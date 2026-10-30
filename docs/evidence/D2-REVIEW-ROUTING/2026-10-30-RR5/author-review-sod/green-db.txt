@@ -1,0 +1,536 @@
+# Green (database tier): the fix, through the real router, with RLS on, as app_service
+#
+# Code under test: the working tree on HEAD 619052719 plus this fix.
+# Database: platform_ci_vault_fixture_sod (fresh: provision-test-db.sh, then deploy-migrate.mjs,
+#   then renamed). RLS_ENFORCE=on; the runtime role is app_service (APP_DATABASE_URL).
+# Files: review-route-authoring-rr5, workflow-import-governance, authoring-governed-delete-signed-freeze,
+#   authoring-stability-table, agency-response-signed-approval (.dbtest.ts).
+# Result: 90 passed, 6 failed (96).
+#   tests/db/review-route-authoring-rr5.dbtest.ts: 23 of 23, the five new tests among them.
+#   The 6 failures predate this change. They fail with identical messages on HEAD, run from a plain
+#   `git archive HEAD` export against the same database:
+#     workflow-import-governance (5): CSR_SCIENTIFIC_REVIEW_REQUIRED where the test expects 200 or
+#       WORKFLOW_MODEL_QUALIFICATION_REQUIRED (the 5 the RR5 README records at HEAD~1);
+#     authoring-stability-table (1): "survives the hard reload", 404 where the test expects 200.
+#   authoring-governed-delete-signed-freeze passes; its REVIEWER freezes and e-signs are a second,
+#   non-author signer's.
+# Accounts: synthetic only. No credential appears below.
+#
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-30T19:19:42.884Z","pid":2414,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-30T19:19:42.885Z","pid":2414,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-30T19:19:42.885Z","pid":2414,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/agency-response-signed-approval.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/agency-response-signed-approval.dbtest.ts
+[database] Database connection successful
+
+{"level":20,"time":"2026-10-30T19:19:48.240Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387988230_6e688c9a654e8c56","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+(node:2414) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 6ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > records a question on a letter, with its ledger row, as unanswered 360ms
+{"level":20,"time":"2026-10-30T19:19:48.506Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387988500_cecc8c239a184e28","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > refuses a second question with the same agency number on one letter 118ms
+{"level":20,"time":"2026-10-30T19:19:48.620Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387988615_10b008e86f75bad9","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:48.760Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387988756_216766421137b035","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > a viewer can read the questions and write none 129ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > tells the author, before they try, that they cannot approve their own answer 90ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses an approval with no password, and writes nothing 29ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a meaning an approval cannot carry 24ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses the author, with the right password, and writes nothing 51ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a viewer: identity is not authority 15ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a signature over a revision the signer did not see 41ms
+{"level":20,"time":"2026-10-30T19:19:49.221Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387989218_5b76346a0e60556b","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > signs: one electronic_signatures row binding the exact response text 75ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a second approval of the same text 38ms
+{"level":20,"time":"2026-10-30T19:19:49.440Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387989437_60295bc13030f547","action":"UPDATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > refuses the package while one response is unsigned, naming it 33ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > refuses to close the letter while a response is unsigned 47ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > records a commitment made in a response, naming the project, letter and question 75ms
+{"level":30,"time":"2026-10-30T19:19:49.595Z","pid":2414,"hostname":"vm","context":{"userId":49,"tenantId":28,"resourceId":"ace_1793387989215_d20c7514"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED agency_response_package"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > once every response is signed: the package assembles, recorded with the bytes delivered 77ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > editing after approval voids it: the package and the close are refused again 113ms
+{"level":20,"time":"2026-10-30T19:19:49.826Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387989821_7e89a0c046a85f97","action":"UPDATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a new signature over the edited text approves it, and the letter closes 96ms
+{"level":20,"time":"2026-10-30T19:19:49.901Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387989896_c39390c2f6bc1e26","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a closed letter takes no new question and no edited response 50ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > lists the commitment under its project, with the letter and question it was made in 22ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation-wide register does not list a project's commitment (project admission applies) 12ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a viewer cannot fulfil it, through either door 19ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation's door does not reach a project's commitment, even for an editor 11ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > refuses a fulfilment dated in the future, and a date that does not exist, with a sentence 34ms
+{"level":20,"time":"2026-10-30T19:19:50.104Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387990100_e15c4ad71650f381","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > an unsigned PMR fulfilment that names nothing is refused, and nothing changes 22ms
+{"level":20,"time":"2026-10-30T19:19:50.232Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387990229_1cbc3c297558e6af","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a commitment from a letter the person may not see is not listed to them 128ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > keeps every text: after an edit, the earlier approved text is in the history, with its signature 198ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > the history is append-only for the runtime role 13ms
+{"level":20,"time":"2026-10-30T19:19:50.438Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387990437_18c71ca5f8855a77","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > nobody who wrote part of the text since the last approval may approve it, not only the last saver 261ms
+{"level":20,"time":"2026-10-30T19:19:50.707Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387990705_df0ae817b2c2d9e0","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":30,"time":"2026-10-30T19:19:50.915Z","pid":2414,"hostname":"vm","context":{"userId":49,"tenantId":28,"resourceId":"ace_1793387990702_e127b168"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED agency_response_package"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a withdrawn question needs no answer, takes no edit, and is left out of the package 246ms
+{"level":20,"time":"2026-10-30T19:19:50.957Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387990954_b5ea0d32fe8e4add","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:50.983Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387990980_ad9d15a0f8f95c90","action":"UPDATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:51.082Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991078_0887dc2a6ac24662","action":"UPDATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response does not close with nothing recorded; marked as asking nothing, with a reason, it does 158ms
+{"level":20,"time":"2026-10-30T19:19:51.111Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991108_fc9bfa4538b2c24f","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:51.175Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991172_fd1975c733bc74ee","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:51.272Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991269_5ae3441e7d9ea6c7","action":"UPDATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:51.350Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991347_0db69aef5a1a90c6","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:51.453Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991451_9b822f860d448261","action":"UPDATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:51.516Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991513_40eb4c4849c5cdb8","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:51.642Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991640_e606c2b85722a7fb","action":"UPDATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:51.694Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991691_53720c568b323eb9","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:51.790Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991787_df0b1a5b89b0ff8e","action":"UPDATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:51.850Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991847_154e39de3d03012c","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:51.974Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387991971_6e013469845e2b67","action":"UPDATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-30T19:19:52.007Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387992003_8ba3d8f780b273ae","action":"UPDATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter with questions recorded cannot be marked as asking nothing 61ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response cannot be logged as already closed 13ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a close and a new question cannot both land: the close is checked under the letter lock 850ms
+{"level":20,"time":"2026-10-30T19:19:52.028Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387992026_6926778fe037a3ed","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the screen is told what this person may do > a viewer may write nothing and sign nothing; an editor with signing authority may 101ms
+{"level":20,"time":"2026-10-30T19:19:52.135Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387992132_909a853d51821cfd","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":30,"time":"2026-10-30T19:19:52.289Z","pid":2414,"hostname":"vm","context":{"userId":49,"tenantId":28,"resourceId":"ace_1793387992129_611f598b"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED agency_response_package"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the Word package reproduces the signed text line for line > each line of a response is its own paragraph, and no Markdown marks are printed 247ms
+{"level":40,"time":"2026-10-30T19:19:53.552Z","pid":2414,"hostname":"vm","context":{"organizationId":30,"purgedByUserId":54,"retentionOverride":null,"finalExportDigest":"dbagr-275cc2e9-2661-4d04-8660-b3523e097d5a-digest","deletedRows":{"company_document_designs":0,"c2c_template_specs":0,"company_legal_registry":0,"company_document_revisions":0,"company_document_grants":0,"company_document_identity_reviews":0,"ana_source_read_receipts":0,"mdx_notification_receipts":0,"mdx_notifications":0,"ai_feedback":0,"module_access_requests":0,"organization_skill_settings":0,"project_skill_settings":0,"ana_run_events":0,"ana_runs":0,"project_workflows":0,"organization_users":0,"concept2cure_signatures":0,"concept2cure_submission_snapshots":0,"commitment_milestones":1,"regulatory_commitments":1,"agency_communication_questions":1,"electronic_signatures":1,"compliance_review_records":0,"document_audit_trail":0,"ind_package_plan_documents":0,"document_comments":0,"document_locks":0,"document_sessions":"[REDACTED]","document_versions":0,"document_sections":0,"documents":0,"link_edges":0,"section_links":0,"section_propagations":0,"section_patches":0,"patches":0,"section_graph_nodes":0,"section_leaves":0,"sections":0,"cross_module_task_links":0,"task_dependencies":0,"unified_tasks":0,"review_routes":0,"account_canon_resolution_log":0,"ana_outcome_log":0,"rule_execution_log":0,"bundle_execution_receipts":0,"data_lineage_records":0,"evidence_chain_records":0,"governance_boundary_transitions":0,"report_seal_events":0,"indemnification_attestations":0,"report_atom_provenance":0,"immutable_report_records":0,"ana_client_objectives":0,"ana_project_capabilities":0,"ana_relational_profiles":0,"project_ingested_documents":0,"project_memory_entries":0,"project_intelligence_profiles":0,"project_modules":0,"project_predictions":0,"project_rules":0,"project_schedule_goals":0,"project_schedule_revisions":0,"project_schedule_of_events":0,"project_tasks":0,"project_workflow_stages":0,"risk_detections":0,"sentinel_findings":0,"template_usage":0,"ctd_onboarding_projects":0,"account_events":0,"account_template_registry":0,"account_term_dictionary":0,"account_canon_items":0,"account_skill_bundles":0,"client_ingested_documents":0,"client_memory_entries":0,"client_intelligence_profiles":0,"c2c_communication_timeline_events":0,"c2c_correspondence_issues":0,"c2c_secure_attachments":0,"c2c_response_packages":0,"c2c_correspondence":0,"c2c_submissions":0,"communication_messages":0,"fda_communications":0,"communication_channels":0,"cer_approvals":0,"cer_clinical_evidence":0,"cer_compliance_checks":0,"cer_essential_requirements":0,"cer_exports":0,"cer_faers_data":0,"cer_literature":0,"cer_sections":0,"cer_version_history":0,"cer_workflows":0,"cer_reports":0,"cer_documents":0,"client_user_permissions":0,"project_activities":0,"project_documents":0,"project_milestones":0,"cer_projects":0,"csr_details":0,"csr_reports":0,"csr_knowledge_edges":0,"csr_regulatory_intelligence":0,"csr_training_data":0,"ctd_cross_references":0,"csr_studies":0,"ctd_programs":0,"csr_narrative_outputs":0,"csr_assembly_runs":0,"csr_narrative_runs":0,"qc_deviations":0,"lumen_knowledge_graph_edges":0,"knowledge_graph_edges":0,"knowledge_graph_nodes":0,"fda_510k_documents":0,"fda_510k_stage_progress":0,"fda_510k_submission_packages":0,"fda_510k_projects":0,"grant_budget_lines":0,"grant_closeout_records":0,"grant_cost_share_contributions":0,"grant_expenditures":0,"grant_invoices":0,"grant_milestones":0,"grant_nce_records":0,"grant_subawards":0,"effort_lines":0,"grant_awards":0,"grant_proposals":0,"ind_package_plan_modalities":0,"ind_package_plan_regions":0,"ind_package_plan_requirements":0,"ind_package_plan_timelines":0,"ind_package_plans":0,"ind_submissions":0,"ind_projects":0,"reg_messages":0,"reg_responses":0,"reg_questions":0,"reg_attachments":0,"agency_correspondence":0,"agency_communications":0,"compliance_calendar":0,"obligation_updates":0,"regulatory_obligations":0,"regulatory_calendar":0,"post_approval_commitments":0,"regulatory_tasks":0,"gate_approvals":0,"stage_gates":0,"regulatory_submissions":0,"qmp_traceability_matrix":0,"ctq_factors":0,"qmp_section_gating":0,"quality_management_plans":0,"report_details":0,"reports":0,"strategic_reports":0,"supply_chain_coas":0,"supply_chain_batches":0,"supply_chain_materials":0,"supply_chain_temperature_readings":0,"supply_chain_shipments":0,"supply_chain_suppliers":0,"submission_twin_challenges":0,"submission_twin_assessments":0,"submission_twin_change_impacts":0,"submission_twin_evidence_links":0,"submission_twin_claims":0,"submission_twin_drift_alerts":0,"client_access":0,"client_security_settings":0,"client_workspace_settings":0,"staff_assignments":0,"sync_status":0,"workflow_progress":0,"protocols":0,"udi_records":0,"software_lifecycle_items":0,"labeling_translations":0,"labeling_symbols":0,"labeling_documents":0,"ivd_analytical_performance":0,"ivd_clinical_performance":0,"ivd_clia_categorization":0,"ivdr_per_documents":0,"cdx_pairings":0,"ivdr_validation_parameter_history":0,"ivdr_evidence_result_history":0,"ivdr_cdx_status_history":0,"ivdr_clinical_evidence":0,"ivdr_analytical_validations":0,"ivdr_cdx_workflows":0,"ivdr_classifications":0,"c2c_documents":0,"projects":1,"client_workspaces":1,"vault.document_chunks":0,"vault.documents":0,"stats_computation_runs":0,"risk_controls":0,"risk_items":0,"qms_nonconforming_products":0,"vault_data_room_seals":0,"saved_precedent_queries":0,"regulatory_programs":0,"file_uploads":0,"regulatory_twin_simulations":0,"cmc_container_closures":0,"cmc_reference_standards":0,"cmc_impurity_profiles":0,"cmc_dissolution_profiles":0,"cmc_material_specs":0,"cmc_formulation_records":0,"cmc_characterization_studies":0,"manufacturing_processes":0,"cmc_interview_sessions":"[REDACTED]","rendered_leaf_files":0,"assumption_records":0,"decision_records":0,"governed_decision_transitions":0,"collab_presence":0,"project_continuity_snapshots":0,"scheduled_job_claims":0,"cmc_workflow_tasks":0,"cmc_workflow_instances":0,"cmc_checklist_instances":0,"cmc_ai_tool_executions":0,"cmc_workflows":0,"organization_retention_settings":0,"ana_turn_records":0,"ana_record_blobs":0,"organization_gateway_accounts":0,"session_activity":"[REDACTED]","coordination_leases":0,"study_pivotal_declarations":0,"submission_filed_baselines":0,"estar_submission_events":0,"citation_chains":0},"turnRecordErasure":{"records":0,"blobs":0},"runEventErasure":{"events":0},"sourceReadReceiptErasure":{"receipts":0},"artifactRecordErasure":{"signatures":0,"snapshots":0},"vaultSealErasure":{"seals":0}},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > a tenant that answered an agency can still be erased > purge removes the questions, their history, the commitments from them and, after custody, the signature 1202ms
+{"level":20,"time":"2026-10-30T19:19:53.593Z","pid":2414,"hostname":"vm","context":{"auditId":"audit_1793387993590_92f246f8e706d833","action":"CREATE","entityType":"project","entityId":"proj_11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > another organization's member cannot reach this project's questions 105ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows 3ms
+{"level":30,"time":"2026-10-30T19:19:54.754Z","pid":2440,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-30T19:19:54.756Z","pid":2440,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-30T19:19:54.756Z","pid":2440,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/workflow-import-governance.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/workflow-import-governance.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/workflow-import-governance.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > opens a real non-owner NOSUPERUSER NOBYPASSRLS connection 21ms
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > refuses an active unassigned organization member before private target/source import 125ms
+(node:2440) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow source snapshots and current sharing use real native data > rechecks an explicit project grant after preview rather than trusting the stale member JWT 129ms
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow source snapshots and current sharing use real native data > hides an existing foreign-organization source under actual forced RLS and the import route 30ms
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow source snapshots and current sharing use real native data > retains a coherent source snapshot across a committed concurrent child insertion 44ms
+{"level":30,"time":"2026-10-30T19:19:59.179Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc fd160219-039c-4404-8150-6a7a853615e6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.196Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc fd160219-039c-4404-8150-6a7a853615e6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.202Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc fd160219-039c-4404-8150-6a7a853615e6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.209Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc fd160219-039c-4404-8150-6a7a853615e6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.216Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc fd160219-039c-4404-8150-6a7a853615e6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.228Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc fd160219-039c-4404-8150-6a7a853615e6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.239Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc fd160219-039c-4404-8150-6a7a853615e6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.442Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc fd160219-039c-4404-8150-6a7a853615e6 by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow source snapshots and current sharing use real native data > refuses a preview made stale by a new child row before any authoring evidence 61ms
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow source snapshots and current sharing use real native data > converges concurrent identical imports on one actual draft and preserves later edits 531ms
+{"level":30,"time":"2026-10-30T19:19:59.626Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.639Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.646Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.651Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.656Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.667Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:19:59.675Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.014Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.132Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.223Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.298Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.493Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: EXPORT on doc 47d121e2-7605-4bbb-b169-a6d947c0cade by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > creates an unbound unknown-origin copy, rejects fingerprint-only release, then permits actual assigned reviewer adoption 993ms
+{"level":30,"time":"2026-10-30T19:20:00.592Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 64d9c3a2-d4d3-489a-9466-7f6ae3d30505 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.692Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 64d9c3a2-d4d3-489a-9466-7f6ae3d30505 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.858Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 05f5bab5-a11b-43a2-9a4e-ee767df9e33f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.869Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 05f5bab5-a11b-43a2-9a4e-ee767df9e33f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.875Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 05f5bab5-a11b-43a2-9a4e-ee767df9e33f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.880Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 05f5bab5-a11b-43a2-9a4e-ee767df9e33f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.886Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 05f5bab5-a11b-43a2-9a4e-ee767df9e33f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.897Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 05f5bab5-a11b-43a2-9a4e-ee767df9e33f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.910Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 05f5bab5-a11b-43a2-9a4e-ee767df9e33f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:00.999Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 05f5bab5-a11b-43a2-9a4e-ee767df9e33f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.095Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 05f5bab5-a11b-43a2-9a4e-ee767df9e33f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.177Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 05f5bab5-a11b-43a2-9a4e-ee767df9e33f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.204Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 05f5bab5-a11b-43a2-9a4e-ee767df9e33f by w***@example.invalid"}
+ × tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > holds positively machine-authored CSR without qualified generation evidence even after actual reviewer adoption 266ms
+   → {"success":false,"error":{"code":"CSR_SCIENTIFIC_REVIEW_REQUIRED","message":"The CSR scientific evidence is incomplete, stale or unavailable. Review the current saved source tables before approving."}}: expected 409 to be 200 // Object.is equality
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > does not let a full-hash adoption cover content added after that human signature 494ms
+{"level":30,"time":"2026-10-30T19:20:01.365Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 6f7bdf85-969d-48fe-8aa1-3b810a04e64f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.374Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 6f7bdf85-969d-48fe-8aa1-3b810a04e64f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.378Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 6f7bdf85-969d-48fe-8aa1-3b810a04e64f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.382Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 6f7bdf85-969d-48fe-8aa1-3b810a04e64f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.386Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 6f7bdf85-969d-48fe-8aa1-3b810a04e64f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.395Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 6f7bdf85-969d-48fe-8aa1-3b810a04e64f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.403Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 6f7bdf85-969d-48fe-8aa1-3b810a04e64f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.489Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 6f7bdf85-969d-48fe-8aa1-3b810a04e64f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.584Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 6f7bdf85-969d-48fe-8aa1-3b810a04e64f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.654Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 6f7bdf85-969d-48fe-8aa1-3b810a04e64f by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.678Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: RENAME on doc 6f7bdf85-969d-48fe-8aa1-3b810a04e64f by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > full visible review and known machine qualification remain distinct > requires new full-document adoption after an actual section-title edit even when its prose hash stays the same 459ms
+{"level":30,"time":"2026-10-30T19:20:01.816Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 12587270-b7f7-428e-ae3c-8fb611736c24 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.856Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: SUBMIT on doc 12587270-b7f7-428e-ae3c-8fb611736c24 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:01.932Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 12587270-b7f7-428e-ae3c-8fb611736c24 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.097Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 06d475be-d5a6-4ce9-814c-98410c34eca6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.104Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 06d475be-d5a6-4ce9-814c-98410c34eca6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.107Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 06d475be-d5a6-4ce9-814c-98410c34eca6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.110Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 06d475be-d5a6-4ce9-814c-98410c34eca6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.116Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 06d475be-d5a6-4ce9-814c-98410c34eca6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.129Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 06d475be-d5a6-4ce9-814c-98410c34eca6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.141Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 06d475be-d5a6-4ce9-814c-98410c34eca6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.240Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 06d475be-d5a6-4ce9-814c-98410c34eca6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.321Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 06d475be-d5a6-4ce9-814c-98410c34eca6 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.384Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 06d475be-d5a6-4ce9-814c-98410c34eca6 by w***@example.invalid"}
+ × tests/db/workflow-import-governance.dbtest.ts > full visible review and known machine qualification remain distinct > records a real reviewer signature without releasing known machine text when it clears the last workflow step 282ms
+   → {"success":false,"error":{"code":"CSR_SCIENTIFIC_REVIEW_REQUIRED","message":"The CSR scientific evidence is incomplete, stale or unavailable. Review the current saved source tables before approving."}}: expected 409 to be 200 // Object.is equality
+ ✓ tests/db/workflow-import-governance.dbtest.ts > full visible review and known machine qualification remain distinct > retains an accepted protocol machine span as machine origin without transferring its prior acceptance or inventing qualification 426ms
+{"level":30,"time":"2026-10-30T19:20:02.508Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 89f71505-3a24-4731-afef-d4bcbf3c7051 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.662Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: WORKING_COPY on doc 89f71505-3a24-4731-afef-d4bcbf3c7051 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:02.912Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 4557e49a-990a-487e-93ce-ea839626f78a by w***@example.invalid"}
+ × tests/db/workflow-import-governance.dbtest.ts > retained workflow identity and lifecycle changes fail closed > allows real DOCX working bytes for held machine text with an explicit uncontrolled notice and no controlled export or seal 392ms
+   → expected 'CSR_SCIENTIFIC_REVIEW_REQUIRED' to be 'WORKFLOW_MODEL_QUALIFICATION_REQUIRED' // Object.is equality
+{"level":30,"time":"2026-10-30T19:20:03.047Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 35df4f01-7ece-4dee-bf48-457e8320d75c by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.058Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 35df4f01-7ece-4dee-bf48-457e8320d75c by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.063Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 35df4f01-7ece-4dee-bf48-457e8320d75c by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.067Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 35df4f01-7ece-4dee-bf48-457e8320d75c by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.074Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 35df4f01-7ece-4dee-bf48-457e8320d75c by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.080Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 35df4f01-7ece-4dee-bf48-457e8320d75c by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.085Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 35df4f01-7ece-4dee-bf48-457e8320d75c by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.167Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 35df4f01-7ece-4dee-bf48-457e8320d75c by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.252Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 35df4f01-7ece-4dee-bf48-457e8320d75c by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.333Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 35df4f01-7ece-4dee-bf48-457e8320d75c by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.403Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 35df4f01-7ece-4dee-bf48-457e8320d75c by w***@example.invalid"}
+ × tests/db/workflow-import-governance.dbtest.ts > retained workflow identity and lifecycle changes fail closed > does not lift a known-machine hold when displayed workflow provenance is removed 133ms
+   → expected 'CSR_SCIENTIFIC_REVIEW_REQUIRED' to be 'WORKFLOW_MODEL_QUALIFICATION_REQUIRED' // Object.is equality
+ ✓ tests/db/workflow-import-governance.dbtest.ts > retained workflow identity and lifecycle changes fail closed > cannot freeze a snapshot that misses an actual section insertion queued ahead of its parent lock 456ms
+{"level":30,"time":"2026-10-30T19:20:03.485Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 199b5214-1fed-4a21-8d0f-61bca105b867 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.496Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 199b5214-1fed-4a21-8d0f-61bca105b867 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.502Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 199b5214-1fed-4a21-8d0f-61bca105b867 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.508Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 199b5214-1fed-4a21-8d0f-61bca105b867 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.514Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 199b5214-1fed-4a21-8d0f-61bca105b867 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.520Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 199b5214-1fed-4a21-8d0f-61bca105b867 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.524Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 199b5214-1fed-4a21-8d0f-61bca105b867 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.595Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 199b5214-1fed-4a21-8d0f-61bca105b867 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.661Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 199b5214-1fed-4a21-8d0f-61bca105b867 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.725Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 199b5214-1fed-4a21-8d0f-61bca105b867 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:03.827Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 199b5214-1fed-4a21-8d0f-61bca105b867 by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > current sealed records and later renditions retain their exact reviewed text > refuses a PATCH that passed its editable preflight but waited behind the actual committed freeze without changing text, lineage or revisions 426ms
+{"level":30,"time":"2026-10-30T19:20:03.918Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 7f508cb9-6905-457d-86b1-d869be1a9a18 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:04.014Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 836fc48c-1f2c-4a2f-9838-10a8af261ec0 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:04.021Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 836fc48c-1f2c-4a2f-9838-10a8af261ec0 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:04.024Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 836fc48c-1f2c-4a2f-9838-10a8af261ec0 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:04.027Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 836fc48c-1f2c-4a2f-9838-10a8af261ec0 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:04.030Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 836fc48c-1f2c-4a2f-9838-10a8af261ec0 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:04.036Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 836fc48c-1f2c-4a2f-9838-10a8af261ec0 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:04.041Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 836fc48c-1f2c-4a2f-9838-10a8af261ec0 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:04.108Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 836fc48c-1f2c-4a2f-9838-10a8af261ec0 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:04.166Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 836fc48c-1f2c-4a2f-9838-10a8af261ec0 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:04.232Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 836fc48c-1f2c-4a2f-9838-10a8af261ec0 by w***@example.invalid"}
+{"level":30,"time":"2026-10-30T19:20:04.306Z","pid":2440,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 836fc48c-1f2c-4a2f-9838-10a8af261ec0 by w***@example.invalid"}
+ × tests/db/workflow-import-governance.dbtest.ts > current sealed records and later renditions retain their exact reviewed text > permits an actual human replacement after current review without erasing original machine origin or fabricating PQ 109ms
+   → expected 'CSR_SCIENTIFIC_REVIEW_REQUIRED' to be 'WORKFLOW_MODEL_QUALIFICATION_REQUIRED' // Object.is equality
+ ✓ tests/db/workflow-import-governance.dbtest.ts > current sealed records and later renditions retain their exact reviewed text > refuses re-signing and new controlled output when a source child changes after reviewed freeze 404ms
+{"level":30,"time":"2026-10-30T19:20:05.926Z","pid":2460,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-30T19:20:05.928Z","pid":2460,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-30T19:20:05.928Z","pid":2460,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/review-route-authoring-rr5.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/review-route-authoring-rr5.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/review-route-authoring-rr5.dbtest.ts
+✅ Template tables initialized
+
+{"level":30,"time":"2026-10-30T19:20:07.659Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 58230521-08e7-4e9e-afb0-c588f2168ac9 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:07.684Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 58230521-08e7-4e9e-afb0-c588f2168ac9 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:07.811Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 58230521-08e7-4e9e-afb0-c588f2168ac9 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > one request writes the review rows, the grants, the route header and each reviewer’s task, and tells each reviewer 288ms
+{"level":30,"time":"2026-10-30T19:20:07.903Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 0368a720-26b2-4e61-af10-c4ae22a39129 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:07.934Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 0368a720-26b2-4e61-af10-c4ae22a39129 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > or neither does: a reviewer the validator refuses, after the request rows were written, leaves nothing 129ms
+{"level":30,"time":"2026-10-30T19:20:08.026Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc d384e2f7-dd80-40c3-b582-b011ee5c2aca by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.051Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc d384e2f7-dd80-40c3-b582-b011ee5c2aca by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.108Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc c36b3dc1-6f65-4427-a2f2-f6874dc3379c by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.131Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc c36b3dc1-6f65-4427-a2f2-f6874dc3379c by d***@example.test"}
+{"level":40,"time":"2026-10-30T19:20:08.235Z","pid":2460,"hostname":"vm","context":{"tenantId":33,"principalId":"59","method":"GET","path":"/authoring/documents/c36b3dc1-6f65-4427-a2f2-f6874dc3379c/route-candidates","action":"edit","docId":"c36b3dc1-6f65-4427-a2f2-f6874dc3379c","sectionId":null,"reason":"permission-denied"},"msg":"[authoring-object-authorization] Authoring object mutation denied"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > a request with no due date, or no reason, is refused with nothing written 89ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > the picker’s read answers with the one validator: a member without signing authority is refused, and why, before anything is sent 166ms
+{"level":30,"time":"2026-10-30T19:20:08.280Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 8fb1b021-1ab1-49c3-8298-2527511aa3f2 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.306Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 8fb1b021-1ab1-49c3-8298-2527511aa3f2 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.385Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 8fb1b021-1ab1-49c3-8298-2527511aa3f2 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.461Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 8fb1b021-1ab1-49c3-8298-2527511aa3f2 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > asking another reviewer while the route is open on the same content adds them to it 246ms
+{"level":30,"time":"2026-10-30T19:20:08.523Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 4172d312-aa5e-436d-8bbb-c24680786c71 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.543Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 4172d312-aa5e-436d-8bbb-c24680786c71 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.638Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 4172d312-aa5e-436d-8bbb-c24680786c71 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.703Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 4172d312-aa5e-436d-8bbb-c24680786c71 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.758Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 4172d312-aa5e-436d-8bbb-c24680786c71 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > stamps the signature on the member row, cites it, tells the sender, and the last reviewer completes the route 280ms
+{"level":30,"time":"2026-10-30T19:20:08.794Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc b19eb0fd-cbeb-4643-95ce-e979ed3524c2 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.820Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc b19eb0fd-cbeb-4643-95ce-e979ed3524c2 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.884Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc b19eb0fd-cbeb-4643-95ce-e979ed3524c2 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.949Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a37ef6bb-79fd-4966-b407-4b64bebc3dbd by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:08.968Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a37ef6bb-79fd-4966-b407-4b64bebc3dbd by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > refuses, before the credential, a reviewer the route does not name: a wrong password is never checked 160ms
+{"level":30,"time":"2026-10-30T19:20:09.054Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc a37ef6bb-79fd-4966-b407-4b64bebc3dbd by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.133Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc a37ef6bb-79fd-4966-b407-4b64bebc3dbd by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > refuses a reviewer whose step has not opened, one after another 317ms
+{"level":30,"time":"2026-10-30T19:20:09.274Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e51c91ed-802c-4155-b78c-39c63d666a70 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.290Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e51c91ed-802c-4155-b78c-39c63d666a70 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.345Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc e51c91ed-802c-4155-b78c-39c63d666a70 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > refuses a review signature over content the route is not about 133ms
+{"level":30,"time":"2026-10-30T19:20:09.395Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a4b9273f-fe10-4d85-bc44-14e4005972b4 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.411Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a4b9273f-fe10-4d85-bc44-14e4005972b4 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.467Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc feaf0ce7-75f0-4fbb-b4bd-ba888ec9faf1 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.483Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc feaf0ce7-75f0-4fbb-b4bd-ba888ec9faf1 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.550Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc feaf0ce7-75f0-4fbb-b4bd-ba888ec9faf1 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.628Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc feaf0ce7-75f0-4fbb-b4bd-ba888ec9faf1 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > with no route: the author’s REVIEWER e-sign is refused 403, before the credential, and no signature is written 69ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > after the route completes: the named reviewer’s signature closes it, and the author’s is refused the same way 213ms
+{"level":30,"time":"2026-10-30T19:20:09.680Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 47ee5bcd-e7b3-48f6-a581-8ded46785984 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.693Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 47ee5bcd-e7b3-48f6-a581-8ded46785984 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.736Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 13af770b-b375-477e-804f-25bd3ecb842c by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.746Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 13af770b-b375-477e-804f-25bd3ecb842c by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.763Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 13af770b-b375-477e-804f-25bd3ecb842c by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.787Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 13af770b-b375-477e-804f-25bd3ecb842c by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > a REVIEWER freeze by the author is refused 403 before the credential: not frozen, no snapshot, no signature 55ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > the author still signs AUTHOR, by e-sign and by freeze 80ms
+{"level":30,"time":"2026-10-30T19:20:09.811Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 91a27b4f-5ab8-459e-9080-b7b273b62264 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.821Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 91a27b4f-5ab8-459e-9080-b7b273b62264 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.844Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 91a27b4f-5ab8-459e-9080-b7b273b62264 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.874Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cffca2e0-2817-4a35-a60c-80f0d571b350 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.890Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cffca2e0-2817-4a35-a60c-80f0d571b350 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.913Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 34e06883-15d1-498d-852e-ee7231d135e5 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:09.936Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 34e06883-15d1-498d-852e-ee7231d135e5 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:10.000Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc cffca2e0-2817-4a35-a60c-80f0d571b350 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > someone who did not write it still signs REVIEWER with no route 57ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the Authoring signature door (RR5 merged with P-59) > closes a member’s task only on their own signature, with REVIEWER, over this document and the routed content 228ms
+{"level":30,"time":"2026-10-30T19:20:10.102Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 33b0dec9-f82a-4a6b-b296-744e90e7aace by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:10.113Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 33b0dec9-f82a-4a6b-b296-744e90e7aace by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:10.175Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 33b0dec9-f82a-4a6b-b296-744e90e7aace by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:10.237Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 33b0dec9-f82a-4a6b-b296-744e90e7aace by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:10.337Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 33b0dec9-f82a-4a6b-b296-744e90e7aace by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a negative verdict returns the route and opens nobody’s step (RR5, §2.9, B5) > “changes requested” is recorded, the route is returned with its reason, every unsigned member is cancelled, the sender is told 277ms
+{"level":30,"time":"2026-10-30T19:20:10.381Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 711f0725-299e-4e47-b338-25937e6a1559 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:10.399Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 711f0725-299e-4e47-b338-25937e6a1559 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:10.453Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 711f0725-299e-4e47-b338-25937e6a1559 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:10.515Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 711f0725-299e-4e47-b338-25937e6a1559 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a negative verdict returns the route and opens nobody’s step (RR5, §2.9, B5) > an approval verdict records the verdict and leaves the route task to the signature 176ms
+{"level":30,"time":"2026-10-30T19:20:10.555Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f69469bf-21f2-4cca-bd34-adad89172e42 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:10.570Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f69469bf-21f2-4cca-bd34-adad89172e42 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:10.630Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc f69469bf-21f2-4cca-bd34-adad89172e42 by d***@example.test"}
+(node:2460) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":30,"time":"2026-10-30T19:20:10.727Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc f69469bf-21f2-4cca-bd34-adad89172e42 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:10.917Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc f69469bf-21f2-4cca-bd34-adad89172e42 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the Review board reads a reviewer’s route signature (RR5 phone acceptance, open item) > a reviewer who signed is no longer awaiting review; one who has not is; the request names who asked 436ms
+{"level":30,"time":"2026-10-30T19:20:10.998Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc b9011176-0dd6-4f00-8a79-cc51213aef18 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.011Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc b9011176-0dd6-4f00-8a79-cc51213aef18 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.097Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc b9011176-0dd6-4f00-8a79-cc51213aef18 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.136Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc b9011176-0dd6-4f00-8a79-cc51213aef18 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the Review board reads a reviewer’s route signature (RR5 phone acceptance, open item) > a signature over content the document no longer has is not a review of it: the reviewer is awaiting again 229ms
+{"level":30,"time":"2026-10-30T19:20:11.220Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc dfadf0c7-a8df-4ac7-9ed1-66256919c1a2 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.248Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc dfadf0c7-a8df-4ac7-9ed1-66256919c1a2 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.318Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc dfadf0c7-a8df-4ac7-9ed1-66256919c1a2 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.405Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc dfadf0c7-a8df-4ac7-9ed1-66256919c1a2 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.471Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc dfadf0c7-a8df-4ac7-9ed1-66256919c1a2 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > reassign and hand back (RR5 with RR3’s acts) > reassigns a reviewer: the task is kept, the review request moves, and the new reviewer signs 281ms
+{"level":30,"time":"2026-10-30T19:20:11.521Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 16d1061e-4e01-4bc2-b779-127c5ccb91eb by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.542Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 16d1061e-4e01-4bc2-b779-127c5ccb91eb by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.629Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 16d1061e-4e01-4bc2-b779-127c5ccb91eb by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > reassign and hand back (RR5 with RR3’s acts) > a reviewer hands back: their task waits on the sender, who is told, and they do not sign meanwhile 314ms
+{"level":30,"time":"2026-10-30T19:20:11.822Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f12d624d-723a-496a-8199-67758249fd52 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.841Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f12d624d-723a-496a-8199-67758249fd52 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.896Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc f12d624d-723a-496a-8199-67758249fd52 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > reassign and hand back (RR5 with RR3’s acts) > another organization’s member reads no round 121ms
+{"level":30,"time":"2026-10-30T19:20:11.937Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc ba524f5f-7ef1-43b0-afb3-853be3b63c69 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:11.952Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc ba524f5f-7ef1-43b0-afb3-853be3b63c69 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:12.007Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc ba524f5f-7ef1-43b0-afb3-853be3b63c69 by d***@example.test"}
+{"level":30,"time":"2026-10-30T19:20:12.048Z","pid":2460,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc ba524f5f-7ef1-43b0-afb3-853be3b63c69 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > grandfathering: a review requested before RR5 keeps today’s loop (§2.13, M1) > a reviewer with a request row and a task and no route: the verdict completes the task as before, and no route is written 140ms
+{"level":30,"time":"2026-10-30T19:20:13.336Z","pid":2483,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-30T19:20:13.337Z","pid":2483,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-30T19:20:13.337Z","pid":2483,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an organisation member (not owner/admin/manager) is refused and the document stays 63ms
+{"level":30,"time":"2026-10-30T19:20:14.760Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc b7beb88f-69ed-40c8-89d2-eef26dff1e4b by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an admin deletes an empty document of their organisation; the chained row names the actor and the reason 42ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a document with a section (so a revision) answers 409 and stays — the ledger is append-only 56ms
+{"level":30,"time":"2026-10-30T19:20:14.819Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 256f2a5f-8d15-4d6e-a10b-4b9c06385531 by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a draft that carries a signature answers 409 and stays — the signature keeps its record 62ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > another organisation's admin gets 404 for this organisation's document, and it stays 22ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin freezing without the password is refused by the ceremony; the document stays a draft 31ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > a member without a signing role is refused before any credential is read 17ms
+{"level":30,"time":"2026-10-30T19:20:14.945Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc b84c842c-c36f-4fda-aee5-8abf12da8b2c by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed 48ms
+{"level":30,"time":"2026-10-30T19:20:15.138Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e22d01eb-67c3-4804-bce1-4e8a6e1ae810 by d***@c2c.test"}
+{"level":30,"time":"2026-10-30T19:20:15.302Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc e22d01eb-67c3-4804-bce1-4e8a6e1ae810 by d***@c2c.test"}
+{"level":30,"time":"2026-10-30T19:20:15.313Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc e22d01eb-67c3-4804-bce1-4e8a6e1ae810 by d***@c2c.test"}
+{"level":30,"time":"2026-10-30T19:20:15.314Z","pid":2483,"hostname":"vm","context":{"userId":"28","tenantId":18,"resourceId":"e22d01eb-67c3-4804-bce1-4e8a6e1ae810"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+{"level":30,"time":"2026-10-30T19:20:15.368Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc e22d01eb-67c3-4804-bce1-4e8a6e1ae810 by d***@c2c.test"}
+{"level":30,"time":"2026-10-30T19:20:15.391Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc e22d01eb-67c3-4804-bce1-4e8a6e1ae810 by d***@c2c.test"}
+{"level":30,"time":"2026-10-30T19:20:15.391Z","pid":2483,"hostname":"vm","context":{"userId":"28","tenantId":18,"resourceId":"e22d01eb-67c3-4804-bce1-4e8a6e1ae810"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+{"level":30,"time":"2026-10-30T19:20:15.409Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc e22d01eb-67c3-4804-bce1-4e8a6e1ae810 by d***@c2c.test"}
+{"level":30,"time":"2026-10-30T19:20:15.409Z","pid":2483,"hostname":"vm","context":{"userId":"28","tenantId":18,"resourceId":"e22d01eb-67c3-4804-bce1-4e8a6e1ae810"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > biotech pack: the second signer seals the synopsis as REVIEWER, then e-signs; a re-run adds nothing 328ms
+{"level":30,"time":"2026-10-30T19:20:15.460Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc d7aded2e-bc9f-4c37-aab5-552fb61b86fe by d***@c2c.test"}
+{"level":30,"time":"2026-10-30T19:20:15.518Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 0e2cd5e2-5585-4865-b649-b59e7dbe7c90 by d***@c2c.test"}
+{"level":30,"time":"2026-10-30T19:20:15.556Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 0e2cd5e2-5585-4865-b649-b59e7dbe7c90 by d***@c2c.test"}
+{"level":30,"time":"2026-10-30T19:20:15.569Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc 0e2cd5e2-5585-4865-b649-b59e7dbe7c90 by d***@c2c.test"}
+{"level":30,"time":"2026-10-30T19:20:15.569Z","pid":2483,"hostname":"vm","context":{"userId":"28","tenantId":18,"resourceId":"0e2cd5e2-5585-4865-b649-b59e7dbe7c90"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+{"level":30,"time":"2026-10-30T19:20:15.631Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 0e2cd5e2-5585-4865-b649-b59e7dbe7c90 by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > biotech pack: without a signer credential the freeze is recorded as not executed and the pack goes on 55ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > mdx pack: the second signer seals the summary as REVIEWER, then approves; the approval is its own signature 172ms
+{"level":30,"time":"2026-10-30T19:20:15.685Z","pid":2483,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc b99c69a4-9de3-4d59-bad4-a59434a2df54 by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > mdx pack: without a signer credential the freeze is recorded as not executed and the pack goes on 44ms
+{"level":30,"time":"2026-10-30T19:20:16.939Z","pid":2502,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-30T19:20:16.944Z","pid":2502,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-30T19:20:16.944Z","pid":2502,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-stability-table.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-stability-table.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-stability-table.dbtest.ts
+✅ Template tables initialized
+
+{"level":30,"time":"2026-10-30T19:20:18.366Z","pid":2502,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 7549bc87-4fde-4755-af22-28ce3b5fc6dd by d***@c2c.test"}
+ ✓ tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > authors the table into a governed section 90ms
+{"level":30,"time":"2026-10-30T19:20:18.444Z","pid":2502,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 7549bc87-4fde-4755-af22-28ce3b5fc6dd by d***@c2c.test"}
+ × tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > survives the hard reload — the grid is re-read from the store, not from memory 19ms
+   → expected 404 to be 200 // Object.is equality
+{"level":30,"time":"2026-10-30T19:20:18.558Z","pid":2502,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: EXPORT on doc 7549bc87-4fde-4755-af22-28ce3b5fc6dd by d***@c2c.test"}
+{"level":30,"time":"2026-10-30T19:20:18.559Z","pid":2502,"hostname":"vm","context":{"userId":"32","tenantId":20,"resourceId":"7549bc87-4fde-4755-af22-28ce3b5fc6dd"},"msg":"[audit-service] [AUDIT] authoring.section.EXPORT authoring_document"}
+ ✓ tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > exports to Word as a REAL table — <w:tbl>, 10 rows, 70 cells 339ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > survives the hard reload — the grid is re-read from the store, not from memory
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/authoring-stability-table.dbtest.ts:268:25
+    266|       .get(`/api/authoring/docs/${docId}/sections`)
+    267|       .set('Authorization', auth);
+    268|     expect(back.status).toBe(200);
+       |                         ^
+    269|
+    270|     const rows = back.body?.sections ?? back.body?.data ?? back.body;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > holds positively machine-authored CSR without qualified generation evidence even after actual reviewer adoption
+AssertionError: {"success":false,"error":{"code":"CSR_SCIENTIFIC_REVIEW_REQUIRED","message":"The CSR scientific evidence is incomplete, stale or unavailable. Review the current saved source tables before approving."}}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ approveAssignedReview tests/db/workflow-import-governance.dbtest.ts:82:57
+     80|   const binding = await captureAssignedWorkflowReview(app, actors.revi…
+     81|   const reviewed = await call(actors.reviewer,'post',`/documents/${doc…
+     82|   expect(reviewed.status,JSON.stringify(reviewed.body)).toBe(200);
+       |                                                         ^
+     83|   assertBoundWorkflowReviewReceipt(reviewed.body, binding);
+     84| }
+ ❯ adopt tests/db/workflow-import-governance.dbtest.ts:86:3
+ ❯ tests/db/workflow-import-governance.dbtest.ts:305:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/db/workflow-import-governance.dbtest.ts > full visible review and known machine qualification remain distinct > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+AssertionError: {"success":false,"error":{"code":"CSR_SCIENTIFIC_REVIEW_REQUIRED","message":"The CSR scientific evidence is incomplete, stale or unavailable. Review the current saved source tables before approving."}}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ approveAssignedReview tests/db/workflow-import-governance.dbtest.ts:82:57
+     80|   const binding = await captureAssignedWorkflowReview(app, actors.revi…
+     81|   const reviewed = await call(actors.reviewer,'post',`/documents/${doc…
+     82|   expect(reviewed.status,JSON.stringify(reviewed.body)).toBe(200);
+       |                                                         ^
+     83|   assertBoundWorkflowReviewReceipt(reviewed.body, binding);
+     84| }
+ ❯ tests/db/workflow-import-governance.dbtest.ts:364:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/db/workflow-import-governance.dbtest.ts > retained workflow identity and lifecycle changes fail closed > allows real DOCX working bytes for held machine text with an explicit uncontrolled notice and no controlled export or seal
+AssertionError: expected 'CSR_SCIENTIFIC_REVIEW_REQUIRED' to be 'WORKFLOW_MODEL_QUALIFICATION_REQUIRED' // Object.is equality
+
+Expected: "WORKFLOW_MODEL_QUALIFICATION_REQUIRED"
+Received: "CSR_SCIENTIFIC_REVIEW_REQUIRED"
+
+ ❯ tests/db/workflow-import-governance.dbtest.ts:418:38
+    416|     expect(await effects(id)).toEqual({signatures:0,frozen:0,exports:0…
+    417|     expect((await owner.query("SELECT count(*)::int AS n FROM authorin…
+    418|     expect(codeOf(await freeze(id))).toBe('WORKFLOW_MODEL_QUALIFICATIO…
+       |                                      ^
+    419|   });
+    420|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/db/workflow-import-governance.dbtest.ts > retained workflow identity and lifecycle changes fail closed > does not lift a known-machine hold when displayed workflow provenance is removed
+AssertionError: expected 'CSR_SCIENTIFIC_REVIEW_REQUIRED' to be 'WORKFLOW_MODEL_QUALIFICATION_REQUIRED' // Object.is equality
+
+Expected: "WORKFLOW_MODEL_QUALIFICATION_REQUIRED"
+Received: "CSR_SCIENTIFIC_REVIEW_REQUIRED"
+
+ ❯ tests/db/workflow-import-governance.dbtest.ts:429:30
+    427|     const response = await freeze(data.doc.id);
+    428|     expect(response.status,JSON.stringify(response.body)).toBe(409);
+    429|     expect(codeOf(response)).toBe('WORKFLOW_MODEL_QUALIFICATION_REQUIR…
+       |                              ^
+    430|     expect(await effects(data.doc.id)).toEqual({signatures:0,frozen:0,…
+    431|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/db/workflow-import-governance.dbtest.ts > current sealed records and later renditions retain their exact reviewed text > permits an actual human replacement after current review without erasing original machine origin or fabricating PQ
+AssertionError: expected 'CSR_SCIENTIFIC_REVIEW_REQUIRED' to be 'WORKFLOW_MODEL_QUALIFICATION_REQUIRED' // Object.is equality
+
+Expected: "WORKFLOW_MODEL_QUALIFICATION_REQUIRED"
+Received: "CSR_SCIENTIFIC_REVIEW_REQUIRED"
+
+ ❯ tests/db/workflow-import-governance.dbtest.ts:504:38
+    502|     const data = await pull(await csr());
+    503|     const id = data.doc.id;
+    504|     expect(codeOf(await freeze(id))).toBe('WORKFLOW_MODEL_QUALIFICATIO…
+       |                                      ^
+    505|     const section = data.sections[0];
+    506|     const replacement = await call(actors.author,'patch',`/sections/${…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed | 3 passed (5)
+      Tests  6 failed | 90 passed (96)
+   Start at  19:19:36
+   Duration  42.23s (transform 6.88s, setup 194ms, import 1.42s, tests 39.74s, environment 0ms)
+

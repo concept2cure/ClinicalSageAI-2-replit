@@ -92,7 +92,9 @@ const MIGRATIONS = [
   'migrations/20260728_c2c_document_sections_timestamps.sql',
   'migrations/20260728_c2c_section_version_author_kind.sql',
   'migrations/20260728_authoring_document_governed_binding.sql',
-  // A signature reads the record's review-route standing (RR1a, 20261023).
+  // A signature reads the record's review-route standing (RR1a, 20261023), and
+  // a REVIEWER e-sign asks the document's review route first (RR5,
+  // authoringReviewerPrecheck). Without the table that e-sign answered 500.
   'migrations/20261023_review_routes.sql',
 ];
 
