@@ -76,7 +76,7 @@ describe('§14.3.3 of 1,500 narratives (SYNTHETIC)', () => {
     expect(result.narratives!.receipt).toHaveLength(N);
     expect(result.narratives!.receipt.every((r, i) => r.subjectId === subjectOf(i) && r.storedSha256 === build.rows![i].contentHash && r.drawnSha256 === r.storedSha256)).toBe(true);
     const leaf = result.leaves.find(l => l.appendix === '14.3.3');
-    expect(leaf).toMatchObject({ fileName: 'csr-14-3-3-narratives.pdf', stfFileTag: 'study-report', ctdSection: '5.3.5.1' });
+    expect(leaf).toMatchObject({ fileName: 'csr-14-3-3-narratives.pdf', stfFileTag: 'study-report-body', ctdSection: '5.3.5.1' });
     expect(result.missing.some(m => m.number === '14.3.3')).toBe(false);
   }, 600_000);
 });
@@ -91,7 +91,7 @@ describe('the 2,000,000-character limit still applies to the inline sections (SY
 
 /** An assembly of `jobId` recorded as finished and clean, made from the build with this fingerprint: only the source check is left to placement. */
 async function assembledRun(jobId: number, jobFingerprint: string): Promise<number> {
-  const leaf = { appendix: '14.3.3', title: '14.3.3 Narratives', fileName: 'csr-14-3-3-narratives.pdf', packageFileName: 'csr-14-3-3-narratives.pdf', fileTag: 'study-report',
+  const leaf = { appendix: '14.3.3', title: '14.3.3 Narratives', fileName: 'csr-14-3-3-narratives.pdf', packageFileName: 'csr-14-3-3-narratives.pdf', fileTag: 'study-report-body',
     origin: 'generated', ctdSection: '5.3.5.1', studyId: 'SYN-LMN201-B', pages: 1, bytes: 1, sha256: 'b'.repeat(64), md5: 'c'.repeat(32), renderedLeafFileId: 1 };
   const result = { status: 'complete', studyId: 'SYN-LMN201-B', sourceRunId: 'run-41', sourceSha256: 'a'.repeat(64), jobFingerprint, leaves: [leaf], missing: [], notApplicable: [],
     bodyGaps: [], placeholderSections: [], unresolvedReferences: [], structure: { ok: true, findings: [] }, listings: [], stfWarnings: [], pdfa: '' };

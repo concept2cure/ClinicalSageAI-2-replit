@@ -1,0 +1,36 @@
+{
+  "reviewed_canonical_base": "a97f503b521930b838f310c9087c80644a1e4717",
+  "reviewed_working_head": "b94cca276b1b7a9393053925328463ce1bbdf088",
+  "current_qualification_manifest": "docs/evidence/D2-VAULT-UPLOAD-RECEIPTS/2026-10-30/stf-merged-inputs.json",
+  "current_qualification_manifest_sha256": "afdb9878cf02a14145aef3c5562c55f1d60da77d9aca4a9ff52edde52f7f06ff",
+  "current52_input_mismatches": [],
+  "prior39_input_mismatches": [],
+  "prior46_review_pin_mismatches": [],
+  "incoming_canonical_sha256": {
+    "server/services/ectd/stf-generator.ts": "df4760b1daabf82f02f56ad0dcf4128d4f3124bdbb56987b6dfecdaee492dff9",
+    "server/services/csr/csr-assembly-plan.ts": "99aec61ee1f97de84617ce3be64e3188be3c6ec16539f5b265721397c9c4effb",
+    "server/services/csr/csr-assembly-placement.ts": "ad25772804a556d3e6ace30df5d2ff8b476666432862636468cd9dc5da691876",
+    "server/services/csr/csr-placement-lifecycle.ts": "8bf39d329654ff43035b845a7d88ecb6f1addcee5eef3e1fb9beff8d31130404",
+    "server/services/ind/ctd/regulatory-basis.ts": "7aa40c3e87edda6854834421d1c54379cdd1acdb8f156300e69078418130ba8e",
+    "server/services/ectd/__tests__/stf-csr-source-values.test.ts": "3d236aac59c5b29b531f7cfbd614e7540c24e49b6ee8bd3ee009df6bf1d8d4f8",
+    "server/services/ectd/__tests__/stf-generator.test.ts": "cfc9d77bda19a11cd446816e771d67665d24efa95a0eae349523952589457c70",
+    "server/services/csr/__tests__/csr-stf-source-values.test.ts": "efafe8d0c1025190e863919ef8df405cdc5fc45311e0ddb7eff79ff93b26d970",
+    "server/services/csr/__tests__/csr-assembly.test.ts": "ad444398953c4442a0f0d3ffa9d0e55b26c531bce4b5f89dc701f2464df2ef28",
+    "server/services/csr/__tests__/csr-assembly-narratives.test.ts": "65a8675eb4404166cef42b852841bc0d1b3ce26b885e2e7888a025f12705795c",
+    "server/services/csr/__tests__/csr-assembly-run.pglite.test.ts": "03fda7381534aab7a48784149d344ee18109ad5f558b46330830f19792f71d5a",
+    "server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts": "7c64aad4d3a45b4341d8642da9e9058a9b36a10df14a3d98a539f7b4173b01aa",
+    "server/services/csr/__tests__/csr-placement-lifecycle.test.ts": "bc9323cfd7d4fa83cf4b2bddd217d4ca8640060c92550148d70894c76d26f344",
+    "server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts": "8185aaf4b053d702c0f3c2864136c40442e3ffea026b4e0392e417450ad43dfc",
+    "server/services/submission-gateways/regional-packager.ts": "aecaa9dec672caddf5b7d066b5370d6b147a94edc8cbd11b512e2a77c10b1e49",
+    "server/services/ectd/leaf-source-resolver.ts": "fc27c016fd97b2cd2492efd2b3c72006f75b7e955672409ee0a11cae0849fe65",
+    "server/services/ectd/core-to-packager.ts": "c6939991b126ddefc5760a94985335a0057da114d6b160ab3c58129c4de43917"
+  },
+  "incoming_all_match_canonical": true,
+  "upstream77_qualified_pin_differences": [
+    "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx",
+    "client/src/concept2cure/v2/useVaultUpload.ts"
+  ],
+  "qualification_status": "Read-only preservation/cohort review; root owns the running 38-suite qualification, fresh build and all normal publication gates."
+}

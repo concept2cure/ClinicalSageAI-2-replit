@@ -58,7 +58,7 @@ beforeAll(async () => {
              (12, 1, 'm5.3.5.1', 'Section 14 tables', 'new', 'rendered_leaf_files', 502, ${ORG}, ${USER}, 'SYN-LMN201-B', 'study-report');
     -- 0001 files the revised body (rendered file 501) as a replace of leaf 10.
     INSERT INTO submission_leaves (id, sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by, study_id, stf_file_tag, parent_leaf_id)
-      VALUES (20, 2, 'm5.3.5.1', 'CSR body', 'replace', 'rendered_leaf_files', 501, ${ORG}, ${USER}, 'SYN-LMN201-B', 'study-report', 10);
+      VALUES (20, 2, 'm5.3.5.1', 'CSR body', 'replace', 'rendered_leaf_files', 501, ${ORG}, ${USER}, 'SYN-LMN201-B', 'study-report-body', 10);
   `);
   const idx = { backbone: 'index.xml', operation: 'new' };
   await h.pglite.query(`INSERT INTO ectd_compilations (organization_id, submission_id, sequence_number, leaf_manifest) VALUES ($1, 1, '0000', $2)`, [ORG, JSON.stringify([
