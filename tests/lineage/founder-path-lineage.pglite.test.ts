@@ -124,13 +124,16 @@ vi.mock('../../server/services/storage/index', async (importOriginal) => {
   };
   return { ...actual, getStorageProvider: () => provider, getStorageProviderFor: () => provider };
 });
-/* Text extraction stays real for text; a PDF this test renders is read as its HTML. */
+/* Text extraction stays real; a PDF this test's own engine rendered is read as its HTML. Filing renders
+   through the canonical Word converter since 34942873db, so a real PDF reaches the real extractor: reading
+   its compressed streams as text put NUL bytes into vault.documents and failed hop 6 (2026-10-30). */
+const TEST_ENGINE_PDF = '%PDF-1.7\n% rendered by the lineage test engine\n';
 vi.mock('../../server/services/ocr/index', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../server/services/ocr/index')>();
   return {
     ...actual,
     extractDocumentText: async (buffer: Buffer, mime: string | undefined, filename?: string) =>
-      String(mime ?? '').includes('pdf')
+      String(mime ?? '').includes('pdf') && buffer.subarray(0, TEST_ENGINE_PDF.length).toString('utf8') === TEST_ENGINE_PDF
         ? { text: buffer.toString('utf8').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(), method: 'test-pdf', confidence: 1 }
         : actual.extractDocumentText(buffer, mime, filename),
   };
@@ -146,10 +149,10 @@ vi.mock('../../server/services/vault/document-chunking.service', () => ({
   chunkDocumentForIngest: vi.fn(),
 }));
 vi.mock('../../server/export/renderers', () => ({
-  renderHtmlToPdf: async (html: string) => Buffer.from(`%PDF-1.7\n% rendered by the lineage test engine\n${html}`),
+  renderHtmlToPdf: async (html: string) => Buffer.from(`${TEST_ENGINE_PDF}${html}`),
   // Filing renders through the tracked form since a056eb9ea (QA 2026-10-08, j4); same stub.
   renderHtmlToPdfTracked: async (html: string) => ({
-    buffer: Buffer.from(`%PDF-1.7\n% rendered by the lineage test engine\n${html}`),
+    buffer: Buffer.from(`${TEST_ENGINE_PDF}${html}`),
     usedFallback: false,
   }),
 }));

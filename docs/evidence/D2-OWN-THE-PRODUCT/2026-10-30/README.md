@@ -67,3 +67,33 @@ The CSR cortex tests had never run, and once run they were failing.
     specifier the plain-Node build needs.
   - **Fix.** The module is now in the build, and the specifier matches the file's other runtime import.
   - **Result.** 517 of 517 pass, and `ci:canonicalizers` still passes.
+
+## Batch 4: the first vitest shard's failures, each fixed at its cause
+
+The full vitest suite (about 6,100 files) runs as 8 serial shards. Shard 1 had 18 failing tests in 6 files.
+
+- **Vault ingest failed on a NUL byte (`server/services/ocr/extractDocumentText.ts`).**
+  - **Cause.** PostgreSQL refuses U+0000 in a text column. A PDF text layer or a DOCX run that carries one made
+    File to Vault, the Vault sweep and Data Room processing record nothing (`invalid byte sequence for encoding
+    "UTF8": 0x00`).
+  - **Fix.** Every format's text now leaves the one extractor with each NUL replaced by U+FFFD. One UTF-16 unit
+    replaces one, so every page span still addresses the same characters.
+  - **Proof.** `extracted-text-nul.test.ts` was red first (`nul-red.txt`). It is green now, and so are the other
+    OCR suites: 71 of 71 (`nul-green.txt`).
+- **The founder-path lineage test read a real PDF as text.** Filing renders through the canonical Word converter
+  since `34942873db`. The test's extraction stub still read every PDF as the HTML its own engine had written, so
+  it passed compressed streams, NULs included, into `vault.documents`. The stub now reads only its own engine's
+  output that way, and a real PDF reaches the real extractor. Hop 6 (file to Vault) passes again. Hops 6b–8 fail
+  for a separate cause, still open.
+- **`cross-reference-packaging.test.ts`** built its fixture PDFs by hand, and the packager's parse refused them.
+  It now builds them with `pdf-lib`. 5 of 5 pass.
+- **`mdx-client-review.ts` (`admitRoom`)** resolved a program's project with its own subquery, beside the
+  canonical reader. The one-program-anchor-reader contract refused that. It now calls `readProgramAnchorRow`,
+  and a failed read answers "verification unavailable" instead of an empty room. The route test's `projects`
+  table gained the two columns the reader selects. 13 of 13 pass.
+- **`launch-reproof-narrowing.test.ts`** listed `/api/submission-ops/blockers`, which `041880cbdf` deleted. The
+  entry is removed, with that commit cited. 204 of 204 pass.
+- **`memory-context-assembler-presents-no-confidence-percent.test.ts`** expected an organization atom while a
+  project was open. The assembler scopes to the project, by design. It is now two tests, one per scope. Both fail
+  when a confidence suffix is put back.
+- **Passes alone:** `processing-timestamp`. Watched for flakiness, not changed.
