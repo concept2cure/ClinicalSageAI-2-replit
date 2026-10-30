@@ -1,5 +1,17 @@
 # Complete device attachment feedback in the existing drawer
 
+Source accepted directly on `concept2cure-v2`: **`f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c`**. [Publication receipt](source-publication.json) and [normal gate log](source-push.txt) are authoritative; earlier pending-publication and ref-race records below are historical. No PR, force push, hook bypass or baseline change was used. Concurrent canonical work and all conflicting work-order rows were preserved.
+
+The existing drawer now has a native keyboard file chooser, visible pending/success/refusal/unknown feedback, shared ErrorState dismissal, protection against overlapping or retired uploads and continuity across ordinary drawer tabs. The canonical uploader, receipt parser and session owner remain single implementations. This completes the existing workflow; it adds no app, API, entitlement, dependency or server write path.
+
+Current disjoint qualification: **727 checks / 54 suites** (618 client, 109 server), **eight actual-component Chromium flows** with 36 unchanged input pins, a fresh full build of the accepted source, no lint warning growth and whole-project TypeScript **0**. All 165 selected source hashes match both current files and accepted Git blobs. The older 484/34 and 385/28 results overlap the latest cohort and are not added again. [CI observation](ci-source-observation.json) records queued/pending runs and one skipped run; CI completion and deployment are not claimed.
+
+Controlled browser/XHR fixtures prove engineering behavior. They do not establish hosted authentication, native storage, signed human OQ or agency acceptance. Durable Dossier-to-Vault attachment association after reload remains a separate need. Existing native database/licensed-validator evidence retains its original canonical owner attribution; the six older xmllint-dependent skips are excluded from the 727 checks above.
+
+## What already exists — accepted safety-narrative integration
+
+The final incoming `e27f678dfed2f06fa4751c127aec9f36c76a016a` preserves the existing `server/services/ana/safety-narrative.ts` deterministic composer and its CSR reconciliation owner. Its controlled-term prose correction retains recorded seriousness, severity, action, outcome and investigator causality; it adds no second composer or clinical inference. Nine commits / seven paths merged cleanly. The two affected server suites passed 20 checks and the server build passed before the accepted ninth normal push. The accepted source then passed a fresh full client/server/audit-verifier build. Existing attachment/client/browser inputs remained exact; [the eighth ref-race record](source-push-race-8.json) distinguishes its rejected predecessor from actual acceptance.
+
 ## What already exists — final recorded-context integration
 
 The seventh normal run passed every gate and TypeScript0, then raced canonical `86b0fa6f70bc1a0bb85a45c0e178e8a99843acf0`. Its four commits / twelve paths update existing test expectations and their TypeScript annotations, plus the existing owner README; production source is unchanged. The repaired filing-write fixture is not imported by the seven server suites executed here. The merge is clean, all 162 selected publication and 36 browser inputs remain exact, and no new execution of the incoming test repairs is claimed. Retain the 707 disjoint client/server checks, builds and eight browser flows; retry normal gates.
