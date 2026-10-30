@@ -1,0 +1,13 @@
+{
+  "observedAt": "2026-10-30T19:28:58.223739+00:00",
+  "acceptedCodeCommit": "233df90704075850206c7616463ba9dae2272adb",
+  "localCommit": "233df90704075850206c7616463ba9dae2272adb",
+  "freshRemoteCommit": "233df90704075850206c7616463ba9dae2272adb",
+  "branchEqual": true,
+  "sourcePinsMatchingLocalAndRemote": 328,
+  "unmerged": [],
+  "cleanWorktree": true,
+  "codePushExit": 0,
+  "codePushTranscriptSha256": "b8cdf708c13ba1771c8dda63239a85a03b348f0da4c84fe529bbd7f2b1841e2c",
+  "limits": "Selected source/test inputs only. Local mounted/synthetic-HTTP and source publication proof; no authenticated deployment or agency acceptance."
+}

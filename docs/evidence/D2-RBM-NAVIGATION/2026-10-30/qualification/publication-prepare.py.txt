@@ -27,7 +27,7 @@ for old, new in [
  assert old in s, old
  s=s.replace(old,new)
 f.write_text(s)
-f=e/'qualified-source.json';q=json.loads(f.read_text());q['publication']={'acceptedCodeCommit':sha,'observedAt':proof['observedAt'],'normalPushExit':0,'wholeTypeScriptErrors':0,'baseline':0,'selectedSourcePinsMatchingLocalAndFreshRemote':328,'proof':'qualification/publication-code-proof.json','transcript':'qualification/code-push.txt','transcriptSha256':accepted['transcriptSha256'],'priorRefusalsRetained':['qualification/push-refusal-01-summary.json','qualification/push-refusal-02-summary.json','qualification/push-refusal-03-summary.json','qualification/push-refusal-04-summary.json','qualification/push-refusal-05-summary.json','qualification/push-refusal-06-summary.json','qualification/push-refusal-07-summary.json','qualification/push-refusal-08-summary.json','qualification/push-refusal-09-summary.json']};f.write_text(json.dumps(q,indent=2)+'\n')
+f=e/'qualified-source.json';q=json.loads(f.read_text());q['publication']={'acceptedCodeCommit':sha,'observedAt':proof['observedAt'],'normalPushExit':0,'wholeTypeScriptErrors':0,'baseline':0,'selectedSourcePinsMatchingLocalAndFreshRemote':328,'proof':'qualification/publication-code-proof.json','transcript':'qualification/code-push.txt','transcriptSha256':accepted['transcriptSha256'],'interruptedAttemptsRetained':['qualification/push-interrupted-10-summary.json'],'priorRefusalsRetained':['qualification/push-refusal-01-summary.json','qualification/push-refusal-02-summary.json','qualification/push-refusal-03-summary.json','qualification/push-refusal-04-summary.json','qualification/push-refusal-05-summary.json','qualification/push-refusal-06-summary.json','qualification/push-refusal-07-summary.json','qualification/push-refusal-08-summary.json','qualification/push-refusal-09-summary.json']};f.write_text(json.dumps(q,indent=2)+'\n')
 (e/'PUBLICATION.md').write_text(f'''# RBM source publication
 
 Accepted code commit: [`{sha}`](https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/{sha}) on `concept2cure-v2`.
@@ -42,7 +42,9 @@ transaction, preserving project access, licensing and signer authority.
 The normal push exited **0**. Its actual whole-repository incremental TypeScript
 run reported **0 errors against baseline 0**; every other pre-push gate passed.
 No hook, compiler, SQL scanner or baseline was bypassed or widened. The SQL gate refusal, 27-error compiler refusal and later Git concurrent-update
-refusal are retained with their corrected successors.
+refusals are retained with their corrected successors. An interrupted attempt
+during a documentation merge is retained separately without a successful-exit
+claim; the retry checks clean-tree and completed-merge preconditions.
 
 Fresh Git remote proof matched local HEAD and all **328 selected source/test/
 configuration inputs**, with a clean worktree and no unresolved conflicts. See

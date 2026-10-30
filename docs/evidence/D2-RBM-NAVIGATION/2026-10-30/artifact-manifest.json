@@ -1,5 +1,5 @@
 {
-  "observedAt": "2026-10-30T19:24:25.803895+00:00",
+  "observedAt": "2026-10-30T19:29:07.374077+00:00",
   "note": "Exact local raw evidence; large text deterministically gzip-compressed, executable source archived as text. Intermediate failures and unqualified cached-browser attempt retained. No node_modules/dependency cache. Counts overlap; do not sum cohorts.",
   "artifacts": [
     {
@@ -4614,27 +4614,27 @@
       "original": "code-push-exit.json",
       "stored": "qualification/code-push-exit.json",
       "rawBytes": 324,
-      "rawSha256": "854bace54951f58a0eec2452031a0fb1c2aab6b4daec8706406730bab606f1a9",
+      "rawSha256": "515e705e95177cb8a0ed67fceed94c3ee16a203343bfa7e09f56845f6a630eef",
       "storedBytes": 324,
-      "storedSha256": "854bace54951f58a0eec2452031a0fb1c2aab6b4daec8706406730bab606f1a9",
+      "storedSha256": "515e705e95177cb8a0ed67fceed94c3ee16a203343bfa7e09f56845f6a630eef",
       "gzip": false
     },
     {
       "original": "code-push-launcher.txt",
       "stored": "qualification/code-push-launcher.txt",
-      "rawBytes": 452,
-      "rawSha256": "416af9b95640e2c590160ee776dd5e0c2f0b0a5a3beefff90aa990359ce8751c",
-      "storedBytes": 452,
-      "storedSha256": "416af9b95640e2c590160ee776dd5e0c2f0b0a5a3beefff90aa990359ce8751c",
+      "rawBytes": 532,
+      "rawSha256": "303749b0157f28e3bf930e61b5b7a912785be7082c3a109eff1df66634825f2d",
+      "storedBytes": 532,
+      "storedSha256": "303749b0157f28e3bf930e61b5b7a912785be7082c3a109eff1df66634825f2d",
       "gzip": false
     },
     {
       "original": "code-push.txt",
       "stored": "qualification/code-push.txt",
-      "rawBytes": 15517,
-      "rawSha256": "0fdbe0fb81c0a6a1900c8f3fa2ec163e29d876021972e27c7122f4281426115d",
-      "storedBytes": 15517,
-      "storedSha256": "0fdbe0fb81c0a6a1900c8f3fa2ec163e29d876021972e27c7122f4281426115d",
+      "rawBytes": 15271,
+      "rawSha256": "b8cdf708c13ba1771c8dda63239a85a03b348f0da4c84fe529bbd7f2b1841e2c",
+      "storedBytes": 15271,
+      "storedSha256": "b8cdf708c13ba1771c8dda63239a85a03b348f0da4c84fe529bbd7f2b1841e2c",
       "gzip": false
     },
     {
@@ -5997,6 +5997,15 @@
       "gzip": false
     },
     {
+      "original": "final-qualification-commit.txt",
+      "stored": "qualification/final-qualification-commit.txt",
+      "rawBytes": 2400,
+      "rawSha256": "4984703325df2ba207f670afdaf6b83c2746f4e0235969f0c6639175c6b635b4",
+      "storedBytes": 2400,
+      "storedSha256": "4984703325df2ba207f670afdaf6b83c2746f4e0235969f0c6639175c6b635b4",
+      "gzip": false
+    },
+    {
       "original": "final-qualification-finish.json",
       "stored": "qualification/final-qualification-finish.json",
       "rawBytes": 43186,
@@ -6768,6 +6777,24 @@
       "rawSha256": "8a904e4e839dd86e971ffbcce681593de5a556ecf5b89655c2049ccfb2a4b0aa",
       "storedBytes": 3319,
       "storedSha256": "8a904e4e839dd86e971ffbcce681593de5a556ecf5b89655c2049ccfb2a4b0aa",
+      "gzip": false
+    },
+    {
+      "original": "incoming-10b9-merge-commit.txt",
+      "stored": "qualification/incoming-10b9-merge-commit.txt",
+      "rawBytes": 196,
+      "rawSha256": "dd82cf21cc5394e5de1ccd437c04eb81fc72a9794072dda1fea95442159bae85",
+      "storedBytes": 196,
+      "storedSha256": "dd82cf21cc5394e5de1ccd437c04eb81fc72a9794072dda1fea95442159bae85",
+      "gzip": false
+    },
+    {
+      "original": "incoming-10b9-merge.txt",
+      "stored": "qualification/incoming-10b9-merge.txt",
+      "rawBytes": 171,
+      "rawSha256": "312dd30ba6883bf1e0ef8307319d889e4fde6f4c01b9aae1c08cfd67f75c0650",
+      "storedBytes": 171,
+      "storedSha256": "312dd30ba6883bf1e0ef8307319d889e4fde6f4c01b9aae1c08cfd67f75c0650",
       "gzip": false
     },
     {
@@ -8355,21 +8382,66 @@
       "gzip": false
     },
     {
+      "original": "publication-code-proof.json",
+      "stored": "qualification/publication-code-proof.json",
+      "rawBytes": 637,
+      "rawSha256": "7cf8d32c768d481ed8f09350cd8642801fef4af3ada42c69c53a0c7d361554d1",
+      "storedBytes": 637,
+      "storedSha256": "7cf8d32c768d481ed8f09350cd8642801fef4af3ada42c69c53a0c7d361554d1",
+      "gzip": false
+    },
+    {
       "original": "publication-prepare.py",
       "stored": "qualification/publication-prepare.py.txt",
-      "rawBytes": 8717,
-      "rawSha256": "3df8a7b3a9acc188f96a286f670d2deb5b3ebfe35d2e91adb06910b8db9008d8",
-      "storedBytes": 8717,
-      "storedSha256": "3df8a7b3a9acc188f96a286f670d2deb5b3ebfe35d2e91adb06910b8db9008d8",
+      "rawBytes": 8970,
+      "rawSha256": "1ef1f1b0a578c04e946e69d4717ccbeb9efa2b0c422d1b0a6328bdbae6ddf7b2",
+      "storedBytes": 8970,
+      "storedSha256": "1ef1f1b0a578c04e946e69d4717ccbeb9efa2b0c422d1b0a6328bdbae6ddf7b2",
       "gzip": false
     },
     {
       "original": "push-finish.json",
       "stored": "qualification/push-finish.json",
-      "rawBytes": 40960,
-      "rawSha256": "dde4ffd6897a81312140721776baa47d79f486ea1a70ae7b555e5913a950739f",
-      "storedBytes": 40960,
-      "storedSha256": "dde4ffd6897a81312140721776baa47d79f486ea1a70ae7b555e5913a950739f",
+      "rawBytes": 43274,
+      "rawSha256": "f107740523fe7ee17ac31612490aeefc8b7ceb9ecc4bf114525cdcb6d00be5f9",
+      "storedBytes": 43274,
+      "storedSha256": "f107740523fe7ee17ac31612490aeefc8b7ceb9ecc4bf114525cdcb6d00be5f9",
+      "gzip": false
+    },
+    {
+      "original": "push-interrupted-10-start.json",
+      "stored": "qualification/push-interrupted-10-start.json",
+      "rawBytes": 43274,
+      "rawSha256": "a66c06c1494faa0d18aac2d6b46afe2abefbd92a0a94fe02f303e751be658ffe",
+      "storedBytes": 43274,
+      "storedSha256": "a66c06c1494faa0d18aac2d6b46afe2abefbd92a0a94fe02f303e751be658ffe",
+      "gzip": false
+    },
+    {
+      "original": "push-interrupted-10-summary.json",
+      "stored": "qualification/push-interrupted-10-summary.json",
+      "rawBytes": 516,
+      "rawSha256": "ce9ff4a598a48522d5b800f82093929d0868d5991b1e8e025d2b00e36a1c4bd2",
+      "storedBytes": 516,
+      "storedSha256": "ce9ff4a598a48522d5b800f82093929d0868d5991b1e8e025d2b00e36a1c4bd2",
+      "gzip": false
+    },
+    {
+      "original": "push-interrupted-10-transcript.txt",
+      "stored": "qualification/push-interrupted-10-transcript.txt",
+      "rawBytes": 4179,
+      "rawSha256": "e98f20f8503eea401ef850d732c5586f00016aaa1b806178ae198d6d30a52116",
+      "storedBytes": 4179,
+      "storedSha256": "e98f20f8503eea401ef850d732c5586f00016aaa1b806178ae198d6d30a52116",
+      "gzip": false
+    },
+    {
+      "original": "push-preflight.py",
+      "stored": "qualification/push-preflight.py.txt",
+      "rawBytes": 941,
+      "rawSha256": "5a5e53e3ec8cb4a2338dc9604845374f11446b84d61cc773b78b284d94160015",
+      "storedBytes": 941,
+      "storedSha256": "5a5e53e3ec8cb4a2338dc9604845374f11446b84d61cc773b78b284d94160015",
       "gzip": false
     },
     {
@@ -8843,10 +8915,10 @@
     {
       "original": "push-start.json",
       "stored": "qualification/push-start.json",
-      "rawBytes": 40960,
-      "rawSha256": "e57f9d32e2ee75acaeae58294fc3d3ea3862634171fd61883d77e09968f20f20",
-      "storedBytes": 40960,
-      "storedSha256": "e57f9d32e2ee75acaeae58294fc3d3ea3862634171fd61883d77e09968f20f20",
+      "rawBytes": 43274,
+      "rawSha256": "dad809254919af09634459f68e6c0340153333aa7c02499d53edf2f2c8f2e481",
+      "storedBytes": 43274,
+      "storedSha256": "dad809254919af09634459f68e6c0340153333aa7c02499d53edf2f2c8f2e481",
       "gzip": false
     },
     {
@@ -8996,19 +9068,19 @@
     {
       "original": "run-code-push.sh",
       "stored": "qualification/run-code-push.sh.txt",
-      "rawBytes": 1140,
-      "rawSha256": "3dfa7e0a7c0fce3551de4372097ca5a8a5529e6934cd3fa9c0fff34c773540d9",
-      "storedBytes": 1140,
-      "storedSha256": "3dfa7e0a7c0fce3551de4372097ca5a8a5529e6934cd3fa9c0fff34c773540d9",
+      "rawBytes": 1216,
+      "rawSha256": "3c1d76e38407dfd6b0cdc5755519e9511621365583204f4736c1eb66f992ee30",
+      "storedBytes": 1216,
+      "storedSha256": "3c1d76e38407dfd6b0cdc5755519e9511621365583204f4736c1eb66f992ee30",
       "gzip": false
     },
     {
       "original": "run-docs-push.sh",
       "stored": "qualification/run-docs-push.sh.txt",
-      "rawBytes": 1160,
-      "rawSha256": "632485419bb62e6c73877b72aa90329fef8bbcc824fdc2909c224198e4a8febf",
-      "storedBytes": 1160,
-      "storedSha256": "632485419bb62e6c73877b72aa90329fef8bbcc824fdc2909c224198e4a8febf",
+      "rawBytes": 1236,
+      "rawSha256": "182ee3423ecf911c9d548075c3b311a16c1e0aa1c4b5c1214183044e575a581e",
+      "storedBytes": 1236,
+      "storedSha256": "182ee3423ecf911c9d548075c3b311a16c1e0aa1c4b5c1214183044e575a581e",
       "gzip": false
     },
     {
