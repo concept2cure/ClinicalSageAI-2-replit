@@ -12,7 +12,7 @@
  *
  * @module client/src/concept2cure/mdx/surfaces/engineeringPanelsContext
  */
-import { useEffect, useRef } from 'react';
+import { useReportToHost } from './hostContextReport';
 import type { SurfaceContext } from '../../v2/surfaceContext';
 import type { Program } from '../data/programs';
 
@@ -33,12 +33,8 @@ export interface EngineeringPanelsContextProps {
 /**
  * Report the panels' context to the host: in every state, refusal and loading
  * included, since each panel's context says itself why it holds no rows; null
- * with no project, and null on unmount.
- *
- * Only a change of content is reported. The effect is keyed on the context's
- * serialization, as usePublishSurfaceContext is (v2/surfaceContext.ts). The
- * host stores what it receives, which re-renders the screen with the same
- * content, so reporting on every render would never settle.
+ * with no project, and null on unmount (./hostContextReport.ts, which reports a
+ * change of content only).
  */
 export function useReportPanelsContext(
   report: EngineeringPanelsContextProps['onPanelsContext'],
@@ -46,15 +42,5 @@ export function useReportPanelsContext(
   risk: PanelContext,
   designControls: PanelContext,
 ): void {
-  const ctx: EngineeringPanelsContext | null = program ? { programId: String(program.id), risk, designControls } : null;
-  const key = ctx ? JSON.stringify(ctx) : '';
-  const latest = useRef({ report, ctx });
-  latest.current = { report, ctx };
-  useEffect(() => {
-    latest.current.report?.(latest.current.ctx);
-  }, [key]);
-  useEffect(() => {
-    const box = latest;
-    return () => box.current.report?.(null);
-  }, []);
+  useReportToHost(report, program ? { programId: String(program.id), risk, designControls } : null);
 }

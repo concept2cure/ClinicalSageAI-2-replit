@@ -216,8 +216,9 @@ async function processOrganization(organizationId: number, report: VaultProcessi
 }
 
 /**
- * One pass over every organisation the lifecycle lets background work touch.
- * Exported for tests and operators.
+ * One pass over every organisation the lifecycle lets background work touch,
+ * or only the ones named (an operator re-running one tenant; a test that must
+ * not read what another suite left pending). Exported for tests and operators.
  *
  * The Vault's row security admits a program through the organisation's UUID,
  * so each organisation is read in its own full tenant scope, as the chunk
@@ -225,11 +226,13 @@ async function processOrganization(organizationId: number, report: VaultProcessi
  * system scope lists organisations only. That is one indexed query per
  * organisation per run.
  */
-export async function runVaultProcessingOnce(): Promise<VaultProcessingReport> {
+export async function runVaultProcessingOnce(opts: { organizationIds?: number[] } = {}): Promise<VaultProcessingReport> {
   const report: VaultProcessingReport = { organizations: 0, examined: 0, extracted: 0, failed: 0, skipped: 0 };
   const organizations = await runWithSystemTenantScope(CALLER, async () => {
     const { rows } = await pool.query<{ id: number; uuid: string }>(
-      `SELECT id, uuid::text AS uuid FROM public.organizations WHERE uuid IS NOT NULL ORDER BY id LIMIT 5000`,
+      `SELECT id, uuid::text AS uuid FROM public.organizations
+        WHERE uuid IS NOT NULL AND ($1::int[] IS NULL OR id = ANY($1::int[])) ORDER BY id LIMIT 5000`,
+      [opts.organizationIds ?? null],
     );
     const { filterTenantsForBackgroundWork } = await import('../services/tenant/tenant-lifecycle.js');
     const allowed = await filterTenantsForBackgroundWork(rows.map((r) => Number(r.id)));

@@ -189,7 +189,8 @@ export function computeQmsDocumentRetirementDigest(row: QmsDocumentRow): string 
   return computeQmsDocumentContentDigest({ ...row, metadata });
 }
 
-export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL' | 'INVALID_AUTHORSHIP' | 'FILING_DIVERGED';
+export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL' | 'INVALID_AUTHORSHIP' | 'FILING_DIVERGED'
+  | 'EFFECTIVE_DATE_BACKDATED';
 
 /** A refusal the route maps to a status. Nothing has been written when thrown. */
 export class QmsApprovalRefusedError extends Error {
@@ -383,7 +384,7 @@ async function applyApproval(
         SET status = 'effective',
             approver_id = $3,
             approved_at = $6::timestamptz,
-            effective_date = COALESCE($4::date, effective_date, $6::date),
+            effective_date = $4::date,
             metadata = COALESCE(metadata, '{}'::jsonb) || CASE WHEN $11::jsonb IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('authoringContent', $11::jsonb) END || jsonb_build_object(
               'approval',
               jsonb_build_object(
@@ -475,6 +476,20 @@ function routeShare(route: QmsApprovalRoute | undefined, routed: unknown) {
  * Approve a controlled document as a signed act, on the caller's transaction
  * client. See the module header for the three writes and the rollback rule.
  */
+/**
+ * The effective date an approval signs (CAT2-19): the one given, refused when
+ * it is earlier than the database's today, or else the approval's UTC day.
+ * Nothing has been written when it refuses.
+ */
+async function signedEffectiveDate(client: SignatureDbClient, given: string | null, occurredAt: Date): Promise<string> {
+  if (!given) return occurredAt.toISOString().slice(0, 10);
+  const { rows } = await client.query(`SELECT $1::date < CURRENT_DATE AS backdated`, [given]);
+  if (rows[0]?.backdated === true) {
+    throw new QmsApprovalRefusedError('EFFECTIVE_DATE_BACKDATED', 'An effective date cannot be earlier than today. Nothing was signed.');
+  }
+  return given;
+}
+
 export async function approveQmsDocumentSigned(
   client: SignatureDbClient,
   params: ApproveQmsDocumentSignedParams,
@@ -488,11 +503,17 @@ export async function approveQmsDocumentSigned(
   const twoPersonRule = row.author_id != null || controlledTextAuthorUserIds.length > 0 ? 'enforced' : 'not_applicable_no_author_recorded';
   const target = `qms-document:${documentId}`;
   const occurredAt = new Date();
+  /* CAT2-19 (2026-10-29): the version is effective from the date the approver
+     signs, never the prior version's: the date given, which may not be earlier
+     than the database's today, else the approval's own UTC day. It is bound in
+     the signature's manifest, so a later change to effective_date no longer
+     verifies (current-release-approval.ts exactManifest). */
+  const effectiveDate = await signedEffectiveDate(client, params.effectiveDate, occurredAt);
 
   // RR2: on a route with several approvers, only the last signature makes it effective.
   const share = routeShare(params.route, routed);
   const completes = share?.completes ?? true;
-  const document = completes ? await applyApproval(client, params, { contentDigest, occurredAt, twoPersonRule, authoredContent }) : current;
+  const document = completes ? await applyApproval(client, { ...params, effectiveDate }, { contentDigest, occurredAt, twoPersonRule, authoredContent }) : current;
 
   // §11.10(e): the chained ledger pair, same transaction.
   const gov = await recordGovernedAction(client, {
@@ -509,6 +530,7 @@ export async function approveQmsDocumentSigned(
       version: row.version,
       fromStatus: row.status,
       toStatus: completes ? 'effective' : 'in_review',
+      effectiveDate,
       ...(share ? { approvalsRecorded: share.approvalsRecorded, approvalsRequired: share.approvalsRequired } : {}),
       originalAuthorId: row.author_id,
       controlledTextAuthorUserIds,
@@ -533,7 +555,7 @@ export async function approveQmsDocumentSigned(
     occurredAt,
     command: 'approve',
     ...approvalSignatureRecord(share, contentDigest, {
-      docNumber: row.doc_number, version: row.version, twoPersonRule, originalAuthorId: row.author_id, controlledTextAuthorUserIds,
+      docNumber: row.doc_number, version: row.version, effectiveDate, twoPersonRule, originalAuthorId: row.author_id, controlledTextAuthorUserIds,
     }),
   });
 

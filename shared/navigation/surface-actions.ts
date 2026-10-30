@@ -113,14 +113,13 @@ export function assertUngovernedActionId(id: string): void {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * AnA's three actions on the ISO 14971 risk matrix, defined once. Two screens
- * mount the one register that performs them (client/src/concept2cure/v2/
- * surfaces/RiskRegister.tsx): the Risk screen, and Engineering, for its
- * project (D2, fold F1 slice B, 2026-10-29). Each registers its handlers under
- * its own id, so each id is listed here. `risk.*` goes when Risk folds into
- * Engineering.
+ * AnA's three actions on the ISO 14971 risk matrix. Engineering mounts the
+ * register that performs them (client/src/concept2cure/v2/surfaces/
+ * RiskRegister.tsx, D2, fold F1 slice B) for its project, and registers its
+ * handlers under device-engineering. The Risk screen's `risk.*` copies went
+ * when it folded into Engineering (fold F1c, 2026-10-29).
  */
-function riskMatrixActions(surfaceId: 'risk' | 'device-engineering', where: string): SurfaceActionTarget[] {
+function riskMatrixActions(surfaceId: 'device-engineering', where: string): SurfaceActionTarget[] {
   return [
     {
       id: `${surfaceId}.set-matrix-view`,
@@ -611,8 +610,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Risk management (ISO 14971 file): the Risk screen, and Engineering ──
-  ...riskMatrixActions('risk', 'On the risk file'),
+  // ── Risk management (ISO 14971 file), on Engineering ──
   ...riskMatrixActions('device-engineering', "On Engineering's risk file"),
 
   // ── Template library ──

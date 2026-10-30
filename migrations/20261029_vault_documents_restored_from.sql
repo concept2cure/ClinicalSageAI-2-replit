@@ -43,6 +43,11 @@
 -- so there is no create-then-drop cycle. Guarded on to_regclass, so
 -- install-fresh re-applies this file after 044c creates the table.
 --
+-- AMENDED IN PLACE 2026-10-29 (security review of the same change): the guard
+-- also refuses a row with no document code. IS DISTINCT FROM treats two NULL
+-- codes as equal, so one uncoded row could have "restored" another uncoded
+-- document's identical bytes. CREATE OR REPLACE, so every deploy installs it.
+--
 -- Pinned by tests/db/vault-version-restore.dbtest.ts.
 -- ============================================================================
 
@@ -87,6 +92,7 @@ BEGIN
       IF src.program_id IS DISTINCT FROM NEW.program_id
          OR src.organization_id IS DISTINCT FROM NEW.organization_id
          OR NEW.organization_id IS NULL
+         OR NEW.document_code IS NULL
          OR src.document_code IS DISTINCT FROM NEW.document_code
          OR src.content_hash IS DISTINCT FROM NEW.content_hash THEN
         RAISE EXCEPTION 'VAULT_RESTORE_INVALID: version % does not hold the bytes of %, a version of the same document.',

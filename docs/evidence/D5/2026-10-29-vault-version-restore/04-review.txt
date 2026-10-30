@@ -1,0 +1,54 @@
+# The security review's findings, fixed (2026-10-29, the same day). Real PostgreSQL 16, app_service, RLS_ENFORCE=on.
+
+## The restore suite and its neighbours, run side by side
+# vault-version-restore, vault-version-checkin, vault-ingest, vault-processing-sweep, document-catalog, vault-reupload, vault-fixity, vault-placement
+ ✓ restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+ ✓ restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+ ✓ restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+ ✓ what a restore refuses > refuses each restore it cannot make, and saves nothing
+ ✓ what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+ ✓ what a restore refuses > refuses a stored file rewritten together with its storage record: only the recorded hash can tell
+ ✓ what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+ ✓ what a restore refuses > refuses a version whose original file a data disposition withdrew
+ ✓ what a restore refuses > the database refuses a restore between two rows with no document code
+ ✓ what a restore refuses > restores an earlier version that is not the oldest
+ Test Files  8 passed (8)
+      Tests  99 passed (99)
+
+## Unit: document-data-disposition, server/services/vault, server/jobs, scripts/ci gates and their self-tests, the client restore test
+      Tests  1028 passed (1028)
+ Test Files  86 passed (86)
+
+## Gates
+ci:sql-interpolation: [ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+ci:tenant-isolation:no-regression: [ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+ci:vault-document-writers: [ci:vault-document-writers] OK: every writer is a named one.
+ci:migration-drop-safety: [ci:migration-drop-safety] OK — 450 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2
+ci:migration-set-order: [ci:migration-set-order] OK — 450 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+ci:discarded-audit-write: check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+
+## Mutations, each applied alone
+=== mutation: no-withdrawn-precheck
+      Tests  10 passed (10)
+=== mutation: no-withdrawn-commitcheck
+      Tests  10 passed (10)
+=== mutation: no-withdrawn-checks
+ × what a restore refuses > refuses a version whose original file a data disposition withdrew
+   → {"success":false,"error":"INGEST_FAILED","message":"The document could not be recorded in the vault. Nothing was saved."}: expected 500 to be 409 // Object.is equality
+      Tests  1 failed | 9 passed (10)
+=== mutation: no-reason-column
+ × restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+   → expected { …(4) } to match object { …(3) }
+      Tests  1 failed | 9 passed (10)
+=== mutation: no-restored-family
+ × a restored Vault document (MR-08 Stage 5) > links every copy of a restored document, so a withdrawal covers each one
+   → Multiple project identities hold these original bytes. Resolve that ambiguity before removal.
+ ✓ a restored Vault document (MR-08 Stage 5) > still refuses two unrelated rows holding one file as ambiguous
+ ✓ a restored Vault document (MR-08 Stage 5) > refuses a row that claims to restore a row outside the set
+ ↓ retained data lifecycle and transaction safety > appends keep_data → remove_data without rewriting the first decision or retained lineage
+ ↓ retained data lifecycle and transaction safety > appends keep_data → supersede without rewriting the first decision or retained lineage
+      Tests  1 failed | 2 passed | 18 skipped (21)
+=== mutation: db-trigger-admits-null-code
+ × what a restore refuses > the database refuses a restore between two rows with no document code
+   → promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+      Tests  1 failed | 9 passed (10)

@@ -130,6 +130,8 @@ describe('SopRegister — approval is a signature taken here', () => {
       mfaToken: '123456',
       meaning: 'APPROVED',
       reason: 'Reviewed against ISO 13485 §8.2.2',
+      // CAT2-19: the day it is effective from, today by default, signed with the approval.
+      effectiveDate: new Date().toISOString().slice(0, 10),
     });
     expect(H.signed).toMatchObject({ meaning: 'approval', signedAt: '2026-09-24T09:12:00.000Z' });
     expect(H.refresh).toHaveBeenCalled();

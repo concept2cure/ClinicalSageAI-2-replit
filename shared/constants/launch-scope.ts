@@ -68,13 +68,17 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // app already holds; its old address resolves there (DEEP_LINK_ALIASES).
     // 2026-10-29 (D2, fold F3): the device vault folded into the Vault app's
     // Vault; its old address resolves there too.
+    // 2026-10-29 (D2, folds F1c and F2): the risk file and the design-control
+    // trace folded into Engineering evidence, and the IVDR readiness board into
+    // IVDR evidence, both already here; their old addresses resolve there, and a
+    // subscription to either carries (P-61 item 4, folded-module-successors.ts).
     surfaces: [
       'projects', 'project-home', 'tasks', 'communication-center',
       'device-workstream', 'device-510k', 'device-pma', 'device-cer',
-      'device-diagnostics', 'ivd-completeness', 'device-clinical-studies', 'device-software',
+      'device-diagnostics', 'device-clinical-studies', 'device-software',
       'device-engineering', 'device-udi', 'device-postmarket', 'device-presub',
       'device-validation', 'device-submission',
-      'device-analytics', 'design-controls', 'human-factors', 'risk', 'labeling',
+      'device-analytics', 'human-factors', 'labeling',
     ],
     modules: ['projects', 'tasks'],
   },

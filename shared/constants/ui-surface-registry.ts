@@ -924,9 +924,13 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'risk',
     // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
     // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    // 2026-10-29 (ivd-board-under-diagnostics): the readiness panel's IVDR board and workbench read the last two.
-    // Shared with ivd-completeness, which keeps its claim until the F2 fold (founder decision 4).
-    apiPrefixes: ['/api/mdx/audit', '/api/mdx/cdx', '/api/mdx/clia', '/api/mdx/ivdr', '/api/manufacturing', '/api/ivdr', '/api/ivd-completeness', '/api/ivd-assessments'],
+    // 2026-10-29 (ivd-board-under-diagnostics): the readiness panel's IVDR board and workbench read
+    // /api/ivd-completeness and /api/ivd-assessments.
+    // 2026-10-29 (fold F2): ivd-completeness folded in, and its two other claims moved here with it, so
+    // whoever was served is served still: /api/ivd-lifecycle and /api/validate-completeness. No screen
+    // calls either (AnA reaches the IVD lifecycle engines directly, ivdLifecycleTools.ts); whether to close
+    // them is a separate decision. /api/c2c/projects stays with projects and submission-center.
+    apiPrefixes: ['/api/mdx/audit', '/api/mdx/cdx', '/api/mdx/clia', '/api/mdx/ivdr', '/api/manufacturing', '/api/ivdr', '/api/ivd-completeness', '/api/ivd-assessments', '/api/ivd-lifecycle', '/api/validate-completeness'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -959,30 +963,9 @@ export const UI_SURFACES: UiSurface[] = [
     notes: 'Labeling/IFU authoring and compliance. Documents, symbols and translations are read and written live — nothing is held only in the browser.',
     engineering: 'Routes: /api/mdx/labeling.',
   },
-  {
-    id: 'risk',
-    label: 'Risk management',
-    navTier: 'specialist',
-    layoutMode: 'risk',
-    icon: 'alertTriangle',
-    group: 'device',
-    uiKit: 'risk',
-    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
-    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    apiPrefixes: ['/api/mdx/risk-items'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    // routes-ready: useLiveRows('/api/mdx/risk-items') at
-    // client/src/concept2cure/v2/surfaces/Risk.tsx:152, with apiRequest creating
-    // items, adding controls and changing status at :265/:298/:335 — against
-    // server/routes/mdx-risk-management.ts:98/126/280/183. sharedContract is
-    // still null, so this stops at routes-ready.
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'ISO 14971 risk file and hazard analysis. Risk items and their controls are read and written live — nothing is held only in the browser.',
-    engineering: 'Routes: /api/mdx/risk-items.',
-  },
+  // No `risk`: Risk management folded into Engineering evidence (D2, fold F1c,
+  // 2026-10-29). device-engineering claims /api/mdx/risk-items and mounts the
+  // register (RiskRegister.tsx); the id is an alias (registryModel.ts).
   {
     id: 'deep-research',
     label: 'Deep research',

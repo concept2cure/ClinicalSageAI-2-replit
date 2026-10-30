@@ -135,7 +135,8 @@ describe('the project record under module enforcement', () => {
     // 18 distinct paths: a GET and a POST (or DELETE) on one path are one request to the gate.
     expect(requests.length).toBeGreaterThanOrEqual(18);
     // The tiers the cases rest on, read from the packaging migration.
-    expect([TIER.get('projects'), TIER.get('submission-center'), TIER.get('ivd-completeness')]).toEqual(['free', 'standard', 'standard']);
+    // ivd-completeness, the third claimant, folded into device-diagnostics (fold F2, 2026-10-29); its packaging row went with it.
+    expect([TIER.get('projects'), TIER.get('submission-center'), TIER.get('ivd-completeness')]).toEqual(['free', 'standard', undefined]);
   });
 
   it('serves it to a free-tier organization that holds Projects by tier and has no grant', async () => {
@@ -158,7 +159,7 @@ describe('the project record under module enforcement', () => {
     expect(await verdicts(304)).toEqual(all('403 MODULE_NOT_LICENSED'));
   });
 
-  it('is claimed by projects beside the claims it already had', () => {
-    expect([...(buildPrefixMap().get(RECORD) ?? [])].sort()).toEqual(['ivd-completeness', 'projects', 'submission-center']);
+  it('is claimed by projects beside the claims it already had (ivd-completeness folded, fold F2)', () => {
+    expect([...(buildPrefixMap().get(RECORD) ?? [])].sort()).toEqual(['projects', 'submission-center']);
   });
 });

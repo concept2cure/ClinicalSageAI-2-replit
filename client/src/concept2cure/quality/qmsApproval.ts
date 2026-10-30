@@ -52,12 +52,15 @@ const SIGNED_MEANING: Record<QmsApprovalTarget['kind'], { stored: string; id: 'a
 export async function postQmsApproval(
   target: QmsApprovalTarget,
   input: { reason: string; password: string; totp?: string },
+  /** For a document approval: the day it is effective from (YYYY-MM-DD, not before today), bound in the signature (CAT2-19). */
+  effectiveDate?: string,
 ): Promise<EsigSignedManifest> {
   const res = await apiRequest('POST', `/api/mdx/qms/${SIGNED_PATH[target.kind](target.id)}`, {
     password: input.password,
     ...(input.totp ? { mfaToken: input.totp } : {}),
     meaning: SIGNED_MEANING[target.kind].stored,
     reason: input.reason,
+    ...(target.kind === 'document' && effectiveDate ? { effectiveDate } : {}),
   });
   const json = (await res.json().catch(() => null)) as {
     meta?: { signature?: { signedAt?: string; boundPayloadDigest?: string } };

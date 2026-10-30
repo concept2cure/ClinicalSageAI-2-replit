@@ -16,6 +16,10 @@
  * none). With no project open, or one opened by id alone, the trail is
  * Projects › <feature>: the crumb never invents a project name. ⌘K's hint
  * names Projects. Ids, routes and entitlements are untouched: labels only.
+ *
+ * 2026-10-29 (D2, folds F1c and F2): design-controls and risk folded into
+ * device-engineering, and ivd-completeness into device-diagnostics, so the
+ * cases that used them use those two features; the folded ids are no ⌘K row.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -81,17 +85,17 @@ afterEach(() => {
 });
 
 describe('a project feature is crumbed under the open project', () => {
-  it('design controls, with a project open: Projects › the project › the feature', () => {
+  it('engineering evidence, with a project open: Projects › the project › the feature', () => {
     publishShellProject(PROJECT);
-    bar('design-controls');
-    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510', 'Design controls (DHF)']);
+    bar('device-engineering');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510', 'Engineering evidence']);
     expect(document.querySelector('.crumbs')?.textContent).not.toContain(OLD_TIER);
   });
 
-  it('risk, with a project open: the same trail, and no "Medical Device & IVD" parent', () => {
+  it('IVDR evidence, with a project open: the same trail, and no "Medical Device & IVD" parent', () => {
     publishShellProject(PROJECT);
-    bar('risk');
-    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510', 'Risk management']);
+    bar('device-diagnostics');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510', 'IVDR evidence']);
     expect(document.querySelector('.crumbs')?.textContent).not.toContain(OLD_TIER);
   });
 
@@ -121,7 +125,7 @@ describe('a project feature is crumbed under the open project', () => {
 
   it('follows the channel when another project is opened', () => {
     publishShellProject(PROJECT);
-    bar('risk');
+    bar('device-engineering');
     expect(parents()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510']);
     act(() => {
       publishShellProject({ id: '1c0d9e8f-7a6b-4c5d-8e9f-0a1b2c3d4e5f', code: 'CV-104' });
@@ -132,14 +136,14 @@ describe('a project feature is crumbed under the open project', () => {
 
 describe('the crumb never invents a project name', () => {
   it('with no project open: Projects › the feature', () => {
-    bar('risk');
-    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'Risk management']);
+    bar('device-engineering');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'Engineering evidence']);
   });
 
   it('with a project opened by id alone (a deep link, no name yet): Projects › the feature', () => {
     publishShellProject({ id: PROJECT.id });
-    bar('design-controls');
-    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'Design controls (DHF)']);
+    bar('device-diagnostics');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'IVDR evidence']);
   });
 });
 
@@ -200,14 +204,22 @@ describe('⌘K’s hint names Projects for a project feature', () => {
     return row.querySelector('.hint')?.textContent;
   };
 
-  it('design controls', async () => {
-    await search('design controls');
-    expect(hintOf('Design controls (DHF)')).toBe('Projects');
+  it('engineering evidence', async () => {
+    await search('engineering evidence');
+    expect(hintOf('Engineering evidence')).toBe('Projects');
   });
 
-  it('risk management', async () => {
-    await search('risk management');
-    expect(hintOf('Risk management')).toBe('Projects');
+  it('IVDR evidence', async () => {
+    await search('ivdr evidence');
+    expect(hintOf('IVDR evidence')).toBe('Projects');
+  });
+
+  it('no row for a folded screen: risk management, design controls and IVD completeness live in their targets', async () => {
+    for (const [text, label] of [['risk management', 'Risk management'], ['design controls', 'Design controls (DHF)'], ['ivd completeness', 'IVD completeness']]) {
+      await search(text);
+      expect(Array.from(document.querySelectorAll('.cmdk-item .lbl')).map((el) => el.textContent), text).not.toContain(label);
+      cleanup();
+    }
   });
 
   it('no ⌘K row is hinted with the old tier', async () => {

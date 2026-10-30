@@ -13,7 +13,8 @@
  *                get one.
  *
  * Engineering put those into words first (b6831819). The risk register and the
- * design-controls trace, which Engineering, Risk and Design controls all mount,
+ * design-controls trace, which Engineering mounts (Risk and Design controls did
+ * too until they folded into it, fold F1c),
  * say them in the same words, so the words moved here from
  * EngineeringSurface.tsx: one copy.
  *
@@ -148,7 +149,8 @@ export type ProjectReadStatus = 'idle' | 'loading' | 'refused' | 'error' | 'unke
 export interface ProjectReadOptions {
   /** The open project, or null. */
   programId: string | null;
-  /** Read nothing without a project (Engineering). Otherwise the organization's records are read (the older screens). */
+  /** Read nothing without a project (Engineering). Otherwise the organization's records are read; no mount has asked
+   *  for that since the Risk and Design controls screens folded into Engineering (fold F1c, 2026-10-29). */
   requireProject?: boolean;
   /** Hold the read: the screen's own route has not answered for the project yet. */
   waiting?: boolean;

@@ -245,7 +245,7 @@ describe('ingest with the catalog on — the extraction tier is recorded', () =>
       [pdfDocId],
     )).rows;
     expect((await read())[0]?.catalog_status).toBe('extraction_pending');
-    await (await import('../../server/jobs/vaultProcessingSweep')).runVaultProcessingOnce();
+    await (await import('../../server/jobs/vaultProcessingSweep')).runVaultProcessingOnce({ organizationIds: [orgId] });
 
     // …and once read, the catalog says the truth: nothing was extracted, and why.
     const rows = await read();

@@ -259,6 +259,28 @@ describe('the build board (getModule3BuildStatus)', () => {
     const refusal = await refusalOf(getModule3BuildStatus(ORG, PROGRAM));
     expect(refusal?.code).toBe('CMC_PRODUCT_CLASS_OUT_OF_SCOPE');
   });
+
+  /* A drug program with nothing recorded yet has no drug substance, so its
+     modality is not established, and compositionRefusal answered that before
+     it reached the application. admitProgramComposition admits that case, so
+     a program filing an NDA or an EU CTA got an empty, admitted board, and the
+     task assessment that reads the board (P-62) would have told it to record
+     its drug substance (2026-10-29,
+     docs/evidence/CMC-M3-GA/2026-10-29/p62-one-cmc-home/). */
+  it.each([
+    ['an NDA', async () => filesApplication('nda'), 'NDA'],
+    ['an EU clinical-trial application', async () => {
+      await q(`DELETE FROM submissions WHERE organization_id = $1`, [ORG]);
+      await q(`UPDATE regulatory_programs SET program_type = 'CTA', primary_agency = 'EMA' WHERE id = $1`, [PROGRAM]);
+    }, 'CTA'],
+  ])('still refuses a program with no records that files %s', async (_label, files, filed) => {
+    await q(`DELETE FROM cmc_source_objects WHERE project_id = $1`, [PROGRAM]);
+    await files();
+    const refusal = await refusalOf(getModule3BuildStatus(ORG, PROGRAM));
+    expect(refusal?.code).toBe('CMC_APPLICATION_OUT_OF_SCOPE');
+    expect(refusal?.message).toContain(`files ${filed},`);
+    await noTransactionOpen();
+  });
 });
 
 describe('a legacy numeric project, which is not a program', () => {

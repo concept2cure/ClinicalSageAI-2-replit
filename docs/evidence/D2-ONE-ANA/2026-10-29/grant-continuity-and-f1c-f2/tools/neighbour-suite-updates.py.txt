@@ -1,0 +1,211 @@
+#!/usr/bin/env python3
+"""Item 2: update the six neighbouring suites the folds turned red. Each edit asserts its anchor once."""
+import pathlib
+R = pathlib.Path('/home/user/ClinicalSageAI-2-replit')
+
+def edit(rel, pairs):
+    p = R / rel
+    s = p.read_text()
+    for old, new, *count in pairs:
+        n = count[0] if count else 1
+        assert s.count(old) == n, (rel, old[:80], s.count(old))
+        s = s.replace(old, new)
+    p.write_text(s)
+    print('edited', rel)
+
+# 1. moduleCatalogReconciliation: design-controls is seeded by no file now.
+edit('client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts', [
+    (" * design-controls / human-factors\n", " * human-factors\n"),
+    ("const KNOWN_RESEEDS = ['design-controls', 'human-factors'];",
+     " *\n * design-controls was the pair's other half until it folded into\n * device-engineering (D2, fold F1c, 2026-10-29): both its writers were amended in\n * place and seed it no more (docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/).\n */\nconst KNOWN_RESEEDS = ['human-factors'];"),
+])
+
+# 2. projectFeatureBreadcrumb: the folded ids are no project features; use device-engineering and device-diagnostics.
+edit('client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx', [
+    (" * names Projects. Ids, routes and entitlements are untouched: labels only.\n */",
+     " * names Projects. Ids, routes and entitlements are untouched: labels only.\n *\n * 2026-10-29 (D2, folds F1c and F2): design-controls and risk folded into\n * device-engineering, and ivd-completeness into device-diagnostics, so the\n * cases that used them use those two features; the folded ids are no ⌘K row.\n */"),
+    ("""  it('design controls, with a project open: Projects › the project › the feature', () => {
+    publishShellProject(PROJECT);
+    bar('design-controls');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510', 'Design controls (DHF)']);""",
+     """  it('engineering evidence, with a project open: Projects › the project › the feature', () => {
+    publishShellProject(PROJECT);
+    bar('device-engineering');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510', 'Engineering evidence']);"""),
+    ("""  it('risk, with a project open: the same trail, and no "Medical Device & IVD" parent', () => {
+    publishShellProject(PROJECT);
+    bar('risk');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510', 'Risk management']);""",
+     """  it('IVDR evidence, with a project open: the same trail, and no "Medical Device & IVD" parent', () => {
+    publishShellProject(PROJECT);
+    bar('device-diagnostics');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510', 'IVDR evidence']);"""),
+    ("""  it('follows the channel when another project is opened', () => {
+    publishShellProject(PROJECT);
+    bar('risk');""",
+     """  it('follows the channel when another project is opened', () => {
+    publishShellProject(PROJECT);
+    bar('device-engineering');"""),
+    ("""  it('with no project open: Projects › the feature', () => {
+    bar('risk');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'Risk management']);""",
+     """  it('with no project open: Projects › the feature', () => {
+    bar('device-engineering');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'Engineering evidence']);"""),
+    ("""    publishShellProject({ id: PROJECT.id });
+    bar('design-controls');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'Design controls (DHF)']);""",
+     """    publishShellProject({ id: PROJECT.id });
+    bar('device-diagnostics');
+    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'IVDR evidence']);"""),
+    ("""  it('design controls', async () => {
+    await search('design controls');
+    expect(hintOf('Design controls (DHF)')).toBe('Projects');
+  });
+
+  it('risk management', async () => {
+    await search('risk management');
+    expect(hintOf('Risk management')).toBe('Projects');
+  });""",
+     """  it('engineering evidence', async () => {
+    await search('engineering evidence');
+    expect(hintOf('Engineering evidence')).toBe('Projects');
+  });
+
+  it('IVDR evidence', async () => {
+    await search('ivdr evidence');
+    expect(hintOf('IVDR evidence')).toBe('Projects');
+  });
+
+  it('no row for a folded screen: risk management, design controls and IVD completeness live in their targets', async () => {
+    for (const [text, label] of [['risk management', 'Risk management'], ['design controls', 'Design controls (DHF)'], ['ivd completeness', 'IVD completeness']]) {
+      await search(text);
+      expect(Array.from(document.querySelectorAll('.cmdk-item .lbl')).map((el) => el.textContent), text).not.toContain(label);
+      cleanup();
+    }
+  });"""),
+])
+
+# 3. appsMdxSolution: the risk row becomes Engineering evidence, a project feature.
+edit('client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx', [
+    ("      row('risk', 'Risk management', { category: 'quality', sortOrder: 20 }),\n",
+     "      row('device-engineering', 'Engineering evidence', { category: 'quality', sortOrder: 20 }),\n"),
+    ("      row('risk', 'Risk management', { isAvailable: false, requiredTier: 'standard' }),\n",
+     "      row('device-engineering', 'Engineering evidence', { isAvailable: false, requiredTier: 'standard' }),\n"),
+    ("    expect(access.getByText(/Risk management is not offered for this workspace/)).toBeTruthy();",
+     "    expect(access.getByText(/Engineering evidence is not offered for this workspace/)).toBeTruthy();"),
+    ("      row('risk', 'Risk management', { category: 'quality', sortOrder: 20, subscriptionState: 'disabled' }),\n",
+     "      row('device-engineering', 'Engineering evidence', { category: 'quality', sortOrder: 20, subscriptionState: 'disabled' }),\n"),
+    ("    fireEvent.click(access.getByRole('switch', { name: 'Enable Risk management' }));",
+     "    fireEvent.click(access.getByRole('switch', { name: 'Enable Engineering evidence' }));"),
+    ("    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'Enable risk work for active device projects' } });",
+     "    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'Enable engineering work for active device projects' } });"),
+    ("""    await waitFor(() => expect(put).toHaveBeenCalledWith('/api/module-subscriptions/risk/toggle', {
+      enabled: true, reason: 'Enable risk work for active device projects',""",
+     """    await waitFor(() => expect(put).toHaveBeenCalledWith('/api/module-subscriptions/device-engineering/toggle', {
+      enabled: true, reason: 'Enable engineering work for active device projects',"""),
+    ("    await waitFor(() => expect(access.getByRole('switch', { name: 'Disable Risk management' }).getAttribute('aria-checked')).toBe('true'));",
+     "    await waitFor(() => expect(access.getByRole('switch', { name: 'Disable Engineering evidence' }).getAttribute('aria-checked')).toBe('true'));"),
+])
+
+# 4. core-project-record-gating: ivd-completeness's claim on the record went with the fold.
+edit('server/middleware/__tests__/core-project-record-gating.test.ts', [
+    ("    expect([TIER.get('projects'), TIER.get('submission-center'), TIER.get('ivd-completeness')]).toEqual(['free', 'standard', 'standard']);",
+     "    // ivd-completeness, the third claimant, folded into device-diagnostics (fold F2, 2026-10-29); its packaging row went with it.\n    expect([TIER.get('projects'), TIER.get('submission-center'), TIER.get('ivd-completeness')]).toEqual(['free', 'standard', undefined]);"),
+    ("""  it('is claimed by projects beside the claims it already had', () => {
+    expect([...(buildPrefixMap().get(RECORD) ?? [])].sort()).toEqual(['ivd-completeness', 'projects', 'submission-center']);""",
+     """  it('is claimed by projects beside the claims it already had (ivd-completeness folded, fold F2)', () => {
+    expect([...(buildPrefixMap().get(RECORD) ?? [])].sort()).toEqual(['projects', 'submission-center']);"""),
+])
+
+# 5. engineering-risk-design-controls-gate: the fold moved the claims; continuity is the resolver's.
+edit('server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts', [
+    (""" * Asked of the real registry, the panels' calls as the launch-scope walk reads
+ * them from the screens' own code, and the gate production builds.
+ */""",
+     """ * Asked of the real registry, the panels' calls as the launch-scope walk reads
+ * them from the screens' own code, and the gate production builds.
+ *
+ * 2026-10-29 (D2, fold F1c, decision P-61 item 4): the fold is made. risk and
+ * design-controls have no registry entry, so device-engineering claims both
+ * families alone. A holder of either keeps them: its grant carries to
+ * device-engineering in the entitlement resolver, which this file stubs, so that
+ * is pinned with the real resolver in
+ * server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts.
+ */"""),
+    ("""  402: new Set(['risk']),
+  403: new Set(['design-controls']),
+""", ""),
+    ("""  it('a risk-only organization keeps the risk register, as before', async () => {
+    const risk = REQUESTS.filter((r) => r.startsWith(RISK));
+    expect(await verdicts(402, risk)).toEqual(each(risk, 'served'));
+  });
+
+  it('a design-controls-only organization keeps the design-control register, as before', async () => {
+    expect(await verdicts(403, [DC])).toEqual(each([DC], 'served'));
+  });
+""",
+     """  it('asks the gate for device-engineering alone: a folded module is no claimant', () => {
+    const map = buildPrefixMap();
+    for (const r of REQUESTS) expect([...(modulesForPath(r, map) ?? [])], r).toEqual(['device-engineering']);
+  });
+"""),
+    ("""  it('leaves the risk and design-controls claims whole: moving them is founder decision 4', () => {
+    expect(getSurface('risk')!.apiPrefixes).toEqual([RISK]);
+    expect(getSurface('design-controls')!.apiPrefixes).toEqual([DC]);
+  });""",
+     """  it('the fold moved the claims: there is no risk or design-controls entry', () => {
+    expect(getSurface('risk')).toBeUndefined();
+    expect(getSurface('design-controls')).toBeUndefined();
+    expect(getSurface('device-engineering')!.apiPrefixes).toEqual(expect.arrayContaining([RISK, DC]));
+  });"""),
+    ("import { buildPrefixMap, moduleEntitlementGate } from '../moduleEntitlementGate';",
+     "import { buildPrefixMap, modulesForPath, moduleEntitlementGate } from '../moduleEntitlementGate';"),
+])
+
+# 6. ivd-board-under-diagnostics: one mount, one claimant.
+edit('server/middleware/__tests__/ivd-board-under-diagnostics.test.ts', [
+    (""" * Asked of the real registry, the panel's calls as the launch-scope walk reads
+ * them from the screens' own code, and the gate production builds.
+ */""",
+     """ * Asked of the real registry, the panel's calls as the launch-scope walk reads
+ * them from the screens' own code, and the gate production builds.
+ *
+ * 2026-10-29 (D2, fold F2, decision P-61 item 4): the fold is made.
+ * ivd-completeness has no registry entry and its claims moved to
+ * device-diagnostics, so device-diagnostics claims the panel's calls alone. A
+ * holder of ivd-completeness keeps them: its grant carries to device-diagnostics
+ * in the entitlement resolver, which this file stubs, so that is pinned with the
+ * real resolver in
+ * server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts.
+ */"""),
+    ("""  102: new Set(['ivd-completeness']),
+""", ""),
+    ("""  it('reads the panel\\'s calls from both screens that mount it', () => {""",
+     """  it('reads the panel\\'s calls from the screen that mounts it', () => {"""),
+    ("""    for (const c of calls) expect([...c.surfaces].sort(), c.p).toEqual(expect.arrayContaining(['device-diagnostics', 'ivd-completeness']));""",
+     """    for (const c of calls) {
+      expect([...c.surfaces], c.p).toContain('device-diagnostics');
+      expect([...c.surfaces], c.p).not.toContain('ivd-completeness');
+    }"""),
+    ("""  it('serves them to an organization entitled to ivd-completeness only, as before', async () => {
+    expect(await verdicts(102)).toEqual(all('served'));
+  });""",
+     """  it('asks the gate for device-diagnostics alone: a folded module is no claimant', () => {
+    const map = buildPrefixMap();
+    for (const c of calls) expect([...(modulesForPath(c.request, map) ?? [])], c.request).toEqual(['device-diagnostics']);
+  });"""),
+    ("""  it('leaves the ivd-completeness claim whole: moving it is founder decision 4', () => {
+    expect(getSurface('ivd-completeness')!.apiPrefixes).toEqual([
+      '/api/validate-completeness', '/api/c2c/projects', '/api/ivd-assessments', '/api/ivd-lifecycle', '/api/ivd-completeness',
+    ]);
+  });""",
+     """  it('the fold moved the claims: no ivd-completeness entry, and device-diagnostics holds its four IVD claims', () => {
+    expect(getSurface('ivd-completeness')).toBeUndefined();
+    expect(getSurface('device-diagnostics')!.apiPrefixes).toEqual(expect.arrayContaining([
+      '/api/validate-completeness', '/api/ivd-assessments', '/api/ivd-lifecycle', '/api/ivd-completeness',
+    ]));
+  });"""),
+    ("import { buildPrefixMap, moduleEntitlementGate } from '../moduleEntitlementGate';",
+     "import { buildPrefixMap, modulesForPath, moduleEntitlementGate } from '../moduleEntitlementGate';"),
+])

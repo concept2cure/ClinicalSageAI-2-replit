@@ -83,3 +83,124 @@ AssertionError: expected [ Array(1) ] to deeply equal [ …(2) ]
 + Received
 -   "server/services/license-manager.ts",
 
+# ════ Item 2, the mapping's red: the pin's table gains risk and design-controls → device-engineering and
+# ivd-completeness → device-diagnostics before FOLDED_MODULE_SUCCESSORS, the aliases or the catalogue do.
+ × the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row 9ms
+ × the mapping > agrees with the screens: each folded id opens its target 2ms
+ × the mapping > carries to live catalogue modules only; the uncatalogued folds have no row to hold a grant 3ms
+ ✓ the module gate, MODULE_ENFORCEMENT=enforce > serves tasks's paths to an organization holding only device-tasks 74ms
+ ✓ the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only device-vault 19ms
+ ✓ the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only artifacts-center 26ms
+ ✓ the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing 39ms
+ × the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only risk 22ms
+ × the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only design-controls 17ms
+ × the module gate, MODULE_ENFORCEMENT=enforce > serves device-diagnostics's paths to an organization holding only ivd-completeness 47ms
+ ✓ the module gate, MODULE_ENFORCEMENT=enforce > refuses a tiered target's own paths to an organization holding neither 205ms
+ ✓ the module gate, MODULE_ENFORCEMENT=enforce > a revocation written on the target stands: the carried grant does not undo it 34ms
+ ✓ the module gate, MODULE_ENFORCEMENT=enforce > a lapsed or revoked grant of the folded module carries nothing 55ms
+ ✓ the module gate, MODULE_ENFORCEMENT=enforce > the target's own grant serves as before 24ms
+ × the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it 11ms
+ ✓ the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on 5ms
+ ✓ the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module 17ms
+ × the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed 22ms
+ ✓ the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed 25ms
+ ✓ the operator console answers as the rail does > shows a revoked target as revoked, and a tenant holding neither as below its tier 13ms
+ ✓ the mapping is consulted in exactly one place > only its own module names the mapping 236ms
+ ✓ the mapping is consulted in exactly one place > only the licence read derives the carried grants, once 246ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed | 14 passed (22)
+
+# Failures (trimmed):
+ FAIL  the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+AssertionError: expected { 'device-tasks': 'tasks', …(3) } to deeply equal { 'device-tasks': 'tasks', …(6) }
+- Expected
++ Received
+-   "design-controls": "device-engineering",
+-   "ivd-completeness": "device-diagnostics",
+-   "risk": "device-engineering",
+ FAIL  the mapping > agrees with the screens: each folded id opens its target
+AssertionError: risk: expected undefined to be 'device-engineering' // Object.is equality
+- Expected:
++ Received:
+ FAIL  the mapping > carries to live catalogue modules only; the uncatalogued folds have no row to hold a grant
+AssertionError: risk is deprecated by its fold: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ FAIL  the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only risk
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+- Expected
++ Received
+-   "/api/design-controls": "served",
+-   "/api/mdx/engineering": "served",
++   "/api/design-controls": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/engineering": "403 MODULE_NOT_LICENSED",
+ FAIL  the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only design-controls
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+- Expected
++ Received
+-   "/api/mdx/engineering": "served",
+-   "/api/mdx/risk-items": "served",
++   "/api/mdx/engineering": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/risk-items": "403 MODULE_NOT_LICENSED",
+ FAIL  the module gate, MODULE_ENFORCEMENT=enforce > serves device-diagnostics's paths to an organization holding only ivd-completeness
+AssertionError: expected { …(8) } to deeply equal { '/api/mdx/audit': 'served', …(7) }
+- Expected
++ Received
+-   "/api/ivdr": "served",
+-   "/api/manufacturing": "served",
+-   "/api/mdx/audit": "served",
+-   "/api/mdx/cdx": "served",
+-   "/api/mdx/clia": "served",
+-   "/api/mdx/ivdr": "served",
++   "/api/ivdr": "403 MODULE_NOT_LICENSED",
++   "/api/manufacturing": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/audit": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/cdx": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/clia": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/ivdr": "403 MODULE_NOT_LICENSED",
+ FAIL  the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+AssertionError: device-engineering: expected { allowed: false, …(1) } to match object { allowed: true }
+- Expected
++ Received
+-   "allowed": true,
++   "allowed": false,
+ FAIL  the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+AssertionError: device-engineering: expected { id: 'device-engineering', …(4) } to match object { Object (entitled, source) }
+- Expected
++ Received
+-   "entitled": true,
+-   "source": "subscribed",
++   "entitled": false,
++   "source": "tier",
+
+# ════ Item 2, the fold guard written before the fold: client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts (at 267b91e70 plus the mapping rows)
+ × risk and design-controls are folded into device-engineering > resolves both old ids to device-engineering from a link and an in-app move 6ms
+ ✓ risk and design-controls are folded into device-engineering > lands on device-engineering, which mounts the risk register and the design-control trace 1ms
+ ✓ risk and design-controls are folded into device-engineering > claims both families of calls the panels make 0ms
+ × risk and design-controls are folded into device-engineering > registers AnA's matrix actions on device-engineering only 2ms
+ × risk and design-controls are folded into device-engineering > keeps no screen of its own: no view, no registry entry for ⌘K, no file, no client import 1ms
+ × risk and design-controls are folded into device-engineering > is in neither project scope list, the rail, a focus list nor the group tables 1ms
+ × risk and design-controls are folded into device-engineering > the guided tours stop at device-engineering and drive its matrix 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: risk: expected undefined to be 'device-engineering' // Object.is equality
+AssertionError: expected [ 'attach_sources_to_document', …(1) ] to be undefined
+AssertionError: risk: expected { component: [Function] } to be undefined
+AssertionError: risk: expected [ 'projects', 'project-home', …(21) ] to not include 'risk'
+AssertionError: expected [ { …(2) }, { …(2) } ] to deeply equal []
+      Tests  5 failed | 2 passed (7)
+
+# ════ Item 2, the fold guard written before the fold: client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts (at 267b91e70 plus the mapping rows)
+ × ivd-completeness is folded into device-diagnostics > resolves the old id to device-diagnostics from a link and an in-app move, with or without a project open 5ms
+ × ivd-completeness is folded into device-diagnostics > lands on device-diagnostics, which draws the readiness board and the workbench with shell navigation 2ms
+ × ivd-completeness is folded into device-diagnostics > claims the IVD calls the old screen claimed 1ms
+ × ivd-completeness is folded into device-diagnostics > keeps no screen of its own: no view, no registry entry for ⌘K, no file, no client import 1ms
+ × ivd-completeness is folded into device-diagnostics > is in neither project scope list, the rail nor a focus list, and its AnA actions moved to device-diagnostics 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be 'device-diagnostics' // Object.is equality
+AssertionError: expected 'case \'device-diagnostics\':\n      s…' to match /<IvdSurface[\s\S]*\bonNav=\{onNav\}[…/>
+AssertionError: /api/ivd-lifecycle: expected [ '/api/mdx/audit', …(7) ] to include '/api/ivd-lifecycle'
+AssertionError: expected { component: [Function], full: true } to be undefined
+AssertionError: expected [ 'projects', 'project-home', …(21) ] to not include 'ivd-completeness'
+      Tests  5 failed (5)

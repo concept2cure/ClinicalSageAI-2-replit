@@ -48,6 +48,25 @@ async function qmsAuthoringRefusal(db: Queryable, tenantId: number, docId: strin
 }
 
 export const qmsAuthoringWriteRefusal = (db: Queryable, tenantId: number, docId: string) => qmsAuthoringRefusal(db, tenantId, docId, false);
+
+/**
+ * A controlled render of a QMS controlled document is the Quality register's
+ * controlled copy (MR-12 Stage 8, controlled-copy.ts): the version in force,
+ * its QMS approval signature and the CONTROLLED COPY marking. Authoring's own
+ * controlled export and Vault filing read the Authoring signature store, which
+ * a QMS approval never writes, and would print "no signatures" over an approved
+ * SOP, or export a retired one; they are refused for a QMS-bound document. Its
+ * working copy, marked DRAFT, stays.
+ */
+export async function qmsControlledRenderRefusal(db: Queryable, tenantId: number, docId: string): Promise<
+  null | { status: 409 | 503; code: string; error: string }
+> {
+  const bound = await qmsAuthoringRefusal(db, tenantId, docId, true);
+  if (!bound) return null;
+  if (bound.status === 503) return bound;
+  return { status: 409, code: 'QMS_CONTROLLED_COPY_IN_QUALITY',
+    error: 'A controlled copy of this QMS controlled document is issued from the Quality register, with its approval signature and CONTROLLED COPY marking. Nothing was exported.' };
+}
 export const qmsAuthoringGovernanceRefusal = (db: Queryable, tenantId: number, docId: string) => qmsAuthoringRefusal(db, tenantId, docId, true);
 
 /** A Part 11 signing role alone must not bypass the bound document's canonical object permission. */
