@@ -659,6 +659,10 @@ deletion record the working agreement requires:
        letter (`source_type` `meeting_minutes`, already in the vocabulary) linked to the interaction. Its agreements
        and commitments become that letter's questions and `regulatory_commitments` (`meeting_commitment`).
      - `c2c_agency_meetings` and the Agency Meetings surface retire in that change.
+     - *2026-10-30:* Communication records and moves meetings, admitted by the meeting's project
+       (`docs/evidence/D2-MEETINGS-IN-COMMUNICATION/2026-10-30/`). A meeting names its minutes letter
+       (`ha_interactions.minutes_event_id`; `docs/evidence/D2-MEETING-MINUTES-IN-INBOX/2026-10-30/`). The retirement of
+       `c2c_agency_meetings` and its surface is next.
 
 ### P-40 — A sealed editing copy is revisable, and the refusal says so
 

@@ -196,6 +196,8 @@ const statusSchema = z.object({
   heldDate: isoDate.optional(),
   scheduledDate: isoDate.optional(),
   minutesReceivedDate: isoDate.optional(),
+  /** The inbox letter (meeting minutes) that holds them; named with the move to minutes received. */
+  minutesEventId: z.string().trim().min(1).max(120).optional(),
   reason,
 });
 
