@@ -1,0 +1,6 @@
+-- P-72 slice 1a, added to slice 0's RDS shape: the RDS master user is LOGIN CREATEROLE CREATEDB (not SUPERUSER, not
+-- BYPASSRLS, not REPLICATION). Slice 0's c2c_rds_master lacked CREATEDB, and PostgreSQL 16 lets only a role with CREATEDB
+-- name CREATEDB in ALTER ROLE, so deploy step 4's ALTER ROLE app_service … NOCREATEDB was refused on the copy alone.
+-- Cluster-wide; run once, as a superuser.
+ALTER ROLE c2c_rds_master CREATEDB;
+SELECT rolname, rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, rolreplication, rolinherit FROM pg_roles WHERE rolname = 'c2c_rds_master';

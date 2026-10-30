@@ -1,0 +1,7 @@
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > reads only the open program by default 57ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > widens to every program only when asked 190ms
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > a program opened from a link is named from the board, never by its id 5016ms
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > with no row naming it, the switch says "this project" 5010ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > the review-thread inbox follows the same program filter 105ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 3 passed | 14 skipped (19)

@@ -1,0 +1,6 @@
+Every policy, non-catalog function and constraint, one line each, oids stripped (probe 51), after the first green deploy and after each replay, on the production-shaped copy g4_green.
+after-1: 5931 objects, sha256 d81869704bc8f3c342c964a9aa80dca46eb848613154a39d94605c2ead6143b4
+after-2: 5931 objects, sha256 d81869704bc8f3c342c964a9aa80dca46eb848613154a39d94605c2ead6143b4
+after-3: 5931 objects, sha256 d81869704bc8f3c342c964a9aa80dca46eb848613154a39d94605c2ead6143b4
+diff after-1 after-2: 0 lines
+diff after-2 after-3: 0 lines
