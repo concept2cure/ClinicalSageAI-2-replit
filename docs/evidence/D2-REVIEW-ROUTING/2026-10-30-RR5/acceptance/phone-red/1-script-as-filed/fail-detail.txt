@@ -1,0 +1,69 @@
+locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for getByTestId('send-for-review-dialog').getByTestId('sfr-submit')
+    - locator resolved to <button class="de-btn primary" data-testid="sfr-submit">Send for review</button>
+  - attempting click action
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <label for="sfr-due" class="de-label">…</label> from <div class="de-body">…</div> subtree intercepts pointer events
+  - retrying click action
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <label class="de-label" for="sfr-priority">Priority</label> from <div class="de-body">…</div> subtree intercepts pointer events
+  - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <label for="sfr-due" class="de-label">…</label> from <div class="de-body">…</div> subtree intercepts pointer events
+    - retrying click action
+      - waiting 100ms
+    14 × waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <label for="sfr-due" class="de-label">…</label> from <div class="de-body">…</div> subtree intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+       - waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <label class="de-label" for="sfr-priority">Priority</label> from <div class="de-body">…</div> subtree intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+       - waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <label for="sfr-due" class="de-label">…</label> from <div class="de-body">…</div> subtree intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+       - waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <label for="sfr-due" class="de-label">…</label> from <div class="de-body">…</div> subtree intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <label for="sfr-due" class="de-label">…</label> from <div class="de-body">…</div> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <label class="de-label" for="sfr-priority">Priority</label> from <div class="de-body">…</div> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+
+    at /home/user/ClinicalSageAI-2-replit/docs/evidence/D2-REVIEW-ROUTING/2026-10-30-RR5/acceptance/rr5-acceptance.mjs:165:39

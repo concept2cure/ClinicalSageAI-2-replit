@@ -1,0 +1,3 @@
+Error: Send for review dialog: horizontal scroll of 95px at 390 wide
+    at phoneChecks (file:///home/user/ClinicalSageAI-2-replit/docs/evidence/D2-REVIEW-ROUTING/2026-10-30-RR5/acceptance/rr5-acceptance.mjs:113:29)
+    at async file:///home/user/ClinicalSageAI-2-replit/docs/evidence/D2-REVIEW-ROUTING/2026-10-30-RR5/acceptance/rr5-acceptance.mjs:169:3

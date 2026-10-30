@@ -1,0 +1,6 @@
+document af2a2f74-7778-4130-9455-a09cb1ccbaa7 "Module 2.5 Clinical Overview RR5-PRIXZ" with two sections (API)
+author: signed in
+  screenshot phone/01-author-send-for-review-open.png
+    text: REVIEW | Send for review | Asks the people you choose to review “Module 2.5 Clinical Overview RR5-PRIXZ”. | Reviewers* | Rae Reviewer | Rob Reviewer | Mo Member | Mo Member does not hold signing authority, so cannot be named to review or approve. | The document’s author is not offered: a different person reviews it. | Reason for the request* | Recorded with the request on the document’s audit trail, and given to each reviewer in their task. At least 8 characters. | In each reviewer’s tasks | Instructions to the reviewers | Review due* | The end of that day in your time zone (UTC). Each reviewer is reminded before it. | Priority | low | medium | high | critical | One act, one record. In one s
+  phone Send for review dialog: horizontal overflow 95px (layout viewport 485x1048); controls under 44px: []
+RESULT: fail — Send for review dialog: horizontal scroll of 95px at 390 wide

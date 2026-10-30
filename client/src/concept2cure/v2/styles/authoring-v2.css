@@ -946,35 +946,10 @@
     background: var(--bg-300);
   }
 
-  /* Keep the shared signature meaning pills intact under the V2 button reset. */
-  .es-meaning-opt {
-    padding: 5px 11px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--bg-000);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-300);
-  }
-  .es-meaning-opt:hover {
-    background: var(--bg-050);
-    color: var(--text-100);
-  }
-  .es-meaning-opt[data-active='true'] {
-    background: var(--accent-strong);
-    border-color: var(--accent-strong);
-    color: var(--accent-on-strong);
-  }
-  .es-meaning-opt:focus-visible {
-    outline: 2px solid var(--accent-main-200);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-  }
-  @media (max-width: 760px) {
-    .es-meaning-opt {
-      min-height: 44px;
-    }
-  }
+  /* The shared signature dialog's meaning pills, like its buttons, are kept
+     intact under the V2 button reset by EsignModal.css itself (`.es-modal`),
+     for every surface that signs; this copy of its rules went (RR5 phone
+     acceptance, 2026-10-30). */
 
   /* Workflow review consent uses a checkbox, separate from the shared
      signing dialog's full-width password and reason fields. */
@@ -2163,12 +2138,23 @@
        overlaying the rows below it. A scroller keeps the document where it
        is, and every control in it is still reached by Tab. The governed acts
        (.ed-doc-commit) are not in it: they wrap above it and stay on screen
-       (QA 2026-10-08, walk 2, j5). */
+       (QA 2026-10-08, walk 2, j5).
+
+       `position: relative` makes the scroller the containing block of what
+       it scrolls (RR5 phone acceptance, 2026-10-30). A scroll box clips only
+       the absolutely placed boxes it contains. The Download menu's live
+       region is one (`.sr-only`, 1px); it was placed by an ancestor outside
+       the scroller, so it sat unclipped at its place in the unscrolled row,
+       484px from the left of a 390px screen. The page was 485px wide, a
+       phone browser laid every fixed layer out on a 485 x 1048 viewport, and
+       Send for review's footer, with Send, opened off the bottom right of
+       the screen. The menu itself is fixed (`.dlm-menu`) and is not cut. */
     .ed-doc-h {
       --ed-crumbs-floor: 0px;
       padding: 8px 12px;
     }
     .ed-doc-actions {
+      position: relative;
       flex-wrap: nowrap;
       overflow-x: auto;
     }
