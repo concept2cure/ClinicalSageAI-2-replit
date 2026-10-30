@@ -1,0 +1,322 @@
+### npm run ci:launch-scope
+[ci:launch-scope] 7 apps · 43 surfaces · 12 modules · 30 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+### exit 0 (ci:launch-scope)
+### npm run ci:launch-scope:selftest
+✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation
+✅ selftest: gate exits 1 and names 'ectd-compile' when it is missing from the 20260810 keep-list
+✅ selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route
+✅ selftest: gate passes on the real tree
+### exit 0 (ci:launch-scope:selftest)
+### npm run ci:launch-scope-api
+ci:launch-scope-api: 563 API paths named by launch and shell screens; none refused. {"launch":513,"infrastructure":2,"never-gated":48}
+### exit 0 (ci:launch-scope-api)
+### npm run ci:launch-scope-api:selftest
+  ✓ flags a launch screen calling a prefix only an out-of-scope surface claims
+  ✓ names the surface and the file
+  ✓ does not flag the launch prefix, or a never-gated shell call
+  ✓ passes once the launch surface declares the prefix it calls
+  ✓ flags a launch call no surface claims (unmapped)
+  ✓ resolves every registration it was given
+  ✓ reads the surface's own registration, not a longer id ending in it
+  ✓ flags a launch screen that computes the /api namespace
+  ✓ resolves a project MDX feature to its actual host import
+  ✓ keeps unrelated optional workbench imports outside that feature graph
+  ✓ an MDX feature with no component mapping fails closed
+
+selftest PASSED — the gate flags a launch screen that production would refuse.
+### exit 0 (ci:launch-scope-api:selftest)
+### npm run ci:ana-surface-context
+
+[ci:ana-surface-context] OK — 101 of 105 routable surface ids publish screen state (baseline 101 exact), 4 exempt, 0 still blind.
+  98 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (conversation-thread, ectd-coauthor, rbm) — full-width surfaces may
+  publish saved context and hand requests to the canonical conversation.
+  107 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router
+  rewrites before the shell has an active id, so they are not routable and cannot be
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (71 surface file(s) hold a call).
+
+### exit 0 (ci:ana-surface-context)
+### npm run ci:surface-discoverability
+
+[ci:surface-discoverability] OK — 107 renderable surface(s): 82 in the Apps catalog, 25 declared contextual.
+
+### exit 0 (ci:surface-discoverability)
+### npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 456 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 20 dynamic DROP(s) in 20 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+### exit 0 (ci:migration-drop-safety)
+### npm run ci:migration-drop-safety:selftest
+  ✓ REPEATED — dropper after creator (re-added and re-dropped every deploy)
+  ✓ UNDONE — dropper before creator (the drop reverts on the next deploy)
+  ✓ quiet — drop-and-re-add of the same name in one file
+  ✓ quiet — a DROP nothing in the set re-creates
+  ✓ quiet — a reviewed baseline exception suppresses a real pairing
+  ✓ NARROWED — an earlier file re-imposes a narrower CHECK a later file widened
+  ✓ quiet — the earlier replacement is conditional on the current definition
+  ✓ NARROWED — a guard that names a different constraint does not count
+  ✓ NARROWED — a guard that exists only in a comment does not count
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+### exit 0 (ci:migration-drop-safety:selftest)
+### npm run ci:migration-set-order
+[ci:migration-set-order] OK — 456 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+### exit 0 (ci:migration-set-order)
+### npm run ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+### exit 0 (ci:migration-deploy-path)
+### npm run ci:migration-deploy-path:selftest
+[ci:migration-deploy-path:selftest] OK — an unlisted new file fails; the tree as it stands passes; a listed file passes.
+### exit 0 (ci:migration-deploy-path:selftest)
+### npm run ci:migration-guard-order
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+### exit 0 (ci:migration-guard-order)
+### npm run ci:migration-reachability
+[ci:migration-reachability] 1385 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined
+[ci:migration-reachability] ✅ no new unreachable table references.
+### exit 0 (ci:migration-reachability)
+### npm run check:catalog-copy
+[ci:catalog-copy] OK — 107 catalog description(s) across 3 migration(s) read as product copy.
+### exit 0 (check:catalog-copy)
+### npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+### exit 0 (ci:undefined-css-classes)
+### npm run ci:unreferenced-modules
+Unreferenced modules: 73 (baseline 73)
+
+OK: no new unreachable modules.
+### exit 0 (ci:unreferenced-modules)
+### npm run ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+### exit 0 (ci:program-ownership-single-source)
+### npm run ci:sql-interpolation
+[ci:sql-interpolation] 29 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/routes/c2c/project-vault.ts:1696:21 vaultLifecycleStageSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1715:44 vaultUnfiledSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1716:44 vaultSuggestedSql('d') <- ../../services/vault/vault-document-filter.js
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:36:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:95:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:652:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-version-restore.ts:64:67 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+### exit 0 (ci:sql-interpolation)
+### npm run ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+### exit 0 (ci:sign-ceremony)
+### npm run ci:sign-ceremony:selftest
+[ci:sign-ceremony:selftest]
+  ✓ the pre-fix protocol finalize route fails the gate
+  ✓ an AnA tool that signs from a chat turn fails the gate
+  ✓ re-authentication without a signature row still fails
+  ✓ the full ceremony passes
+  ✓ a ceremony in another handler does not count for this one
+  ✓ writeMutation("sign") needs the caller to re-authenticate
+  ✓ comments, type annotations and other commands are not sites
+  ✓ a command chosen by a ternary is still a sign write (IRB approval, as it stood on 2026-09-23)
+  ✓ a ternary or template-literal command inside recordGovernedAction is a site
+  ✓ "sign" in a reason, a target or a callback is not a command
+  ✓ the baseline is a ceiling per file, not a pass
+  ✓ a baseline that allows more than exists is reported, so a fixed site cannot be refilled
+  ✓ a baseline entry without a written reason fails
+  ✓ an approval stamped under a non-sign verb fails the gate (the QMS AnA tool before e1c224f69)
+  ✓ an approval stamp built up in a service fails the gate (transitionChange before 028a0c704)
+  ✓ an approval stamp written beside its signature row passes
+  ✓ an authoring approval stamp beside its authoring_signatures write passes
+  ✓ the same authoring approval stamp with no signature write fails
+  ✓ an approval stamp inside signGovernedAct passes (the labeling translation approval, 2026-10-29)
+  ✓ the same approval stamp with no signGovernedAct fails (the labeling PATCH before 2026-10-29)
+  ✓ a status-only act signed through signGovernedAct is a site, and passes (the residual-risk acceptance)
+  ✓ the same write without the ceremony fails: in the same file as the signed one, or anywhere once the pair is governed
+  ✓ the governed flag alone, without the ceremony, fails too (acceptable = TRUE)
+  ✓ creating a hazard already accepted is a status act (INSERT … VALUES)
+  ✓ without a ceremony or a record, the pair is not governed: why the baseline records signed pairs
+  ✓ a non-governed status is not an act: draft, in_progress, open, mitigating
+  ✓ a declared signed status is governed on every table (an IRB approval written outside its ceremony fails)
+  ✓ a condition is not a write: WHERE, FILTER, a CASE test, a SELECT
+  ✓ a status the product signs only on some tables counts only there (superseded)
+  ✓ a `$n` whose value is a literal in the inline parameter array is read; a computed one is not
+  ✓ for a status act, writeMutation counts only as writeMutation('sign')
+  ✓ a statement that stamps an approval and sets a status is one site, the stamp
+  ✓ a status act is baselined like a stamp: a ceiling with a written reason
+  ✓ the declared statuses are read from the product, never copied: Set, object keys, and a missing declaration
+  ✓ the repository's declarations are where the gate reads them, and give the vocabulary it governs
+  ✓ clearing an approval (a revision) is not a stamp
+  ✓ the pre-fix Gateway transmit (re-authentication, no authority) fails the authority rule
+  ✓ the same transmit asking checkSigningAuthority first passes
+  ✓ reverifySigner is held to the rule too, and checkSigningAuthority satisfies it
+  ✓ an inline copy of the policy (isSigningAuthorized in the handler) no longer satisfies the rule
+  ✓ the retired local wrappers no longer satisfy the rule
+  ✓ an authority check in another handler does not count for this one
+  ✓ a declaration of the primitive is not a call; a commented check is not a check
+  ✓ an authority baseline entry is a ceiling with a written reason, as the sign baseline is
+[ci:sign-ceremony:selftest] 44 passed — the gate fails on what it exists to catch.
+### exit 0 (ci:sign-ceremony:selftest)
+### npm run ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+### exit 0 (ci:discarded-audit-write)
+### npm run ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 90 site(s), all baselined.
+### exit 0 (ci:drizzle-tenant-scope)
+### npm run ci:duplicate-table-ddl
+[ci:duplicate-table-ddl] scanned 706 non-archived .sql files; 1409 distinct tables; 13 defined more than once; 13 baselined
+[ci:duplicate-table-ddl] ✅ no new duplicate table definitions.
+### exit 0 (ci:duplicate-table-ddl)
+### npm run ci:fabricated-identity
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+### exit 0 (ci:fabricated-identity)
+### npm run ci:tenant-resolvers
+Local tenant resolvers: 174 (baseline 180)
+
+6 baselined module(s) no longer define one — regenerate the baseline:
+  - server/api/cmc/module3BuildStateRoutes.ts
+  - server/api/cmc/module3ConvergenceRoutes.ts
+  - server/api/cmc/module3OperatingSystemRoutes.ts
+  - server/routes/k510-document-preview.ts
+  - server/routes/mdx-qms.ts
+  - server/routes/regulatory-precedent-intelligence.ts
+
+OK: no new local tenant resolvers.
+### exit 0 (ci:tenant-resolvers)
+### npm run ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 72 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+### exit 0 (ci:unauthenticated-fetch)
+### npm run ci:proof-tier
+[ci:proof-tier] 183 proof files: schema-contract=98, tenant-contract=26, golden-journeys=9, export-contract=8, e2e-browser=42
+[ci:proof-tier] +106 new proof file(s) since baseline (good — run write-baseline to ratchet):
+      + [schema-contract] tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts
+      + [schema-contract] tests/schema-contract/ana-source-read-receipts.contract.test.ts
+      + [schema-contract] tests/schema-contract/authoring-durable-applier.contract.test.ts
+      + [schema-contract] tests/schema-contract/authoring-migration-list-closure.contract.test.ts
+      + [schema-contract] tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+      + [schema-contract] tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+      + [schema-contract] tests/schema-contract/authoring-section-permissions.contract.test.ts
+      + [schema-contract] tests/schema-contract/authoring-section-revision-gate.contract.test.ts
+      + [schema-contract] tests/schema-contract/baseline-drift-classification.contract.test.ts
+      + [schema-contract] tests/schema-contract/biopharma-programs-router-columns.contract.test.ts
+      + [schema-contract] tests/schema-contract/c2c-document-submit-requires-filing.contract.test.ts
+      + [schema-contract] tests/schema-contract/c2c-filing-class-packs.contract.test.ts
+      + [schema-contract] tests/schema-contract/c2c-regional-device-packs.contract.test.ts
+      + [schema-contract] tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+      + [schema-contract] tests/schema-contract/c2c-section-ana-backlink.contract.test.ts
+      + [schema-contract] tests/schema-contract/c2c-section-completion.contract.test.ts
+      + [schema-contract] tests/schema-contract/c2c-section-has-content.contract.test.ts
+      + [schema-contract] tests/schema-contract/c2c-section-lineage-gate.contract.test.ts
+      + [schema-contract] tests/schema-contract/c2c-section-reason-required.contract.test.ts
+      + [schema-contract] tests/schema-contract/c48-stage1-identity-org-bridge.contract.test.ts
+      + [schema-contract] tests/schema-contract/catalog-module-claims.contract.test.ts
+      + [schema-contract] tests/schema-contract/chat-thread-access.contract.test.ts
+      + [schema-contract] tests/schema-contract/clinical-ops-provisioning.contract.test.ts
+      + [schema-contract] tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts
+      + [schema-contract] tests/schema-contract/cmc-compliance-tracking-tenancy.contract.test.ts
+      + [schema-contract] tests/schema-contract/cmc-playbook-schema.contract.test.ts
+      + [schema-contract] tests/schema-contract/cmc-register-store-parity.contract.test.ts
+      + [schema-contract] tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts
+      + [schema-contract] tests/schema-contract/column-reachability-guard.contract.test.ts
+      + [schema-contract] tests/schema-contract/contradiction-consequence-log-columns.contract.test.ts
+      + [schema-contract] tests/schema-contract/declared-table-surface.contract.test.ts
+      + [schema-contract] tests/schema-contract/deploy-frontend-after-api.contract.test.ts
+      + [schema-contract] tests/schema-contract/document-catalog-migration.contract.test.ts
+      + [schema-contract] tests/schema-contract/document-span-lineage.contract.test.ts
+      + [schema-contract] tests/schema-contract/dossier-map-seed-module1-codes.contract.test.ts
+      + [schema-contract] tests/schema-contract/durable-sharing-review-prerequisites.contract.test.ts
+      + [schema-contract] tests/schema-contract/ectd-sequence-continuity.contract.test.ts
+      + [schema-contract] tests/schema-contract/ectd-submission-agent-reachability.contract.test.ts
+      + [schema-contract] tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+      + [schema-contract] tests/schema-contract/filings-catalog-retirement.contract.test.ts
+      + [schema-contract] tests/schema-contract/governed-command-vocabulary.contract.test.ts
+      + [schema-contract] tests/schema-contract/ivdr-classification-reconciliation.contract.test.ts
+      + [schema-contract] tests/schema-contract/ivdr-history-tenant-isolation.contract.test.ts
+      + [schema-contract] tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts
+      + [schema-contract] tests/schema-contract/kernel-hash-chain-honesty.contract.test.ts
+      + [schema-contract] tests/schema-contract/known-unlisted-reason-holds.contract.test.ts
+      + [schema-contract] tests/schema-contract/manufacturing-responses-provisioning.contract.test.ts
+      + [schema-contract] tests/schema-contract/migration-reachability-guard.contract.test.ts
+      + [schema-contract] tests/schema-contract/no-project-id-coercion.contract.test.ts
+      + [schema-contract] tests/schema-contract/one-dispatch-verdict.contract.test.ts
+      + [schema-contract] tests/schema-contract/one-normalize-ctd-code.contract.test.ts
+      + [schema-contract] tests/schema-contract/one-program-anchor-reader.contract.test.ts
+      + [schema-contract] tests/schema-contract/platform-role-grant-upsert-arbiter.contract.test.ts
+      + [schema-contract] tests/schema-contract/pma-governed-assembly.contract.test.ts
+      + [schema-contract] tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts
+      + [schema-contract] tests/schema-contract/project-charters-declared-columns.contract.test.ts
+      + [schema-contract] tests/schema-contract/qms-deployment-prerequisite.contract.test.ts
+      + [schema-contract] tests/schema-contract/qms-inspection-parentage.contract.test.ts
+      + [schema-contract] tests/schema-contract/rds-ca-bundle.contract.test.ts
+      + [schema-contract] tests/schema-contract/reachability-debt-cleared.contract.test.ts
+      + [schema-contract] tests/schema-contract/readiness-security-tables.contract.test.ts
+      + [schema-contract] tests/schema-contract/rendered-leaf-files.contract.test.ts
+      + [schema-contract] tests/schema-contract/rls-two-tenant-full-schema.contract.test.ts
+      + [schema-contract] tests/schema-contract/rules-engine-assignee-resolution.contract.test.ts
+      + [schema-contract] tests/schema-contract/stability-backing-tables.contract.test.ts
+      + [schema-contract] tests/schema-contract/stability-tenant-isolation.contract.test.ts
+      + [schema-contract] tests/schema-contract/submission-core-reachability.contract.test.ts
+      + [schema-contract] tests/schema-contract/template-specs-durable-creator.contract.test.ts
+      + [schema-contract] tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+      + [schema-contract] tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+      + [schema-contract] tests/schema-contract/tenant-storage-accounting.contract.test.ts
+      + [schema-contract] tests/schema-contract/tier5-complete-schema.contract.test.ts
+      + [schema-contract] tests/schema-contract/uuid-tenant-isolation.contract.test.ts
+      + [tenant-contract] tests/artifact-change-invalidates-bundles.contract.test.ts
+      + [tenant-contract] tests/ci/ci-honesty.contract.test.ts
+      + [tenant-contract] tests/ci/deploy-refuses-unproven-sha.contract.test.ts
+      + [tenant-contract] tests/ci/deploy-rollback.contract.test.ts
+      + [tenant-contract] tests/ci/deploy-staging-promote.contract.test.ts
+      + [tenant-contract] tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+      + [tenant-contract] tests/ci/project-creation-owners.contract.test.ts
+      + [tenant-contract] tests/ci/secret-history-scan.contract.test.ts
+      + [tenant-contract] tests/ci/test-runner-evidence.contract.test.ts
+      + [tenant-contract] tests/ci/trivy-steps-run-after-failures.contract.test.ts
+      + [tenant-contract] tests/rls-auth-boundary-invariant.contract.test.ts
+      + [tenant-contract] tests/rls-scoped-route-mounts-tranche2.contract.test.ts
+      + [tenant-contract] tests/rls-scoped-route-mounts.contract.test.ts
+      + [tenant-contract] tests/rls-users-preauth-scope.contract.test.ts
+      + [tenant-contract] tests/routes/legacy-digest-routes-removed.contract.test.ts
+      + [golden-journeys] tests/golden-journeys/cer-eu-mdr.journey.test.ts
+      + [golden-journeys] tests/golden-journeys/device-510k-estar.journey.test.ts
+      + [golden-journeys] tests/golden-journeys/drug-nda-ectd.journey.test.ts
+      + [e2e-browser] tests/e2e/filing-catalog-core-workflow.e2e.ts
+      + [e2e-browser] tests/e2e/filing-catalog-fold.e2e.ts
+      + [e2e-browser] tests/e2e/filing-picker-guidance.e2e.ts
+      + [e2e-browser] tests/e2e/golden-customer-journey.e2e.ts
+      + [e2e-browser] tests/e2e/launch-surface-access-control.e2e.spec.ts
+      + [e2e-browser] tests/e2e/launch-surface-keyboard.e2e.spec.ts
+      + [e2e-browser] tests/e2e/launch-walk-no-lock.e2e.ts
+      + [e2e-browser] tests/e2e/project-create-action.e2e.ts
+      + [e2e-browser] tests/e2e/project-creator-retirement.e2e.ts
+      + [e2e-browser] tests/e2e/project-dossier-destinations.e2e.ts
+      + [e2e-browser] tests/e2e/project-dossier-details.e2e.ts
+      + [e2e-browser] tests/e2e/project-step-return.e2e.ts
+      + [e2e-browser] tests/e2e/projects-client-filter.e2e.ts
+      + [e2e-browser] tests/e2e/projects-mdx-destination.e2e.ts
+      + [e2e-browser] tests/e2e/projects-pathway-counts.e2e.ts
+[ci:proof-tier] ✅ proof surface intact — no proofs removed, every journey emits a manifest, doc in sync.
+### exit 0 (ci:proof-tier)
+### npm run ci:rls-allowlist-sync
+[ci:rls-allowlist-sync] OK — 6 entries match across RLS_ALLOWLIST and 4 consumers
+### exit 0 (ci:rls-allowlist-sync)

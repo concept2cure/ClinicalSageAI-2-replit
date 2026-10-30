@@ -1,0 +1,4 @@
+#!/bin/bash
+# Start P-72 slice 0's private PostgreSQL 16 (+pgvector) on 127.0.0.1:55472, in a user namespace (the server refuses uid 0).
+P=/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/p72
+nohup unshare --user --map-user=1000 --map-group=1000 $P/root/usr/lib/postgresql/16/bin/postgres -D $P/pg/data -p 55472 -k "" -c listen_addresses=127.0.0.1 -c fsync=off -c synchronous_commit=off -c full_page_writes=off -c max_connections=80 -c shared_buffers=128MB >> $P/pg/log.txt 2>&1 &

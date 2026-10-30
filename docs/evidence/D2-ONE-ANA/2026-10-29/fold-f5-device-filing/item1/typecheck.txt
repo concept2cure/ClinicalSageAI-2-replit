@@ -1,0 +1,10 @@
+# Scoped tsc over the 37 TypeScript files item 1 changes or adds that exist on disk (tools/tsconfig.item1.json.txt): npx tsc -p tsconfig.item1.json
+# 8 errors over 4,200 repository files; none is in a changed file. They are missing CSS-module declarations and the Express Request augmentation (dbClient), which this scoped include does not load:
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+server/db/requestDbLease.ts(51,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(51,42): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(61,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(82,39): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(228,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.

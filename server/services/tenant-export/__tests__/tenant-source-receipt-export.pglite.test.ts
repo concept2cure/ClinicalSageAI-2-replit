@@ -42,6 +42,8 @@ beforeAll(async () => {
   await db.exec(readFileSync('migrations/20261014_ana_source_read_receipts.sql', 'utf8'));
   await db.exec(readFileSync('migrations/20260813b_tenant_export_receipts.sql', 'utf8'));
   await db.exec(readFileSync('migrations/20261018_company_document_export_receipts.sql', 'utf8'));
+  // The scope column 20261029k adds (section 0): a receipt records the scope its export was read in.
+  await db.exec('ALTER TABLE tenant_export_receipts ADD COLUMN IF NOT EXISTS export_scope text');
   await seed(ORG); await seed(FOREIGN);
 }, 60_000);
 afterAll(async () => { await db?.close(); });

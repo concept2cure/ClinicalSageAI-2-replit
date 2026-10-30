@@ -23,8 +23,14 @@ const id = z.number().int().positive().max(2_147_483_647);
 export const assignmentExpectedSchema = z.object({ expectedAssigneeId: id.nullable(), expectedVersion: z.string().regex(/^[a-f0-9]{64}$/) });
 export const namedAssignmentSchema = assignmentExpectedSchema.extend({ action: z.literal('assign'), assigneeId: id, reason: z.string().trim().min(3).max(1000) }).strict();
 export type AssignmentInput = { taskId: string; method: 'named' | 'workload-balanced'; assigneeId?: number; expectedAssigneeId?: number | null; expectedVersion?: string; reason?: string };
-/** Set only by server/services/review/review-route.ts, on a transaction that holds the route-writer setting: a route member's handoff is the route's (RR3). No request schema admits it. */
-export type AssignmentOptions = { routeOwned?: boolean };
+/**
+ * Set only by server/services/review/review-route.ts: a route member's handoff
+ * is the route's (RR3), written through the route writer's door
+ * public.review_route_reassign_member (P-59), which needs the route, the
+ * reassignment's own ledger row and the member's printed name at naming. No
+ * request schema admits it.
+ */
+export type AssignmentOptions = { routeOwned?: { routeId: string; actId: string; printedName: string } };
 
 export class TaskAssignmentError extends Error {
   constructor(readonly status: 400 | 401 | 403 | 404 | 409 | 503, readonly code: string, message: string) {
@@ -186,14 +192,23 @@ function saved(ctx: Admission, task: Row): TaskAssignmentResult {
     projectId: numberOrNull(task.project_id), clientWorkspaceId: ctx.workspace, status: String(task.status), assigneeId: id.parse(task.assignee_id),
     assigneeName: typeof task.assignee_name === 'string' ? task.assignee_name : null, assignedBy: id.parse(task.assigned_by), assignedAt, assignmentVersion: version(task) };
 }
-async function mutate(req: Request, q: RequestSqlClient, ctx: Admission, input: AssignmentInput) {
+/** The assignment's compare-and-set write: a route member's through its route's door (P-59), any other task's directly. */
+function assignmentWrite(q: RequestSqlClient, ctx: Admission, input: AssignmentInput, account: Account, opts: AssignmentOptions) {
+  const route = opts.routeOwned;
+  if (route) {
+    return q.query('/* task-assignment:route-door */ SELECT * FROM public.review_route_reassign_member($1, $2::uuid, $3, $4, $5, $6, $7)',
+      [ctx.organizationId, route.routeId, input.taskId, account.id, route.printedName, ctx.actor.userId, route.actId]);
+  }
+  return q.query(`/* task-assignment:update */ UPDATE unified_tasks SET assignee_id=$1,assignee_name=$2,assigned_by=$3,assigned_at=now(),last_modified_by=$3,updated_at=now(),metadata=CASE WHEN metadata IS NULL THEN NULL ELSE ((metadata::jsonb - 'dueSoonNotifiedAt') - 'overdueNotifiedAt')::json END WHERE id=$4 AND organization_id=$5 AND deleted_at IS NULL AND status IN ('pending','in-progress','review','blocked') RETURNING *,xmin::text AS row_version,updated_at::text AS exact_updated_at`, [account.id, account.name, ctx.actor.userId, ctx.task.id, ctx.organizationId]);
+}
+async function mutate(req: Request, q: RequestSqlClient, ctx: Admission, input: AssignmentInput, opts: AssignmentOptions = {}) {
   const account = await chosen(q, ctx, input);
   if (!account) return null;
   if (ctx.task.assignee_id === account.id) {
     if (input.method === 'workload-balanced') return null;
     throw new TaskAssignmentError(409, 'ASSIGNMENT_UNCHANGED', 'The task is already assigned to this account. Nothing was changed.');
   }
-  const result = await q.query(`/* task-assignment:update */ UPDATE unified_tasks SET assignee_id=$1,assignee_name=$2,assigned_by=$3,assigned_at=now(),last_modified_by=$3,updated_at=now(),metadata=CASE WHEN metadata IS NULL THEN NULL ELSE ((metadata::jsonb - 'dueSoonNotifiedAt') - 'overdueNotifiedAt')::json END WHERE id=$4 AND organization_id=$5 AND deleted_at IS NULL AND status IN ('pending','in-progress','review','blocked') RETURNING *,xmin::text AS row_version,updated_at::text AS exact_updated_at`, [account.id, account.name, ctx.actor.userId, ctx.task.id, ctx.organizationId]);
+  const result = await assignmentWrite(q, ctx, input, account, opts);
   if (result.rows.length !== 1) throw stale();
   const data = saved(ctx, result.rows[0]);
   await auditTaskActionInTx(q, { orgId: ctx.organizationId, userId: ctx.actor.userId, command: 'task.assign', taskId: input.taskId,
@@ -225,7 +240,7 @@ export async function assignTaskInTx(req: Request, q: RequestSqlClient, input: A
     if (!canSkip(input, error)) throw error;
     return { skipped: true };
   }
-  return { skipped: false, result: await mutate(req, q, ctx, input), title: String(ctx.task.title) };
+  return { skipped: false, result: await mutate(req, q, ctx, input, opts), title: String(ctx.task.title) };
 }
 /** The new assignee's notice, sent only once the assignment committed. */
 export function notifyAssignedAfterCommit(data: TaskAssignmentResult | null, title: string): void { notifyAssigned(data, title); }

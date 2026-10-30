@@ -1,0 +1,11 @@
+-- P-72 slice 0, seeding pass 3 (owner): a program-scoped legal hold and one document relationship per tenant.
+\set ON_ERROR_STOP on
+INSERT INTO vault.legal_holds (organization_id, reference, reason, scope, program_id)
+SELECT o.id, 'p72-hold-'||o.id, 'p72 slice 0 probe hold', 'program', rp.id
+  FROM organizations o JOIN regulatory_programs rp ON rp.organization_id = o.id AND rp.code LIKE 'P72-%' WHERE o.slug IN ('p72-a','p72-b');
+INSERT INTO vault_document_relationships (organization_id, program_id, from_document_id, to_document_id, relationship_type)
+SELECT d1.organization_id, d1.program_id, d1.id, d2.id, 'references'
+  FROM vault.documents d1 JOIN vault.documents d2 ON d2.program_id = d1.program_id AND d2.document_code > d1.document_code
+ WHERE d1.document_code IN ('p72-a-doc-1','p72-b-doc-1') AND d2.document_code IN ('p72-a-doc-2','p72-b-doc-2');
+SELECT 'legal_holds', organization_id, count(*) FROM vault.legal_holds WHERE reference LIKE 'p72-hold-%' GROUP BY 2
+UNION ALL SELECT 'vault_document_relationships', organization_id, count(*) FROM vault_document_relationships WHERE organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%') GROUP BY 2;

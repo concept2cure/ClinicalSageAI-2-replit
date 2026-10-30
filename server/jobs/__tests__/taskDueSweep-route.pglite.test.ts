@@ -42,11 +42,14 @@ beforeAll(async () => {
     INSERT INTO users (id, email, name, password_hash) VALUES (3, 'rita@example.test', 'Rita', 'x'), (4, 'sam@example.test', 'Sam', 'x');
     INSERT INTO review_routes (id, organization_id, subject_type, subject_id, round, sender_id, sender_name, review_order, approval_due_at, content_digest)
       VALUES ('${ROUTE}', 1, 'canonical_document', 'c-1', 1, 4, 'Sam', 'parallel', now() + interval '7 days', 'd');
-    SET c2c.review_route_writer = 'on';
+    -- The fixture lays the route members down as the route writer's doors
+    -- would (P-59: the guard admits only the review_route_writer role, never a
+    -- setting); the superuser fixture skips the trigger for these two rows.
+    SET session_replication_role = replica;
     INSERT INTO unified_tasks (task_id, organization_id, module_type, title, status, assignee_id, due_date, created_by_id, review_route_id, review_role, review_step) VALUES
       ('R-APPROVER', 1, 'Vault', 'Approve: overview v2', 'blocked', 3, now() - interval '1 day', 4, '${ROUTE}', 'approver', 2),
       ('R-REVIEWER', 1, 'Vault', 'Review: overview v2', 'pending', 4, now() - interval '1 day', 4, '${ROUTE}', 'reviewer', 1);
-    RESET c2c.review_route_writer;
+    RESET session_replication_role;
     INSERT INTO unified_tasks (task_id, organization_id, module_type, title, status, assignee_id, due_date, created_by_id) VALUES
       ('T-BLOCKED', 1, 'IND', 'Blocked ordinary work', 'blocked', 3, now() - interval '1 day', 4);
   `);

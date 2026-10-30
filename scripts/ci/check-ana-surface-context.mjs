@@ -123,7 +123,14 @@ const SCAN_ROOT = 'client/src/concept2cure';
 // whose host publish carries the readiness board's as 'device-diagnostics'. The
 // retired ids are aliases, no longer routable publishers
 // (foldRiskDesignControls.test.ts, foldIvdCompleteness.test.ts).
-const ID_BASELINE = 103;
+// 2026-10-29 D2 fold F5 item 2: device-validation, the organization-wide blocker
+// list, retires (decision P-61 item 2); a blocker is its filing's readiness. The
+// retired id is an alias for Submission Center, which already publishes, so no
+// id is added (foldDeviceValidation.test.ts).
+// 2026-10-30 D2 fold F5 item 1: device-submission folds into Submission Center
+// (decision P-61 item 1), whose own publish states the device filings. The
+// retired id is an alias, no longer a routable publisher (foldDeviceSubmission.test.ts).
+const ID_BASELINE = 101;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.

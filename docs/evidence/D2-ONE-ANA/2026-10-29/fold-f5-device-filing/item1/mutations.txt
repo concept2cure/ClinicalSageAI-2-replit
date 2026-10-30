@@ -1,0 +1,247 @@
+S1: the migration takes a package on another organization's project
+  file: migrations/20261030_estar_filing_one_store.sql
+  test: tests/schema-contract/estar-filing-one-store.pglite.test.ts
+  result: RED (2 passed | 5 skipped (7))
+  restored byte for byte: yes (sha256 10c610160a0ba240)
+
+S2: a cancelled package becomes a draft filing
+  file: migrations/20261030_estar_filing_one_store.sql
+  test: tests/schema-contract/estar-filing-one-store.pglite.test.ts
+  result: RED (1 failed | 6 passed (7))
+    x a database holding device packages > makes each device package on its own organization's project one tracked filing, never filed
+  restored byte for byte: yes (sha256 10c610160a0ba240)
+
+S3: a completed package becomes a filed filing (a filing nobody signed)
+  file: migrations/20261030_estar_filing_one_store.sql
+  test: tests/schema-contract/estar-filing-one-store.pglite.test.ts
+  result: RED (2 failed | 5 passed (7))
+    x a database holding device packages > makes each device package on its own organization's project one tracked filing, never filed
+    x a database holding device packages > names what each package recorded in its import event, and keeps each milestone as an event
+  restored byte for byte: yes (sha256 10c610160a0ba240)
+
+S4: an IND package is migrated as a device filing
+  file: migrations/20261030_estar_filing_one_store.sql
+  test: tests/schema-contract/estar-filing-one-store.pglite.test.ts
+  result: RED (4 failed | 3 passed (7))
+    x a database holding device packages > makes each device package on its own organization's project one tracked filing, never filed
+    x a database holding device packages > names what each package recorded in its import event, and keeps each milestone as an event
+    x a database holding device packages > leaves the packages that are not device filings, and the package rows themselves, untouched
+    x a database holding device packages > adds nothing on a replay
+  restored byte for byte: yes (sha256 10c610160a0ba240)
+
+S5: the migration's insert is not guarded against a replay
+  file: migrations/20261030_estar_filing_one_store.sql
+  test: tests/schema-contract/estar-filing-one-store.pglite.test.ts
+  result: RED (2 passed | 5 skipped (7))
+  restored byte for byte: yes (sha256 10c610160a0ba240)
+
+S6: the history is not append-only (no UPDATE refusal)
+  file: migrations/20261030_estar_filing_one_store.sql
+  test: tests/schema-contract/estar-filing-one-store.pglite.test.ts
+  result: RED (1 failed | 6 passed (7))
+    x a database holding device packages > keeps a filing's history append-only, held to its organization, and gone with its filing
+  restored byte for byte: yes (sha256 10c610160a0ba240)
+
+S7: an event is held to its filing only, not to the filing's organization
+  file: migrations/20261030_estar_filing_one_store.sql
+  test: tests/schema-contract/estar-filing-one-store.pglite.test.ts
+  result: RED (1 failed | 6 passed (7))
+    x a database holding device packages > keeps a filing's history append-only, held to its organization, and gone with its filing
+  restored byte for byte: yes (sha256 10c610160a0ba240)
+
+S8: a tracked filing is inserted outside the transaction of its created event
+  file: server/services/pathway-engines/estar/estar-submission-service.ts
+  test: server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x the filing and its history commit together > a filing whose created event cannot be written is not tracked
+  restored byte for byte: yes (sha256 120a86bf05b15d60)
+
+S9: a status change writes no event
+  file: server/services/pathway-engines/estar/estar-submission-service.ts
+  test: server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts
+  result: RED (2 failed | 3 passed (5))
+    x the filing and its history commit together > a status change writes its event, and does not land without it
+    x reading the history > in order, for the filing's organization only
+  restored byte for byte: yes (sha256 120a86bf05b15d60)
+
+S10: a signed filing writes no filed event
+  file: server/services/pathway-engines/estar/estar-submission-service.ts
+  test: server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts
+  result: RED (1 failed | 12 passed (13))
+    x applySignedFiling > writes the filed event to the filing's history on the same client, after the signature
+  restored byte for byte: yes (sha256 120a86bf05b15d60)
+
+S11: the history read does not check the filing's organization first
+  file: server/services/pathway-engines/estar/estar-submission-service.ts
+  test: server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x reading the history > in order, for the filing's organization only
+  restored byte for byte: yes (sha256 120a86bf05b15d60)
+
+S12: a migrated filing takes no review clock from the catalogue
+  file: server/services/pathway-engines/estar/estar-submission-service.ts
+  test: server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x a migrated filing's review clock > is the catalogue's when the filing recorded none, and its own otherwise
+  restored byte for byte: yes (sha256 120a86bf05b15d60)
+
+S13: a filing with no project is assessed anyway
+  file: server/routes/510k-estar-routes.ts
+  test: tests/routes/estar-filing-row-gate.test.ts
+  result: RED (1 failed | 5 passed (6))
+    x GET /submissions/:id/readiness — the filing's own gate > does not assess a filing tracked under no project, and says so
+  restored byte for byte: yes (sha256 d0cf885a790296b6)
+
+S14: the row gate reads without admitting the filing's project
+  file: server/routes/510k-estar-routes.ts
+  test: tests/routes/estar-filing-row-gate.test.ts
+  result: RED (3 failed | 3 passed (6))
+    x GET /submissions/:id/readiness — the filing's own gate > answers what the filing-readiness panel answers for the filing's type, variant and project
+    x GET /submissions/:id/readiness — the filing's own gate > assesses nothing for a caller the filing's project does not admit
+    x GET /submissions/:id/events — the filing's history > returns the history once the filing's project admits the caller
+  restored byte for byte: yes (sha256 d0cf885a790296b6)
+
+S15: the history read skips the project's admission
+  file: server/routes/510k-estar-routes.ts
+  test: tests/routes/estar-filing-row-gate.test.ts
+  result: RED (2 failed | 4 passed (6))
+    x GET /submissions/:id/events — the filing's history > returns the history once the filing's project admits the caller
+    x GET /submissions/:id/events — the filing's history > reads nothing for a caller the project does not admit
+  restored byte for byte: yes (sha256 d0cf885a790296b6)
+
+S16: the row gate assesses with the project's integer id in place of its program
+  file: server/routes/510k-estar-routes.ts
+  test: tests/routes/estar-filing-row-gate.test.ts
+  result: RED (1 failed | 5 passed (6))
+    x GET /submissions/:id/readiness — the filing's own gate > answers what the filing-readiness panel answers for the filing's type, variant and project
+  restored byte for byte: yes (sha256 d0cf885a790296b6)
+
+S17: AnA's command maps an IND onto a 510(k) filing
+  file: server/services/ana-ri/command-executor.ts
+  test: server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts
+  result: RED (1 failed | 23 passed (24))
+    x create_submission_package tracks a device filing and signs the creation decision > refuses a family that is not a device filing, by name, writing nothing
+  restored byte for byte: yes (sha256 78556357337ff43b)
+
+S18: AnA's filing is written outside its signed transaction
+  file: server/services/ana-ri/command-executor.ts
+  test: server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts
+  result: RED (2 failed | 22 passed (24))
+    x create_submission_package tracks a device filing and signs the creation decision > without a verified sign-off creates no filing
+    x create_submission_package tracks a device filing and signs the creation decision > a failed signature write rolls the filing and its event back
+  restored byte for byte: yes (sha256 78556357337ff43b)
+
+S19: the gate asks for every filing, not drafts only
+  file: client/src/concept2cure/v2/surfaces/DeviceFilings.tsx
+  test: client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx
+  result: RED (1 failed | 9 passed (10))
+    x each draft filing's gate, from its own readiness > asks only for drafts: a filing past draft is not assessed for filing
+  restored byte for byte: yes (sha256 7e966aafd355a0bf)
+
+S20: the status filter offers statuses the list does not hold
+  file: client/src/concept2cure/v2/surfaces/DeviceFilings.tsx
+  test: client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx
+  result: RED (1 failed | 9 passed (10))
+    x the status filter > offers only the statuses the list holds, each with its count, and shows only that status
+  restored byte for byte: yes (sha256 7e966aafd355a0bf)
+
+S21: a failed read of the gate is drawn as not assessed
+  file: client/src/concept2cure/v2/surfaces/DeviceFilings.tsx
+  test: client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx
+  result: RED (2 failed | 8 passed (10))
+    x each draft filing's gate, from its own readiness > a failed read is an error with a retry, never a verdict
+    x what the retired screen pinned, on the device filings > a 200 that is not a gate is an unreadable gate, never a verdict
+  restored byte for byte: yes (sha256 7e966aafd355a0bf)
+
+S22: a failed history read is an empty history
+  file: client/src/concept2cure/v2/surfaces/TrackedFilingHistory.tsx
+  test: client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx
+  result: RED (1 failed | 9 passed (10))
+    x each filing's history, on its record > an empty history is said to be empty, and a failed read to have failed
+  restored byte for byte: yes (sha256 e5e1e91a4d6af0d7)
+
+S23: an unknown actor is named System
+  file: client/src/concept2cure/v2/surfaces/TrackedFilingHistory.tsx
+  test: client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx
+  result: RED (1 failed | 9 passed (10))
+    x each filing's history, on its record > lists the events in order, with who and what, and an unknown person as —
+  restored byte for byte: yes (sha256 e5e1e91a4d6af0d7)
+
+S24: device-submission has no alias
+  file: client/src/concept2cure/v2/registryModel.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-submission is folded into Submission Center > resolves the old id to Submission Center from a link, an in-app move and AnA, with or without a project open
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 23 passed (24))
+    x the mapping > agrees with the screens: each folded id opens its target
+  restored byte for byte: yes (sha256 319f159ac52f2f1e)
+
+S25: device-submission back on the device rail
+  file: client/src/concept2cure/v2/registryModel.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-submission is folded into Submission Center > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+  restored byte for byte: yes (sha256 319f159ac52f2f1e)
+
+S26: the sales tour stops at device-submission again
+  file: shared/navigation/demo-scripts.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-submission is folded into Submission Center > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+  restored byte for byte: yes (sha256 35ad0a5e1b37ccba)
+
+S27: the mapping drops device-submission
+  file: server/services/entitlements/folded-module-successors.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (4 failed | 20 passed (24))
+    x the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+    x the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-submission
+    x the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+  restored byte for byte: yes (sha256 b30e2e64a563fffb)
+
+S28: device-submission left in the Projects scope list
+  file: shared/constants/launch-scope.ts
+  test: server/services/entitlements/__tests__/launch-scope.test.ts
+  result: RED (1 failed | 44 passed (45))
+    x the folded device submission packages > are in no scope list and no new grant: Submission Center holds the device filings (D2, fold F5 item 1, 2026-10-30)
+  test: client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-submission is folded into Submission Center > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+  restored byte for byte: yes (sha256 64f7ba4e86a892bb)
+
+S29: 20260810 upserts device-submission again
+  file: db/migrations/20260810_reconcile_module_catalog.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (27 skipped (27))
+  restored byte for byte: yes (sha256 692347f58467e1d0)
+
+S30: 20260823 keeps the device-submission packaging row
+  file: db/migrations/20260823_module_catalog_commercial_packaging.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (27 skipped (27))
+  restored byte for byte: yes (sha256 7ff6aaa4dae7b0ee)
+
+S31: a client screen reads the package store again
+  file: client/src/concept2cure/v2/surfaces/DeviceFilings.tsx
+  test: client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-submission is folded into Submission Center > leaves no client code that names the retired screen or reads the package store
+  restored byte for byte: yes (sha256 7e966aafd355a0bf)
+
+S1, S5, S29 and S30 are red by the suite not starting: its beforeAll applies the mutated file, which raises, as a
+deploy would (tools/why.py, run once each, restored byte for byte):
+  S1:  error: fold F5: 1 device package(s) were not migrated into estar_submissions with their import event   (the migration's own completeness check)
+  S5:  error: duplicate key value violates unique constraint "estar_submissions_source_package_uq"   (the second replay)
+  S29: error: catalog modules with no tier assigned: device-submission   (20260823's tier guard)
+  S30: error: packaging names modules that are not in available_modules: device-submission   (20260823's unknown-module guard)
+
+After the run: sha256sum -c over the 12 mutated files (item1-sha-before.txt): all OK.
+
+Not through this runner: the PURGE_CHILD_TABLES line in server/services/tenant/tenant-offboarding.ts. Its red was
+taken once by removing the line and running ci:purge-coverage on a deploy-shaped database (purge-coverage.txt):
+"NEW org-keyed table(s) a tenant purge cannot reach: estar_submission_events"; the file was restored and checked by
+sha256. The migration-set.mjs entry's order is pinned by
+estar-filing-one-store.pglite.test.ts and ci:migration-set-order; both files are shared with other lanes, so neither
+was rewritten for a mutation.

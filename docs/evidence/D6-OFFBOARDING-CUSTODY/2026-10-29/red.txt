@@ -1,0 +1,192 @@
+# Red: each test of this change, failing on the code it exists to catch (D6, P-58 and P-59, 2026-10-29)
+# Real PostgreSQL 16 + pgvector, deploy-shaped (install-fresh + deploy-migrate), RLS enforced, runtime role app_service.
+# Filtered to the verdict lines; full logs stay in the lane's scratch.
+
+## 1. P-58 items 1 to 4, at the lane's base (c2c_custody_head_tpl, d56be445f), with the new dbtest
+### item 1: the export lacks the held records' integrity and the IVDR histories
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > seeds one row of every held table for D and for E
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > every held table is one the export reads
+   → held tables the export does not read: expected [ …(3) ] to deeply equal []
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > D's export holds D's row of every held table and none of E's
+   → D's held rows missing from D's export: expected [ …(3) ] to deeply equal []
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries the verdict of the audit ledger every signature cites
+   → no audit_logs chain verdict in the export: expected undefined to be defined
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries each of D's signatures with its manifest and the §11.200 hash verdict, and none of E's
+   → signature 2 is not in the export's integrity section: expected undefined to be defined
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: held tables the export does not read: expected [ …(3) ] to deeply equal []
+AssertionError: D's held rows missing from D's export: expected [ …(3) ] to deeply equal []
+AssertionError: no audit_logs chain verdict in the export: expected undefined to be defined
+AssertionError: signature 2 is not in the export's integrity section: expected undefined to be defined
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+
+### item 2: custody is not a signed act
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > seeds one row of every held table for D and for E
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > every held table is one the export reads
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > D's export holds D's row of every held table and none of E's
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries the verdict of the audit ledger every signature cites
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries each of D's signatures with its manifest and the §11.200 hash verdict, and none of E's
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > the purge of a tenant holding a held record is refused without it, and nothing is touched
+   → expected '23503' to be 'CUSTODY_ATTESTATION_REQUIRED' // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator reads what they will sign: every held record, and those inside the retention period
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > nobody else signs it: a member, the other tenant, a digest that is not this tenant's, a changed attestation
+   → Cannot read properties of undefined (reading 'attestationSha256')
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator signs custody through the ceremony: one signature on the export's digest, its manifest the attestation
+   → Cannot read properties of undefined (reading 'attestationSha256')
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > with custody signed, the purge passes its custody check
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '23503' to be 'CUSTODY_ATTESTATION_REQUIRED' // Object.is equality
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed | 6 passed (10)
+
+### items 3 and 4: no certificate; the held tables are not erased
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > seeds one row of every held table for D and for E
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > every held table is one the export reads
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > D's export holds D's row of every held table and none of E's
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries the verdict of the audit ledger every signature cites
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries each of D's signatures with its manifest and the §11.200 hash verdict, and none of E's
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > the purge of a tenant holding a held record is refused without it, and nothing is touched
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator reads what they will sign: every held record, and those inside the retention period
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > nobody else signs it: a member, the other tenant, a digest that is not this tenant's, a changed attestation
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator signs custody through the ceremony: one signature on the export's digest, its manifest the attestation
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > with custody signed, the purge passes its custody check
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > purges D
+   → 23503 update or delete on table "document_versions" violates foreign key constraint "document_audit_trail_version_id_document_versions_id_fk" on table "document_audit_trail": expected error: update or delete on table "documen… { …(15) } to be null
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > writes one certificate: the digest, the counts, the custody signature, the purge; no customer content
+   → relation "tenant_offboarding_certificates" does not exist
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the certificate is a platform record: it cannot be changed or removed
+   → expected [Function] to throw error matching /OFFBOARDING_CERTIFICATE_IMMUTABLE/ but got 'relation "tenant_offboarding_certific…'
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows
+   → D's held rows the purge left: expected [ …(24) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: 23503 update or delete on table "document_versions" violates foreign key constraint "document_audit_trail_version_id_document_versions_id_fk" on table "document_audit_trail": expected error: update or delete on table "documen… { …(15) } to be null
+AssertionError: expected [Function] to throw error matching /OFFBOARDING_CERTIFICATE_IMMUTABLE/ but got 'relation "tenant_offboarding_certific…'
+AssertionError: D's held rows the purge left: expected [ …(24) ] to deeply equal []
+ Test Files  1 failed (1)
+      Tests  4 failed | 10 passed (14)
+
+## 2. P-59: the review-route guard admits the session setting (tests/db/review-route-guard.dbtest.ts at the base)
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s status
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s assignee
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s archive
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s blockers
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s due date
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s dependencies
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s route columns
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a DELETE of a route row
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > an INSERT naming a route column
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > an INSERT into task_dependencies naming a route member
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > an INSERT into cross_module_task_links naming a route member
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > a metadata-only UPDATE (the due-date sweep’s marker)
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > every write to a task that is not a route member
+ × tests/db/review-route-guard.dbtest.ts > what the guard admits > a door’s own transition: members enlisted, a step opened when its turn has come and not before
+   → function public.review_route_enlist_member(unknown, uuid, unknown, unknown, unknown) does not exist
+ × tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > the setting the guard used to read is still settable by the runtime role, and admits nothing
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ ✓ tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > the runtime role cannot become the route writer
+ × tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > each door is a definer function owned by the route writer, with a pinned search_path, that PUBLIC cannot run
+   → expected [] to deeply equal [ 'review_route_cancel_member', …(6) ]
+ × tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > a door refuses another tenant’s scope, and a task that is not the route writer’s own
+   → expected [Function] to throw error matching /written in its organization's own sco…/ but got 'function public.review_route_enlist_m…'
+ ✓ tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > carries the tenant policy and FORCE RLS
+ × tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > another tenant cannot see the route, nor name it from a task
+   → expected [Function] to throw error matching /is not an open route of organization/ but got 'function public.review_route_enlist_m…'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+AssertionError: expected [] to deeply equal [ 'review_route_cancel_member', …(6) ]
+AssertionError: expected [Function] to throw error matching /written in its organization's own sco…/ but got 'function public.review_route_enlist_m…'
+AssertionError: expected [Function] to throw error matching /is not an open route of organization/ but got 'function public.review_route_enlist_m…'
+ Test Files  1 failed (1)
+      Tests  5 failed | 15 passed (20)
+
+## 3. The lead's decisions, on the tree as it stood at 96a9ecf58 (c2c_custody_new5_tpl)
+### ci:purge-coverage before decisions 1 and 2
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - csr_assembly_runs
+  - csr_narrative_runs
+  - qc_deviations
+exit 1
+
+### custody dbtest with qc_deviations held in the test and not in the code (decision 1)
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > seeds one row of every held table for D and for E
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > every held table is one the export reads
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > D's export holds D's row of every held table and none of E's
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries the verdict of the audit ledger every signature cites
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries each of D's signatures with its manifest and the §11.200 hash verdict, and none of E's
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > the purge of a tenant holding a held record is refused without it, and nothing is touched
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator reads what they will sign: every held record, and those inside the retention period
+   → actual value must be number or bigint, received "undefined"
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > nobody else signs it: a member, the other tenant, a digest that is not this tenant's, a changed attestation
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator signs custody through the ceremony: one signature on the export's digest, its manifest the attestation
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > with custody signed, the purge's custody check passes on that receipt and no other
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > a held record added after custody was signed makes it stale, and the purge is refused
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2b. the doors hold the database to it, and the runtime role has no way around them > each door refuses the other tenant's held records without custody, in the platform scope
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2b. the doors hold the database to it, and the runtime role has no way around them > the runtime role cannot delete a held record itself, nor become the doors' role
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > purges D
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > writes one certificate: the digest, the counts, the custody signature, the purge; no customer content
+   → actual value must be number or bigint, received "undefined"
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the certificate is a platform record: it cannot be changed or removed
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows
+   → D's held rows the purge left: expected [ 'public.qc_deviations' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: D's held rows the purge left: expected [ 'public.qc_deviations' ] to deeply equal []
+ Test Files  1 failed (1)
+      Tests  3 failed | 14 passed (17)
+exit 1
+
+## 4. tests/db/review-route-qms-rr2.dbtest.ts (6549fe2b5) on P-59's guard, before its fixture assumed the writer's role
+   → ROUTE_TASK_OWNED_BY_ROUTE: review route columns of task ROUTE-32c7b4d7-21 are written only by the review route.
+  public.unified_tasks: ROUTE_TASK_OWNED_BY_ROUTE: review route columns are written only by the review route.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route
+
+## 5. P-58's data return (the export and the purge in the platform scope), c2c_custody_new7_tpl
+### the routes back in the platform scope (M17): D's export lacks D's row of all eight tables; no receipt is recorded, so custody and the purge fail after
+files: server/routes/tenant-export.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > holds D's row of every table the platform scope returned none of, the Vault's among them, and none of E's 6ms
+   → D's rows missing from D's export: expected [ 'vault.documents', …(7) ] to deeply equal []
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > the purge of a tenant holding a held record is refused without it, and nothing is touched 4ms
+   → expected 'EXPORT_EVIDENCE_UNVERIFIED' to be 'CUSTODY_ATTESTATION_REQUIRED' // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator reads what they will sign: every held record, and those inside the retention period 13ms
+   → {"error":{"code":"CUSTODY_RECEIPT_NOT_FOUND","message":"No complete export of this organization has that digest. Produce a full export, then sign custody of it. Nothing was signed."}}: expected 404 to be 200 // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > nobody else signs it: a member, the other tenant, a digest that is not this tenant's, a changed attestation 1ms
+   → Cannot read properties of undefined (reading 'attestationSha256')
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator signs custody through the ceremony: one signature on the export's digest, its manifest the attestation 1ms
+   → Cannot read properties of undefined (reading 'attestationSha256')
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > with custody signed, the purge's custody check passes on that receipt and no other 14ms
+   → expected { …(2) } to be undefined
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > a held record added after custody was signed makes it stale, and the purge is refused 14ms
+   → expected 'CUSTODY_ATTESTATION_REQUIRED' to be 'CUSTODY_ATTESTATION_STALE' // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > purges D 1ms
+   → EXPORT_EVIDENCE_UNVERIFIED No export receipt matches that digest for this organization. Produce a full export (GET /api/tenant-export/full) and purge with the digest it returns.: expected OffboardingStateError: No export receipt … { code: '…' } to be null
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > writes one certificate: the digest, the counts, the custody signature, the purge; no customer content 2ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the certificate is a platform record: it cannot be changed or removed 2ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the database refuses a certificate of an export whose receipt states no scope 2ms
+   → promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows 26ms
+   → D's held rows the purge left: expected [ …(33) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > holds D's row of every table the platform scope returned none of, the Vault's among them, and none of E's
+AssertionError: D's rows missing from D's export: expected [ 'vault.documents', …(7) ] to deeply equal []
+### the export fixed, the purge not yet (c2c_custody_new6_tpl): the purge of D leaves its knowledge graph (on no purge list)
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows
+   → D's held rows the purge left: expected [ Array(3) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 19 passed (20)
+### the purge without the organization's tenant id and uuid (M18): it leaves citation_chains too
+files: server/services/tenant/tenant-offboarding.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows 35ms
+   → D's held rows the purge left: expected [ 'public.citation_chains', …(3) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows
+AssertionError: D's held rows the purge left: expected [ 'public.citation_chains', …(3) ] to deeply equal []
+

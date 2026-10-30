@@ -438,9 +438,10 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'device-postmarket': { component: DeviceSurfaces['device-postmarket'], full: true },
   'device-presub': { component: DeviceSurfaces['device-presub'], full: true },
   'device-software': { component: DeviceSurfaces['device-software'], full: true },
-  'device-submission': { component: DeviceSurfaces['device-submission'], full: true },
+  // No device-submission: it folded into Submission Center (D2, fold F5 item 1, 2026-10-30).
   'device-udi': { component: DeviceSurfaces['device-udi'], full: true },
-  'device-validation': { component: DeviceSurfaces['device-validation'], full: true },
+  // No device-validation: the organization-wide blocker list retired (D2, fold F5
+  // item 2, 2026-10-29); its address opens Submission Center (DEEP_LINK_ALIASES).
   'device-workstream': { component: DeviceSurfaces['device-workstream'], full: true },
   'dispatch-readiness': { component: DispatchReadiness, full: true },
   'doc-journey': { component: DocJourney },

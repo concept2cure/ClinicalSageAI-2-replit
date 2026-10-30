@@ -81,8 +81,8 @@ beforeEach(async () => {
   await owner.query('DELETE FROM vault.legal_holds WHERE organization_id = $1', [ORG]);
   await owner.query('DELETE FROM tenant_export_receipts WHERE organization_id = $1', [ORG]);
   await owner.query(
-    `INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by)
-     VALUES ($1, $2, 2, 4, NULL)`,
+    `INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by, export_scope)
+     VALUES ($1, $2, 2, 4, NULL, 'organization')`,
     [ORG, DIGEST],
   );
 });
