@@ -23,3 +23,7 @@ Use the Audit trail authority once at each archive entry and pass explicit `name
 - Root publication gates and release receipt follow separately. No production dependency, schema, signed seal content or permission expansion.
 
 The build guard is process-local and serializes building only, across both archive endpoints for the same organization/account. It does not claim a cluster-wide quota. Privileged audit readers retain the original history; reduced copies identify their projection and preserve the canonical reader's chain verdict.
+
+## Combined verification and publication
+
+`04-integration.txt` and compressed logs record 2,620 regression tests across 256 files, the separate 28 native database tests, 19 lint-ratchet controls, production build, zero-error TypeScript and warning ratchet. Upload browser evidence lives beside its D2 review evidence. Normal publication uses all repository hooks; the exact publication receipt and hook log are retained at the paths in the integration record. No deployment or complete launch acceptance is claimed.
