@@ -1,0 +1,26 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  client/src/concept2cure/v2/dataConnect.tsx (728 lines)
+  client/src/concept2cure/v2/editor/DocumentWorkbench.tsx (6674 lines)
+  client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx (563 lines)
+  client/src/concept2cure/v2/surfaces/Vault.tsx (3018 lines)
+  server/routes/c2c/project-vault.ts (3081 lines)
+  server/routes/csr-jobs.ts (552 lines)
+  server/services/ana/intelligence-questions/flows/csr-report.ts (1991 lines)
+  server/services/csr-builder.ts (817 lines)
+  server/services/csr/csr-job-runner.ts (786 lines)
+  server/services/vault/vault-filing.service.ts (552 lines)
+  tests/unit/csr-job-runner.test.ts (640 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3551 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 50bf225d3] Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2

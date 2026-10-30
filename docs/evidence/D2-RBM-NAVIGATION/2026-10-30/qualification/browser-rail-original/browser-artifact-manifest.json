@@ -1,0 +1,52 @@
+{
+  "scope": "Actual Rail and existing providers in installed Chromium, synthetic intercepted GET/auth fixtures only. No hosted deployment or real tenant acceptance.",
+  "checks": 5,
+  "selectedInputsUnchanged": true,
+  "selectedInputCount": 23,
+  "artifacts": {
+    "browser-server.mjs": {
+      "bytes": 921,
+      "sha256": "769e4b841b95002755ef654c9c98bf71e7c9469d43a65f782a4ec3b1cdce6ffb"
+    },
+    "browser-index.html": {
+      "bytes": 302,
+      "sha256": "56284e9b8eb066d525df7524881950e0968b166e48015230d893d1f0eee810d5"
+    },
+    "browser-rail.tsx": {
+      "bytes": 2966,
+      "sha256": "b21d9b6f7acb86c61785563c7daba1ab37e4657ce95dc23d90b0e399f70896f5"
+    },
+    "browser-check.mjs": {
+      "bytes": 7766,
+      "sha256": "1130da73609d174c00bbc1d2c5688a41592f58cb7f7a8914a9189285470dc1df"
+    },
+    "browser-result.json": {
+      "bytes": 5059,
+      "sha256": "8495fed153909fe466248f8eddb89a80702d2788bfa808b04178b29b0a33bad7"
+    },
+    "browser-execution.txt": {
+      "bytes": 414,
+      "sha256": "63aeb5a3fab5a60782e38b6b75a069821b343e051cb181292a7cc0943bf96295"
+    },
+    "browser-server.log": {
+      "bytes": 214,
+      "sha256": "9834eadac945a30d7673a2ca0d26acdb73560944b97d9084f31c3eb3f47b397a"
+    },
+    "browser-result/desktop-expanded-rbm.png": {
+      "bytes": 47897,
+      "sha256": "b7f26f50010cf6a4fc74c8276fd2f3c5c4afd3d45dcb10cb33aafe9cd84d382d"
+    },
+    "browser-result/desktop-professional-lock.png": {
+      "bytes": 66183,
+      "sha256": "137c078554c0cad1be83888f9500d99da1c52e6265a4df3dd3556c277d7992fe"
+    },
+    "browser-result/mobile-collapsed-rbm.png": {
+      "bytes": 30394,
+      "sha256": "65d05a6417e3b1b5cbf686b5794b52b49bc1e7bd65714015ee47d273ae2ae872"
+    },
+    "browser-result/mobile-expanded-rbm.png": {
+      "bytes": 25287,
+      "sha256": "a467ec1da45f7d9dfcd0276c9ad1ffbee65a4c1d9d2ccd925e7ba8f4ef88a7c7"
+    }
+  }
+}

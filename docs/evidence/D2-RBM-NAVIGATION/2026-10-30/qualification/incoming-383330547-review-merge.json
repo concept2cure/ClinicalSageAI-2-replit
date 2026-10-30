@@ -1,0 +1,23 @@
+{
+  "observedAt": "2026-10-30T17:51:53.296361+00:00",
+  "reviewer": "/root/rbm_signature_review",
+  "incoming": "383330547",
+  "mergedCommit": "ee4ce3da10892369e90bc2ac3cf0cde81578f27b",
+  "mergeConflicts": [],
+  "verdict": "CSR/STF source role changes only; no RBM dependency overlap, actor/project/signature services unchanged",
+  "unchangedPriorSelectedInputs": 139,
+  "reviewWasReadOnlyNoExecution": true,
+  "upstreamTotalsNotBorrowed": true,
+  "productionPins": {
+    "server/services/csr/csr-assembly-placement.ts": "ad25772804a556d3e6ace30df5d2ff8b476666432862636468cd9dc5da691876",
+    "server/services/csr/csr-assembly-plan.ts": "99aec61ee1f97de84617ce3be64e3188be3c6ec16539f5b265721397c9c4effb",
+    "server/services/csr/csr-placement-lifecycle.ts": "8bf39d329654ff43035b845a7d88ecb6f1addcee5eef3e1fb9beff8d31130404",
+    "server/services/ectd/stf-generator.ts": "df4760b1daabf82f02f56ad0dcf4128d4f3124bdbb56987b6dfecdaee492dff9",
+    "server/services/ind/ctd/regulatory-basis.ts": "7aa40c3e87edda6854834421d1c54379cdd1acdb8f156300e69078418130ba8e"
+  },
+  "freshRegression": [
+    "server/services/csr/__tests__/csr-stf-source-values.test.ts",
+    "server/services/ectd/__tests__/stf-csr-source-values.test.ts",
+    "server/services/ectd/__tests__/stf-generator.test.ts"
+  ]
+}

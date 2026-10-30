@@ -1,0 +1,63 @@
+{
+  "result": "passed",
+  "checks": 12,
+  "selectedInputCount": 28,
+  "selectedInputsUnchanged": true,
+  "projectsSha256": "e09aa607759335a987aa75e269c3c75aa00dab1607c8858c21f66dba88da5fc0",
+  "freshFixtureServerRestarted": true,
+  "correctedSpacingVerifiedInActualDOM": true,
+  "previousWizardProof": "browser-wizard-before-spacing/",
+  "cachedHostIntermediateUnqualified": "browser-wizard-cached-server-intermediate/",
+  "originalRailProof": "browser-rail-original/",
+  "artifacts": {
+    "browser-wizard.tsx": {
+      "bytes": 2801,
+      "sha256": "850a7778c2adcbca61bf1003f2e4af007e43afd15be45aca968b3a03d3749202"
+    },
+    "browser-wizard-index.html": {
+      "bytes": 314,
+      "sha256": "70a4b89c3a0cd4cd99c2df25631c171e31d8c7d048214e261eabb2e1783fff4b"
+    },
+    "browser-wizard-final-check.mjs": {
+      "bytes": 10126,
+      "sha256": "7ce6c0ab6ed78c8969d19026ab7c6bddb32535c8647da2f7749b19167e99c8e1"
+    },
+    "browser-wizard-final-result.json": {
+      "bytes": 47658,
+      "sha256": "bb4652da6c4dfd21010e32bcc7228fa3d63f76e9519044a374fd396551a5f6a6"
+    },
+    "browser-wizard-final-execution.txt": {
+      "bytes": 865,
+      "sha256": "a0d666b86d38e85536ac98966c58ffe70098dc3a1205400aaf8a390c75d0be84"
+    },
+    "browser-wizard-fresh-server.log": {
+      "bytes": 60,
+      "sha256": "286f006f39e24b53813557a4a4944da3ea90132fcbb9d444f9afab69a9c5431e"
+    },
+    "browser-wizard-final-result/desktop-configuration-selected.png": {
+      "bytes": 108205,
+      "sha256": "622aa694a94927bb943e67582bf241831e3529c94642f10a73e5199ed28fffab"
+    },
+    "browser-wizard-final-result/desktop-mocked-receipt.png": {
+      "bytes": 28273,
+      "sha256": "6a8720253c59bde526129ae7bceb3f831519d04188160c44720eca9d22d8b8f7"
+    },
+    "browser-wizard-final-result/desktop-review-selected.png": {
+      "bytes": 88278,
+      "sha256": "cfb7db502c2fcf427719aa625f5887def90d9cafb95c524e6983e50345cef237"
+    },
+    "browser-wizard-final-result/phone-configuration-selected.png": {
+      "bytes": 57349,
+      "sha256": "b525d1bddcc3bb189fb990907a97b2f1ca6ec34502765badb129ed6b4c81dd51"
+    },
+    "browser-wizard-final-result/phone-mocked-receipt.png": {
+      "bytes": 24066,
+      "sha256": "24a783008d50fd3ee48b80aaa325bed4a66e28b54e68f45e76243639081a6e73"
+    },
+    "browser-wizard-final-result/phone-review-selected.png": {
+      "bytes": 53346,
+      "sha256": "803d512dc8a60a61d8d954ec3cb06f8a622a63897ba1d040605b6875e2341735"
+    }
+  },
+  "scope": "Actual NewProjectWizard, filing picker and providers in installed Chromium. Explicit synthetic filing-offer/identity/workspace HTTP GETs and an intercepted project-create POST response. No real application backend or project write, module grant, RBM seed, hosted acceptance, clinical or agency validation."
+}

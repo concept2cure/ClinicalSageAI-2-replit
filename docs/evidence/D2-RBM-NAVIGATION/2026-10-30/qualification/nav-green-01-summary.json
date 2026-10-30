@@ -1,0 +1,24 @@
+{
+  "exitCode": 1,
+  "passed": 64,
+  "failed": 4,
+  "skipped": 0,
+  "actualFiles": 3,
+  "unchangedInputs": true,
+  "failures": [
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/server/services/entitlements/__tests__/rbm-launch-claim.test.ts",
+      "cases": [
+        "RBM release admission keeps the existing tier refusal after release admission",
+        "RBM release admission keeps the existing disabled refusal after release admission",
+        "RBM release admission preserves a real subscription verdict instead of replacing it with a release lock"
+      ]
+    },
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx",
+      "cases": [
+        "RBM in the main left rail explains the real Professional subscription lock without opening RBM"
+      ]
+    }
+  ]
+}

@@ -20,7 +20,7 @@
  * 87 features presented as apps (docs/design/CLIENT_JOURNEY_2026-10-25.md).
  * Now the rail is the five places every client works in (Home, Projects, Tasks,
  * Communication, Vault), then the work areas under their own heading (CMC /
- * Module 3, Quality, Reporting & analytics). The catalog is "Subscription & features"
+ * Module 3, Risk-based monitoring, Quality, Reporting & analytics). The catalog is "Subscription & features"
  * in the account menu, for organization administrators; Submission Center opens
  * from a project's Submit step; Tasking and My work are one entry; Home lists
  * the person's conversations. The client type is in the account menu, which the
@@ -123,7 +123,7 @@ function destinations(scroll: HTMLElement, onNav: ReturnType<typeof vi.fn>): str
 }
 
 const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault'];
-const WORK_AREAS = ['CMC / Module 3', 'Quality', 'Reporting & analytics'];
+const WORK_AREAS = ['CMC / Module 3', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
 
 describe('the rail lists the places, then the work areas', () => {
   it('exactly the places, then the work areas, in order', async () => {
@@ -202,8 +202,9 @@ describe('the rail lists the places, then the work areas', () => {
     expect(rail.querySelector('.nav-badge')).toBeNull();
     const text = rail.textContent ?? '';
     // CMC came back as a place of its own on 2026-10-22, not inside the old
-    // "Science & intelligence" section, which stays gone with RBM and the CRL library.
-    for (const gone of ['Science & intelligence', 'Explore', 'Quick access', 'Client categories', 'AnA Command', 'AnA memory', 'Artifacts Center', 'Risk-based monitoring', 'CRL library']) {
+    // "Science & intelligence" section, which stays gone with the CRL library.
+    // RBM is a founder-admitted work area from 2026-10-30.
+    for (const gone of ['Science & intelligence', 'Explore', 'Quick access', 'Client categories', 'AnA Command', 'AnA memory', 'Artifacts Center', 'CRL library']) {
       expect(text, gone).not.toContain(gone);
     }
   });

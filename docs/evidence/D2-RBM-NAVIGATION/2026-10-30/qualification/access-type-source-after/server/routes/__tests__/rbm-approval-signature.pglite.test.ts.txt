@@ -1,0 +1,342 @@
+/** Real RBM approval SQL and canonical signature persistence share one pinned transaction.
+ * Credential/project decisions are controlled collaborators; the ledger double
+ * writes real fixture rows on the client it receives. This is not native PG RLS.
+ */
+import { readFileSync } from 'node:fs';
+import express from 'express';
+import request from 'supertest';
+import { PGlite } from '@electric-sql/pglite';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const h = vi.hoisted(() => ({
+  query: null as unknown as (sql: string, args?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>,
+  access: vi.fn(), write: vi.fn(), authority: vi.fn(), verify: vi.fn(),
+  poolForbidden: false,
+  activateAfterPlanRead: false,
+  malformedAuthor: false,
+  calls: [] as string[],
+}));
+vi.mock('../../db', () => ({ pool: {
+  query: (sql: string, args?: unknown[]) => {
+    if (h.poolForbidden) throw new Error('Approval escaped request-pinned connection');
+    return h.query(sql, args);
+  },
+  connect: async () => {
+    if (h.poolForbidden) throw new Error('Approval escaped request-pinned connection');
+    return { query: h.query, release: vi.fn() };
+  },
+} }));
+vi.mock('../../services/c2c/current-program-access', async original => ({
+  ...(await original<Record<string, unknown>>()), requireCurrentProgramAccess: h.access,
+}));
+vi.mock('../../services/c2c/governed-program-write', async original => ({
+  ...(await original<Record<string, unknown>>()), requireGovernedProgramWriteTx: h.write,
+}));
+vi.mock('../../services/part11/signing-authority-gate', () => ({ checkSigningAuthority: h.authority }));
+vi.mock('../../services/part11/reverify-signer', () => ({ reverifySigner: h.verify }));
+vi.mock('../../services/part11/reverify-signer-deps', () => ({ signerReverificationDeps: () => ({}) }));
+vi.mock('../c2c/actions', () => ({
+  recordGovernedAction: async (client: { query: typeof h.query }, input: Record<string, unknown>) => {
+    const row = (await client.query('INSERT INTO audit_logs (target, payload) VALUES ($1,$2) RETURNING id', [input.target, JSON.stringify(input.payload)])).rows[0];
+    await client.query('INSERT INTO c2c_ana_actions (target, command, payload) VALUES ($1,$2,$3)', [input.target, input.command, JSON.stringify(input.payload)]);
+    return { actionId: `action-${row.id}`, auditId: String(row.id), sha256Chain: 'a'.repeat(64) };
+  },
+}));
+
+import { ProgramReadAccessError } from '../../services/c2c/current-program-access';
+import { deriveGovernedTargetBinding, manifestSignatureHash } from '../../services/part11/signature-persistence';
+import router from '../mdx-rbm';
+
+const PROGRAM = '11111111-1111-4111-8111-111111111111';
+const PRIVATE = '22222222-2222-4222-8222-222222222222';
+const REASON = 'Independent review approves this monitoring version';
+const KINDS = [
+  { kind: 'assessment', path: 'rbm-assessments', table: 'rbm_risk_assessments', id: 12, prior: 10, target: 'rbm-assessment:12' },
+  { kind: 'plan', path: 'rbm-monitoring-plans', table: 'rbm_monitoring_plans', id: 22, prior: 20, target: 'rbm-monitoring-plan:22' },
+];
+let db: PGlite;
+function app(signerId = 3) {
+  const a = express(); a.use(express.json());
+  a.use((req, _res, next) => { Object.assign(req, { user: { id: signerId, organizationId: 7, role: 'admin' }, dbClient: { query: h.query } }); next(); });
+  a.use('/api/mdx', router); return a;
+}
+const approve = (item: typeof KINDS[number], extra: Record<string, unknown> = {}, signer = 3) =>
+  request(app(signer)).post(`/api/mdx/${item.path}/${item.id}/approve`).send({ reason: REASON, password: 'fixture-password', ...extra });
+const rows = async (sql: string, args?: unknown[]) => (await db.query(sql, args)).rows as Array<Record<string, unknown>>;
+const row = async (item: typeof KINDS[number], id = item.id) => (await rows(`SELECT * FROM ${item.table} WHERE id=$1`, [id]))[0];
+
+beforeAll(async () => {
+  db = new PGlite();
+  h.query = async (sql, args) => {
+    h.calls.push(sql);
+    const result = await db.query<Record<string, unknown>>(sql, args);
+    if (h.malformedAuthor && /SELECT created_by,status,program_id,version/.test(sql)) {
+      result.rows[0].created_by = 'unverified-author';
+    }
+    if (h.activateAfterPlanRead && /SELECT status, version FROM rbm_monitoring_plans/.test(sql)) {
+      h.activateAfterPlanRead = false;
+      await db.query("UPDATE rbm_monitoring_plans SET status='active' WHERE id=$1", [22]);
+    }
+    return result;
+  };
+  await db.exec(`
+    CREATE TABLE organizations(id integer PRIMARY KEY);
+    CREATE TABLE users(id integer PRIMARY KEY, name text, email text, title text);
+    CREATE TABLE organization_users(user_id integer, organization_id integer);
+    INSERT INTO organizations VALUES (7),(8);
+    INSERT INTO users VALUES (3,'R. Patel','r.patel@example.test','Reviewer'),(8,'A. Author','a.author@example.test','Author'),(9,'Earlier Reviewer','prior@example.test','Reviewer');
+    INSERT INTO organization_users VALUES (3,7),(8,7),(9,7);
+    CREATE TABLE audit_logs(id serial PRIMARY KEY, target text, payload jsonb);
+    CREATE TABLE c2c_ana_actions(id serial PRIMARY KEY, target text, command text, payload jsonb);
+    CREATE TABLE electronic_signatures (
+      id serial PRIMARY KEY, document_id integer, version_id integer, signed_target text, binding_basis text,
+      signature_type text, signature_purpose text, signature_level integer, signer_id integer,
+      signer_name text, signer_title text, signer_email text, authentication_method text,
+      authentication_timestamp timestamptz, second_factor_verified boolean, signature_hash text,
+      signature_meaning text, signature_manifest json, is_valid boolean, verification_status text,
+      compliance_statement text, legal_disclaimer text, ip_address text, device_info jsonb,
+      signed_at timestamptz, bound_payload_digest text, organization_id integer
+    );
+  `);
+  for (const file of ['20260629_rbm_surfaces.sql', '20260918_rbm_author_attribution.sql', '20260930_rbm_plan_versioning.sql']) {
+    await db.exec(readFileSync(new URL(`../../../migrations/${file}`, import.meta.url), 'utf8'));
+  }
+}, 60_000);
+afterAll(async () => { await db?.close(); });
+
+beforeEach(async () => {
+  h.poolForbidden = false; h.activateAfterPlanRead = false; h.malformedAuthor = false; h.calls.length = 0;
+  h.authority.mockReset().mockResolvedValue(null);
+  h.verify.mockReset().mockResolvedValue({ ok: true, authenticationMethod: 'password', secondFactorVerified: false });
+  h.access.mockReset().mockImplementation(async (_q: unknown, input: { programId: string }) => {
+    if (input.programId !== PROGRAM) throw new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Project access is not permitted.');
+    return { programId: PROGRAM, projectId: 70, clientWorkspaceId: null, actor: { userId: 3, role: 'admin' } };
+  });
+  h.write.mockReset().mockResolvedValue(undefined);
+  await db.exec(`
+    DROP TRIGGER IF EXISTS reject_signature ON electronic_signatures;
+    TRUNCATE rbm_risk_items, rbm_monitoring_actions, rbm_monitoring_plans, rbm_risk_assessments, audit_logs, c2c_ana_actions, electronic_signatures RESTART IDENTITY CASCADE;
+    INSERT INTO rbm_risk_assessments(id, organization_id, program_id, title, overall_risk, status, version, created_by, approved_by, approved_at)
+    VALUES (10,7,'${PROGRAM}','Prior assessment','medium','active',1,8,9,'2026-10-01'),(12,7,'${PROGRAM}','New assessment','high','draft',2,8,NULL,NULL);
+    INSERT INTO rbm_risk_items(id,organization_id,program_id,assessment_id,ctq_factor,risk_description,likelihood,impact,risk_score,mitigation)
+    VALUES (31,7,'${PROGRAM}',12,'Consent integrity','Consent deviation',3,4,12,'Review consent at every visit');
+    INSERT INTO rbm_monitoring_plans(id,organization_id,program_id,assessment_id,title,strategy,status,version,created_by,approved_by,approved_at)
+    VALUES (20,7,'${PROGRAM}',10,'Prior plan','hybrid','active',1,8,9,'2026-10-01'),(22,7,'${PROGRAM}',10,'New plan','risk_based','draft',2,8,NULL,NULL);
+    INSERT INTO rbm_monitoring_actions(id,organization_id,plan_id,description,status)
+    VALUES (40,7,20,'Open site follow-up','open'),(41,7,20,'Completed visit','done');
+  `);
+});
+
+describe('mounted RBM approvals persist their electronic signature', () => {
+  it.each(KINDS)('$kind activation and signature commit together', async item => {
+    const out = await approve(item, { mfaToken: 'body-code-does-not-prove-MFA' });
+    expect(out.status).toBe(200);
+    expect(await row(item)).toMatchObject({ status: 'active', approved_by: 3 });
+    expect(await row(item, item.prior)).toMatchObject({ status: 'archived' });
+    const signatures = await rows('SELECT * FROM electronic_signatures');
+    expect(signatures).toHaveLength(1);
+    expect(signatures[0]).toMatchObject({ signed_target: item.target, signer_id: 3, signer_name: 'R. Patel', signer_email: 'r.patel@example.test', signature_meaning: 'approval', signature_purpose: REASON, authentication_method: 'password', second_factor_verified: false, organization_id: 7 });
+    expect(signatures[0].signature_hash).toBe(manifestSignatureHash(signatures[0].signature_manifest));
+    const audits = await rows('SELECT * FROM audit_logs');
+    expect(audits).toHaveLength(1);
+    expect(audits[0].payload).toMatchObject({ meaning: 'approval', version: 2, programId: PROGRAM, twoPersonRule: 'enforced' });
+    expect(await rows('SELECT * FROM c2c_ana_actions')).toHaveLength(1);
+    expect(JSON.stringify([...signatures, ...audits])).not.toContain('fixture-password');
+    expect(JSON.stringify([...signatures, ...audits])).not.toContain('body-code-does-not-prove-MFA');
+  });
+
+  it.each(KINDS)('$kind never escapes the request-pinned client', async item => {
+    h.poolForbidden = true;
+    const out = await approve(item);
+    expect(out.status).toBe(200);
+    expect(h.authority.mock.calls[0][2]).toMatchObject({ query: expect.any(Function) });
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(1);
+  });
+
+  it('records MFA only when returned as verified by the server', async () => {
+    h.verify.mockResolvedValue({ ok: true, authenticationMethod: 'password+mfa', secondFactorVerified: true });
+    const out = await approve(KINDS[0]);
+    expect(out.status).toBe(200);
+    expect((await rows('SELECT * FROM electronic_signatures'))[0]).toMatchObject({ authentication_method: 'password+mfa', second_factor_verified: true });
+  });
+
+  it.each(KINDS)('$kind retains honest attribution when the legacy author was never recorded', async item => {
+    await db.query(`UPDATE ${item.table} SET created_by=NULL WHERE id=$1`, [item.id]);
+    expect((await approve(item)).status).toBe(200);
+    const audit = (await rows('SELECT * FROM audit_logs'))[0];
+    expect(audit.payload).toMatchObject({ twoPersonRule: 'not_applicable_no_author_recorded' });
+    expect(await row(item)).toMatchObject({ created_by: null, approved_by: 3 });
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(1);
+  });
+});
+
+describe('a failed signature rolls back the whole approval', () => {
+  it.each(KINDS)('$kind approval, archival and ledger all roll back', async item => {
+    await db.exec(`CREATE OR REPLACE FUNCTION reject_signature_write() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'fixture signature storage unavailable'; END $$;
+      CREATE TRIGGER reject_signature BEFORE INSERT ON electronic_signatures FOR EACH ROW EXECUTE FUNCTION reject_signature_write();`);
+    const out = await approve(item);
+    expect(out.status).toBe(500);
+    expect(await row(item)).toMatchObject({ status: 'draft', approved_by: null, approved_at: null });
+    expect(await row(item, item.prior)).toMatchObject({ status: 'active', approved_by: 9 });
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+    expect(await rows('SELECT * FROM audit_logs')).toHaveLength(0);
+    expect(await rows('SELECT * FROM c2c_ana_actions')).toHaveLength(0);
+    expect(await rows('SELECT id,plan_id,status FROM rbm_monitoring_actions ORDER BY id')).toEqual([{ id: 40, plan_id: 20, status: 'open' }, { id: 41, plan_id: 20, status: 'done' }]);
+    expect(JSON.stringify(out.body)).not.toContain('fixture signature storage unavailable');
+  });
+});
+
+describe('approval refusals sign nothing', () => {
+  it.each(KINDS)('$kind refuses an unverified non-null author instead of treating it as a legacy record', async item => {
+    h.malformedAuthor = true;
+    expect((await approve(item)).status).toBe(500);
+    expect(await row(item)).toMatchObject({ status: 'draft', approved_by: null });
+    expect(await rows('SELECT * FROM audit_logs')).toHaveLength(0);
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+  });
+
+  it.each(KINDS)('$kind requires signing authority before checking credentials', async item => {
+    h.authority.mockResolvedValue({ status: 403, code: 'ESIGNATURE_NO_AUTHORITY', message: 'No signing authority' });
+    expect((await approve(item)).status).toBe(403);
+    expect(h.verify).not.toHaveBeenCalled();
+    expect(await row(item)).toMatchObject({ status: 'draft', approved_by: null });
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+  });
+
+  it.each(KINDS)('$kind refuses failed reauthentication without domain or ledger changes', async item => {
+    h.verify.mockResolvedValue({ ok: false, status: 401, code: 'PASSWORD_VERIFICATION_FAILED', error: 'Password verification failed' });
+    expect((await approve(item)).status).toBe(401);
+    expect(await row(item)).toMatchObject({ status: 'draft', approved_by: null });
+    expect(await rows('SELECT * FROM audit_logs')).toHaveLength(0);
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+  });
+
+  it.each(KINDS)('$kind refuses the recorded author', async item => {
+    const out = await approve(item, {}, 8);
+    expect(out.status).toBe(403);
+    expect(out.body.details?.code).toBe('RBM_SELF_APPROVAL');
+    expect(await row(item)).toMatchObject({ status: 'draft', approved_by: null });
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+  });
+
+  it.each(KINDS)('$kind refuses a private project before credentials', async item => {
+    await db.query(`UPDATE ${item.table} SET program_id=$1 WHERE id=$2`, [PRIVATE, item.id]);
+    expect((await approve(item)).status).toBe(403);
+    expect(h.verify).not.toHaveBeenCalled();
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+  });
+
+  it.each(KINDS)('$kind rejects an explicit conflicting signature meaning', async item => {
+    const out = await approve(item, { meaning: 'authorship' });
+    expect(out.status).toBe(422);
+    expect(h.verify).not.toHaveBeenCalled();
+    expect(await row(item)).toMatchObject({ status: 'draft', approved_by: null });
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+  });
+
+  it.each(KINDS)('$kind cannot approve an already activated version again', async item => {
+    await db.query(`UPDATE ${item.table} SET status='active' WHERE id=$1`, [item.id]);
+    expect((await approve(item)).status).toBe(409);
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+    expect(await rows('SELECT * FROM audit_logs')).toHaveLength(0);
+  });
+});
+
+describe('the canonical binding re-derives the signed monitoring version', () => {
+  it.each(KINDS)('$kind re-derives exactly after activation and later archival', async item => {
+    expect((await approve(item)).status).toBe(200);
+    const sig = (await rows('SELECT * FROM electronic_signatures'))[0];
+    const manifest = sig.signature_manifest as Record<string, unknown>;
+    expect(manifest).toMatchObject({ meaning: 'approval', signerId: 3, organizationId: 7, target: item.target, bindingRecipe: expect.any(String) });
+    const bound = await deriveGovernedTargetBinding({ query: h.query }, item.target, 7, { recipe: String(manifest.bindingRecipe) });
+    expect(bound.digest).toBe(sig.bound_payload_digest);
+    expect(bound.basis).toBe(sig.binding_basis);
+    expect(bound.digest).toMatch(/^[a-f0-9]{64}$/);
+    expect(bound.basis).not.toBe('governed-action-ledger');
+    await db.query(`UPDATE ${item.table} SET status='archived', approved_at=now(), updated_at=now() WHERE id=$1`, [item.id]);
+    const archived = await deriveGovernedTargetBinding({ query: h.query }, item.target, 7, { recipe: String(manifest.bindingRecipe) });
+    expect(archived.digest).toBe(sig.bound_payload_digest);
+  });
+
+  it('assessment CtQ content changes its binding', async () => {
+    const before = await deriveGovernedTargetBinding({ query: h.query }, KINDS[0].target, 7);
+    expect(before.digest).toMatch(/^[a-f0-9]{64}$/);
+    await db.exec("UPDATE rbm_risk_items SET mitigation='Reviewed replacement mitigation' WHERE id=31");
+    const after = await deriveGovernedTargetBinding({ query: h.query }, KINDS[0].target, 7);
+    expect(after.digest).not.toBe(before.digest);
+  });
+
+  it('plan execution changes preserve its binding and plan content changes do not', async () => {
+    const before = await deriveGovernedTargetBinding({ query: h.query }, KINDS[1].target, 7);
+    expect(before.digest).toMatch(/^[a-f0-9]{64}$/);
+    await db.exec("UPDATE rbm_monitoring_actions SET plan_id=22, status='done', description='Executed later' WHERE id=40");
+    expect((await deriveGovernedTargetBinding({ query: h.query }, KINDS[1].target, 7)).digest).toBe(before.digest);
+    await db.exec("UPDATE rbm_monitoring_plans SET strategy='on_site' WHERE id=22");
+    expect((await deriveGovernedTargetBinding({ query: h.query }, KINDS[1].target, 7)).digest).not.toBe(before.digest);
+  });
+
+  it.each(KINDS)('$kind version identity is part of its binding', async item => {
+    const before = await deriveGovernedTargetBinding({ query: h.query }, item.target, 7);
+    expect(before.digest).toMatch(/^[a-f0-9]{64}$/);
+    await db.query(`UPDATE ${item.table} SET version=99 WHERE id=$1`, [item.id]);
+    expect((await deriveGovernedTargetBinding({ query: h.query }, item.target, 7)).digest).not.toBe(before.digest);
+  });
+
+  it.each(KINDS)('$kind refuses re-derivation using an unknown recipe', async item => {
+    const bound = await deriveGovernedTargetBinding({ query: h.query }, item.target, 7, { recipe: 'unrecognized-rbm-recipe/v999' });
+    expect(bound.digest).toBeNull();
+  });
+});
+
+describe('incoherent monitoring relationships cannot acquire a signature', () => {
+  it.each([PRIVATE, null])('refuses a same-tenant CtQ linked to a different or absent project (%s)', async programId => {
+    await db.query('UPDATE rbm_risk_items SET program_id=$1 WHERE id=31', [programId]);
+    const out = await approve(KINDS[0]);
+    expect(out.status).toBe(409);
+    expect(await row(KINDS[0])).toMatchObject({ status: 'draft', approved_by: null });
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+    expect(await rows('SELECT * FROM audit_logs')).toHaveLength(0);
+    expect(JSON.stringify(out.body)).not.toContain('Consent deviation');
+  });
+
+  it('does not bind a foreign-tenant CtQ retained under an assessment id', async () => {
+    const before = await deriveGovernedTargetBinding({ query: h.query }, KINDS[0].target, 7);
+    await db.exec(`INSERT INTO rbm_risk_items(organization_id,program_id,assessment_id,ctq_factor,likelihood,impact) VALUES (8,'${PROGRAM}',12,'Foreign secret factor',5,5)`);
+    expect((await deriveGovernedTargetBinding({ query: h.query }, KINDS[0].target, 7)).digest).toBe(before.digest);
+    expect((await approve(KINDS[0])).status).toBe(200);
+    expect(JSON.stringify(await rows('SELECT * FROM electronic_signatures'))).not.toContain('Foreign secret factor');
+  });
+
+  it('refuses a plan whose retained assessment belongs to another project', async () => {
+    await db.query('UPDATE rbm_risk_assessments SET program_id=$1 WHERE id=10', [PRIVATE]);
+    expect((await approve(KINDS[1])).status).toBe(409);
+    expect(await row(KINDS[1])).toMatchObject({ status: 'draft', approved_by: null });
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+  });
+});
+
+describe('a plan approved after an editor read stays immutable', () => {
+  it('updates draft title, strategy and status with the bound retirement flag before field values', async () => {
+    const out = await request(app()).patch('/api/mdx/rbm-monitoring-plans/22')
+      .send({ title: 'Revised draft strategy', strategy: 'hybrid', status: 'draft' });
+    expect(out.status).toBe(200);
+    expect(await row(KINDS[1])).toMatchObject({ id: 22, organization_id: 7,
+      title: 'Revised draft strategy', strategy: 'hybrid', status: 'draft' });
+    expect(await row(KINDS[1], 20)).toMatchObject({ title: 'Prior plan', status: 'active' });
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+  });
+
+  it('refuses a stale draft edit when activation wins before the content UPDATE', async () => {
+    h.activateAfterPlanRead = true;
+    const out = await request(app()).patch('/api/mdx/rbm-monitoring-plans/22').send({ title: 'Stale editor overwrote signed content' });
+    expect(out.status).toBe(409);
+    expect(await row(KINDS[1])).toMatchObject({ status: 'active', title: 'New plan' });
+  });
+
+  it('continues to allow status-only retirement of an active plan', async () => {
+    await db.exec("UPDATE rbm_monitoring_plans SET status='active' WHERE id=22");
+    const out = await request(app()).patch('/api/mdx/rbm-monitoring-plans/22').send({ status: 'archived' });
+    expect(out.status).toBe(200);
+    expect(await row(KINDS[1])).toMatchObject({ status: 'archived', title: 'New plan' });
+  });
+});

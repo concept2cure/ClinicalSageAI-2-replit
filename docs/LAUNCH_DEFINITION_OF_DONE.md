@@ -1375,3 +1375,26 @@ Decided by the founder on 2026-10-30, the three questions the eTMF slice of P-74
   evidence under `docs/evidence/reviews/`.
 - Nightly on staging: readiness probe, isolation contract, smoke suite; the
   delta is Monday's agenda.
+
+
+### P-76 — Risk-Based Monitoring is a central rail service and an optional project setup choice
+
+Founder request, 2026-10-30: focus on the existing risk-based monitoring module,
+put it on the main left rail beside CMC, Projects, Tasking, Communication, Vault
+and the other core services, and allow it to be chosen while setting up a project.
+This explicitly admits the existing `rbm` surface; the central-service direction
+of2026-10-26 already names its owner. It is the eighth launch app. Existing
+professional-tier licensing and commercial enforcement mode stay in force;
+`modules:[]` creates no automatic subscription grant.
+
+The optional project choice is recorded on the existing regulatory project, not
+as a filing type or a new clinical-study store. Real project UUIDs/names and current
+sharing scope carry into monitoring and cross-service navigation. The canonical
+monitoring engines, source records, audit and signed assessment/plan approvals
+remain their owners. Admission includes the exact live RBM API families, current
+project/record access and draft-only assessment seeding; it does not admit the
+whole MDX namespace or merge clinical-ops/study/deviation stores.
+
+Contract `docs/design/RBM_NAVIGATION_PROJECT_SETUP_2026-10-30.md`; engineering
+and publication evidence `docs/evidence/D2-RBM-NAVIGATION/2026-10-30/`.
+Hosted deployment, clinical validation and agency acceptance need their own proof.

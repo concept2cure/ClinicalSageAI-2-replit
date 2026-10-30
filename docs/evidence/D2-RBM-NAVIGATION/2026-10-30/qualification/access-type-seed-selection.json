@@ -1,0 +1,21 @@
+{
+  "files": [
+    "server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx"
+  ],
+  "inputs": [
+    "server/services/rbm/rbm-assessment-seed.ts",
+    "server/services/rbm/rbm-access.ts",
+    "server/services/rbm/rbm-engine.ts",
+    "server/db/requestDb.ts",
+    "server/services/c2c/current-program-access.ts",
+    "server/services/c2c/governed-program-write.ts",
+    "client/src/concept2cure/v2/surfaces/Rbm.tsx",
+    "client/src/concept2cure/v2/surfaceViews.ts",
+    "shared/constants/ui-surface-registry.ts",
+    "shared/constants/ui-surface-registry.ui-v2.ts",
+    "vitest.config.ts",
+    "package.json",
+    "package-lock.json"
+  ]
+}

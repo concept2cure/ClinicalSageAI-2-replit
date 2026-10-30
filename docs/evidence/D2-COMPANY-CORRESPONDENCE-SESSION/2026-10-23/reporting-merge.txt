@@ -1,0 +1,427 @@
+Merge made by the 'ort' strategy.
+ .../v2/__tests__/_insights-library-fixture.tsx     |  14 +
+ .../insightsLibraryReachesBackend.test.tsx         |   4 +-
+ .../v2/__tests__/reportingLibraryRecovery.test.tsx | 332 +++++++++++
+ client/src/concept2cure/v2/surfaces/Insights.tsx   |  10 +-
+ .../v2/surfaces/InsightsBundlesPanel.tsx           |  91 +--
+ .../v2/surfaces/InsightsSchedulesPanel.tsx         | 129 +++--
+ .../v2/surfaces/insightsLibraryActions.tsx         | 149 +++++
+ .../v2/surfaces/insightsLibraryModel.ts            | 113 +++-
+ .../REPORTING_LIBRARY_RECOVERY_2026_10_23.md       |  35 ++
+ .../2026-10-23/README.md                           |  58 ++
+ .../2026-10-23/backend/README.md                   |  34 ++
+ .../2026-10-23/backend/archives.json               | 180 ++++++
+ .../2026-10-23/backend/checks.json                 | 410 ++++++++++++++
+ .../backend/compiler-successor/README.md           |  11 +
+ .../backend/compiler-successor/archives.json       |  75 +++
+ .../compiler-successor/before-correction.json.gz   | Bin 0 -> 181 bytes
+ .../backend/compiler-successor/checks.json         | 108 ++++
+ .../backend/compiler-successor/command.json.gz     | Bin 0 -> 442 bytes
+ .../compiler-successor/lint-command.json.gz        | Bin 0 -> 298 bytes
+ .../backend/compiler-successor/lint-stderr.txt.gz  | Bin 0 -> 20 bytes
+ .../backend/compiler-successor/lint.json.gz        | Bin 0 -> 193 bytes
+ .../original-bundle-test-source.ts.gz              | Bin 0 -> 6341 bytes
+ .../compiler-successor/source-after.json.gz        | Bin 0 -> 925 bytes
+ .../compiler-successor/source-before.json.gz       | Bin 0 -> 925 bytes
+ .../backend/compiler-successor/tests.json.gz       | Bin 0 -> 1698 bytes
+ .../backend/compiler-successor/tests.txt.gz        | Bin 0 -> 1581 bytes
+ .../2026-10-23/backend/focused-command.json.gz     | Bin 0 -> 369 bytes
+ .../2026-10-23/backend/focused-source.json.gz      | Bin 0 -> 531 bytes
+ .../2026-10-23/backend/focused.json.gz             | Bin 0 -> 1692 bytes
+ .../2026-10-23/backend/focused.txt.gz              | Bin 0 -> 1573 bytes
+ .../2026-10-23/backend/formatting-delta.json.gz    | Bin 0 -> 370 bytes
+ .../2026-10-23/backend/initial-source.json.gz      | Bin 0 -> 566 bytes
+ .../2026-10-23/backend/integration-command.json.gz | Bin 0 -> 543 bytes
+ .../integration-report-pack-test-source.ts.gz      | Bin 0 -> 10742 bytes
+ .../backend/integration-source-after.json.gz       | Bin 0 -> 929 bytes
+ .../backend/integration-source-before.json.gz      | Bin 0 -> 929 bytes
+ .../2026-10-23/backend/integration.json.gz         | Bin 0 -> 8424 bytes
+ .../2026-10-23/backend/integration.txt.gz          | Bin 0 -> 7018 bytes
+ .../2026-10-23/backend/lint-before.json.gz         | Bin 0 -> 38630 bytes
+ .../2026-10-23/backend/lint-final.json.gz          | Bin 0 -> 39207 bytes
+ .../2026-10-23/backend/lint-pack-before.json.gz    | Bin 0 -> 192 bytes
+ .../2026-10-23/backend/post-mdx-project/README.md  |  13 +
+ .../backend/post-mdx-project/archives.json         |  47 ++
+ .../backend/post-mdx-project/checks.json           | 148 +++++
+ .../backend/post-mdx-project/command.json.gz       | Bin 0 -> 541 bytes
+ .../post-mdx-project/interface-review.json.gz      | Bin 0 -> 1414 bytes
+ .../backend/post-mdx-project/source-after.json.gz  | Bin 0 -> 1315 bytes
+ .../backend/post-mdx-project/source-before.json.gz | Bin 0 -> 1315 bytes
+ .../backend/post-mdx-project/tests.json.gz         | Bin 0 -> 6396 bytes
+ .../backend/post-mdx-project/tests.txt.gz          | Bin 0 -> 4554 bytes
+ .../2026-10-23/backend/red-command.json.gz         | Bin 0 -> 366 bytes
+ .../2026-10-23/backend/red-source.json.gz          | Bin 0 -> 565 bytes
+ .../2026-10-23/backend/red-test-source.ts.gz       | Bin 0 -> 6341 bytes
+ .../2026-10-23/backend/red.json.gz                 | Bin 0 -> 2101 bytes
+ .../2026-10-23/backend/red.txt.gz                  | Bin 0 -> 2426 bytes
+ .../2026-10-23/backend/successor-command.json.gz   | Bin 0 -> 448 bytes
+ .../backend/successor-source-after.json.gz         | Bin 0 -> 926 bytes
+ .../backend/successor-source-before.json.gz        | Bin 0 -> 926 bytes
+ .../2026-10-23/backend/successor.json.gz           | Bin 0 -> 3056 bytes
+ .../2026-10-23/backend/successor.txt.gz            | Bin 0 -> 2716 bytes
+ .../2026-10-23/browser/README.md                   |  21 +
+ .../2026-10-23/browser/archives.json               | 284 ++++++++++
+ .../browser/bundles-uncertain-dark-1440.png        | Bin 0 -> 84180 bytes
+ .../browser/bundles-uncertain-dark-390.png         | Bin 0 -> 72580 bytes
+ .../browser/bundles-uncertain-light-1440.png       | Bin 0 -> 85852 bytes
+ .../browser/bundles-uncertain-light-390.png        | Bin 0 -> 74621 bytes
+ .../2026-10-23/browser/bundles-uncertain.html.gz   | Bin 0 -> 1762 bytes
+ .../2026-10-23/browser/capture-layout.py.gz        | Bin 0 -> 878 bytes
+ .../browser/capture-library-dom.test.tsx.gz        | Bin 0 -> 1528 bytes
+ .../2026-10-23/browser/cdp-probe-stderr.txt.gz     | Bin 0 -> 583 bytes
+ .../2026-10-23/browser/cdp-probe.json.gz           | Bin 0 -> 337 bytes
+ .../2026-10-23/browser/checks.json                 | 283 ++++++++++
+ .../2026-10-23/browser/chromium.raw.log.gz         | Bin 0 -> 2511120 bytes
+ .../2026-10-23/browser/component-layout.json       | 578 +++++++++++++++++++
+ .../2026-10-23/browser/dom-capture.json.gz         | Bin 0 -> 502 bytes
+ .../2026-10-23/browser/dom-capture.txt.gz          | Bin 0 -> 366 bytes
+ .../2026-10-23/browser/dom-command.json.gz         | Bin 0 -> 439 bytes
+ .../2026-10-23/browser/dom-source-after.json.gz    | Bin 0 -> 523 bytes
+ .../2026-10-23/browser/dom-source-before.json.gz   | Bin 0 -> 523 bytes
+ .../browser/file-navigation-capture-layout.py.gz   | Bin 0 -> 798 bytes
+ .../browser/final-capture-command.json.gz          | Bin 0 -> 278 bytes
+ .../browser/final-capture-source-after.json.gz     | Bin 0 -> 2671 bytes
+ .../browser/final-capture-source-before.json.gz    | Bin 0 -> 2671 bytes
+ .../2026-10-23/browser/final-capture-stderr.txt.gz | Bin 0 -> 20 bytes
+ .../2026-10-23/browser/final-capture-stdout.txt.gz | Bin 0 -> 55 bytes
+ .../initial-wrapper-final-capture-command.json.gz  | Bin 0 -> 276 bytes
+ ...tial-wrapper-final-capture-source-after.json.gz | Bin 0 -> 2670 bytes
+ ...ial-wrapper-final-capture-source-before.json.gz | Bin 0 -> 2670 bytes
+ .../initial-wrapper-final-capture-stderr.txt.gz    | Bin 0 -> 216 bytes
+ .../browser/playwright-probe-stderr.txt.gz         | Bin 0 -> 1585 bytes
+ .../2026-10-23/browser/playwright-probe.json.gz    | Bin 0 -> 620 bytes
+ .../2026-10-23/browser/playwright-probe.py.gz      | Bin 0 -> 472 bytes
+ .../2026-10-23/browser/review-layout.py.gz         | Bin 0 -> 2062 bytes
+ .../browser/schedules-review-dark-1440.png         | Bin 0 -> 93504 bytes
+ .../browser/schedules-review-dark-390.png          | Bin 0 -> 58009 bytes
+ .../browser/schedules-review-light-1440.png        | Bin 0 -> 94009 bytes
+ .../browser/schedules-review-light-390.png         | Bin 0 -> 58624 bytes
+ .../2026-10-23/browser/schedules-review.html.gz    | Bin 0 -> 2861 bytes
+ .../browser/schedules-uncertain-dark-1440.png      | Bin 0 -> 90600 bytes
+ .../browser/schedules-uncertain-dark-390.png       | Bin 0 -> 55609 bytes
+ .../browser/schedules-uncertain-light-1440.png     | Bin 0 -> 91136 bytes
+ .../browser/schedules-uncertain-light-390.png      | Bin 0 -> 56296 bytes
+ .../2026-10-23/browser/schedules-uncertain.html.gz | Bin 0 -> 2810 bytes
+ .../browser/single-process-probe.json.gz           | Bin 0 -> 363 bytes
+ .../browser/single-process-stderr.txt.gz           | Bin 0 -> 680 bytes
+ .../browser/wrapper-debug-command.json.gz          | Bin 0 -> 238 bytes
+ .../2026-10-23/browser/wrapper-debug-stderr.txt.gz | Bin 0 -> 746 bytes
+ .../2026-10-23/canonical-catchup.json              | 618 +++++++++++++++++++++
+ .../2026-10-23/client/README.md                    |  52 ++
+ .../2026-10-23/client/artifact-manifest.json       |  90 +++
+ .../2026-10-23/client/commands.json                | 102 ++++
+ .../2026-10-23/client/integration-final.json.gz    | Bin 0 -> 16072 bytes
+ .../2026-10-23/client/integration-final.txt.gz     | Bin 0 -> 11026 bytes
+ .../2026-10-23/client/lint-baseline.json.gz        | Bin 0 -> 39915 bytes
+ .../2026-10-23/client/lint-final.json.gz           | Bin 0 -> 40133 bytes
+ .../2026-10-23/client/post-api-merge/README.md     |  19 +
+ .../client/post-api-merge/after-source-pins.json   | 183 ++++++
+ .../post-api-merge/api-result-annotation.patch     |  16 +
+ .../client/post-api-merge/artifact-manifest.json   |  23 +
+ .../client/post-api-merge/before-source-pins.json  | 183 ++++++
+ .../2026-10-23/client/post-api-merge/command.json  |  62 +++
+ .../client/post-api-merge/integration.json.gz      | Bin 0 -> 16749 bytes
+ .../client/post-api-merge/integration.txt.gz       | Bin 0 -> 11407 bytes
+ .../client/post-api-merge/lint-scoped.json.gz      | Bin 0 -> 40133 bytes
+ .../client/post-api-merge/pre-annotation-pins.txt  |   3 +
+ .../client/post-assembly-search/README.md          |  21 +
+ .../post-assembly-search/after-source-pins.json    | 103 ++++
+ .../post-assembly-search/artifact-manifest.json    |  16 +
+ .../post-assembly-search/before-source-pins.json   | 103 ++++
+ .../client/post-assembly-search/command.json       |  28 +
+ .../post-assembly-search/integration.json.gz       | Bin 0 -> 3684 bytes
+ .../client/post-assembly-search/integration.txt.gz | Bin 0 -> 2739 bytes
+ .../2026-10-23/client/post-discovery/README.md     |  24 +
+ .../client/post-discovery/after-source-pins.json   | 140 +++++
+ .../client/post-discovery/artifact-manifest.json   |  16 +
+ .../client/post-discovery/before-source-pins.json  | 140 +++++
+ .../2026-10-23/client/post-discovery/command.json  |  28 +
+ .../client/post-discovery/integration.json.gz      | Bin 0 -> 5897 bytes
+ .../client/post-discovery/integration.txt.gz       | Bin 0 -> 4169 bytes
+ .../2026-10-23/client/post-legal-chooser/README.md |  17 +
+ .../post-legal-chooser/after-source-pins.json      | 265 +++++++++
+ .../post-legal-chooser/artifact-manifest.json      |  16 +
+ .../post-legal-chooser/before-source-pins.json     | 265 +++++++++
+ .../client/post-legal-chooser/command.json         |  65 +++
+ .../client/post-legal-chooser/integration.json.gz  | Bin 0 -> 18260 bytes
+ .../client/post-legal-chooser/integration.txt.gz   | Bin 0 -> 12054 bytes
+ .../2026-10-23/client/post-mdx-project/README.md   |  25 +
+ .../client/post-mdx-project/after-source-pins.json | 452 +++++++++++++++
+ .../client/post-mdx-project/artifact-manifest.json |  16 +
+ .../post-mdx-project/before-source-pins.json       | 452 +++++++++++++++
+ .../client/post-mdx-project/command.json           |  32 ++
+ .../client/post-mdx-project/integration.json.gz    | Bin 0 -> 7237 bytes
+ .../client/post-mdx-project/integration.txt.gz     | Bin 0 -> 5105 bytes
+ .../2026-10-23/client/product-red-test.tsx.gz      | Bin 0 -> 2930 bytes
+ .../2026-10-23/client/product-red.json.gz          | Bin 0 -> 4161 bytes
+ .../2026-10-23/client/product-red.txt.gz           | Bin 0 -> 6561 bytes
+ .../client/review-race-red-runtime.tsx.gz          | Bin 0 -> 2759 bytes
+ .../2026-10-23/client/review-race-red-test.tsx.gz  | Bin 0 -> 4613 bytes
+ .../2026-10-23/client/review-race-red.json.gz      | Bin 0 -> 1801 bytes
+ .../2026-10-23/client/review-race-red.txt.gz       | Bin 0 -> 1657 bytes
+ .../2026-10-23/client/source-pins.json             | 202 +++++++
+ .../2026-10-23/release/archives.json               | 334 +++++++++++
+ .../release/assembly-search-merge.txt.gz           | Bin 0 -> 2291 bytes
+ .../release/assembly-search-review.json.gz         | Bin 0 -> 535 bytes
+ .../2026-10-23/release/build-command.json.gz       | Bin 0 -> 295 bytes
+ .../2026-10-23/release/build-source-after.json.gz  | Bin 0 -> 522104 bytes
+ .../2026-10-23/release/build-source-before.json.gz | Bin 0 -> 522104 bytes
+ .../2026-10-23/release/build.txt.gz                | Bin 0 -> 4698 bytes
+ .../release/canonical-company-merge.txt.gz         | Bin 0 -> 1723 bytes
+ .../2026-10-23/release/canonical-merge.txt.gz      | Bin 0 -> 8361 bytes
+ .../2026-10-23/release/checks.json                 | 172 ++++++
+ .../company-api-reconciled-build-command.json.gz   | Bin 0 -> 298 bytes
+ ...mpany-api-reconciled-build-source-after.json.gz | Bin 0 -> 522443 bytes
+ ...pany-api-reconciled-build-source-before.json.gz | Bin 0 -> 522443 bytes
+ .../release/company-api-reconciled-build.txt.gz    | Bin 0 -> 4697 bytes
+ ...-api-reconciled-pre-type-annotation-model.ts.gz | Bin 0 -> 10204 bytes
+ ...ciled-pre-type-annotation-public-assets.json.gz | Bin 0 -> 15666 bytes
+ .../2026-10-23/release/compiler-first-refusal.json |  12 +
+ .../release/final-api-typed-build-command.json.gz  | Bin 0 -> 297 bytes
+ .../final-api-typed-build-source-after.json.gz     | Bin 0 -> 522443 bytes
+ .../final-api-typed-build-source-before.json.gz    | Bin 0 -> 522443 bytes
+ .../release/final-api-typed-build.txt.gz           | Bin 0 -> 4695 bytes
+ ...final-assembly-reconciled-build-command.json.gz | Bin 0 -> 296 bytes
+ ...-assembly-reconciled-build-source-after.json.gz | Bin 0 -> 522688 bytes
+ ...assembly-reconciled-build-source-before.json.gz | Bin 0 -> 522688 bytes
+ .../release/final-assembly-reconciled-build.txt.gz | Bin 0 -> 4713 bytes
+ .../final-chooser-reconciled-build-command.json.gz | Bin 0 -> 297 bytes
+ ...l-chooser-reconciled-build-source-after.json.gz | Bin 0 -> 522798 bytes
+ ...-chooser-reconciled-build-source-before.json.gz | Bin 0 -> 522798 bytes
+ .../release/final-chooser-reconciled-build.txt.gz  | Bin 0 -> 4729 bytes
+ .../final-mdx-reconciled-build-command.json.gz     | Bin 0 -> 296 bytes
+ ...final-mdx-reconciled-build-source-after.json.gz | Bin 0 -> 523926 bytes
+ ...inal-mdx-reconciled-build-source-before.json.gz | Bin 0 -> 523926 bytes
+ .../release/final-mdx-reconciled-build.txt.gz      | Bin 0 -> 4740 bytes
+ ...final-workflow-reconciled-build-command.json.gz | Bin 0 -> 297 bytes
+ ...-workflow-reconciled-build-source-after.json.gz | Bin 0 -> 522595 bytes
+ ...workflow-reconciled-build-source-before.json.gz | Bin 0 -> 522595 bytes
+ .../release/final-workflow-reconciled-build.txt.gz | Bin 0 -> 4718 bytes
+ .../2026-10-23/release/incoming-review.json.gz     | Bin 0 -> 5230 bytes
+ .../2026-10-23/release/mdx-project-merge.txt.gz    | Bin 0 -> 2042 bytes
+ .../2026-10-23/release/mdx-project-review.json.gz  | Bin 0 -> 1760 bytes
+ .../previous-publication-ci-observed.json.gz       | Bin 0 -> 511 bytes
+ .../push-attempt-1-typecheck-refusal.txt.gz        | Bin 0 -> 4663 bytes
+ ...h-attempt-2-zero-type-errors-cas-refusal.txt.gz | Bin 0 -> 4485 bytes
+ ...h-attempt-3-zero-type-errors-cas-refusal.txt.gz | Bin 0 -> 4482 bytes
+ ...h-attempt-4-zero-type-errors-cas-refusal.txt.gz | Bin 0 -> 4483 bytes
+ .../release/reporting-chooser-merge.txt.gz         | Bin 0 -> 1659 bytes
+ .../release/reporting-chooser-review.json.gz       | Bin 0 -> 629 bytes
+ .../second-zero-type-errors-cas-refusal.json       |  13 +
+ .../third-zero-type-errors-cas-refusal.json        |  13 +
+ .../release/type-only-assets-comparison.json.gz    | Bin 0 -> 266 bytes
+ .../release/workflow-discovery-merge.txt.gz        | Bin 0 -> 2118 bytes
+ .../release/workflow-discovery-review.json.gz      | Bin 0 -> 1892 bytes
+ .../release/zero-type-errors-cas-refusal.json      |  13 +
+ .../__tests__/report-os-bundle-recording.test.ts   | 126 +++++
+ .../__tests__/report-os-report-pack-export.test.ts |  21 +
+ server/routes/report-os.ts                         |  67 ++-
+ 217 files changed, 7552 insertions(+), 123 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx
+ create mode 100644 client/src/concept2cure/v2/surfaces/insightsLibraryActions.tsx
+ create mode 100644 docs/design/REPORTING_LIBRARY_RECOVERY_2026_10_23.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/README.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/README.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/archives.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/checks.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/README.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/archives.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/before-correction.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/checks.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/lint-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/lint-stderr.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/lint.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/original-bundle-test-source.ts.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/tests.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/compiler-successor/tests.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/focused-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/focused-source.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/focused.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/focused.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/formatting-delta.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/initial-source.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/integration-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/integration-report-pack-test-source.ts.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/integration-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/integration-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/integration.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/integration.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/lint-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/lint-final.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/lint-pack-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/post-mdx-project/README.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/post-mdx-project/archives.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/post-mdx-project/checks.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/post-mdx-project/command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/post-mdx-project/interface-review.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/post-mdx-project/source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/post-mdx-project/source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/post-mdx-project/tests.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/post-mdx-project/tests.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/red-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/red-source.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/red-test-source.ts.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/red.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/red.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/successor-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/successor-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/successor-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/successor.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/backend/successor.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/README.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/archives.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/bundles-uncertain-dark-1440.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/bundles-uncertain-dark-390.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/bundles-uncertain-light-1440.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/bundles-uncertain-light-390.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/bundles-uncertain.html.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/capture-layout.py.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/capture-library-dom.test.tsx.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/cdp-probe-stderr.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/cdp-probe.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/checks.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/chromium.raw.log.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/component-layout.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/dom-capture.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/dom-capture.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/dom-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/dom-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/dom-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/file-navigation-capture-layout.py.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/final-capture-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/final-capture-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/final-capture-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/final-capture-stderr.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/final-capture-stdout.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/initial-wrapper-final-capture-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/initial-wrapper-final-capture-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/initial-wrapper-final-capture-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/initial-wrapper-final-capture-stderr.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/playwright-probe-stderr.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/playwright-probe.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/playwright-probe.py.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/review-layout.py.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/schedules-review-dark-1440.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/schedules-review-dark-390.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/schedules-review-light-1440.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/schedules-review-light-390.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/schedules-review.html.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/schedules-uncertain-dark-1440.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/schedules-uncertain-dark-390.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/schedules-uncertain-light-1440.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/schedules-uncertain-light-390.png
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/schedules-uncertain.html.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/single-process-probe.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/single-process-stderr.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/wrapper-debug-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/browser/wrapper-debug-stderr.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/canonical-catchup.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/README.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/commands.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/integration-final.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/integration-final.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/lint-baseline.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/lint-final.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-api-merge/README.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-api-merge/after-source-pins.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-api-merge/api-result-annotation.patch
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-api-merge/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-api-merge/before-source-pins.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-api-merge/command.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-api-merge/integration.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-api-merge/integration.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-api-merge/lint-scoped.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-api-merge/pre-annotation-pins.txt
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-assembly-search/README.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-assembly-search/after-source-pins.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-assembly-search/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-assembly-search/before-source-pins.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-assembly-search/command.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-assembly-search/integration.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-assembly-search/integration.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-discovery/README.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-discovery/after-source-pins.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-discovery/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-discovery/before-source-pins.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-discovery/command.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-discovery/integration.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-discovery/integration.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-legal-chooser/README.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-legal-chooser/after-source-pins.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-legal-chooser/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-legal-chooser/before-source-pins.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-legal-chooser/command.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-legal-chooser/integration.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-legal-chooser/integration.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-mdx-project/README.md
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-mdx-project/after-source-pins.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-mdx-project/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-mdx-project/before-source-pins.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-mdx-project/command.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-mdx-project/integration.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/post-mdx-project/integration.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/product-red-test.tsx.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/product-red.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/product-red.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/review-race-red-runtime.tsx.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/review-race-red-test.tsx.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/review-race-red.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/review-race-red.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/client/source-pins.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/archives.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/assembly-search-merge.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/assembly-search-review.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/build-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/build-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/build-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/build.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/canonical-company-merge.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/canonical-merge.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/checks.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/company-api-reconciled-build-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/company-api-reconciled-build-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/company-api-reconciled-build-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/company-api-reconciled-build.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/company-api-reconciled-pre-type-annotation-model.ts.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/company-api-reconciled-pre-type-annotation-public-assets.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/compiler-first-refusal.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-api-typed-build-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-api-typed-build-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-api-typed-build-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-api-typed-build.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-assembly-reconciled-build-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-assembly-reconciled-build-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-assembly-reconciled-build-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-assembly-reconciled-build.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-chooser-reconciled-build-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-chooser-reconciled-build-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-chooser-reconciled-build-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-chooser-reconciled-build.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-mdx-reconciled-build-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-mdx-reconciled-build-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-mdx-reconciled-build-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-mdx-reconciled-build.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-workflow-reconciled-build-command.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-workflow-reconciled-build-source-after.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-workflow-reconciled-build-source-before.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/final-workflow-reconciled-build.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/incoming-review.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/mdx-project-merge.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/mdx-project-review.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/previous-publication-ci-observed.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/push-attempt-1-typecheck-refusal.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/push-attempt-2-zero-type-errors-cas-refusal.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/push-attempt-3-zero-type-errors-cas-refusal.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/push-attempt-4-zero-type-errors-cas-refusal.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/reporting-chooser-merge.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/reporting-chooser-review.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/second-zero-type-errors-cas-refusal.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/third-zero-type-errors-cas-refusal.json
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/type-only-assets-comparison.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/workflow-discovery-merge.txt.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/workflow-discovery-review.json.gz
+ create mode 100644 docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/release/zero-type-errors-cas-refusal.json

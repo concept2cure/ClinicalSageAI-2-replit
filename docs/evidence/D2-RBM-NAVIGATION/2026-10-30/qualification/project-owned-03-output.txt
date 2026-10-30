@@ -1,0 +1,517 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > opens the selected empty project instead of the first roster row and does not seed data 266ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > requires a choice without a shell project and carries an admitted choice to Vault and Tasks 118ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > does not replace an unavailable explicit project with another project 43ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > withdraws the old project while the next board is pending 124ms
+stderr | client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > retires retained project selection after account replacement and project A to B to A
+An update to RbmWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > retires retained project selection after account replacement and project A to B to A 155ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > retires the old selector and admits a fresh visit after a batched project A to B to A 141ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > blocks retained navigation after raw browser bearer drift or unmount 65ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > preserves the selected project across canonical bearer refresh without extra reads 45ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > keeps admitted project and conversation scope during the normal persisted-record board reload 102ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > reports a malformed roster read as failure, with no wrong-project board 28ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > reports a unavailable roster read as failure, with no wrong-project board 29ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > keeps relationship reconciliation distinct from a successful empty roster 32ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > requires a local multi-workspace choice despite the global default, and sends the reviewed sponsor 623ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > names and records the single verified workspace 220ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed duplicate directory without enabling Continue 144ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed foreign directory without enabling Continue 189ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed inactive directory without enabling Continue 165ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed actor directory without enabling Continue 164ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed missing-name directory without enabling Continue 124ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified workspace creation receipt 352ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified actor creation receipt 356ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified anchor creation receipt 346ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified uuid creation receipt 424ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified json creation receipt 392ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown transport outcome 371ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown server outcome 352ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refreshes active options before retrying a confirmed refusal 377ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires sponsor form contents on an account or organization change 322ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not send a stale write after a token switch 284ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires a late workspace read when the bearer changes without a render 107ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not publish or navigate after an old create receipt arrives under another bearer 332ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > returns to Configure without writing if the selected workspace changes before Create 357ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > states confirmed creation when only the saved project details are unavailable 319ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands the verified sponsor to the actual sharing and assignment consumers before leaving the wizard 314ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands off the verified workspace for a confirmed scaffold notice without navigating 281ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Cancel, then restores Check projects after uncertainty 403ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Projects, then restores Check projects after uncertainty 444ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Escape, then restores Check projects after uncertainty 423ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > appends a KRI reading through the real values endpoint 268ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > creates a KRI against the program, with blank thresholds left null 89ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > writes a QTL breach response onto the QTL 76ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > posts a CtQ factor with the components, letting the engine derive the score 304ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > triages a signal through the signals endpoint 76ms
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > refuses to edit the CtQ register of an approved assessment
+An update to RbmRact inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > runs central monitoring server-side and reports the engine counts 40ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > recomputes site risk server-side 19ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > advances a monitoring action through the actions endpoint 27ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > generates the plan from the RACT when the study has none 22ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > will not offer to raise an action when there is no plan to attach it to 16ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > refuses to edit the CtQ register of an approved assessment 143ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > omits fields it cannot show when editing, instead of blanking them 225ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > shows and mutates only the governing plan's actions 23ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > records an investigation and its follow-up action in one transactional call 124ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > states outright when no source feed is tracked 5ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > marks a stale feed on the overview rather than showing its age neutrally 9ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > surfaces the server error and changes nothing when a write is rejected 73ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > posts the pasted extract with its source and cutoff 95ms
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > offers Amend on an approved assessment instead of dead-ending the register
+An update to RbmRact inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > shows the rejected rows and their reasons on a partial load 105ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > calls out metrics that matched no indicator, even when nothing was rejected 94ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > offers Amend on an approved assessment instead of dead-ending the register 151ms
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > renders the version chain with each version's own signature
+An update to RbmRact inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > does not offer Amend on a draft — a draft is already editable
+An update to RbmRact inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > opens the amendment with a reason, and says the signed version is preserved 233ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > renders the version chain with each version's own signature 24ms
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM plan — an approved plan is amended, not edited > does not offer Amend on a draft plan
+An update to RbmPlan inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > does not offer Amend on a draft — a draft is already editable 145ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM plan — an approved plan is amended, not edited > offers Amend on an approved plan and posts the reason to /amend 46ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM plan — an approved plan is amended, not edited > does not offer Amend on a draft plan 14ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > Add action posts to the plan in force while the amendment draft is on screen 48ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > a signal follow-up is raised on the plan in force 59ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > an investigation follow-up is raised on the plan in force 112ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > says so when the server saved the notes but did not raise the action 100ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > a scheduled oversight visit is raised on the plan in force 56ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > opening an amendment does not claim to carry actions forward 42ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — a duplicate load is refused, and reprocess needs a reason > holds the 409 as its own state and resubmits only with reprocess + reason 123ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > publishes the first step and chosen filing, and passes Ask AnA through 361ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > reports actual picker segment and search alongside the selected filing 98ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > keeps an inspected unavailable filing separate from the selected creation choice and retires both with the actor 97ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > reports the visible filing segment and search, and clears the browsing context on close 145ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > tracks Configure, Review and Back while excluding entered/private fields 350ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > replaces a prior selection and restores portfolio context on close 159ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > keeps wizard state when a delayed portfolio response arrives 82ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > retires selected metadata if the signed-in organization no longer matches 105ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > starts a matching new account at the first step with no prior selection 258ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > opens the existing module for the same confirmed opted-in project 412ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true (false) 105ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true (undefined) 95ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true ("true") 101ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > preserves the existing availability verdict 106ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires a retained entry after project A to B to A 287ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires an old entry and admits the fresh entry after a batched project A to B to A 178ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires an entry on browser bearer change 112ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires an entry on unmount change 122ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > reviews and persists the explicitly selected monitoring service without seeding a record 624ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > leaves monitoring unselected unless the creator chooses it 298ms
+stderr | server/routes/c2c/__tests__/projects-create.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts
+{
+  "timestamp": "2026-10-30T16:55:44.673Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create.test.ts
+{
+  "timestamp": "2026-10-30T16:55:44.757Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:55:44.758Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts
+{
+  "timestamp": "2026-10-30T16:55:44.758Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written
+{
+  "timestamp": "2026-10-30T16:55:47.013Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "audit_logs write failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01)
+{
+  "timestamp": "2026-10-30T16:55:47.022Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "5af8733b-094d-4ed8-9ae0-f86f08a15896",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+{
+  "timestamp": "2026-10-30T16:55:47.025Z",
+  "level": "error",
+  "message": "[c2c-projects] 42P01 names a relation that EXISTS — not a provisioning failure",
+  "context": {
+    "correlationId": "a1d5d70d-a6c7-4ae2-9601-bf19e3b20389",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "code": "42P01",
+    "route": "/api/c2c/projects",
+    "detail": "relation \"audit_logs\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+{
+  "timestamp": "2026-10-30T16:55:47.025Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "relation \"audit_logs\" does not exist",
+    "correlationId": null,
+    "code": "42P01"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent
+{
+  "timestamp": "2026-10-30T16:55:47.027Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "84c2a98f-6779-4858-acd9-6b5a704d8228",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 403 without org context 21ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses missing membership before quota or any program mutation 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses membership in a different organization before quota or any program mutation 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses active viewer before quota or any program mutation 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls back if membership is revoked between preflight and the locked admission 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 when name is missing 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 on an invalid programType (never reaches business SQL) 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses a malformed monitoring selection "true" before business SQL 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses a malformed monitoring selection 1 before business SQL 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses a malformed monitoring selection null before business SQL 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses a malformed monitoring selection {} before business SQL 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses a malformed monitoring selection undefined before business SQL 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > records monitoring choice true in the program and same-transaction audit 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > records monitoring choice false in the program and same-transaction audit 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > projects only the exact stored monitoring boolean true 1ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > projects only the exact stored monitoring boolean false 0ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > projects only the exact stored monitoring boolean "true" 0ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > projects only the exact stored monitoring boolean 1 0ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > projects only the exact stored monitoring boolean undefined 0ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > inserts into regulatory_programs and returns the portfolio display contract 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > derives product_type from program_type when the client omits it 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > retries with a suffixed code on a unique-code collision (23505) 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > runs the insert and the scaffold in ONE transaction, and releases the client 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > a scaffold that finds no outline refuses the filing (422 FILING_NOT_OFFERED) and rolls the creation back 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > reports the scaffolded document and section count on success 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01) 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent 2ms
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent
+{
+  "timestamp": "2026-10-30T16:55:47.032Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "f249f282-8043-42e5-9c4d-fbf24e972164",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "PROJECT_RECORD_UNAVAILABLE",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent
+{
+  "timestamp": "2026-10-30T16:55:47.032Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: the anchor column is not provisioned",
+  "context": {
+    "correlationId": "f249f282-8043-42e5-9c4d-fbf24e972164",
+    "orgId": 7,
+    "reason": "PENDING_ANCHOR_COLUMN",
+    "detail": "projects.regulatory_program_id is not present in this database (migrations/20260814_projects_regulatory_program_anchor.sql has not been applied). A program cannot be created without its PM-spine anchor."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen
+{
+  "timestamp": "2026-10-30T16:55:47.035Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "3715f2cd-acaf-4009-9e56-e9cc9af4c56f",
+    "orgId": 7,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails
+{
+  "timestamp": "2026-10-30T16:55:47.048Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "submissions insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01)
+{
+  "timestamp": "2026-10-30T16:55:47.050Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "35e0a536-6405-4e6a-ab68-e0ef628cfcd9",
+    "step": "creating the project",
+    "store": "submissions",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object
+{
+  "timestamp": "2026-10-30T16:55:47.053Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "e24c924b-6035-45a6-a935-5b8372356599",
+    "step": "creating the project",
+    "store": "submissions",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed
+{
+  "timestamp": "2026-10-30T16:55:47.055Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "fe09f548-7935-4ce3-b198-077fe71e795c",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed
+{
+  "timestamp": "2026-10-30T16:55:47.057Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "null value in column \"code\" violates not-null constraint",
+    "correlationId": "3b46779335ffb1ec4187935db4df7570",
+    "code": "23502"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure
+{
+  "timestamp": "2026-10-30T16:55:47.059Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "boom",
+    "correlationId": "3b46779335ffb1ec4187935db4df7570",
+    "code": "23502"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses the create when the org is at its licensed program quota 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates the submissions row transactionally for a drug program (nda) 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > reuses only a spine already anchored to THIS program 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a device program (510k) 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a CER program 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01) 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed 2ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure 2ms
+stderr | server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts
+{
+  "timestamp": "2026-10-30T16:55:47.968Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts
+{
+  "timestamp": "2026-10-30T16:55:48.003Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:55:48.004Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts
+{
+  "timestamp": "2026-10-30T16:55:48.004Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > reaches the exact recorded filing identity without exposing internal metadata 19ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > does not infer a filing identity from program_type when metadata is null 1ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > does not infer a filing identity from program_type when metadata is "not json" 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > does not infer a filing identity from program_type when metadata is undefined 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > does not infer a filing identity from program_type when metadata is {} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > does not infer a filing identity from program_type when metadata is {"submissionTypeId":510} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > does not infer a filing identity from program_type when metadata is {"submissionTypeId":"  "} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > withholds an unknown recorded identity instead of silently remapping it to a known guide 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > selects the stored device columns and returns them for a 510(k) IVD program 6ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > a drug program is unchanged: existing keys present, device fields honestly null 4ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > serializeProgramDetail never invents: a metadata string that is not JSON, or a null, yields nulls 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > normalizes the recorded canonical id us_ind to us_ind 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > normalizes the recorded canonical id US_IND to us_ind 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > normalizes the recorded canonical id  us_pre_ind  to us_pre_ind 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > normalizes the recorded canonical id EU_CTA to eu_cta 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > normalizes the recorded canonical id US_510K_IVD to us_510k_ivd 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: null 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: undefined 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: {} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: undefined 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: "not json" 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: "[]" 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: {"submissionTypeId":""} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: {"submissionTypeId":"  "} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: {"submissionTypeId":12} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: {"submissionTypeId":["us_ind"]} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: {"submissionTypeId":{"id":"us_ind"}} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: {"submissionTypeId":"not_a_filing"} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: {"submissionTypeId":"IND"} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: {"submissionTypeId":"fda_510k"} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > withholds missing, malformed, unrecognized or alias-only identity: {"registryId":"US_IND"} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > the exact recorded filing identity is projected without metadata > reads the driver JSON string but never takes a registry fallback or a parent program type 3ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > POST /api/c2c/projects — the create answers with the same serializer > 201 carries `program` from serializeProgramDetail, so the read returns what the write stored 18ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > project detail retains exact public filing identity > retains US_NDA without leaking raw metadata 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > project detail retains exact public filing identity > retains US_BLA without leaking raw metadata 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > project detail retains exact public filing identity > retains US_351K without leaking raw metadata 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > project detail retains exact public filing identity > retains US_505B2 without leaking raw metadata 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > project detail retains exact public filing identity > uses only canonical type/agency fallback and keeps unknown choices unconfirmed 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > keeps malformed recorded filing identity unconfirmed: {"value":42} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > keeps malformed recorded filing identity unconfirmed: {"value":{}} 0ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > keeps malformed recorded filing identity unconfirmed: {"value":[]} 0ms
+
+ Test Files  8 passed (8)
+      Tests  174 passed (174)
+   Start at  16:55:16
+   Duration  32.87s (transform 5.98s, setup 535ms, import 11.36s, tests 16.64s, environment 3.03s)
+
+JSON report written to /workspace/.cloud-setup/rbm-navigation/project-owned-03-results.json

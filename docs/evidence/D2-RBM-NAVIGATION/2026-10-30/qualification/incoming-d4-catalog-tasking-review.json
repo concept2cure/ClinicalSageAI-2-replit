@@ -1,0 +1,27 @@
+{
+  "reviewedIncoming": "d4c745c5f5642257fa2c1b0efe7c414238cae835",
+  "mergedCommit": "f254676b34f8d0a51f8b4c66db0225472f18a04d",
+  "changedSourceInputs": [
+    "client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx",
+    "client/src/concept2cure/v2/styles/app-v2.css",
+    "client/src/concept2cure/v2/styles/workflows-v2.css",
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+    "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx"
+  ],
+  "finding": "No RBM source, rail, wizard, launch scope, tier lock, canonical actor/shared-project context or backend access change. Catalog retries remain independent and governed toggles unchanged. Board retry preserves filter/context and actor-keyed sessions. CSS selectors confined to .tb and .workflow-page; earlier browser evidence is not an exact-current whole-CSS proof.",
+  "productionFixNeeded": false,
+  "checks": [
+    "client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx",
+    "client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx",
+    "client/src/concept2cure/v2/__tests__/appsLive.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx"
+  ]
+}

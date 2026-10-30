@@ -1,0 +1,48 @@
+{
+  "observedAt": "2026-10-30T18:15:06.360233+00:00",
+  "reviewers": [
+    "/root/rbm_signature_review",
+    "/root/rbm_seed_and_context_types"
+  ],
+  "incoming": "ed5c91058",
+  "mergeCommit": "5df5084ddfb425ac8a231deabb18b9cb6fd6a66b",
+  "mergeConflicts": [],
+  "unchangedPriorSelectedInputs": 153,
+  "reviewsWereReadOnlyNoExecution": true,
+  "sourceFindings": [
+    "Product-risk guards only on literal risk/engineering routes, no broad namespace middleware or rbm route match",
+    "Actor/project/write/sharing/signature and bootstrap files unchanged",
+    "Shared navigation adds optional device-engineering params only; projectScopedRead forwards optional owner with unchanged undefined default",
+    "New narrow mdx-shell risk CSS selectors do not match RBM; browser whole-CSS predecessor pins remain"
+  ],
+  "productionPins": {
+    "client/src/concept2cure/mdx/MdxSurfaceHost.tsx": "3e0506be983f5407732db2b365a9e8565f30abe491d15872be83d87f8ad24c54",
+    "client/src/concept2cure/mdx/app.css": "62cca3606d3ce23a08a116559b571c5ccef2e953e58b842a346ad60601f71eb8",
+    "client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx": "b4136ca73086117f26b53659787f7eecc185123f4a45e51c097e9295672c2e7e",
+    "client/src/concept2cure/mdx/surfaces/engineeringPanelTarget.ts": "df13aa1545e1fbd99219afa2cb83faf22563103f65eeb08209afa7561690e455",
+    "client/src/concept2cure/v2/projectScopedRead.tsx": "9dcd711a081a9fece7b2952216858a421a627d72c5be6861181363a0184d3f99",
+    "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx": "1f49ca6b760a6f2cc5f13b810e0bb7d642fcd828cc86b4f8cab78895edda4adc",
+    "client/src/concept2cure/v2/surfaces/RiskRegister.tsx": "48a66bb26b8d2426781d42df9eb2f11b51f6684484fd23ee83b570f56f283a2e",
+    "client/src/concept2cure/v2/surfaces/riskRecordRead.ts": "31e92c9cd5b484d7e99c6c394f42f16f8d9aec3c973369b440c41898a64f402d",
+    "server/routes/mdx-engineering.ts": "d312e5c9f34f4cd81a5741666d1cd10ed48c27b11f80a16f130e65c689f6aaa5",
+    "server/routes/mdx-risk-acceptance-lock.ts": "0849a31a865c83a6a4b19e1b5133a3884a6f7d30f194ea34a17bd405e368bf78",
+    "server/routes/mdx-risk-access.ts": "1a4660caeff1c9e5b3d92659481dbfd6d991fd7b1a665e9c856af93332687ff2",
+    "server/routes/mdx-risk-management.ts": "17dc627fc53846fbfb90fd6b58a596f4e955c892d6ba3d4f8e4891f1fef44cc3",
+    "shared/navigation/index.ts": "5844fa1bca83f041b02206193a780608af4936feb67de80f821ce1522ce9e46e"
+  },
+  "freshTestFiles": [
+    "server/routes/__tests__/mdx-risk-access.test.ts",
+    "server/routes/__tests__/mdx-engineering.contract.test.ts",
+    "server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts",
+    "server/__tests__/routes/risk-acceptance-locked.pglite.test.ts",
+    "client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx",
+    "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+    "client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx",
+    "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx",
+    "server/routes/__tests__/rbm-current-project-admission.test.ts"
+  ],
+  "upstreamTotalsNotBorrowed": true
+}

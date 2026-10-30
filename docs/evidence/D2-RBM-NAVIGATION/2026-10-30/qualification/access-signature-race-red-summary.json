@@ -1,0 +1,17 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/routes/__tests__/rbm-approval-signature.pglite.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/access-signature-race-red-results.json",
+  "exitCode": 1,
+  "passed": 32,
+  "failed": 1,
+  "skipped": 0,
+  "files": 1,
+  "unchangedInputs": true,
+  "failures": [
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/rbm-approval-signature.pglite.test.ts",
+      "cases": [
+        "a plan approved after an editor read stays immutable refuses a stale draft edit when activation wins before the content UPDATE"
+      ]
+    }
+  ]
+}

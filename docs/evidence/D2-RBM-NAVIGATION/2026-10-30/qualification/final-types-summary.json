@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/rbm/__tests__/rbm-access.test.ts server/services/rbm/__tests__/rbm-assessment-seed.test.ts server/routes/__tests__/rbm-current-project-admission.test.ts server/routes/__tests__/rbm-board-current-project.test.ts server/services/ana/__tests__/rbm-launch-admission.test.ts server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts server/routes/__tests__/mdx-rbm-signed-records.test.ts server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts server/services/ana/__tests__/ana-cannot-sign.test.ts server/routes/__tests__/rbm-assessment-integrity.test.ts server/services/rbm/__tests__/rbm-actuator.test.ts server/routes/__tests__/rbm-approval-signature.pglite.test.ts client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/final-types-results.json",
+  "exitCode": 0,
+  "passed": 334,
+  "failed": 0,
+  "skipped": 0,
+  "files": 18,
+  "unchangedInputs": true,
+  "failures": []
+}

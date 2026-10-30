@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx client/src/concept2cure/v2/__tests__/companyLegalAdmissionContinuity.test.tsx client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx client/src/concept2cure/v2/__tests__/companyNamedDesigns.test.tsx client/src/concept2cure/v2/__tests__/companySettingsSessionContinuity.test.tsx client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx server/services/company-documents/__tests__/correspondence.test.ts server/services/company-documents/__tests__/identity.pglite.test.ts server/services/company-documents/__tests__/correspondence-rendering.test.ts client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx server/routes/__tests__/report-os-bundle-recording.test.ts server/routes/__tests__/report-os-report-pack-export.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/correspondence-session/final-results.json",
+  "exitCode": 0,
+  "passed": 317,
+  "failed": 0,
+  "skipped": 0,
+  "files": 20,
+  "unchangedInputs": true,
+  "failures": []
+}

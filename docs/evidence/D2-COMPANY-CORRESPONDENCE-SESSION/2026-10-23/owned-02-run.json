@@ -1,0 +1,35 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx --reporter=verbose --reporter=json --outputFile=/workspace/.cloud-setup/correspondence-session/owned-02-results.json",
+  "exitCode": 0,
+  "start": "/workspace/.cloud-setup/correspondence-session/owned-02-start.json",
+  "finish": "/workspace/.cloud-setup/correspondence-session/owned-02-finish.json",
+  "numTotalTests": 47,
+  "numPassedTests": 47,
+  "numFailedTests": 0,
+  "numTotalTestSuites": 18,
+  "numFailedTestSuites": 0,
+  "perFile": [
+    {
+      "name": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx",
+      "passed": 2,
+      "failed": 0
+    },
+    {
+      "name": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx",
+      "passed": 26,
+      "failed": 0
+    },
+    {
+      "name": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx",
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "name": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx",
+      "passed": 7,
+      "failed": 0
+    }
+  ],
+  "failures": [],
+  "all8InputsUnchanged": true
+}

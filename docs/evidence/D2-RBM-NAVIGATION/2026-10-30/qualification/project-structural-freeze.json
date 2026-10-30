@@ -1,0 +1,20 @@
+{
+  "observedAt": "2026-10-30T17:22:31.401822+00:00",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "e09aa607759335a987aa75e269c3c75aa00dab1607c8858c21f66dba88da5fc0",
+    "client/src/concept2cure/v2/surfaces/Rbm.tsx": "865c285d912d306d0aa4bc57376e91e15bb89886ecb897ad041fb01931e591dc",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "846447fe7bbaa44e91c19f511c4bce06755e382476752d9c4ce7fe914867d92e",
+    "client/src/concept2cure/v2/surfaces/rbmBoard.ts": "2e88b3a40cb6797efcbc58d40f4d8458eacb675d7eaf95ea59d716e782f8d9e7",
+    "server/routes/c2c/projects.ts": "08c8e25d518e2f2918ce0ab55ada6143ce2049c97c359c4d84487096bfd4ae6e",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx": "e3270495a246c7a075e6468c6396b57d5481b9a9340996b0335fae0963ce0232",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "c94373903863c699201803e9a8a7bfda51e0474f312102f492703f374ce3e646",
+    "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx": "1231c041cde83252e2a670e4ca373039f76762a3fc8690ab0b53682eb71e1da1",
+    "server/routes/c2c/__tests__/projects-rbm-choice.test.ts": "745ea87e511c4f3e0503aa684724450b2b004349cac6ec40b5c60195b97f34bc"
+  },
+  "productionUnchangedFromApprovedSpacingSuccessor": true,
+  "legacyServerSuiteRestoredToHead": true,
+  "existingSharedFixtureUnchanged": "server/routes/c2c/__tests__/projects-create-fixture.ts",
+  "historicalQualification": "project-owned-03-summary.json:174/174across8files, source archived exactly. This structure successor is not represented as rerun.",
+  "nextRootSelection": "project-structural-selection.json:9files,same174cases",
+  "testsRepeated": false
+}
