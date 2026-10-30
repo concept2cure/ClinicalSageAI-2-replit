@@ -1,0 +1,20 @@
+ ✓ §14.3.3 of 1,500 narratives (SYNTHETIC) > is larger than the inline limit 2ms
+ × §14.3.3 of 1,500 narratives (SYNTHETIC) > imports by reference: the section holds the opening, the origin the store reference with the narrative count 982ms
+ × §14.3.3 of 1,500 narratives (SYNTHETIC) > assembles from the store: all 1,500 filed, each checked against its stored SHA-256, with the import’s fingerprint 947ms
+ ✓ the 2,000,000-character limit still applies to the inline sections (SYNTHETIC) > refuses inline sections over the limit, however the narratives are held 309ms
+ × a stored narrative edited after import fails closed, naming the subject (SYNTHETIC) > its text and recorded hash both changed: the import no longer verifies, and assembly is refused 998ms
+ × a stored narrative edited after import fails closed, naming the subject (SYNTHETIC) > its text changed under its recorded hash: the import no longer verifies, and assembly is refused 1049ms
+ ✓ a stored narrative edited after import fails closed, naming the subject (SYNTHETIC) > a landed §14.3.3 changed under its recorded hash is refused 16ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  §14.3.3 of 1,500 narratives (SYNTHETIC) > imports by reference: the section holds the opening, the origin the store reference with the narrative count
+WorkflowSourceImportError: The saved workflow is too large or has ambiguous section keys for one authoring draft.
+     48| const fail = (status: WorkflowSourceImportError['status'], code: strin…
+Serialized Error: { status: 409, code: 'WORKFLOW_SOURCE_LIMIT' }
+ FAIL  §14.3.3 of 1,500 narratives (SYNTHETIC) > assembles from the store: all 1,500 filed, each checked against its stored SHA-256, with the import’s fingerprint
+WorkflowSourceImportError: The saved workflow is too large or has ambiguous section keys for one authoring draft.
+     48| const fail = (status: WorkflowSourceImportError['status'], code: strin…
+Serialized Error: { status: 409, code: 'WORKFLOW_SOURCE_LIMIT' }
+ FAIL  a stored narrative edited after import fails closed, naming the subject (SYNTHETIC) > its text and recorded hash both changed: the import no longer verifies, and assembly is refused
+ FAIL  a stored narrative edited after import fails closed, naming the subject (SYNTHETIC) > its text changed under its recorded hash: the import no longer verifies, and assembly is refused
+TypeError: Cannot read properties of undefined (reading 'narratives')
+      Tests  4 failed | 3 passed (7)
