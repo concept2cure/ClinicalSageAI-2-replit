@@ -1,5 +1,11 @@
 # Complete device attachment feedback in the existing drawer
 
+Source accepted directly on `concept2cure-v2` at **`f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c`**. The [final receipt](../evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-publication.json) supersedes pending-publication statements below. Qualification is 727 disjoint checks / 54 suites, eight actual-component Chromium flows with 36 stable input pins, 165 selected accepted-source hashes, a fresh full accepted-source build and every normal gate including TypeScript0. CI completion, deployment and agency/human acceptance are not claimed. Durable attachment association after reload remains separate.
+
+## What already exists — accepted safety-narrative integration
+
+Canonical `e27f678dfed2f06fa4751c127aec9f36c76a016a` retains the existing deterministic `server/services/ana/safety-narrative.ts` composer and CSR reconciliation owner. Its controlled-term prose correction preserves recorded clinical categories and introduces no second composer or inference. Nine commits / seven paths merged cleanly. The two affected server suites passed 20 checks, the server build passed and the subsequent ninth normal push was accepted with every gate green. A fresh full build then qualified the exact accepted source. Current receipt and evidence README describe actual acceptance; previous ref-race and planning paragraphs remain historical.
+
 ## What already exists — final recorded-context integration
 
 The seventh normal run passed every gate and TypeScript0, then raced canonical `86b0fa6f70bc1a0bb85a45c0e178e8a99843acf0`. Its four commits / twelve paths update existing test expectations and their TypeScript annotations, plus the existing owner README; production source is unchanged. The repaired filing-write fixture is not imported by the seven server suites executed here. The merge is clean, all 162 selected publication and 36 browser inputs remain exact, and no new execution of the incoming test repairs is claimed. Retain the 707 disjoint client/server checks, builds and eight browser flows; retry normal gates.
