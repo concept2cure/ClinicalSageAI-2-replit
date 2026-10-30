@@ -87,14 +87,17 @@ export type GovernedQmsCommand = keyof typeof GOVERNED_VERB;
  * One governed QMS write. `write` runs inside the transaction and returns the
  * ledger target/payload plus the response body; the ledger pair is written on
  * the same client before COMMIT. Answers the response itself in every branch;
- * returns true only when the change committed.
+ * returns true only when the change committed. `afterCommit`, when returned,
+ * runs after COMMIT and before the answer, while the request client is still
+ * held (as signGovernedAct's does): best effort, and nothing it does can turn
+ * the committed change into a failure.
  */
 export async function governedQmsWrite(
   req: Request,
   res: Response,
   subject: GovernedQmsSubject,
   opts: { orgId: number; userId: number; reason: string; command: GovernedQmsCommand; failure: string },
-  write: () => Promise<{ target: string; payload: Record<string, unknown>; status: number; body: unknown }>,
+  write: () => Promise<{ target: string; payload: Record<string, unknown>; status: number; body: unknown; afterCommit?: () => Promise<void> }>,
 ): Promise<boolean> {
   const verb = GOVERNED_VERB[opts.command];
   let client: RequestSqlClient;
@@ -155,6 +158,9 @@ export async function governedQmsWrite(
   }
   // Committed. Answered outside the try, so nothing after COMMIT can be
   // reported as a rollback.
+  if (out.afterCommit) {
+    await out.afterCommit().catch((error: unknown) => subject.logger.error(`${subject.logLabel} ${opts.command} after-commit work failed; the change stands`, { error }));
+  }
   res.status(out.status).json(out.body);
   return true;
 }
