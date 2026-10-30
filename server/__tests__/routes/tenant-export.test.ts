@@ -36,8 +36,10 @@ vi.mock('../../services/tenant-export/attestation-report.service', () => ({
   generateAttestation: (...args: any[]) => attestationSvc.generateAttestation(...args),
   AttestationKeyMissingError,
 }));
+// uuid: the export runs in the organization's own scope, its tenant id and its uuid (P-58's data return).
 vi.mock('../../db', () => ({ pool: { query: vi.fn(async () => ({ rows: [{
   role: authState.user?.role ?? (authState.user?.roles?.includes('admin') ? 'admin' : ''),
+  uuid: '00000000-0000-4000-8000-000000000007',
 }] })), connect: vi.fn(async () => ({ query: vi.fn(async () => ({ rows: [{ id: 7 }] })), release: vi.fn() })) } }));
 vi.mock('../../services/auditService', () => ({ default: audit }));
 

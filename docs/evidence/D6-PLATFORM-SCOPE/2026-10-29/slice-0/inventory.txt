@@ -1,0 +1,157 @@
+SET
+== server
+version
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+== policies in the catalog
+count
+1233
+== custom settings read directly in policy expressions: setting | policies
+s | count
+app.rls_enforce | 1029
+app.current_user_role | 977
+app.current_org_id | 974
+app.current_tenant_id | 938
+app.current_program_id | 10
+app.current_account_id | 7
+app.current_organization_id | 6
+app.current_user_id | 6
+app.organization_id | 4
+== values app.current_user_role is compared to in policies | policies
+m | count
+app_super_admin | 977
+== S (shadow) arm forms: admit-everything NULLIF form | COALESCE form | any rls_enforce reader
+nullif_form | coalesce_form | any_reader
+1029 | 0 | 1029
+== P (platform) arm, exact form (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text)
+exact_p | any_role_reader | both | s_only | p_only
+977 | 977 | 977 | 52 | 0
+== platform-only policies: once S and P are struck, nothing in the expression reads a scope (no current_setting, no can_* or current_org_id() helper, no parent EXISTS, no current_user/session_user) | count
+count
+4
+-- those policies: table | policy | cmd | struck expression
+t | polname | polcmd | left
+public.license_requests | license_requests_platform_access | * | (false OR false) (false OR false)
+public.platform_role_grants | platform_role_grants_platform_delete | d | (false OR false) 
+public.platform_role_grants | platform_role_grants_platform_insert | a |  (false OR false)
+public.platform_role_grants | platform_role_grants_platform_update | w | (false OR false) (false OR false)
+== RLS posture of relations: rls enabled | forced | enabled with a P-arm policy | forced with a P-arm policy
+count | count | count | count
+1128 | 1007 | 967 | 967
+== FORCEd tables, by schema: schema | forced | of which carry a P-arm policy
+nspname | count | count
+ai | 1 | 1
+audit | 6 | 6
+clinical_ops | 7 | 7
+compliance | 1 | 0
+core | 3 | 1
+cortex | 1 | 0
+ectd | 1 | 1
+federated_ml | 1 | 0
+global_dossier | 5 | 4
+identity | 1 | 0
+intelligence | 1 | 0
+lumen | 3 | 3
+manufacturing | 7 | 1
+precedent | 2 | 2
+predicate | 3 | 3
+public | 940 | 936
+regulatory_harmonization | 6 | 1
+regulatory_intel | 11 | 0
+vault | 7 | 1
+ | 1007 | 967
+== functions (outside pg_catalog/information_schema) whose BODY reads app.rls_enforce or app.current_user_role: function | definer | owner | reads
+?column? | prosecdef | pg_get_userbyid | concat_ws
+public.actor_name(p_user_id integer) | t | postgres | rls_enforce,current_user_role
+public.expire_orphaned_run_events(p_org integer, p_older_than timestamp with time zone) | t | ana_run_events_purger | rls_enforce
+public.guard_company_document_design() | f | postgres | rls_enforce,current_user_role
+public.guard_company_document_revision() | f | postgres | rls_enforce,current_user_role
+public.guard_company_legal_registry() | f | postgres | rls_enforce,current_user_role
+public.organization_users_staff_role_platform_only() | f | postgres | rls_enforce,current_user_role
+public.purge_tenant_artifact_records(p_org integer) | t | artifact_record_purger | rls_enforce,current_user_role
+public.purge_tenant_run_events(p_org integer) | t | ana_run_events_purger | rls_enforce,current_user_role
+public.purge_tenant_source_read_receipts(p_org integer) | t | ana_record_purger | current_user_role
+public.purge_tenant_turn_records(p_org integer) | t | ana_record_purger | rls_enforce,current_user_role
+public.purge_tenant_vault_records(p_org integer) | t | postgres | rls_enforce,current_user_role
+public.purge_tenant_vault_seals(p_org integer) | t | postgres | rls_enforce,current_user_role
+public.release_sealed_run_events(p_org integer, p_run text) | t | ana_run_events_purger | rls_enforce
+public.review_route_door_scope(p_org integer) | f | postgres | rls_enforce
+public.tenant_purge_door_preconditions(p_org integer, p_door text) | f | postgres | rls_enforce,current_user_role
+== functions whose SET clause (proconfig) names either setting (missed by P-70's prosrc-only query): function | definer | owner | proconfig
+?column? | prosecdef | pg_get_userbyid | array_to_string
+public.invitations_for_member(p_user_id integer) | t | postgres | search_path=pg_catalog, public,app.current_user_role=app_super_admin
+public.user_id_for_email(p_email text) | t | postgres | search_path=pg_catalog, public,app.current_user_role=app_super_admin
+public.user_id_for_reset_token(p_token_hash text) | t | postgres | search_path=pg_catalog, public,app.current_user_role=app_super_admin
+== every function SET clause naming any app.* setting: setting=value | functions
+c | count
+app.current_user_role=app_super_admin | 3
+== role and database defaults (pg_db_role_setting): role | database | settings
+coalesce | coalesce | array_to_string
+-- rows naming either setting
+count
+0
+== SECURITY DEFINER functions outside pg_catalog/information_schema, by owner: owner | super | bypassrls | functions
+pg_get_userbyid | rolsuper | rolbypassrls | count
+postgres | t | t | 67
+review_route_writer | f | f | 7
+tenant_record_purger | f | f | 5
+ana_run_events_purger | f | f | 3
+ana_record_purger | f | f | 2
+artifact_record_purger | f | f | 1
+audit_archiver | f | f | 1
+== runtime role and NOLOGIN roles: role | login | super | bypassrls | inherit | member of
+rolname | rolcanlogin | rolsuper | rolbypassrls | rolinherit | string_agg
+ana_record_purger | f | f | f | f | 
+ana_run_events_purger | f | f | f | f | 
+app_service | t | f | f | t | 
+artifact_record_purger | f | f | f | f | 
+audit_archiver | f | f | f | f | 
+postgres | t | t | t | t | 
+review_route_writer | f | f | f | f | 
+tenant_record_purger | f | f | f | f | 
+-- members of the purger/door roles: role | members
+rolname | string_agg
+== the platform-scope roles P-72 names exist?
+count
+0
+== the 46 allowlisted definers (scripts/db/security-definer-allowlist.json, working tree) by owner: owner | super | functions
+CREATE TABLE
+COPY 46
+coalesce | rolsuper | count
+postgres | t | 27
+review_route_writer | f | 7
+tenant_record_purger | f | 5
+ana_run_events_purger | f | 3
+ana_record_purger | f | 2
+audit_archiver | f | 1
+artifact_record_purger | f | 1
+-- owner-owned (not a purger/door role) allowlisted definers: function
+k
+audit.audit_trigger_func()
+cognitive_audit.audit_trigger_func()
+compliance.create_electronic_signature(p_signer_id uuid, p_signer_email text, p_signer_full_name text, p_signer_title text, p_organization_id uuid, p_signature_meaning text, p_record_schema text, p_record_table text, p_record_id uuid, p_record_version integer, p_authentication_method text, p_authentication_session_id uuid, p_credential_hash text, p_device_fingerprint text)
+compliance.verify_audit_chain(p_organization_id uuid, p_start_date timestamp with time zone, p_end_date timestamp with time zone)
+compliance.write_audit_entry(p_event_type text, p_user_id uuid, p_user_email text, p_user_full_name text, p_user_role text, p_organization_id uuid, p_record_schema text, p_record_table text, p_record_id uuid, p_record_type text, p_previous_values jsonb, p_new_values jsonb, p_change_reason text, p_change_reason_code text, p_session_id uuid, p_ip_address inet, p_metadata jsonb)
+core.can_access_program(p_program_id uuid)
+core.can_write_program(p_program_id uuid)
+fhir.audit_resource_changes()
+identity.can_access_org(target_org_id uuid)
+identity.can_access_program(p_program_id uuid)
+identity.can_write_org(target_org_id uuid)
+identity.can_write_program(p_program_id uuid)
+identity.check_org_access(target_org_id uuid)
+identity.check_org_write_access(target_org_id uuid)
+identity.check_signing_authority(target_org_id uuid)
+identity.current_org_id()
+product_master.audit_product_changes()
+public.actor_name(p_user_id integer)
+public.invitations_for_member(p_user_id integer)
+public.purge_tenant_vault_records(p_org integer)
+public.purge_tenant_vault_seals(p_org integer)
+public.seed_authoring_document_permissions()
+public.user_id_for_email(p_email text)
+public.user_id_for_reset_token(p_token_hash text)
+regulatory_harmonization.create_export_job(p_tenant_id uuid, p_source_entity_type text, p_source_entity_ids uuid[], p_target_format regulatory_harmonization.regulatory_format, p_target_jurisdiction text, p_created_by text)
+regulatory_harmonization.log_audit(p_table_name text, p_record_id uuid, p_action text, p_old_data jsonb, p_new_data jsonb, p_reason text)
+regulatory_harmonization.validate_data_region(p_tenant_id uuid, p_requested_region regulatory_harmonization.data_region)
+-- allowlist keys with no catalog function: key
+k

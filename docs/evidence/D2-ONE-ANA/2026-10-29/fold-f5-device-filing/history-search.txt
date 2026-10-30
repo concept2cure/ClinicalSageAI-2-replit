@@ -1,0 +1,16 @@
+# git log --all --diff-filter=D --name-only over the F5 names (clone depth: 1447 commits reachable from HEAD; shallow: true)
+2168fd569 2026-10-29 Fold device-tasks into Tasks, carrying the blocking flag (D2)
+
+client/src/concept2cure/mdx/hooks/__tests__/useWorkbench.unified.test.ts
+37f2ed240 2026-10-26 Fold filing reference discovery into canonical intake and recorded Plan
+
+client/src/concept2cure/v2/surfaces/FilingsCatalog.tsx
+b9975a914 2026-10-26 Fold filing catalogue into core project workflow
+
+client/src/concept2cure/v2/surfaces/FilingsCatalog.tsx
+0fc2fc294 2026-10-26 D2 cleanup S02: delete the MDX TemplatesSurface, replaced by Authoring > New document > Start from
+
+client/src/concept2cure/mdx/hooks/__tests__/useWorkbenchTemplates.test.ts
+client/src/concept2cure/mdx/hooks/useWorkbenchTemplates.ts
+
+# Item 1 names: git log --all --diff-filter=D --name-only over *package*, *Package*, *milestone*, *Milestone*, *TrackedFiling*, *DeviceFiling*, *submission*event*, *filing*event*

@@ -52,6 +52,15 @@
  * the tables whose rows the purge must not erase, so a tenant holding one is
  * not purged until a decision is made about them. Those are also not residue.
  *
+ * ── Platform records (P-58, 2026-10-29) ───────────────────────────────────────
+ * PURGE_PLATFORM_RECORDS (purge-referrers.ts) names the records the platform
+ * keeps ABOUT a purge and that hold no customer content: the offboarding
+ * certificate (tenant_offboarding_certificates). It is org-keyed and the purge
+ * does not erase it, by design, so it is reported as a platform record and
+ * never counted as residue; the gate fails if the purge list names one or a
+ * listed delete's cascade reaches one, and its keys are written after the
+ * deletes, so they are reported, not failed.
+ *
  * Not modelled: what a door function deletes beyond the table its entry names
  * (company_document_designs' disposal also deletes c2c_template_specs; the Vault
  * door, vault.document_archives). Those deletes run inside the door, in its own
@@ -222,6 +231,28 @@ function declaredBody(name, open, close) {
   return found.length ? { file: found[0].f, body: found[0].m[1] } : null;
 }
 
+/**
+ * PURGE_PLATFORM_RECORDS: the platform's own records of a purge, each with why
+ * (P-58). JSON-shaped; absent, it is empty (which only makes this gate
+ * stricter); present but unreadable, it fails closed.
+ */
+function platformRecords() {
+  const declared = declaredBody('PURGE_PLATFORM_RECORDS', '{', '})');
+  if (!declared) return {};
+  try {
+    const policy = JSON.parse(`{${declared.body.replace(/,\s*$/, '')}}`);
+    for (const [table, reason] of Object.entries(policy)) {
+      if (!/^[a-z][a-z0-9_]*$/.test(table) || typeof reason !== 'string' || reason.trim().length < 10) {
+        throw new Error('every exact public table needs a nonempty reason');
+      }
+    }
+    return policy;
+  } catch (error) {
+    console.error(`❌ purge-coverage: cannot read PURGE_PLATFORM_RECORDS — ${error.message}`);
+    process.exit(1);
+  }
+}
+
 function parentScopedTables() {
   const declared = declaredBody('PURGE_PARENT_SCOPED', '{', '});');
   if (!declared) return [];
@@ -294,10 +325,19 @@ try {
   const { tables, ordered } = purgeChildTables();
   const retained = retainedRecords();
   const notErased = referrersNotErased();
+  const platform = platformRecords();
   const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
-  const twice = Object.keys(notErased).filter((t) => own(retained, t));
+  const twice = [
+    ...Object.keys(notErased).filter((t) => own(retained, t)),
+    ...Object.keys(platform).filter((t) => own(retained, t) || own(notErased, t)),
+  ];
   if (twice.length) {
-    console.error(`❌ purge-coverage: named in both PURGE_RETAINED_RECORDS and PURGE_REFERRERS_NOT_ERASED: ${twice.join(', ')}`);
+    console.error(`❌ purge-coverage: named in more than one of PURGE_RETAINED_RECORDS, PURGE_REFERRERS_NOT_ERASED and PURGE_PLATFORM_RECORDS: ${twice.join(', ')}`);
+    process.exit(1);
+  }
+  const listedPlatform = Object.keys(platform).filter((t) => ordered.includes(t) || ordered.includes(`public.${t}`));
+  if (listedPlatform.length) {
+    console.error(`❌ purge-coverage: the purge list names a platform record it must never erase: ${listedPlatform.join(', ')}`);
     process.exit(1);
   }
   const listedHeld = Object.keys(notErased).filter((t) => ordered.includes(t) || ordered.includes(`public.${t}`));
@@ -305,7 +345,7 @@ try {
     console.error(`❌ purge-coverage: PURGE_REFERRERS_NOT_ERASED names table(s) the purge list erases: ${listedHeld.join(', ')}`);
     process.exit(1);
   }
-  const held = { ...retained, ...notErased };
+  const held = { ...retained, ...notErased, ...platform };
   const retainedNames = Object.keys(held);
   const { rows } = await client.query(RESIDUE_SQL, [tables]);
   const allResidue = rows.map((r) => r.t);
@@ -317,7 +357,8 @@ try {
   );
   const reachedRetained = visibleRetained.map((r) => r.t).filter((t) => !allResidue.includes(t));
   if (reachedRetained.length) {
-    console.error(`❌ purge-coverage: retained evidence is reachable by purge: ${reachedRetained.join(', ')}`);
+    const what = reachedRetained.some((t) => own(platform, t)) ? 'retained evidence or a platform record' : 'retained evidence';
+    console.error(`❌ purge-coverage: ${what} is reachable by purge: ${reachedRetained.join(', ')}`);
     process.exit(1);
   }
   const retainedHere = allResidue.filter((t) => own(retained, t));
@@ -329,6 +370,11 @@ try {
     console.info(`   tables the purge does not erase until a decision is made (PURGE_REFERRERS_NOT_ERASED): ${notErasedHere.length}`);
     for (const table of notErasedHere) console.info(`     ${table}: ${notErased[table]}`);
   }
+  const platformHere = allResidue.filter((t) => own(platform, t));
+  if (Object.keys(platform).length) {
+    console.info(`   platform records of a purge, kept by design and not residue (PURGE_PLATFORM_RECORDS): ${platformHere.length}`);
+    for (const table of platformHere) console.info(`     ${table}: ${platform[table]}`);
+  }
 
   // The order question (header, "does the purge get to the end?").
   const { rows: fkRows } = await client.query(FOREIGN_KEYS_SQL);
@@ -339,7 +385,7 @@ try {
   const stopping = keys.filter((k) => !own(held, bare(k.child)));
   const describe = (k) => `${k.child} (${k.cols.join(', ')}) → ${k.parent}, ${DEL_ACTION[k.del]}${k.del === 'n' || k.del === 'd' ? ' on a NOT NULL column' : ''} [${k.conname}]`;
   if (heldKeys.length) {
-    console.info(`   keys from a table the purge does not erase (a tenant holding such a row is not purged): ${heldKeys.length}`);
+    console.info(`   keys from a table the purge does not erase (a held row stops the purge; a platform record is written after it): ${heldKeys.length}`);
     for (const k of heldKeys) console.info(`     ${describe(k)}`);
   }
   if (stopping.length && !writeBaseline) {

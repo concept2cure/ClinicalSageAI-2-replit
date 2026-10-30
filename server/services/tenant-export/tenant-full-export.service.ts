@@ -234,8 +234,57 @@ export interface TenantFullExport {
     totalRows: number;
     truncatedTables: string[];
     companyDocuments?: CompanyDocumentsExportDescriptor;
+    /** The scope the read ran in, as its database session stated it (readExportScope). */
+    scope?: ExportScope;
   };
   tables: ExportedTable[];
+}
+
+/**
+ * The scope an export's read ran in, read from its own database session
+ * (P-58's data return, 2026-10-29; docs/evidence/D6-OFFBOARDING-CUSTODY/2026-10-29/).
+ *
+ *   organization  RLS enforced, in the exported organization's own scope: its
+ *                 tenant id and its organization uuid. Every tenant policy
+ *                 admits the organization's own rows, so the export's
+ *                 predicate alone decides (routes/tenant-export.ts).
+ *   unrestricted  nothing filtered the read: RLS not enforced on the session,
+ *                 or a role that bypasses it (the owner, a test fixture).
+ *   restricted    any other scope. The platform scope (tenant '0', no uuid)
+ *                 is one: under it vault.* and the knowledge graph returned
+ *                 none of the organization's rows, and nothing failed.
+ */
+export interface ExportScope {
+  kind: 'organization' | 'unrestricted' | 'restricted';
+  rlsEnforced: boolean;
+  tenantId: string;
+  organizationUuid: string;
+}
+
+/** The scopes whose read returns every row the export selects: the only ones whose export records a receipt, and so the only ones a purge accepts. */
+export const COMPLETE_EXPORT_SCOPES: readonly string[] = Object.freeze(['organization', 'unrestricted']);
+
+/** The export's scope, from its session. A scope that cannot be read is `restricted`: it records no receipt. */
+export async function readExportScope(client: Pool | PoolClient, organizationId: number): Promise<ExportScope> {
+  try {
+    const { rows } = await client.query(
+      `SELECT current_setting('app.rls_enforce', true) AS enforce,
+              current_setting('app.current_tenant_id', true) AS tenant,
+              current_setting('app.current_org_id', true) AS org_uuid,
+              (SELECT r.rolsuper OR r.rolbypassrls FROM pg_roles r WHERE r.rolname = current_user) AS bypass,
+              (SELECT to_jsonb(o)->>'uuid' FROM organizations o WHERE o.id = $1) AS own_uuid`,
+      [organizationId],
+    );
+    const r = rows[0] ?? {};
+    const rlsEnforced = r.enforce === 'on';
+    const tenantId = String(r.tenant ?? '');
+    const organizationUuid = String(r.org_uuid ?? '');
+    const own = rlsEnforced && tenantId === String(organizationId) && !!r.own_uuid && organizationUuid === String(r.own_uuid);
+    const kind: ExportScope['kind'] = !rlsEnforced || r.bypass === true ? 'unrestricted' : own ? 'organization' : 'restricted';
+    return { kind, rlsEnforced, tenantId, organizationUuid };
+  } catch {
+    return { kind: 'restricted', rlsEnforced: false, tenantId: '', organizationUuid: '' };
+  }
 }
 
 export class TenantNotFoundError extends Error {
@@ -338,6 +387,7 @@ export async function exportTenantFull(
     throw new TenantNotFoundError(`Organization ${organizationId} not found`);
   }
   const org = orgResult.rows[0];
+  const scope = await readExportScope(client, organizationId);
   const companyDocuments = await readCompanyDocumentsExportEnvelope(client, organizationId, org);
 
   const discovered = await discoverTenantTables(client);
@@ -407,6 +457,7 @@ export async function exportTenantFull(
       totalRows,
       truncatedTables,
       companyDocuments: companyDocumentsExportDescriptor(companyDocuments),
+      scope,
     },
     tables,
   };
@@ -421,6 +472,8 @@ export interface ExportReceipt {
   createdBy: number | null;
   companyDocumentsVersion?: number | null;
   companyDocumentsSha256?: string | null;
+  /** The scope its export ran in (COMPLETE_EXPORT_SCOPES); null for a receipt recorded before 2026-10-29. */
+  exportScope?: string | null;
 }
 
 /**
@@ -457,7 +510,7 @@ export interface ExportReceiptOutcome {
    * purge, and an incomplete return of a tenant's data must never authorize its
    * destruction. Names the tables, so the operator knows what to fix.
    */
-  incomplete?: { tablesFailed: string[]; truncatedTables: string[] };
+  incomplete?: { tablesFailed: string[]; truncatedTables: string[]; scope?: string };
 }
 
 export async function recordExportReceipt(
@@ -473,6 +526,7 @@ export async function recordExportReceipt(
       tablesFailed: ReadonlyArray<{ table: string } | string>;
       truncatedTables: ReadonlyArray<string>;
       companyDocuments?: CompanyDocumentsExportDescriptor;
+      scope?: Pick<ExportScope, 'kind'>;
     };
   }
 ): Promise<ExportReceiptOutcome> {
@@ -480,6 +534,17 @@ export async function recordExportReceipt(
   const truncatedTables = [...params.coverage.truncatedTables];
   const companyDocuments = params.coverage.companyDocuments;
   if (companyDocuments !== undefined && !validCompanyDocumentsExportDescriptor(companyDocuments)) tablesFailed.push('organizations.companyDocuments');
+  // An export read in a scope that returns less than exists is incomplete although no table failed:
+  // under the platform scope, vault.* and the knowledge graph returned nothing (P-58's data return).
+  const scope = params.coverage.scope?.kind ?? 'unstated';
+  if (!COMPLETE_EXPORT_SCOPES.includes(scope)) {
+    logger.warn('Tenant export read outside the organization\'s own scope — no receipt recorded; this digest cannot authorize a purge', {
+      organizationId: params.organizationId,
+      digest: params.digest,
+      scope,
+    });
+    return { recorded: false, inserted: false, incomplete: { tablesFailed, truncatedTables, scope } };
+  }
   if (tablesFailed.length > 0 || truncatedTables.length > 0) {
     // No receipt: this digest must not open a purge (tenant-purge.dbtest.ts).
     logger.warn('Tenant export incomplete — no receipt recorded; this digest cannot authorize a purge', {
@@ -493,8 +558,8 @@ export async function recordExportReceipt(
   try {
     const res = await client.query(
       `INSERT INTO tenant_export_receipts
-         (organization_id, digest, table_count, row_count, created_by, company_documents_version, company_documents_sha256)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+         (organization_id, digest, table_count, row_count, created_by, company_documents_version, company_documents_sha256, export_scope)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (organization_id, digest) DO NOTHING`,
       [
         params.organizationId,
@@ -504,6 +569,7 @@ export async function recordExportReceipt(
         params.createdBy,
         companyDocuments?.schemaVersion ?? null,
         companyDocuments?.sha256 ?? null,
+        scope,
       ]
     );
     // A conflict wrote nothing and is still a receipt-backed digest.
@@ -532,7 +598,8 @@ export async function findExportReceipt(
   const { rows } = await client.query(
     `SELECT organization_id, digest, table_count, row_count, created_at, created_by,
             to_jsonb(r)->'company_documents_version' AS company_documents_version,
-            to_jsonb(r)->>'company_documents_sha256' AS company_documents_sha256
+            to_jsonb(r)->>'company_documents_sha256' AS company_documents_sha256,
+            to_jsonb(r)->>'export_scope' AS export_scope
        FROM tenant_export_receipts r
       WHERE organization_id = $1 AND digest = $2
       LIMIT 1${opts.hold ? ' FOR SHARE' : ''}`,
@@ -549,5 +616,6 @@ export async function findExportReceipt(
     createdBy: r.created_by,
     companyDocumentsVersion: r.company_documents_version ?? null,
     companyDocumentsSha256: r.company_documents_sha256 ?? null,
+    exportScope: r.export_scope ?? null,
   };
 }

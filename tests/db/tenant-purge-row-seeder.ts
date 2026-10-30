@@ -273,3 +273,30 @@ export async function removeSeeded(pool: Pool, rows: readonly SeededRow[]): Prom
     client.release();
   }
 }
+
+/**
+ * A Vault document belongs to one of its organization's programs: the Vault's
+ * policies decide on that (core.can_access_program, by the program's
+ * organization uuid). The seeder fills program_id, which no key names, with a
+ * program of no organization, so no tenant scope could read the document
+ * (P-58's data return, 2026-10-29). This gives every Vault document the seeder
+ * wrote for its organization that organization's own program, laid down past
+ * the record guard (program_id is fixed once written) as the owner.
+ */
+export async function ownVaultProgram(owner: Pool, seeder: TenantRowSeeder): Promise<void> {
+  if (!seeder.rows.some((r) => r.table === 'vault.documents')) return;
+  const program = await seeder.seed('public.regulatory_programs');
+  const c = await owner.connect();
+  try {
+    await c.query('BEGIN');
+    await c.query('ALTER TABLE vault.documents DISABLE TRIGGER USER');
+    await c.query('UPDATE vault.documents SET program_id = $1 WHERE organization_id = $2', [program.id, seeder.organizationId]);
+    await c.query('ALTER TABLE vault.documents ENABLE TRIGGER USER');
+    await c.query('COMMIT');
+  } catch (error) {
+    await c.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    c.release();
+  }
+}

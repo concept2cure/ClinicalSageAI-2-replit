@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Editor } from '@tiptap/core';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { displayName: 'Author', email: 'author@example.test' } }) }));
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()), useAuth: () => ({ user: { displayName: 'Author', email: 'author@example.test' } }) }));
 vi.mock('../clinicalRegulatoryGraphFlag', () => ({ isClinicalRegulatoryGraphEnabled: () => false }));
 vi.mock('../editor/SourceImportDialog', async original => ({ ...(await original<typeof import('../editor/SourceImportDialog')>()),
   SourceImportDialog: ({ programId, source, onOpenDocument }: { programId: string; source: unknown; onOpenDocument: (id: string, code: string) => void }) =>

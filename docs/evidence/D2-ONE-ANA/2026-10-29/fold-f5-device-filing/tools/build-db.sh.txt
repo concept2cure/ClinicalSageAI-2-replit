@@ -1,0 +1,9 @@
+#!/bin/bash
+# Build a deploy-shaped database from blank on my private cluster: install-fresh then deploy-migrate.
+PGBASE="postgresql://postgres@127.0.0.1:55473"
+NAME=${1:-c2c_f5}
+psql "$PGBASE/postgres?sslmode=disable" -q -c "DROP DATABASE IF EXISTS $NAME WITH (FORCE)" -c "CREATE DATABASE $NAME"
+export DATABASE_URL="$PGBASE/$NAME?sslmode=disable" DATABASE_OWNER_URL="$PGBASE/$NAME?sslmode=disable" APP_SERVICE_DB_PASSWORD=local-f5-app-service-pw
+cd /home/user/ClinicalSageAI-2-replit
+node scripts/db/install-fresh.mjs > <scratch>/install-fresh-$NAME.log 2>&1; echo "install-fresh exit $?" >> <scratch>/install-fresh-$NAME.log
+node scripts/db/deploy-migrate.mjs > <scratch>/deploy-migrate-$NAME.log 2>&1; echo "deploy-migrate exit $?" >> <scratch>/deploy-migrate-$NAME.log

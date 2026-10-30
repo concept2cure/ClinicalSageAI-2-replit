@@ -287,6 +287,8 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'evidence',
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) calls these for the Vault too.
+    // 2026-10-30 (D2, fold F5): useWorkbench and useSubmissions are gone with their screens; no client calls
+    // /api/submission-ops/artifact-section-map or /api/submission-ops/packages now. The claims are kept, unchanged.
     // '/api/mdx/vault' was claimed here on 2026-09-26 for mdx/hooks/useVault.ts. That attribution
     // was a walker bug (fixed in f9eee2670): useVault renders only in the device kit's device-vault
     // surface, outside the catalog. The launch Vault reads the same stores through
@@ -712,6 +714,8 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'collaboration',
     uiKit: 'tasking',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) and the shell's TaskTray call these.
+    // 2026-10-30 (D2, fold F5): useWorkbench and useSubmissions are gone with their screens; no client calls
+    // /api/submission-ops/artifact-section-map or /api/submission-ops/packages now. The claims are kept, unchanged.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): the task board and the shell's task tray.
     // /api/project-rules: the task board reads the rule definitions it shows
     // (TaskBoard.tsx); claimed by no surface until the gate saw it (2026-10-01).

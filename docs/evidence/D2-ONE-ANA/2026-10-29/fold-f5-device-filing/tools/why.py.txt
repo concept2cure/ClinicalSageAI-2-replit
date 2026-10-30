@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""Apply one mutation from a spec by id, run its first test, print the error lines, restore byte for byte."""
+import hashlib, json, re, subprocess, sys, pathlib
+REPO = pathlib.Path('/home/user/ClinicalSageAI-2-replit')
+spec = {m['id']: m for m in json.load(open(sys.argv[1]))}
+m = spec[sys.argv[2]]
+f = REPO / m['file']; orig = f.read_bytes()
+f.write_bytes(orig.decode().replace(m['old'], m['new']).encode())
+try:
+    t = m['test'] if isinstance(m['test'], str) else m['test'][0]
+    p = subprocess.run(['npx', 'vitest', 'run', t], cwd=REPO, capture_output=True, text=True, timeout=600)
+    o = p.stdout + p.stderr
+    for line in o.splitlines():
+        if re.search(r'error:|Error:|RAISE|raise|exception', line, re.I): print(line[:300])
+finally:
+    f.write_bytes(orig)
+print('restored:', hashlib.sha256(f.read_bytes()).hexdigest() == hashlib.sha256(orig).hexdigest())

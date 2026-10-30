@@ -75,6 +75,13 @@
  * (which also takes a table out of the residue, by name, with its reason); and
  * the list split across modules: a `...NAME` entry spread in place from a
  * sibling module, which fails closed when nothing declares it.
+ *
+ * PURGE_PLATFORM_RECORDS (P-58, 2026-10-29): the records the platform keeps
+ * about a purge, the offboarding certificate. The cases pin that one named
+ * there is reported as a platform record and is not residue, that the same
+ * table unnamed is NEW residue, and that the gate fails when the purge list
+ * names one, when a cascade reaches one, when one is also named as held, and,
+ * closed, when an entry has no reason.
  * tests/db/tenant-purge-blocking-keys.dbtest.ts runs the real list against a
  * tenant holding a row in every such table.
  *
@@ -313,6 +320,16 @@ function service(entries = BASE_ENTRIES, retained = {}, { parentScoped = null, n
     '',
   ].join('\n');
 }
+
+/**
+ * The platform's own record of a purge (P-58): the offboarding certificate,
+ * org-keyed, kept by design, declared in purge-referrers.ts.
+ */
+const CERTIFICATE_REASON = 'The offboarding certificate: counts, digests and times, no customer content.';
+const CERTIFICATE_DDL =
+  'CREATE TABLE tenant_offboarding_certificates (id serial PRIMARY KEY, organization_id integer NOT NULL REFERENCES organizations(id));';
+const platformRecords = (reason = CERTIFICATE_REASON) =>
+  `export const PURGE_PLATFORM_RECORDS: Readonly<Record<string, string>> = Object.freeze({\n  "tenant_offboarding_certificates": ${JSON.stringify(reason)}\n});\n`;
 
 const baselineJson = (tables) =>
   `${JSON.stringify({ generatedAt: '2026-09-19T00:00:00.000Z', purgeChildTables: [], count: tables.length, tables }, null, 2)}\n`;
@@ -598,7 +615,7 @@ const cases = [
     notErased: { electronic_signatures: 'Part 11 signatures; retention awaits a decision.' },
     expect: 0,
     mustSay: [
-      'keys from a table the purge does not erase (a tenant holding such a row is not purged): 1',
+      'keys from a table the purge does not erase (a held row stops the purge; a platform record is written after it): 1',
       'public.electronic_signatures (document_id) → public.documents, NO ACTION [electronic_signatures_document_id_fkey]',
       'tables the purge does not erase until a decision is made (PURGE_REFERRERS_NOT_ERASED): 1',
       'electronic_signatures: Part 11 signatures; retention awaits a decision.',
@@ -660,7 +677,58 @@ const cases = [
     retained: { electronic_signatures: 'Retained with the audit trail.' },
     notErased: { electronic_signatures: 'Part 11 signatures; retention awaits a decision.' },
     expect: 1,
-    mustSay: ['named in both PURGE_RETAINED_RECORDS and PURGE_REFERRERS_NOT_ERASED: electronic_signatures'],
+    mustSay: ['named in more than one of PURGE_RETAINED_RECORDS, PURGE_REFERRERS_NOT_ERASED and PURGE_PLATFORM_RECORDS: electronic_signatures'],
+  },
+
+  // The platform's own records of a purge (P-58, 2026-10-29): the offboarding
+  // certificate is org-keyed, kept by design, and must never be erased.
+  {
+    name: 'quiet — a platform record named in PURGE_PLATFORM_RECORDS is reported as one, and is not residue',
+    ddl: `${BASE_DDL} ${CERTIFICATE_DDL}`,
+    siblings: { 'purge-referrers.ts': platformRecords() },
+    expect: 0,
+    mustSay: [
+      'platform records of a purge, kept by design and not residue (PURGE_PLATFORM_RECORDS): 1',
+      `tenant_offboarding_certificates: ${CERTIFICATE_REASON}`,
+      okLine(1, 1),
+    ],
+  },
+  {
+    name: 'FAILS on that table when it is not named',
+    ddl: `${BASE_DDL} ${CERTIFICATE_DDL}`,
+    expect: 1,
+    newTables: ['tenant_offboarding_certificates'],
+  },
+  {
+    name: 'FAILS when the purge list names a platform record',
+    ddl: `${BASE_DDL} ${CERTIFICATE_DDL}`,
+    entries: [...BASE_ENTRIES, "  'tenant_offboarding_certificates',"],
+    siblings: { 'purge-referrers.ts': platformRecords() },
+    expect: 1,
+    mustSay: ['the purge list names a platform record it must never erase: tenant_offboarding_certificates'],
+  },
+  {
+    name: 'FAILS when a platform record is reached by a cascade from a purged table',
+    ddl: `${BASE_DDL} CREATE TABLE tenant_offboarding_certificates (id serial PRIMARY KEY, organization_id integer NOT NULL,
+      project_id integer REFERENCES projects(id) ON DELETE CASCADE);`,
+    siblings: { 'purge-referrers.ts': platformRecords() },
+    expect: 1,
+    mustSay: ['retained evidence or a platform record is reachable by purge: tenant_offboarding_certificates'],
+  },
+  {
+    name: 'FAILS when a platform record is also named in PURGE_REFERRERS_NOT_ERASED',
+    ddl: `${BASE_DDL} ${CERTIFICATE_DDL}`,
+    notErased: { tenant_offboarding_certificates: 'Held until a decision is made.' },
+    siblings: { 'purge-referrers.ts': platformRecords() },
+    expect: 1,
+    mustSay: ['named in more than one of PURGE_RETAINED_RECORDS, PURGE_REFERRERS_NOT_ERASED and PURGE_PLATFORM_RECORDS: tenant_offboarding_certificates'],
+  },
+  {
+    name: 'FAILS closed when a PURGE_PLATFORM_RECORDS entry has no meaningful reason',
+    ddl: `${BASE_DDL} ${CERTIFICATE_DDL}`,
+    siblings: { 'purge-referrers.ts': platformRecords(' ') },
+    expect: 1,
+    mustSay: ['cannot read PURGE_PLATFORM_RECORDS'],
   },
 
   // The list split across modules (2026-10-29): purge-referrers.ts holds a block

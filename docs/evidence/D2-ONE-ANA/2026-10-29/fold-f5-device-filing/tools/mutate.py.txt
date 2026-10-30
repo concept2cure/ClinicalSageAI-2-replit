@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+"""Apply each mutation alone, run its test, restore the file byte for byte.
+
+Usage: mutate.py SPEC.json OUT.txt
+SPEC: [{"id", "what", "file", "old", "new", "test"}]. `old` must occur exactly once.
+"""
+import hashlib, json, re, subprocess, sys, pathlib
+
+REPO = pathlib.Path('/home/user/ClinicalSageAI-2-replit')
+spec = json.load(open(sys.argv[1]))
+out = open(sys.argv[2], 'w')
+
+def sha(b): return hashlib.sha256(b).hexdigest()
+
+for m in spec:
+    f = REPO / m['file']
+    orig = f.read_bytes()
+    text = orig.decode()
+    n = text.count(m['old'])
+    if n != 1:
+        out.write(f"{m['id']}: SKIPPED, old text occurs {n} times in {m['file']}\n"); out.flush(); continue
+    f.write_bytes(text.replace(m['old'], m['new']).encode())
+    try:
+        tests = m['test'] if isinstance(m['test'], list) else [m['test']]
+        results = []
+        for t in tests:
+            p = subprocess.run(['npx', 'vitest', 'run', t], cwd=REPO, capture_output=True, text=True, timeout=600)
+            o = p.stdout + p.stderr
+            summ = re.findall(r'^\s+Tests\s+(.*)$', o, re.M)
+            fails = re.findall(r'^ +× (.*?)(?: \d+ms)?$', o, re.M)
+            results.append((t, p.returncode, summ[-1] if summ else 'no summary', fails))
+    finally:
+        f.write_bytes(orig)
+    restored = sha(f.read_bytes()) == sha(orig)
+    red = all(rc != 0 for _, rc, _, _ in results)
+    out.write(f"{m['id']}: {m['what']}\n  file: {m['file']}\n")
+    for t, rc, summ, fails in results:
+        out.write(f"  test: {t}\n  result: {'RED' if rc != 0 else 'GREEN (survived)'} ({summ})\n")
+        for x in fails[:8]:
+            out.write(f"    x {x.split(' > ', 1)[-1]}\n")
+    out.write(f"  restored byte for byte: {'yes' if restored else 'NO'} (sha256 {sha(orig)[:16]})\n\n")
+    out.flush()
+    if not restored:
+        sys.exit(f"restore failed for {m['file']}")

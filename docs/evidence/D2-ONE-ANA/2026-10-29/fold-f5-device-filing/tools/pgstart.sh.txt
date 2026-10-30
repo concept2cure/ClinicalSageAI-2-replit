@@ -1,0 +1,3 @@
+#!/bin/bash
+# Start my private PostgreSQL 16 (+pgvector) on 127.0.0.1:55473, in a user namespace (the server refuses uid 0).
+nohup unshare --user --map-user=1000 --map-group=1000 <scratch>/pg-root/usr/lib/postgresql/16/bin/postgres -D <scratch>/pg/data -p 55473 -k "" -c listen_addresses=127.0.0.1 -c fsync=off -c synchronous_commit=off -c full_page_writes=off -c max_connections=80 -c shared_buffers=128MB >> <scratch>/pg/log.txt 2>&1 &

@@ -12,6 +12,15 @@
  * frozen and module-local in the same way, and ci:purge-coverage reads the
  * spread in place, in order. PURGE_REFERRERS_NOT_ERASED is re-exported there.
  *
+ * Since P-58 (2026-10-29; docs/evidence/D6-OFFBOARDING-CUSTODY/2026-10-29/)
+ * the tables held out of the purge are in this list too: each is exported,
+ * custody of the export is signed by the customer's administrator
+ * (./offboarding-custody.ts), and then it is erased, through its door
+ * (./purge-held-doors.ts) where its trigger or the runtime role's grant
+ * ceiling refuses DELETE. PURGE_REFERRERS_NOT_ERASED is empty, and
+ * PURGE_PLATFORM_RECORDS names the two records the purge keeps of a tenant:
+ * its export receipts and its offboarding certificate.
+ *
  * @module server/services/tenant/purge-referrers
  */
 
@@ -44,6 +53,17 @@ export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([
   // which each document names with no cascade; it used to come after both.
   // Their comments, locks, sessions, versions, sections and package-plan
   // entries first: each names its document with no cascade.
+  //
+  // Before them all, the signed records (P-58): a signed compliance review
+  // (it names its signature), the tenant's electronic signatures and the
+  // documents' audit trail, each naming a document or a version with no
+  // delete action. One door erases the three (purge_tenant_signed_records):
+  // the signatures' trigger refuses DELETE from every role, and the runtime
+  // role holds no DELETE on the signatures or the audit trail. The custody
+  // signatures stay, for the offboarding certificate.
+  'compliance_review_records',
+  'electronic_signatures',
+  'document_audit_trail',
   'ind_package_plan_documents',
   'document_comments',
   'document_locks',
@@ -61,16 +81,37 @@ export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([
   'section_graph_nodes',
   'section_leaves',
   'sections',
-  // Unified tasks, after the links and dependencies that name them. A task on
-  // a review route refuses DELETE (unified_tasks_route_rows_guard); see
-  // review_routes in PURGE_REFERRERS_NOT_ERASED.
+  // Unified tasks, after the links and dependencies that name them, then the
+  // review routes their route members name (P-58). A route member's DELETE is
+  // refused to every role but the purge's door (unified_tasks_route_rows_guard,
+  // 20261023), so one door erases the tenant's tasks, members included, and
+  // then its routes (purge_tenant_review_routes).
   'cross_module_task_links',
   'task_dependencies',
   'unified_tasks',
+  'review_routes',
   // A project's own working data: AnA objectives, capabilities and profiles,
   // its intelligence profile and what it ingested, modules, predictions, rules,
   // schedule, tasks and workflow stages, risk detections, sentinel findings,
   // template usage, CTD onboarding. Each names the project with no cascade.
+  //
+  // With them, the project's records held out of the purge until P-58: AnA's
+  // canon resolution and outcome logs, the rule execution log, skill-bundle
+  // execution receipts, data lineage and evidence chains (one door,
+  // purge_tenant_lineage_records: their trigger refuses DELETE), governance
+  // boundary transitions, and the sealed reports, after the seal events,
+  // indemnification attestations and atom provenance that name them.
+  'account_canon_resolution_log',
+  'ana_outcome_log',
+  'rule_execution_log',
+  'bundle_execution_receipts',
+  'data_lineage_records',
+  'evidence_chain_records',
+  'governance_boundary_transitions',
+  'report_seal_events',
+  'indemnification_attestations',
+  'report_atom_provenance',
+  'immutable_report_records',
   'ana_client_objectives',
   'ana_project_capabilities',
   'ana_relational_profiles',
@@ -91,7 +132,9 @@ export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([
   'ctd_onboarding_projects',
   // Account intelligence: templates and terms of a project's skill bundles
   // (which cascade from projects), canon items, and the workspace's
-  // intelligence profile with what it ingested and remembers.
+  // intelligence profile with what it ingested and remembers. The account
+  // event ledger first (P-58): it names canon items and bundles.
+  'account_events',
   'account_template_registry',
   'account_term_dictionary',
   'account_canon_items',
@@ -113,8 +156,9 @@ export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([
   // CER v1: each report's evidence, checks, requirements, exports, FAERS data,
   // literature, sections, versions and workflows, then the reports; then the
   // CER project's documents, permissions, activities and milestones, then the
-  // project, which names its workspace with no cascade. cer_approvals is held
-  // (PURGE_REFERRERS_NOT_ERASED).
+  // project, which names its workspace with no cascade. The CER approvals
+  // first (P-58): each names its project and a project document.
+  'cer_approvals',
   'cer_clinical_evidence',
   'cer_compliance_checks',
   'cer_essential_requirements',
@@ -151,6 +195,34 @@ export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([
   // purged. So a purged tenant kept every narrative (ci:purge-coverage, NEW
   // residue; docs/evidence/D6-TENANT-EXPORT-GAPS/2026-10-29/).
   'csr_narrative_outputs',
+  // Beside them, a CSR build's assembly and narrative runs (b265d6fc0;
+  // migrations/20260628_csr_job_state.sql, Tables 4 and 5): who asked for each
+  // run, its progress, and its result or error. Tenant content, and no
+  // signature or signed act. Nothing names them, and they name no purged row:
+  // like the outputs, they cascade only from csr_build_jobs, which is not
+  // purged, and their organization_id key has no cascade, so a purged tenant
+  // kept every run (ci:purge-coverage, NEW residue; P-58, 2026-10-29).
+  'csr_assembly_runs',
+  'csr_narrative_runs',
+  // A tenant's deviations (P-57, migrations/20261029g_qc_deviations.sql): a
+  // GxP quality record, so a held record (the lead's decision, P-58,
+  // 2026-10-29), counted in the custody attestation (./held-records.ts) and
+  // erased only after custody. A plain DELETE: no trigger refuses it and the
+  // runtime role holds DELETE, so it needs no door. Nothing names it and it
+  // names only its organization. Its close and cancel signatures are
+  // electronic_signatures rows, erased above through purge_tenant_signed_records.
+  'qc_deviations',
+  // The tenant's knowledge graph (P-58's data return, 2026-10-29): its nodes
+  // and edges, and the Lumen atom graph's edges. Tenant content, no signature,
+  // and nothing names them; the Lumen edges cascade only from lumen_data_atoms,
+  // which is not purged. Each was baselined residue (ci:purge-coverage), so a
+  // purged tenant kept its whole graph. Their policy admits only the
+  // organization's own tenant id, which the purge's transaction now carries
+  // (tenant-offboarding.ts, enterOrganizationScope); the export reads them in
+  // the same scope (company-export-snapshot.ts).
+  'lumen_knowledge_graph_edges',
+  'knowledge_graph_edges',
+  'knowledge_graph_nodes',
   // 510(k) v1: a project's documents, stage progress and packages, then the project.
   'fda_510k_documents',
   'fda_510k_stage_progress',
@@ -182,9 +254,13 @@ export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([
   // Regulatory submissions and obligations (legacy): correspondence messages
   // and attachments, the correspondence, communications, the compliance
   // calendar, an obligation's updates and the obligation, then a submission's
-  // calendar, commitments, tasks and gates, then the submission. reg_questions
-  // and gate_approvals are held (PURGE_REFERRERS_NOT_ERASED).
+  // calendar, commitments, tasks and gates, then the submission. The legacy
+  // questions (P-58) after their messages and responses, through their door
+  // (purge_tenant_reg_questions: read-only to every role since 20261019b);
+  // the stage-gate approvals before their gate and submission.
   'reg_messages',
+  'reg_responses',
+  'reg_questions',
   'reg_attachments',
   'agency_correspondence',
   'agency_communications',
@@ -194,6 +270,7 @@ export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([
   'regulatory_calendar',
   'post_approval_commitments',
   'regulatory_tasks',
+  'gate_approvals',
   'stage_gates',
   'regulatory_submissions',
   // Quality management plans: traceability, critical-to-quality factors and
@@ -241,17 +318,31 @@ export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([
      validations, clinical evidence and CDx workflows
      (migrations/001_create_ivdr_tables.sql) name their classification with NO
      ACTION on every lineage, so they go before it; their Part 11 change
-     histories are held (PURGE_REFERRERS_NOT_ERASED). labeling_documents names
-     its program by labeling_documents_program_same_org_fk, NO ACTION; its
-     translations and symbols cascade. */
+     histories before them (P-58), through their door
+     (purge_tenant_ivdr_histories: the runtime role holds no DELETE on them),
+     each by its parent's organization. labeling_documents names
+     its program by labeling_documents_program_same_org_fk, NO ACTION. Its
+     translations and symbols name it twice: by a key that cascades and by
+     their same-organization key (20261013b), NO ACTION. Both checks are
+     AFTER triggers on labeling_documents and fire in trigger-name order, the
+     text order of their OIDs, so on a database where the NO ACTION trigger's
+     name sorts first (an OID past 99999 against one below it) the check finds
+     the rows the cascade has not yet removed, and the purge fails 23503
+     (found 2026-10-29 on an install-fresh database, P-58). Listed first, they
+     are gone before either trigger fires. */
   'udi_records',
   'software_lifecycle_items',
+  'labeling_translations',
+  'labeling_symbols',
   'labeling_documents',
   'ivd_analytical_performance',
   'ivd_clinical_performance',
   'ivd_clia_categorization',
   'ivdr_per_documents',
   'cdx_pairings',
+  'ivdr_validation_parameter_history',
+  'ivdr_evidence_result_history',
+  'ivdr_cdx_status_history',
   'ivdr_clinical_evidence',
   'ivdr_analytical_validations',
   'ivdr_cdx_workflows',
@@ -265,34 +356,24 @@ export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([
 ]);
 
 /** Tables the purge does not erase although a row of theirs can name a row it
- * deletes, each with why (D6, 2026-10-29;
- * docs/evidence/D6-TENANT-PURGE-BLOCKING-KEYS/2026-10-29/). They are
- * signatures, audit trails, sealed reports and ledgers, whose retention after a
- * tenant's erasure is the founder's decision and not yet made. Until it is, a
- * tenant holding one such row is NOT purged: the purge stops at the table each
- * reason names and rolls back, as it did before; nothing here detaches them.
- * review_routes names nothing the purge deletes; it is here because nothing
- * reaches it and its rows are a signed workflow. ci:purge-coverage reads this
- * literal: each table is reported with its key instead of failing the gate, and
- * is not counted as residue. Keep it JSON-shaped.
+ * deletes, each with why. Empty since P-58 (2026-10-29;
+ * docs/evidence/D6-OFFBOARDING-CUSTODY/2026-10-29/): the 18 tables held here on
+ * 2026-10-29 (signatures, audit trails, sealed reports, ledgers, the IVDR
+ * histories, reg_questions, review_routes) are exported, custody of the export
+ * is signed, and they are erased with the tenant, in PURGE_REFERRER_TABLES
+ * above. Kept, JSON-shaped and read by ci:purge-coverage, so a table that must
+ * be held again is named here with its reason rather than left as residue.
  */
 export const PURGE_REFERRERS_NOT_ERASED: Readonly<Record<string, string>> = Object.freeze({
-  "account_canon_resolution_log": "Log of AnA's canon resolutions. Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.",
-  "account_events": "Append-only account event ledger (20260318_ga_immutability_hardening.sql). Blocks: project_id → projects, canon_item_id → account_canon_items, skill_bundle_id → account_skill_bundles (NO ACTION). A tenant holding one is not purged: 23503 at account_canon_items, rolled back. Retention awaits the founder's decision.",
-  "ana_outcome_log": "Log of AnA outcomes. Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.",
-  "bundle_execution_receipts": "Receipts of skill-bundle executions. Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.",
-  "cer_approvals": "CER v1 approval records (who approved what, when). Blocks: project_id → cer_projects, document_id → project_documents (NO ACTION). A tenant holding one is not purged: 23503 at project_documents, rolled back. Retention awaits the founder's decision.",
-  "data_lineage_records": "Data lineage records, update-refused (trg_prevent_lineage_update). Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.",
-  "document_audit_trail": "The legacy documents' audit trail (a registered domain history, server/services/audit/domain-history-link.ts). Blocks: document_id → documents, version_id → document_versions (NO ACTION). A tenant holding one is not purged: 23503 at document_versions, rolled back. Retention awaits the founder's decision.",
-  "electronic_signatures": "Part 11 electronic signatures (trg_electronic_signatures_immutable). Blocks: document_id → documents, version_id → document_versions (NO ACTION). A tenant holding one is not purged: 23503 at document_versions, rolled back. Retention awaits the founder's decision.",
-  "evidence_chain_records": "Evidence chain records, update-refused (trg_prevent_evidence_chain_update). Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.",
-  "gate_approvals": "Stage-gate approvals carrying a signature hash and meaning. Blocks: gate_id → stage_gates, submission_id → regulatory_submissions (NO ACTION). A tenant holding one is not purged: 23503 at stage_gates, rolled back. Retention awaits the founder's decision.",
-  "governance_boundary_transitions": "Governance boundary transitions of artifacts. Blocks: project_id → projects, artifact_id → concept2cure_artifacts (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.",
-  "immutable_report_records": "Sealed report records. Blocks: project_id → projects, client_workspace_id → client_workspaces (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.",
-  "ivdr_cdx_status_history": "Part 11 change history of an IVDR CDx workflow (a registered domain history). Blocks: workflow_id → ivdr_cdx_workflows (NO ACTION). A tenant holding one is not purged: 23503 at ivdr_cdx_workflows, rolled back. Retention awaits the founder's decision.",
-  "ivdr_evidence_result_history": "Part 11 change history of IVDR clinical evidence (a registered domain history). Blocks: evidence_id → ivdr_clinical_evidence (NO ACTION). A tenant holding one is not purged: 23503 at ivdr_clinical_evidence, rolled back. Retention awaits the founder's decision.",
-  "ivdr_validation_parameter_history": "Part 11 change history of an IVDR analytical validation (a registered domain history). Blocks: validation_id → ivdr_analytical_validations (NO ACTION). A tenant holding one is not purged: 23503 at ivdr_analytical_validations, rolled back. Retention awaits the founder's decision.",
-  "reg_questions": "Legacy agency questions, read-only since 2026-10-19 (reg_questions_read_only refuses INSERT, UPDATE, DELETE and TRUNCATE from every role, migrations/20261019b_reg_questions_read_only.sql). Blocks: correspondence_id → agency_correspondence, attachment_id → reg_attachments (NO ACTION). A tenant holding one is not purged: 23503 at reg_attachments, rolled back. Whether they are a retained regulatory record awaits the founder's decision; the migration follows from it.",
-  "review_routes": "A signed review workflow (20261023_review_routes.sql); retention undecided. Nothing the purge deletes is named by it, and nothing reaches it, so it is residue by name. Its tasks are unified_tasks rows that refuse DELETE (unified_tasks_route_rows_guard): a tenant holding one is not purged, stopped at unified_tasks (ROUTE_TASK_OWNED_BY_ROUTE) and rolled back.",
-  "rule_execution_log": "Log of rule executions. Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.",
+});
+
+/** The records the platform keeps about a purged tenant, which hold no customer
+ * content, each with why (P-58): the export receipts and the certificate. The purge does not erase them, and must not:
+ * assertNoRetainedRecords refuses an injected list naming one, and
+ * ci:purge-coverage reports each as a platform record (never as residue) and
+ * fails if the purge could reach one. Keep it JSON-shaped.
+ */
+export const PURGE_PLATFORM_RECORDS: Readonly<Record<string, string>> = Object.freeze({
+  "tenant_export_receipts": "The receipt of each full tenant export (migrations/20260813b_tenant_export_receipts.sql, 20261018): the export's SHA-256 digest, its table and row counts, the company-documents binding's version and SHA-256, who exported it and when. Digests, counts, an actor and a time only; no customer content. The purge verifies the final export against it, the custody signature and the certificate name its digest, and it outlives the tenant as the evidence that the data was returned (P-58, the lead's decision of 2026-10-29).",
+  "tenant_offboarding_certificates": "The offboarding certificate (P-58, migrations/20261029k_tenant_offboarding_custody.sql): one row per purged tenant, written by its purge, with the export digest, the rows erased per table, the held records erased, the custody signature, who purged and when. Counts, identifiers, digests and times only. Append-only for every role; it is the platform's record that the tenant's data was returned and erased.",
 });

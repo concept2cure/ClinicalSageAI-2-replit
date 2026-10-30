@@ -86,6 +86,12 @@ beforeAll(async () => {
   await safe(
     fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260807_task_graph_org_columns.sql'), 'utf8')
   );
+  // And the signatures' tenant column (P-58, 2026-10-29): the purge erases a
+  // tenant's electronic_signatures by it since then, and the set adds it on
+  // every deploy.
+  await safe(
+    fs.readFileSync(path.join(REPO_ROOT, 'migrations/20260813c2_electronic_signatures_tenant_key.sql'), 'utf8')
+  );
 
   discovered = await discoverTenantTables(asClient());
 
