@@ -9,6 +9,9 @@
  *   was drafted from (csr_build_jobs.source_run_id), through
  *   saved-clinical-tables.ts readRetainedStudyForAssembly: current project
  *   access, the sealed run digest, the approved source receipt.
+ * - §14.3.3 is checked against, and drawn from, the build's stored narratives
+ *   (csr-narrative-store.ts sqlNarrativeStore, read a page at a time); when it
+ *   has not landed, the narrative job's saved state is named in the gap (D18).
  * - Population flags, protocol deviations, ADLB and the sponsor's documents are
  *   not in a retained run; the caller supplies them, or the assembly lists the
  *   listings and appendices they would produce as missing.
@@ -20,6 +23,9 @@ import { readRetainedStudyForAssembly } from './saved-clinical-tables.js';
 import { assembleCsr, CsrAssemblyError, type CsrAssemblyInput, type CsrAssemblyResult } from './csr-assembly.js';
 import type { CsrListingSource } from './csr-listings.js';
 import { hasUnresolvedPlaceholders } from './csr-placeholders.js';
+import { sqlNarrativeStore } from './csr-narrative-store.js';
+import { CSR_NARRATIVES_SECTION } from './csr-assembly-plan.js';
+import type { CsrNarrativesSource } from './csr-assembly-narratives.js';
 
 export interface AssembleCsrJobInput extends Pick<CsrAssemblyInput, 'supplied' | 'notApplicable' | 'ctdSection' | 'outDir' | 'onStage' | 'shipAs'> {
   organizationId: number; userId: number; programId: string; projectId: number; jobId: number;
@@ -43,6 +49,19 @@ function subjectLevel(study: Awaited<ReturnType<typeof readRetainedStudyForAssem
 /** The import's own gap lines for §3, §14 and §16, which this assembly composes (contents, tables, appendices). §15 stays a gap. */
 const ASSEMBLED_HERE = /^CSR section (3|14|16) is prepared from source outputs and records/;
 
+/** The build's stored narratives; when §14.3.3 has not landed, what the narrative job has saved, for the gap's reason. */
+async function narrativesOf(q: Queryable, input: AssembleCsrJobInput, landed: boolean): Promise<CsrNarrativesSource> {
+  const store = sqlNarrativeStore(q, { organizationId: input.organizationId, jobId: input.jobId, projectId: input.projectId });
+  if (landed) return { page: store.page };
+  const { rows } = await q.query(`SELECT status, count(*)::int AS n FROM csr_narrative_outputs WHERE organization_id = $1 AND job_id = $2 GROUP BY status`,
+    [input.organizationId, input.jobId]);
+  const count = (status: string) => Number((rows as Array<Record<string, unknown>>).find(r => r.status === status)?.n ?? 0);
+  const composed = count('composed'), refused = count('refused');
+  const notLandedReason = composed + refused === 0 ? 'No narrative of this build has been saved.'
+    : `The narrative job has saved ${composed} composed and ${refused} refused narrative(s); Section 14.3.3 is landed only when every selected subject has a verified narrative (see the build's narrative QC list).`;
+  return { page: store.page, notLandedReason, savedNarratives: composed + refused };
+}
+
 export async function assembleCsrJob(q: Queryable & RequestSqlClient, input: AssembleCsrJobInput): Promise<AssembledCsrJob> {
   const source = await materializeCsrAssemblySource({ organizationId: input.organizationId, userId: input.userId,
     target: { programId: input.programId, projectId: input.projectId }, source: { kind: 'csr', jobId: input.jobId } }, q);
@@ -52,7 +71,7 @@ export async function assembleCsrJob(q: Queryable & RequestSqlClient, input: Ass
   const stamp = source.lastGeneratedAt && source.lastGeneratedAt > cut ? source.lastGeneratedAt : cut;
   const result = await assembleCsr({
     studyId: source.studyId, title: source.title, nctNumber: source.nctNumber, ctdSection: input.ctdSection, sections: source.sections, gaps: source.gaps.filter(g => !ASSEMBLED_HERE.test(g)),
-    tables: retained.tables, outDir: input.outDir, contentModifiedAt: stamp, supplied: input.supplied, notApplicable: input.notApplicable, onStage: input.onStage, shipAs: input.shipAs,
+    tables: retained.tables, narratives: await narrativesOf(q, input, source.sections.some(s => s.code === CSR_NARRATIVES_SECTION)), outDir: input.outDir, contentModifiedAt: stamp, supplied: input.supplied, notApplicable: input.notApplicable, onStage: input.onStage, shipAs: input.shipAs,
     listingSource: { study: subjectLevel(retained.study), participants: input.participants, protocolDeviations: input.protocolDeviations, laboratory: input.laboratory },
   });
   const placeholderSections = source.sections.filter(s => hasUnresolvedPlaceholders(s.content)).map(s => s.code);
