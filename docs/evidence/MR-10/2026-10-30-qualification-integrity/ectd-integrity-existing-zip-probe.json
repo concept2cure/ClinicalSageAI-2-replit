@@ -1,0 +1,26 @@
+{
+  "purpose": "Read-only compatibility probe of prior preserved golden ZIPs, no agency validation",
+  "results": [
+    {
+      "sequence": "original",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "index.xml references a DTD via DOCTYPE but no DTD is bundled under util/dtd/ — the package is not self-contained and is not submission-ready until the ICH/regional DTDs are vendored into util/dtd/.",
+        "index.xml references stylesheet \"util/style/ectd-2-0.xsl\" but no stylesheet is bundled under util/style/ — the package is not self-contained and is not submission-ready until the ICH/regional stylesheets are vendored into util/style/.",
+        "Module folder \"m4/\" is empty or missing"
+      ]
+    },
+    {
+      "sequence": "amendment",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "index.xml references a DTD via DOCTYPE but no DTD is bundled under util/dtd/ — the package is not self-contained and is not submission-ready until the ICH/regional DTDs are vendored into util/dtd/.",
+        "index.xml references stylesheet \"util/style/ectd-2-0.xsl\" but no stylesheet is bundled under util/style/ — the package is not self-contained and is not submission-ready until the ICH/regional stylesheets are vendored into util/style/.",
+        "Module folder \"m3/\" is empty or missing",
+        "Module folder \"m4/\" is empty or missing"
+      ]
+    }
+  ]
+}
