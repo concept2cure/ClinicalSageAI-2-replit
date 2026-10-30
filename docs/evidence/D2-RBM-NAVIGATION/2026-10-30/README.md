@@ -66,7 +66,7 @@ Deleted history finds 3 historical retirements/rewrites, not an absent module.
 The full signature successor at `09c83267b` passed the root combined cohort,
 build and zero-regression lint below. Canonical integration, the later SQL gate
 successor and the latest unrelated CSR/STF merge have their own named checks and
-source-preservation links. The current packet selects 147 source/test/configuration
+source-preservation links. The current packet selects 153 source/test/configuration
 inputs; it does not relabel earlier executions as a full rerun of current source.
 Whole TypeScript, normal push gates and fresh remote proof remain pending.
 
@@ -171,7 +171,7 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   two production files and one test file. These later bytes have the 220-case
   affected qualification rather than a claim that the full 1082-case cohort ran
   again.
-- Latest canonical merge: `383330547` merged normally into `ee4ce3da1` without
+- CSR/STF canonical integration: `383330547` merged normally into `ee4ce3da1` without
   conflicts. Read-only incoming review found CSR/STF source-role changes only,
   with no overlap in the prior 139 selected inputs or RBM actor/project/signature
   services. All 139 prior inputs remained unchanged. Fresh local checks of the
@@ -180,6 +180,42 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   Upstream historical totals are not borrowed. The fresh current production
   build at `ee4ce3da1` passed **exit 0**, with the same 147 selected inputs stable.
   All four current CI checks have passed on those stable inputs.
+- Second normal push refusal (`push-refusal-02-*`): the gated push of
+  `7b0c1f64f` reached the canonical TypeScript gate and exited 1 with **27 errors
+  against a zero-error baseline**. It published nothing, and all 147 selected
+  inputs stayed unchanged. Earlier hook gates, including lint and warning
+  growth, passed. The hook transcript displays only 15 diagnostics; all 27 were
+  extracted from the canonical incremental build information into
+  `push-refusal-02-all-diagnostics.json`. The compiler cache was not altered or
+  published, and no baseline, suppression or query-contract weakening was used.
+- Compiler successor at `e0c8ed618`: nine files correct the actual RBM
+  surface/segment test props, minimal request-database fixture assignments,
+  explicit PGlite row/projection generics and the truthful assessment-seed return
+  shape. The author comparison now narrows an unknown database value: only a
+  missing null/undefined value is treated as a legacy unknown author; a valid
+  positive integer remains an author, and any malformed non-null value refuses
+  approval before a domain write. The malformed-author RED passed **36/38**;
+  the final approval cohort passed **38/38 across 1 file**, with 20 inputs
+  stable, preserving the valid, self-approval and legacy cases. Two other
+  producers independently passed **37/37 across 4 files**, with 5 selected
+  inputs stable, and **19/19 across 2 files**, with 15 selected inputs stable.
+  Their assertion-bearing lines remain unchanged. These are separate,
+  overlapping producer cohorts, not a sum or whole-TypeScript result.
+- Vault receipt integration: incoming `819029e2c` merged into `506064adb`
+  without production conflicts. The work-order documentation conflict was
+  resolved by preserving the incoming Vault receipt/convergence row and the
+  distinct RBM/company rows. Bounded review found only stored-title confirmation
+  changes using the already validated upload receipt, with a neutral fallback
+  for a blank title; actor, exact-project/ID checks, navigation, signature,
+  CSS and dependency contracts remain unchanged. Root's compiler-successor
+  qualification (`final-types-*`) at `506064adb` passed **334/334 across 18 actual
+  files**, exit 0, zero skipped and all **153 selected inputs unchanged**. It
+  includes all nine compiler changes and the five affected Vault suites. The
+  production build at that same commit passed **exit 0**, with 153 inputs stable;
+  all four selected CI checks passed and changed-file lint remained flat at
+  190→190 warnings with zero errors. Upstream historical totals are not borrowed.
+  These affected tests and build do not replace the pending whole-TypeScript
+  retry through the normal push gate.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
   changed-file selection. The initial lint harness exceeded its historical text
@@ -207,7 +243,7 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   API gate first exposed the old shared base literal; explicit addresses fixed
   it without broadening claims or weakening the gate. The recorded API gate
   passes 590 named paths. Current launch scope, launch API scope, signature
-  ceremony and SQL-interpolation CI checks all pass **exit 0**, with **147 selected
+  ceremony and SQL-interpolation CI checks all pass **exit 0**, with **153 selected
   inputs unchanged** through those checks (`final-ci-summary.json`).
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.

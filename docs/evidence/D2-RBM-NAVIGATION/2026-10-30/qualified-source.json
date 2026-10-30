@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-30T17:52:42.635162+00:00",
-  "sourceCommit": "ee4ce3da10892369e90bc2ac3cf0cde81578f27b",
-  "scope": "147 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.",
+  "observedAt": "2026-10-30T18:05:33.038281+00:00",
+  "sourceCommit": "506064adb29e56c0489c5c304fc0466676098086",
+  "scope": "153 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.",
   "qualification": [
     {
       "receipt": "qualification/final-03-summary.json",
@@ -24,15 +24,49 @@
       "result": "build0 at ee4ce3da1;147inputs unchanged"
     },
     {
-      "receipt": "qualification/final-ci-summary.json",
+      "receipt": "qualification/final-pre-types-ci-summary.json",
       "result": "launch-scope/API/signature/SQL checks all0;147inputs unchanged"
     },
     {
-      "receipt": "qualification/lint-final.json",
+      "receipt": "qualification/final-pre-types-lint.json.gz",
       "result": "54changedfiles,0errors,190before/190afterwarnings against383330547"
+    },
+    {
+      "receipt": "qualification/final-types-summary.json",
+      "result": "334/334 across18files at506064adb;153inputs unchanged. Executes compiler successors (including38 signature cases) and latest5Vault receipt files; supersedes changed13predecessorinputs named below."
+    },
+    {
+      "receipt": "qualification/build-types-exit.json",
+      "result": "build0 at506064adb;153inputs unchanged"
+    },
+    {
+      "receipt": "qualification/final-ci-summary.json",
+      "result": "launch-scope/API/signature/SQL checks all0 at506064adb;153inputs unchanged"
+    },
+    {
+      "receipt": "qualification/lint-final.json.gz",
+      "result": "54changedfiles,0errors,190before/190afterwarnings against819029e2c"
     }
   ],
+  "changedPriorSelectedInputsQualifiedByLatestCohort": [
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx",
+    "client/src/concept2cure/v2/useVaultUpload.ts",
+    "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts",
+    "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts",
+    "server/routes/__tests__/mdx-rbm-signed-records.test.ts",
+    "server/routes/__tests__/rbm-approval-signature.pglite.test.ts",
+    "server/routes/__tests__/rbm-board-current-project.test.ts",
+    "server/routes/mdx-rbm.ts",
+    "server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "server/services/rbm/rbm-assessment-seed.ts"
+  ],
   "files": {
+    "client/src/concept2cure/mdx/store/dossierStore.ts": "da488d82c39784ef5b2f415871ef079e45513d8b8aba973148d366a010bad415",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx": "851e38f86dff04ba69b630d2dba313feda53ae53d7a0cfdc168624bde4e48111",
+    "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx": "7aaa36a2843af27ccedd317b1aca3eae12f32718b9ff1ff4c9514f1c8f964a87",
     "client/src/concept2cure/v2/Shell.tsx": "1c5777170c14e5f0e1d5d8c5f1a2991019b2aca7ec37fa58fe8107b5f178ff66",
     "client/src/concept2cure/v2/__tests__/_ingest-xhr-fake.ts": "d7c582159a4a99871d4ca8f823fa2410341dfcc24576ee084e8b15f41700d7ff",
     "client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx": "420baf6139a2282f32cb992d4bbfe3090a37a8dcc08a80457702cf38a5174715",
@@ -51,15 +85,16 @@
     "client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx": "b492611e278cce14e34de035191791f4a39f655dc67d89574e79447e0ef94943",
     "client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts": "be52cd0e44d7cb0488cdb553a024c94f337d834fdec69bedb01ae1cf5ad1426d",
     "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx": "376cbb6f3e65be35982ada60aeb78226419d35871ab118f2f63ff9810ac7fd69",
-    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "c94373903863c699201803e9a8a7bfda51e0474f312102f492703f374ce3e646",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "c4e9a2d65ec014d40a0c7055d0f7d931dedd23d1266531ba6f42b44f87829279",
     "client/src/concept2cure/v2/__tests__/rbmSitesMapping.test.ts": "d64fada0d8f7403b2361def0cf40612715ca6ba469742b81df73ef5dccc2f733",
     "client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx": "3ab404e3a6872bb1b4fcd28680d4b11607159f4d03bc87f6aaab1165a6263fdc",
     "client/src/concept2cure/v2/__tests__/shellNav.test.tsx": "e0b6f1678d3a2b60429b7bb484187e03077b4281a425c716622d2a0c23804531",
-    "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx": "e9e0dd364d86208d264042d1e2e359311a2af41635f3c9558eddcd34e48e42c2",
+    "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx": "7128cb3f4070490b0ed0479a6d3cf6355c13635fac0b7d5778dd8a30b8993573",
     "client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx": "a965fc36895c33e80315e6b2049c03c9fea0f7df9a887a6f00c80888fc6f2afa",
-    "client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx": "3af89424aefca5135285fc9b0a80116e13837b5da1269a31307986c913a52b7f",
+    "client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx": "30b1065e72a28096372bb98fce6b05abbf4d1bfe1b35c0b1b0713977e880fe73",
     "client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx": "22bbb0640baa4856af9ccf6ed186a57750c3cd996f4485d8c9343b825977739d",
-    "client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx": "3192f4362a660d142403b0a40e265dd65e10387bdc3722983739ecfa48706c0f",
+    "client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx": "a97546f715f1e0c200ff6d8c69f600ae02a8702ad85bb546b0743c3baf9576d3",
+    "client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx": "8fdb26891dde531eda566ba8660ae77268ba25f11cc4d6808f2d1eccf82570d0",
     "client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx": "532d3c9339d732b160ce64bc8f7766ab267bfd8070894d6f1009d776eb14b49f",
     "client/src/concept2cure/v2/dataConnect.tsx": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669",
     "client/src/concept2cure/v2/fixtures/rbm-data.ts": "74a79c73c31fc2bd7642f48ca75f4a3c2e2d29eef3e899c7089d4f6964dfe7db",
@@ -67,6 +102,7 @@
     "client/src/concept2cure/v2/shellProject.ts": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7",
     "client/src/concept2cure/v2/styles/project-home-v2.css": "da717168f6787e3afba4fb8078bc1c4a634e33607c8b51199aea1784ac2e6940",
     "client/src/concept2cure/v2/styles/protocol-dev-editing.css": "6263d5f95d841436d2433585d2b3c65074e41e8d6692d0015936682b9a3202f8",
+    "client/src/concept2cure/v2/surfaceViews.ts": "3026a4c2bece76334497b1f7d4694d056545ffa18876da209509d739fff42376",
     "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceDraft.tsx": "5ef1536bfaf1d17f1b5a78d411a9e039019de96d4faa86e881e318c000a5e4e2",
     "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceVariants.tsx": "dc4a33e973e58da0f9d524c42ec3c559fc502eb898da3984c3a8dfb53d246848",
     "client/src/concept2cure/v2/surfaces/CompanyFilingIdentityReview.tsx": "9bbdfd8c5a99184e5a6ca578e2bc70f081031d5892fe65de2974eb32dc0bf815",
@@ -80,7 +116,7 @@
     "client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx": "a211037fea3140527a5501b0defe6469add550754302a117fa8f70203afd42ad",
     "client/src/concept2cure/v2/surfaces/rbmBoard.ts": "2e88b3a40cb6797efcbc58d40f4d8458eacb675d7eaf95ea59d716e782f8d9e7",
     "client/src/concept2cure/v2/surfaces/rbmWrites.tsx": "e11d649f94003975c304f31b1152d3d112e74a03a496be2ba889c4732a608dbe",
-    "client/src/concept2cure/v2/useVaultUpload.ts": "e23599ab93b0907d33e6a5d26d376cfa1f96604c07e45f8ef0dd842837d1f873",
+    "client/src/concept2cure/v2/useVaultUpload.ts": "bd24e2c28da897010dac7247de47d73c991cfe3befc57b915eaef1480e68890e",
     "client/src/concept2cure/v2/vaultIngestReceipt.ts": "83af6a73aebfa765329bcd5d8d4b979c2a60502998dd357e7967e9fd915de00a",
     "migrations/0000_sweet_joseph.sql": "4ad13ecd8dcb8b996674c816e8a54d34604610b8a4293619a1a1861b88c8ad56",
     "migrations/20260629_rbm_surfaces.sql": "2125d652a5ceb596ded19224a55e0d9cb0e47e1b39bb5ebd0d53ddffe187ec24",
@@ -99,12 +135,12 @@
     "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
     "server/db/runtime.ts": "3cb629ec8998503a258434fce52c0754c78a1c3f4074584ee03f39cfd0c60542",
     "server/middleware/__tests__/launch-scope-api-gate.test.ts": "2e19f6db6b1f029badb9699b9877dde719dd94ab9b613d3a163936b0378586bc",
-    "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts": "a0463c214c877a5975012558ff64e30ec3a5eee9e5fc0cda4691d1780b2e1adc",
-    "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts": "982b5c95eecfa845fba5677db7a891a1040fc4486cc1bead6d2c96647c99d9e7",
-    "server/routes/__tests__/mdx-rbm-signed-records.test.ts": "105764ab039ba6747a0f2c5289118972d22a76b522b530d77e987c5f97271f5c",
-    "server/routes/__tests__/rbm-approval-signature.pglite.test.ts": "568d1e4a95111bef1b06c1a7b25527dba269184bc3bdcb7b7dec82ee9ff6edf1",
+    "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts": "8d479d67059716eb5726a9be31edd9ddbd5684377016d4a2f1096a6242616a1e",
+    "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts": "aae63c3c0207d6186dc06a9a1bc986e7c93f80f02d64595998b963cae2c9b607",
+    "server/routes/__tests__/mdx-rbm-signed-records.test.ts": "42f8caff0caa0837d36dcc99cabd418244e3629f92e7c50ac8c21f297f52ede9",
+    "server/routes/__tests__/rbm-approval-signature.pglite.test.ts": "31f493321e4d71e61d613c55e9428af30232120ad046e2dd846061926e8e74f6",
     "server/routes/__tests__/rbm-assessment-integrity.test.ts": "365e58c3e395d48f4d2c5494e92cb1af0061f862f2bf47c4efc38a86f426edf4",
-    "server/routes/__tests__/rbm-board-current-project.test.ts": "8da78c857c6c8c429a2eb6d63ae6c959a640072b5edff0e556d22a514a6bed38",
+    "server/routes/__tests__/rbm-board-current-project.test.ts": "28d1d285967033058f087b0e33b97dbfcc4ba7c335c430eaa09503d0bae81e9c",
     "server/routes/__tests__/rbm-current-project-admission.test.ts": "b75c299cd6020fd747510521de11b50a15fc06c7fe87ecca83bffcb6fdb20be2",
     "server/routes/c2c/__tests__/projects-authorization.test.ts": "8286eb2a460be023232501c8ce1a02774629652e75cb57ecf8506315d4e035ea",
     "server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts": "45ae64b737f49620807da177c0f5eb6ec49f7f43cd5413a82020fc8a2160cf50",
@@ -115,7 +151,7 @@
     "server/routes/c2c/projects.ts": "08c8e25d518e2f2918ce0ab55ada6143ce2049c97c359c4d84487096bfd4ae6e",
     "server/routes/mdx-rbm-board.ts": "1c2cdb68ba1712f8bd904b2f31485bc8d6c6750bae525c6d3d0d1a22ff433bdb",
     "server/routes/mdx-rbm-data.ts": "b32a9139bb5ac334f75c32c9e091bc9364da65ad7c39e58cb5a94be218d40e60",
-    "server/routes/mdx-rbm.ts": "f4846168482a55cd3b64c426aed415c1196da8c2dc532d7d149d2a80e803aa76",
+    "server/routes/mdx-rbm.ts": "37060ac4a24f735320dc56318e6404fea499f99ea6d8e56b19462eeed075da6c",
     "server/services/ana/AnaToolExecutor.ts": "aa3e435a7241c45a3daf25591fb5d1e180293c52e0edb109b1b4bed5cba06f26",
     "server/services/ana/__tests__/ana-cannot-sign.test.ts": "ced14d27af58ab6b115e4aaca20f505ddfb17dae46e6e205b45c06eb68dccc4d",
     "server/services/ana/__tests__/ana-launch-scope-execution.test.ts": "a532379bd73e37e3255a080c0b3a672e95f12332efd85e23f0e8a5e6282aba4f",
@@ -160,7 +196,7 @@
     "server/services/rbm/__tests__/metric-ingestion.test.ts": "921e2a014a7c30c307977489b622ba6f3a86a16e75f03aa3afddbadaab860547",
     "server/services/rbm/__tests__/rbm-access.test.ts": "43779d407e31a2f7f0103f8b09bdd59cf4d9e2c665f3a4358836afa9d6b27536",
     "server/services/rbm/__tests__/rbm-actuator.test.ts": "156331d4740b7cd0aa1f424e61f5716edf80a9cf7fd0bacc4b35be6ea436b48f",
-    "server/services/rbm/__tests__/rbm-assessment-seed.test.ts": "0940e6cfa7312c235f7f26a0bc396ccf370986d2394d4c5a21013ecde2f108f9",
+    "server/services/rbm/__tests__/rbm-assessment-seed.test.ts": "2305a3ad5c332e0c603e31c32e320a0a59cf5d70cbedfff5b1d83c4fd07091d4",
     "server/services/rbm/__tests__/rbm-engine.test.ts": "18e58de8f18c40abcdf34b3a0e1e3af8e06a7defcee332c6c3db7cf2b7dc46e5",
     "server/services/rbm/__tests__/risk-report.test.ts": "ff5f664873bd1b3264a5040a9df8c31f265b8cad6a85f7310bc11c4ae5313534",
     "server/services/rbm/__tests__/site-risk-engine.test.ts": "8fbcfed97d74bab695ec88051578921af607a6e3b9e3b75b2c456f41cb8cf6c4",
@@ -168,18 +204,19 @@
     "server/services/rbm/metric-ingestion.ts": "502a41905eec331e9a3946d371e4f20942eb401dfd84711ba86bef2cb54a5af5",
     "server/services/rbm/rbm-access.ts": "09726bf718a82198dafbb697bd1c830e94b5df8d357a36225c1e20ce18c97441",
     "server/services/rbm/rbm-actuator.ts": "d9bfeeef9a49f7513b257bf1eaec65198b6e2345b09579448ed256b165085143",
-    "server/services/rbm/rbm-assessment-seed.ts": "73010d8d30540420fd3aa83df1377f90b5844c66cc99e999e1c5cc808a262a2a",
+    "server/services/rbm/rbm-assessment-seed.ts": "17842f208ca929140511c2805a12bdb99721e37cad90f98946d334ac1f22907f",
     "server/services/rbm/rbm-engine.ts": "496026a5b551ec548636d03585c5784536f67cf3df167535adc04b2420982770",
     "server/services/rbm/rbm-signature-content.ts": "24b96c9b4709f50d7ac4df34633622e01a533497305026d7daa304615b04bf99",
     "server/services/rbm/risk-report.ts": "03dbd96d0eda92199563356ccaac19ad800dc23e9d2743725f912b4298f4a7e4",
     "server/services/rbm/site-risk-engine.ts": "f3eceaade27bf0341017de2c1b03eaa8575aae07b668694430b06264c716f592",
     "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
     "shared/constants/launch-scope.ts": "2bdfbf4271d116e11c39f3403d15ced81e0b9237d9831d399012a126a0809506",
+    "shared/constants/ui-surface-registry.ts": "44dd09b081a9d265ee383e0fe2bc87e1d2c52ebd534d7ba0866bba1509bfc2f9",
     "shared/constants/ui-surface-registry.ui-v2.ts": "3037f59fde53562e7d0cecf35180235603642a82bc85b9c7425aff251d7386d1",
     "shared/schema.ts": "f5dcde2abbcbc409989c4d3d6690f5cb0edce1f4117dcc5ecd1f155a04db9cba",
     "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
     "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4",
     "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
   },
-  "publication": "Pending normal push, whole TypeScript and fresh remote proof. First normal attempt was refused by SQL gate before TypeScript; preserved under push-refusal-01 receipts. No baseline or scanner weakened."
+  "publication": "Pending normal push, actual zero-error whole TypeScript and fresh remote proof. Attempts1and2 refused before remote update: SQL gate, then27compilererrors/zero baseline. Exact receipts retained; no baseline/scanner changes or diagnostic suppressions."
 }
