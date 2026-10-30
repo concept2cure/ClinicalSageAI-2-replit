@@ -82,7 +82,7 @@ export async function createInteractionTx(client: Queryable, orgId: number, user
  */
 export async function updateInteractionStatusTx(client: Queryable, orgId: number, id: number, status: string, dates: Record<string, string | null | undefined> = {}): Promise<void> {
   const current = await client.query(
-    `SELECT status, scheduled_date FROM ha_interactions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`, [id, orgId]);
+    `SELECT status, scheduled_date, submission_id FROM ha_interactions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`, [id, orgId]);
   if (!current.rows.length) throw new HaError('NOT_FOUND', 'Interaction not found for this organization.');
   const refusal = haInteractionMoveRefusal(String(current.rows[0].status), status);
   if (refusal) throw new HaError('INVALID_STATE', `${refusal} Nothing was changed.`);
@@ -91,16 +91,44 @@ export async function updateInteractionStatusTx(client: Queryable, orgId: number
   if (dateKey && !dates[dateKey] && !keptSchedule) {
     throw new HaError('BAD_INPUT', `Moving to ${HA_INTERACTION_STATUS_LABEL[status as HaInteractionStatus].toLowerCase()} records its date. Give the date. Nothing was changed.`);
   }
+  const minutesEventId = dates.minutesEventId ?? null;
+  if (minutesEventId) await refuseMinutesLetter(client, orgId, status, current.rows[0].submission_id, minutesEventId);
   await client.query(
     `UPDATE ha_interactions SET
         status = $3,
         held_date = COALESCE($4, held_date),
         scheduled_date = COALESCE($5, scheduled_date),
         minutes_received_date = COALESCE($6, minutes_received_date),
+        minutes_event_id = COALESCE($7, minutes_event_id),
         updated_at = now()
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-    [id, orgId, status, dates.heldDate ?? null, dates.scheduledDate ?? null, dates.minutesReceivedDate ?? null],
+    [id, orgId, status, dates.heldDate ?? null, dates.scheduledDate ?? null, dates.minutesReceivedDate ?? null, minutesEventId],
   );
+}
+
+/**
+ * The minutes a meeting names (P-39 step 4c) are an inbox letter of this
+ * organisation, recorded as meeting minutes, in the meeting's own project, and
+ * named only when the minutes are received. Its questions carry the agreements
+ * and its answers the commitments, by the inbox's own governed paths.
+ */
+async function refuseMinutesLetter(client: Queryable, orgId: number, status: string, submissionId: unknown, eventId: string): Promise<void> {
+  if (status !== 'minutes_received') throw new HaError('BAD_INPUT', 'A minutes letter is named when the minutes are received. Nothing was changed.');
+  if (submissionId == null) throw new HaError('BAD_INPUT', 'This meeting names no submission, so it has no project inbox to hold its minutes. Nothing was changed.');
+  const { rows } = await client.query(
+    `SELECT c.source_type,
+            (SELECT CASE WHEN count(*) = 1 THEN min(p.id) END FROM submissions s
+               JOIN projects p ON p.regulatory_program_id = s.program_id AND p.organization_id = s.organization_id AND p.status IS DISTINCT FROM 'deleted'
+              WHERE s.id = $3 AND s.organization_id = $2) AS meeting_project,
+            c.project_id
+       FROM concept2cure_agency_communications c WHERE c.event_id = $1 AND c.organization_id = $2`,
+    [eventId, orgId, submissionId]);
+  const letter = rows[0];
+  if (!letter) throw new HaError('NOT_FOUND', 'That letter is not in this organisation\'s inbox. Nothing was changed.');
+  if (letter.source_type !== 'meeting_minutes') throw new HaError('BAD_INPUT', 'That letter is not recorded as meeting minutes. Nothing was changed.');
+  if (letter.meeting_project == null || Number(letter.project_id) !== Number(letter.meeting_project)) {
+    throw new HaError('BAD_INPUT', "That letter is in another project's inbox, not this meeting's. Nothing was changed.");
+  }
 }
 
 export interface QuestionInput {
@@ -371,7 +399,9 @@ export async function addMilestoneTx(
 export async function listInteractions(orgId: number, submissionId: number | undefined, programIds: readonly string[], q: Queryable = pool): Promise<any[]> {
   const params: unknown[] = [orgId, [...programIds]];
   let sql = `SELECT i.id, i.submission_id, i.interaction_type, i.agency, i.title, i.status, i.requested_date, i.scheduled_date, i.held_date,
-                    i.minutes_received_date
+                    i.minutes_received_date, i.minutes_event_id,
+                    (SELECT CASE WHEN count(*) = 1 THEN min(p.id) END FROM projects p
+                      WHERE p.regulatory_program_id = s.program_id AND p.organization_id = i.organization_id AND p.status IS DISTINCT FROM 'deleted') AS project_id
                FROM ha_interactions i
                LEFT JOIN submissions s ON s.id = i.submission_id AND s.organization_id = i.organization_id
               WHERE i.organization_id = $1 AND i.deleted_at IS NULL

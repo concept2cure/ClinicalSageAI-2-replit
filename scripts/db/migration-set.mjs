@@ -3695,6 +3695,11 @@ export const C2C_MIGRATION_FILES = [
   // and TRUNCATE of concept2cure_artifact_versions refused; DELETE open for the
   // purge's cascade. After 0000 (the table). No table, no DROP of another file's.
   'migrations/20261029k_artifact_versions_no_rewrite.sql',
+  // A meeting names the inbox letter that holds its minutes (P-39 step 4c,
+  // 2026-10-30): ha_interactions.minutes_event_id → the letter's event_id, ON
+  // DELETE SET NULL. After 20260610 (ha_interactions) and 20260331 (the inbox).
+  // Additive; the constraint only when absent. No table, no DROP.
+  'migrations/20261030_ha_interaction_minutes_letter.sql',
   // QMS job roles and training assignments (D2, P-49, 2026-10-29;
   // docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.1): qms_job_roles,
   // qms_job_role_members and qms_training_assignments, created only here. After
