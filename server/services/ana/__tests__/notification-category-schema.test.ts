@@ -11,7 +11,7 @@ describe('active producer categories reach the AnA notification input contract',
   it('does not offer AnA the server-only task and turn categories',()=>{
     // One by one: not.arrayContaining passes as soon as any one of a list is absent.
     for (const category of ['task_assigned','task_blocked','task_completed','task_update','ana_turn']) {
-      expect((FIRE_NOTIFICATION.input_schema as {properties:{category:{enum:string[]}}}).properties.category.enum).not.toContain(category);
+      expect((FIRE_NOTIFICATION.input_schema.properties.category as {enum:string[]}).enum).not.toContain(category);
     }
   });
   it('keeps unknown categories outside the advertised input vocabulary',()=>{
