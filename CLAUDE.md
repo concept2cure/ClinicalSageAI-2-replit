@@ -219,6 +219,12 @@ subsequent flow. Never build a card, a workspace, an app."*
 
 - **Concept2Cure is one product:** one canvas, one agent (AnA), one document editor, one project module.
   Not apps. Not cards. Not workspaces. Not a screen per capability or per document.
+- **The design mirrors Anthropic's Claude** (founder, 2026-10-31): the conversation with AnA, and beside it the
+  canvas and document editor where what AnA builds appears, is read, edited, reviewed, signed and filed. Calm,
+  conversation-first, no dashboards or control walls: intelligence surfaces in the conversation, not as widgets
+  or toolbars. Decided in `docs/design/ONE_ANA_ONE_CANVAS.md` (2026-10-08); the principles are
+  `.claude/skills/claude-ui-design-principles.md`. A screen that does not read like Claude's conversation and
+  canvas is not done.
 - **A document type is data, never a screen.** CSR, IND, protocol, IB, 510(k), CER, PMA, Module 3, QMS
   documents and every other are document types in one catalog, organized by client type (medical device,
   diagnostic, biotech, pharma).
