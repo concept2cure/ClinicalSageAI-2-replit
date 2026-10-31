@@ -52,6 +52,7 @@ import { resolveSurfaceIdForTarget, stashNavParamsForTarget, surfaceLeaveRefusal
 import { createDriveQueue, type DriveMove } from './driveQueue';
 import { ceremonyOpen } from './ceremony';
 import { publishShellProject } from './shellProject';
+import { useClientFollowsProject } from './clientFollowsProject';
 import type { SentAttachment } from '../hooks/useChatUpload';
 import { getAuthHeaders } from '@/utils/authToken';
 import { useActiveSurfaceContext, toModuleContext } from './surfaceContext';
@@ -297,6 +298,7 @@ export function V2App() {
   /* The URL names the open program (?program=), so a copied link, a bookmark
      or a new tab opens the same project — see shellProject.ts. */
   useShellProjectInUrl(location);
+  useClientFollowsProject();
   const [prefs, setPrefs] = React.useState<Prefs>(loadPrefs);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
 

@@ -243,6 +243,41 @@ describe('isSystemScopedPath', () => {
  * than losing it on the response's 'close' — the release the middleware arms
  * waits for every holder. docs/design/ANA_DETACH_2026-10-08.md §12.2.
  */
+/*
+ * A caller that went away before the scope was established (2026-10-31: badge
+ * polls abandoned during authentication each held a pooled connection until
+ * the pool was empty) — its response never emits 'finish' or 'close', so the
+ * connection's own end releases the response's hold.
+ */
+describe('a request whose connection is gone', () => {
+  const socketOf = (destroyed: boolean) => Object.assign(new EventEmitter(), { destroyed });
+
+  it('is released at once when its connection closed before the client was bound', () => {
+    const req = makeReq({ socket: socketOf(true) });
+    const next = vi.fn();
+    establishRequestTenantScope(req, makeRes() as any, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(req.dbClient, 'a request nobody is waiting for kept a client that its first query would pin').toBeNull();
+  });
+
+  it('is released when its connection closes, and a kept-alive connection keeps no listener', async () => {
+    const socket = socketOf(false);
+    const req = makeReq({ socket });
+    const res = makeRes();
+    establishRequestTenantScope(req, res as any, () => {});
+    expect(req.dbClient).toBeTruthy();
+    socket.emit('close');
+    expect(req.dbClient).toBeNull();
+
+    const kept = socketOf(false);
+    const second = makeReq({ socket: kept });
+    const secondRes = makeRes();
+    establishRequestTenantScope(second, secondRes as any, () => {});
+    secondRes.finish();
+    expect(kept.listenerCount('close'), 'a finished response left its listener on the shared socket').toBe(0);
+  });
+});
+
 describe('a request DB client retained past the response (retainRequestDbClient)', () => {
   it('survives the response closing, still answers queries, and is released by its holder', async () => {
     const { retainRequestDbClient } = await import('../../db/requestDbLease');

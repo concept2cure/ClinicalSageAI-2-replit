@@ -61,13 +61,28 @@ export function bindRequestDbClient(req: Request, res: Response, client: Releasa
   req.dbClient = client;
   (req as LeasedRequest)[LEASE] = lease;
   let responseEnded = false;
+  /* The connection's own end, too (2026-10-31). A request whose caller went
+     away while authentication was still running — a page navigated, a badge
+     poll abandoned — is bound after its connection closed, and its response
+     never emits 'finish' or 'close'. Its handler runs on, its first query
+     acquires a pooled connection, and nothing released it: on a local stack
+     17 of 20 abandoned polls each held a connection until the pool was empty
+     and every request waited out its connect timeout. A socket already gone
+     ends the response's hold now; a live one ends it when it closes. The
+     listener leaves with the response, so a kept-alive socket does not
+     collect one per request. */
+  const socket = req.socket as (NodeJS.EventEmitter & { destroyed?: boolean }) | undefined;
+  const onSocketClose = () => end();
   const end = () => {
     if (responseEnded) return;
     responseEnded = true;
+    socket?.removeListener('close', onSocketClose);
     void drop(req, lease);
   };
   res.on('finish', end);
   res.on('close', end);
+  if (socket?.destroyed) end();
+  else socket?.once('close', onSocketClose);
 }
 
 /**
