@@ -290,3 +290,19 @@ describe('filing guidance without hiding the global template library', () => {
       { Authorization: `Bearer ${token}`, 'x-organization-id': '12' }));
   });
 });
+
+describe('the created-document notice', () => {
+  const context = { projectId: PROJECT, registryId: 'US_BLA' };
+  /* UI walk, 2026-10-31: after creating a document the editor opened it and
+     still showed "Document created. Open created document" above it. */
+  it('offers to open the created document only while it is not the one open', async () => {
+    wire({ templates: [], globalCatalog: 'ok' }); const p = props();
+    const view = render(<AuthoringCreateExport {...p} filingContext={context} />); await open();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Document title' }), { target: { value: 'Created here' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+    expect(await screen.findByRole('button', { name: 'Open created document' })).toBeTruthy();
+    view.rerender(<AuthoringCreateExport {...p} docId="created-document" docTitle="Created here" filingContext={context} />);
+    expect(screen.queryByRole('button', { name: 'Open created document' })).toBeNull();
+    expect(screen.queryByText('Document created.')).toBeNull();
+  });
+});

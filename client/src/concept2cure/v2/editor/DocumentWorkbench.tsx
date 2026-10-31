@@ -4877,7 +4877,10 @@ export function DocumentWorkbench({
             {activeDoc && (
               <AuthoringCollab
                 documentId={activeDoc.id}
-                sectionId={activeSectionId}
+                /* The section only once it is this document's: on switching
+                   documents the previous one's section id rode along for a
+                   render, and the room join was refused (403) for the pair. */
+                sectionId={readableSourceSectionId}
                 fireToast={fireToast}
               />
             )}

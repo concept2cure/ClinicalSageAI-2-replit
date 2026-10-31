@@ -174,6 +174,23 @@ describe('sectionStructureIssues', () => {
     expect(r.duplicateCodes).toEqual([]);
   });
 
+  /* UI walk, 2026-10-31: a document just created from the Investigator's
+     Brochure template said its sections were "stored in an order that differs
+     from their section codes". Its front matter has word codes, and words sort
+     after numbers, so every template that opens with a title page tripped it. */
+  it('leaves word-coded front and back matter where the document puts it', () => {
+    const ib = ['title_page', 'confidentiality_statement', 'table_of_contents', '1', '2', '3', '4', '4.1', '4.2', '4.3', '5', '5.1', '5.2', '5.3', '6', 'references'];
+    const r = sectionStructureIssues(ib);
+    expect(r.outOfOrder).toBe(false);
+    expect(r.suggestedOrder).toEqual(ib);
+  });
+
+  it('still reports numbered sections out of order among themselves, front matter kept in place', () => {
+    const r = sectionStructureIssues(['title_page', '2', '1', 'references']);
+    expect(r.outOfOrder).toBe(true);
+    expect(r.suggestedOrder).toEqual(['title_page', '1', '2', 'references']);
+  });
+
   it('reads the order it is given, not a sorted copy of it', () => {
     // Passing pre-sorted codes would make outOfOrder unable to be true.
     expect(sectionStructureIssues(['5.1', '5.6']).outOfOrder).toBe(false);

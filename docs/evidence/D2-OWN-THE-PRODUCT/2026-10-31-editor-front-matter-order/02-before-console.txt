@@ -1,0 +1,9 @@
+ "console": [
+  "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+ ],
+ "pageErrors": [],
+ "failed": [
+  "403 PUT /api/realtime-collab/rooms/3c4fea4f-e9cc-4815-80b8-5ce90d5e1ca9/awareness",
+  "403 POST /api/realtime-collab/rooms"
+ ]
+}
