@@ -57,9 +57,12 @@ describe('the real registry with the device features in Projects (62a8d5e7)', ()
     ['device-clinical-studies', 'mdx/hooks/useRbqm.ts'], ['device-clinical-studies', 'mdx/hooks/useStudyArchetypes.ts'],
     ['device-diagnostics', 'mdx/hooks/useIvd.ts'], ['device-diagnostics', 'mdx/hooks/useCdxClia.ts'],
     ['device-engineering', 'mdx/hooks/useEngineering.ts'], ['device-software', 'mdx/hooks/useSoftware.ts'],
-    ['device-postmarket', 'mdx/hooks/usePostmarket.ts'], ['device-analytics', 'mdx/hooks/useAnalytics.ts'],
+    ['device-postmarket', 'mdx/hooks/usePostmarket.ts'],
+    // No device-analytics: it joined Reporting & analytics (fold F4, 2026-10-30), with its hook; Insights' calls are read as the insights app's.
     // No device-submission: it folded into Submission Center (fold F5 item 1, 2026-10-30), with its hook.
-    ['device-workstream', 'mdx/hooks/useClientReview.ts'],
+    // No device-workstream: the kit portfolio folded into Projects (fold F6, 2026-10-30). The Client Review Room is on
+    // the device project's Review step, so Project home reaches the room's hook and claims its read.
+    ['project-home', 'mdx/hooks/useClientReview.ts'],
     // No device-validation: the organization-wide blocker list retired (fold F5 item 2, 2026-10-29), with its hook.
     ['human-factors', 'v2/surfaces/HumanFactors.tsx'],
     // The IVDR family board names its read, and the workbench beside it; device-diagnostics mounts both (F2, folded 2026-10-29).
@@ -96,6 +99,21 @@ describe('the real registry with the device features in Projects (62a8d5e7)', ()
     const refused: string[] = [];
     for (const p of calls) for (const r of requests(p)) if (!(await run(gate, r)).passed) refused.push(`${r} (named as ${p})`);
     expect(refused).toEqual([]);
+  });
+
+  it('refuses the retired device analytics family in production: no launch screen claims /api/mdx/analytics (fold F4, 2026-10-30)', async () => {
+    /* Device analytics joined Reporting & analytics (decision P-61 item 3); its
+       kit aggregate retired with its screen, and the organization-wide facet
+       routes kept in server/routes/mdx-analytics.ts have no caller. Only
+       labeling-pi, outside the launch catalogue, claims the /api/mdx root. */
+    const gate = moduleEntitlementGate(buildPrefixMap(), { launchScope: 'on', unattributed: 'enforce' });
+    const retired = ['/api/mdx/analytics', '/api/mdx/analytics/portfolio', '/api/mdx/analytics/submissions',
+      '/api/mdx/analytics/cycle-times', '/api/mdx/analytics/blockers', '/api/mdx/analytics/clinical', '/api/mdx/analytics/ana-usage'];
+    const served: string[] = [];
+    for (const p of retired) if ((await run(gate, p)).passed) served.push(p);
+    expect(served).toEqual([]);
+    // The Reporting overview that carries the device section is served.
+    expect((await run(gate, '/api/insights-canvas/overview')).passed).toBe(true);
   });
 
   it('claims no /api/mdx or /api/submission-ops root, nor a family no screen of it calls', () => {

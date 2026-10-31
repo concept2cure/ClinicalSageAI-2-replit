@@ -1,3 +1,32 @@
+-- AMENDED IN PLACE 2026-10-30 — D2 fold F6: the device workstream folds into Projects (CLAUDE.md Rule 1).
+-- Decision P-61 item 5: the device workstream into Projects shows only figures
+-- computed from the project's own records, and the Client Review Room admits
+-- the project. The kit portfolio (device-workstream, mdx/surfaces/Overview.tsx)
+-- retires; Projects with its MDX filter counts the device portfolio on the
+-- server, the Client Review Room is on the device project's Review step, and
+-- the old address opens filtered Projects. Removed: the id from step 1's
+-- keep-list and step 2's upsert, so a fresh database never holds the row and
+-- step 1 deprecates the existing row on every replay. The row, its metadata
+-- (its recorded tier, 'standard', included), module_subscriptions FKs and every
+-- tenant record stay; no DELETE, no appended DROP. A live grant carries to
+-- projects in the entitlement resolver (decision P-61 item 4,
+-- server/services/entitlements/folded-module-successors.ts); no grant row is
+-- written. 20260823's packaging row is removed with it.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/README.md.
+-- AMENDED IN PLACE 2026-10-30 — D2 fold F4: device analytics joins Reporting & analytics (CLAUDE.md Rule 1).
+-- Decision P-61 item 3: device analytics joins Reporting & analytics at its tier
+-- (standard), over the projects the reader can open. Device pathway analytics
+-- (device-analytics) retires; its status counts, submission pace and AnA draft
+-- acceptance rate are the device section of the Reporting overview
+-- (server/services/report-os/device-portfolio.ts), and its address opens
+-- insights. Removed: the id from step 1's keep-list and step 2's upsert, so a
+-- fresh database never holds the row and step 1 deprecates the existing row on
+-- every replay. The row, its metadata (its recorded tier, 'professional',
+-- included), module_subscriptions FKs and every tenant record stay; no DELETE, no
+-- appended DROP. A live grant carries to insights in the entitlement resolver
+-- (decision P-61 item 4, server/services/entitlements/folded-module-successors.ts);
+-- no grant row is written. 20260823's packaging row is removed with it.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/README.md.
 -- AMENDED IN PLACE 2026-10-30 — D2 fold F5 item 1: device submission packages into Submission Center (CLAUDE.md Rule 1).
 -- Decision P-61 item 1: one device-filing store, estar_submissions. The device
 -- submission-packages screen (device-submission) is folded into Submission
@@ -340,7 +369,6 @@ UPDATE available_modules
    'decision-lineage',
    'deep-research',
    'device-510k',
-   'device-analytics',
    'device-cer',
    'device-clinical-studies',
    'device-diagnostics',
@@ -350,7 +378,6 @@ UPDATE available_modules
    'device-presub',
    'device-software',
    'device-udi',
-   'device-workstream',
    'dispatch-readiness',
    'doc-journey',
    'document-authoring',
@@ -415,7 +442,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('device-diagnostics', 'IVDR evidence', 'Classification, performance testing, risk analysis, IVDR, CLIA, CDx, LDT. See ui_kits/risk + ui_kits/labeling.', 'Author & assemble', '/concept2cure/device-diagnostics', 'stethoscope', 70, '{"tiers": [], "industries": []}'::json),
   ('device-pma', 'PMA', 'PMA module status and trial metrics over the program read-model. Had no v2 entry point before the kit shell was retired.', 'Author & assemble', '/concept2cure/device-pma', 'shieldCheck', 80, '{"tiers": [], "industries": []}'::json),
   ('device-presub', 'Pre-submission (Q-Sub)', 'Q-Sub meeting manager. Previously reachable only through a persisted localStorage value — no rail, tab or palette entry existed.', 'Author & assemble', '/concept2cure/device-presub', 'messageSquare', 90, '{"tiers": [], "industries": []}'::json),
-  ('device-workstream', 'Medical Device & IVD', 'The MDX workstream — one door. Programs portfolio with classification + 510(k)/PMA/CER/De Novo pathway tabs, predicate intelligence, eSTAR/Annex XIV editors. Built in the MDX kit.', 'Author & assemble', '/concept2cure/device-workstream', 'stethoscope', 100, '{"tiers": [], "industries": []}'::json),
   ('doc-journey', 'Document journey', 'One document, ideation → submission: ideate → outline → AnA draft → revise → review → QC → approve (§11 e-sign) → assemble (eCTD leaf) → transmit (ESG). Document state visible at every stage.', 'Author & assemble', '/concept2cure/doc-journey', 'gitBranch', 110, '{"tiers": [], "industries": []}'::json),
   ('document-authoring', 'The editor', 'See HANDOFF_TO_DESIGN_document_authoring.md — editor + Yjs co-author + track-changes + comments + versions + approval + e-sign all have working backends, no UI.', 'Author & assemble', '/concept2cure/document-authoring', 'penLine', 120, '{"tiers": [], "industries": []}'::json),
   ('ectd-coauthor', 'eCTD co-author', 'eCTD tree + section authoring. Back-half pipeline (format→assemble→validate→transmit) is production-grade.', 'Author & assemble', '/concept2cure/ectd-coauthor', 'gitBranch', 140, '{"tiers": [], "industries": []}'::json),
@@ -451,7 +477,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('tasks', 'Tasks', 'Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates. See ui_kits/tasking + ui_kits/task-tray.', 'Review & govern', '/concept2cure/tasks', 'checkSquare', 530, '{"tiers": [], "industries": []}'::json),
   ('crl-library', 'FDA CRL library', 'Searchable view over the shared clinical-regulatory evidence graph — the same findings CSR workflow, study design and AnA read. Not a separate corpus, retrieval path or agent. Behind ENABLE_CLINICAL_REGULATORY_GRAPH.', 'Intelligence & risk', '/concept2cure/crl-library', 'gavel', 540, '{"tiers": [], "industries": []}'::json),
   ('deep-research', 'Deep research', 'Long-running multi-source research (Opus). Shares the AnA rail in deep-research mode.', 'Intelligence & risk', '/concept2cure/deep-research', 'telescope', 550, '{"tiers": [], "industries": []}'::json),
-  ('device-analytics', 'Device pathway analytics', 'Pathway-scoped device analytics. insights and report-engine answer protocol and report-run questions instead.', 'Intelligence & risk', '/concept2cure/device-analytics', 'barChart3', 560, '{"tiers": [], "industries": []}'::json),
   ('device-postmarket', 'Post-market surveillance and CAPA', 'Device MDR/MAUDE vigilance and CAPA triage. A different regulatory regime from pv-cockpit, which is drug pharmacovigilance.', 'Intelligence & risk', '/concept2cure/device-postmarket', 'shieldAlert', 570, '{"tiers": [], "industries": []}'::json),
   ('global-ri', 'Global regulatory intelligence', 'Gold-standard pattern: ~41 deterministic capabilities, 9 groups, one-call catalog drives nav + dynamic forms. See HANDOFF_TO_DESIGN_global_ri.md.', 'Intelligence & risk', '/concept2cure/global-ri', 'globe', 580, '{"tiers": [], "industries": []}'::json),
   ('intelligence-catalog', 'Intelligence catalog', 'Read-only reference: 142 deterministic_registry tools across 24 domains, with the determinism-pedigree trust system and the shared deterministic-result rendering pattern. Contract ref (not yet a @shared file): server/services/ana/tool-pedigree.ts', 'Intelligence & risk', '/concept2cure/intelligence-catalog', 'shieldCheck', 590, '{"tiers": [], "industries": []}'::json),

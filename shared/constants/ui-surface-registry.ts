@@ -216,7 +216,11 @@ export const UI_SURFACES: UiSurface[] = [
     // 2026-09-29: '/api/rim' removed: ProjectHome does not call it; it is the
     // hidden Registrations app's API.
     // 2026-09-29: '/api/programs' removed for the same reason as on Projects.
-    apiPrefixes: ['/api/projects', '/api/concept2cure/projects'],
+    // 2026-10-30 (D2, fold F6): '/api/mdx/client-review' moved here from the
+    // retired device-workstream: the Client Review Room is drawn on the device
+    // project's Review step (ProjectClientReview), for that project, and the
+    // route admits the project before anything is read (P-61 item 5).
+    apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
