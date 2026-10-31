@@ -25,6 +25,7 @@ import {
 } from '@shared/regulatory/filing-document-classes';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { openProjectHome, publishShellProject } from '../shellProject';
+import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue, isMeasuredReadiness, type DossierFigureState } from '../dossierReadiness';
 import {
   listedChoices,
@@ -1161,6 +1162,26 @@ const WS_TONE: Record<string, string> = { MDX: 'ai', Biotech: 'ok', Pharma: 'war
 const BLOCKED_NO_CAUSE = 'No cause recorded';
 const BLOCKED_NO_CAUSE_TITLE = 'This project’s status is recorded as blocked, and no blocker is recorded against it.';
 
+/**
+ * A project screen chosen from the rail with no project ever opened lands on
+ * Projects: say which one, rather than nothing (2026-10-31).
+ */
+function NeedsProjectNotice() {
+  const [label, setLabel] = useState<string | null>(null);
+  useEffect(() => {
+    const receive = () => setLabel((current) => consumeNavParams('projects')?.needsProject ?? current);
+    receive();
+    window.addEventListener(NAV_PARAMS_EVENT, receive);
+    return () => window.removeEventListener(NAV_PARAMS_EVENT, receive);
+  }, []);
+  if (!label) return null;
+  return (
+    <p className="ph-sub" role="status" data-testid="projects-needs-project">
+      <strong>{label} opens inside a project.</strong> Open one below, or create one with New project.
+    </p>
+  );
+}
+
 export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [ws, setWs] = useState('all');
   const [pathway, setPathway] = useState('all');
@@ -1467,6 +1488,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           <div className="ph-eyebrow">Workspace</div>
           <h1 className="ph-title">Projects</h1>
           <div className="ph-sub">Every regulatory project across all workstreams. Open one to enter its project home.</div>
+          <NeedsProjectNotice />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn ghost" onClick={() => onAsk('Which projects are at risk this week?')}>{I.sparkles} Ask AnA</button>

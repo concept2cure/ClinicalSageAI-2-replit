@@ -137,7 +137,7 @@ import './styles/device-v2.css';
    GENERATED: scripts/design/generate-surface-text-ramp.mjs, drift-checked by
    ci:surface-text-ramp. See GA ledger L102. */
 import './styles/surface-text-ramp.css';
-import { readShellProject, restoreShellProject, useShellProject, useShellProjectInUrl } from './shellProject';
+import { readShellProject, reopenLastProject, restoreShellProject, useShellProject, useShellProjectInUrl } from './shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 
@@ -343,6 +343,13 @@ export function V2App() {
      click does, never a second router. */
   const nav = React.useCallback(
     (id: string) => {
+      // A project screen chosen with no project open reopens the last project
+      // this person opened, rather than landing on Projects without a word.
+      const needsProject = !readShellProject() && destinationFor(id, false).surfaceId !== destinationFor(id, true).surfaceId;
+      if (needsProject && !reopenLastProject()) {
+        // No project was ever opened: Projects says which screen needs one.
+        stashNavParamsForTarget(OPEN_PROGRAM_SURFACE, { needsProject: getSurface(destinationFor(id, true).surfaceId)?.label ?? 'That screen' });
+      }
       const next = destinationFor(id, Boolean(readShellProject()));
       const resolved = next.applies ? resolveSurfaceAction(next.applies.actionId, next.applies.params) : null;
       // The validated bus stashes or performs first; this single canonical

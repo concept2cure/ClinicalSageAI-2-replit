@@ -8,7 +8,7 @@
  * without that credential neither the freeze nor the e-signature is executed.
  */
 import { must } from '../lib.mjs';
-import { AUTHORING_DOCS, STUDY, T, findDemoByTitle } from './biotech-content.mjs';
+import { AUTHORING_DOCS, STUDY, T, findDemoByTitle, inDays } from './biotech-content.mjs';
 import { NOT_EXECUTED_NO_SIGNER, asArray, uuidRe } from './biotech-shared.mjs';
 
 /** Create the document in the program. A document belongs to a project (PF-07): it is never created org-wide. */
@@ -95,12 +95,15 @@ function reviewerFor({ me, signer }) {
 
 async function ensureReview(ctx, spec, docRec) {
   const { api, tally } = ctx;
+  // Independent review: the server refuses the author as their own reviewer
+  // (REVIEWER_IS_AUTHOR). Without a second person nothing is requested.
+  if (!ctx.signer) { docRec.review = null; return `review ${NOT_EXECUTED_NO_SIGNER}`; }
   const reviewer = reviewerFor(ctx);
   const rows = asArray(must(await api('GET', `/api/authoring/documents/${docRec.id}/reviews`), 200, `reviews ${spec.key}`), 'reviews', 'data');
   let pending = rows.find((x) => x.reviewer_email === reviewer.email) || null;
   if (pending) tally.found('authoring-review-request');
   else {
-    const j = must(await api('POST', `/api/authoring/documents/${docRec.id}/request-review`, { reviewers: [reviewer] }), [200, 201], `request-review ${spec.key}`);
+    const j = must(await api('POST', `/api/authoring/documents/${docRec.id}/request-review`, { reviewers: [reviewer], route: { reviewDueDate: inDays(7) }, reason: 'Demo: send the synopsis for scientific review' }), [200, 201], `request-review ${spec.key}`);
     pending = (j.reviews ?? []).find((x) => x.reviewer_email === reviewer.email) || null;
     if (!pending) throw new Error(`request-review ${spec.key}: reviewer not recorded — ${JSON.stringify(j).slice(0, 200)}`);
     tally.created('authoring-review-request');
