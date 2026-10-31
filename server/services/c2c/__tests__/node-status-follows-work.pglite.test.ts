@@ -222,8 +222,9 @@ describe('2. the approval signature approves the sections it covers', () => {
     const f = await makeFiling(['2.5']);
     expect((await save(f.sectionIds['2.5'], 'Text a reviewer reads.')).status).toBe(200);
     const replies: unknown[] = [];
-    for (const meaning of ['REVIEWER', 'AUTHOR']) {
-      const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({
+    // The review is signed by the member who drafted nothing: an author never signs REVIEWER on their own document.
+    for (const [meaning, signer] of [['REVIEWER', reviewerToken], ['AUTHOR', token]] as const) {
+      const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`), signer).send({
         meaning, intent: `Signed as ${meaning}.`, password: PASSWORD,
       });
       expect(res.status, JSON.stringify(res.body)).toBe(200);

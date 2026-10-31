@@ -37,11 +37,15 @@ import { ensureSubmission } from './biotech-submission.mjs';
 
 /* ───────────────────────── 1. Projects ───────────────────────── */
 
-async function createProgram({ api, run, tally }) {
+async function createProgram({ api, run, tally, clientWorkspaceId }) {
   const j = must(await api('POST', '/api/c2c/projects', {
     name: T(PROGRAM_NAME),
     productName: PRODUCT_NAME,
     programType: 'ind',
+    // C2C-101 is the fictional monoclonal antibody defined by this pack.
+    // IND alone cannot determine product class in the canonical intake.
+    productType: 'biologic',
+    ...(clientWorkspaceId !== undefined ? { clientWorkspaceId } : {}),
     primaryAgency: 'FDA',
     indication: INDICATION,
     priority: 'high',
@@ -49,7 +53,7 @@ async function createProgram({ api, run, tally }) {
     teamMembers: [],
   }), 201, 'create program');
   run.record('program.intakeMeta', j.meta ?? null);
-  run.note('Program create accepts name, productName, programType, primaryAgency, indication, priority, targetSubmissionDate, teamMembers only (server/routes/c2c/projects.ts:478-495): there is no description or sponsor field and phase is fixed to "planning" at intake, so those parts of the story live in the documents, not on the program row.');
+  run.note('Program creation uses the canonical project intake, explicitly identifies the fictional biologic, and passes the selected client workspace when supplied. With no selection, intake alone decides whether a unique workspace is available. Sponsor and phase are not fabricated by the seed.');
   tally.created('program');
   return { row: j.data, spineSubmissionId: j.meta?.submissionId ?? null };
 }
@@ -74,14 +78,31 @@ async function ensureProgram(ctx) {
   const program = {};
   run.record('program', program);
   await run.step('Projects: program C2C-101 (IND)', async () => {
-    const list = must(await api('GET', '/api/c2c/projects?limit=200'), 200, 'list programs');
-    let row = findDemoByTitle(list.data ?? [], PROGRAM_NAME);
+    let row = null;
+    let offset = 0;
+    for (let page = 0; page < 100; page += 1) {
+      const suffix = offset ? `&offset=${offset}` : '';
+      const list = must(await api('GET', `/api/c2c/projects?limit=200${suffix}`), 200, 'list programs');
+      if (!Array.isArray(list.data) || list.meta?.pendingStore === true || list.meta?.reconciliationRequired === true) {
+        throw new Error('The project list is unavailable or requires access reconciliation; no demo program was created.');
+      }
+      row = findDemoByTitle(list.data, PROGRAM_NAME);
+      if (row || list.meta?.hasMore !== true) break;
+      if (!list.data.length || page === 99) {
+        throw new Error('The project lookup did not finish; no duplicate demo program was created.');
+      }
+      offset += list.data.length;
+    }
     let spineSubmissionId = null;
     const created = !row;
     if (row) tally.found('program');
     else ({ row, spineSubmissionId } = await createProgram(ctx));
     const detail = must(await api('GET', `/api/c2c/projects/${row.id}`), 200, 'read program');
-    Object.assign(program, describeProgram(detail.data ?? detail, row), { spineSubmissionId, created });
+    const recorded = detail.data ?? detail;
+    if (ctx.clientWorkspaceId !== undefined && Number(recorded.client_workspace_id) !== ctx.clientWorkspaceId) {
+      throw new Error('The demo project is not in the selected client workspace. Existing records were not moved.');
+    }
+    Object.assign(program, describeProgram(recorded, row), { spineSubmissionId, created });
     return `${created ? 'created' : 'found'} ${row.id} (${program.code ?? '?'})`;
   });
   return program;
@@ -229,7 +250,7 @@ export async function seed(ctx) {
   if (!signer) run.note(NOT_EXECUTED_NO_SIGNER);
 
   const before = await readLedger(api);
-  const c = { api, run, tally, me, signer };
+  const c = { api, run, tally, me, signer, clientWorkspaceId: ctx.clientWorkspaceId };
 
   const program = await ensureProgram(c);
   const vaultDocs = await ensureVault(c, program);
