@@ -1,0 +1,9 @@
+ ✓ the shell’s button reset > still resets every button in the shell 2ms
+ × the shell’s button reset > is outranked by a single class 6ms
+ × the shell’s button reset > Quality’s .qms-tab keeps the box its own rule gives it 2ms
+ × the shell’s button reset > Quality’s .qms-btn keeps the box its own rule gives it 2ms
+ × the shell’s button reset > Quality’s .qms-chip keeps the box its own rule gives it 1ms
+ × the shell’s button reset > Quality’s .qms-tpl-card keeps the box its own rule gives it 2ms
+ × the shell’s button reset > Quality’s .qms-tb-btn keeps the box its own rule gives it 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 1 passed (7)

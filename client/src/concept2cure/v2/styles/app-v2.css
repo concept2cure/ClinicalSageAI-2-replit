@@ -78,7 +78,11 @@
   -moz-osx-font-smoothing: grayscale;
 }
 .c2c-v2 *, .c2c-v2 *::before, .c2c-v2 *::after { box-sizing: border-box; }
-.c2c-v2 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
+/* The reset yields to any class. As `.c2c-v2 button` (a class and an element)
+   it outranked every one-class rule, and a button styled by one class rendered
+   as bare text: Quality's tabs, buttons, chips and library cards, and the
+   signing dialog's buttons on every surface that signs. */
+:where(.c2c-v2) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
 .c2c-v2 button:focus-visible { outline: 2px solid var(--accent-200); outline-offset: 2px; border-radius: var(--radius-md); }
 .c2c-v2 input, .c2c-v2 textarea, .c2c-v2 select { font: inherit; color: inherit; background: transparent; border: 0; outline: 0; }
 /* The reset above strips the user-agent focus ring from every field in v2, and

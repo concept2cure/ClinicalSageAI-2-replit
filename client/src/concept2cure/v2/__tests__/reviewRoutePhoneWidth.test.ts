@@ -18,9 +18,10 @@
  *    Tasks tray Close 26px, Mark read 24px, the notices' buttons 32px; in the
  *    review decision dialog the decision 36px and its buttons 32px.
  *  - The signing dialog's buttons lost their padding and background to the
- *    shell's `.c2c-v2 button` reset, which outranks one class: "Sign and
+ *    shell's `.c2c-v2 button` reset, which outranked one class: "Sign and
  *    commit", Cancel and Done were bare text 20px tall, on every surface that
- *    signs, at any width.
+ *    signs, at any width. (The reset is now `:where(.c2c-v2) button`, which
+ *    any class outranks: shellButtonResetYields.test.ts.)
  *
  * The Authoring toolbar's half (its scroller now holds the Download menu's
  * live region) is pinned beside that menu, in downloadWorkingCopy.test.tsx.
@@ -143,15 +144,19 @@ describe('The review decision dialog at 390px', () => {
 
 describe('The signing dialog keeps its buttons inside the v2 shell', () => {
   /** [ids, classes/attributes/pseudo-classes, types], enough for these selectors. */
-  const specificity = (sel: string): [number, number, number] => [
+  const specificity = (raw: string): [number, number, number] => {
+    // `:where()` counts nothing, as in CSS.
+    const sel = raw.replace(/:where\((?:[^()]|\([^()]*\))*\)/g, ' ');
+    return [
     (sel.match(/#[\w-]+/g) ?? []).length,
     (sel.match(/\.[\w-]+|\[[^\]]+\]|:(?!:)[\w-]+/g) ?? []).length,
     (sel.replace(/\[[^\]]+\]|[.#:][\w-]+/g, ' ').match(/(^|[\s>+~])[a-z][\w-]*/gi) ?? []).length,
-  ];
+    ];
+  };
   const outranks = (a: [number, number, number], b: [number, number, number]) =>
     a[0] !== b[0] ? a[0] > b[0] : a[1] !== b[1] ? a[1] > b[1] : a[2] > b[2];
 
-  const reset = rulesOf(app).find(r => r.media.length === 0 && r.selectors.includes('.c2c-v2 button') && declares(r.decls, 'padding', /^0$/));
+  const reset = rulesOf(app).find(r => r.media.length === 0 && r.selectors.includes(':where(.c2c-v2) button') && declares(r.decls, 'padding', /^0$/));
   const BUTTONS = ['es-btn-primary', 'es-btn-secondary', 'es-close', 'es-meaning-opt'];
 
   it('the shell resets every button’s padding and background', () => {
