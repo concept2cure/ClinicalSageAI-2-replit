@@ -17,7 +17,7 @@ $ npx vitest run (the two new test files)
 # Every IND forms and IND lifecycle suite (client and server), and the launch-scope tests naming these routes
  Test Files  82 passed (82)
       Tests  807 passed (807)
-  Not in this run: dispatch-verdict-parity.pglite.test.ts and routes.contract.integration.test.ts. Their 11 dispatch-gate cases fail identically on the committed code (below); the next change fixes their fixture.
+  Not in this run: dispatch-verdict-parity.pglite.test.ts and routes.contract.integration.test.ts. Their 11 dispatch-gate cases fail identically on the committed code (below); another session fixed their fixture the same day (350d1639d, 19:30), so this lane made no second fix.
 
 # Those two files on the committed code, this change reverted
 ⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯

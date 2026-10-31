@@ -71,7 +71,7 @@ and `docs/design/CSR_PATH_REVIEW_2026-10-29.md` recorded the amendment as
 | …a revision with no leaf to revise | not said | said |
 | …the letter names its sequence | no such field | sent |
 | Every IND forms and IND lifecycle suite, client and server (82 files) | — | 807/807 |
-| `dispatch-verdict-parity.pglite.test.ts`, `routes.contract.integration.test.ts` | 11 fail on the committed code | the same 11 fail. Cause: their database has no `organizations` table, which the dispatch gate's legal-readiness check has read since `5ebfcfd2c` (2026-10-18). Fixed in the next change |
+| `dispatch-verdict-parity.pglite.test.ts`, `routes.contract.integration.test.ts` | 11 fail on the committed code | the same 11 fail. Cause: their database has no `organizations` table, which the dispatch gate's legal-readiness check has read since `5ebfcfd2c` (2026-10-18). Fixed by another session the same day (`350d1639d`, 19:30), not by this lane: this README first said "the next change" would fix it |
 | ESLint | — | no file gained a warning |
 
 ## Disclosed (files another lane changed in the last 24 hours)
