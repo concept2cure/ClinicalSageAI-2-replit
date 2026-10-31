@@ -48,7 +48,6 @@ type HomeModeBinding =
 export function Home({
   onNav,
   onAsk,
-  segment,
   mode: boundMode,
   setMode: setBoundMode,
   welcome,
@@ -56,6 +55,8 @@ export function Home({
 }: {
   onNav: (id: string) => void;
   onAsk: (text: string) => void;
+  /** The client type. Home no longer prints it beside the greeting (Claude's
+   *  front door carries the greeting alone); callers still pass it. */
   segment: string;
   /** First-run AnA welcome. It lived in the right rail, which is gone
    *  (docs/design/ONE_ANA_ONE_CANVAS.md, slices 6 and 9). Home offers it while
