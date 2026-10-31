@@ -1,0 +1,19 @@
+# Chromium, with the fix: the same walk, each launch surface left to load for 7 s, twice (16 visits)
+home             conns(idle,total)=16|20 session=200 408ms failed=0 calls=16
+project-home     conns(idle,total)=20|20 session=200 18ms failed=0 calls=28
+tasks            conns(idle,total)=20|20 session=200 20ms failed=0 calls=14
+communication    conns(idle,total)=20|20 session=200 17ms failed=0 calls=17
+vault            conns(idle,total)=20|20 session=200 14ms failed=0 calls=13
+cmc              conns(idle,total)=20|20 session=200 14ms failed=0 calls=16
+quality          conns(idle,total)=20|20 session=200 19ms failed=0 calls=17
+insights         conns(idle,total)=3|3 session=200 33ms failed=0 calls=12
+home (2)         conns(idle,total)=19|19 session=200 17ms failed=0 calls=16
+project-home (2) conns(idle,total)=19|19 session=200 15ms failed=0 calls=25
+tasks (2)        conns(idle,total)=20|20 session=200 23ms failed=0 calls=14
+communication (2) conns(idle,total)=20|20 session=200 14ms failed=0 calls=17
+vault (2)        conns(idle,total)=20|20 session=200 19ms failed=0 calls=13
+cmc (2)          conns(idle,total)=20|20 session=200 19ms failed=0 calls=16
+quality (2)      conns(idle,total)=20|20 session=200 19ms failed=0 calls=17
+insights (2)     conns(idle,total)=20|20 session=200 21ms failed=0 calls=12
+after close: conns=20|20 session=200 17ms
+# pool timeouts in the server log since restart: 0

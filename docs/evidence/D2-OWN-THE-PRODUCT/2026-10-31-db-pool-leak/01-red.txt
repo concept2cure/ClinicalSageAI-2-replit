@@ -1,0 +1,25 @@
+ FAIL  server/db/__tests__/requestDbLease.test.ts > a request DB connection is returned to the pool however its request ends > when the client went away before the scope was bound
+AssertionError: the abandoned request kept its connection: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/db/__tests__/requestDbLease.test.ts:77:72
+     75|       socket.on('error', () => undefined);
+     76|     });
+     77|     expect(outstanding(), 'the abandoned request kept its connection')…
+       |                                                                        ^
+     78|   });
+     79|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  02:03:03
+   Duration  710ms (transform 160ms, setup 98ms, import 143ms, tests 172ms, environment 0ms)
+

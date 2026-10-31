@@ -54,7 +54,9 @@ function drop(req: Request, lease: Lease): Promise<void> {
 
 /**
  * Bind `client` as the request's `req.dbClient`, held by the response until it
- * ends (`finish` or `close`, whichever comes first).
+ * ends (`finish` or `close`, whichever comes first). A response that has
+ * already ended holds nothing: the client is released at once, and a query on
+ * it fails closed without taking a connection.
  */
 export function bindRequestDbClient(req: Request, res: Response, client: ReleasableRequestDbClient): void {
   const lease: Lease = { client, holds: 1, released: false };
@@ -68,6 +70,13 @@ export function bindRequestDbClient(req: Request, res: Response, client: Releasa
   };
   res.on('finish', end);
   res.on('close', end);
+  // Authentication is asynchronous, so a client that went away first has
+  // already had its 'close', and a response written to a closed socket never
+  // emits 'finish': nothing would return the connection its handler then
+  // takes. Each such request kept one until the pool was exhausted. The
+  // connection is asked as well as the response: outside production the auth
+  // boundary hands the authenticator a stand-in that forwards only `on`.
+  if (res.destroyed || res.writableFinished || req.socket?.destroyed) end();
 }
 
 /**

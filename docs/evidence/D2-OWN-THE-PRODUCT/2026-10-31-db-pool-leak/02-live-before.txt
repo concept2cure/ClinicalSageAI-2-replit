@@ -1,0 +1,3 @@
+# Live, before the fix (HEAD 05d8d4f472), dev server on PostgreSQL 16, pool max 20
+# 20 rounds x 6 fetches of one read, each aborted after 15 ms; then GET /api/v1/auth/session
+/api/mdx/notifications/unread-count    120 abandoned -> session 500/10013ms
