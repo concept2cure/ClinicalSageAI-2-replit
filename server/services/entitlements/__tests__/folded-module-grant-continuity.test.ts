@@ -62,6 +62,12 @@ const CARRIED = [
   // Fold F5 item 1 (P-61 item 1): the device submission-packages screen folded
   // into Submission Center's device filings, over the one device-filing store.
   { source: 'device-submission', target: 'submission-center', fold: 'F5', tier: 'standard' },
+  // Fold F4 (P-61 item 3): device analytics joined Reporting & analytics, over the
+  // projects the reader can open; its address opens insights.
+  { source: 'device-analytics', target: 'insights', fold: 'F4', tier: 'professional' },
+  // Fold F6 (P-61 item 5): the kit portfolio folded into Projects with its MDX
+  // filter; its address opens filtered Projects.
+  { source: 'device-workstream', target: 'projects', fold: 'F6', tier: 'standard' },
 ] as const;
 
 /** Folded screens that never had a catalogue row: nothing to carry. */

@@ -47,6 +47,12 @@ export default defineConfig({
     },
   },
   root: path.resolve(import.meta.dirname, 'client'),
+  /* Dependencies the start-up scan misses, pre-bundled at start. Found when a lazy surface first
+     imports them, each re-optimized and reloaded the whole page: opening the Vault after a restart
+     blanked the screen and dropped what was on it (vaultUploadManifest.ts, 2026-10-31). */
+  optimizeDeps: {
+    include: ['csv-parse/browser/esm/sync'],
+  },
   server: {
     hmr: {
       overlay: false,

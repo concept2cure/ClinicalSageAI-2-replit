@@ -132,7 +132,7 @@ import { mountQmsReviewRoute, qmsRouteRefusal } from './mdx-qms-review-route';
 import { qmsApprovalPrecheck, qmsApprovalRoute, qmsRetirementRoute } from '../services/qms/qms-review-route';
 import { readRouteRounds, type RouteRound } from '../services/review/review-route-standing';
 import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
-import { getOrgId, getUserId, qmsClient, admitBodyProject, admittedProject } from './mdx-qms-context';
+import { getOrgId, getUserId, qmsClient, admitBodyProject, admittedProject, queryProject } from './mdx-qms-context';
 import qmsRecordsRouter from './mdx-qms-records';
 import qmsDeviationsRouter from './mdx-qms-deviations';
 import qmsControlledCopyRouter from './mdx-qms-controlled-copy';
@@ -166,6 +166,7 @@ const docListQuery = z.object({
   doc_type: z.enum(DOC_TYPE).optional(),
   status:   z.enum(DOC_STATUS).optional(),
   category: z.string().max(60).optional(),
+  program_id: z.string().optional(), // admitted by queryProject
 });
 /* ─── GET /api/mdx/qms/readiness ──────────────────────────────────────
    One compact quality-system readiness block for the MDX device shell.
@@ -360,6 +361,9 @@ router.get('/qms/documents', async (req: Request, res: Response) => {
   if (doc_type) { args.push(doc_type); filters.push(`doc_type = $${args.length}`); }
   if (status)   { args.push(status);   filters.push(`status = $${args.length}`); }
   if (category) { args.push(category); filters.push(`category = $${args.length}`); }
+  const project = await queryProject(req, res); if (project === false) return res;
+  // A project's documents are those whose authored copy was created in it; an inline register entry has none.
+  if (project) { args.push(project); filters.push(`authoring_document_id IN (SELECT id FROM authoring_documents WHERE tenant_id = $1 AND client_program_id = $${args.length}::uuid)`); }
   try {
     const client = qmsClient(req);
     const { rows } = await client.query(`SELECT * FROM qms_documents WHERE ${filters.join(' AND ')}
@@ -1139,6 +1143,7 @@ const changeTransition = z.object({
 const changeListQuery = z.object({
   status:      z.enum(CHANGE_STATES).optional(),
   change_type: z.enum(CHANGE_TYPES).optional(),
+  program_id:  z.string().optional(), // admitted by queryProject
 });
 const linkCreate = z.object({
   linkType:     z.enum(LINK_TYPES),
@@ -1160,10 +1165,12 @@ router.get('/qms/changes', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const parsed = changeListQuery.safeParse(req.query);
   if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
+  const programId = await queryProject(req, res); if (programId === false) return res;
   try {
     const rows = await listChanges(orgId, {
       status: parsed.data.status,
       changeType: parsed.data.change_type,
+      programId,
     }, requestPgClient(req));
     /* Each change carries its cross-references (one org-scoped read for the
        whole register) and the lifecycle moves its state allows — the surface

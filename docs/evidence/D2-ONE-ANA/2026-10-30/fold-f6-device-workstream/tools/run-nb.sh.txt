@@ -1,0 +1,11 @@
+#!/bin/bash
+S=/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/laneD/r3
+cd /home/user/ClinicalSageAI-2-replit
+rm -f $S/nb/*
+split -l 28 -d $S/all-suites.txt $S/nb/batch-
+: > $S/nb-summary.txt
+for b in $S/nb/batch-??; do
+  timeout 1500 npx vitest run --maxWorkers=2 $(cat $b) > $b.log 2>&1
+  echo "$(basename $b) exit $? $(grep -E '^ +Test Files ' $b.log | tail -1) $(grep -E '^ +Tests ' $b.log | tail -1)" >> $S/nb-summary.txt
+done
+echo DONE >> $S/nb-summary.txt

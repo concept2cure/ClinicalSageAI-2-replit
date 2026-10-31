@@ -1122,7 +1122,9 @@ interface ProjPortfolioEntry {
   due: string;
   /** target_submission_date as YYYY-MM-DD, or null when none is set. */
   due_date?: string | null;
-  activity: string;
+  /** When the project's record last changed ('Updated Oct 29'), from
+   *  projects.updated_at on the server; null when the record holds none. */
+  activity: string | null;
   client_workspace_id?: number | null;
   client_name?: string | null;
 }
@@ -1582,7 +1584,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           {list.map(p => (
             <button key={p.id} className="pj-card" onClick={() => openProj(p)}>
               <div className="pj-card-t">{p.title}</div>
-              <div className="pj-card-m">{p.code} · {p.stage} · Lead {p.lead}</div>
+              {/* The last activity is the record's own (the device portfolio's
+                  "last activity", folded into Projects: D2, fold F6, 2026-10-30). */}
+              <div className="pj-card-m">{p.code} · {p.stage} · Lead {p.lead}{p.activity ? ` · ${p.activity}` : ''}</div>
               {/* No figure draws no bar: an empty track reads as 0. */}
               {isMeasuredReadiness(p.readiness, p.readinessState) ? (
                 <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>
@@ -1622,7 +1626,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
             <button key={p.id} className="ct-row" style={{ gridTemplateColumns: '1.6fr 80px 1fr 120px 100px 90px' }} onClick={() => openProj(p)}>
               <div>
                 <div className="ct-strong">{p.title}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.code}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.code}{p.activity ? ` · ${p.activity}` : ''}</div>
               </div>
               <div><span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span></div>
               <div>

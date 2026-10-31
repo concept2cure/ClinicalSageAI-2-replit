@@ -1,7 +1,7 @@
 /**
  * The request context the QMS routers share (mdx-qms.ts, mdx-qms-records.ts):
  * the caller's organization and user, the request's pinned SQL executor, and
- * the admission of a project a write names.
+ * the admission of a project a write names or a list is asked for.
  * Split out of mdx-qms.ts on 2026-10-29, when the quality-record routes moved
  * to their own router under the repository's file-size ceiling.
  *
@@ -54,6 +54,32 @@ export async function admitBodyProject(req: Request, res: Response, next: NextFu
   }
   res.locals.admittedProgramId = programId;
   next();
+}
+
+const PROJECT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * A QMS list asked for one project's records (`?program_id=`; QP2 of
+ * docs/design/QMS_IN_PROJECTS_2026-10-30.md). Absent, the list is the
+ * organization's, as before (null). A malformed id is 422, and a project that
+ * is not this organization's is 404 "Project not found" (admitProject), never
+ * an empty list that would read as "this project has none" (false: answered).
+ */
+export async function queryProject(req: Request, res: Response): Promise<string | null | false> {
+  const named = req.query.program_id;
+  if (named === undefined) return null;
+  if (typeof named !== 'string' || !PROJECT_ID.test(named)) {
+    res.status(422).json({ error: 'QMS_PROJECT_INVALID', message: 'program_id must be a project id.' });
+    return false;
+  }
+  const orgId = resolveOrgId(req);
+  if (orgId === null) return null;
+  try {
+    return (await admitProject(res, log, named, orgId)) ? named : false;
+  } catch (err) {
+    serverError(res, log, 'project-admission', err);
+    return false;
+  }
 }
 
 /** The project `admitBodyProject` admitted for this request, or null. */
