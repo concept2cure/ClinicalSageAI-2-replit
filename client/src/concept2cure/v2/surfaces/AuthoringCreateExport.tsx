@@ -163,11 +163,20 @@ function useCreationFilingScope(programId: string | null | undefined, openProjec
   const session = useAuthoringReadSession(authService.getUser());
   const effectiveProgram = programId === undefined ? openProject : programId;
   const currentFiling = context?.projectId === effectiveProgram ? context : null;
-  const scope = JSON.stringify([effectiveProgram, openProject, currentFiling?.registryId, currentFiling?.filingDocumentId, session.actor, session.key]);
-  const visit = useRef({ scope, generation: 0, projectCurrent: captureShellProjectGuard() });
-  if (visit.current.scope !== scope || !visit.current.projectCurrent()) {
-    visit.current = { scope, generation: visit.current.generation + 1, projectCurrent: captureShellProjectGuard() };
+  const base = JSON.stringify([effectiveProgram, openProject, session.actor, session.key]);
+  const filing: Array<string | null> = [currentFiling?.registryId ?? null, currentFiling?.filingDocumentId ?? null];
+  const visit = useRef({ base, filing, generation: 0, projectCurrent: captureShellProjectGuard() });
+  /* A filing value that was known and is now another (or gone) is a change. One
+     that was not yet read and now is, is the same visit learning its filing:
+     New document opened as soon as the editor drew it said the project had
+     changed, and kept saying it, because the filing read landed a second later. */
+  const filingChanged = visit.current.filing.some((known, i) => known !== null && known !== filing[i]);
+  if (visit.current.base !== base || filingChanged || !visit.current.projectCurrent()) {
+    visit.current = { base, filing, generation: visit.current.generation + 1, projectCurrent: captureShellProjectGuard() };
+  } else if (visit.current.filing.some((known, i) => known !== filing[i])) {
+    visit.current.filing = filing;
   }
+  const scope = JSON.stringify([base, ...visit.current.filing]);
   const currentVisit = visit.current;
   const [formVisit, setFormVisit] = useState<object | null>(null);
   const current = () => visit.current === currentVisit && session.sameRevision() && currentVisit.projectCurrent();

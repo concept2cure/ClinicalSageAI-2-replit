@@ -211,6 +211,30 @@ describe('filing guidance without hiding the global template library', () => {
     expect(apiRequest.mock.calls.filter(call => call[0] === 'POST')).toHaveLength(0);
     expect(screen.getByText(/project or filing changed/i)).toBeTruthy();
   });
+  /* UI walk, 2026-10-31: New document clicked as soon as the editor drew it,
+     before the project's filing was read, said "The project or filing changed
+     … Close this form and open New document again", and kept saying it. The
+     filing had not changed; it had become known. */
+  it('keeps the form when its filing becomes known after it opened, and creates the document', async () => {
+    wire({ templates: catalog, globalCatalog: 'ok' }); const p = props();
+    const view = render(<AuthoringCreateExport {...p} filingContext={{ projectId: PROJECT, registryId: null, filingDocumentId: null }} />);
+    await open(); await screen.findByText('3 of 3 templates');
+    view.rerender(<AuthoringCreateExport {...p} filingContext={{ projectId: PROJECT, registryId: 'US_BLA', filingDocumentId: 'filing-doc-1' }} />);
+    expect(screen.queryByText(/project or filing changed/i)).toBeNull();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Document title' }), { target: { value: 'Opened early' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+    await waitFor(() => expect(apiRequest.mock.calls.filter(call => call[0] === 'POST')).toHaveLength(1));
+  });
+  it('still requires a reopen when a filing that was known changes to another', async () => {
+    wire({ templates: catalog, globalCatalog: 'ok' }); const p = props();
+    const view = render(<AuthoringCreateExport {...p} filingContext={{ projectId: PROJECT, registryId: null, filingDocumentId: null }} />);
+    await open(); await screen.findByText('3 of 3 templates');
+    view.rerender(<AuthoringCreateExport {...p} filingContext={{ projectId: PROJECT, registryId: 'US_BLA', filingDocumentId: 'filing-doc-1' }} />);
+    view.rerender(<AuthoringCreateExport {...p} filingContext={{ projectId: PROJECT, registryId: 'US_NDA', filingDocumentId: 'filing-doc-2' }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+    expect(apiRequest.mock.calls.filter(call => call[0] === 'POST')).toHaveLength(0);
+    expect(screen.getByText(/project or filing changed/i)).toBeTruthy();
+  });
   it('does not infer a CTD placement for a new blank document', async () => {
     wire({ templates: [], globalCatalog: 'ok' }); render(<AuthoringCreateExport {...props()} filingContext={context} />); await open();
     fireEvent.change(screen.getByRole('textbox', { name: 'Document title' }), { target: { value: 'Working response' } });
