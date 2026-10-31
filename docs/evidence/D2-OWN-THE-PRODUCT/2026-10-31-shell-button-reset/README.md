@@ -35,3 +35,34 @@ The reset is `:where(.c2c-v2) button`. It still resets every button in the shell
 **Also run.**
 - `reviewRoutePhoneWidth.test.ts`, updated to the new selector and to count `:where()` as nothing (as CSS does): 15 of 15. Its assertion that the signing buttons outrank the reset still holds.
 - Gates: `ci:shell-css-collisions`, `ci:css-selector-shadowing`, `ci:undefined-css-classes` and `ci:frozen-theme-aliases` pass. `ci:component-class-coverage` reads built CSS and was not run (no build here).
+
+## Correction, the same day: the first version changed the font of every `.btn`
+
+The measurement above compared padding, margin, border, background, alignment, font size, font weight and colour. It did not compare the font family, and the first version (`32e1eb7dd8`) changed it.
+
+That version lowered the whole reset, including `font: inherit`. `index.css` gives `button, …, .btn, [role='button'], [role='tab']` the legacy stack `-apple-system, BlinkMacSystemFont, 'Segoe UI', …`. Its `.btn` selector, one class, then outranked the reset and set that stack on every `.btn` in the shell:
+
+- on Project home, 289 of 318 buttons;
+- on Linux, up to 12% narrower ("See this project's reports" went from 343 px to 306 px);
+- on a Mac the two stacks resolve to nearly the same face, which is why it was not seen.
+
+Two one-class line heights also came through ("Refresh sharing", "Grant sharing").
+
+**Corrected.** The face, and the whole font outside Quality, are held at the old strength:
+
+```css
+.c2c-v2 button { font-family: inherit; }
+.c2c-v2 button:not(:where(.qms-shell *)) { font: inherit; }
+```
+
+Padding, border, background, margin and alignment still yield to any class. Inside Quality, its classes now set size and weight as well, as its own scoped reset intends.
+
+**Measured again, with the full property list plus the face, letter spacing, line height, text transform, style and rendered box** (`06-regression-and-correction.txt`):
+- outside Quality, on 13 surfaces and about 940 buttons, nothing differs from the original reset;
+- inside Quality, the 25 buttons take their own styling, and the face is unchanged.
+
+**Tests.** `shellButtonResetYields.test.ts` has two new cases:
+- the face is held over a one-class rule;
+- the whole font is held outside Quality.
+
+Each fails when its rule is removed (`04-red-font-family.txt`, `05-mutations-font.txt`). Totals: 9 of 9 pass, and `reviewRoutePhoneWidth.test.ts` 15 of 15.
