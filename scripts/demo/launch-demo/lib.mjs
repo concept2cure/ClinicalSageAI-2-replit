@@ -294,3 +294,27 @@ export function makeMultiPagePdfBuffer({ title, subtitle = '', footer = '', sect
   body += `trailer\n<< /Size ${objs.length + 1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
   return Buffer.from(body, 'latin1');
 }
+
+/**
+ * Write an SOP's text into its editing copy, where a section is still empty
+ * (2026-10-31). A QMS document's text is authored in the editor, never posted
+ * with the register entry, and it cannot be sent for review or approved with
+ * no saved text (QMS_CONTENT_REQUIRED). The editing copy's sections are coded
+ * `qms-<key>`; `textByKey` maps each key to plain text. Returns how many
+ * sections were written.
+ */
+export async function fillQmsSections(api, qmsId, textByKey) {
+  const editor = must(await api('GET', `/api/mdx/qms/documents/${qmsId}/editor`), 200, `open the editing copy of QMS document ${qmsId}`);
+  const docId = (editor.data ?? editor)?.document?.id;
+  if (!docId) throw new Error(`QMS document ${qmsId} has no editing copy`);
+  const sections = must(await api('GET', `/api/authoring/docs/${docId}/sections`), 200, `read the sections of ${docId}`).sections ?? [];
+  const html = (text) => `<p>${String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+  let written = 0;
+  for (const s of sections) {
+    const text = textByKey?.[String(s.code ?? '').replace(/^qms-/, '')];
+    if (!text || String(s.content ?? '').replace(/<[^>]*>/g, '').trim()) continue;
+    must(await api('PATCH', `/api/authoring/sections/${s.id}`, { content: html(text), changeReason: 'Demo: write the SOP text for the demonstration' }), 200, `write section ${s.code}`);
+    written += 1;
+  }
+  return written;
+}

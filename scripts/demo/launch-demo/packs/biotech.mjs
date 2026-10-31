@@ -255,9 +255,9 @@ export async function seed(ctx) {
   const program = await ensureProgram(c);
   const vaultDocs = await ensureVault(c, program);
   await ensureAuthoring(c, program);
-  await ensureProtocol(c);
+  await ensureProtocol(c, program);
   await ensureSubmission(c, program, vaultDocs);
-  await ensureQms(c);
+  await ensureQms(c, program);
   await run.step('Audit trail: ledger after the run', () => auditAfterRun(c, before, startedAt));
 
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);

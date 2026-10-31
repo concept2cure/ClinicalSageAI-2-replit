@@ -226,7 +226,9 @@ one document editor for every document type and every client type."*
   editor, and delete the old place in the same change (working agreement: name the replacement by path).
   Known case, 2026-10-31: the CSR controls on Submission Center's eCTD Compile surface
   (`CsrSourceInputControls`, `CsrRunBuilds`, `CsrHeadingReview`, `CsrNarrativeBuild`, `CsrAssemblyControl`),
-  recorded in `docs/design/CSR_END_TO_END_2026-10-29.md` decision 1.
+  recorded in `docs/design/CSR_END_TO_END_2026-10-29.md` decision 1. *2026-10-31:* the build, its review and
+  import, narratives and assembly moved into the CSR document's editor (`editor/StudyDataBuild.tsx`, "Build from
+  the study's data"); Submission Center keeps only the study's data input (clinical source, frozen tables).
 - **Before writing any UI, name the editor or project path it extends.** If the honest answer is "a new
   card / screen / panel for this type", stop: it is refused.
 - **A screen is not done until it was opened in the running app and used.** Component tests in a simulated

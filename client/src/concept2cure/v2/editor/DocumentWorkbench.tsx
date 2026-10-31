@@ -84,6 +84,7 @@ import { scopedProposalResult, type EditorProposalReceipt } from './editorPropos
 import { readSavedTemplateContext, savedTemplateFacts, sourceMetadataUnavailable } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
+import { CSR_TEMPLATE_ENTRY, StudyDataBuild } from './StudyDataBuild';
 import { captureAssemblySourceIntent, captureSourceDocumentStartIntent, type AssemblySourceIntent, type AssemblySourceDocumentStartIntent } from './assemblySourceIntent';
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, workbenchNavigationRefusal, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
@@ -4308,8 +4309,10 @@ export function DocumentWorkbench({
         {/* Why there is no outline, said plainly rather than as a blank pane.
             A project with no governed document is usually not a fault: program
             types ivd/device/ide/biologic/anda have no rule pack, and the
-            scaffolder skips them deliberately. */}
-        {filing.reason === 'no-governed-document' && (
+            scaffolder skips them deliberately. Said only when the tree is
+            otherwise empty: above a document's own headings it read as
+            "nothing here" (seen in the running app, 2026-10-31). */}
+        {filing.reason === 'no-governed-document' && docs.length === 0 && (
           <div className="scaf-note" style={{ padding: '10px 12px', fontSize: 12 }}>
             This project has no governed filing document, so there is no section outline to show.
             Projects created before scaffolding — and project types with no rule pack — fall here.
@@ -4916,6 +4919,8 @@ export function DocumentWorkbench({
         <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
             <AuthoringAssemblyBuild controller={assembly} />
+            {/* A clinical study report is built from the study's data here, in the one editor (RULE 4). */}
+            {programId && docTemplateContext?.templateSource?.entryId === CSR_TEMPLATE_ENTRY && <StudyDataBuild programId={programId} onNav={onNav} />}
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a

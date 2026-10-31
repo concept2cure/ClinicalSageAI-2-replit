@@ -169,6 +169,7 @@ export const RAIL_CORE = [
   { id: 'tasking', label: 'Tasks', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } satisfies SurfaceApplies },
   { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
+  { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
   { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker', group: 'work-areas' as const },
   { id: 'rbm', label: 'Risk-based monitoring', icon: 'activity', group: 'work-areas' as const },
   { id: 'quality', label: 'Quality', icon: 'shieldCheck', group: 'work-areas' as const },
