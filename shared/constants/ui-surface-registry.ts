@@ -255,6 +255,14 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/tasks/my-work',
       '/api/tasks/tasks',
       '/api/tasks/templates',
+      // A clinical study report's study data, in its editor (RULE 4, 2026-10-31; editor/StudyDataSource.tsx):
+      // the project's clinical sources, their preview and format, and the data frozen for the document.
+      // Exactly these endpoints; the runs, the CSR jobs and the pivotal declarations are attributed on
+      // submission-center, whose screens call them too.
+      '/api/submission-orchestrator/csr/sources',
+      '/api/submission-orchestrator/csr/source-preview',
+      '/api/submission-orchestrator/csr/source-contract',
+      '/api/submission-orchestrator/csr/study-data',
     ],
     anaToolFamilies: ['get_csr_template', 'get_nonclinical_template', 'draft_clinical_overview_m2_5'],
     sharedContract: '@shared/types/document-contract',
@@ -457,12 +465,13 @@ export const UI_SURFACES: UiSurface[] = [
        REQUEST BODY. Narrowed to the segment the screens read, so the rest are
        unmapped and production refuses them 403 LAUNCH_SCOPE (GA plan item 1,
        decision 2026-10-05; /m2/qos, the CMC one, is deleted outright). */
-    // The package screen reads source readiness, selects Vault supporting JSON
+    // The package screen reads source readiness. The study's clinical source (list, preview, format) moved to
+    // the CSR document's editor on 2026-10-31 (RULE 4) and is attributed there (document-authoring).
+    // Formerly: it selected Vault supporting JSON
     // and previews deterministic tables. Attribute only these exact endpoints;
     // standalone CSR/Module 2 content builders retain their launch fences.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
     apiPrefixes: ['/api/ectd-compile', '/api/ectd/export', '/api/ectd/validate', '/api/submission-orchestrator/runs', '/api/submission-orchestrator/csr/readiness',
-      '/api/submission-orchestrator/csr/sources', '/api/submission-orchestrator/csr/source-preview', '/api/submission-orchestrator/csr/source-contract',
       // The CSR card's build control and its board (2026-10-29, CSR slices 3 and 7): start a
       // build bound to the run, read its sections, triage them, build narratives. Exactly the
       // jobs router, not the /api/csr builder prefix.

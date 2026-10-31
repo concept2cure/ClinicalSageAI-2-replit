@@ -37,16 +37,18 @@ beforeEach(() => {
   apiRequest.mockImplementation(async (_method: string, path: string) => {
     if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-30T08:00:00Z' }] });
     if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1', limitReached: false, sources: [] });
+    if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
     if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies });
     if (path === '/api/csr/jobs') return ok({ jobId: 41, status: 'queued' }, 202);
     return ok({});
   });
 });
 afterEach(() => { cleanup(); apiRequest.mockReset(); nav.mockReset(); });
-/* The build is in the CSR document's editor since 2026-10-31 (CLAUDE.md RULE 4): mount it and choose the run. */
+/* The build is in the CSR document's editor since 2026-10-31 (CLAUDE.md RULE 4): mount it and choose the study
+   data, here an earlier package run's (the same id field as a document's own frozen study data). */
 const card = async () => {
-  render(<StudyDataBuild programId={PROGRAM} onNav={nav} />);
-  fireEvent.change(await screen.findByLabelText(/Saved run with the study’s data/), { target: { value: RUN } });
+  render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" onNav={nav} />);
+  fireEvent.change(await screen.findByLabelText(/Study data/), { target: { value: RUN } });
 };
 
 it('offers "Build CSR draft" only for a saved run that holds retained tables, and binds that run', async () => {
@@ -65,7 +67,7 @@ it('offers "Build CSR draft" only for a saved run that holds retained tables, an
 it('renders no build control for a run with no retained tables', async () => {
   studies = [];
   await card();
-  await screen.findByText(/This run holds no clinical source tables\./);
+  await screen.findByText(/This earlier package run holds no study data\./);
   expect(screen.queryByRole('button', { name: /Build CSR draft/ })).toBeNull();
 });
 
@@ -73,6 +75,7 @@ it('shows the server refusal as stated, never a silent empty or a queued build',
   apiRequest.mockImplementation(async (_method: string, path: string) => {
     if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-30T08:00:00Z' }] });
     if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies });
+    if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
     if (path === '/api/csr/jobs') throw refusal(404, { code: 'CSR_RUN_INPUTS_NOT_FOUND',
       error: 'This saved run has no retained source inputs in the selected project. No job was created.' });
     return ok({ format: 'concept2cure.csr-source.v1', limitReached: false, sources: [] });

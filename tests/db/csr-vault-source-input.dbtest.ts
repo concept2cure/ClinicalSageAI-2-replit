@@ -19,7 +19,7 @@ import { guardRunCsrSourcesTx } from '../../server/services/csr/run-source-guard
 import type { OrchestratorRun } from '../../server/services/submission-package-orchestrator.js';
 
 const TAG = `audit-csr-source-${Date.now().toString(36)}`;
-const PROGRAM = randomUUID(), FOREIGN_PROGRAM = randomUUID();
+const PROGRAM = randomUUID(), FOREIGN_PROGRAM = randomUUID(), CSR_DOC = randomUUID();
 type Actor = { id: number; org: number; token: string };
 type Source = { id: string; sha256: string; version: string; receipt: CsrSourceReceipt };
 let owner: Pool, runtime: Pool, app: express.Express, org: number, otherOrg: number, author: Actor, unshared: Actor, viewer: Actor, foreign: Actor;
@@ -96,6 +96,9 @@ beforeAll(async () => {
   const submission = await owner.query<{ id: number }>(`INSERT INTO submissions(title,product_name,application_type,client_type,primary_region,organization_id,created_by,program_id)
     VALUES($1,$1,'IND','pharma','FDA',$2,$3,$4) RETURNING id`, [TAG, org, author.id, PROGRAM]);
   await owner.query("INSERT INTO ectd_sequences(submission_id,region,sequence_number,organization_id,created_by) VALUES($1,'FDA','0000',$2,$3)", [submission.rows[0].id, org, author.id]);
+  // The clinical study report document the study's data is frozen for (RULE 4, 2026-10-31).
+  await owner.query(`INSERT INTO authoring_documents(id,title,status,created_by,tenant_id,client_program_id) VALUES($1,$2,'draft',$3,$4,$5)`,
+    [CSR_DOC, `${TAG} clinical study report`, String(author.id), org, PROGRAM]);
   approved = await source('approved', org, PROGRAM, author.id);
   draft = await source('draft', org, PROGRAM, author.id, { stage: 'draft' });
   checkedIn = await source('old-version', org, PROGRAM, author.id);
@@ -143,11 +146,15 @@ function registerCsrSourceAdmissionCases1() {
     expect(JSON.stringify(result.body)).not.toContain('synthetic-a');
     expect(scopes.every(item => item.lazy && item.tenant === String(org))).toBe(true);
   });
-  it('freezes the actual selected observations and receipt through the shipped run endpoint', async () => {
-    const result = await post(author, '/runs/for-program', { programId: PROGRAM, clinicalSource: selection(approved) });
-    expect(result.status, JSON.stringify(result.body)).toBe(200); actualRunId = result.body.runId;
+  /* The study's data is frozen as its CSR document's study data, in the editor (RULE 4, 2026-10-31,
+     services/csr/csr-study-data.ts), no longer through a package run: the same receipt, seal and reader. */
+  it('freezes the actual selected observations and receipt as the CSR document’s study data', async () => {
+    const result = await post(author, '/csr/study-data', { programId: PROGRAM, documentId: CSR_DOC, source: selection(approved) });
+    expect(result.status, JSON.stringify(result.body)).toBe(201); actualRunId = result.body.studyDataId;
     expect(actualRunId).toMatch(/^[a-f0-9-]{36}$/);
-    const retained = await owner.query<{ input_snapshot: Record<string, unknown> }>('SELECT input_snapshot FROM submission_orchestrator_inputs WHERE run_id=$1 AND organization_id=$2', [actualRunId, org]);
+    expect(result.body.sources).toEqual([approved.receipt]);
+    expect(result.body.meta.auditTrail).toEqual({ persisted: true, chained: true });
+    const retained = await owner.query<{ input_snapshot: Record<string, unknown> }>('SELECT input_snapshot FROM csr_study_data WHERE study_data_id=$1 AND organization_id=$2 AND authoring_document_id=$3', [actualRunId, org, CSR_DOC]);
     expect(retained.rows[0].input_snapshot.clinicalStudyData).toEqual([sourceFixture().studyData]);
     expect(retained.rows[0].input_snapshot.clinicalSourceReceipts).toEqual([approved.receipt]);
     const read = await tables(author, actualRunId);
@@ -155,9 +162,11 @@ function registerCsrSourceAdmissionCases1() {
     expect(read.body.studies[0].tables.demographics.rows[1][1]).toBe('35.0 (7.1)');
     expect(JSON.stringify(read.body)).not.toContain('synthetic-a');
     expect(JSON.stringify(read.body)).not.toContain('participants');
-    // The source file is supporting data. Neither this proof nor this run
-    // supplies an approved Module 3 or qualifies a package for transmission.
-    expect(result.body.inputGaps.join(' ')).toContain('Clinical verification');
+    const listed = await get(author, `/csr/study-data?programId=${PROGRAM}&documentId=${CSR_DOC}`);
+    expect(listed.status).toBe(200); expect(listed.body.studyData.map((entry: { studyDataId: string }) => entry.studyDataId)).toEqual([actualRunId]);
+    expect(JSON.stringify(listed.body)).not.toContain('participants');
+    // A package run takes no clinical source any more: a caller still sending one is refused, not given a run without it.
+    expect((await post(author, '/runs/for-program', { programId: PROGRAM, clinicalSource: selection(approved) })).status).toBe(400);
   }, 120_000);
   it('reports a completed preview with failed audit truthfully, then recovers on an actual retry', async () => {
     const failedAudit = await preview(author, approved).set('x-csr-native-audit-fault', 'after-preview');
@@ -175,14 +184,14 @@ function registerCsrSourceAdmissionCases1() {
     expect((await preview(foreign, approved)).status).toBe(404);
     expect((await preview(author, foreignSource)).status).toBe(404);
     expect((await tables(unshared, actualRunId)).status).toBe(403);
-    expect((await post(viewer, '/runs/for-program', { programId: PROGRAM, clinicalSource: selection(approved) })).status).toBe(403);
+    expect((await post(viewer, '/csr/study-data', { programId: PROGRAM, documentId: CSR_DOC, source: selection(approved) })).status).toBe(403);
   });
   it('allows an honest draft preview but refuses its inclusion before any run record is created', async () => {
     expect((await preview(author, draft)).body).toMatchObject({ approved: false, source: { sourceApproval: 'not-approved' } });
-    const before = await owner.query<{ n: string }>('SELECT count(*)::text AS n FROM submission_orchestrator_runs WHERE organization_id=$1', [org]);
-    const result = await post(author, '/runs/for-program', { programId: PROGRAM, clinicalSource: selection(draft) });
+    const before = await owner.query<{ n: string }>('SELECT count(*)::text AS n FROM csr_study_data WHERE organization_id=$1', [org]);
+    const result = await post(author, '/csr/study-data', { programId: PROGRAM, documentId: CSR_DOC, source: selection(draft) });
     expect(result.status).toBe(409); expect(result.body.error).toBe('CSR_SOURCE_APPROVAL_REQUIRED');
-    expect((await owner.query<{ n: string }>('SELECT count(*)::text AS n FROM submission_orchestrator_runs WHERE organization_id=$1', [org])).rows[0].n).toBe(before.rows[0].n);
+    expect((await owner.query<{ n: string }>('SELECT count(*)::text AS n FROM csr_study_data WHERE organization_id=$1', [org])).rows[0].n).toBe(before.rows[0].n);
   });
 }
 
