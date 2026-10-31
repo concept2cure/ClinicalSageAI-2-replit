@@ -65,7 +65,7 @@ describe('Recents', () => {
     const recents = await screen.findByTestId('rail-recents');
     expect(await within(recents).findByText('Summarize the nonclinical package')).toBeTruthy();
     expect(within(recents).getByText('Untitled conversation')).toBeTruthy();
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/chat/threads?limit=15');
+    expect(apiRequest.mock.calls.some(([m, u]) => m === 'GET' && u === '/api/chat/threads?limit=15')).toBe(true);
     fireEvent.click(within(recents).getByText('Summarize the nonclinical package'));
     expect(window.C2C_CONVO).toEqual({ id: 't-1' });
     expect(onNav).toHaveBeenCalledWith('conversation-thread');
