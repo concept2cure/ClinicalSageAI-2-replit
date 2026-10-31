@@ -16,10 +16,10 @@ const BROKEN = /something went wrong|error boundary|failed to load|cannot read|u
   page.on('console', (m) => { if (m.type() === 'error') rec('console', m.text().slice(0, 240)); });
   page.on('response', (r) => { if (r.status() >= 400) rec('failed', `${r.status()} ${r.request().method()} ${r.url().replace(BASE, '').slice(0, 140)}`); });
   const settle = async () => {
-    try { await page.waitForLoadState('networkidle', { timeout: 15000 }); } catch {}
+    try { await page.waitForLoadState('networkidle', { timeout: 15000 }); } catch { /* not idle within 15s; the loading check below decides */ }
     const t0 = Date.now();
     while (Date.now() - t0 < 90000) { const busy = await page.getByText(/Loading surface|Loading…|Loading\.\.\./).count().catch(() => 0); if (!busy) break; await page.waitForTimeout(1000); }
-    console.log(`   (settled in ${Math.round((Date.now() - t0) / 1000)}s)`);
+    console.info(`   (settled in ${Math.round((Date.now() - t0) / 1000)}s)`);
     await page.waitForTimeout(2000);
   };
   const report = async (name) => {
@@ -27,8 +27,8 @@ const BROKEN = /something went wrong|error boundary|failed to load|cannot read|u
     const flagged = text.split('\n').filter(l => BROKEN.test(l)).slice(0, 5);
     await page.screenshot({ path: path.join(OUT, `w_${name.replace(/\W+/g, '_')}.png`) });
     const p = per[stage] || { pageerror: [], console: [], failed: [] };
-    console.log(`== ${name} (${page.url().replace(BASE, '')}) chars=${text.length} pageerrors=${p.pageerror.length} console=${p.console.length} failed=${p.failed.length}${flagged.length ? ' FLAGGED: ' + JSON.stringify(flagged) : ''}`);
-    for (const k of ['pageerror', 'console', 'failed']) for (const v of [...new Set(p[k])].slice(0, 6)) console.log(`   ${k}: ${v}`);
+    console.info(`== ${name} (${page.url().replace(BASE, '')}) chars=${text.length} pageerrors=${p.pageerror.length} console=${p.console.length} failed=${p.failed.length}${flagged.length ? ' FLAGGED: ' + JSON.stringify(flagged) : ''}`);
+    for (const k of ['pageerror', 'console', 'failed']) for (const v of [...new Set(p[k])].slice(0, 6)) console.info(`   ${k}: ${v}`);
   };
   stage = 'project home';
   await page.goto(BASE + '/concept2cure/project-home?program=11111111-2222-3333-4444-000000000204', { waitUntil: 'domcontentloaded', timeout: 90000 });
@@ -37,7 +37,7 @@ const BROKEN = /something went wrong|error boundary|failed to load|cannot read|u
   for (const label of nav) {
     stage = label;
     const link = page.locator('aside, nav').filter({ hasText: 'WORK AREAS' }).getByText(label, { exact: true }).first();
-    if (!(await link.count())) { console.log(`== ${label}: NOT FOUND in nav`); continue; }
+    if (!(await link.count())) { console.info(`== ${label}: NOT FOUND in nav`); continue; }
     await link.click({ timeout: 10000 }).catch(e => rec('pageerror', 'click ' + e.message.slice(0, 200)));
     await settle(); await report('with project: ' + label);
   }
