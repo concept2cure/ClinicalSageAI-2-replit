@@ -260,7 +260,7 @@ router.get('/usage', writeGuard, async (req: Request, res: Response) => {
  */
 async function projectOf(req: Request, res: Response, ref: unknown, forWrite: boolean): Promise<number | null> {
   try {
-    // The session may state its ids as strings ("1"); admission takes numbers (found in the running app, 2026-10-31).
+    // The token's subject arrives as a string; admission takes numbers (as orgOf and actorOf coerce).
     const admitted = await admitAnaProjectScope(requestPgClient(req), {
       projectRef: ref,
       organizationId: positiveInt((req as any).user?.organizationId),

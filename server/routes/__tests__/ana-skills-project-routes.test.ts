@@ -149,16 +149,6 @@ describe('deploying a skill to a project, or turning one off there', () => {
     const res = await request(appAs(EDITOR, fakeClient())).get(`/api/ana-skills/projects/${PROGRAM}`);
     expect(res.status).toBe(403);
   });
-
-  // 2026-10-31, found in the running app: the session carries its ids as strings ("1", "2"), the
-  // project admission accepts only numbers, so every project home answered 403 to its own admin.
-  it('admits a person whose session states the ids as strings, as numbers', async () => {
-    const { admitAnaProjectScope } = await import('../../services/ana/project-scope-admission');
-    vi.mocked(admitAnaProjectScope).mockClear();
-    const res = await request(appAs({ ...EDITOR, id: '5', organizationId: '42' }, fakeClient())).get(`/api/ana-skills/projects/${PROGRAM}`);
-    expect(res.status).toBe(200);
-    expect(vi.mocked(admitAnaProjectScope).mock.calls[0][1]).toMatchObject({ organizationId: 42, userId: 5 });
-  });
 });
 
 describe('a skill written for a project', () => {
@@ -249,5 +239,20 @@ describe('what the composer can pick, and a draft tried before it is saved', () 
     expect(res.body.history[0]).toMatchObject({ version: 2, actorName: 'Pat Editor', reason: REASON, action: 'ana_skill.updated' });
     const read = client.seen.find(q => q.sql.includes('FROM audit_logs'))!;
     expect(read.params.slice(0, 2)).toEqual([42, 'bundle_1']);
+  });
+});
+
+describe('reading a project’s skills as the token names the person', () => {
+  /* authenticateToken sets req.user.id to the token's subject, which a JWT carries as a string. The
+     admission check takes numbers only, so the raw value refused the organization's own admin with "An
+     identified organization member is required" (Project home, 2026-10-31). The route coerces the ids the
+     way orgOf and actorOf already do. */
+  it('admits the ids as numbers when the token carries them as strings', async () => {
+    const { admitAnaProjectScope } = await import('../../services/ana/project-scope-admission');
+    vi.mocked(admitAnaProjectScope).mockClear();
+    const res = await request(appAs({ ...EDITOR, id: '5', organizationId: '42' } as unknown as typeof EDITOR, fakeClient()))
+      .get(`/api/ana-skills/projects/${PROGRAM}`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(vi.mocked(admitAnaProjectScope).mock.calls[0][1]).toMatchObject({ organizationId: 42, userId: 5, projectRef: PROGRAM });
   });
 });

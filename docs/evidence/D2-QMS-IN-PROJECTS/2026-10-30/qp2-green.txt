@@ -1,0 +1,14 @@
+# QP2, green
+
+## bash dbtest.sh tests/db/qms-project-records.dbtest.ts
+ ✓ tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > lists the change controls filed under the project, and only those
+ ✓ tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > lists the nonconforming product filed under the project, and only that
+ ✓ tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > lists the controlled documents authored in the project, and no inline register entry
+ ✓ tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > answers another organization’s project as not found, and a malformed id as refused, on every list
+      Tests  4 passed (4)
+
+## npx vitest run projectHomeQuality, clientNamesSlice1 (door names), projectHomeRbmDoor
+ Test Files  3 passed (3)
+      Tests  41 passed (41)
+
+ci:undefined-css-classes: OK

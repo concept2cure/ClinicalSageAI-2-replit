@@ -188,9 +188,10 @@ const IMPLEMENTATION_OVERDUE_SQL =
 /** A register row with the server-computed overdue flag. */
 export type ChangeControlListRow = ChangeControlRow & { implementation_overdue: boolean };
 
-export async function listChanges(orgId: number, opts: { status?: string; changeType?: string } = {}, client: RequestSqlClient = pool): Promise<ChangeControlListRow[]> {
+export async function listChanges(orgId: number, opts: { status?: string; changeType?: string; programId?: string | null } = {}, client: RequestSqlClient = pool): Promise<ChangeControlListRow[]> {
   const args: unknown[] = [orgId];
   let where = 'organization_id = $1 AND deleted_at IS NULL';
+  if (opts.programId) { args.push(opts.programId); where += ` AND program_id = $${args.length}::uuid`; }
   if (opts.status) { args.push(opts.status); where += ` AND status = $${args.length}`; }
   if (opts.changeType) { args.push(opts.changeType); where += ` AND change_type = $${args.length}`; }
   const { rows } = await queryRowsClient(client).query<ChangeControlListRow>(

@@ -1084,6 +1084,72 @@ function ProjectReviews({ state, onRetry, onNav, available }: {
   );
 }
 
+/* ════ Quality: this project's quality records (docs/design/QMS_IN_PROJECTS_2026-10-30.md QP2) ════
+   A CAPA belongs to a project; a change control, nonconforming product and a
+   controlled document name the project they were filed under or authored in.
+   Each list is read by the project (`program_id`, admitted by the server as a
+   write's project is), and each row is a count with its own failure: a read
+   that failed is said, never 0. The work is done in Quality, which the door opens. */
+type QmsListRead = Array<Record<string, unknown>>;
+/** The QMS lists answer `{ data, meta }`, which useLiveData unwraps to the rows. */
+const isQmsList = (v: unknown): v is QmsListRead => Array.isArray(v);
+type CapaListRead = { rows: Array<Record<string, unknown>> };
+const CHANGE_CLOSED: ReadonlySet<string> = new Set(['closed', 'cancelled', 'rejected']);
+const QUALITY_READS = (pid: string) => {
+  const p = encodeURIComponent(pid);
+  return {
+    capa: `/api/capa-mdr/capa?program_id=${p}&open_only=true`,
+    changes: `/api/mdx/qms/changes?program_id=${p}`,
+    nonconforming: `/api/mdx/qms/nonconforming?program_id=${p}`,
+    documents: `/api/mdx/qms/documents?program_id=${p}`,
+  };
+};
+function qualityValue<T>(state: DataState<T>, count: (data: T) => string): { text: string; failed: boolean } {
+  if (state.loading) return { text: 'Reading…', failed: false };
+  if (state.error || !state.data) return { text: 'Could not be read', failed: true };
+  return { text: count(state.data), failed: false };
+}
+function documentsByStatus(rows: Array<Record<string, unknown>>): string {
+  const n = (status: string) => rows.filter((row) => row.status === status).length;
+  return rows.length === 0 ? 'None' : `${n('effective')} effective · ${n('in_review')} in review · ${n('draft')} draft`;
+}
+
+function ProjectQuality({ pid, onNav }: { pid: string; onNav: (id: string) => void }) {
+  const [epoch, setEpoch] = useState(0);
+  const reads = QUALITY_READS(pid);
+  const capa = useLiveData<CapaListRead>(reads.capa, [reads.capa, epoch], hasKeys<CapaListRead>('rows'));
+  const changes = useLiveData<QmsListRead>(reads.changes, [reads.changes, epoch], isQmsList);
+  const nonconforming = useLiveData<QmsListRead>(reads.nonconforming, [reads.nonconforming, epoch], isQmsList);
+  const documents = useLiveData<QmsListRead>(reads.documents, [reads.documents, epoch], isQmsList);
+  const rows = [
+    { label: 'Open CAPAs', ...qualityValue(capa, (d) => String(d.rows.length)) },
+    { label: 'Open change controls', ...qualityValue(changes, (d) => String(d.filter((r) => !CHANGE_CLOSED.has(String(r.status))).length)) },
+    { label: 'Nonconforming product awaiting disposition', ...qualityValue(nonconforming, (d) => String(d.filter((r) => r.disposition == null).length)) },
+    { label: 'Controlled documents authored here', ...qualityValue(documents, (d) => documentsByStatus(d)) },
+  ];
+  return (
+    <section className="pj-sec" aria-labelledby="pj-quality-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-quality-h">Quality</h2>
+        <span className="sec-sub">this project’s quality records</span>
+        <span className="pj-sec-acts">
+          <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('quality')}>
+            {STEP_DOORS.quality} {I.right}
+          </button>
+        </span>
+      </div>
+      <dl className="pj-quality">
+        {rows.map((row) => (
+          <div key={row.label}><dt>{row.label}</dt><dd data-tone={row.failed ? 'error' : undefined}>{row.text}</dd></div>
+        ))}
+      </dl>
+      {rows.some((row) => row.failed) && (
+        <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px', marginTop: 8 }} onClick={() => setEpoch((e) => e + 1)}>Try again</button>
+      )}
+    </section>
+  );
+}
+
 /* ════ Inline conversation composer ════
    An ENTRY POINT to the one conversation, not a conversation of its own.
 
@@ -1916,6 +1982,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
           {stage === 'review' && (
             <div className="pj-stagebody">
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
+              {pid && available('quality') && <ProjectQuality key={pid} pid={pid} onNav={onNav} />}
               <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} />
               {/* What the client sees of this project's work (the Client Review
                   Room), for this project only: the device portfolio drew it for
