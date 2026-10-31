@@ -77,6 +77,23 @@ describe('the shell’s button reset', () => {
     expect(outranks(specificity('.any-class'), specificity(reset!.selectors[0])), reset!.selectors[0]).toBe(true);
   });
 
+  /* The first version of this change lowered `font: inherit` with the rest,
+     and index.css's legacy `.btn { font-family: -apple-system, … }` (one
+     class) then set the font of 289 buttons on Project home alone: a
+     different face and up to 12% narrower. Measured: the font family and
+     the box it sizes were the only things that changed outside Quality. */
+  it('keeps the shell’s font family on every button, over a one-class legacy rule', () => {
+    const family = topLevelRules(appCss).filter((r) => /font-family:\s*inherit/.test(r.decls) && r.selectors.some((s) => /(^|\s)button$/.test(s)));
+    expect(family.length, 'no button rule inherits the shell’s font family').toBeGreaterThan(0);
+    expect(family.some((r) => r.selectors.some((s) => outranks(specificity(s), specificity('.btn')))), family.map((r) => r.selectors.join(', ')).join(' | ')).toBe(true);
+  });
+
+  it('keeps the whole font (size, weight, line height) at the old strength outside Quality', () => {
+    const font = topLevelRules(appCss).filter((r) => /(^|;)\s*font:\s*inherit/.test(r.decls)
+      && r.selectors.some((s) => /button:not\(:where\(\.qms-shell \*\)\)$/.test(s) && outranks(specificity(s), specificity('.btn'))));
+    expect(font.length, 'no full font reset outranks one class outside Quality').toBeGreaterThan(0);
+  });
+
   it.each(['.qms-tab', '.qms-btn', '.qms-chip', '.qms-tpl-card', '.qms-tb-btn'])('Quality’s %s keeps the box its own rule gives it', (cls) => {
     const own = topLevelRules(qualityCss).filter((r) => r.selectors.includes(cls) && /padding:/.test(r.decls));
     expect(own.length, `${cls} has no padding rule in quality/app.css`).toBeGreaterThan(0);
