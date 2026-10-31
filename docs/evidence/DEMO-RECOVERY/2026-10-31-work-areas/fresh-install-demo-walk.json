@@ -1,0 +1,198 @@
+[
+ {
+  "screen": "home",
+  "url": "/concept2cure",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "rail Projects",
+  "url": "/concept2cure/projects",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "rail Tasks",
+  "url": "/concept2cure/tasks",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "rail Communication",
+  "url": "/concept2cure/projects",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "rail Vault",
+  "url": "/concept2cure/projects",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "rail Submission Center",
+  "url": "/concept2cure/projects",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "rail CMC / Module 3",
+  "url": "/concept2cure/projects",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "rail Risk-based monitoring",
+  "url": "/concept2cure/rbm",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "rail Biostatistics",
+  "url": "/concept2cure/biostatistics",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "rail Quality",
+  "url": "/concept2cure/quality",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "rail Reporting & analytics",
+  "url": "/concept2cure/insights",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · Lumen] LMN-201 home",
+  "url": "/concept2cure/project-home?program=d06cde6e-7e99-4ae7-9d6d-0f5b4cbae8e1",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · Lumen] LMN-201 CMC / Module 3",
+  "url": "/concept2cure/cmc?program=d06cde6e-7e99-4ae7-9d6d-0f5b4cbae8e1",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · Lumen] LMN-201 Biostatistics",
+  "url": "/concept2cure/biostatistics?program=d06cde6e-7e99-4ae7-9d6d-0f5b4cbae8e1",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · Lumen] LMN-201 Tasks",
+  "url": "/concept2cure/tasks?program=d06cde6e-7e99-4ae7-9d6d-0f5b4cbae8e1",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · Lumen] LMN-201 Vault",
+  "url": "/concept2cure/vault?program=d06cde6e-7e99-4ae7-9d6d-0f5b4cbae8e1",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · Lumen] LMN-201 Submission Center",
+  "url": "/concept2cure/submission-center?program=d06cde6e-7e99-4ae7-9d6d-0f5b4cbae8e1",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · Biotech] C2C-101 home",
+  "url": "/concept2cure/project-home?program=6bd20d25-dae2-437a-826e-118fe6652c3b",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · Biotech] C2C-101 CMC / Module 3",
+  "url": "/concept2cure/cmc?program=6bd20d25-dae2-437a-826e-118fe6652c3b",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · Biotech] C2C-101 Biostatistics",
+  "url": "/concept2cure/biostatistics?program=6bd20d25-dae2-437a-826e-118fe6652c3b",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · Biotech] C2C-101 Tasks",
+  "url": "/concept2cure/tasks?program=6bd20d25-dae2-437a-826e-118fe6652c3b",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · Biotech] C2C-101 Communication",
+  "url": "/concept2cure/communication-center?program=6bd20d25-dae2-437a-826e-118fe6652c3b",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · MDX] NeuroPanel-Dx home",
+  "url": "/concept2cure/project-home?program=604f79bb-ff04-4d66-899e-137ca066b93c",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · MDX] NeuroPanel-Dx Tasks",
+  "url": "/concept2cure/tasks?program=604f79bb-ff04-4d66-899e-137ca066b93c",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · MDX] NeuroPanel-Dx Vault",
+  "url": "/concept2cure/vault?program=604f79bb-ff04-4d66-899e-137ca066b93c",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · MDX] NeuroPanel-Dx Submission Center",
+  "url": "/concept2cure/submission-center?program=604f79bb-ff04-4d66-899e-137ca066b93c",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "[Demo · MDX] NeuroPanel-Dx Quality",
+  "url": "/concept2cure/quality?program=604f79bb-ff04-4d66-899e-137ca066b93c",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ },
+ {
+  "screen": "new project wizard",
+  "url": "/concept2cure/projects?program=604f79bb-ff04-4d66-899e-137ca066b93c",
+  "fails": [],
+  "errors": [],
+  "suspectText": null
+ }
+]
