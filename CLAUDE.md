@@ -251,6 +251,9 @@ subsequent flow. Never build a card, a workspace, an app."*
   converged by the lane that owns it, its replacement named by path, the old place deleted in the same change.
 - **Before writing any UI, name the editor or project path it extends.** If the honest answer is "a new
   card / screen / panel for this type", stop: it is refused.
+- **Enforced by `npm run ci:one-product`, in `.husky/pre-push`:** no new surface (`UI_SURFACES`) or rail entry
+  (`RAIL_CORE`) beyond `scripts/ci/one-product-baseline.json`, which only shrinks. An addition needs the founder's
+  recorded decision in that file; a session cannot grant itself one.
 - **A screen is not done until it was opened in the running app and used.** Component tests in a simulated
   DOM are not evidence that a screen works.
 

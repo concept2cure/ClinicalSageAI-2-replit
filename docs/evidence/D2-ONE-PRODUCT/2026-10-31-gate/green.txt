@@ -1,0 +1,2 @@
+ci:one-product: 102 surfaces, 10 rail entries, none new.
+ci:one-product selftest: refuses a new surface, a new rail entry and a reasonless grant; allows a removal.
