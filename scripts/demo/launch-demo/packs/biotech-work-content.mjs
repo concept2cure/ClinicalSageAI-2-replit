@@ -62,7 +62,15 @@ export const BIOTECH_CMC = {
   ],
 };
 
-/** Protocol C2C-101-201's design as the protocol states it, with the planning assumptions the engine sizes it from. */
+/**
+ * Protocol C2C-101-201's design as the protocol states it (biotech-content.mjs:
+ * synopsis, §9 sample size, SAP §2-5): three arms 1:1:1, 180 participants, a
+ * composite estimand for PASI 75 at Week 16, a stratified CMH test with
+ * non-responder imputation at a two-sided 0.025 per comparison, and a fixed
+ * sequence. The sizing comparison is the conservative one, 100 mg vs placebo
+ * (55 % vs 8 %). 2026-10-31: the seeded design had two arms and no estimand,
+ * analysis or populations, and contradicted the protocol beside it.
+ */
 export const BIOTECH_STUDY_DESIGN = {
   title: T('C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis'),
   acronym: 'C2C-201',
@@ -70,20 +78,55 @@ export const BIOTECH_STUDY_DESIGN = {
   indication: 'Moderate-to-severe plaque psoriasis',
   productType: 'biologic',
   targetRegions: ['US'],
-  objectives: [{ level: 'primary', order: 1, text: 'To evaluate the efficacy of C2C-101 compared with placebo in adults with moderate-to-severe plaque psoriasis.', endpointName: 'PASI 75 at week 16' }],
-  endpoints: [{ role: 'primary', name: 'PASI 75 at week 16', type: 'binary', definition: 'Proportion of participants with at least a 75% reduction from baseline in Psoriasis Area and Severity Index at week 16.', timepoint: 'Week 16' }],
-  estimands: [],
-  framework: { inferentialFrame: 'superiority', structuralDesign: 'parallel_group', controlType: 'placebo', controlJustification: 'Placebo control for 16 weeks is accepted in moderate-to-severe psoriasis, with rescue to active treatment.' },
-  population: { targetDescription: 'Adults aged 18–75 with chronic plaque psoriasis for at least 6 months, BSA ≥ 10%, PASI ≥ 12 and sPGA ≥ 3.', analysisPopulations: [], eligibility: [] },
-  arms: [
-    { name: 'C2C-101 100 mg SC', interventions: [{ name: 'C2C-101 100 mg', role: 'investigational' }] },
-    { name: 'Placebo SC', interventions: [{ name: 'Placebo', role: 'placebo' }] },
+  objectives: [
+    { level: 'primary', order: 1, text: 'To evaluate the efficacy of two subcutaneous dose regimens of C2C-101 compared with placebo in adults with moderate-to-severe plaque psoriasis.', endpointName: 'PASI 75 at Week 16' },
+    { level: 'secondary', order: 2, text: 'To evaluate sPGA 0/1, PASI 90, PASI 100 and change in DLQI at Week 16.', endpointName: 'sPGA 0/1 at Week 16' },
   ],
+  endpoints: [
+    { role: 'primary', name: 'PASI 75 at Week 16', type: 'binary', definition: 'At least a 75% reduction from baseline in Psoriasis Area and Severity Index at Week 16.', timepoint: 'Week 16' },
+    { role: 'key_secondary', name: 'sPGA 0/1 at Week 16', type: 'binary', definition: 'Static Physician Global Assessment of clear (0) or almost clear (1) at Week 16.', timepoint: 'Week 16' },
+  ],
+  estimands: [{
+    endpointName: 'PASI 75 at Week 16',
+    population: 'Adults with moderate-to-severe plaque psoriasis as defined by the eligibility criteria (all randomized, ITT)',
+    variable: 'PASI 75 response at Week 16',
+    summaryMeasure: 'Difference in response proportions with a 95% confidence interval',
+    treatmentCondition: 'C2C-101 100 mg or 200 mg versus placebo, as randomized',
+    strategy: 'composite',
+    intercurrentEvents: [
+      { name: 'Discontinuation of study treatment for any reason', strategy: 'composite', justification: 'Counted as non-response.' },
+      { name: 'Use of prohibited psoriasis therapy', strategy: 'composite', justification: 'Counted as non-response.' },
+    ],
+  }],
+  framework: { inferentialFrame: 'superiority', structuralDesign: 'dose_ranging', controlType: 'placebo', controlJustification: 'Placebo control for 16 weeks is accepted in moderate-to-severe psoriasis; participants then enter an open-label extension.' },
+  population: {
+    targetDescription: 'Adults aged 18–75 with chronic plaque psoriasis for at least 6 months, PASI ≥ 12, BSA ≥ 10% and sPGA ≥ 3.',
+    analysisPopulations: [
+      { kind: 'ITT', definition: 'All randomized participants, analysed as randomized.', isPrimaryAnalysisSet: true },
+      { kind: 'Safety', definition: 'All participants who received at least one dose, analysed by treatment received.' },
+      { kind: 'PP', definition: 'ITT participants without major protocol deviations affecting the primary endpoint, defined before unblinding.' },
+      { kind: 'PK', definition: 'Participants with at least one evaluable post-dose concentration.' },
+    ],
+    eligibility: [],
+  },
+  arms: [
+    { name: 'C2C-101 200 mg', interventions: [{ name: 'C2C-101 200 mg', role: 'investigational', dose: '200 mg', route: 'subcutaneous', regimen: 'Weeks 0 and 4, then every 8 weeks' }] },
+    { name: 'C2C-101 100 mg', interventions: [{ name: 'C2C-101 100 mg', role: 'investigational', dose: '100 mg', route: 'subcutaneous', regimen: 'Weeks 0 and 4, then every 8 weeks' }] },
+    { name: 'Placebo', interventions: [{ name: 'Placebo', role: 'placebo', route: 'subcutaneous', regimen: 'Weeks 0 and 4, then every 8 weeks' }] },
+  ],
+  randomization: { ratio: [1, 1, 1], allocationMethod: 'stratified', stratificationFactors: ['Body weight (≤ 90 kg, > 90 kg)', 'Prior biologic exposure (yes/no)'], blinding: 'double' },
   statisticalPlan: {
-    alpha: 0.05,
+    alpha: 0.025,
     power: 0.9,
-    dropoutRate: 0.15,
-    plannedAnalyses: [],
-    powerAssumptions: { eventRate: 0.08, effectSize: 0.42 },
+    plannedSampleSize: 180,
+    dropoutRate: 0.08,
+    plannedAnalyses: [
+      { endpointName: 'PASI 75 at Week 16', method: 'CMH', estimandEndpointName: 'PASI 75 at Week 16' },
+      { endpointName: 'sPGA 0/1 at Week 16', method: 'CMH' },
+    ],
+    multiplicity: { method: 'fixed_sequence', alphaAllocation: [{ endpointName: 'PASI 75 at Week 16', alpha: 0.025 }] },
+    missingDataStrategy: 'Non-responder imputation; sensitivity by multiple imputation under missing at random and a tipping-point analysis',
+    sensitivityAnalysesSpecified: true,
+    powerAssumptions: { eventRate: 0.08, effectSize: 0.47 },
   },
 };

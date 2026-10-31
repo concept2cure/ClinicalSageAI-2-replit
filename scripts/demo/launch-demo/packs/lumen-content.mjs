@@ -117,9 +117,25 @@ export const LMN201_DESIGN = {
   targetRegions: ['US'],
   objectives: [{ level: 'primary', order: 1, text: 'To evaluate whether LMN-201 with standard-of-care antibiotics improves sustained clinical cure compared with placebo.', endpointName: 'Sustained clinical cure at week 12' }],
   endpoints: [{ role: 'primary', name: 'Sustained clinical cure at week 12', type: 'binary', definition: 'Initial clinical cure and no recurrence of C. difficile infection through week 12 (public listing).', timepoint: 'Week 12' }],
-  estimands: [],
+  // Illustrative from here: the public listing names the endpoint, not the estimand or analysis.
+  estimands: [{
+    endpointName: 'Sustained clinical cure at week 12',
+    population: 'All randomized participants (ITT)',
+    variable: 'Initial clinical cure and no recurrence of C. difficile infection through week 12',
+    summaryMeasure: 'Difference in proportions with a 95% confidence interval',
+    strategy: 'composite',
+    intercurrentEvents: [{ name: 'Discontinuation of study treatment or rescue CDI therapy', strategy: 'composite', justification: 'Counted as not cured (illustrative).' }],
+  }],
   framework: { inferentialFrame: 'superiority', structuralDesign: 'parallel_group', controlType: 'placebo', controlJustification: 'Placebo on top of standard-of-care antibiotics (public listing).' },
-  population: { targetDescription: 'Adults recently diagnosed with C. difficile infection receiving standard-of-care antibiotics (public listing).', analysisPopulations: [], eligibility: [] },
+  population: {
+    targetDescription: 'Adults recently diagnosed with C. difficile infection receiving standard-of-care antibiotics (public listing).',
+    analysisPopulations: [
+      { kind: 'ITT', definition: 'All randomized participants, analysed as randomized (illustrative).', isPrimaryAnalysisSet: true },
+      { kind: 'Safety', definition: 'All participants who received at least one dose (illustrative).' },
+    ],
+    eligibility: [],
+  },
+  randomization: { ratio: [1, 1], allocationMethod: 'block', blinding: 'double' },
   arms: [
     { name: 'LMN-201 + standard of care', interventions: [{ name: 'LMN-201', role: 'investigational' }] },
     { name: 'Placebo + standard of care', interventions: [{ name: 'Placebo', role: 'placebo' }] },
@@ -129,7 +145,8 @@ export const LMN201_DESIGN = {
     power: 0.8,
     dropoutRate: 0.1,
     plannedSampleSize: 375,
-    plannedAnalyses: [],
+    plannedAnalyses: [{ endpointName: 'Sustained clinical cure at week 12', method: 'CMH', estimandEndpointName: 'Sustained clinical cure at week 12' }],
+    missingDataStrategy: 'Participants with a missing week-12 assessment counted as not cured (illustrative)',
     // Illustrative demo assumptions, not the sponsor's.
     powerAssumptions: { eventRate: 0.7, effectSize: 0.14 },
   },

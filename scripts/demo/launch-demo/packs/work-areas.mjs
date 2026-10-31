@@ -168,9 +168,13 @@ export async function ensureStudyDesign({ api, run, tally }, program, protocolDo
   await run.step(`Biostatistics: study design "${design.title}"`, async () => {
     const listed = rowsOf(must(await api('GET', '/api/biostat-bridge/designs'), 200, 'list study designs'));
     const found = listed.find((d) => d.title === design.title);
-    if (found) { tally.found('study-design'); return `found ${found.studyId ?? found.id}`; }
-    const reason = 'Demo seed: record the study design the protocol states, with its planning assumptions.';
-    const saved = must(await api('POST', '/api/study-design/persist', { design: { ...design, programId: program.id, status: 'draft' }, reason }), [200, 201], 'persist study design');
+    const reason = found
+      ? 'Demo seed: bring the recorded study design in line with the protocol it belongs to.'
+      : 'Demo seed: record the study design the protocol states, with its planning assumptions.';
+    // An earlier run's design is updated in place (the persist route upserts by
+    // study id), so a corrected design reaches databases already seeded.
+    const saved = must(await api('POST', '/api/study-design/persist', { design: { ...design, ...(found ? { id: found.studyId } : {}), programId: program.id, status: 'draft' }, reason }), [200, 201], 'persist study design');
+    if (found) { tally.found('study-design'); return `updated ${found.studyId}`; }
     const studyId = saved.studyId ?? saved.data?.studyId ?? saved.id ?? saved.data?.id;
     if (!studyId) throw new Error(`persist study design answered no study id: ${JSON.stringify(saved).slice(0, 300)}`);
     if (protocolDocumentId) {
