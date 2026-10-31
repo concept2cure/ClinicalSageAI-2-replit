@@ -211,7 +211,14 @@ The founder, 2026-10-31, after saying it for two years: *"We have document types
 diagnostic, by biotech, by pharma. We don't have apps. We don't have cards. We have one product. One canvas,
 one document editor for every document type and every client type."*
 
-- **Concept2Cure is one product.** Not apps. Not cards. Not a screen per capability or per document.
+The founder again, 2026-10-31: *"We don't have a special editor just for CSR reports. We have one document
+editor for every document type across all life science customers, medical device or biotech. One canvas. One
+agent personality, AnA. One editor. One project module. From the project module the document type is selected,
+and feature functionality aligned to that type of document, like a CSR report, appears in the editor and the
+subsequent flow. Never build a card, a workspace, an app."*
+
+- **Concept2Cure is one product:** one canvas, one agent (AnA), one document editor, one project module.
+  Not apps. Not cards. Not workspaces. Not a screen per capability or per document.
 - **A document type is data, never a screen.** CSR, IND, protocol, IB, 510(k), CER, PMA, Module 3, QMS
   documents and every other are document types in one catalog, organized by client type (medical device,
   diagnostic, biotech, pharma).
@@ -229,6 +236,13 @@ one document editor for every document type and every client type."*
   recorded in `docs/design/CSR_END_TO_END_2026-10-29.md` decision 1. *2026-10-31:* the build, its review and
   import, narratives and assembly moved into the CSR document's editor (`editor/StudyDataBuild.tsx`, "Build from
   the study's data"); Submission Center keeps only the study's data input (clinical source, frozen tables).
+- **A type's functions appear inside the one editor, for that type.** Example: a CSR document shows "Build from
+  the study's data" as a section of the editor (`editor/StudyDataBuild.tsx`). That is the pattern; a separate
+  editor, workspace or card for the type is not.
+- **Still in the app, 2026-10-31, to converge (not extend):** the rail's "CMC / Module 3" work area (Module 3 is a
+  document type: it belongs in the project's document start and the one editor); the project's "Core work"
+  workspaces (`ProjectCoreWork.tsx`: Study & Protocol Design, Risk-based monitoring, Biostatistics). Each is
+  converged by the lane that owns it, its replacement named by path, the old place deleted in the same change.
 - **Before writing any UI, name the editor or project path it extends.** If the honest answer is "a new
   card / screen / panel for this type", stop: it is refused.
 - **A screen is not done until it was opened in the running app and used.** Component tests in a simulated
