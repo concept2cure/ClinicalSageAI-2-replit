@@ -205,6 +205,39 @@ each deleted and rebuilt, are the same failure at a larger scale.
 
 ---
 
+## RULE 4 — ONE PRODUCT. One canvas, one document editor, for every document type and every client type.
+
+The founder, 2026-10-31, after saying it for two years: *"We have document types by medical device and
+diagnostic, by biotech, by pharma. We don't have apps. We don't have cards. We have one product. One canvas,
+one document editor for every document type and every client type."*
+
+- **Concept2Cure is one product.** Not apps. Not cards. Not a screen per capability or per document.
+- **A document type is data, never a screen.** CSR, IND, protocol, IB, 510(k), CER, PMA, Module 3, QMS
+  documents and every other are document types in one catalog, organized by client type (medical device,
+  diagnostic, biotech, pharma).
+- **Every document starts from its project**, through the project's one document start, and is worked in
+  the one canvas and document editor (`client/src/concept2cure/v2/editor/DocumentCanvas.tsx`,
+  `DocumentWorkbench.tsx`). Drafting, engine tables, narratives, review, approval, signing, export,
+  assembly and filing are functions of that editor and that project, available to every type that needs them.
+- **Forbidden, with no exception a session may grant itself:** a per-document-type card, panel, screen,
+  surface, builder or start button; a second editor or canvas; a new top-level screen. A capability one type
+  needs is built into the one editor or the project's document start, never beside it.
+- **What exists that breaks this is converged, not extended.** Move it into the project start and the one
+  editor, and delete the old place in the same change (working agreement: name the replacement by path).
+  Known case, 2026-10-31: the CSR controls on Submission Center's eCTD Compile surface
+  (`CsrSourceInputControls`, `CsrRunBuilds`, `CsrHeadingReview`, `CsrNarrativeBuild`, `CsrAssemblyControl`),
+  recorded in `docs/design/CSR_END_TO_END_2026-10-29.md` decision 1.
+- **Before writing any UI, name the editor or project path it extends.** If the honest answer is "a new
+  card / screen / panel for this type", stop: it is refused.
+- **A screen is not done until it was opened in the running app and used.** Component tests in a simulated
+  DOM are not evidence that a screen works.
+
+This restates `docs/design/ONE_ANA_ONE_CANVAS.md` (decided 2026-10-08: "the product's functions live inside
+the project's workflow and the document's lifecycle, not in separate apps"), which, being a design record
+and not a rule, did not stop sessions from building cards. Now it is a rule.
+
+---
+
 ## Working agreement
 
 - **Deleting a user-facing capability requires the reachable replacement, by path.**
