@@ -1,0 +1,620 @@
+{
+  "kind": "actual-component Chromium with explicit synthetic network replies",
+  "expectedChecks": 8,
+  "checks": [
+    {
+      "name": "desktop light: keyboard chooser and known refusal",
+      "passed": true,
+      "screenshot": "desktop-light-refused.png",
+      "fit": {
+        "drawer": {
+          "width": 559,
+          "scroll": 559
+        },
+        "note": {
+          "width": 509,
+          "scroll": 509
+        },
+        "page": {
+          "width": 1440,
+          "scroll": 1440
+        }
+      }
+    },
+    {
+      "name": "desktop dark: malformed reply stays unknown and long names wrap",
+      "passed": true,
+      "screenshot": "desktop-dark-unknown.png",
+      "fit": {
+        "drawer": {
+          "width": 559,
+          "scroll": 559
+        },
+        "note": {
+          "width": 509,
+          "scroll": 509
+        },
+        "page": {
+          "width": 1440,
+          "scroll": 1440
+        }
+      }
+    },
+    {
+      "name": "mobile light: actual saved receipt is visible",
+      "passed": true,
+      "screenshot": "mobile-light-recorded.png",
+      "fit": {
+        "drawer": {
+          "width": 358,
+          "scroll": 358
+        },
+        "note": {
+          "width": 308,
+          "scroll": 308
+        },
+        "page": {
+          "width": 390,
+          "scroll": 390
+        }
+      }
+    },
+    {
+      "name": "mobile dark: unchanged reupload keeps its actual meaning",
+      "passed": true,
+      "screenshot": "mobile-dark-unchanged.png",
+      "fit": {
+        "drawer": {
+          "width": 358,
+          "scroll": 358
+        },
+        "note": {
+          "width": 308,
+          "scroll": 308
+        },
+        "page": {
+          "width": 390,
+          "scroll": 390
+        }
+      }
+    },
+    {
+      "name": "pending: disabled chooser and suppressed overlapping input/drop survive tab switches",
+      "passed": true,
+      "screenshot": "desktop-light-pending.png",
+      "fit": {
+        "drawer": {
+          "width": 559,
+          "scroll": 559
+        },
+        "note": {
+          "width": 509,
+          "scroll": 509
+        },
+        "page": {
+          "width": 1440,
+          "scroll": 1440
+        }
+      }
+    },
+    {
+      "name": "mobile dark: partial batch shows confirmed count and exact refused file",
+      "passed": true,
+      "screenshot": "mobile-dark-mixed.png",
+      "fit": {
+        "drawer": {
+          "width": 358,
+          "scroll": 358
+        },
+        "note": {
+          "width": 308,
+          "scroll": 308
+        },
+        "page": {
+          "width": 390,
+          "scroll": 390
+        }
+      }
+    },
+    {
+      "name": "mobile light: explicit uncertain commit uses the existing check-before-retry guidance",
+      "passed": true,
+      "screenshot": "mobile-light-explicit-unknown.png",
+      "fit": {
+        "drawer": {
+          "width": 358,
+          "scroll": 358
+        },
+        "note": {
+          "width": 308,
+          "scroll": 308
+        },
+        "page": {
+          "width": 390,
+          "scroll": 390
+        }
+      }
+    },
+    {
+      "name": "new deliberate selection clears the prior alert while pending",
+      "passed": true,
+      "screenshot": "desktop-dark-new-selection.png",
+      "fit": {
+        "drawer": {
+          "width": 559,
+          "scroll": 559
+        },
+        "note": {
+          "width": 509,
+          "scroll": 509
+        },
+        "page": {
+          "width": 1440,
+          "scroll": 1440
+        }
+      }
+    }
+  ],
+  "passed": true,
+  "failure": null,
+  "selectedInputsUnchanged": true,
+  "before": [
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx",
+      "exists": true,
+      "sha256": "ad598137329e7168af5f0022e09120e795f4c2a9ecf6eb79961105fe358cab35"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/pathway/DossierAttachments.tsx",
+      "exists": true,
+      "sha256": "12e07476b74abe61279e8ea7c92fe37878a7cbc3320d82320a1aa8f9960d49a1"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/store/dossierStore.ts",
+      "exists": true,
+      "sha256": "da488d82c39784ef5b2f415871ef079e45513d8b8aba973148d366a010bad415"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useSectionVersions.ts",
+      "exists": true,
+      "sha256": "daaa6dec0f885abf689a4dd4ecf66e0f869e066d694114f71000dd91dc11a169"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useFetchJson.ts",
+      "exists": true,
+      "sha256": "cf315ff2c81dc0a3a5f565af9aad728cf4a4a3edf752dad7c71d40ca566b5b37"
+    },
+    {
+      "path": "client/src/concept2cure/v2/useVaultUpload.ts",
+      "exists": true,
+      "sha256": "bd24e2c28da897010dac7247de47d73c991cfe3befc57b915eaef1480e68890e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/vaultIngestTransport.ts",
+      "exists": true,
+      "sha256": "420be6b1ca6c22ff5367a70aa484356ee62b1733b21de0675cebeaaaec030e8f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/vaultIngestReceipt.ts",
+      "exists": true,
+      "sha256": "83af6a73aebfa765329bcd5d8d4b979c2a60502998dd357e7967e9fd915de00a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+      "exists": true,
+      "sha256": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "exists": true,
+      "sha256": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "exists": true,
+      "sha256": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54"
+    },
+    {
+      "path": "client/src/utils/authToken.ts",
+      "exists": true,
+      "sha256": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c"
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "exists": true,
+      "sha256": "169dd465b658b06756d3dda372bed53ef587052cd9b86702486d3852e4b6da3a"
+    },
+    {
+      "path": "shared/constants/domain/vault-document-code.ts",
+      "exists": true,
+      "sha256": "4d3a659af585ed41b428d8f5b8ef0eb47dd698c72a1d19e845b122780e288eb5"
+    },
+    {
+      "path": "shared/constants/document-intake-formats.ts",
+      "exists": true,
+      "sha256": "a8de00d06ef6fcab6ddeb88618c66107739f0039c2e710874fb9a07106ecf335"
+    },
+    {
+      "path": "design-system/colors_and_type.css",
+      "exists": true,
+      "sha256": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0"
+    },
+    {
+      "path": "client/src/index.css",
+      "exists": true,
+      "sha256": "c6f279c1a9c09a86c7087eaf44e4b42ba377011f91ff9859131d145a83d6594b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/app-v2.css",
+      "exists": true,
+      "sha256": "83409a950412bf267f232e6ad333c7cf6f9c63ba7ece242f154b4c3554dd1270"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surfaces-v2.css",
+      "exists": true,
+      "sha256": "b45f5b5123e4402f274cd2c3e908e83ff6d9070221dead41ec16e23142809246"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "exists": true,
+      "sha256": "8e5341cb1be8062c3c696d4645d1b2df5a01b93e9c5d89aff0c73f9da2f467ce"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/coverage-v2.css",
+      "exists": true,
+      "sha256": "a9c012ae4b2cc88dd0292a4971288bc4d989e666d9667b5995c1ccd882c55b20"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "exists": true,
+      "sha256": "e51c1f78075f4fb168459f9ddcf3efc9df16add9cb10fbcc49acd9a384cb0aec"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/app.css",
+      "exists": true,
+      "sha256": "62cca3606d3ce23a08a116559b571c5ccef2e953e58b842a346ad60601f71eb8"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/pathway-tabs.css",
+      "exists": true,
+      "sha256": "0819d24ca0b53b41f7eeb17144521b082235ed3951cdc86733457b7ae2fe601a"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/files-tree.css",
+      "exists": true,
+      "sha256": "bf88a574b92a34ab8f485f3df810c7c561a57000e292a0a90103c6ca1ee75d2d"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surface-text-ramp.css",
+      "exists": true,
+      "sha256": "5f2cdb1df8f97b9d981c1544be940ceb5e02e212a07a27aec69023a1a302b931"
+    },
+    {
+      "path": "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-check.mjs",
+      "exists": true,
+      "sha256": "fda0890882a6101f5004fec6ff127fdd92c83193a340f108039a7b7d0a8daff1"
+    },
+    {
+      "path": "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-probe.tsx",
+      "exists": true,
+      "sha256": "067b3258059c3d4620395ff0178dc15d6124f8dac0929769f2ceff93feab4249"
+    },
+    {
+      "path": "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-index.html",
+      "exists": true,
+      "sha256": "9cee2cc94dc04b829ec5a12d61da390edb2e2c4ab4bdfc22e481653bb71a197c"
+    },
+    {
+      "path": "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-server.mjs",
+      "exists": true,
+      "sha256": "207e51aa57df3c350ab73cdca1e9e562fa944d59063b50e57f805fb2107c0adf"
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-server.mjs",
+      "exists": true,
+      "sha256": "9bfdd621b0bd97ba9323abcd341855a598b7b300d7a813acab0ccb0ed45e68d8"
+    },
+    {
+      "path": "scripts/visual-qa/playwright.mjs",
+      "exists": true,
+      "sha256": "365bc31bba210b40fc103c71dee1467003503b3053fbc67530c9e5c0a7932a04"
+    }
+  ],
+  "after": [
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx",
+      "exists": true,
+      "sha256": "ad598137329e7168af5f0022e09120e795f4c2a9ecf6eb79961105fe358cab35"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/pathway/DossierAttachments.tsx",
+      "exists": true,
+      "sha256": "12e07476b74abe61279e8ea7c92fe37878a7cbc3320d82320a1aa8f9960d49a1"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/store/dossierStore.ts",
+      "exists": true,
+      "sha256": "da488d82c39784ef5b2f415871ef079e45513d8b8aba973148d366a010bad415"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useSectionVersions.ts",
+      "exists": true,
+      "sha256": "daaa6dec0f885abf689a4dd4ecf66e0f869e066d694114f71000dd91dc11a169"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useFetchJson.ts",
+      "exists": true,
+      "sha256": "cf315ff2c81dc0a3a5f565af9aad728cf4a4a3edf752dad7c71d40ca566b5b37"
+    },
+    {
+      "path": "client/src/concept2cure/v2/useVaultUpload.ts",
+      "exists": true,
+      "sha256": "bd24e2c28da897010dac7247de47d73c991cfe3befc57b915eaef1480e68890e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/vaultIngestTransport.ts",
+      "exists": true,
+      "sha256": "420be6b1ca6c22ff5367a70aa484356ee62b1733b21de0675cebeaaaec030e8f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/vaultIngestReceipt.ts",
+      "exists": true,
+      "sha256": "83af6a73aebfa765329bcd5d8d4b979c2a60502998dd357e7967e9fd915de00a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+      "exists": true,
+      "sha256": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "exists": true,
+      "sha256": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "exists": true,
+      "sha256": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54"
+    },
+    {
+      "path": "client/src/utils/authToken.ts",
+      "exists": true,
+      "sha256": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c"
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "exists": true,
+      "sha256": "169dd465b658b06756d3dda372bed53ef587052cd9b86702486d3852e4b6da3a"
+    },
+    {
+      "path": "shared/constants/domain/vault-document-code.ts",
+      "exists": true,
+      "sha256": "4d3a659af585ed41b428d8f5b8ef0eb47dd698c72a1d19e845b122780e288eb5"
+    },
+    {
+      "path": "shared/constants/document-intake-formats.ts",
+      "exists": true,
+      "sha256": "a8de00d06ef6fcab6ddeb88618c66107739f0039c2e710874fb9a07106ecf335"
+    },
+    {
+      "path": "design-system/colors_and_type.css",
+      "exists": true,
+      "sha256": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0"
+    },
+    {
+      "path": "client/src/index.css",
+      "exists": true,
+      "sha256": "c6f279c1a9c09a86c7087eaf44e4b42ba377011f91ff9859131d145a83d6594b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/app-v2.css",
+      "exists": true,
+      "sha256": "83409a950412bf267f232e6ad333c7cf6f9c63ba7ece242f154b4c3554dd1270"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surfaces-v2.css",
+      "exists": true,
+      "sha256": "b45f5b5123e4402f274cd2c3e908e83ff6d9070221dead41ec16e23142809246"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "exists": true,
+      "sha256": "8e5341cb1be8062c3c696d4645d1b2df5a01b93e9c5d89aff0c73f9da2f467ce"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/coverage-v2.css",
+      "exists": true,
+      "sha256": "a9c012ae4b2cc88dd0292a4971288bc4d989e666d9667b5995c1ccd882c55b20"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "exists": true,
+      "sha256": "e51c1f78075f4fb168459f9ddcf3efc9df16add9cb10fbcc49acd9a384cb0aec"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/app.css",
+      "exists": true,
+      "sha256": "62cca3606d3ce23a08a116559b571c5ccef2e953e58b842a346ad60601f71eb8"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/pathway-tabs.css",
+      "exists": true,
+      "sha256": "0819d24ca0b53b41f7eeb17144521b082235ed3951cdc86733457b7ae2fe601a"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/files-tree.css",
+      "exists": true,
+      "sha256": "bf88a574b92a34ab8f485f3df810c7c561a57000e292a0a90103c6ca1ee75d2d"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surface-text-ramp.css",
+      "exists": true,
+      "sha256": "5f2cdb1df8f97b9d981c1544be940ceb5e02e212a07a27aec69023a1a302b931"
+    },
+    {
+      "path": "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-check.mjs",
+      "exists": true,
+      "sha256": "fda0890882a6101f5004fec6ff127fdd92c83193a340f108039a7b7d0a8daff1"
+    },
+    {
+      "path": "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-probe.tsx",
+      "exists": true,
+      "sha256": "067b3258059c3d4620395ff0178dc15d6124f8dac0929769f2ceff93feab4249"
+    },
+    {
+      "path": "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-index.html",
+      "exists": true,
+      "sha256": "9cee2cc94dc04b829ec5a12d61da390edb2e2c4ab4bdfc22e481653bb71a197c"
+    },
+    {
+      "path": "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-server.mjs",
+      "exists": true,
+      "sha256": "207e51aa57df3c350ab73cdca1e9e562fa944d59063b50e57f805fb2107c0adf"
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-server.mjs",
+      "exists": true,
+      "sha256": "9bfdd621b0bd97ba9323abcd341855a598b7b300d7a813acab0ccb0ed45e68d8"
+    },
+    {
+      "path": "scripts/visual-qa/playwright.mjs",
+      "exists": true,
+      "sha256": "365bc31bba210b40fc103c71dee1467003503b3053fbc67530c9e5c0a7932a04"
+    }
+  ],
+  "requests": [
+    {
+      "scenario": "known",
+      "method": "GET",
+      "path": "/api/c2c/documents/22222222-2222-4222-8222-222222222222/sections/91/versions"
+    },
+    {
+      "scenario": "known",
+      "method": "POST",
+      "path": "/api/vault/ingest",
+      "fileName": "synthetic-performance.pdf",
+      "programId": "11111111-1111-4111-8111-111111111111",
+      "multipart": true,
+      "authorizationMatched": true
+    },
+    {
+      "scenario": "unknown",
+      "method": "GET",
+      "path": "/api/c2c/documents/22222222-2222-4222-8222-222222222222/sections/91/versions"
+    },
+    {
+      "scenario": "unknown",
+      "method": "POST",
+      "path": "/api/vault/ingest",
+      "fileName": "synthetic-performance-evidence-synthetic-performance-evidence-synthetic-performance-evidence-synthetic-performance-evidence-synthetic-performance-evidence-report.pdf",
+      "programId": "11111111-1111-4111-8111-111111111111",
+      "multipart": true,
+      "authorizationMatched": true
+    },
+    {
+      "scenario": "created",
+      "method": "GET",
+      "path": "/api/c2c/documents/22222222-2222-4222-8222-222222222222/sections/91/versions"
+    },
+    {
+      "scenario": "created",
+      "method": "POST",
+      "path": "/api/vault/ingest",
+      "fileName": "synthetic-performance.pdf",
+      "programId": "11111111-1111-4111-8111-111111111111",
+      "multipart": true,
+      "authorizationMatched": true
+    },
+    {
+      "scenario": "held",
+      "method": "GET",
+      "path": "/api/c2c/documents/22222222-2222-4222-8222-222222222222/sections/91/versions"
+    },
+    {
+      "scenario": "held",
+      "method": "POST",
+      "path": "/api/vault/ingest",
+      "fileName": "synthetic-performance.pdf",
+      "programId": "11111111-1111-4111-8111-111111111111",
+      "multipart": true,
+      "authorizationMatched": true
+    },
+    {
+      "scenario": "pending",
+      "method": "GET",
+      "path": "/api/c2c/documents/22222222-2222-4222-8222-222222222222/sections/91/versions"
+    },
+    {
+      "scenario": "pending",
+      "method": "POST",
+      "path": "/api/vault/ingest",
+      "fileName": "synthetic-performance.pdf",
+      "programId": "11111111-1111-4111-8111-111111111111",
+      "multipart": true,
+      "authorizationMatched": true
+    },
+    {
+      "scenario": "mixed",
+      "method": "GET",
+      "path": "/api/c2c/documents/22222222-2222-4222-8222-222222222222/sections/91/versions"
+    },
+    {
+      "scenario": "mixed",
+      "method": "POST",
+      "path": "/api/vault/ingest",
+      "fileName": "confirmed.pdf",
+      "programId": "11111111-1111-4111-8111-111111111111",
+      "multipart": true,
+      "authorizationMatched": true
+    },
+    {
+      "scenario": "mixed",
+      "method": "POST",
+      "path": "/api/vault/ingest",
+      "fileName": "refused.pdf",
+      "programId": "11111111-1111-4111-8111-111111111111",
+      "multipart": true,
+      "authorizationMatched": true
+    },
+    {
+      "scenario": "explicit-unknown",
+      "method": "GET",
+      "path": "/api/c2c/documents/22222222-2222-4222-8222-222222222222/sections/91/versions"
+    },
+    {
+      "scenario": "explicit-unknown",
+      "method": "POST",
+      "path": "/api/vault/ingest",
+      "fileName": "dropped-performance.pdf",
+      "programId": "11111111-1111-4111-8111-111111111111",
+      "multipart": true,
+      "authorizationMatched": true
+    },
+    {
+      "scenario": "next-selection",
+      "method": "GET",
+      "path": "/api/c2c/documents/22222222-2222-4222-8222-222222222222/sections/91/versions"
+    },
+    {
+      "scenario": "next-selection",
+      "method": "POST",
+      "path": "/api/vault/ingest",
+      "fileName": "first-refused.pdf",
+      "programId": "11111111-1111-4111-8111-111111111111",
+      "multipart": true,
+      "authorizationMatched": true
+    },
+    {
+      "scenario": "next-selection",
+      "method": "POST",
+      "path": "/api/vault/ingest",
+      "fileName": "later-confirmed.pdf",
+      "programId": "11111111-1111-4111-8111-111111111111",
+      "multipart": true,
+      "authorizationMatched": true
+    }
+  ],
+  "unexpected": [],
+  "browserErrors": [],
+  "limits": "No hosted login, real upload storage, native server admission, durable dossier linkage, live signature, deployment or agency acceptance is qualified."
+}

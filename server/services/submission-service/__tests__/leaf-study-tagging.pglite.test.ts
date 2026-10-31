@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 import { VAULT_DDL } from '../../../routes/__tests__/_authoring-canvas-fixture';
@@ -30,6 +31,8 @@ beforeAll(async () => {
   holder.db = h.db;
   holder.pool = { query: (text: string, params?: unknown[]) => h.pglite.query(text, params as unknown[]) };
   await h.pglite.exec(VAULT_DDL);
+  // Placement asks whether a Vault document is a registered company legal record (20261018).
+  await h.pglite.exec(readFileSync(new URL('../../../../migrations/20261018_company_legal_registry.sql', import.meta.url), 'utf8'));
   await q(`INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_name)
     VALUES ($1, 1, 'Program', 'P-1', 'ind', 'Alpha')`, [P]);
   await q(`INSERT INTO vault.documents (id, program_id, organization_id, document_code, document_title, document_type, content_hash)

@@ -73,6 +73,13 @@ describe('QMS controls reach the canonical authoring workbench', () => {
     expect(H.request).toHaveBeenCalledWith('GET','/api/mdx/qms/documents/9/editor');
     expect(H.request.mock.calls.some(([,path])=>path.includes('/4/'))).toBe(false);
   });
+  it('opens the training reader, not the editor, for a training notice (qmsIntent read)',async()=>{
+    H.request.mockImplementation(async()=>response({id:9,doc_number:'SOP-009',title:'Training target',doc_type:'sop',version:'2.0',status:'effective',authoring_document_id:DOCUMENT}));
+    render(<QualityApp onNavigate={H.nav} qmsDocumentId="9" qmsIntent="read" />);
+    expect(await screen.findByRole('dialog',{name:'Read and acknowledge'})).toBeTruthy();
+    expect(screen.queryByTestId('canonical-workbench')).toBeNull();
+    expect(H.request.mock.calls.some(([,path])=>String(path).endsWith('/editor'))).toBe(false);
+  });
   it('preserves a refused exact notification target without opening a different register row',async()=>{
     H.request.mockRejectedValue(new Error('The selected controlled document was not found.'));
     render(<QualityApp qmsDocumentId="9" />);

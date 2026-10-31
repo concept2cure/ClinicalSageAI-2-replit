@@ -1,0 +1,63 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ↓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > generates a well-formed, checksum-verified FDA package with a working lifecycle
+ ↓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > records local checks for region ema without complete qualification
+ ↓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > records local checks for region pmda without complete qualification
+ ↓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > records local checks for region ca without complete qualification
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v4.0 qualification > generates a well-formed RPS package, verifies checksums + in-message integrity, and a lifecycle revise 616ms
+ ↓ server/services/ectd/qualification/__tests__/qualification.test.ts > runQualification (full suite, preserved reports) > runs FDA v3 + v4 and preserves blocked outcomes with declared spec versions
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a vendored stylesheet that checksums.txt does not record 898ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a manifest entry whose agency artifact is GONE from the drop point 684ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > the v4.0 schema drop point has the same three fault classes 270ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > POSITIVE CONTROL: a recorded stylesheet verifies clean 657ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > skips (does not fail) a region whose regional DTD is absent from a partial drop 515ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > states the AMENDMENT package's skip too, not only the original sequence's 517ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > POSITIVE CONTROL: with no drop-point at all, every backbone is skipped and none fails 538ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone with no DOCTYPE at all (it must not vanish from the report) 14ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE carries no parseable SYSTEM identifier 3ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE points OUTSIDE the package (not self-contained) 2ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS an unreadable backbone rather than reporting nothing about its DTD 1ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > STILL skips (does not fail) when the DOCTYPE is right but the DTD is unvendored 2ms
+ ↓ server/services/ectd/qualification/__tests__/qualification.test.ts > POSITIVE CONTROL: a real generated package declares and validates its DTDs > emits an xmllint DTD row for every backbone when the drop-point is complete
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > passes a pointer to a leaf ID the prior backbone carries, from index.xml and from the regional backbone 2ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS a file-path pointer, which names no leaf 3ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS an ID no leaf of the prior backbone carries 2ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS a Module 1 pointer that climbs out of the regional backbone too few folders 2ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > qualification outcomes retain local evidence without an incomplete pass (SYNTHETIC) > blocks absent supportive assets and unavailable external selection while local checks pass 28ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > qualification outcomes retain local evidence without an incomplete pass (SYNTHETIC) > passes complete coherent automated technical controls for both sequences, without an agency claim 20ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > qualification outcomes retain local evidence without an incomplete pass (SYNTHETIC) > records a coherent amendment external content failure as failed 17ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > qualification outcomes retain local evidence without an incomplete pass (SYNTHETIC) > fails an observed amendment captured-byte integrity mismatch even when native XML and ZIP checks pass 16ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > qualification outcomes retain local evidence without an incomplete pass (SYNTHETIC) > blocks malformed amendment captured-byte proof (missing-hashes) without fabricating an observed mismatch 15ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > qualification outcomes retain local evidence without an incomplete pass (SYNTHETIC) > blocks malformed amendment captured-byte proof (invalid-hashes) without fabricating an observed mismatch 10ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > qualification outcomes retain local evidence without an incomplete pass (SYNTHETIC) > blocks malformed amendment captured-byte proof (equal-hashes) without fabricating an observed mismatch 10ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > qualification outcomes retain local evidence without an incomplete pass (SYNTHETIC) > does not omit an amendment-only index failure 12ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > invalid or unrun external evidence blocks qualification (SYNTHETIC) > blocks amendment identity without fabricating a package-content failure 13ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > invalid or unrun external evidence blocks qualification (SYNTHETIC) > blocks amendment profile without fabricating a package-content failure 13ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > invalid or unrun external evidence blocks qualification (SYNTHETIC) > blocks amendment counts without fabricating a package-content failure 13ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > invalid or unrun external evidence blocks qualification (SYNTHETIC) > blocks amendment missing-findings without fabricating a package-content failure 18ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > invalid or unrun external evidence blocks qualification (SYNTHETIC) > blocks amendment unrun without fabricating a package-content failure 10ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > invalid or unrun external evidence blocks qualification (SYNTHETIC) > blocks a missing requested FDA profile even with otherwise clean report metadata 10ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > invalid or unrun external evidence blocks qualification (SYNTHETIC) > runs an opted-in subset at most once per sequence and never calls it an external qualification 13ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > invalid or unrun external evidence blocks qualification (SYNTHETIC) > blocks missing native capability without claiming an executed content failure 11ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > v4 and summary completeness outcomes (SYNTHETIC) > keeps v4 blocked without captured/confined schema proof even when local XSD execution passes 8ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts > v4 and summary completeness outcomes (SYNTHETIC) > does not produce a vacuous passing summary when no target was selected 3ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > tallyFindings > counts only error/warning severities 2ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > NoopExternalValidator > is not configured and returns an honest un-run report (not a pass) 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > LorenzEValidatorAdapter > is not configured without EVALIDATOR_BINARY and fails closed when validated 2ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > resolveExternalValidator > falls back to the no-op when no engine is configured 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > runExternalValidation with an existing server selection > uses the supplied adapter once without resolving again and forwards the same arguments 2ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > runExternalValidation with an existing server selection > preserves the canonical unrun failure report for a supplied adapter that throws 2ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > runExternalValidation with an existing server selection > preserves default resolution when no selection is supplied 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > staging is advisory: surfaces error count but adds no blocker 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > production + required + not configured ⇒ fail closed (could not run) 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > production + required + ran with errors ⇒ blocks on the agency errors 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > production + required + ran clean ⇒ cleared 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > not required ⇒ never blocks even in production with no engine 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > reads the opt-in enforcement flag from the environment 0ms
+
+ Test Files  3 passed (3)
+      Tests  48 passed | 6 skipped (54)
+   Start at  19:26:39
+   Duration  7.50s (transform 1.21s, setup 101ms, import 1.86s, tests 4.99s, environment 0ms)
+

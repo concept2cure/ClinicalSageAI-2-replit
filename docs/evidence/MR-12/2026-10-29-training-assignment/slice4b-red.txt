@@ -1,0 +1,14 @@
+# Slice 4b (QP1): a training task's notice opens the reader — red at 98cc17c8c5, the tests alone
+# npx vitest run server/services/notifications/__tests__/notification-training-target.test.ts client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx client/src/concept2cure/v2/__tests__/notificationTarget.test.ts
+ × client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the training reader, not the editor, for a training notice (qmsIntent read)
+ × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opened from a training notice, starts on the version approved for a later day, and on the version in force when none waits
+ × client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx > Quality adapter consumes exact notification handoffs > carries a training notice’s reading intent, and only that intent (MR-12 Stage 4 slice 4b)
+ × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > sends the person assigned to read and acknowledge the document, with no share onto its authored copy
+ × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > asks anyone no longer assigned what any notice on the document asks: no view of its authored copy, no target
+ × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > opens an inline document for someone no longer assigned as any notice on it does, without the reading intent
+ × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > opens nothing for a training task whose document is gone, or whose key is not a training key
+ × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > still opens any other task on the Tasks board, by the id its task store wrote
+ × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > the shared contract admits the reading intent on Quality, and no other
+ × client/src/concept2cure/v2/__tests__/notificationTarget.test.ts > notification navigation boundary > hands a unified task to the real board with its identity
+ Test Files  5 failed (5)
+      Tests  10 failed | 64 passed (74)

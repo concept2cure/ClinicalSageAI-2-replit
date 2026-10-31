@@ -1,0 +1,28 @@
+{
+  "rejected_candidate": "5702b41c1756ca15c6616fa2db6e2a64678844de",
+  "normal_gates_passed": true,
+  "typescript_errors": 0,
+  "push_result": "rejected concurrent ref compare-and-swap, exit1; no source accepted",
+  "push_log": "source-push-race-5.txt",
+  "canonical_base": "32eafdbf2c57bfa70d98429b8d312652eb08afe5",
+  "incoming_commits": 3,
+  "incoming_paths": [
+    "docs/evidence/D5/2026-10-30-vault-archive-receipt-ownership/README.md",
+    "docs/work-orders/README.md"
+  ],
+  "runtime_changes": [],
+  "work_order_conflict": "resolved preserving both adjacent rows and every canonical table row",
+  "canonical_table_rows_retained": 342,
+  "retained_qualification": {
+    "client_tests": 618,
+    "client_suites": 45,
+    "server_checks": 13,
+    "server_suites": 2,
+    "browser_flows": 8,
+    "browser_inputs": 36,
+    "publication_inputs": 150,
+    "input_mismatches": [],
+    "builds_passed": true
+  },
+  "next_push": "pending all normal gates"
+}

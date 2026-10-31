@@ -7,6 +7,10 @@ describe('notification navigation boundary',()=>{
   });
   it('hands a unified task to the real board with its identity',()=>{
     expect(notificationTarget({resource_type:'unified_task',resource_id:'TASK-abc-123'})).toEqual({surface:'tasks',label:'Open task',params:{taskId:'TASK-abc-123'}});
+    // The id createUnifiedTask writes (a UUID): periodic-review, CAPA and training tasks, whose reminders the due-date sweep sends.
+    const uuid='5d9f7a3c-1e2b-4c6d-8f0a-9b8c7d6e5f4a';
+    expect(notificationTarget({resource_type:'unified_task',resource_id:uuid})).toEqual({surface:'tasks',label:'Open task',params:{taskId:uuid}});
+    expect(notificationTarget({resource_type:'unified_task',resource_id:'5d9f7a3c-1e2b-4c6d-8f0a'})).toBeNull();
   });
   it('keeps declared local record identifiers but drops redirect parameters',()=>{
     expect(notificationTarget({action_url:'/concept2cure/submission-center?submissionId=42&sequenceId=7&redirect=https://evil.invalid'})).toEqual({surface:'submission-center',label:'Open linked record',params:{submissionId:'42',sequenceId:'7'}});

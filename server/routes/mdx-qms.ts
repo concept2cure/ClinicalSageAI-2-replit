@@ -126,6 +126,7 @@ import {
 } from '../services/qms/periodic-review';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { schedulePeriodicReviewTask } from '../services/qms/periodic-review-task';
+import { reconcileTrainingTasks } from '../services/qms/training-task';
 import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { mountQmsReviewRoute, qmsRouteRefusal } from './mdx-qms-review-route';
 import { qmsApprovalPrecheck, qmsApprovalRoute, qmsRetirementRoute } from '../services/qms/qms-review-route';
@@ -753,13 +754,16 @@ async function verifyRoutedApprovalSigner(
 
 /**
  * The version now in force is due on the date its approval signed; the
- * previous version's task, if any, ends with it. Best effort, after commit. An
+ * previous version's task, if any, ends with it; and the people assigned get
+ * their training tasks. Best effort, after commit and before the answer. An
  * approval that leaves other named approvers to sign (RR2) puts nothing in force.
  */
-async function scheduleInForceReview(orgId: number, userId: number, result: ApproveQmsDocumentSignedResult): Promise<void> {
+async function scheduleInForceReview(client: RequestSqlClient, orgId: number, userId: number, result: ApproveQmsDocumentSignedResult): Promise<void> {
   if (!result.approvalComplete) return;
   await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
     kind: 'review', closeAs: 'completed', due: reviewDay(result.document.next_review_date) });
+  // The people assigned get the version to train on (P-49; services/qms/training-task.ts).
+  await reconcileTrainingTasks(client, orgId, { documentIds: [Number(result.document.id)] }, userId);
 }
 
 router.post('/qms/documents/:id/approve', async (req: Request, res: Response) => {
@@ -797,7 +801,7 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
     commitAttempted = true;
     await client.query('COMMIT');
     for (const n of notices) notifyTaskEvent(n);
-    await scheduleInForceReview(orgId, userId, result);
+    await scheduleInForceReview(client, orgId, userId, result);
     return ok(res, result.document, {
       auditTrail: { persisted: true, chained: true },
       signature: result.signature,
@@ -889,6 +893,8 @@ router.post('/qms/documents/:id/retire', requireEditorAccess, async (req: Reques
     // A retired document has no next review: its open task is withdrawn with it.
     await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
       kind: 'review', closeAs: 'cancelled', due: null });
+    // ...and so are the open training tasks on it.
+    await reconcileTrainingTasks(client, orgId, { documentIds: [id] }, userId);
     return ok(res, result.document, {
       auditTrail: { persisted: true, chained: true },
       signature: result.signature,
@@ -922,6 +928,8 @@ router.post('/qms/documents/:id/training-ack', async (req: Request, res: Respons
       organizationId: orgId, userId, documentId: id, input: parsed.data,
       ipAddress: clientIpOf(req) ?? undefined, userAgent: req.get('user-agent'),
     });
+    // A receipt of the version they train on completes their task (training-task.ts); best effort.
+    await reconcileTrainingTasks(requestPgClient(req), orgId, { documentIds: [id], userIds: [userId] }, userId);
     if (result.alreadyAcknowledged) return ok(res, result.acknowledgement, { alreadyAcknowledged: true });
     return created(res, result.acknowledgement, { auditTrail: { persisted: true, chained: true } });
   } catch (err) {

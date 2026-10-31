@@ -145,10 +145,9 @@ const STILL_SERVED = [
   '/api/regulatory/tasks/unified',
   '/api/submission-ops/artifact-section-map',
   '/api/submission-ops/packages',
-  /* Upheld on 2026-10-15; the device features became Projects features in
-     62a8d5e7 (2026-10-23), and their screens call this: the validation and
-     submission work queues (mdx/hooks/useWorkbench.ts). */
-  '/api/submission-ops/blockers',
+  /* '/api/submission-ops/blockers' left this list on 2026-10-30: fold F5 item 2 (041880cbdf, P-61) retired
+     the organization-wide blocker list and its caller (mdx/hooks/useWorkbench.ts); a blocker is its filing's
+     readiness (EstarFilingPanel), reached through submission-center. No launch screen calls it. */
   '/api/task-management/assignees',
   '/api/task-management/board',
   '/api/task-management/filings',

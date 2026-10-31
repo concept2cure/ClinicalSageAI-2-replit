@@ -139,7 +139,8 @@ export function registerSurfaceLeaveGuard(guard: () => string | null): () => voi
   return () => { surfaceLeaveGuards.delete(guard); };
 }
 
-export function surfaceLeaveRefusal(): string | null {
+/** A shell navigation dialog may exclude itself, never another mounted dialog. */
+export function surfaceLeaveRefusal(navigationDialog?: Element | null): string | null {
   for (const guard of surfaceLeaveGuards) {
     try {
       const reason = guard();
@@ -152,7 +153,7 @@ export function surfaceLeaveRefusal(): string | null {
   // own their work. The drawer itself is the navigation affordance, excluded.
   if (typeof document !== 'undefined') {
     const dialog = Array.from(document.querySelectorAll('[role="dialog"], [role="alertdialog"]'))
-      .find(element => !element.classList.contains('tt-panel') && !element.closest('[hidden], [aria-hidden="true"]'));
+      .find(element => element !== navigationDialog && !element.classList.contains('tt-panel') && !element.closest('[hidden], [aria-hidden="true"]'));
     if (dialog) return 'A dialog is open — finish or close it before navigating.';
   }
   return null;
