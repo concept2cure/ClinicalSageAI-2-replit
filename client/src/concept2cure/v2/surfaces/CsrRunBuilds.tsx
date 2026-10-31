@@ -84,11 +84,11 @@ export function CsrRunBuilds({ programId, runId, focus, onNav }: {
   const [chosen, setChosen] = useState<number | null>(null);
   useEffect(() => { if (focus !== null) setChosen(focus); }, [focus]);
   const selected = builds?.find(b => b.jobId === chosen) ?? builds?.[0] ?? null;
-  return <section aria-label="CSR builds from this run" style={{ display: 'grid', gap: 6 }}>
+  return <section aria-label="CSR builds from this study data" style={{ display: 'grid', gap: 6 }}>
     <BuildPicker builds={builds} selected={selected} onChoose={setChosen} onReload={retry} />
     {error && <p role="alert">{error}</p>}
     {!error && builds === null && <p role="status">Loading the CSR builds of this run…</p>}
-    {!error && builds?.length === 0 && <p>No CSR build has been started from this run.</p>}
+    {!error && builds?.length === 0 && <p>No CSR build has been started from this study data.</p>}
     {!error && selected && <BuildOnCard key={selected.jobId} build={selected} programId={programId} onNav={onNav} />}
   </section>;
 }
@@ -97,7 +97,7 @@ function BuildPicker({ builds, selected, onChoose, onReload }: {
   builds: RunBuild[] | null; selected: RunBuild | null; onChoose: (jobId: number) => void; onReload: () => void;
 }) {
   return <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-    <strong>CSR builds from this run</strong>
+    <strong>CSR builds from this study data</strong>
     {builds && builds.length > 1 && <select aria-label="CSR build" value={selected?.jobId ?? ''} onChange={e => onChoose(Number(e.target.value))}>
       {builds.map(b => <option key={b.jobId} value={b.jobId}>CSR build {b.jobId} · {b.status}</option>)}
     </select>}

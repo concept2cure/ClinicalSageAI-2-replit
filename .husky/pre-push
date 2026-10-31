@@ -197,6 +197,18 @@ if ! npm run --silent ci:migration-drop-safety 2>&1; then
 fi
 echo "   ✅ Replay-safe DROPs passed."
 
+# One product (CLAUDE.md RULE 4, 2026-10-31): no new surface or rail entry. A capability a document
+# type needs goes into the one editor or the project's document start, which adds neither.
+echo "   Validating one product: no new surface or rail entry..."
+if ! npm run --silent ci:one-product 2>&1; then
+  echo ""
+  echo "🚫 ERROR: One-product check FAILED (CLAUDE.md RULE 4)."
+  echo "   One canvas, one agent, one editor, one project module. No cards, workspaces or apps."
+  echo ""
+  exit 1
+fi
+echo "   ✅ One product passed."
+
 # One vocabulary per class. The US class was enumerated at least fifteen times
 # across the repository (three with a different value set), the MDR class in two
 # irreconcilable shapes, the IVDR class in eight places — and two interviews had

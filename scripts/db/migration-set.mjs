@@ -3769,6 +3769,10 @@ export const C2C_MIGRATION_FILES = [
   // other entry's objects, so its place among the 20261029–30 files is free.
   // Creates no table, column or policy; every step conditional on stored state.
   'migrations/20261030b_platform_scope_role.sql',
+  // A document's study data (RULE 4, 2026-10-31): the clinical source frozen as a source of
+  // the CSR document, without a package run. Public with organization_id INTEGER NOT NULL, so
+  // the sweep below gives it its tenant policy. After regulatory_programs and organizations.
+  'migrations/20261031_csr_study_data.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

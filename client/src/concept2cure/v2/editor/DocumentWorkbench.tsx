@@ -4923,7 +4923,7 @@ export function DocumentWorkbench({
           <div className="ed-doc-inner">
             <AuthoringAssemblyBuild controller={assembly} />
             {/* A clinical study report is built from the study's data here, in the one editor (RULE 4). */}
-            {programId && docTemplateContext?.templateSource?.entryId === CSR_TEMPLATE_ENTRY && <StudyDataBuild programId={programId} onNav={onNav} />}
+            {programId && activeDocId && docTemplateContext?.templateSource?.entryId === CSR_TEMPLATE_ENTRY && <StudyDataBuild key={activeDocId} programId={programId} documentId={activeDocId} onNav={onNav} />}
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a

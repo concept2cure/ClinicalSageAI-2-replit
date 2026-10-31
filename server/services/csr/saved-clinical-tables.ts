@@ -40,10 +40,14 @@ export async function readRetainedStudyForAssembly(q: RequestSqlClient, scope: C
 
 async function readVerifiedRetainedStudies(q: RequestSqlClient, scope: CsrSourceScope, runId: string, eligibility: { historical: boolean; lock: boolean }) {
   await authorizeCsrSourceProgram(q, scope);
-  const { rows } = await q.query(`SELECT i.input_snapshot, i.input_digest, i.input_seal
+  let { rows } = await q.query(`SELECT i.input_snapshot, i.input_digest, i.input_seal
     FROM submission_orchestrator_runs r JOIN submission_orchestrator_inputs i
       ON i.run_id = r.run_id AND i.organization_id = r.organization_id
     WHERE r.run_id = $1 AND r.organization_id = $2 AND i.program_id = $3`, [runId, scope.organizationId, scope.programId]);
+  /* The retained id is a package run's, or a document's frozen study data (csr_study_data, RULE 4,
+     2026-10-31): the same sealed snapshot, verified the same way below. */
+  if (rows.length === 0) ({ rows } = await q.query(`SELECT input_snapshot, input_digest, input_seal FROM csr_study_data
+    WHERE study_data_id = $1 AND organization_id = $2 AND program_id::text = $3`, [runId, scope.organizationId, scope.programId]));
   if (rows.length !== 1) throw new CsrSourceInputError(404, 'CSR_RUN_INPUTS_NOT_FOUND', 'This saved run has no retained source inputs in the selected project.');
   const row = rows[0];
   if (!verifyOrchestratorReceipt(row.input_snapshot, row.input_digest, row.input_seal, scope.organizationId)) {

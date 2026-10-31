@@ -20,7 +20,7 @@ vi.mock('../editor/SourceImportDialog', async original => ({ ...(await original<
   SourceImportDialog: ({ programId, programName, source, onOpenDocument }: { programId: string; programName?: string; source: unknown; onOpenDocument?: (id: string, code?: string) => void }) =>
     <div data-testid="csr-import">{JSON.stringify({ programId, programName, source })}
       {onOpenDocument && <button type="button" onClick={() => onOpenDocument('saved-csr-copy', '11.4.1')}>Open confirmed copy</button>}</div> }));
-import { CsrSourceInputControls } from '../surfaces/CsrSourceInputControls';
+import { OrchestratorRunControls } from '../surfaces/OrchestratorRunControls';
 import { StudyDataBuild } from '../editor/StudyDataBuild';
 import { BUILD_POLL_MS } from '../surfaces/CsrRunBuilds';
 import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
@@ -28,6 +28,7 @@ import { clearShellProject, publishShellProject } from '../shellProject';
 
 const PROGRAM = '11111111-2222-4333-8444-000000000001';
 const RUN = '0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31';
+const CSR_DOC = '11111111-2222-4333-8444-000000000009';
 const HASH = 'a'.repeat(64);
 const receipt = { documentId: '11111111-2222-4333-8444-000000000003', documentTitle: 'SYN source', version: '2', sha256: HASH,
   adapter: 'concept2cure.csr-source.v1', dataCutDate: '2026-10-01', studyId: 'SYN-201', protocolNumber: 'SYN-201-P',
@@ -61,6 +62,7 @@ function routes(method: string, path: string) {
 
 function jobRoutes(method: string, path: string) {
   if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1', limitReached: false, sources: [] });
+  if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
   if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies: [{ source: receipt, tables }] });
   if (method === 'GET' && path === BUILDS) return ok({ jobs: builds });
   if (method === 'POST' && path === '/api/csr/jobs') { builds = [build(42, 'queued'), ...builds]; return ok({ jobId: 42, status: 'queued' }, 202); }
@@ -75,24 +77,25 @@ function jobRoutes(method: string, path: string) {
 beforeEach(() => { builds = [build(41)]; apiRequest.mockImplementation(async (method: string, path: string) => routes(method, path)); });
 afterEach(() => { cleanup(); apiRequest.mockReset(); nav.mockReset(); clearEditorTarget(); });
 /* 2026-10-31 (CLAUDE.md RULE 4): the build lives in the CSR document's editor, not on Submission Center's card.
-   These cases are the card's, moved: mount the editor's build and choose the saved run. */
+   These cases are the card's, moved: mount the editor's build and choose the study data. Here it is an earlier
+   package run's, which stays reachable; a document's own frozen study data is studyDataSource.test.tsx. */
 const card = async () => {
-  render(<StudyDataBuild programId={PROGRAM} onNav={nav} />);
-  fireEvent.change(await screen.findByLabelText(/Saved run with the study’s data/), { target: { value: RUN } });
+  render(<StudyDataBuild programId={PROGRAM} documentId={CSR_DOC} onNav={nav} />);
+  fireEvent.change(await screen.findByLabelText(/Study data/), { target: { value: RUN } });
 };
 
-it('Submission Center keeps the study data and points to the document; it carries no CSR build', async () => {
-  render(<CsrSourceInputControls programId={PROGRAM} runId={RUN} interactionBusy={false}
-    onSelectionChange={() => {}} onBusyChange={() => {}} onNav={nav} />);
-  expect(await screen.findByLabelText('Frozen run clinical tables')).toBeTruthy();
-  expect(await screen.findByText(/open the project’s Clinical Study Report document in the editor/)).toBeTruthy();
-  expect(screen.queryByLabelText('CSR builds from this run')).toBeNull();
+it('Submission Center carries no CSR build and no study data: both are the CSR document’s, in the editor', async () => {
+  render(<OrchestratorRunControls programId={PROGRAM} sequenceId={7} run={null} selectedRunId={null} onLoad={vi.fn()} onBusyChange={() => {}} onNav={nav} />);
+  expect(await screen.findByRole('button', { name: 'Build package run' })).toBeTruthy();
+  expect(screen.queryByLabelText('CSR builds from this study data')).toBeNull();
   expect(screen.queryByRole('button', { name: /Build CSR draft/ })).toBeNull();
+  expect(screen.queryByLabelText('Clinical source')).toBeNull();
+  expect(screen.queryByText(/Clinical source tables/)).toBeNull();
 });
 
 it('carries the narrative build and the assembly for a build of the saved run, in the CSR document’s editor', async () => {
   await card();
-  const region = await screen.findByLabelText('CSR builds from this run');
+  const region = await screen.findByLabelText('CSR builds from this study data');
   expect(await within(region).findByLabelText('Patient safety narratives')).toBeTruthy();
   expect(within(region).getByLabelText('CSR assembly')).toBeTruthy();
   expect(within(region).getByRole('button', { name: /Build narratives/ })).toBeTruthy();
@@ -106,7 +109,7 @@ it('a newly queued build is selected in the editor; nothing navigates to the boa
   await card();
   fireEvent.click(await screen.findByRole('button', { name: /Build CSR draft · SYN-201-P/ }));
   await screen.findByText(/CSR build 42 is queued/);
-  const region = screen.getByLabelText('CSR builds from this run');
+  const region = screen.getByLabelText('CSR builds from this study data');
   expect(await within(region).findByText(/CSR build 42 · queued · 0%/)).toBeTruthy();
   expect(screen.queryByRole('button', { name: /Open build progress/ })).toBeNull();
   expect(nav).not.toHaveBeenCalledWith('csr-workflow');
@@ -116,7 +119,7 @@ it('a newly queued build is selected in the editor; nothing navigates to the boa
 it('states that no build exists for the run, and a refused build list as an alert, never an empty list', async () => {
   builds = [];
   await card();
-  expect(await screen.findByText('No CSR build has been started from this run.')).toBeTruthy();
+  expect(await screen.findByText('No CSR build has been started from this study data.')).toBeTruthy();
   cleanup();
   apiRequest.mockImplementation(async (method: string, path: string) => {
     if (method === 'GET' && path === BUILDS) throw refusal(403, { code: 'CSR_PROJECT_ACCESS_DENIED', error: 'The CSR actor does not have access to this project.' });
@@ -125,7 +128,7 @@ it('states that no build exists for the run, and a refused build list as an aler
   await card();
   const alert = await screen.findByText(/does not have access to this project/);
   expect(alert.getAttribute('role')).toBe('alert');
-  expect(screen.queryByText('No CSR build has been started from this run.')).toBeNull();
+  expect(screen.queryByText('No CSR build has been started from this study data.')).toBeNull();
 });
 
 it('follows a drafting build until it ends, then stops re-reading the list', async () => {
@@ -133,7 +136,7 @@ it('follows a drafting build until it ends, then stops re-reading the list', asy
   try {
     builds = [{ ...build(43, 'drafting'), progress: 40 }];
     await card();
-    const region = await screen.findByLabelText('CSR builds from this run');
+    const region = await screen.findByLabelText('CSR builds from this study data');
     expect(await within(region).findByText(/CSR build 43 · drafting · 40%/)).toBeTruthy();
     builds = [{ ...build(43), updatedAt: '2026-10-30T09:05:00Z' }];
     await act(async () => { await vi.advanceTimersByTimeAsync(BUILD_POLL_MS); });
@@ -150,7 +153,7 @@ const headingReads = (jobId: number) => apiRequest.mock.calls.filter(([m, p]) =>
 
 it('reviews the selected build section by section, with the ICH E3 labels, and approves against the content hash', async () => {
   await card();
-  const region = await screen.findByLabelText('CSR builds from this run');
+  const region = await screen.findByLabelText('CSR builds from this study data');
   const review = await within(region).findByLabelText('Section review');
   expect(within(review).getByText('4 of 5 ICH E3 headings drafted · 2 approved')).toBeTruthy();
   const row = within(review).getByText('Disposition of patients').closest('li')!;
@@ -165,7 +168,7 @@ it('reviews the selected build section by section, with the ICH E3 labels, and a
 
 it('imports exactly the approved sections into Authoring and opens the saved copy there', async () => {
   await card();
-  const region = await screen.findByLabelText('CSR builds from this run');
+  const region = await screen.findByLabelText('CSR builds from this study data');
   fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into Authoring/ }));
   const dialog = await screen.findByTestId('csr-import');
   // No open project in the shell: the dialog names the target by its id (programName absent).
@@ -179,13 +182,13 @@ it('names the target project in the import dialog when the open project is this 
   publishShellProject({ id: PROGRAM.toUpperCase(), title: 'SYN-201 IND' });
   try {
     await card();
-    const region = await screen.findByLabelText('CSR builds from this run');
+    const region = await screen.findByLabelText('CSR builds from this study data');
     fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into Authoring/ }));
     expect(JSON.parse((await screen.findByTestId('csr-import')).firstChild!.textContent!)).toMatchObject({ programId: PROGRAM, programName: 'SYN-201 IND' });
     cleanup();
     publishShellProject({ id: '11111111-2222-4333-8444-0000000000ff', title: 'Another program' });
     await card();
-    const other = await screen.findByLabelText('CSR builds from this run');
+    const other = await screen.findByLabelText('CSR builds from this study data');
     fireEvent.click(await within(other).findByRole('button', { name: /Import approved sections into Authoring/ }));
     expect(JSON.parse((await screen.findByTestId('csr-import')).firstChild!.textContent!).programName).toBeUndefined();
   } finally { clearShellProject(); }
@@ -197,7 +200,7 @@ it('states a refused headings read as an alert, never an empty review', async ()
     return routes(method, path);
   });
   await card();
-  const region = await screen.findByLabelText('CSR builds from this run');
+  const region = await screen.findByLabelText('CSR builds from this study data');
   const alert = await within(region).findByText(/does not have access to this project/);
   expect(alert.getAttribute('role')).toBe('alert');
   expect(within(region).queryByLabelText('Section review')).toBeNull();
