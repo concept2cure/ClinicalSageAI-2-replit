@@ -1510,6 +1510,16 @@
 .c2c-v2 .tb-org-chev{color:var(--text-400);font-size:13px;display:flex;}
 .c2c-v2 .tb-cmdk .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 @media (max-width:1180px){ .c2c-v2 .tb-cmdk .lbl{display:none;} .c2c-v2 .tb-org-name{display:none;} .c2c-v2 .crumbs .sep, .c2c-v2 .crumbs span:not(.here){display:none;} }
+/* At phone width the bar's controls and their gaps were wider than the screen,
+   and the last one, Get help, was cut off. A phone has no ⌘K, so the key hint
+   goes, and the gaps close up. The crumb and the project chip's name had room
+   only for "H…" and "No …": the page's own heading names the screen, and the
+   chip keeps its name for a screen reader and its title. */
+@media (max-width:640px){
+  .c2c-v2 .topbar{gap:6px;padding:0 10px;}
+  .c2c-v2 .tb-cmdk .kbd, .c2c-v2 .topbar .crumbs{display:none;}
+  .c2c-v2 .tb-proj-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+}
 .c2c-v2 .page{flex:1;overflow-y:auto;}
 .c2c-v2 .page-inner{max-width:1160px;margin:0 auto;padding:28px 32px 80px;}
 

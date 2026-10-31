@@ -1,0 +1,45 @@
+# After: Home at 390, 360 and 320 px, and Project home at 390 px. Every control within the screen.
+header x=56 w=334 scrollW=334 docScrollW=390 vw=390 gap 6px pad 0px 10px
+  crumbs                       x=0 w=0 right=0 (hidden)
+  tb-spacer                    x=66 w=0 right=66
+  tb-proj                      x=72 w=35 right=107
+  tb-org                       x=113 w=31 right=144
+  tb-btn                       x=150 w=32 right=182
+  tb-cmdk                      x=188 w=37 right=225
+  tb-task                      x=231 w=35 right=266
+  tb-btn                       x=272 w=32 right=304
+  tt-trigger tb-btn            x=310 w=32 right=342
+  tb-btn                       x=348 w=32 right=380
+header x=56 w=304 scrollW=304 docScrollW=360 vw=360 gap 6px pad 0px 10px
+  crumbs                       x=0 w=0 right=0 (hidden)
+  tb-spacer                    x=66 w=0 right=66
+  tb-proj                      x=72 w=32 right=104
+  tb-org                       x=110 w=28 right=138
+  tb-btn                       x=144 w=26 right=170
+  tb-cmdk                      x=176 w=37 right=213
+  tb-task                      x=219 w=35 right=254
+  tb-btn                       x=260 w=26 right=286
+  tt-trigger tb-btn            x=292 w=26 right=318
+  tb-btn                       x=324 w=26 right=350
+header x=56 w=264 scrollW=264 docScrollW=320 vw=320 gap 6px pad 0px 10px
+  crumbs                       x=0 w=0 right=0 (hidden)
+  tb-spacer                    x=66 w=0 right=66
+  tb-proj                      x=72 w=28 right=100
+  tb-org                       x=106 w=28 right=134
+  tb-btn                       x=140 w=17 right=157
+  tb-cmdk                      x=163 w=37 right=200
+  tb-task                      x=206 w=35 right=241
+  tb-btn                       x=247 w=17 right=264
+  tt-trigger tb-btn            x=270 w=17 right=287
+  tb-btn                       x=293 w=17 right=310
+header x=56 w=334 scrollW=334 docScrollW=390 vw=390 gap 6px pad 0px 10px
+  crumbs                       x=0 w=0 right=0 (hidden)
+  tb-spacer                    x=66 w=0 right=66
+  tb-proj                      x=72 w=35 right=107
+  tb-org                       x=113 w=31 right=144
+  tb-btn                       x=150 w=32 right=182
+  tb-cmdk                      x=188 w=37 right=225
+  tb-task                      x=231 w=35 right=266
+  tb-btn                       x=272 w=32 right=304
+  tt-trigger tb-btn            x=310 w=32 right=342
+  tb-btn                       x=348 w=32 right=380

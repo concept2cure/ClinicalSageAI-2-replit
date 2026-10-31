@@ -1,0 +1,12 @@
+## mutation: the read's project not compared with the open one
+ × is not named from a read that answered for another project 98ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)
+## mutation: a name the shell already has not kept
+ × keeps the name the shell already has 114ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)
+## mutation: the project not named (the code before this change)
+ × is named in the shell once its page has read it 5353ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)
