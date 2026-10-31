@@ -249,6 +249,40 @@ const SECTION_FOR_CATEGORY: Record<ContentCategory, CategoryMapping> = {
   },
 };
 
+/** The class each planned document type files under, from the one category table above. */
+const CLASS_FOR_DOCUMENT: Record<string, IndAmendmentClass> = Object.fromEntries(
+  Object.values(SECTION_FOR_CATEGORY).map((m) => [m.documentType, m.amendmentClass]),
+);
+
+/** The Module 1 transmittal pair every amendment carries: not its contents. */
+const TRANSMITTAL_DOCUMENTS = new Set(['cover_letter', 'form_1571']);
+
+/**
+ * What a filed amendment sequence is, read from its stored leaves: an
+ * information amendment, with its 21 CFR 312.31(b) identification, when every
+ * content leaf carries an information-class document type from the table above.
+ * Null otherwise, so the cover letter reports the type as a gap, not a guess:
+ * - a protocol document, whose 312.30 title depends on what happened to the
+ *   protocol, which a stored leaf does not record;
+ * - a leaf whose document type this planner did not set;
+ * - a sequence with no contents, or one that is not an amendment.
+ * Pure.
+ */
+export function informationAmendmentFromLeaves(
+  sequenceType: string | null | undefined,
+  leaves: ReadonlyArray<{ documentType?: string | null }>,
+): { submissionType: 'information_amendment'; informationAmendmentTitles: InformationAmendmentTitle[] } | null {
+  if (sequenceType !== 'amendment') return null;
+  const contents = leaves.map((l) => String(l.documentType ?? '')).filter((t) => !TRANSMITTAL_DOCUMENTS.has(t));
+  if (contents.length === 0 || contents.some((t) => CLASS_FOR_DOCUMENT[t] !== 'information')) return null;
+  return {
+    submissionType: 'information_amendment',
+    informationAmendmentTitles: [...new Set(
+      contents.map((t) => INFORMATION_TITLE_FOR_DOCUMENT[t]).filter((t): t is InformationAmendmentTitle => Boolean(t)),
+    )].sort(),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // lifecycleOp inference
 // ---------------------------------------------------------------------------
