@@ -16,31 +16,43 @@
  * failure of the check itself goes to the log; the report says only that it
  * could not be run.
  *
+ * The sealed rows are counted in the tenant's own scope (tenant-chain-verdict.ts
+ * countTenantChainRows), not on the admin-scope connection the walk uses (P-72
+ * slice 1b, 2026-10-30; docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/).
+ * That connection sees the tenant's rows only through the policies' platform
+ * arm: with the arm removed it counted 0 sealed rows of 3, verified none, and
+ * the check said valid; the report then said no row carries a seal. A check
+ * that verified fewer seals than the tenant's rows carry did not run, and says
+ * so.
+ *
  * @module server/services/audit/compliance-reports/integrity-checks
  */
 import { createScopedLogger } from '../../../utils/logger.js';
 import { verifyAuditChainSeals } from '../chain.js';
 import { snapshotChainIntegrity } from '../signedAuditExport.js';
+import { countTenantChainRows } from '../tenant-chain-verdict.js';
 import type { IntegrityChecks, SealCheck, SqlClient } from './types';
 
 const log = createScopedLogger('compliance-reports');
-
-/** The number of this tenant's audit_logs rows that carry a seal. */
-const SEALED_ROWS_SQL = 'SELECT count(*)::int AS sealed FROM audit_logs WHERE tenant_id = $1 AND hmac_seal IS NOT NULL';
 
 export async function verifyTenantSealsOnAdminScope(orgId: number): Promise<SealCheck> {
   if (!process.env.AUDIT_HMAC_KEY) {
     return { ran: false, reason: 'The seal key is not configured on this server, so no seal was checked.' };
   }
   try {
+    const { sealed: sealedRows } = await countTenantChainRows(orgId);
     const { withTenantConnection } = await import('../../../db/withTenantConnection.js');
     return await withTenantConnection(
       { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'audit/compliance-reports seals' },
-      async (c) => {
-        const counted = await c.query(SEALED_ROWS_SQL, [orgId]);
-        const sealedRows = Number(counted.rows[0]?.sealed ?? 0);
+      async (c): Promise<SealCheck> => {
         const v = await verifyAuditChainSeals(c, { tenantId: orgId });
-        return { ran: true as const, valid: v.valid, sealedRows, brokenAt: v.brokenAt };
+        if (v.valid && v.verified < sealedRows) {
+          return {
+            ran: false,
+            reason: `The seal check could verify ${v.verified} of the ${sealedRows} sealed rows in this organisation's audit_logs, so the seals were not verified.`,
+          };
+        }
+        return { ran: true, valid: v.valid, sealedRows, brokenAt: v.brokenAt };
       },
     );
   } catch (err) {

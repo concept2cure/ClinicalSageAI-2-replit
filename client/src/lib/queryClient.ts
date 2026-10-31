@@ -403,8 +403,12 @@ export const apiRequest = async (
   method: ApiRequestMethod,
   url: string,
   body?: any,
-  customHeaders?: Record<string, string>
+  customHeaders?: Record<string, string>,
+  signal?: AbortSignal,
 ): Promise<Response> => {
+  // Read callers can retire a navigation or timed-out load without changing
+  // the canonical authentication, error-envelope or audit handling.
+  signal?.throwIfAborted();
   const organizationId = getCachedOrgId();
   const authToken = getCachedAuthToken();
 
@@ -419,6 +423,7 @@ export const apiRequest = async (
     method,
     headers,
     credentials: 'include',
+    ...(signal ? { signal } : {}),
   };
 
   if (body && method !== 'GET') {
@@ -426,12 +431,15 @@ export const apiRequest = async (
   }
 
   const response = await fetch(url, options);
+  signal?.throwIfAborted();
 
   // P1-1: a 401 that names SESSION_IDLE or SESSION_LIFETIME is a session the
   // server ended on its own account. The auth provider ends the client's; this
   // module cannot import it, so it announces. The response is the caller's.
   if (response.status === 401) {
     const ended = await sessionEndReasonOfResponse(response);
+    // A retired read must not end a newer session when its old response arrives.
+    signal?.throwIfAborted();
     if (ended) announceSessionEnded(ended);
   }
 

@@ -27,6 +27,31 @@
  * to chain it under, or the row cannot be written — is not made. Until
  * 2026-09-26 the record of a deletion was a line in logs/audit.log on the
  * task's disk.
+ *
+ * Each organisation is swept in its OWN scope: its tenant id and its
+ * organisation uuid, no role (P-72 slice 1b, 2026-10-30;
+ * docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/). Only the list of
+ * organisations is read in the system scope, from `organizations`, whose read
+ * policy is open. Until then the whole sweep ran in the system scope (tenant
+ * '0', no uuid), where vault.documents decides through core.can_access_program
+ * on the organisation uuid and admits nothing: on a production-shaped database
+ * it scanned 0 of 2 expired documents, so the Vault's retention never ran. It
+ * read the legal holds only through the platform arm, which P-72 removes. In
+ * its own scope an organisation's policies admit its documents, its programmes
+ * and its holds, with or without that arm, and nothing of another
+ * organisation's.
+ *
+ * An organisation sweeps the expired documents of the programmes it OWNS. A
+ * hold is always placed by the organisation that owns its programme or
+ * document (routes/vault-legal-holds.ts targetOwned), so that organisation's
+ * scope reads every hold that can cover them; a delegate's scope, which also
+ * admits a sponsor's programme (identity.org_relationships), does not read
+ * the sponsor's holds, and so never sweeps the sponsor's documents. A
+ * document that names a different organisation from its programme's owner
+ * (vault.documents carries no same-organisation key: scripts/db/
+ * program-same-org-preflight.mjs) is left in place and counted
+ * (organizationMismatch): its disposal would be audited under its own
+ * organisation, whose scope cannot read the owner's holds.
  */
 
 import cron from 'node-cron';
@@ -40,11 +65,12 @@ import {
 import { writeChainedAuditRow } from '../services/auditService';
 import { reportSecurityAlert } from '../services/security-alerts';
 import { sendGenericEmail } from '../services/emailService';
-import { runWithSystemTenantScope } from '../db/tenantStore';
+import { runWithSystemTenantScope, runWithTenantScope } from '../db/tenantStore';
 import { runScheduledOncePerWindow, windowKeyOf } from '../db/scheduledOnce';
 import { createScopedLogger } from '../utils/logger';
 
-const logger = createScopedLogger('retention-sweep');
+const CALLER = 'retention-sweep';
+const logger = createScopedLogger(CALLER);
 
 type VaultDocument = typeof vaultDocuments.$inferSelect;
 type RetentionPolicy = typeof vaultRetentionPolicies.$inferSelect;
@@ -53,6 +79,14 @@ type RetentionPolicy = typeof vaultRetentionPolicies.$inferSelect;
 const DEFAULT_BEHAVIOR = { archiveBeforeDelete: true, hardDelete: false } as const;
 
 export interface RetentionSummary {
+  /** Organisations swept, each in its own scope. */
+  organizations: number;
+  /**
+   * Organisations with no uuid: their Vault cannot be read in their own scope,
+   * so none of their documents was swept. The deployed schema makes the column
+   * NOT NULL; a run that finds one fails rather than report a clean sweep.
+   */
+  organizationsNotSwept: number;
   scanned: number;
   archived: number;
   softDeleted: number;
@@ -67,6 +101,12 @@ export interface RetentionSummary {
   /** Expired documents left in place because a legal hold covers them. */
   heldByLegalHold: number;
   /**
+   * Expired documents left in place because the document names another
+   * organisation than its programme's owner: no one scope reads every hold on
+   * it and can also audit its disposal. Not a clean sweep (runRetentionJob).
+   */
+  organizationMismatch: number;
+  /**
    * Expired documents another run had already disposed of by the time this
    * one reached them: nothing archived, nothing audited (U19).
    */
@@ -74,8 +114,14 @@ export interface RetentionSummary {
   errors: number;
 }
 
-/** Documents whose retention_until has passed and that are not already deleted. */
-async function findExpiredDocuments(): Promise<VaultDocument[]> {
+/**
+ * The expired, undeleted documents of the programmes this organisation owns,
+ * whatever organisation each document names (the sweep refuses a mismatch).
+ * The organisation's scope admits a programme it is a delegate on too
+ * (identity.org_relationships); that sponsor's documents are swept in the
+ * sponsor's own run, whose scope reads the sponsor's holds.
+ */
+async function findExpiredDocuments(organizationId: number): Promise<VaultDocument[]> {
   return db
     .select()
     .from(vaultDocuments)
@@ -83,7 +129,8 @@ async function findExpiredDocuments(): Promise<VaultDocument[]> {
       and(
         isNull(vaultDocuments.deletedAt),
         sql`${vaultDocuments.retentionUntil} IS NOT NULL`,
-        sql`${vaultDocuments.retentionUntil} < CURRENT_DATE`
+        sql`${vaultDocuments.retentionUntil} < CURRENT_DATE`,
+        sql`${vaultDocuments.programId} IN (SELECT rp.id FROM regulatory_programs rp WHERE rp.organization_id = ${organizationId})`
       )
     );
 }
@@ -121,6 +168,7 @@ async function organisationOf(client: TxClient, doc: VaultDocument): Promise<num
 async function disposeDocument(
   doc: VaultDocument,
   behaviour: { archiveBeforeDelete: boolean; policyMatched: boolean },
+  scopeOrganizationId: number,
 ): Promise<'disposed' | 'already_disposed'> {
   const client = (await pool.connect()) as unknown as TxClient;
   try {
@@ -128,6 +176,9 @@ async function disposeDocument(
     const organizationId = await organisationOf(client, doc);
     if (organizationId === null) {
       throw new Error('no organisation for the document: the deletion cannot be audited, so it is not made');
+    }
+    if (organizationId !== scopeOrganizationId) {
+      throw new Error(`the document belongs to organisation ${organizationId}, not to the one being swept: it is not disposed of in another organisation's scope`);
     }
     if (behaviour.archiveBeforeDelete) {
       await client.query(
@@ -177,11 +228,6 @@ async function disposeDocument(
 }
 
 /**
- * Run one retention sweep. Best-effort per document; returns counts. Throws only
- * on a failure to enumerate work (e.g. the initial queries), not on per-document
- * errors (those are counted and the sweep continues).
- */
-/**
  * Programs and documents under an ACTIVE legal hold.
  *
  * Read once per sweep rather than per document: a hold covers a program, so the
@@ -189,15 +235,16 @@ async function disposeDocument(
  *
  * FAILS CLOSED. If the hold table cannot be read — it does not exist yet on this
  * database, the query errors, anything — this THROWS, and the sweep aborts
- * having deleted nothing. The alternative is a sweep that proceeds as though no
+ * having deleted nothing more. Read in the organisation's own scope, whose
+ * tenant arm admits its holds; in the system scope only the platform arm did. The alternative is a sweep that proceeds as though no
  * holds existed, which is the same outcome as having no holds at all and is
  * unrecoverable for the records it destroys.
  */
-async function loadActiveHolds(): Promise<{ programs: Set<string>; documents: Set<string> }> {
+async function loadActiveHolds(organizationId: number): Promise<{ programs: Set<string>; documents: Set<string> }> {
   const rows = await db
     .select({ programId: vaultLegalHolds.programId, documentId: vaultLegalHolds.documentId })
     .from(vaultLegalHolds)
-    .where(isNull(vaultLegalHolds.liftedAt));
+    .where(and(isNull(vaultLegalHolds.liftedAt), eq(vaultLegalHolds.organizationId, organizationId)));
 
   const programs = new Set<string>();
   const documents = new Set<string>();
@@ -208,82 +255,150 @@ async function loadActiveHolds(): Promise<{ programs: Set<string>; documents: Se
   return { programs, documents };
 }
 
-export async function runRetentionSweep(): Promise<RetentionSummary> {
-  return runWithSystemTenantScope('retention-sweep', async () => {
-    const summary: RetentionSummary = {
-      scanned: 0,
-      archived: 0,
-      softDeleted: 0,
-      destructionRefused: 0,
-      heldByLegalHold: 0,
-      alreadyDisposed: 0,
-      errors: 0,
-    };
-
-    /* Holds are loaded BEFORE anything is deleted, and a failure here aborts the
-       whole sweep rather than one document — see loadActiveHolds. */
-    const [expired, policies, holds] = await Promise.all([
-      findExpiredDocuments(),
-      loadPolicies(),
-      loadActiveHolds(),
-    ]);
-    summary.scanned = expired.length;
-
-    for (const doc of expired) {
-      try {
-        /* LEGAL HOLD OUTRANKS RETENTION.
-           Checked before the policy is even resolved, so no archive is written
-           and no delete is attempted for a held record. A retention policy says
-           when a record MAY be destroyed; a hold says it may not be, and the
-           hold wins. Destroying a record under hold is spoliation and is the one
-           thing in this job that cannot be undone. */
-        if (holds.documents.has(doc.id) || holds.programs.has(doc.programId)) {
-          summary.heldByLegalHold += 1;
-          logger.info('Expired document left in place: legal hold', {
-            documentId: doc.id,
-            programId: doc.programId,
-            retentionUntil: doc.retentionUntil,
-            heldBy: holds.documents.has(doc.id) ? 'document' : 'program',
-          });
-          continue;
-        }
-
-        const policy = doc.retentionPolicy ? policies.get(doc.retentionPolicy) : undefined;
-        const archiveBeforeDelete = policy
-          ? policy.archiveBeforeDelete
-          : DEFAULT_BEHAVIOR.archiveBeforeDelete;
-        const hardDelete = policy ? policy.hardDelete : DEFAULT_BEHAVIOR.hardDelete;
-        if (hardDelete) {
-          // Nothing is archived or tombstoned either: the policy asked for
-          // destruction, not for this, and the record stays as it is.
-          summary.destructionRefused += 1;
-          logger.warn('Expired document left untouched: its policy asks for destruction, which is refused', {
-            documentId: doc.id,
-            programId: doc.programId,
-            retentionPolicy: doc.retentionPolicy,
-            retentionUntil: doc.retentionUntil,
-          });
-          continue;
-        }
-
-        const outcome = await disposeDocument(doc, { archiveBeforeDelete, policyMatched: Boolean(policy) });
-        if (outcome === 'already_disposed') {
-          summary.alreadyDisposed += 1;
-          continue;
-        }
-        if (archiveBeforeDelete) summary.archived += 1;
-        summary.softDeleted += 1;
-      } catch (error) {
-        summary.errors += 1; // per-document best-effort; keep sweeping
-        logger.error('Expired document not disposed of', {
-          documentId: doc.id,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    }
-
-    return summary;
+/** Every organisation, or only the ones named; read in the system scope, where `organizations` is an open read. */
+async function listOrganizations(organizationIds?: number[]): Promise<Array<{ id: number; uuid: string | null }>> {
+  return runWithSystemTenantScope(CALLER, async () => {
+    const { rows } = await pool.query<{ id: number; uuid: string | null }>(
+      `SELECT id, uuid::text AS uuid FROM public.organizations
+        WHERE ($1::int[] IS NULL OR id = ANY($1::int[])) ORDER BY id`,
+      [organizationIds ?? null],
+    );
+    return rows.map((r) => ({ id: Number(r.id), uuid: r.uuid ? String(r.uuid) : null }));
   });
+}
+
+/**
+ * The other organisation an expired document names, when it names one that is
+ * not its programme's owner (the organisation being swept); null otherwise.
+ */
+function namesAnotherOrganization(doc: VaultDocument, organizationId: number): number | null {
+  const named = Number((doc as { organizationId?: unknown }).organizationId);
+  return Number.isInteger(named) && named > 0 && named !== organizationId ? named : null;
+}
+
+/** One organisation's expired documents, in that organisation's own scope. */
+async function sweepOrganization(
+  organizationId: number,
+  policies: Map<string, RetentionPolicy>,
+  summary: RetentionSummary,
+): Promise<void> {
+  /* Holds are loaded BEFORE anything is deleted, and a failure here aborts the
+     whole sweep rather than one document — see loadActiveHolds. */
+  const [expired, holds] = await Promise.all([
+    findExpiredDocuments(organizationId),
+    loadActiveHolds(organizationId),
+  ]);
+  summary.scanned += expired.length;
+
+  for (const doc of expired) {
+    try {
+      /* LEGAL HOLD OUTRANKS RETENTION.
+         Checked before the policy is even resolved, so no archive is written
+         and no delete is attempted for a held record. A retention policy says
+         when a record MAY be destroyed; a hold says it may not be, and the
+         hold wins. Destroying a record under hold is spoliation and is the one
+         thing in this job that cannot be undone. */
+      if (holds.documents.has(doc.id) || holds.programs.has(doc.programId)) {
+        summary.heldByLegalHold += 1;
+        logger.info('Expired document left in place: legal hold', {
+          organizationId,
+          documentId: doc.id,
+          programId: doc.programId,
+          retentionUntil: doc.retentionUntil,
+          heldBy: holds.documents.has(doc.id) ? 'document' : 'program',
+        });
+        continue;
+      }
+
+      const named = namesAnotherOrganization(doc, organizationId);
+      if (named !== null) {
+        summary.organizationMismatch += 1;
+        logger.warn('Expired document left in place: it names another organisation than its programme\'s owner', {
+          organizationId,
+          documentOrganizationId: named,
+          documentId: doc.id,
+          programId: doc.programId,
+          retentionUntil: doc.retentionUntil,
+        });
+        continue;
+      }
+
+      const policy = doc.retentionPolicy ? policies.get(doc.retentionPolicy) : undefined;
+      const archiveBeforeDelete = policy
+        ? policy.archiveBeforeDelete
+        : DEFAULT_BEHAVIOR.archiveBeforeDelete;
+      const hardDelete = policy ? policy.hardDelete : DEFAULT_BEHAVIOR.hardDelete;
+      if (hardDelete) {
+        // Nothing is archived or tombstoned either: the policy asked for
+        // destruction, not for this, and the record stays as it is.
+        summary.destructionRefused += 1;
+        logger.warn('Expired document left untouched: its policy asks for destruction, which is refused', {
+          organizationId,
+          documentId: doc.id,
+          programId: doc.programId,
+          retentionPolicy: doc.retentionPolicy,
+          retentionUntil: doc.retentionUntil,
+        });
+        continue;
+      }
+
+      const outcome = await disposeDocument(doc, { archiveBeforeDelete, policyMatched: Boolean(policy) }, organizationId);
+      if (outcome === 'already_disposed') {
+        summary.alreadyDisposed += 1;
+        continue;
+      }
+      if (archiveBeforeDelete) summary.archived += 1;
+      summary.softDeleted += 1;
+    } catch (error) {
+      summary.errors += 1; // per-document best-effort; keep sweeping
+      logger.error('Expired document not disposed of', {
+        organizationId,
+        documentId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+}
+
+/**
+ * Run one retention sweep over every organisation, or only the ones named (an
+ * operator re-running one tenant; a test that must not touch another suite's
+ * rows). Best-effort per document; returns counts. Throws only on a failure to
+ * enumerate work (the organisation list, the policies, an organisation's
+ * documents or holds), not on per-document errors (those are counted and the
+ * sweep continues).
+ */
+export async function runRetentionSweep(opts: { organizationIds?: number[] } = {}): Promise<RetentionSummary> {
+  const summary: RetentionSummary = {
+    organizations: 0,
+    organizationsNotSwept: 0,
+    scanned: 0,
+    archived: 0,
+    softDeleted: 0,
+    destructionRefused: 0,
+    heldByLegalHold: 0,
+    organizationMismatch: 0,
+    alreadyDisposed: 0,
+    errors: 0,
+  };
+  const organizations = await listOrganizations(opts.organizationIds);
+  // vault.retention_policies is reference data with no tenant key or policy: read once.
+  const policies = await runWithSystemTenantScope(CALLER, () => loadPolicies());
+
+  for (const org of organizations) {
+    if (!org.uuid) {
+      summary.organizationsNotSwept += 1;
+      logger.error('Organisation not swept: it has no uuid, so its Vault cannot be read in its own scope', { organizationId: org.id });
+      continue;
+    }
+    summary.organizations += 1;
+    await runWithTenantScope(
+      { tenantId: String(org.id), orgUuid: org.uuid, role: null, source: 'job', caller: CALLER },
+      () => sweepOrganization(org.id, policies, summary),
+    );
+  }
+
+  return summary;
 }
 
 /**
@@ -304,10 +419,13 @@ async function notifyAdmins(summary: RetentionSummary): Promise<void> {
   if (!recipients.length) return;
 
   const lines: Array<[string, number]> = [
+    ['Organisations swept', summary.organizations],
+    ['Organisations NOT swept (no uuid: their Vault cannot be read)', summary.organizationsNotSwept],
     ['Scanned (expired)', summary.scanned],
     ['Archived', summary.archived],
     ['Soft-deleted', summary.softDeleted],
     ['Destruction refused (policy asks to destroy; awaiting the retention decision)', summary.destructionRefused],
+    ['Left in place: the document names another organisation than its programme\'s owner', summary.organizationMismatch],
     ['Already disposed of by another run', summary.alreadyDisposed],
     ['Errors', summary.errors],
   ];
@@ -341,10 +459,18 @@ export async function runRetentionJob(): Promise<boolean> {
   logger.info('Document retention sweep starting');
   try {
     const summary = await runRetentionSweep();
-    if (summary.errors > 0) logger.warn('Document retention sweep complete with errors', { ...summary });
+    if (summary.organizationsNotSwept > 0) {
+      reportSecurityAlert({
+        kind: 'retention_sweep_failed',
+        message: `Document retention sweep could not read the Vault of ${summary.organizationsNotSwept} organisation(s)`,
+        detail: { organizations: summary.organizations, organizationsNotSwept: summary.organizationsNotSwept },
+      });
+    }
+    const clean = summary.errors === 0 && summary.organizationsNotSwept === 0 && summary.organizationMismatch === 0;
+    if (!clean) logger.warn('Document retention sweep complete with errors', { ...summary });
     else logger.info('Document retention sweep complete', { ...summary });
     await notifyAdmins(summary);
-    return summary.errors === 0;
+    return clean;
   } catch (error) {
     logger.error('Document retention sweep failed', { error: error instanceof Error ? error.message : String(error) });
     reportSecurityAlert({

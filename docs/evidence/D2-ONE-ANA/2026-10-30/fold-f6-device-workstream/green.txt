@@ -1,0 +1,226 @@
+# Green: after both folds and the upstream merge (base 4323b9149, HEAD 55d58630b), 2026-10-30 19:45-20:00 UTC.
+# Every suite F4 and F6 wrote or edited, and every neighbouring suite: 222 files, run in batches of 28:
+#   npx vitest run --maxWorkers=2 <28 files>   (the list: tools/all-suites.txt)
+#
+#   222 files, 3,076 tests: 3,038 pass; 38 fail in 8 files.
+#
+# The 38 failures are upstream's, not this lane's: each fails identically on a clean export of HEAD (git archive
+# HEAD, no lane edit, the eight files run there: the same 38 red, no other):
+#   projectMarkets.test.tsx (15), projectSubmitDeviceFiling.test.tsx (13), submitHoldsReadiness.test.tsx (4):
+#     'useTenant must be used within a TenantProvider', from ProjectSettings in Project home (89b67685e);
+#   registryModel.test.ts (1): 'CMC sits directly before Quality' (RAIL_CORE, b602ecad9 put RBM between them);
+#   moduleCatalogReconciliation.test.ts (2): agency-meetings is still seeded by 20260810 after it retired into
+#     Communication (508b2b7a8) without the catalogue step;
+#   demo-scripts.test.ts (1): the orientation never reaches the Risk-based monitoring app (b602ecad9);
+#   launch-reproof-narrowing.test.ts (1): /api/submission-ops/blockers is unmapped;
+#   mdx-pathway-panes-smoke.test.tsx (1): 'LIVE DOSSIER SECTION' not found.
+# None of those files, nor what they assert, is changed by F4 or F6.
+
+## Batch summaries
+batch-00  Test Files  28 passed (28)       Tests  201 passed (201)
+batch-01  Test Files  28 passed (28)       Tests  413 passed (413)
+batch-02  Test Files  28 passed (28)       Tests  247 passed (247)
+batch-03  Test Files  1 failed | 27 passed (28)       Tests  2 failed | 320 passed (322)
+batch-04  Test Files  28 passed (28)       Tests  285 passed (285)
+batch-05  Test Files  4 failed | 24 passed (28)       Tests  33 failed | 289 passed (322)
+batch-06  Test Files  28 passed (28)       Tests  735 passed (735)
+batch-07  Test Files  3 failed | 23 passed (26)       Tests  3 failed | 548 passed (551)
+
+## The HEAD export, the same failures
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome (gate breakdown=true)
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome (gate breakdown=true)
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome (gate breakdown=false)
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome (gate breakdown=false)
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a 500 on one verdict shows "No verdict" with a retry on that row only, never "Cleared", and keeps the other row
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a sequence list with no body is "No verdict" with a retry, never "No sequence yet"
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > opening a row stashes the submission, its sequence and Validation when blocked, then opens the Submission Center
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > "Add a market" opens the Submission Center on New submission; "See every sequence in Submission Center" on the list
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a project with no submission says so in words and offers Add a market
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a 403 on the list is the person’s role, stated once, with no retry and no alert in the header
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a failed list read is a failure with a retry, never "no market"
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > states both verdicts and the count in review, from the reads the tabs make (one board read)
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a board of approved documents is not "in review"
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a failed verdict is "No verdict" in the header too, never "Cleared"
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a '510k' project is offered "'Assemble the eSTAR'", which opens 'device-510k'
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'PMA' project is offered "'Export the PMA package'", which opens 'device-pma'
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'MDR' project is offered "'Export the CER'", which opens 'device-cer'
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'IVDR' project is offered "'Assemble the technical documentation'", which opens 'device-diagnostics'
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > reads the pathway from the recorded regulatory path when the filing type does not name one
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-510k' is not in this release, says so in words and draws no button
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-pma' is not in this release, says so in words and draws no button
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-cer' is not in this release, says so in words and draws no button
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-diagnostics' is not in this release, says so in words and draws no button
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a pathway with no feature (De Novo) is given no door and no guessed one
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a device project that records no pathway is given no door
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > offers nothing before the project is read, even when the shell says it is a device project
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a drug project is offered no device door
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/submitHoldsReadiness.test.tsx > Submit holds the readiness verdict; it does not send the person to a second screen for it > no control on Submit opens the separate Submission Readiness canvas
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/submitHoldsReadiness.test.tsx > Submit holds the readiness verdict; it does not send the person to a second screen for it > each row shows its own sequence’s gates and findings, and an act opens that row’s sequence, never the other market’s
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/submitHoldsReadiness.test.tsx > Submit holds the readiness verdict; it does not send the person to a second screen for it > a cleared gate opens that sequence’s Dispatch tab from Submit
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/submitHoldsReadiness.test.tsx > Submit fails closed: a verdict that could not be read is never shown as clear > a failed readiness read says so on its row, with a retry, and draws no gate, no "Satisfied" and no Dispatch door
+head-preexisting.log: FAIL  client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > CMC / Module 3 is a launch app, reachable, and a rail place beside Quality
+head-preexisting.log: Test Files  5 failed (5)
+head-preexisting.log:      Tests  33 failed | 29 passed (62)
+head-preexisting-2.log: FAIL  client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > seeds no catalog row for something a user cannot actually open
+head-preexisting-2.log: FAIL  client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > lists one module once — never the same surface under two ids
+head-preexisting-2.log: Test Files  1 failed (1)
+head-preexisting-2.log:      Tests  2 failed | 7 passed (9)
+head-preexisting-3.log: FAIL  tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > live dossier wiring > async-seeds the Files tree + drawer from the c2c/documents backend
+head-preexisting-3.log: FAIL  shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the orientation walks all seven launch apps and ends at the audit trail
+head-preexisting-3.log: FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/submission-ops/blockers
+head-preexisting-3.log: Test Files  3 failed (3)
+head-preexisting-3.log:      Tests  3 failed | 234 passed (237)
+
+## The F6 cases (and the suites F6 edited), as printed
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > draws no portfolio and no creation door; with no project open it sends the person to Projects
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps a secondary IVDR performance section out of the primary 510(k) document
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps the selected project and responds when the shell switches projects
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > never substitutes another same-pathway project for an unavailable selection
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > opens the CER document type for the selected project, preserving pathway-specific authoring
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > requires an explicit project selection before mounting a project feature
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > retires engineering working state when the selected project changes
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > routes an IVD away from MDR CER into performance evaluation
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > says which postmarket panels are this project's, without changing the selected project
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > software does not borrow the first project
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > withholds the leaf on a failed context read and offers a retry
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with a program whose predicate service is unreachable > shows its own stage and clock, and a banner that does not promise example rows
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with no program selected (sample mode off) > renders no fixture device, stage, clock or subject name
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with no program selected (sample mode off) > states no section or blocker count when no sections were read
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx > MDX host — a failed programs load discloses nothing and offers a way out > does not render { label: 'a driver error', status: 503, body: 'ECONNREFUSED' }
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx > MDX host — a failed programs load discloses nothing and offers a way out > does not render { label: 'a route and a status', status: 500, body: 'nope' }
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx > MDX host — a failed programs load discloses nothing and offers a way out > offers a retry rather than a dead screen
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-510k renders inside the .mdx-shell scope root
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-cer renders inside the .mdx-shell scope root
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-clinical-studies renders inside the .mdx-shell scope root
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-diagnostics renders inside the .mdx-shell scope root
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-engineering renders inside the .mdx-shell scope root
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-pma renders inside the .mdx-shell scope root
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-postmarket renders inside the .mdx-shell scope root
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-presub renders inside the .mdx-shell scope root
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-software renders inside the .mdx-shell scope root
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-udi renders inside the .mdx-shell scope root
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > keeps the kit content measure around the surface
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > the scope root opts out of the shell grid
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > opens exactly those twelve features from a device project's Plan, over every recorded route and product type
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > places each of the 12 project features once, each opened from Plan
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > does not fabricate a 510(k) for an unknown device route or an MDX workflow for a drug
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > gives MDR clinical evaluation and IVDR performance evaluation different leads and deliverables
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > hands De Novo assembly to project authoring while preserving its filing identity
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > keeps a US diagnostic on its recorded 510(k) route and adds the assay bench
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > opens an existing feature and uses project evidence for specialist laboratory reports
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > shares evidence across recorded filings without converting a De Novo into a 510(k)
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > targets the existing risk panel for the same project when opening engineering work
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a 510(k) project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a IVDR project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a MDR project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a PMA project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > heads a filing with no recorded route by its kind, in words a client reads
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > names the software, agency, post-market and clinical-studies doors for their jobs
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > opens a secondary MDR evaluation from its clinical evidence without changing the primary 510(k)
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > states an unreadable additional-filing list and never offers a locked feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > uses project evidence for US assay work and only opens IVDR evidence for a recorded IVDR filing
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > is in neither project scope list, the rail, a focus list nor the group tables, and both device tours stop at filtered Projects
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > keeps no screen of its own: no view, no registry entry, no kit id, no host publish and no portfolio in the host
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > reaches the Client Review Room from the device project, for that project, and claims its read there
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > resolves the old id to Projects with the MDX filter, from a link, an in-app move and AnA, with or without a project open
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > "biopharma" opens Projects, where a project is opened and created, not a screen outside the release
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > aliases only point AT real views — a dangling alias is drift in the other direction
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > every target opens in the release, or resolves to a surface the launch scope can lock for AnA
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > resolves every NAVIGATION_TARGETS id to a real surface view (never the scaffold)
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > the retained MDX handle and the folded device portfolio's handle both reach admitted Projects
+ ✓ client/src/concept2cure/v2/__tests__/projectClientReview.test.tsx > the Client Review Room on a device project > asks for this project's room, by its verified integer id and its program, and says it is the project's
+ ✓ client/src/concept2cure/v2/__tests__/projectClientReview.test.tsx > the Client Review Room on a device project > reads nothing, and draws nothing, until the project is verified
+ ✓ client/src/concept2cure/v2/__tests__/projectClientReview.test.tsx > the Client Review Room on a device project > says a refused or failed read is one, never an empty room
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > MDX destination in the real shell > a copied MDX URL applies its filter once with an open project=false
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > MDX destination in the real shell > a copied MDX URL applies its filter once with an open project=true
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > MDX destination in the real shell > imperative MDX navigation applies once when Projects is already mounted
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > MDX destination in the real shell > imperative MDX navigation reaches Projects without changing the selected project step
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > filing catalogue destination in the real shell > copied filing links open intake once in StrictMode with an open project=false
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > filing catalogue destination in the real shell > copied filing links open intake once in StrictMode with an open project=true
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > filing catalogue destination in the real shell > imperative legacy navigation reaches mounted intake and preserves its typed draft
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > a reload on the canonical URL restores the chosen step without replaying the alias
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > applies imperative legacy navigation once and writes one canonical history entry
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > browser Back returns to Projects rather than an alias history entry
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > hydrates a copied project URL before deciding scope, then applies Author once
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > keeps the features address without a project or alias action
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > replaces a no-project dossier URL with Projects and no pending Author action
+ ✓ client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx > Projects shows the last activity its record holds > on the card, and on the list row
+ ✓ client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx > Projects shows the last activity its record holds > shows none where the record holds none, in either view
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD"), for every surface
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names no category for a surface that belongs to both — the launch core
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names the one category a surface belongs to, and Admin for an admin surface
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > never names a category the rail does not list the surface under — for every surface
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws exactly that crumb
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > Help goes where the account menu’s "Get help" goes
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > names no organisation when none is known: no "Organization" placeholder (P-25)
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > shows the organisation as a label, not as a control that does nothing
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > collapsed, the brand mark keeps the top and the toggle moves to the foot
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > draws the current page, and no rule draws a client category on the rail
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > expanded, the toggle stays at the top
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > marks the open surface as the current page, and lists no client category beside it
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > draws no floating launcher — the header’s Task and Collaborate buttons open it
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > keeps the auto-assign note one sentence beside its icon
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > labels priorities for people, and posts the server’s values
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > names the surface, not its URL slug or the payload field
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > offers each module once, by name, with the server’s value
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > the header’s Task and Collaborate buttons open it — the path that replaced the floating button
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > locationForSurface (the path the shell writes) > every address it writes reads back to the same surface
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > locationForSurface (the path the shell writes) > writes /concept2cure/features for apps, and the id itself for every other surface
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > /concept2cure/features is Subscription & features (section 12: no id with "app" in the address bar)
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > ignores trailing segments and query strings
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > maps every registry id to itself
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > maps the bare base path to home
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > resolves deep-link aliases to their canonical surfaces
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > treats non-base locations as home
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > the retired kit paths still land somewhere real > /concept2cure/mdx resolves to Projects with its existing MDX filter
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > the retired kit paths still land somewhere real > /concept2cure/pdev resolves to itself — it is a real surface id now
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > the retired kit paths still land somewhere real > neither falls through to home
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > a program and its own project id: the room is that project's
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > a project id of the organization narrows the room to that project
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > answers 503 when ownership cannot be checked, and reads no task
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses a project id that does not exist with 404, and reads no task
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses a project that does not exist with 404, and reads no task
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses another organization's project id with 404, and reads no task
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses another organization's project with 404, and reads no task
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses the organization's own deleted project with 404, and reads no task
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses the organization's project of another program with 404, and reads no task
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > shares the admitted project's client-visible tasks only, and says the scope is that project
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > with neither, it is the organization's room, says so, and holds no other organization's task
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > agrees with the screens: each folded id opens its target
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > carries to live catalogue modules only; the uncatalogued folds have no row to hold a grant
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only its own module names the mapping
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only the licence read derives the carried grants, once
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a lapsed or revoked grant of the folded module carries nothing
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a revocation written on the target stands: the carried grant does not undo it
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > refuses a tiered target's own paths to an organization holding neither
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-diagnostics's paths to an organization holding only ivd-completeness
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only design-controls
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only risk
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves insights's paths to an organization holding only device-analytics
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves projects's paths to an organization holding only device-workstream
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-submission
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-validation
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves tasks's paths to an organization holding only device-tasks
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only artifacts-center
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only device-vault
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > the target's own grant serves as before
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows a revoked target as revoked, and a tenant holding neither as below its tier
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded device workstream > is in no scope list and no new grant: Projects, with its MDX filter, is the device portfolio (D2, fold F6, 2026-10-30)
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device workstream > a fresh database replaying the whole catalogue set twice never holds device-workstream, and Projects stays offered at free
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device workstream > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+ ✓ tests/ui/one-shell.test.ts > one shell > every device surface the kit can render is one the shell can route to
+ ✓ tests/ui/one-shell.test.ts > one shell > no module outside v2 renders a rail
+ ✓ tests/ui/one-shell.test.ts > one shell > no route mounts a second application
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface bypasses the ownsConversation union with a cast
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface navigates out of the shell to reach a kit
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface takes the AnA rail column and still calls the shell onAsk
+ ✓ tests/ui/one-shell.test.ts > one shell > only the shell and its named-thread surfaces start a conversation
+ ✓ tests/ui/one-shell.test.ts > one shell > the v2 shell root is the only one that lays out a rail column

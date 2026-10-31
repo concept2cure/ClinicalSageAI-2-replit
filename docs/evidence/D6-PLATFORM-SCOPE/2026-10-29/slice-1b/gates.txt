@@ -1,0 +1,93 @@
+P-72 slice 1b, lane C: gates on the working tree at base 4323b9149, 2026-10-30, 19:55 UTC.
+
+== npm run ci:session-scoped-rls-bypass  (exit 0)
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 0 baselined occurrence(s) remain in 0 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+[ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (789 migration file(s) and 4377 code file(s) read), and no script writes either (P-70).
+
+== npm run ci:session-scoped-rls-bypass:selftest  (exit 0)
+  ✓ RED — server code whose SQL string reads the bypass
+  ✓ quiet — the reader quoted in SQL comments, and the LIKE / ~ / regex shapes that find a stored reader without being one
+  ✓ quiet — a test that reads the setting to prove nothing honours it (tests are not product code)
+
+[ci:session-scoped-rls-bypass:selftest] 4 known gap(s), NOT counted below: real defect shapes the gate still prints OK on (marked ! above; described, with the fix each needs, under KNOWN GAPS in this file’s header).
+[ci:session-scoped-rls-bypass:selftest] 32 passed — the gate fails on what it exists to catch.
+
+== npm run ci:tenant-isolation:no-regression  (exit 0)
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+
+== npm run ci:tenant-resolvers  (exit 0)
+  - server/api/cmc/module3OperatingSystemRoutes.ts
+  - server/routes/k510-document-preview.ts
+  - server/routes/mdx-qms.ts
+  - server/routes/regulatory-precedent-intelligence.ts
+
+OK: no new local tenant resolvers.
+
+== npm run ci:tenant-resolvers:selftest  (exit 0)
+  ✓ quiet — a baselined module stays baselined
+  ✓ FAILS — a baseline entry for one module does not suppress a new one in another
+  ✓ reports (exit 0) a baselined module that was re-pointed at the canonical resolver
+  ✓ --write-baseline lists exactly the modules found, sorted, drops a stale entry, and then passes
+
+[ci:tenant-resolvers:selftest] 16 passed — the gate fails on what it exists to catch.
+
+== npm run ci:sql-interpolation  (exit 0)
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-version-restore.ts:64:67 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+
+== npm run ci:sql-interpolation:selftest  (exit 0)
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+  ! KNOWN GAP 2 — string concatenation
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+
+[ci:sql-interpolation:selftest] 2 known gap(s), NOT counted below.
+[ci:sql-interpolation:selftest] 35 passed — the gate fails on what it exists to catch.
+
+== ESLint: each lane file, at HEAD (git show HEAD:<file> | eslint --stdin) and now
+server/bin/run-retention.ts: HEAD 11 warnings 0 errors; now 11 warnings 0 errors  ['no-console']
+server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/jobs/__tests__/auditChainIntegritySweep.test.ts: HEAD 1 warnings 0 errors; now 1 warnings 0 errors  ['max-lines-per-function']
+server/jobs/__tests__/retentionCron.legal-hold.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/jobs/__tests__/retentionCron.org-scope.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/jobs/__tests__/retentionCron.policies.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/jobs/auditChainIntegritySweep.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/jobs/auditChainOrganizationVerdicts.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/jobs/retentionCron.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/mcp/__tests__/mcp-call-client-platform-role.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/mcp/tools/runtime.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/routes/__tests__/governed-signed-act-platform-role.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/routes/c2c/actions.ts: HEAD 5 warnings 0 errors; now 5 warnings 0 errors  ['complexity', 'max-lines', 'max-lines-per-function', 'max-params']
+server/routes/decision-lineage.ts: HEAD 2 warnings 0 errors; now 2 warnings 0 errors  ['complexity', 'max-lines-per-function']
+server/routes/governed-signed-act.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/ana/__tests__/catalog-scope-platform-role.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/ana/catalog-scope.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/audit/__tests__/chain-anchor-own-scope.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/audit/__tests__/chain-head-on-demand.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/audit/__tests__/seal-coverage-organization.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/audit/audit-integrity-service.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/audit/audited-export.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/audit/chain-anchor.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/audit/compliance-reports/integrity-checks.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/audit/seal-coverage.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/audit/signedAuditExport.ts: HEAD 1 warnings 0 errors; now 1 warnings 0 errors  ['no-useless-assignment']
+server/services/audit/tenant-chain-verdict.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/tenant-export/held-record-integrity.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+server/services/tenant/governed-tenant-context.ts: HEAD 0 warnings 0 errors; now 0 warnings 0 errors
+TOTAL: HEAD 20 warnings; now 20 warnings
+
+== Scoped tsc (tsc -p, noEmit; the repository tsconfig, the lane's files plus every .d.ts)
+baseline: an unrelated file (server/jobs/taskDueSweep.ts), for the errors the shared import graph already carries: 41 lines
+lane sources (18 files) and lane tests (14 files): 42 lines each, exit 2. No error names a lane file.
+The one line beyond the baseline, in both:
+server/services/entitlements/master-admin.ts(177,22): error TS2551: Property 'roles' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'. Did you mean 'role'?
+It is pre-existing and not this lane's: tsc on server/services/entitlements/master-admin.ts alone, with no lane file, reports the same line
+(master-admin.ts last changed in c04ed02be, 7 days ago; this lane does not touch it).
+A 4 GB heap ran out of memory on the lane's import graph; the runs above used 6 GB.

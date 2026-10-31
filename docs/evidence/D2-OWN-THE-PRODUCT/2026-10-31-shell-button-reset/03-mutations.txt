@@ -1,0 +1,8 @@
+## mutation: the reset as it was (.c2c-v2 button)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 1 passed (7)
+## mutation: .c2c-v2 :where(button) (ties with one class, does not yield)
+1
+ × the shell’s button reset > still resets every button in the shell 5ms
+ × the shell’s button reset > is outranked by a single class 2ms
+ × the shell’s button reset > Quality’s .qms-tab keeps the box its own rule gives it 2ms

@@ -1,0 +1,51 @@
+# Red: the three new F6 suites with only the tests written (2026-10-30, 15:46 UTC), on the tree with F4 complete and
+# no F6 product change; then the F6 catalogue and grant cases (19:25 UTC), written before 20260810, 20260823 and
+# FOLDED_MODULE_SUCCESSORS were amended for F6. npx vitest run <file>; the failure lines, as printed.
+
+## foldDeviceWorkstream.test.ts
+ × client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > resolves the old id to Projects with the MDX filter, from a link, an in-app move and AnA, with or without a project open
+ × client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > keeps no screen of its own: no view, no registry entry, no kit id, no host publish and no portfolio in the host
+ × client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > is in neither project scope list, the rail, a focus list nor the group tables, and both device tours stop at filtered Projects
+ × client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > reaches the Client Review Room from the device project, for that project, and claims its read there
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > resolves the old id to Projects with the MDX filter, from a link, an in-app move and AnA, with or without a project open
+AssertionError: expected undefined to be 'projects' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > keeps no screen of its own: no view, no registry entry, no kit id, no host publish and no portfolio in the host
+AssertionError: expected { component: [Function Surface], …(1) } to be undefined
+ FAIL  client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > is in neither project scope list, the rail, a focus list nor the group tables, and both device tours stop at filtered Projects
+AssertionError: expected [ 'projects', 'project-home', …(15) ] to not include 'device-workstream'
+ FAIL  client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts > device-workstream is folded into Projects > reaches the Client Review Room from the device project, for that project, and claims its read there
+AssertionError: expected 'import React, { useState, useRef, use…' to match /stage === 'review'[\s\S]*?<ProjectCli…/
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+
+## projectClientReview.test.tsx
+ FAIL  client/src/concept2cure/v2/__tests__/projectClientReview.test.tsx [ client/src/concept2cure/v2/__tests__/projectClientReview.test.tsx ]
+Error: Failed to resolve import "../surfaces/ProjectClientReview" from "client/src/concept2cure/v2/__tests__/projectClientReview.test.tsx". Does the file exist?
+ Test Files  1 failed (1)
+      Tests  no tests
+
+## projectsActivity.test.tsx
+ × client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx > Projects shows the last activity its record holds > on the card, and on the list row
+ ✓ client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx > Projects shows the last activity its record holds > shows none where the record holds none, in either view
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx > Projects shows the last activity its record holds > on the card, and on the list row
+AssertionError: expected 'Program k510K510 · Planning · Lead Ra…' to contain 'Updated Oct 29'
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+
+## catalog-module-claims.contract.test.ts and folded-module-grant-continuity.test.ts (the F6 cases)
+ FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device workstream > a fresh database replaying the whole catalogue set twice never holds device-workstream, and Projects stays offered at free
+AssertionError: replay 0: expected [ { metadata: { …(2) } } ] to deeply equal []
+ FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device workstream > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+AssertionError: replay 0: expected [ { metadata: { …(2) } } ] to deeply equal [ { metadata: { …(4) } } ]
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+AssertionError: expected { 'device-tasks': 'tasks', …(9) } to deeply equal { 'device-tasks': 'tasks', …(10) }
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > carries to live catalogue modules only; the uncatalogued folds have no row to hold a grant
+AssertionError: device-workstream is deprecated by its fold: expected true to be false // Object.is equality
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+AssertionError: projects: expected { id: 'projects', …(4) } to match object { Object (entitled, source) }
+ Test Files  2 failed (2)
+      Tests  5 failed | 52 passed (57)
+
+# Each guarded fact is shown red again on the finished tree, one at a time, in mutations.txt.

@@ -413,3 +413,33 @@ describe('CmOverview — the build-state card reads the export gate, never a per
     expect(screen.getByText(/failed read, not a pass/)).toBeTruthy();
   });
 });
+
+/* UI walk, 2026-10-31: one submission read "1 submissions — RPI — average"
+   under the title and "Is your CMC package ready across all 1 submissions"
+   above the lead. */
+describe('CmOverview — counts its submissions in words', () => {
+  it('says one submission in the singular, with its preparedness index', async () => {
+    wire(board());
+    renderOverview();
+    expect(await screen.findByText('1 submission — RPI 82 average')).toBeTruthy();
+    expect(screen.getByText('Is your CMC package ready for its submission')).toBeTruthy();
+    expect(screen.queryByText(/1 submissions/)).toBeNull();
+  });
+
+  it('says no preparedness index is computed, rather than "RPI — average"', async () => {
+    wire(board({ portfolio: [{ sub: 'IND 161234', product: 'BX-204', region: 'FDA', type: 'IND', rpi: null, ir: null, source: 'spine' }], kpis: { submissions: 1, rpiAverage: null, sectionsApproved: 0, sectionsTotal: 0, readyPercent: 0 } }));
+    renderOverview();
+    expect(await screen.findByText('1 submission — no preparedness index computed yet')).toBeTruthy();
+    expect(screen.queryByText(/RPI — average/)).toBeNull();
+  });
+
+  it('counts two or more in the plural', async () => {
+    wire(board({ portfolio: [
+      { sub: 'BLA 761234', product: 'Compound A', region: 'FDA', type: 'BLA', rpi: 80, ir: null, source: 'spine' },
+      { sub: 'MAA 0001', product: 'Compound A', region: 'EMA', type: 'MAA', rpi: 84, ir: null, source: 'spine' },
+    ], kpis: { submissions: 2, rpiAverage: 82, sectionsApproved: 0, sectionsTotal: 0, readyPercent: 0 } }));
+    renderOverview();
+    expect(await screen.findByText('2 submissions — RPI 82 average')).toBeTruthy();
+    expect(screen.getByText('Is your CMC package ready across all 2 submissions')).toBeTruthy();
+  });
+});

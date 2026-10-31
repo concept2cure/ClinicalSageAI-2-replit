@@ -120,7 +120,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 const props = {
-  surface: { id: 'device-workstream' },
+  surface: { id: 'device-510k' },
   onAsk: () => {},
   onNav: () => {},
   segment: 'medtech',

@@ -1,0 +1,2756 @@
+# Why node-status-follows-work.pglite.test.ts changed: it relied on the author signing REVIEWER
+#
+# At HEAD the test "a signature that does not mean approval approves nothing (e-sign as REVIEWER,
+# AUTHOR)" already failed: its PGlite harness (server/services/c2c/__tests__/_filing-write-harness.ts)
+# had no review_routes table, which RR5's route precheck reads on every REVIEWER e-sign, so the
+# e-sign answered 500 ("relation \"review_routes\" does not exist").
+#
+# Below: the harness loads migrations/20261023_review_routes.sql (as the other Authoring PGlite
+# suites do), the fix is in, and the test is unchanged. The REVIEWER e-sign is the author's, and it
+# is now refused 403 SEPARATION_OF_DUTIES. That is this fix working; the test then had the member
+# who drafted nothing (APPROVER in the harness, the reviewer token) sign REVIEWER, and it passes
+# (green-unit.txt). The other two failures in the file are unrelated and fail identically at HEAD
+# (/sign with a workflow step does not approve the sections).
+# Command: RLS_ENFORCE=off npx vitest run server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts \
+#            server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts
+# Result: 3 failed, 22 passed (25).
+#
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+{
+  "timestamp": "2026-10-30T15:44:06.277Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+{
+  "timestamp": "2026-10-30T15:44:09.972Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T15:44:09.973Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+{
+  "timestamp": "2026-10-30T15:44:09.973Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+✅ Template tables initialized
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+{
+  "timestamp": "2026-10-30T15:44:11.113Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+{
+  "timestamp": "2026-10-30T15:44:11.125Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "4f008b9a-3f72-4514-8ecc-d581546245fd",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+{
+  "timestamp": "2026-10-30T15:44:11.128Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "4f008b9a-3f72-4514-8ecc-d581546245fd",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+{
+  "timestamp": "2026-10-30T15:44:11.143Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+{
+  "timestamp": "2026-10-30T15:44:11.160Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4f008b9a-3f72-4514-8ecc-d581546245fd by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+{
+  "timestamp": "2026-10-30T15:44:11.179Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+{
+  "timestamp": "2026-10-30T15:44:11.189Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4f008b9a-3f72-4514-8ecc-d581546245fd by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+{
+  "timestamp": "2026-10-30T15:44:11.199Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+{
+  "timestamp": "2026-10-30T15:44:11.250Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 4f008b9a-3f72-4514-8ecc-d581546245fd by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo
+{
+  "timestamp": "2026-10-30T15:44:11.270Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo
+{
+  "timestamp": "2026-10-30T15:44:11.277Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "a435c4ce-5084-4e43-a36b-8c10543a2241",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo
+{
+  "timestamp": "2026-10-30T15:44:11.280Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "a435c4ce-5084-4e43-a36b-8c10543a2241",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo
+{
+  "timestamp": "2026-10-30T15:44:11.292Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo
+{
+  "timestamp": "2026-10-30T15:44:11.301Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a435c4ce-5084-4e43-a36b-8c10543a2241 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo
+{
+  "timestamp": "2026-10-30T15:44:11.310Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo
+{
+  "timestamp": "2026-10-30T15:44:11.338Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a435c4ce-5084-4e43-a36b-8c10543a2241 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo 192ms
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.353Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.358Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "ea89d104-b625-4640-a05a-1ca631f2f900",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.359Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "ea89d104-b625-4640-a05a-1ca631f2f900",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.369Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.378Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ea89d104-b625-4640-a05a-1ca631f2f900 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.387Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.396Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ea89d104-b625-4640-a05a-1ca631f2f900 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.404Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.432Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc ea89d104-b625-4640-a05a-1ca631f2f900 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.444Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.472Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc ea89d104-b625-4640-a05a-1ca631f2f900 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo 86ms
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.484Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.514Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc ea89d104-b625-4640-a05a-1ca631f2f900 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.526Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-30T15:44:11.553Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc ea89d104-b625-4640-a05a-1ca631f2f900 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.566Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.570Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "b9530b5a-6904-4fd0-bb99-49630ba7de56",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.572Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "b9530b5a-6904-4fd0-bb99-49630ba7de56",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.577Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.585Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b9530b5a-6904-4fd0-bb99-49630ba7de56 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.594Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.602Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b9530b5a-6904-4fd0-bb99-49630ba7de56 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.609Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.636Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc b9530b5a-6904-4fd0-bb99-49630ba7de56 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.644Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.672Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc b9530b5a-6904-4fd0-bb99-49630ba7de56 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards 214ms
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.684Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+{
+  "timestamp": "2026-10-30T15:44:11.716Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc b9530b5a-6904-4fd0-bb99-49630ba7de56 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why
+{
+  "timestamp": "2026-10-30T15:44:11.731Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why
+{
+  "timestamp": "2026-10-30T15:44:11.734Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "51810283-a39f-4836-9256-a3d31a7eef6a",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why
+{
+  "timestamp": "2026-10-30T15:44:11.736Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "51810283-a39f-4836-9256-a3d31a7eef6a",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why
+{
+  "timestamp": "2026-10-30T15:44:11.741Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why
+{
+  "timestamp": "2026-10-30T15:44:11.748Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 51810283-a39f-4836-9256-a3d31a7eef6a by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why
+{
+  "timestamp": "2026-10-30T15:44:11.758Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why
+{
+  "timestamp": "2026-10-30T15:44:11.785Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 51810283-a39f-4836-9256-a3d31a7eef6a by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why
+{
+  "timestamp": "2026-10-30T15:44:11.793Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why
+{
+  "timestamp": "2026-10-30T15:44:11.818Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 51810283-a39f-4836-9256-a3d31a7eef6a by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded 166ms
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.835Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.839Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "bb31169e-5522-4483-86b9-729a7bd5efe0",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.841Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "bb31169e-5522-4483-86b9-729a7bd5efe0",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.845Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.853Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc bb31169e-5522-4483-86b9-729a7bd5efe0 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.860Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.869Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc bb31169e-5522-4483-86b9-729a7bd5efe0 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.878Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.887Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc bb31169e-5522-4483-86b9-729a7bd5efe0 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.897Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.931Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc bb31169e-5522-4483-86b9-729a7bd5efe0 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why 101ms
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.941Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.976Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc bb31169e-5522-4483-86b9-729a7bd5efe0 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:11.987Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 43,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 43,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+{
+  "timestamp": "2026-10-30T15:44:12.067Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc bb31169e-5522-4483-86b9-729a7bd5efe0 by i***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR)
+{
+  "timestamp": "2026-10-30T15:44:12.084Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR)
+{
+  "timestamp": "2026-10-30T15:44:12.088Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "73550321-2eb4-47e4-b30c-5a8d5370b5fd",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR)
+{
+  "timestamp": "2026-10-30T15:44:12.090Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "73550321-2eb4-47e4-b30c-5a8d5370b5fd",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR)
+{
+  "timestamp": "2026-10-30T15:44:12.095Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR)
+{
+  "timestamp": "2026-10-30T15:44:12.103Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 73550321-2eb4-47e4-b30c-5a8d5370b5fd by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR)
+{
+  "timestamp": "2026-10-30T15:44:12.113Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR)
+{
+  "timestamp": "2026-10-30T15:44:12.139Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 73550321-2eb4-47e4-b30c-5a8d5370b5fd by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR)
+{
+  "timestamp": "2026-10-30T15:44:12.149Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve"
+{
+  "timestamp": "2026-10-30T15:44:12.180Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve"
+{
+  "timestamp": "2026-10-30T15:44:12.183Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "e21ae592-287b-4b49-9633-b057ab57ba50",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve"
+{
+  "timestamp": "2026-10-30T15:44:12.185Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "e21ae592-287b-4b49-9633-b057ab57ba50",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve"
+{
+  "timestamp": "2026-10-30T15:44:12.190Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve"
+{
+  "timestamp": "2026-10-30T15:44:12.197Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e21ae592-287b-4b49-9633-b057ab57ba50 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve"
+{
+  "timestamp": "2026-10-30T15:44:12.208Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 43,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 43,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve"
+{
+  "timestamp": "2026-10-30T15:44:12.230Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc e21ae592-287b-4b49-9633-b057ab57ba50 by i***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row 250ms
+ × server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR) 97ms
+   → {"error":"Separation of duties: you are an author of this record (Authoring document creator, Authoring revision ledger, Authoring visible mutation audit) and cannot review, approve or lock it. A different, authorized user must sign.","code":"SEPARATION_OF_DUTIES"}: expected 403 to be 200 // Object.is equality
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.241Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.244Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "98b32c29-889b-4193-8405-aea33478fd43",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.246Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "98b32c29-889b-4193-8405-aea33478fd43",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.251Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.258Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 98b32c29-889b-4193-8405-aea33478fd43 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.265Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.292Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 98b32c29-889b-4193-8405-aea33478fd43 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.299Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 43,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 43,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.331Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 98b32c29-889b-4193-8405-aea33478fd43 by i***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.339Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.343Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "40496a9f-d474-4af6-b56f-d47fedc43a39",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.345Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "40496a9f-d474-4af6-b56f-d47fedc43a39",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.349Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.357Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 40496a9f-d474-4af6-b56f-d47fedc43a39 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.366Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+{
+  "timestamp": "2026-10-30T15:44:12.398Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 40496a9f-d474-4af6-b56f-d47fedc43a39 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve" 62ms
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.414Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.418Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "2456093b-66ae-42b7-a8c8-94d8a738b4b6",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.420Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "2456093b-66ae-42b7-a8c8-94d8a738b4b6",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.424Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.432Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2456093b-66ae-42b7-a8c8-94d8a738b4b6 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.444Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.452Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2456093b-66ae-42b7-a8c8-94d8a738b4b6 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.458Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.482Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 2456093b-66ae-42b7-a8c8-94d8a738b4b6 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.490Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.515Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 2456093b-66ae-42b7-a8c8-94d8a738b4b6 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved 171ms
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.527Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 43,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 43,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.548Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.574Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 2456093b-66ae-42b7-a8c8-94d8a738b4b6 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.582Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 43,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 43,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works
+{
+  "timestamp": "2026-10-30T15:44:12.619Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 2456093b-66ae-42b7-a8c8-94d8a738b4b6 by i***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.630Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.634Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "46c77ab6-062c-42fc-b058-f0ce363936ff",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.635Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "46c77ab6-062c-42fc-b058-f0ce363936ff",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.639Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.650Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 46c77ab6-062c-42fc-b058-f0ce363936ff by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.656Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.698Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 46c77ab6-062c-42fc-b058-f0ce363936ff by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.711Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 43,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 43,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.737Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc 46c77ab6-062c-42fc-b058-f0ce363936ff by i***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works 218ms
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.750Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.754Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "1737aeac-f15c-4536-aec1-133e7124a3d0",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.756Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "1737aeac-f15c-4536-aec1-133e7124a3d0",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.762Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.769Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1737aeac-f15c-4536-aec1-133e7124a3d0 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.777Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.785Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1737aeac-f15c-4536-aec1-133e7124a3d0 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.796Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.824Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 1737aeac-f15c-4536-aec1-133e7124a3d0 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.834Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 43,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 43,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+{
+  "timestamp": "2026-10-30T15:44:12.854Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc 1737aeac-f15c-4536-aec1-133e7124a3d0 by i***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content
+{
+  "timestamp": "2026-10-30T15:44:12.870Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content
+{
+  "timestamp": "2026-10-30T15:44:12.874Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "639c4a32-1b24-4929-807c-e63c7c15d827",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content
+{
+  "timestamp": "2026-10-30T15:44:12.876Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "639c4a32-1b24-4929-807c-e63c7c15d827",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content
+{
+  "timestamp": "2026-10-30T15:44:12.884Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content
+{
+  "timestamp": "2026-10-30T15:44:12.904Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 639c4a32-1b24-4929-807c-e63c7c15d827 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content
+{
+  "timestamp": "2026-10-30T15:44:12.920Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content
+{
+  "timestamp": "2026-10-30T15:44:12.979Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 639c4a32-1b24-4929-807c-e63c7c15d827 by a***@filing.example",
+  "context": {}
+}
+
+ × server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not 239ms
+   → expected { '2.6': 'todo', '2.5': 'drafted' } to deeply equal { '2.5': 'approved', '2.6': 'todo' }
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content
+{
+  "timestamp": "2026-10-30T15:44:12.987Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 43,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 43,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content
+{
+  "timestamp": "2026-10-30T15:44:13.004Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc 639c4a32-1b24-4929-807c-e63c7c15d827 by i***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+{
+  "timestamp": "2026-10-30T15:44:13.019Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+{
+  "timestamp": "2026-10-30T15:44:13.026Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "3b457ac9-cc97-4edb-92cf-0131e27bd618",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+{
+  "timestamp": "2026-10-30T15:44:13.028Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "3b457ac9-cc97-4edb-92cf-0131e27bd618",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+{
+  "timestamp": "2026-10-30T15:44:13.034Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+{
+  "timestamp": "2026-10-30T15:44:13.046Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3b457ac9-cc97-4edb-92cf-0131e27bd618 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+{
+  "timestamp": "2026-10-30T15:44:13.055Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+{
+  "timestamp": "2026-10-30T15:44:13.080Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 3b457ac9-cc97-4edb-92cf-0131e27bd618 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+{
+  "timestamp": "2026-10-30T15:44:13.089Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 43,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 43,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+{
+  "timestamp": "2026-10-30T15:44:13.128Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 3b457ac9-cc97-4edb-92cf-0131e27bd618 by i***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+Error creating electronic signature: error: new row for relation "audit_logs" violates check constraint "tmp_no_esign"
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 728,
+  severity: 'ERROR',
+  code: '23514',
+  detail: 'Failing row contains (6accc427-f9a9-4d7b-b14f-a09f5b202ba5, 1, 43, authoring.document.e-sign, authoring_document, 3b457ac9-cc97-4edb-92cf-0131e27bd618, 43, authoring_document:3b457ac9-cc97-4edb-92cf-0131e27bd618, null, null, null, cd79a4b81415f69887400686bc712ed512afb00638443c08a397838c98dbd6eb, null, c7734e81ad15693b6e5ca97000f807bd4393bc3077c6870950520f3cac7b4c3c, 2026-10-30 15:44:13.128+00, 3c7ad88bcee3568dacf46d7f85596ea9b0690f52233b23daff1f32a6ba0f5599, null, {"meaning":"APPROVER","intent":"Approved.","documentHash":"9e2ed..., 127.0.0.1, null).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'audit_logs',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'tmp_no_esign',
+  file: 'execMain.c',
+  line: '2081',
+  routine: 'ExecConstraints',
+  query: 'INSERT INTO audit_logs\n' +
+    '       (id, tenant_id, user_id, action, table_name, record_id,\n' +
+    '        actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,\n' +
+    '        old_values, new_values, ip_address, user_agent)\n' +
+    '     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)',
+  params: [
+    '6accc427-f9a9-4d7b-b14f-a09f5b202ba5',
+    1,
+    43,
+    'authoring.document.e-sign',
+    'authoring_document',
+    '3b457ac9-cc97-4edb-92cf-0131e27bd618',
+    43,
+    'authoring_document:3b457ac9-cc97-4edb-92cf-0131e27bd618',
+    'cd79a4b81415f69887400686bc712ed512afb00638443c08a397838c98dbd6eb',
+    'c7734e81ad15693b6e5ca97000f807bd4393bc3077c6870950520f3cac7b4c3c',
+    '2026-10-30T15:44:13.128Z',
+    '3c7ad88bcee3568dacf46d7f85596ea9b0690f52233b23daff1f32a6ba0f5599',
+    null,
+    '{"meaning":"APPROVER","intent":"Approved.","documentHash":"9e2ed38eb7c8455b3805f24a0fa6a0c22f882613e389314963877c0f5916b544","signer":"independent.approver@filing.example","signatureId":"0531d11a-1927-4882-b2fa-215e108f3a4f","covers":{"version":"approved","contentHash":"17ef702af96ccf754bfa79566bd0e5b4da2b470202e29c7b28830cfa66d619d0"}}',
+    '127.0.0.1',
+    null
+  ],
+  queryOptions: undefined
+}
+
+ × server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content 150ms
+   → expected null to match object { approved: [ '2.5' ] }
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.156Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.162Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "8bd10b7b-b077-449e-b203-d7971fbd1947",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.165Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "8bd10b7b-b077-449e-b203-d7971fbd1947",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.172Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.184Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8bd10b7b-b077-449e-b203-d7971fbd1947 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.192Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.233Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 8bd10b7b-b077-449e-b203-d7971fbd1947 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were 133ms
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.259Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.265Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "d0dcd23a-b971-42dd-8f48-2e33e46da139",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.267Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "d0dcd23a-b971-42dd-8f48-2e33e46da139",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.274Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.285Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d0dcd23a-b971-42dd-8f48-2e33e46da139 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.296Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.334Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0dcd23a-b971-42dd-8f48-2e33e46da139 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing 104ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing 99ms
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)
+{
+  "timestamp": "2026-10-30T15:44:13.356Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)
+{
+  "timestamp": "2026-10-30T15:44:13.360Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "6b7fdc0a-5a07-4530-ae29-0541032ec091",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)
+{
+  "timestamp": "2026-10-30T15:44:13.361Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "6b7fdc0a-5a07-4530-ae29-0541032ec091",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)
+{
+  "timestamp": "2026-10-30T15:44:13.366Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)
+{
+  "timestamp": "2026-10-30T15:44:13.375Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6b7fdc0a-5a07-4530-ae29-0541032ec091 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)
+{
+  "timestamp": "2026-10-30T15:44:13.382Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)
+{
+  "timestamp": "2026-10-30T15:44:13.407Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 6b7fdc0a-5a07-4530-ae29-0541032ec091 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)
+{
+  "timestamp": "2026-10-30T15:44:13.418Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 43,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 43,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)
+{
+  "timestamp": "2026-10-30T15:44:13.451Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 6b7fdc0a-5a07-4530-ae29-0541032ec091 by i***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.478Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.483Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "21c4f2c1-d53d-4beb-b192-c3728f92e59b",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.485Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "21c4f2c1-d53d-4beb-b192-c3728f92e59b",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.494Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.502Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 21c4f2c1-d53d-4beb-b192-c3728f92e59b by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.509Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing
+{
+  "timestamp": "2026-10-30T15:44:13.535Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 21c4f2c1-d53d-4beb-b192-c3728f92e59b by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > the same PATCH still moves a section between the unsigned states
+{
+  "timestamp": "2026-10-30T15:44:13.555Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > the same PATCH still moves a section between the unsigned states
+{
+  "timestamp": "2026-10-30T15:44:13.559Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "5abe0a4d-e773-48f7-97bc-609e7a205120",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > the same PATCH still moves a section between the unsigned states
+{
+  "timestamp": "2026-10-30T15:44:13.561Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "5abe0a4d-e773-48f7-97bc-609e7a205120",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > the same PATCH still moves a section between the unsigned states
+{
+  "timestamp": "2026-10-30T15:44:13.568Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > the same PATCH still moves a section between the unsigned states
+{
+  "timestamp": "2026-10-30T15:44:13.576Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5abe0a4d-e773-48f7-97bc-609e7a205120 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5) 122ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing 78ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > the same PATCH still moves a section between the unsigned states 39ms
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts
+{
+  "timestamp": "2026-10-30T15:44:17.201Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts
+{
+  "timestamp": "2026-10-30T15:44:18.553Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T15:44:18.554Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts
+{
+  "timestamp": "2026-10-30T15:44:18.555Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts
+✅ Template tables initialized
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:18.833Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:18.844Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "bb632595-3515-418b-a467-0759aecff3da",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:18.847Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "bb632595-3515-418b-a467-0759aecff3da",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:18.864Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:18.880Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc bb632595-3515-418b-a467-0759aecff3da by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:18.893Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:18.946Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc bb632595-3515-418b-a467-0759aecff3da by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:18.961Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > submitted: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.006Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > submitted: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.011Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "49fcf2ee-6825-4e4d-9420-1ec645273eb0",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > submitted: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.014Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "49fcf2ee-6825-4e4d-9420-1ec645273eb0",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > submitted: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.021Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > submitted: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.030Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 49fcf2ee-6825-4e4d-9420-1ec645273eb0 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > submitted: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.039Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > submitted: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.070Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 49fcf2ee-6825-4e4d-9420-1ec645273eb0 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > submitted: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.085Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves 207ms
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked by locked_at alone: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.121Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked by locked_at alone: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.125Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "45d0cb05-26b5-4969-ba1a-5bad96fd1ffd",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked by locked_at alone: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.127Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "45d0cb05-26b5-4969-ba1a-5bad96fd1ffd",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked by locked_at alone: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.133Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked by locked_at alone: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.141Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 45d0cb05-26b5-4969-ba1a-5bad96fd1ffd by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked by locked_at alone: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.149Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked by locked_at alone: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.181Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 45d0cb05-26b5-4969-ba1a-5bad96fd1ffd by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked by locked_at alone: 403, in its own words, and nothing moves
+{
+  "timestamp": "2026-10-30T15:44:19.193Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > submitted: 403, in its own words, and nothing moves 117ms
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > a draft filing still takes the save (the rule is not a blanket refusal)
+{
+  "timestamp": "2026-10-30T15:44:19.227Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > a draft filing still takes the save (the rule is not a blanket refusal)
+{
+  "timestamp": "2026-10-30T15:44:19.232Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "ba3619a6-b912-471e-8496-b7906bfaff74",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > a draft filing still takes the save (the rule is not a blanket refusal)
+{
+  "timestamp": "2026-10-30T15:44:19.234Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "ba3619a6-b912-471e-8496-b7906bfaff74",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > a draft filing still takes the save (the rule is not a blanket refusal)
+{
+  "timestamp": "2026-10-30T15:44:19.239Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > a draft filing still takes the save (the rule is not a blanket refusal)
+{
+  "timestamp": "2026-10-30T15:44:19.249Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ba3619a6-b912-471e-8496-b7906bfaff74 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > a draft filing still takes the save (the rule is not a blanket refusal)
+{
+  "timestamp": "2026-10-30T15:44:19.259Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > a draft filing still takes the save (the rule is not a blanket refusal)
+{
+  "timestamp": "2026-10-30T15:44:19.287Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc ba3619a6-b912-471e-8496-b7906bfaff74 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why
+{
+  "timestamp": "2026-10-30T15:44:19.299Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why
+{
+  "timestamp": "2026-10-30T15:44:19.303Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "7cfc51f0-e7a2-46cc-b55f-3199171c7a8a",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why
+{
+  "timestamp": "2026-10-30T15:44:19.305Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "7cfc51f0-e7a2-46cc-b55f-3199171c7a8a",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why
+{
+  "timestamp": "2026-10-30T15:44:19.311Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why
+{
+  "timestamp": "2026-10-30T15:44:19.319Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7cfc51f0-e7a2-46cc-b55f-3199171c7a8a by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked by locked_at alone: 403, in its own words, and nothing moves 108ms
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > a draft filing still takes the save (the rule is not a blanket refusal) 72ms
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why
+{
+  "timestamp": "2026-10-30T15:44:19.327Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why
+{
+  "timestamp": "2026-10-30T15:44:19.360Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 7cfc51f0-e7a2-46cc-b55f-3199171c7a8a by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why
+{
+  "timestamp": "2026-10-30T15:44:19.370Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 43,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 43,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why
+{
+  "timestamp": "2026-10-30T15:44:19.412Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 7cfc51f0-e7a2-46cc-b55f-3199171c7a8a by i***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > 409 DOCUMENT_LOCKED, with the sentence, and the status does not move
+{
+  "timestamp": "2026-10-30T15:44:19.424Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > 409 DOCUMENT_LOCKED, with the sentence, and the status does not move
+{
+  "timestamp": "2026-10-30T15:44:19.428Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "e35dd186-0f43-4dc1-9e38-8bf57e69c015",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > 409 DOCUMENT_LOCKED, with the sentence, and the status does not move
+{
+  "timestamp": "2026-10-30T15:44:19.429Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "e35dd186-0f43-4dc1-9e38-8bf57e69c015",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > 409 DOCUMENT_LOCKED, with the sentence, and the status does not move
+{
+  "timestamp": "2026-10-30T15:44:19.437Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > 409 DOCUMENT_LOCKED, with the sentence, and the status does not move
+{
+  "timestamp": "2026-10-30T15:44:19.444Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e35dd186-0f43-4dc1-9e38-8bf57e69c015 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why 125ms
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > the seal refusal beside it releases its connection once
+{
+  "timestamp": "2026-10-30T15:44:19.460Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > the seal refusal beside it releases its connection once
+{
+  "timestamp": "2026-10-30T15:44:19.464Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "7ef5b3ba-9fac-418e-b4ae-a3eeeb1ab1e9",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > the seal refusal beside it releases its connection once
+{
+  "timestamp": "2026-10-30T15:44:19.465Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "7ef5b3ba-9fac-418e-b4ae-a3eeeb1ab1e9",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > the seal refusal beside it releases its connection once
+{
+  "timestamp": "2026-10-30T15:44:19.469Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > the seal refusal beside it releases its connection once
+{
+  "timestamp": "2026-10-30T15:44:19.477Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7ef5b3ba-9fac-418e-b4ae-a3eeeb1ab1e9 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > 409 DOCUMENT_LOCKED, with the sentence, and the status does not move 37ms
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > the seal refusal beside it releases its connection once 32ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR)
+AssertionError: {"error":"Separation of duties: you are an author of this record (Authoring document creator, Authoring revision ledger, Authoring visible mutation audit) and cannot review, approve or lock it. A different, authorized user must sign.","code":"SEPARATION_OF_DUTIES"}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts:229:52
+    227|         meaning, intent: `Signed as ${meaning}.`, password: PASSWORD,
+    228|       });
+    229|       expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                    ^
+    230|       replies.push(res.body.filingApproval);
+    231|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+AssertionError: expected { '2.6': 'todo', '2.5': 'drafted' } to deeply equal { '2.5': 'approved', '2.6': 'todo' }
+
+- Expected
++ Received
+
+  {
+-   "2.5": "approved",
++   "2.5": "drafted",
+    "2.6": "todo",
+  }
+
+ ❯ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts:337:35
+    335|     const res = await as(request(app).post(`/api/authoring/docs/${f.au…
+    336|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    337|     expect(await statuses(f.doc)).toEqual({ '2.5': 'approved', '2.6': …
+       |                                   ^
+    338|     expect(await readiness(f.doc)).toBe(50);
+    339|     expect(res.body.filingApproval).toEqual({ approved: ['2.5'], notAp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content
+AssertionError: expected null to match object { approved: [ '2.5' ] }
+
+- Expected:
+{
+  "approved": [
+    "2.5",
+  ],
+}
+
++ Received:
+null
+
+ ❯ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts:352:39
+    350|     const first = await as(request(app).post(`/api/authoring/docs/${f.…
+    351|     expect(first.status, JSON.stringify(first.body)).toBe(200);
+    352|     expect(first.body.filingApproval).toMatchObject({ approved: ['2.5'…
+       |                                       ^
+    353|     const before = await sealedState(f);
+    354|     expect(before.document).toEqual([{status:'APPROVED'}]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 22 passed (25)
+   Start at  15:43:59
+   Duration  19.98s (transform 6.03s, setup 115ms, import 1.21s, tests 18.22s, environment 0ms)
+

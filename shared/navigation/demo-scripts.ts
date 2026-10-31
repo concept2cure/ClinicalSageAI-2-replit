@@ -278,14 +278,15 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       'A device or diagnostics team learning to run their 510(k), PMA, De Novo, or EU MDR/IVDR work here.',
     minutes: 8,
     description:
-      'The complete device working tour: the portfolio, Tasks, the 510(k) pathway, the ISO 14971 risk file worked hands-on, design controls and V&V, the significant-change worklist, EU MDR clinical evaluation, and the submission packages — each stop showing what the team actually does there.',
+      'The complete device working tour: Projects filtered to their device projects, Tasks, the 510(k) pathway, the ISO 14971 risk file worked hands-on, design controls and V&V, the significant-change worklist, EU MDR clinical evaluation, and the submission packages — each stop showing what the team actually does there.',
     steps: [
       {
         say: 'Welcome them to their workspace and set the frame: this is a working tour of their own device projects, on their real data, and they can interrupt with a question at any moment.',
       },
       {
-        say: 'The device portfolio is the front door: every device project with its pathway — 510(k), PMA, De Novo, MDR — its stage and its readiness in one place.',
-        navigate: { target: 'device-workstream' },
+        // 2026-10-30 (D2, fold F6): the device portfolio folded into Projects with its MDX filter.
+        say: 'Projects, filtered to their device projects, is the front door: every device project with its pathway — 510(k), PMA, De Novo, MDR — its stage, its readiness and its last activity, each read from the project\'s own records.',
+        navigate: { target: 'mdx' },
       },
       {
         say: 'Tasks is where the day starts: every open item across their projects, from the board, the schedule, agency correspondence and tracked filings, each labelled with where it lives and with the work another store records as blocking marked, so nothing waits on a shared drive or an email thread.',
@@ -357,8 +358,9 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         say: 'Open with the thesis for device teams: one platform where the 510(k), PMA, De Novo and EU MDR work is done, not tracked — AnA works the screens with the team, and every governed determination stays a human sign-off.',
       },
       {
-        say: 'Start at the device portfolio: every device project, its pathway and its readiness, in one place instead of a spreadsheet and a shared drive.',
-        navigate: { target: 'device-workstream' },
+        // 2026-10-30 (D2, fold F6): the device portfolio folded into Projects with its MDX filter.
+        say: 'Start at Projects, filtered to their device projects: every device project, its pathway and its readiness, in one place instead of a spreadsheet and a shared drive.',
+        navigate: { target: 'mdx' },
       },
       {
         say: 'The 510(k) pathway: predicate intelligence, the substantial-equivalence matrix, and the eSTAR sections — the submission built as you go, not assembled at the end.',

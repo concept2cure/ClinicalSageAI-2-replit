@@ -1,0 +1,26 @@
+# Red: the committed code (HEAD d79abdf9f), with the two new test files
+
+$ npx vitest run server/routes/ind-lifecycle/__tests__/cover-letter-identifies-the-filed-amendment.test.ts
+  POST /cover-letter for a filed sequence > a CSR information amendment says "Information Amendment: Clinical", with no type gap 56ms
+   → expected null to be 'information_amendment' // Object.is equality
+  POST /cover-letter for a filed sequence > a protocol amendment is not called an information amendment: its type stays a gap (control) 11ms
+  POST /cover-letter for a filed sequence > a sequence this submission has not filed is 404 naming it, and no letter is assembled 9ms
+   → expected 200 to be 404 // Object.is equality
+  POST /cover-letter for a filed sequence > a sequence number that is not four digits is 400 naming it 7ms
+   → expected 200 to be 400 // Object.is equality
+  POST /cover-letter for a filed sequence > a type the caller states still wins, and no sequence is read (control) 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 2 passed (5)
+
+$ npx vitest run client/src/concept2cure/v2/__tests__/indLifecycleCsrInformationAmendment.test.tsx
+  IND forms: a CSR as an information amendment > offers the clinical study report category, sends it, and shows the 312.31(b) identification the plan gives 425ms
+   → expected { changedDocuments: [ { …(3) } ] } to match object { changedDocuments: [ { …(3) } ] }
+  IND forms: a CSR as an information amendment > a filing whose leaves await their documents says so, and does not call them placed 5214ms
+   → Unable to find an element with the text: /Filed eCTD sequence 0007 \(id 94\) with 3 leaves\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+  IND forms: a CSR as an information amendment > a revision filed with no leaf to revise says it is not attached to one 179ms
+   → expected 'Filed eCTD sequence 0008 (id 95) — 1 …' to match /1 revises, appends to or withdraws a …/
+  IND forms: the cover letter names the sequence it accompanies > sends the sequence number entered, so the server reads what that sequence contains 37ms
+   → Unable to find a label with the text of: /eCTD sequence this letter accompanies/
+  IND forms: the cover letter names the sequence it accompanies > sends no sequence when none is entered (control) 58ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed (5)

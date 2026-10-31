@@ -11,9 +11,9 @@ vi.mock('@/services/portal/authService', async original => {
   } }) };
 });
 vi.mock('../../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
-vi.mock('../../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: (props: { freezeRefusal?: string; esignRefusal?: string; onChanged: () => void }) =>
+vi.mock('../../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: (props: { freezeRefusal?: string; esignRefusal?: string; signerIsAuthor?: boolean; onChanged: () => void }) =>
   <><button disabled={!!props.freezeRefusal}>Freeze document</button><button disabled={!!props.esignRefusal}>Sign document</button>
-    <button onClick={props.onChanged}>Refresh sections</button></> }));
+    <button onClick={props.onChanged}>Refresh sections</button><span data-testid="filing-signer-is-author">{String(props.signerIsAuthor === true)}</span></> }));
 vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));
 vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFiling: (props: { refusal?: string }) =>
   <button disabled={!!props.refusal}>Place document</button> }));
@@ -166,6 +166,19 @@ describe('current authoring reads restrict whole-document ceremonies', () => {
     expect(apiRequest.mock.calls.some(([method]) => method !== 'GET')).toBe(false);
   });
 
+});
+
+/* 2026-10-30 (RR5 follow-up): the creator is always an author of the document, so
+   the server refuses them every signature meaning but authorship; the bar is told,
+   so its dialogs do not offer them one (AuthoringFilingBar `signerIsAuthor`). */
+describe('the signing bar knows when the signed-in user created the document', () => {
+  it.each([['1', 'true'], [1, 'true'], ['2', 'false'], [null, 'false']])('created_by %j, signed in as user 1: signerIsAuthor %s', async (createdBy, expected) => {
+    apiRequest.mockReset().mockImplementation(async (_method: string, url: string) => baseRead(url));
+    render(<DocumentWorkbench docs={[{ ...row, created_by: createdBy }]} docsState="ready" status="all" reloadDocs={vi.fn()}
+      pinnedDocId={DOC} programId={PID} onNav={vi.fn()} />);
+    await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('Current admitted prose.'));
+    expect(screen.getByTestId('filing-signer-is-author').textContent).toBe(expected);
+  });
 });
 
 describe('current authoring bodies retain their project and session owner', () => {

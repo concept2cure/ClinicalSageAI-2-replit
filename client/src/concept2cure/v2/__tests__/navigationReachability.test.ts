@@ -65,15 +65,18 @@ describe('navigation-registry ↔ shell reachability', () => {
     expect(LAUNCH_SURFACE_IDS.has(surfaceIdFromLocation(locationForSurface('biopharma')))).toBe(true);
   });
 
-  it('the retained MDX handle reaches admitted Projects while the device portfolio remains registered', () => {
+  it('the retained MDX handle and the folded device portfolio\'s handle both reach admitted Projects', () => {
     const target = NAVIGATION_TARGETS.find(t => t.id === 'mdx');
     expect(target?.scope).toBe('global');
     expect(target?.description).toMatch(/Projects/);
     expect(surfaceIdFromLocation(locationForSurface('mdx'))).toBe('projects');
     expect(LAUNCH_SURFACE_IDS.has(surfaceIdFromLocation(locationForSurface('mdx')))).toBe(true);
+    /* The device portfolio folded into Projects (D2, fold F6, 2026-10-30): AnA's handle is kept and lands where
+       `mdx` does; the screen, its registry row and its view are gone (foldDeviceWorkstream.test.ts). */
     expect(NAVIGATION_TARGETS.some(t => t.id === 'device-workstream')).toBe(true);
-    expect(UI_SURFACES.some(s => s.id === 'device-workstream')).toBe(true);
-    expect(SURFACE_VIEWS['device-workstream']).toBeTruthy();
+    expect(surfaceIdFromLocation(locationForSurface('device-workstream'))).toBe('projects');
+    expect(UI_SURFACES.some(s => s.id === 'device-workstream')).toBe(false);
+    expect(SURFACE_VIEWS['device-workstream']).toBeUndefined();
   });
 
   it('aliases only point AT real views — a dangling alias is drift in the other direction', () => {

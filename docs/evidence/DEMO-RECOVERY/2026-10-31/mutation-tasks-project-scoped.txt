@@ -1,0 +1,3 @@
+ × client/src/concept2cure/v2/__tests__/railOpensWithoutProject.test.ts > the rail with no project open > opens Tasks and Quality without a project: both are organisation-wide 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

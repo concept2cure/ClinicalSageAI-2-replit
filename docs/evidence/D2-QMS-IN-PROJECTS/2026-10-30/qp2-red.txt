@@ -1,0 +1,21 @@
+# QP2, red at 668fddd2b0 — the tests alone, no implementation
+
+## bash dbtest.sh tests/db/qms-project-records.dbtest.ts (PostgreSQL 16, app_service, RLS on)
+ × tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > lists the change controls filed under the project, and only those
+ × tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > lists the nonconforming product filed under the project, and only that
+ × tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > lists the controlled documents authored in the project, and no inline register entry
+ × tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > answers another organization’s project as not found, and a malformed id as refused, on every list
+AssertionError: expected [ 7, 8, 9 ] to deeply equal [ 7 ]
+AssertionError: expected [ 381405, 381406, 381407 ] to deeply equal [ 381405 ]
+AssertionError: expected [ 1167, 1168 ] to deeply equal [ 1167 ]
+AssertionError: /changes: {"data":[{"id":9,"organization_id":482,"change_number":"qms-trnassign-ea1ab16f-CC-orgWide","title":"Invented change orgWide","description":null,"change_type":"other","classification":"minor","risk_level":null,"status":"proposed","reason":null,"impact_assessment":null,"imple
+      Tests  4 failed (4)
+(At trunk program_id is ignored: every list returns the organization's records, and another organization's project answers 200 with them.)
+
+## npx vitest run client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx
+      Tests  3 failed | 1 passed (4)
+ × client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > counts this project's open CAPAs, open change controls, undispositioned product and its documents by status
+ × client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > opens Quality from its door
+ × client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > says a read failed, for that record only, and never shows it as 0
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > is not offered when Quality is not in this release
+TestingLibraryElementError: Unable to find role="region" and name "Quality"

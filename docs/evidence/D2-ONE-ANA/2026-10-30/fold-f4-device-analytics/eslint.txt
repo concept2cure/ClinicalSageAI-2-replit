@@ -1,0 +1,33 @@
+# ESLint per file, HEAD (d581eba7a) against now (tools/eslint-compare.sh.txt). No file has more warnings or errors than at HEAD; every new file is clean.
+client/src/concept2cure/mdx/MdxSurfaceHost.tsx  head=4w/0e  now=4w/0e
+client/src/concept2cure/mdx/surfaceIds.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/surfaceViews.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/registryModel.ts  head=1w/0e  now=1w/0e
+client/src/concept2cure/v2/surfaces/Insights.tsx  head=7w/0e  now=7w/0e
+client/src/concept2cure/v2/surfaces/InsightsDevicePortfolio.tsx  head=new  now=0w/0e
+client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts  head=new  now=0w/0e
+client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx  head=new  now=0w/0e
+shared/constants/launch-scope.ts  head=0w/0e  now=0w/0e
+shared/constants/mdx-project-features.ts  head=0w/0e  now=0w/0e
+shared/constants/ui-surface-registry.ui-v2.ts  head=1w/0e  now=1w/0e
+shared/navigation/index.ts  head=0w/0e  now=0w/0e
+scripts/ci/check-launch-scope-api.ts  head=6w/0e  now=6w/0e
+scripts/visual-qa/dump-v2-surfaces.spec.tsx  head=1w/0e  now=1w/0e
+server/routes/insights-canvas-routes.ts  head=0w/0e  now=0w/0e
+server/routes/mdx-analytics.ts  head=0w/0e  now=0w/0e
+server/routes/__tests__/mdx-analytics-availability.test.ts  head=0w/0e  now=0w/0e
+server/routes/__tests__/insights-canvas-device-section.test.ts  head=new  now=0w/0e
+server/middleware/__tests__/launch-scope-device-features.test.ts  head=0w/0e  now=0w/0e
+server/services/report-os/device-portfolio.ts  head=new  now=0w/0e
+server/services/report-os/__tests__/device-portfolio.pglite.test.ts  head=new  now=0w/0e
+server/services/entitlements/folded-module-successors.ts  head=0w/0e  now=0w/0e
+server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts  head=0w/0e  now=0w/0e
+server/services/entitlements/__tests__/launch-scope.test.ts  head=0w/0e  now=0w/0e
+tests/schema-contract/catalog-module-claims.contract.test.ts  head=0w/0e  now=0w/0e
+tests/concept2cure/design-system-surfaces-smoke.test.tsx  head=0w/0e  now=0w/0e
+tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx  head=0w/0e  now=0w/0e
+scripts/ci/check-ana-surface-context.mjs  head=5w/0e  now=5w/0e
+scripts/seed/ga-demo.d/60-mdx-aggregates.mjs  head=26w/0e  now=26w/0e
+
+# Deleted (no lint): client/src/concept2cure/mdx/surfaces/AnalyticsSurface.tsx, mdx/hooks/useAnalytics.ts, mdx/data/analytics.ts, mdx/components/AnalyticsReportLibrary.tsx, mdx/hooks/__tests__/useAnalytics.qa.test.ts, mdx/surfaces/__tests__/AnalyticsSurface.availability.test.tsx.

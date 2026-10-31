@@ -225,7 +225,7 @@ export const REAL: Layout = {
     // 2026-10-23. Resolve their actual leaves rather than skipping the shared
     // host or walking every unrelated feature for each registration.
     components: {
-      'device-workstream': 'Overview',
+      // No device-workstream: the kit portfolio folded into Projects (D2, fold F6, 2026-10-30).
       'device-510k': 'K510Surface',
       'device-pma': 'PmaSurface',
       'device-cer': 'CerSurface',
@@ -240,7 +240,7 @@ export const REAL: Layout = {
       // No device-tasks: it folded into Tasks (D2, 2026-10-29).
       // No device-validation: the organization-wide blocker list retired (D2, fold F5 item 2, 2026-10-29).
       // No device-submission: it folded into Submission Center (D2, fold F5 item 1, 2026-10-30).
-      'device-analytics': 'AnalyticsSurface',
+      // No device-analytics: it joined Reporting & analytics (D2, fold F4, 2026-10-30).
     },
   },
 };

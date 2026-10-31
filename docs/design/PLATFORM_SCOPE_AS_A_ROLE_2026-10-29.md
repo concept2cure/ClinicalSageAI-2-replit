@@ -403,6 +403,14 @@ Each slice leaves every deploy green. The arms are replaced only after every pat
 - The request and per-user scopes refuse the role string `app_super_admin`, which only the system scope's own shape may carry. The authoring router applies the membership role, not the token's claim. `organization_users.role` gains the conditional CHECK `organization_users_role_known`.
 - Slice 1b's queue gains one item from 1a: the four other writers of `app.current_user_role` (`governed-tenant-context.ts`, `mcp/tools/runtime.ts`, `ana/catalog-scope.ts`, `governed-signed-act.ts`) get the same refusal. The new CHECK already refuses the string at its source.
 
+**Slice 1b, landed 2026-10-30** (evidence `docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/`).
+
+- The Vault retention sweep now runs per organization in that organization's own scope, and legal holds are still read. On the production-shaped copy it scanned 0 of 2 expired documents before and 2 of 2 after.
+- The audit-chain sweep verifies each organization in its own scope inside a read-only transaction. Before, it answered ok:false over 0 rows.
+- A verification that read fewer rows than the tenant holds answers "not verified", with its reason, never "valid".
+- The four other writers of `app.current_user_role` refuse `app_super_admin`.
+- Queued before slice 6: the on-demand tenant verdict still walks on the admin scope, because legacy rows link across tenants. Its tenant-scope walk, or the `platform_audit_chain_links` door (§3.4), lands in slice 3 or 4. Otherwise every verify-chain says "not verified" after the flip.
+
 **What a regulated customer gets**:
 
 - No statement the runtime role can run lifts tenant isolation on any table.

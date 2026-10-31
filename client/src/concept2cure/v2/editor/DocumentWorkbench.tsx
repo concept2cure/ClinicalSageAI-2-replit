@@ -84,6 +84,7 @@ import { scopedProposalResult, type EditorProposalReceipt } from './editorPropos
 import { readSavedTemplateContext, savedTemplateFacts, sourceMetadataUnavailable } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
+import { CSR_TEMPLATE_ENTRY, StudyDataBuild } from './StudyDataBuild';
 import { captureAssemblySourceIntent, captureSourceDocumentStartIntent, type AssemblySourceIntent, type AssemblySourceDocumentStartIntent } from './assemblySourceIntent';
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, workbenchNavigationRefusal, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
@@ -946,6 +947,15 @@ export function machineTextNote(machineText: unknown): string {
     ` ${passages} you accepted from AnA ${was} recorded as your own words, because ` +
     `${reasons.join('; ')}. The record says so.`
   );
+}
+
+/** True when the signed-in user created the document (`created_by`). The creator is always one of
+ *  its authors (authoringDocumentAuthors, separation-of-duties.ts), so the server refuses them every
+ *  signature meaning but authorship; the signing bar does not offer one. Unknown on either side is
+ *  false, and the server decides. */
+export function signedInUserCreated(createdBy: unknown, userId: unknown): boolean {
+  const creator = String(createdBy ?? '').trim();
+  return creator !== '' && creator === String(userId ?? '').trim();
 }
 
 /** True when the server refuses every signature but the review signature. */
@@ -4299,8 +4309,10 @@ export function DocumentWorkbench({
         {/* Why there is no outline, said plainly rather than as a blank pane.
             A project with no governed document is usually not a fault: program
             types ivd/device/ide/biologic/anda have no rule pack, and the
-            scaffolder skips them deliberately. */}
-        {filing.reason === 'no-governed-document' && (
+            scaffolder skips them deliberately. Said only when the tree is
+            otherwise empty: above a document's own headings it read as
+            "nothing here" (seen in the running app, 2026-10-31). */}
+        {filing.reason === 'no-governed-document' && docs.length === 0 && (
           <div className="scaf-note" style={{ padding: '10px 12px', fontSize: 12 }}>
             This project has no governed filing document, so there is no section outline to show.
             Projects created before scaffolding — and project types with no rule pack — fall here.
@@ -4570,6 +4582,7 @@ export function DocumentWorkbench({
                    control stays open for that one meaning (QA 2026-10-08, j4). */
                 esignRefusal={esignReviewOnly(docAccess) ? null : actRefusal(docAccess.esign)}
                 reviewOnly={esignReviewOnly(docAccess)}
+                signerIsAuthor={signedInUserCreated(activeDoc.created_by, user?.id)}
                 workflowOrigin={docProvenance?.importSource && isWorkflowImportOrigin(docProvenance.importSource) ? docProvenance.importSource : undefined}
                 docRevision={`${activeDoc.updated_at ?? ''}:${contentEpoch}:${sections.map(s => s.updated_at ?? '').join('|')}`}
               />
@@ -4906,6 +4919,8 @@ export function DocumentWorkbench({
         <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
             <AuthoringAssemblyBuild controller={assembly} />
+            {/* A clinical study report is built from the study's data here, in the one editor (RULE 4). */}
+            {programId && docTemplateContext?.templateSource?.entryId === CSR_TEMPLATE_ENTRY && <StudyDataBuild programId={programId} onNav={onNav} />}
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a

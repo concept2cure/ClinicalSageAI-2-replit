@@ -454,7 +454,7 @@ describe('AuthoringFilingBar — the server’s refusal, before the dialog', () 
   const FREEZE_NO = 'Freezing needs an Owner or Approver grant on this document. Your grants on it: Reviewer.';
   const SIGN_NO = 'Applying an electronic signature needs a signing role in this organization (admin, approver, reviewer). Your role: member.';
 
-  function renderWith(props: { freezeRefusal?: string | null; esignRefusal?: string | null; reviewOnly?: boolean }) {
+  function renderWith(props: { freezeRefusal?: string | null; esignRefusal?: string | null; reviewOnly?: boolean; signerIsAuthor?: boolean }) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
@@ -488,6 +488,40 @@ describe('AuthoringFilingBar — the server’s refusal, before the dialog', () 
     const offered = within(dialog).getAllByRole('radio').map((r) => (r.textContent ?? '').replace(/You .*/, '').trim());
     expect(offered).toEqual(['Review']);
     expect(dialog.textContent).toMatch(/permits the review signature/);
+  });
+
+  /* 2026-10-30 (RR5 follow-up): the server refuses an author of the document
+     every meaning but authorship (separation of duties), route or none. The
+     creator is always an author, and the host knows who created it, so the
+     dialogs do not offer the creator a meaning that is always refused. */
+  const offeredIn = (dialog: HTMLElement) => within(dialog).getAllByRole('radio').map((r) => (r.textContent ?? '').replace(/You .*/, '').trim());
+  it('the document’s author is offered the authorship signature alone on E-sign, and told why', async () => {
+    renderWith({ signerIsAuthor: true });
+    fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    const dialog = await screen.findByRole('dialog');
+    expect(offeredIn(dialog)).toEqual(['Authorship']);
+    expect(dialog.textContent).toMatch(/You created this document, so you sign it as its author\. Review and approval are signed by someone who did not write it\./);
+  });
+
+  it('Freeze offers the document’s author the authorship seal alone, and says why', async () => {
+    renderWith({ signerIsAuthor: true });
+    fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+    const dialog = await screen.findByRole('dialog');
+    expect(offeredIn(dialog)).toEqual(['Authorship']);
+    expect(dialog.textContent).toMatch(/You created this document, so you seal it as its author\. A review seal is signed by someone who did not write it\./);
+  });
+
+  it('a creator whose grant permits the review signature alone has no signature to apply: E-sign is refused, and says why', () => {
+    renderWith({ esignRefusal: null, reviewOnly: true, signerIsAuthor: true });
+    const sign = screen.getByRole('button', { name: /E-sign/ }) as HTMLButtonElement;
+    expect(sign.disabled).toBe(true);
+    expect(describedBy(sign)).toBe('You created this document, so you may not sign its review, and your grant on it permits no other signature.');
+  });
+
+  it('a signer who did not create it is offered every meaning, and the server decides', async () => {
+    renderWith({ signerIsAuthor: false });
+    fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    expect(offeredIn(await screen.findByRole('dialog'))).toEqual(['Authorship', 'Review', 'Approval']);
   });
 
   it('leaves both enabled when the permission is unknown', () => {

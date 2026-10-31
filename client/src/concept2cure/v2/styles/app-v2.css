@@ -78,7 +78,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 .c2c-v2 *, .c2c-v2 *::before, .c2c-v2 *::after { box-sizing: border-box; }
-.c2c-v2 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
+/* The reset yields to any class. As `.c2c-v2 button` (a class and an element)
+   it outranked every one-class rule, and a button styled by one class rendered
+   as bare text: Quality's tabs, buttons, chips and library cards, and the
+   signing dialog's buttons on every surface that signs. */
+:where(.c2c-v2) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
+/* The font stays the shell's, at the old strength. Lowered with the rest, it
+   let index.css's legacy `.btn { font-family: -apple-system, … }` set the face
+   of every `.btn`, and one-class line heights through. Quality alone sets its
+   buttons' size and weight by class, under its own scoped reset; there only
+   the face is held. */
+.c2c-v2 button { font-family: inherit; }
+.c2c-v2 button:not(:where(.qms-shell *)) { font: inherit; }
 .c2c-v2 button:focus-visible { outline: 2px solid var(--accent-200); outline-offset: 2px; border-radius: var(--radius-md); }
 .c2c-v2 input, .c2c-v2 textarea, .c2c-v2 select { font: inherit; color: inherit; background: transparent; border: 0; outline: 0; }
 /* The reset above strips the user-agent focus ring from every field in v2, and
@@ -1513,6 +1524,16 @@
 .c2c-v2 .tb-org-chev{color:var(--text-400);font-size:13px;display:flex;}
 .c2c-v2 .tb-cmdk .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 @media (max-width:1180px){ .c2c-v2 .tb-cmdk .lbl{display:none;} .c2c-v2 .tb-org-name{display:none;} .c2c-v2 .crumbs .sep, .c2c-v2 .crumbs span:not(.here){display:none;} }
+/* At phone width the bar's controls and their gaps were wider than the screen,
+   and the last one, Get help, was cut off. A phone has no ⌘K, so the key hint
+   goes, and the gaps close up. The crumb and the project chip's name had room
+   only for "H…" and "No …": the page's own heading names the screen, and the
+   chip keeps its name for a screen reader and its title. */
+@media (max-width:640px){
+  .c2c-v2 .topbar{gap:6px;padding:0 10px;}
+  .c2c-v2 .tb-cmdk .kbd, .c2c-v2 .topbar .crumbs{display:none;}
+  .c2c-v2 .tb-proj-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+}
 .c2c-v2 .page{flex:1;overflow-y:auto;}
 .c2c-v2 .page-inner{max-width:1160px;margin:0 auto;padding:28px 32px 80px;}
 

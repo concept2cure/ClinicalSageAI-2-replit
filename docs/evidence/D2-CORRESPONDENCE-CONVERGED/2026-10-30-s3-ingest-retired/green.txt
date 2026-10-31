@@ -1,0 +1,4 @@
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest 5ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > withholds them for a request with no organisation too 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > with launch scope off (a development server), offers everything 2ms
+      Tests  29 passed (29)

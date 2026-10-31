@@ -343,6 +343,43 @@ describe('the folded device submission packages', () => {
   });
 });
 
+describe('the folded device analytics', () => {
+  it('is in no scope list and no new grant: Reporting & analytics holds the device section (D2, fold F4, 2026-10-30)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/; decision
+       P-61 item 3: device analytics joins Reporting & analytics at its tier,
+       over the projects the reader can open. The subset pin in 'the scope list
+       itself' would pass with the id left in one list, so this names it. It was
+       a catalogue module; an existing grant is kept, deprecated, by the
+       catalogue, and carries to Reporting & analytics (P-61 item 4). */
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    expect(projects.surfaces).not.toContain('device-analytics');
+    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-analytics');
+    expect(isLaunchSurface('device-analytics')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('device-analytics');
+    expect(isLaunchSurface('insights')).toBe(true);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).toContain('insights');
+    expect(projects.modules).toEqual(['projects', 'tasks']);
+  });
+});
+
+describe('the folded device workstream', () => {
+  it('is in no scope list and no new grant: Projects, with its MDX filter, is the device portfolio (D2, fold F6, 2026-10-30)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/; decision
+       P-61 item 5: only figures computed from the project's own records, and the
+       Client Review Room admits the project. The subset pin in 'the scope list
+       itself' would pass with the id left in the Projects list alone, so this
+       names it. It was a catalogue module; an existing grant is kept,
+       deprecated, by the catalogue, and carries to Projects (P-61 item 4). */
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    expect(projects.surfaces).not.toContain('device-workstream');
+    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-workstream');
+    expect(isLaunchSurface('device-workstream')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('device-workstream');
+    expect(projects.surfaces).toEqual(expect.arrayContaining(['projects', 'project-home']));
+    expect(projects.modules).toEqual(['projects', 'tasks']);
+  });
+});
+
 describe('Submission Center carries the IND lifecycle tools — decision P-32', () => {
   it('the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15', () => {
     const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;

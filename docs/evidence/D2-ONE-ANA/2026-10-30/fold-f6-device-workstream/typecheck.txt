@@ -1,0 +1,17 @@
+# Scoped tsc over the TypeScript files F4 and F6 change that exist on disk (tools/tsconfig.laneD.json.txt): npx tsc -p tsconfig.laneD.json
+# 12 errors; none is on a line either fold changed:
+#  - 10 are the missing CSS-module declarations and the Express Request augmentation this scoped include does not load (as the F4 and F5 evidence record);
+#  - client/src/concept2cure/v2/Shell.tsx: the svg asset declaration, the same cause (Shell.tsx is not changed);
+#  - scripts/visual-qa/dump-surface-markup.spec.tsx(187): PdevRoute's onAskAna; the lines around it are identical at HEAD (F6 changes only line 123 of that file).
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/v2/Shell.tsx(21,23): error TS2307: Cannot find module '@/assets/concept2cure-icon.svg' or its corresponding type declarations.
+scripts/visual-qa/dump-surface-markup.spec.tsx(187,10): error TS2741: Property 'onAskAna' is missing in type '{ nav: "cmc" | "nonclinical" | "clinical" | "contradictions" | "regulatory" | "overview" | "ind_assembly" | "fda_interactions"; onNav: () => void; }' but required in type 'PdevRouteProps'.
+server/db/requestDbLease.ts(51,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(51,42): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(61,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(82,39): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(228,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(62,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/authoring/authoring-permissions.ts(125,24): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.

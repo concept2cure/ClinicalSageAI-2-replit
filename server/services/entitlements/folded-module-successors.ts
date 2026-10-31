@@ -68,6 +68,14 @@ export const FOLDED_MODULE_SUCCESSORS: Readonly<Record<string, string>> = Object
   // Fold F5 item 1 (decision P-61 item 1): the device submission packages folded
   // into Submission Center's device filings, over one store, estar_submissions.
   'device-submission': 'submission-center',
+  // Fold F4 (decision P-61 item 3): device analytics joined Reporting & analytics
+  // at its tier; insights is packaged at standard, below device-analytics'
+  // professional, so a plan that included the folded module includes it.
+  'device-analytics': 'insights',
+  // Fold F6 (decision P-61 item 5): the kit portfolio folded into Projects with
+  // its MDX filter; projects is packaged at free, below device-workstream's
+  // standard, so a plan that included the folded module includes it.
+  'device-workstream': 'projects',
 });
 
 /** Folded screens with no catalogue row ever, so no subscription to carry. */

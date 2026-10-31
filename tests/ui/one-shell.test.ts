@@ -128,7 +128,8 @@ describe('one shell', () => {
     // dragging the kit into the entry chunk; the cases live in the host.
     const ids = read('client/src/concept2cure/mdx/surfaceIds.ts');
     const declared = [...ids.matchAll(/^\s*'(device-[a-z0-9-]+)',$/gm)].map((m) => m[1]);
-    expect(declared.length, 'MDX_SURFACE_IDS did not parse').toBeGreaterThan(10);
+    // Ten remain since device-workstream folded into Projects (D2, fold F6, 2026-10-30); fewer means the parse broke.
+    expect(declared.length, 'MDX_SURFACE_IDS did not parse').toBeGreaterThanOrEqual(10);
     const host = read('client/src/concept2cure/mdx/MdxSurfaceHost.tsx');
 
     const views = read('client/src/concept2cure/v2/surfaceViews.ts');
@@ -139,7 +140,9 @@ describe('one shell', () => {
       'the kit renders these but SURFACE_VIEWS cannot route to them — unreachable UI').toEqual([]);
 
     const cases = new Set([...host.matchAll(/case '(device-[a-z0-9-]+)':/g)].map((m) => m[1]));
-    expect([...registered].filter((id) => !cases.has(id) && id !== 'device-workstream'),
+    // No exception: device-workstream, the one id drawn from the host's default branch, folded into Projects
+    // (D2, fold F6, 2026-10-30), so every routed id is a named case.
+    expect([...registered].filter((id) => !cases.has(id)),
       'the registry routes to these but the kit has no case — they render the not-found card').toEqual([]);
   });
 

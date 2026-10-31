@@ -1,0 +1,19 @@
+"""For mutations whose suite fails before any test (beforeAll), print the error the suite reports. Restores byte for byte."""
+import hashlib, json, re, subprocess, sys, pathlib
+R = pathlib.Path('/home/user/ClinicalSageAI-2-replit')
+out = open(sys.argv[1], 'w')
+for spec_path, ids in [(sys.argv[2], ['M10', 'M11']), (sys.argv[3], ['M15', 'M16'])]:
+    for m in json.load(open(spec_path)):
+        if m['id'] not in ids: continue
+        f = R / m['file']; orig = f.read_bytes()
+        f.write_bytes(orig.decode().replace(m['old'], m['new']).encode())
+        try:
+            p = subprocess.run(['npx', 'vitest', 'run', '--maxWorkers=2', m['test'][0]], cwd=R, capture_output=True, text=True, timeout=900)
+        finally:
+            f.write_bytes(orig)
+        o = p.stdout + p.stderr
+        errs = sorted(set(re.findall(r'^error: (.*)$', o, re.M)))
+        ok = hashlib.sha256(f.read_bytes()).hexdigest() == hashlib.sha256(orig).hexdigest()
+        out.write(f"{pathlib.Path(spec_path).name} {m['id']}: {m['what']}\n  exit {p.returncode}; the suite fails before its tests: {' | '.join(errs) or 'no error line'}\n  restored byte for byte: {'yes' if ok else 'NO'}\n\n")
+        out.flush()
+        if not ok: sys.exit('restore failed')

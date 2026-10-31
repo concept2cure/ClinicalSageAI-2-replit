@@ -1,0 +1,66 @@
+# Gates, on the working tree (HEAD 619052719 plus this fix), all exit 0
+#
+# 1. Typecheck
+#    NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.json --incremental \
+#      --tsBuildInfoFile node_modules/.cache/typecheck-no-regression/tsconfig.tsbuildinfo
+#    exit 0, 0 errors.
+#
+# 2. ESLint on every changed file, this tree against HEAD's version of each (HEAD from a plain
+#    `git archive HEAD` export). No file changed its count; no errors. No baseline was touched.
+#    The two signing handlers stay within the function-length limit:
+#      POST /docs/:id/e-sign   98 -> 99 lines (limit 100; complexity already over, one warning, as at HEAD)
+#      POST /docs/:id/freeze  130 -> 131 lines (already over at HEAD; one warning, as at HEAD)
+#      AuthoringFilingBar      96 -> 97 lines, complexity 14 -> 14 (limit 15)
+#      review-route-authoring-rr5.dbtest.ts  458 -> 499 code lines (limit 500)
+    client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx               HEAD w 1 e 0  | now w 1 e 0
+    client/src/concept2cure/v2/editor/DocumentWorkbench.tsx                        HEAD w 12 e 0  | now w 12 e 0
+    client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx   HEAD w 0 e 0  | now w 0 e 0
+    client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx                     HEAD w 0 e 0  | now w 0 e 0
+    server/routes/authoring.router.ts                                              HEAD w 22 e 0  | now w 22 e 0
+    server/services/c2c/__tests__/_filing-write-harness.ts                         HEAD w 0 e 0  | now w 0 e 0
+    server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts          HEAD w 0 e 0  | now w 0 e 0
+    tests/db/review-route-authoring-rr5.dbtest.ts                                  HEAD w 0 e 0  | now w 0 e 0
+#
+# 3. node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD --gate  (what ci:pushed-lint-warnings runs)
+    [ci:eslint-warning-ratchet] --since HEAD (619052719) -- 8 lintable file(s) changed; linting both versions of each...
+    [ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+#
+# 4. npm run -s ci:sql-interpolation ; npm run -s ci:sign-ceremony
+== ci:sql-interpolation
+[ci:sql-interpolation] 30 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/routes/c2c/project-vault.ts:1713:21 vaultLifecycleStageSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1732:44 vaultUnfiledSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1733:44 vaultSuggestedSql('d') <- ../../services/vault/vault-document-filter.js
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:36:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:95:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:652:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-folder-export.ts:64:15 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-version-restore.ts:64:67 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+exit 0
+== ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+exit 0

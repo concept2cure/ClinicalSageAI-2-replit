@@ -86,14 +86,18 @@ const ACTION_PHRASE: Record<string, (drug: string) => string> = {
   'not applicable': d => `No action with ${d} was applicable`,
   unknown: d => `The action taken with ${d} is unknown`,
 };
-/** CDISC AEOUT (outcome of the adverse event), with the short forms callers pass. */
-const OUTCOME_PHRASE: Record<string, string> = {
-  'recovered/resolved': 'The event resolved', recovered: 'The event resolved', resolved: 'The event resolved',
-  'recovered/resolved with sequelae': 'The event resolved with sequelae', 'recovered with sequelae': 'The event resolved with sequelae',
-  'recovering/resolving': 'The event was recorded as resolving', recovering: 'The event was recorded as resolving',
-  'not recovered/not resolved': 'The event was recorded as not resolved', 'not recovered': 'The event was recorded as not resolved',
-  fatal: 'The event was fatal',
-  unknown: 'The outcome of the event is unknown',
+/** CDISC AEOUT (outcome of the adverse event), with the short forms callers pass, as the state a writer names. */
+const OUTCOME_STATE: Record<string, string> = {
+  'recovered/resolved': 'resolved', recovered: 'resolved', resolved: 'resolved',
+  'recovered/resolved with sequelae': 'resolved with sequelae', 'recovered with sequelae': 'resolved with sequelae',
+  'recovering/resolving': 'resolving', recovering: 'resolving',
+  'not recovered/not resolved': 'not resolved', 'not recovered': 'not resolved',
+  fatal: 'fatal', unknown: 'outcome unknown',
+};
+const OUTCOME_SENTENCE: Record<string, string> = {
+  resolved: 'The event resolved', 'resolved with sequelae': 'The event resolved with sequelae',
+  resolving: 'The event was recorded as resolving', 'not resolved': 'The event was recorded as not resolved',
+  fatal: 'The event was fatal', 'outcome unknown': 'The outcome of the event is unknown',
 };
 /** AEREL categories in words, keeping the investigator's category (no SAP collapse to related / not related). */
 const CAUSALITY_PHRASE: Record<string, string> = {
@@ -113,12 +117,28 @@ function actionSentence(action: string, drug: string | undefined): string {
   return phrase ? phrase(drug || 'study drug') : `Action taken with study drug: ${action}`;
 }
 
+/** An AEOUT value as the state a writer names ("resolved", "not resolved"); undefined outside the codelist. */
+export function outcomeState(outcome: string): string | undefined {
+  return OUTCOME_STATE[key(outcome)];
+}
+
+/** An AEREL value in words, its category kept ("possibly related"); undefined outside the list. */
+export function causalityPhrase(causality: string): string | undefined {
+  return CAUSALITY_PHRASE[key(causality)];
+}
+
+/** "an" before a word read with a vowel sound, ages included ("an 80-year-old", "an 11-year-old"). */
+export function indefiniteArticle(word: string): 'a' | 'an' {
+  return /^(?:8|11|18)(?!\d)|^8\d|^[aeiou]/i.test(word.trim()) ? 'an' : 'a';
+}
+
 function outcomeSentence(outcome: string): string {
-  return OUTCOME_PHRASE[key(outcome)] ?? `The outcome was reported as ${outcome}`;
+  const state = outcomeState(outcome);
+  return state ? OUTCOME_SENTENCE[state] : `The outcome was reported as ${outcome}`;
 }
 
 function causalitySentence(causality: string, drug: string | undefined): string {
-  return `The investigator assessed the event as ${CAUSALITY_PHRASE[key(causality)] ?? causality} to ${drug || 'study drug'}`;
+  return `The investigator assessed the event as ${causalityPhrase(causality) ?? causality} to ${drug || 'study drug'}`;
 }
 
 function seriousnessSentence(criteria: string[]): string {
@@ -135,7 +155,7 @@ export function composeSafetyNarrative(input: SafetyNarrativeInput): SafetyNarra
   const demo: string[] = [];
   if (input.age !== undefined && input.age !== '') demo.push(`${input.age}-year-old`);
   if (input.sex) demo.push(input.sex.toLowerCase());
-  const who = `Subject ${input.subjectId}${demo.length ? `, a ${demo.join(' ')} subject` : ''}`;
+  const who = `Subject ${input.subjectId}${demo.length ? `, ${indefiniteArticle(demo[0])} ${demo.join(' ')} subject` : ''}`;
   const arm = input.treatmentArm ? ` randomized to the ${input.treatmentArm} arm` : '';
   const study = input.studyId ? ` in study ${input.studyId}` : '';
   parts.push(sentence(`${who}${arm}${study}`));

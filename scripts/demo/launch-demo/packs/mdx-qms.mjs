@@ -5,7 +5,7 @@
  * review, one draft, personal acknowledgement readiness and a change-control record.
  * Called from mdx.mjs; nothing here runs on its own.
  */
-import { must } from '../lib.mjs';
+import { must, fillQmsSections } from '../lib.mjs';
 import { PROVENANCE, MANUFACTURER, today, inDays, SOPS } from './mdx-content.mjs';
 import { PACK, T, SIGNER_ABSENT, CHANGE_NUMBER, finding } from './mdx-shared.mjs';
 
@@ -13,15 +13,17 @@ import { PACK, T, SIGNER_ABSENT, CHANGE_NUMBER, finding } from './mdx-shared.mjs
 
 export const qmsDocs = async (api) => must(await api('GET', '/api/mdx/qms/documents'), 200, 'list QMS documents').data ?? [];
 
-async function ensureSop({ api, run }, sop) {
+async function ensureSop({ api, run, programId }, sop) {
   let doc = (await qmsDocs(api)).find((d) => d.doc_number === sop.docNumber) || null;
   const created = !doc;
   if (!doc) {
     doc = must(await api('POST', '/api/mdx/qms/documents', {
-      docNumber: sop.docNumber, title: T(sop.name), docType: 'sop', category: sop.category, nextReviewDate: inDays(365), sections: sop.sections,
-      metadata: { provenance: PROVENANCE, manufacturer: MANUFACTURER, family: 'sop', demoPack: PACK },
+      // The create registers the document in an owned project with a reason; its text is authored in the editor.
+      docNumber: sop.docNumber, title: T(sop.name), docType: 'sop', category: sop.category, nextReviewDate: inDays(365),
+      programId, reason: `Demo: create ${sop.docNumber} for the demonstration`,
     }), 201, `create ${sop.docNumber}`).data;
   }
+  if (doc.status === 'draft') await fillQmsSections(api, doc.id, Object.fromEntries((sop.sections ?? []).map((s) => [s.key, s.hint])));
   const rec = { id: doc.id, docNumber: doc.doc_number, title: doc.title, status: doc.status, version: doc.version, created };
   run.record(`qms.${sop.key}`, rec);
   return rec;
@@ -77,7 +79,7 @@ async function ensureChangeControl({ api, run }, sops, vaultDocs) {
     must(await api('POST', `/api/mdx/qms/changes/${change.id}/links`, w), 201, `link ${w.linkType}`);
     linked += 1;
   }
-  if (change.status === 'proposed') change = must(await api('POST', `/api/mdx/qms/changes/${change.id}/transition`, { to: 'under_assessment' }), 200, 'transition change').data ?? change;
+  if (change.status === 'proposed') change = must(await api('POST', `/api/mdx/qms/changes/${change.id}/transition`, { to: 'under_assessment', reason: 'Demo: assess the NP-100 software release change' }), 200, 'transition change').data ?? change;
   const listed = (must(await api('GET', '/api/mdx/qms/changes'), 200, 'list changes').data ?? []).find((c) => c.id === change.id) || {};
   if (!Array.isArray(listed.links) && links.length + linked > 0) {
     finding(run, `QMS: GET /api/mdx/qms/changes returns rows without their cross-references (no "links" field) while GET /api/mdx/qms/changes/:id carries ${links.length + linked}; the Change control log (client/src/concept2cure/quality/ChangeControl.tsx linkCount = c.links?.length ?? 0) therefore shows 0 links for ${CHANGE_NUMBER} until the row is expanded.`);
@@ -101,8 +103,11 @@ export async function seedQms(ctx, signer, vaultDocs) {
   await run.step('QMS: SOP-103 into review; SOP-104 stays draft', async () => {
     const rows = await qmsDocs(api);
     const statusOf = (id) => (rows.find((d) => d.id === id) || {}).status;
-    if (statusOf(sops.sop103.id) === 'draft') {
-      must(await api('PATCH', `/api/mdx/qms/documents/${sops.sop103.id}`, { status: 'in_review' }), 200, 'SOP-103 → in_review');
+    if (statusOf(sops.sop103.id) === 'draft' && !signer) {
+      // Review names an approver who is not the author (REVIEW_ROUTE_REQUIRED, two-person rule).
+      sops.sop103.status = `draft — review ${SIGNER_ABSENT}`;
+    } else if (statusOf(sops.sop103.id) === 'draft') {
+      must(await api('PATCH', `/api/mdx/qms/documents/${sops.sop103.id}`, { status: 'in_review', reason: 'Demo: send SOP-103 for independent review' }), 200, 'SOP-103 → in_review');
       sops.sop103.status = 'in_review';
     } else sops.sop103.status = statusOf(sops.sop103.id);
     sops.sop104.status = statusOf(sops.sop104.id);

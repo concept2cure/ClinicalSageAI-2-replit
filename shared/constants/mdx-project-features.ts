@@ -5,7 +5,9 @@
  * its existing module id, server verdict, and governed access controls.
  */
 export const MDX_PROJECT_FEATURE_SURFACE_IDS = [
-  'device-workstream',
+  // No device portfolio: it folded into Projects with its MDX filter, and the
+  // Client Review Room is on each device project's Review step (D2, fold F6,
+  // 2026-10-30; docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/).
   'device-510k',
   'device-pma',
   'device-cer',
@@ -25,7 +27,9 @@ export const MDX_PROJECT_FEATURE_SURFACE_IDS = [
   // fold F5 item 2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/).
   // No device submission packages: a device filing is Submission Center's, over
   // one store, estar_submissions (D2, fold F5 item 1, 2026-10-30).
-  'device-analytics',
+  // No device analytics: its figures are the device section of Reporting &
+  // analytics, over the projects the reader can open (D2, fold F4, 2026-10-30;
+  // docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/).
   // No risk management or design controls: both folded into device-engineering
   // (D2, fold F1c, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/).
   'human-factors',

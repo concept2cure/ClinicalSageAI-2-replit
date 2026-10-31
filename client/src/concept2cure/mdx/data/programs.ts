@@ -52,13 +52,6 @@ export interface Program {
    K-numbers, enrolment and literature counts) — and MDX_HEALTH, the KPI strip
    that described them ("Active programs 14 · Down 3 pts vs last week"). Nothing
    imported MDX_PROGRAMS; MDX_HEALTH rendered on the Overview under sample mode,
-   which is gone. The Overview derives its strip from the tenant's programs. */
-
-export interface HealthKpi {
-  label: string;
-  metric: string;
-  unit?: string;
-  bar?: { pct: number; tone: DueTone };
-  meta: string;
-  tone?: DueTone;
-}
+   which is gone. The Overview derived its strip from the tenant's programs.
+   REMOVED 2026-10-30 (D2, fold F6): HealthKpi, the strip's shape. The Overview
+   folded into Projects, which counts the device portfolio on the server. */

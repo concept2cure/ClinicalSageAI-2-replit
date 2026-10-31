@@ -22,6 +22,7 @@ import React from 'react';
 import { apiRequest, redactInternals } from '@/lib/queryClient';
 import { I } from './icons';
 import { getAuthToken } from '@/utils/authToken';
+import { withReadDeadline } from '../mdx/hooks/useFetchJson';
 
 export function connected(): boolean {
   return Boolean(getAuthToken());
@@ -155,6 +156,10 @@ export interface DataResult<T> {
  */
 function failureFrom(e: unknown, path: string): DataResult<never> {
   const status = (e as { status?: unknown } | null)?.status;
+  const interrupted = (e as { code?: unknown } | null)?.code;
+  if (e instanceof Error && (interrupted === 'READ_TIMEOUT' || interrupted === 'READ_CANCELLED')) {
+    return { data: null, error: e.message, status: 0, code: interrupted };
+  }
   if (e instanceof Error && typeof status === 'number' && status > 0) {
     const code = (e as { code?: unknown }).code;
     return { data: null, error: e.message || `HTTP ${status} ${path}`, status, ...(typeof code === 'string' ? { code } : {}) };
@@ -255,22 +260,25 @@ export async function liveGetOrNull<T>(
   path: string,
   guard?: ShapeGuard<T>,
   headers?: Record<string, string>,
+  signal?: AbortSignal,
 ): Promise<DataResult<T>> {
   try {
-    const res = headers ? await apiRequest('GET', path, undefined, headers) : await apiRequest('GET', path);
-    if (!res.ok) {
-      return { data: null, error: `HTTP ${res.status} ${path}`, status: res.status };
-    }
-    if (res.status === 204) {
-      return { data: null, status: 204 };
-    }
-    const body = (await res.json()) as unknown;
-    const payload = unwrapEnvelope(body);
-    const meta = envelopeMeta(body);
-    if (guard && payload != null && !guard(payload)) {
-      return { data: null, error: shapeMismatch(path), meta, status: res.status };
-    }
-    return { data: payload as T, meta, status: res.status };
+    return await withReadDeadline(async readSignal => {
+      const res = await apiRequest('GET', path, undefined, headers, readSignal);
+      if (!res.ok) {
+        return { data: null, error: res.status === 401 ? 'Sign in again to continue.' : `HTTP ${res.status} ${path}`, status: res.status };
+      }
+      if (res.status === 204) {
+        return { data: null, status: 204 };
+      }
+      const body = (await res.json()) as unknown;
+      const payload = unwrapEnvelope(body);
+      const meta = envelopeMeta(body);
+      if (guard && payload != null && !guard(payload)) {
+        return { data: null, error: shapeMismatch(path), meta, status: res.status };
+      }
+      return { data: payload as T, meta, status: res.status };
+    }, signal);
   } catch (e) {
     return failureFrom(e, path);
   }
@@ -382,8 +390,8 @@ export function useLiveData<T>(
   owner?: DataReadOwner,
 ): DataState<T> {
   const owned = useDataReadVisit(path, owner);
-  const [read, setRead] = React.useState<{ visit: DataReadVisit | null; state: DataState<T> }>({
-    visit: null, state: { data: null, loading: Boolean(path), empty: false },
+  const [read, setRead] = React.useState<{ visit: DataReadVisit | null; path: string | null; state: DataState<T> }>({
+    visit: null, path: null, state: { data: null, loading: Boolean(path), empty: false },
   });
   // `guard` is deliberately not a dependency. It is read through a ref so an
   // inline arrow at the call site cannot re-trigger the fetch on every render,
@@ -395,17 +403,19 @@ export function useLiveData<T>(
     const current = () => !cancelled && owned.current();
     if (!current()) return undefined;
     if (!path) {
-      setRead({ visit: owned.visit, state: { data: null, loading: false, empty: false } });
+      setRead({ visit: owned.visit, path, state: { data: null, loading: false, empty: false } });
       return undefined;
     }
-    setRead(previous => ({ visit: owned.visit, state: owned.visit && previous.visit !== owned.visit
-      ? { data: null, loading: true, empty: false } : { ...previous.state, loading: true } }));
-    liveGetOrNull<T>(path, guardRef.current).then((r) => {
+    const controller = new AbortController();
+    setRead(previous => ({ visit: owned.visit, path, state: previous.path !== path || previous.visit !== owned.visit
+      ? { data: null, loading: true, empty: false }
+      : { ...previous.state, loading: true, empty: false, error: undefined, status: undefined, code: undefined } }));
+    liveGetOrNull<T>(path, guardRef.current, undefined, controller.signal).then((r) => {
       if (!current()) return;
       const isEmpty =
         !r.error &&
         (r.data == null || (Array.isArray(r.data) && r.data.length === 0));
-      setRead({ visit: owned.visit, state: {
+      setRead({ visit: owned.visit, path, state: {
         data: r.data,
         loading: false,
         error: r.error,
@@ -417,10 +427,18 @@ export function useLiveData<T>(
     });
     return () => {
       cancelled = true;
+      controller.abort();
     };
+    // A changed URL or null must retire the read even if caller deps omit it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, owned.visit]);
-  return owned.visit && (read.visit !== owned.visit || !owned.current())
+  }, [path, ...deps, owned.visit]);
+  if (owned.visit && !owned.current()) {
+    return { data: null, loading: false, empty: false, ...(path ? {
+      error: 'This view is no longer active. Reopen it to load the current data.',
+      status: 0, code: 'READ_CONTEXT_CHANGED',
+    } : {}) };
+  }
+  return read.path !== path || (owned.visit && read.visit !== owned.visit)
     ? { data: null, loading: Boolean(path), empty: false } : read.state;
 }
 

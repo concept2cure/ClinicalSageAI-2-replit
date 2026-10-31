@@ -148,9 +148,56 @@ interface DelivRun {
   view: DelivView | null;
   filing: boolean;
   fileError: string;
-  filed: { sequenceNumber: string; sequenceId: number | string; leafCount: number; openSections: number } | null;
+  filed: FiledSequence | null;
+}
+/** A filing as the server answered it. `awaiting` names the leaves written with
+ *  no document behind them; `unattached` counts revisions, appends and
+ *  withdrawals filed with no earlier leaf to act on. */
+interface FiledSequence {
+  sequenceNumber: string; sequenceId: number | string; leafCount: number; openSections: number;
+  awaiting: string[]; unattached: number;
 }
 const EMPTY_RUN: DelivRun = { busy: false, error: '', view: null, filing: false, fileError: '', filed: null };
+
+/* What a filing wrote, in words. Until 2026-10-30 every filing read "n leaves
+   placed", though the lifecycle filings write their leaves with no document
+   behind them (the server names those leavesAwaitingDocument), and a revision
+   of a CSR carried no link to the leaf it revised. */
+const leaves = (n: number) => `${n} ${n === 1 ? 'leaf' : 'leaves'}`;
+export function filedSentence(f: FiledSequence): string {
+  const head = `Filed eCTD sequence ${f.sequenceNumber} (id ${String(f.sequenceId)})`;
+  const open = f.openSections > 0 ? ` Filed with ${f.openSections} section(s) open, as acknowledged.` : '';
+  if (f.awaiting.length === 0 && f.unattached === 0) return `${head} — ${leaves(f.leafCount)} placed.${open}`;
+  const awaiting = f.awaiting.length === 0 ? ''
+    : ` ${f.awaiting.length} ${f.awaiting.length === 1 ? 'awaits' : 'await'} a document (${f.awaiting.join(', ')}): place each in Submission Center before validation.`;
+  const unattached = f.unattached === 0 ? ''
+    : f.unattached === 1
+      ? ' 1 revises, appends to or withdraws a leaf filed earlier and is not attached to it: attach it in Submission Center.'
+      : ` ${f.unattached} revise, append to or withdraw leaves filed earlier and are not attached to them: attach each in Submission Center.`;
+  return `${head} with ${leaves(f.leafCount)}.${awaiting}${unattached}${open}`;
+}
+
+/** The filing route's answer as the card states it. */
+function filedFrom(json: any, seq: string): FiledSequence {
+  const written: any[] = Array.isArray(json.leaves) ? json.leaves : [];
+  return {
+    sequenceNumber: String(json.sequence.sequenceNumber ?? seq),
+    sequenceId: json.sequence.id,
+    leafCount: written.length,
+    openSections: typeof json.filedWithOpenGaps === 'number' ? json.filedWithOpenGaps : 0,
+    awaiting: Array.isArray(json.leavesAwaitingDocument) ? json.leavesAwaitingDocument.map(String) : [],
+    unattached: written.filter((l) => ['replace', 'append', 'delete'].includes(String(l?.lifecycleOp)) && l?.parentLeafId == null).length,
+  };
+}
+
+/** The 21 CFR 312.30(d) and 312.31(b) identification the amendment planner gave, one line each; none when it gave none. */
+export function amendmentIdentification(plan: { protocolAmendmentTitles?: unknown; informationAmendmentTitles?: unknown }): string[] {
+  const titles = (v: unknown) => (Array.isArray(v) ? v.map(String).filter(Boolean) : []);
+  return [
+    ...(titles(plan.protocolAmendmentTitles).length ? [`Identified as: ${titles(plan.protocolAmendmentTitles).join('; ')} (21 CFR 312.30(d))`] : []),
+    ...(titles(plan.informationAmendmentTitles).length ? [`Identified as: ${titles(plan.informationAmendmentTitles).join('; ')} (21 CFR 312.31(b))`] : []),
+  ];
+}
 
 export interface DelivField {
   key: string;
@@ -230,7 +277,10 @@ const FDA_CENTERS = [
 ];
 /* The safety-report option lists (event type, seriousness, causality, outcome,
    expectedness) moved with the withheld card to tests/fixtures/withheld/indSafetyReportCard.ts. */
-const AMENDMENT_CATEGORIES = OPTS(['protocol', 'protocol_amendment_summary', 'new_investigator', 'cmc', 'pharmacology_toxicology', 'clinical_summary', 'investigators_brochure', 'other']);
+/* clinical_study_report: a study report files at m5.3.5.1 as an information
+   amendment (the planner, b9dbaeff4). The card did not offer it until 2026-10-30,
+   so a CSR could only be planned at m2.5 or m1.2. */
+const AMENDMENT_CATEGORIES = OPTS(['protocol', 'protocol_amendment_summary', 'new_investigator', 'cmc', 'pharmacology_toxicology', 'clinical_summary', 'clinical_study_report', 'investigators_brochure', 'other']);
 const CHANGE_KINDS = OPTS(['added', 'revised', 'appended', 'withdrawn']);
 
 /* ── Verdicts come from the server's deterministic engines; the screen computes
@@ -763,11 +813,18 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
      now names the submission (submissionId, declared below with the filing
      anchor); the server reads the type from that record's lifecycle stage, or
      reports it not stated — a gap, never the screen's guess. */
+  /* 2026-10-30: the stage names only original and annual, so no letter could
+     identify an amendment. The card now names the filed sequence the letter
+     accompanies, as entered; the server reads what that sequence contains
+     (an information amendment, a CSR's included, and its 312.31(b) title) or
+     reports the type not stated. */
+  const coverLetterSequence = (fields['cl.sequenceNumber'] ?? '').trim();
   const coverLetterPayload = () => ({
     sponsorName: prog.sponsorName ?? '',
     drugName: drug,
     ...(submissionId != null ? { submissionId } : {}),
     ...(coverLetterCenter ? { fdaCenter: coverLetterCenter } : {}),
+    ...(coverLetterSequence ? { sequenceNumber: coverLetterSequence } : {}),
   });
   /** Why the server refused the letter, in its words; "sign in and retry" only when it is about signing in. */
   const coverLetterRefusal = async (res: Response): Promise<string> => {
@@ -934,15 +991,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         patchRun(id, { filing: false, fileError: `Not filed — ${serverErr(json, res.status)}.` });
         return;
       }
-      patchRun(id, {
-        filing: false,
-        filed: {
-          sequenceNumber: String(json.sequence.sequenceNumber ?? seq),
-          sequenceId: json.sequence.id,
-          leafCount: Array.isArray(json.leaves) ? json.leaves.length : 0,
-          openSections: typeof json.filedWithOpenGaps === 'number' ? json.filedWithOpenGaps : 0,
-        },
-      });
+      patchRun(id, { filing: false, filed: filedFrom(json, seq) });
     } catch (e) {
       patchRun(id, { filing: false, fileError: 'Not filed — ' + failMsg(e) + '.' });
     }
@@ -1080,10 +1129,12 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
       toView: (json: any) =>
         Array.isArray(json?.leaves)
           ? {
-              text:
+              text: [
+                ...amendmentIdentification(json),
                 json.leaves
                   .map((l: any) => `${l.sectionCode} · ${l.lifecycleOp} — ${l.title}${l.cfrRef ? ` (${l.cfrRef})` : ''}`)
                   .join('\n') || '(no leaves planned)',
+              ].join('\n'),
               gaps: Array.isArray(json.warnings) ? json.warnings.map(String) : [],
               canFile: true,
             }
@@ -1590,6 +1641,17 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                             ))}
                           </select>
                         </label>
+                        <label style={{ fontSize: 12 }}>
+                          eCTD sequence this letter accompanies (optional)
+                          <input
+                            className="c2c-input"
+                            style={{ height: 28, width: '100%' }}
+                            inputMode="numeric"
+                            placeholder="e.g. 0007"
+                            value={coverLetterSequence}
+                            onChange={(e) => setFieldVal('cl.sequenceNumber', e.target.value)}
+                          />
+                        </label>
                       </div>
                       <div className="indl-dcard-acts">
                         <button
@@ -1793,11 +1855,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                           )}
                           {run.filed && (
                             <div className="indl-dcard-desc" role="status">
-                              Filed eCTD sequence {run.filed.sequenceNumber} (id{' '}
-                              {String(run.filed.sequenceId)}) —{' '}
-                              {run.filed.leafCount}{' '}
-                              {run.filed.leafCount === 1 ? 'leaf' : 'leaves'} placed.
-                              {run.filed.openSections > 0 && ` Filed with ${run.filed.openSections} section(s) open, as acknowledged.`}
+                              {filedSentence(run.filed)}
                             </div>
                           )}
                         </>

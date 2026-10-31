@@ -63,7 +63,7 @@ function renderHost(nav: string) {
 }
 
 const props = {
-  surface: { id: 'device-workstream' },
+  surface: { id: 'device-510k' },
   onAsk: () => {},
   onNav: () => {},
   segment: 'medtech',
@@ -86,7 +86,7 @@ describe('MdxSurfaceHost draws every surface it claims', () => {
     // `.mdx-shell` is also `display: grid` with a rail column at 100vh. Without
     // `data-surface` the canvas lands in the rail slot of a shell that no
     // longer exists, in a box taller than the host's page area.
-    const { container } = renderHost('device-workstream');
+    const { container } = renderHost('device-510k');
     expect(container.querySelector('.mdx-shell[data-surface="true"]')).toBeTruthy();
   });
 

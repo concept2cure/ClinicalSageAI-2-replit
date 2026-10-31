@@ -122,7 +122,8 @@ function destinations(scroll: HTMLElement, onNav: ReturnType<typeof vi.fn>): str
   return onNav.mock.calls.map((c) => c[0] as string);
 }
 
-const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault'];
+// Submission Center is back on the rail: the founder looked for it there in a client demo (2026-10-31).
+const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'Submission Center'];
 const WORK_AREAS = ['CMC / Module 3', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
 
 describe('the rail lists the places, then the work areas', () => {
@@ -138,10 +139,10 @@ describe('the rail lists the places, then the work areas', () => {
     expect(Array.from(group.querySelectorAll('button .lbl')).map((l) => l.textContent)).toEqual(WORK_AREAS);
   });
 
-  it('the feature catalog, Submission Center, Conversation and a second task entry are not on the rail', async () => {
+  it('the feature catalog, Conversation and a second task entry are not on the rail', async () => {
     const { scroll } = await mountRail();
     const labels = Array.from(scroll.querySelectorAll('button .lbl')).map((l) => l.textContent);
-    for (const gone of ['Workflows', 'Plan & features', 'Subscription & features', 'Submission Center', 'Conversation', 'My work', 'Tasking']) {
+    for (const gone of ['Workflows', 'Plan & features', 'Subscription & features', 'Conversation', 'My work', 'Tasking']) {
       expect(labels, gone).not.toContain(gone);
     }
   });
@@ -181,6 +182,28 @@ describe('the rail lists the places, then the work areas', () => {
     const { scroll, onNav } = await mountRail();
     fireEvent.click(within(scroll).getByRole('button', { name: 'Quality' }));
     expect(onNav).toHaveBeenCalledWith('quality');
+  });
+
+  /* Found in the running app, 2026-10-31: with no project open, Vault, Tasks, Communication and
+     Quality are project screens, so the router lands on Projects, and from Projects the click
+     looked dead. The rail now says why. */
+  it('says a project screen needs a project when none is open, instead of doing nothing visible', async () => {
+    const { clearShellProject, publishShellProject } = await import('../shellProject');
+    clearShellProject();
+    const { scroll, onNav } = await mountRail();
+    fireEvent.click(within(scroll).getByRole('button', { name: 'Vault' }));
+    expect(onNav).toHaveBeenCalledWith('vault');
+    expect(await screen.findByText('Open a project to see its Vault. Choose one in Projects.')).toBeTruthy();
+    // Tasks too, whose rail target ('tasks') is not its navigation id ('tasking').
+    fireEvent.click(within(scroll).getByRole('button', { name: 'Tasks' }));
+    expect(await screen.findByText('Open a project to see its Tasks. Choose one in Projects.')).toBeTruthy();
+    cleanup();
+    publishShellProject({ id: '11111111-2222-4333-8444-000000000001', title: 'SYN-201 IND' });
+    try {
+      const open = await mountRail();
+      fireEvent.click(within(open.scroll).getByRole('button', { name: 'Vault' }));
+      expect(screen.queryByText(/Open a project to see/)).toBeNull();
+    } finally { clearShellProject(); }
   });
 
   it('CMC / Module 3 is on the rail beside Quality, and opens CMC', async () => {

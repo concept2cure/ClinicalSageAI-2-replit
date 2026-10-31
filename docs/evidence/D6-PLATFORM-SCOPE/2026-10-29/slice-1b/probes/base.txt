@@ -1,0 +1,52 @@
+P-72 slice 1b, lane C: the production-shaped base, lc_base_h.
+
+1. P-72 slice 0's seeded two-tenant database (organizations p72-a = 7, p72-b = 8; ../slice-0/seed-two-tenants.txt), copied as lc_base.
+2. deploy-migrate replayed on it at d581eba7a (git archive of migrations, db, scripts), as the superuser, as CI's applier does:
+   458/458 migration files applied, all five steps, exit 0 (tail below).
+3. Every object postgres owned handed to c2c_rds_master (41-rds-shaped-owner.sql.txt): LOGIN CREATEROLE, NOSUPERUSER, NOBYPASSRLS, as the RDS master is.
+   A FORCEd table then holds its owner, and every owner-owned SECURITY DEFINER function, to its policies.
+
+Since d581eba7a the migration set gained one file, migrations/20261030b_c2c_agency_meetings_read_only.sql (agency meetings);
+it names none of the tables these controls read (audit_logs, audit_events, vault.*, organizations), so the base was not rebuilt.
+
+== rds shape
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/laneC/probe/41-rds-shaped-owner.sql:49: NOTICE:  reassigned to c2c_rds_master: schemas 0, relations 2, functions 2, types 0; not reassigned 0
+     owner      | count 
+----------------+-------
+ c2c_rds_master |  1280
+(1 row)
+
+         owner          | definers | count 
+------------------------+----------+-------
+ c2c_rds_master         |       64 |   247
+ postgres               |        0 |   114
+ review_route_writer    |        8 |     8
+ tenant_record_purger   |        5 |     5
+ c2c_platform_scope     |        3 |     3
+ ana_run_events_purger  |        3 |     3
+ ana_record_purger      |        2 |     2
+ audit_archiver         |        1 |     1
+ artifact_record_purger |        1 |     1
+(9 rows)
+
+
+== deploy-migrate (head and tail)
+tree d581eba7a508bdb966ff0545f939425e96a526f0 (git archive of HEAD: migrations, db, scripts); database lc_base_h (copy of lc_base); applier postgres (superuser); 2026-10-30T15:01:59Z
+▶ 1/5 Preflight — database already provisioned?
+  ...
+▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+  role postgres on lc_base_h (superuser=true, bypassrls=true)
+  schemas: 3/3 present
+  extensions: 1/1 installed
+  critical tables: 2/2 present
+  security-critical tables: 5/5 present
+  Part 11 audit store: 1/1 present
+  SELECT reach: 8/8 contract tables readable by app_service
+  grant audit: 1327/1327 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+  authoring subsystem: 19/19 tables present
+  tenant-parentage FKs: 6/6 present
+  tenant_isolation_policy: 19/19 tables policied
+  governed-content tree: 3/3 sentinel(s) present
+
+✅ Schema migration complete — safe to roll services.
+deploy-migrate exit 0

@@ -1,0 +1,12 @@
+-- P-72 slice 1b, lane C: give the controls something to act on, as P-72 slice 0's 51-path-data.sql did (owner, past triggers; a copy only).
+-- Retention: one expired document per tenant. A's programme stays under its legal hold; B's hold is lifted with attribution.
+\set ON_ERROR_STOP on
+SET session_replication_role = 'replica';
+UPDATE vault.documents SET retention_until = CURRENT_DATE - 10 WHERE document_code IN ('p72-a-doc-2', 'p72-b-doc-2');
+UPDATE vault.legal_holds SET lifted_at = now(), lifted_by = (SELECT u.id FROM users u WHERE u.email = 'p72-b-admin@example.invalid'),
+       lift_reason = 'p72 slice 1b probe: lifted so the expired document is disposable'
+ WHERE reference = 'p72-hold-' || (SELECT id FROM organizations WHERE slug = 'p72-b');
+SET session_replication_role = 'origin';
+SELECT 'vault expired' AS what, count(*) FROM vault.documents WHERE retention_until < CURRENT_DATE AND deleted_at IS NULL
+UNION ALL SELECT 'holds active', count(*) FROM vault.legal_holds WHERE lifted_at IS NULL AND reference LIKE 'p72-hold-%'
+UNION ALL SELECT 'audit_logs chained', count(*) FROM audit_logs WHERE sha256_chain IS NOT NULL;

@@ -69,6 +69,14 @@ export interface AuthoringFilingBarProps {
    *  offers that one meaning. QA 2026-10-08 (j4): the reviewer a review was
    *  assigned to could not sign it. */
   reviewOnly?: boolean;
+  /** The signed-in user created this document (the host compares
+   *  `created_by`). The creator is always one of its authors, and the server
+   *  refuses an author every signature meaning but authorship, route or none
+   *  (separation of duties, 2026-10-30), so the dialogs offer authorship alone.
+   *  False or absent: the dialogs offer every meaning and the server decides,
+   *  which is right for anyone else, including another author the host cannot
+   *  see (a revision contributor). */
+  signerIsAuthor?: boolean;
   workflowOrigin?: WorkflowImportOrigin;
   docRevision?: string;
 }
@@ -175,12 +183,31 @@ const AUTHORING_MEANING: Partial<Record<EsigMeaning, 'AUTHOR' | 'REVIEWER' | 'AP
 const AUTHORING_MEANINGS: ReadonlyArray<EsigMeaning> = ['authorship', 'review', 'approval'];
 /** What a Reviewer grant may sign (the 'review' act, authoringObjectAuthorization). */
 const REVIEW_ONLY_MEANINGS: ReadonlyArray<EsigMeaning> = ['review'];
+/** What the document's creator may sign or seal: authorship (`signerIsAuthor`). */
+const AUTHORSHIP_ONLY_MEANINGS: ReadonlyArray<EsigMeaning> = ['authorship'];
 
-/** What the E-sign dialog offers: every meaning, or the review signature alone. */
-function esignOffer(reviewOnly: boolean | undefined): { meanings: ReadonlyArray<EsigMeaning>; targetMeta: string } {
+/** What the E-sign dialog offers: every meaning, the review signature alone, or, to its creator, authorship alone. */
+function esignOffer(reviewOnly: boolean | undefined, signerIsAuthor?: boolean): { meanings: ReadonlyArray<EsigMeaning>; targetMeta: string } {
+  if (signerIsAuthor) {
+    return { meanings: AUTHORSHIP_ONLY_MEANINGS,
+      targetMeta: 'You created this document, so you sign it as its author. Review and approval are signed by someone who did not write it.' };
+  }
   return reviewOnly
     ? { meanings: REVIEW_ONLY_MEANINGS, targetMeta: 'Your grant on this document permits the review signature. Approval is signed by an approver.' }
     : { meanings: AUTHORING_MEANINGS, targetMeta: 'An Approval signature approves and freezes the document.' };
+}
+
+/** What the Freeze dialog offers: both freeze meanings, or, to the document's creator, authorship alone. */
+function freezeMeanings(signerIsAuthor: boolean | undefined): ReadonlyArray<EsigMeaning> {
+  return signerIsAuthor ? AUTHORSHIP_ONLY_MEANINGS : FREEZE_MEANINGS;
+}
+
+/** E-sign's refusal: the server's, or, for a creator whose grant permits the review signature alone,
+ *  the refusal every meaning would meet (an author never signs the review; the grant admits nothing else). */
+function esignRefusalFor(refusal: string | null | undefined, reviewOnly: boolean | undefined, signerIsAuthor: boolean | undefined) {
+  return reviewOnly && signerIsAuthor
+    ? 'You created this document, so you may not sign its review, and your grant on it permits no other signature.'
+    : refusal;
 }
 
 /** What the shared dialog hands over once the signer has re-authenticated. */
@@ -365,11 +392,12 @@ async function postFreeze(docId: string, input: SignInput, acknowledge: boolean)
   return { kind: 'sealed', hash: json?.contentHash, frozenAt: json?.frozenAt };
 }
 
-/** The line under the freeze dialog's target: what the signature records. */
-function freezeTargetMeta(unresolved: Unresolved | null): string {
-  return unresolved
+/** The line under the freeze dialog's target: what the signature records, and, to the creator, why authorship alone. */
+function freezeTargetMeta(unresolved: Unresolved | null, signerIsAuthor?: boolean): string {
+  const what = unresolved
     ? `Sealing it as it stands, with ${describeUnresolved(unresolved)}. Your signature records that you sealed it.`
     : 'Freezing seals the content for signature and filing. Your signature records that you sealed it.';
+  return signerIsAuthor ? `${what} You created this document, so you seal it as its author. A review seal is signed by someone who did not write it.` : what;
 }
 
 /** The Freeze control's title: why it is unavailable, or what it does. */
@@ -387,7 +415,8 @@ function RefusalNote({ id, testId, text }: { id: string; testId: string; text: s
   );
 }
 
-export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal, esignRefusal, reviewOnly, workflowOrigin, docRevision }: AuthoringFilingBarProps) {
+export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal, esignRefusal: serverEsignRefusal, reviewOnly, signerIsAuthor, workflowOrigin, docRevision }: AuthoringFilingBarProps) {
+  const esignRefusal = esignRefusalFor(serverEsignRefusal, reviewOnly, signerIsAuthor);
   const freezeNoteId = useId();
   const esignNoteId = useId();
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -485,9 +514,9 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
           open
           action="Freeze and seal"
           target={docTitle}
-          targetMeta={freezeTargetMeta(unresolved)}
+          targetMeta={freezeTargetMeta(unresolved, signerIsAuthor)}
           defaultMeaning="authorship"
-          meanings={FREEZE_MEANINGS}
+          meanings={freezeMeanings(signerIsAuthor)}
           signer={signer}
           onClose={() => { setUnresolved(null); setDialog(null); }}
           onSign={doFreeze}
@@ -501,7 +530,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
           onSubmit={onUnsettledChoice}
         />
       )}
-      <EsignDialogs dialog={dialog} docTitle={docTitle} unresolved={unresolved} reviewOnly={reviewOnly} signer={signer}
+      <EsignDialogs dialog={dialog} docTitle={docTitle} unresolved={unresolved} reviewOnly={reviewOnly} signerIsAuthor={signerIsAuthor} signer={signer}
         esignRefusal={esignRefusal} onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
         onSign={doSign} onClose={closeEsign} onChoice={onApprovalUnsettledChoice} />
     </>
@@ -509,8 +538,8 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
 }
 
 /** The E-sign dialog, and the approval's not-settled question when the server asked it (2026-10-30). */
-function EsignDialogs({ dialog, docTitle, unresolved, reviewOnly, signer, esignRefusal, onMeaningChange, renderMeaningDetails, onSign, onClose, onChoice }: {
-  dialog: Dialog; docTitle: string; unresolved: Unresolved | null; reviewOnly?: boolean;
+function EsignDialogs({ dialog, docTitle, unresolved, reviewOnly, signerIsAuthor, signer, esignRefusal, onMeaningChange, renderMeaningDetails, onSign, onClose, onChoice }: {
+  dialog: Dialog; docTitle: string; unresolved: Unresolved | null; reviewOnly?: boolean; signerIsAuthor?: boolean;
   signer: AuthoringFilingBarProps['signer']; esignRefusal?: string | null;
   onMeaningChange: (m: EsigMeaning) => void; renderMeaningDetails: (m: EsigMeaning, disabled: boolean) => React.ReactNode;
   onSign: (input: SignInput) => Promise<EsigSignedManifest>; onClose: () => void; onChoice: (v: Record<string, string>) => void;
@@ -519,14 +548,15 @@ function EsignDialogs({ dialog, docTitle, unresolved, reviewOnly, signer, esignR
     return <C2CForm config={APPROVAL_UNSETTLED_FORM(docTitle, unresolved)} onCancel={onClose} onSubmit={onChoice} />;
   }
   if (dialog !== 'esign') return null;
+  const offer = esignOffer(reviewOnly, signerIsAuthor);
   return (
     <EsignModal
       open
       action="Sign document"
       target={docTitle}
-      targetMeta={unresolved ? approveAsItStandsMeta(unresolved) : esignOffer(reviewOnly).targetMeta}
+      targetMeta={unresolved ? approveAsItStandsMeta(unresolved) : offer.targetMeta}
       defaultMeaning={unresolved ? 'approval' : 'review'}
-      meanings={esignOffer(reviewOnly).meanings}
+      meanings={offer.meanings}
       onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
       signer={signer}
       onClose={onClose}

@@ -130,7 +130,18 @@ const SCAN_ROOT = 'client/src/concept2cure';
 // 2026-10-30 D2 fold F5 item 1: device-submission folds into Submission Center
 // (decision P-61 item 1), whose own publish states the device filings. The
 // retired id is an alias, no longer a routable publisher (foldDeviceSubmission.test.ts).
-const ID_BASELINE = 101;
+// 2026-10-30 D2 fold F4: device-analytics joins Reporting & analytics (decision
+// P-61 item 3); the overview's device section is shown by Insights, which
+// already publishes. The retired id is an alias, no longer a routable publisher
+// (foldDeviceAnalytics.test.ts).
+// 2026-10-30 D2 fold F6: device-workstream, the kit portfolio, folds into
+// Projects with its MDX filter (decision P-61 item 5); Projects already
+// publishes. The retired id is an alias, no longer a routable publisher
+// (foldDeviceWorkstream.test.ts). The same day agency-meetings retired into
+// Communication (508b2b7a8, P-39 step 4), whose own publish states the
+// meetings; that change left this baseline at 101 over 100 publishers, so the
+// gate failed at its head. Both are counted here: 100 - 1 (F4) - 1 (F6) = 98.
+const ID_BASELINE = 98;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.

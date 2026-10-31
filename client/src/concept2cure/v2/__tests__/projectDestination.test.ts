@@ -47,9 +47,10 @@ describe('one destination for a project-scoped visit', () => {
     expect(destinationFor('mdx', false).applies?.params).toEqual({ workstream: 'MDX' });
   });
 
-  it('retains the device portfolio destination until its separate parity fold', () => {
-    expect(destinationFor('device-workstream', false)).toEqual({ surfaceId: 'device-workstream' });
-    expect(destinationFor('device-workstream', true)).toEqual({ surfaceId: 'device-workstream' });
+  it('sends the folded device portfolio to Projects with the MDX filter, with or without a project open (fold F6)', () => {
+    const filtered = { surfaceId: 'projects', applies: { actionId: 'projects.filter', params: { workstream: 'MDX' } } };
+    expect(destinationFor('device-workstream', false)).toEqual(filtered);
+    expect(destinationFor('device-workstream', true)).toEqual(filtered);
   });
 
   it('keeps the raw URL id until its requested action has been applied', () => {

@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-30",
+  "base_commit": "22859cca96ca016c509bd48c09bae41d987137de",
+  "branch": "concept2cure-v2",
+  "node": "v22.16.0",
+  "command": "node --test scripts/demo/launch-demo/demo-recovery.test.mjs",
+  "original": {
+    "tests": 35,
+    "pass": 2,
+    "fail": 33,
+    "skipped": 0,
+    "tap_sha256": "e6b67dbc621624be96c2454f971745577b88b87438c796e59e710bd9d1082944"
+  },
+  "repaired": {
+    "tests": 35,
+    "pass": 35,
+    "fail": 0,
+    "skipped": 0,
+    "tap_sha256": "91cfaec30e9d8b40b7828a9e6130d2975d8ea4bfb333387789799a1336612840"
+  },
+  "syntax_checked_files": [
+    "scripts/demo/launch-demo/lib.mjs",
+    "scripts/demo/launch-demo/packs/biotech.mjs",
+    "scripts/demo/launch-demo/seed.mjs",
+    "scripts/demo/launch-demo/demo-recovery.test.mjs"
+  ],
+  "files": {
+    "scripts/demo/launch-demo/lib.mjs": {
+      "git_blob_sha": "825254bbe091d02aaf124704814bd2fefc03b299",
+      "sha256": "ec2d16c4ffb3a4dd7d47f7ff8736af495d22d00b8225057d0fa7ecb9655b0ca7"
+    },
+    "scripts/demo/launch-demo/packs/biotech.mjs": {
+      "git_blob_sha": "870d6c81932bb5f2eac57934194824095c8ee1f1",
+      "sha256": "8166798dbec51a37aca2fff950af49721e3a65abf727fda58b963e957061540f"
+    },
+    "scripts/demo/launch-demo/seed.mjs": {
+      "git_blob_sha": "4b777889a1c2b3a7cea9ef48e9d1d83fc486fa87",
+      "sha256": "b73025de8a272fd94312774c8a29d0d88dc8b4a398adca057c2d517e275100c2"
+    },
+    "scripts/demo/launch-demo/demo-recovery.test.mjs": {
+      "git_blob_sha": "dcbfd1048c9486da8797ccabdef69dc25a19c342",
+      "sha256": "b9583b2beda5f4218fad0e0f17ecd48355c1fd5e0c0e94da30c223b051d4880d"
+    }
+  },
+  "scope": "Actual script modules; HTTP and downstream service doubles. No live database, browser, full build, full typecheck or deployment qualification.",
+  "hosted_acceptance": "not_executed"
+}

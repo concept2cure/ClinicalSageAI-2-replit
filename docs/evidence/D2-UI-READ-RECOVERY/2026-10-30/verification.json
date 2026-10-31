@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-30",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "base_commit": "6877b1cfca1008ef633de7763a47e65f266d3fee",
+  "runtime": {
+    "node": "v22.16.0",
+    "typescript": "5.8.3"
+  },
+  "command": "node --test tests/ops/ui-read-recovery.test.mjs",
+  "original": {
+    "tests": 48,
+    "pass": 21,
+    "fail": 27,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "repaired": {
+    "tests": 48,
+    "pass": 48,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "read_timeout_ms": 20000,
+  "assurance": "Actual module execution with explicit HTTP/timer/React-hook lifecycle and dependency doubles, not browser or live-database integration.",
+  "isolated_typecheck": {
+    "diagnostics": 0,
+    "dependency_stubs": true,
+    "full_application": false
+  },
+  "logs": {
+    "red.tap": {
+      "sha256": "54cee2eb5fd0056f8733c37f082feeab63a96b2e58171629baad834891aafc0e",
+      "bytes": 26872
+    },
+    "green.tap": {
+      "sha256": "ce71df4b3887a38aa47a9458b78fe604a4e52c85d1c9eccb10b14f73145bda26",
+      "bytes": 10763
+    },
+    "typecheck-slice.txt": {
+      "sha256": "d2841fcb8da2a8dccabf73388692c5b0deae4434adceac08d08959d07e91c475",
+      "bytes": 154
+    }
+  },
+  "files": {
+    "client/src/lib/queryClient.ts": {
+      "git_blob_sha": "b83fcc66c03348c96aa761755f9b2c1d709c73a4",
+      "sha256": "c7a3bffda9567c044c424ae0db361cac96c2389de69e2e6f80a41eac50cde612",
+      "bytes": 25722,
+      "base_git_blob_sha": "5b8840360c91c20d270bd69dacd5f8d2b04b028a"
+    },
+    "client/src/concept2cure/v2/dataConnect.tsx": {
+      "git_blob_sha": "676bd64ca0aa81a824eba9ce11b25bf5cdab2bca",
+      "sha256": "80a58d10547af07299b99e1b36cd279bdd6949ea15906ced6993c6404fbef120",
+      "bytes": 34066,
+      "base_git_blob_sha": "005d57d94e29a03fa91cfde86b8822da20b23e55"
+    },
+    "client/src/concept2cure/mdx/hooks/useFetchJson.ts": {
+      "git_blob_sha": "b19d2fe11918628e6b633a5cfa5153c4ee8d8c86",
+      "sha256": "feaed717e3c10b29a1324b1297ccfb37f7df82e810c34fdcfdb5899d30643e39",
+      "bytes": 16826,
+      "base_git_blob_sha": "84025440b031f8154ea48d198aa221a39cb75f14"
+    },
+    "tests/ops/ui-read-recovery.test.mjs": {
+      "git_blob_sha": "7bb2913de8b7a20bfc280368b220639d90575f5d",
+      "sha256": "f22496892fff0c26bed56322039234c490c2785b8fd65a832a84eb3fc423cd3c",
+      "bytes": 28022,
+      "base_git_blob_sha": null
+    }
+  },
+  "full_build": "not_executed",
+  "full_typecheck": "not_executed",
+  "lint": "not_executed",
+  "ordinary_pre_push": "not_executed",
+  "browser": "not_executed",
+  "hosted_deployment": "not_performed",
+  "hosted_incident": "open"
+}

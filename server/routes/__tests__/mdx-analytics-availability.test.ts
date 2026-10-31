@@ -20,10 +20,16 @@ beforeEach(() => {
     : { rows: [{ total: 2, active: 2, blocked: 0, complete: 0, received: 1, in_review: 0 }] });
 });
 describe('MDX analytics data availability', () => {
-  it('rejects an unsupported pathway rather than labeling organization totals as filtered data', async () => {
-    const r = await request(app()).get('/api/mdx/analytics?pathway=k510');
-    expect(r.status).toBe(400); expect(r.body.error).toBe('ANALYTICS_PATHWAY_UNAVAILABLE');
+  /* The kit-shaped aggregate retired with the device analytics screen (D2, fold
+     F4, 2026-10-30; decision P-61 item 3). Its figures are the Reporting
+     overview's device section over the projects the reader can open; its
+     honesty cases moved to server/services/report-os/__tests__/device-portfolio.pglite.test.ts. */
+  it('no longer serves the organization-wide kit aggregate, and reads nothing for it', async () => {
+    for (const p of ['/api/mdx/analytics', '/api/mdx/analytics?pathway=all', '/api/mdx/analytics?pathway=k510']) {
+      expect((await request(app()).get(p)).status, p).toBe(404);
+    }
     expect(S.pinned).not.toHaveBeenCalled();
+    expect(S.shared).not.toHaveBeenCalled();
   });
   it('reads positive tenant data on the pinned connection', async () => {
     const r = await request(app()).get('/api/mdx/analytics/portfolio');

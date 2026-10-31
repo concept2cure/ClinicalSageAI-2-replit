@@ -18,6 +18,10 @@
  *                         (computeInitialRun, via fetchOrgPortfolioSummary)
  *   - portfolio         → the cross-program board rollup, ENTERPRISE-gated
  *                         exactly like /api/report-os/portfolio/org
+ *   - device            → the device section (fold F4, decision P-61 item 3):
+ *                         status counts, submission pace and the AnA draft
+ *                         acceptance rate over the device projects the reader
+ *                         can open (readDevicePortfolio), on every tier
  *
  * The per-utterance report / dashboard artifacts the canvas renders on demand
  * are NOT served here — they already have honest endpoints
@@ -76,6 +80,7 @@ import type { FeatureKey, Tier } from '../services/entitlements/types';
 import { authedUserId } from '../utils/authedActor';
 import { getAccessibleReportProjectIds, type ReportProjectActor } from '../services/report-os/project-access';
 import { aggregateOrgPortfolio } from '../services/report-os/portfolio/aggregate';
+import { readDevicePortfolio, type DevicePortfolioSection } from '../services/report-os/device-portfolio';
 
 const logger = createScopedLogger('insights-canvas-routes');
 
@@ -276,6 +281,21 @@ interface CanvasOverview {
    */
   programs: CanvasProgramChoice[];
   portfolio: CanvasPortfolio;
+  /**
+   * Device analytics, folded into Reporting & analytics (D2, fold F4,
+   * 2026-10-30; decision P-61 item 3): the device projects among the reader's
+   * accessible projects, by recorded status, their submission pace and the AnA
+   * draft acceptance rate (server/services/report-os/device-portfolio.ts).
+   * `none` when the reader can open no device project; `unavailable` when the
+   * read failed, never an empty section.
+   */
+  device: DevicePortfolioSection;
+}
+
+/** A failed device read is said as one, with its detail logged only. */
+function deviceSectionUnavailable(organizationId: number, error: unknown): DevicePortfolioSection {
+  logger.error('device section read failed', { organizationId, err: error instanceof Error ? error.message : String(error) });
+  return { state: 'unavailable' };
 }
 
 /** Fail-closed decision used only if the (never-throwing) entitlement gate rejects.
@@ -639,6 +659,12 @@ export default function createInsightsCanvasRoutes(): Router {
       // /api/report-os/portfolio/org.
       const portfolio = canvasPortfolio(gate, summary);
 
+      // The device section (fold F4): over the accessible projects only, on the
+      // request's own connection, on every tier (Reporting's tier is standard).
+      // Its failure withdraws the section alone, said as unavailable.
+      const device: DevicePortfolioSection = await readDevicePortfolio(requestPgClient(req), organizationId, accessibleProjectIds, new Date())
+        .catch((error: unknown) => deviceSectionUnavailable(organizationId, error));
+
       const data: CanvasOverview = {
         organizationId,
         tier,
@@ -650,6 +676,7 @@ export default function createInsightsCanvasRoutes(): Router {
         programs,
         portfolio,
         dataScope: 'accessible_projects',
+        device,
       };
 
       await filingRead.recheck();

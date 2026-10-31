@@ -65,7 +65,7 @@ and `c2c_secure_attachments`. Nothing writes the last one.
 |---|---|---|
 | **S1** | The family's reads and its one governed write are scoped to a project the person may open or change. Not convergence, but an exposure that must not wait for it. | Done 2026-10-29 |
 | **S2** | The device Correspondence tab reads the project inbox, and each letter opens on its record in Communication (`openLetterInCommunication`, as CMC does). The AnaDrafter, a second response screen that could not send, is deleted. | Done 2026-10-29 |
-| **S3** | AnA's `correspondence.ingest` records the letter through the inbox's governed create. **Blocked**: see "S3 is blocked" below. | blocked |
+| **S3** | ~~AnA's `correspondence.ingest` records the letter through the inbox's governed create.~~ Decided 2026-10-30: the command is retired, and a person records the letter in the inbox. See "S3 decided" below. | Done 2026-10-30 |
 | **S4** | The response clock becomes the inbox's: a letter records its class (`AGENCY_LETTER_CLASSES`), the list returns `correspondenceResponseClock` (the stated date wins, else the class window from receipt, else undated), and the card shows it. The overdue verdict moves with S5. | Done 2026-10-29 |
 | **S5** | Submission-ops publish gate 4 and the command-center count read the inbox: a letter's questions not approved, by the server's own verdict. | after S4 |
 | **S6** | The family's routes are deleted and its tables made read-only, with their rows kept, as `20261019b` and `20261029i` did. The issue parser stays as the inbox's classifier: it suggests a proposed question's discipline and CTD section, and a person records them. The deletion record names S2–S5's paths. | last |
@@ -102,3 +102,23 @@ Pointing the proxy at the inbox would carry the defect over. So S3 waits on one 
 
 The second is the convergence S3 needs, and it is the one recommended. Until then the command is reported as not
 working, never as working. S4 does not depend on S3 and goes next.
+
+## S3 decided (2026-10-30, under the founder's delegation): the command is retired, not ported
+
+Neither route above is this convergence's to build:
+- An AnA service identity is security's lane.
+- The in-process route needs project write admission reproduced outside a request. `CommandContext` carries no
+  request, no client workspace and no admission (`server/services/ana-ri/command-executor.ts`). Building that is a
+  change to every AnA command, not to one.
+
+And the command never worked in a deployment, so retiring it takes nothing from any user:
+- `correspondence.ingest` is deleted: its handler, its metadata, its RBAC entry, its launch-inventory entry and its
+  knowledge-pack mentions.
+- A person records the letter in the project inbox (Communication → Log agency communication), with a reason and an
+  audit entry. G3 then proposes the letter's numbered questions without a model.
+- Its past audit rows still explain (`mdx-explain-audit-row.ts`).
+- The other proxied commands (`predicate.candidate.set_status`, `se_matrix.patch`, `mdx-command-handlers.ts`,
+  `mdx-document-preview-tool.ts`) are the device and AnA lanes'. The finding above stands for them.
+- Evidence: `docs/evidence/D2-CORRESPONDENCE-CONVERGED/2026-10-30-s3-ingest-retired/`.
+
+With S3 decided, nothing writes the family but its own routes. S5 and S6 can follow.

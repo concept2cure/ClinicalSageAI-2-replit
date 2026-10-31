@@ -5,18 +5,19 @@
  *
  * Surfaces + the mdx-*.ts GET endpoints that back them:
  *
- *   1. AnalyticsSurface  (client useAnalytics → GET /api/mdx/analytics)
- *      server/routes/mdx-analytics.ts. The single kit-shaped aggregate reads:
- *        · regulatory_programs  — total/active/submitted/approved KPIs +
- *          pace24m (24-month bars from actual_submission_date), byPathway.
- *        · cerv2_510k_sections  — AnA acceptance rate + cycle-times by
- *          category (draft_source='ana', drafted_at, accepted_at).
- *        · c2c_blockers         — open-blocker root-cause list
- *          (blocker_type, MAX(document_family) AS pathway, status='open').
- *      (Its other facet routes also read submission_transmittals /
- *      submission_validation_findings [owned by 40-submission-udi], risk_items
- *      [owned by 10-risk], and clinical_studies* / chat_threads /
- *      client_memory_entries — not seeded here; see report.)
+ *   1. The device section of Reporting & analytics (GET /api/insights-canvas/overview,
+ *      server/services/report-os/device-portfolio.ts; the kit's AnalyticsSurface and
+ *      GET /api/mdx/analytics retired into it, D2 fold F4, 2026-10-30). It reads,
+ *      over the device projects the reader can open (the kit aggregate read them all):
+ *        · regulatory_programs  — each recorded status's count and the
+ *          24-month pace from actual_submission_date (device projects only).
+ *        · cerv2_510k_sections  — the AnA acceptance rate (draft_source='ana',
+ *          accepted_at), counted only where document_id names an
+ *          fda_510k_documents row of one of those projects.
+ *      The c2c_blockers rows below are no longer read by it (no
+ *      organization-wide blocker list, P-61 item 2). The organization-wide
+ *      facet routes kept in server/routes/mdx-analytics.ts (cycle times,
+ *      blockers, clinical, AnA usage) have no caller and no launch claim.
  *
  *   2. EngineeringSurface (client useEngineering → GET /api/mdx/engineering/:programId)
  *      server/routes/mdx-engineering.ts. Reads:

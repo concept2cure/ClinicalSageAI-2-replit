@@ -2,6 +2,7 @@
  * request-scoped program authority. Neither grant widens the other. */
 import type { ToolContext } from './AnaToolExecutor.js';
 import { switchPinTerms } from '../../db/sessionScope.js';
+import { isPlatformScopeRole, PlatformScopeRoleRefusedError } from '../../db/tenantStore.js';
 import { AnaProjectScopeError } from './project-scope-admission.js';
 import type { AdmittedAnaSourceReadScope, AnaSourceReadScopeInput } from './source-read-scope.js';
 import {
@@ -24,6 +25,9 @@ export function sourceReadInput(ctx: ToolContext | undefined, orgId: number, req
 function accessRefusal(error: unknown): Extract<CatalogScope, { error: string }> {
   if (error instanceof AnaProjectScopeError || error instanceof ProgramReadAccessError) {
     return { code: error.code, error: error.message };
+  }
+  if (error instanceof PlatformScopeRoleRefusedError) {
+    return { code: error.code, error: 'This account\'s role in the organization cannot open a session. An administrator must correct the role. No source listing or content was returned.' };
   }
   return { code: 'SOURCE_ACCESS_UNAVAILABLE', error: 'Current project source access could not be verified. No source listing or content was returned.' };
 }
@@ -57,6 +61,11 @@ export async function catalogScope(ctx: ToolContext | undefined, orgId: number, 
     }
     // This connection belongs to the request. Its existing release clears
     // session variables; a cached request role cannot authorize this read.
+    // The admitted role is written to app.current_user_role, for the rest of
+    // the request's session: the platform role, however cased or padded, is
+    // refused before it is (P-72 slice 1b, as the request scope refuses it:
+    // server/db/tenantStore.ts isPlatformScopeRole).
+    if (isPlatformScopeRole(admittedScope.role)) throw new PlatformScopeRoleRefusedError('catalogScope');
     await q.query("SELECT set_config('app.current_tenant_id', $1, false), set_config('app.current_user_role', $2, false), " + switchPinTerms(false), [String(orgId), admittedScope.role]);
     const accessibleScope = await getCurrentAccessibleProgramScope(q, {
       organizationId: orgId, userId: ctx.userId, programId: admittedScope.programId,

@@ -42,6 +42,12 @@ let pool: Pool | null = null;
 // non-superuser app_service role) when configured, else DATABASE_URL. Migrations
 // and admin tooling use DATABASE_URL directly — they need owner privileges.
 const databaseUrl = getRuntimeDatabaseUrl();
+
+/** A positive integer from the environment, else the default. */
+function positiveIntEnv(name: string, fallback: number): number {
+  const value = Number(process.env[name]);
+  return Number.isSafeInteger(value) && value > 0 ? value : fallback;
+}
 const skipDbStartupTest = process.env.SKIP_DB_STARTUP_TEST === 'true';
 
 try {
@@ -53,9 +59,16 @@ try {
     pool = new Pool({
       connectionString: databaseUrl,
       ssl: getSslConfig(databaseUrl),
-      max: isProduction ? 40 : 20,
+      // 40 everywhere, and a wait for a free connection long enough to outlast a
+      // cold start (2026-10-31): with 20 and 5 s, a development server's first
+      // page — many parallel reads, each holding its request client while tsx
+      // compiles route modules on first use — ran the pool dry, and project
+      // admission answered 503 "access could not be verified" to the reads that
+      // waited. A wait is not a refusal. DB_POOL_MAX and
+      // DB_CONNECTION_TIMEOUT_MS override both.
+      max: positiveIntEnv('DB_POOL_MAX', 40),
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis: positiveIntEnv('DB_CONNECTION_TIMEOUT_MS', isProduction ? 10000 : 20000),
       statement_timeout: 30000,
       idle_in_transaction_session_timeout: 60000,
       allowExitOnIdle: !isProduction,

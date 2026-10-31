@@ -18,9 +18,8 @@
  * `auditNote` below and WO-16C finding 133.
  *
  * Tools NOT yet wired (gated on external work, not laziness):
- *   - correspondence.ingest — needs Brief #2 surface for AnA-driven
- *     ingestion to make sense. Direct service call without UI is
- *     low-value.
+ *   - correspondence.ingest — retired 2026-10-30 (P-39 step 3): a person
+ *     records the letter in the project inbox.
  *   - predicate.candidate.set_status / se_matrix.patch — proxy through
  *     the BFF route since the underlying mutation lives in the Python
  *     shadow service. Phase 3 can add an internal-fetch handler when

@@ -133,7 +133,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'labeling', label: 'Labeling', description: 'The labeling workstream (documents, symbols, translations).', scope: 'project', group: 'module' },
   { id: 'risk', label: 'Risk Management', description: 'The risk workstream (register, matrix, controls).', scope: 'project', group: 'module' },
   { id: 'shadow-review', label: 'Shadow review', description: 'The simulated-reviewer surface — predicts Refuse-to-File / Complete-Response risk under a chosen regulator lens (FDA, EMA, PMDA, MDR/IVDR notified body) before filing.', scope: 'project', group: 'module' },
-  { id: 'tasking', label: 'Tasks', description: 'The task board / list / kanban.', scope: 'project', group: 'module' },
+  { id: 'tasking', label: 'Tasks', description: 'The task board / list / kanban.', scope: 'global', group: 'module' },
   { id: 'submission-gateway', label: 'Submission Gateway', description: 'The submission gateway (transmittals, validation).', scope: 'project', group: 'module' },
   // A launch-catalog Submission Center screen that no target reached, so AnA
   // could not get to it at all; its compile controls are wave 7 actions.
@@ -161,7 +161,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
       ],
     }],
   },
-  { id: 'quality', label: 'Quality', description: 'The quality management surface (SOP register, controlled documents).', scope: 'project', group: 'module' },
+  { id: 'quality', label: 'Quality', description: 'The quality management surface (SOP register, controlled documents).', scope: 'global', group: 'module' },
   {
     id: 'authoring', label: 'Authoring', description: 'The unified document authoring editor.', scope: 'project', group: 'module',
     params: [{ name: 'authoringDocType', required: false, description: 'Document type to author (drives the editor template).' }],
@@ -193,7 +193,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
 
   // ── Device & diagnostics workstream (all render via MdxSurfaceHost; program
   // scope comes from the project in context when one is open) ──
-  { id: 'device-workstream', label: 'Device portfolio', description: 'The device portfolio overview — project cards and portfolio health KPIs.', scope: 'global', group: 'module' },
+  /* The device portfolio folded into Projects with its MDX filter (D2, fold F6, 2026-10-30; P-61 item 5); the handle resolves there (DEEP_LINK_ALIASES), as `mdx` does. */
+  { id: 'device-workstream', label: 'Device projects', description: 'Projects filtered to medical device and diagnostics projects, with each project\'s pathway, stage, readiness and last activity (the device portfolio folded into it). Open a project for its workflow and its Client Review Room.', scope: 'global', group: 'module' },
   { id: 'device-510k', label: '510(k) and eSTAR', description: 'The 510(k) pathway workspace — predicate intelligence, the substantial-equivalence matrix, and eSTAR sections.', scope: 'global', group: 'module' },
   { id: 'device-pma', label: 'PMA', description: 'The PMA pathway workspace — premarket-approval modules for the project in context.', scope: 'global', group: 'module' },
   { id: 'device-cer', label: 'Clinical evaluation (CER)', description: 'The CER pathway workspace for clinical evaluation under EU MDR.', scope: 'global', group: 'module' },
@@ -214,7 +215,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'device-validation', label: 'Device filing readiness', description: 'Submission Center: every tracked device filing. A filing\'s blockers are its own eSTAR filing readiness, on its pathway screen (the organization-wide blocker list retired).', scope: 'global', group: 'module' },
   /* The device submission packages folded into Submission Center (D2, fold F5 item 1, 2026-10-30; P-61 item 1); the handle resolves there (DEEP_LINK_ALIASES). */
   { id: 'device-submission', label: 'Device filings', description: 'Submission Center: every tracked device filing, with each draft\'s readiness and each filing\'s history (the device submission-packages screen folded into it).', scope: 'global', group: 'module' },
-  { id: 'device-analytics', label: 'Device analytics', description: 'Device analytics panels.', scope: 'global', group: 'module' },
+  /* Device analytics joined Reporting & analytics (D2, fold F4, 2026-10-30; P-61 item 3); the handle resolves there (DEEP_LINK_ALIASES). */
+  { id: 'device-analytics', label: 'Device analytics', description: 'Reporting & analytics: the device projects you can open, by recorded status, with their submission pace and AnA draft acceptance rate (device analytics joined it).', scope: 'global', group: 'module' },
 
   // ── Pharmaceutical development (the PDEV kit; `pdev` itself is above) ──
   { id: 'pdev-cmc', label: 'PDEV CMC workstream', description: 'The CMC workstream of the PDEV → IND program.', scope: 'global', group: 'module' },

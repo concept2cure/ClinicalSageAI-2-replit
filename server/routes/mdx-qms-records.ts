@@ -32,7 +32,7 @@ import { SUPPLIER_APPROVAL_CODE_STATUS, SUPPLIER_APPROVAL_DECISIONS, recordSuppl
 import { scheduleInternalAuditTask, scheduleSupplierTasks, type InternalAuditTaskSource, type SupplierTaskSource } from '../services/qms/qms-record-tasks';
 import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { admitProject } from '../lib/admit-project';
-import { getOrgId, getUserId, qmsClient } from './mdx-qms-context';
+import { getOrgId, getUserId, qmsClient, queryProject } from './mdx-qms-context';
 import { recordNewNonconformance, recordNewSupplier } from '../services/qms/qms-record-create';
 
 const router = Router();
@@ -340,10 +340,12 @@ const ncDispoBody = z.object({ disposition: z.enum(NC_DISPOSITION_DECISIONS) });
 router.get('/qms/nonconforming', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  // `?program_id=`: the records filed under one project (QP2), admitted as a write's project is.
+  const programId = await queryProject(req, res); if (programId === false) return res;
   try {
     const { rows } = await qmsClient(req).query(`SELECT * FROM qms_nonconforming_products WHERE organization_id = $1
-        ORDER BY detected_at DESC LIMIT 500`,
-      [orgId],
+        AND ($2::uuid IS NULL OR program_id = $2::uuid) ORDER BY detected_at DESC LIMIT 500`,
+      [orgId, programId],
     );
     return ok(res, rows, { count: rows.length });
   } catch (err) { return serverError(res, log, 'nc-list', err); }

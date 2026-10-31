@@ -25,7 +25,7 @@ import { render, cleanup, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
 
-import { AnalyticsSurface }   from '../../client/src/concept2cure/mdx/surfaces/AnalyticsSurface';
+// No AnalyticsSurface: device analytics joined Reporting & analytics (D2, fold F4, 2026-10-30).
 import { PostmarketSurface }  from '../../client/src/concept2cure/mdx/surfaces/PostmarketSurface';
 import { EngineeringSurface } from '../../client/src/concept2cure/mdx/surfaces/EngineeringSurface';
 import { UdiSurface }         from '../../client/src/concept2cure/mdx/surfaces/UdiSurface';
@@ -74,16 +74,6 @@ beforeEach(() => {
 
 /* Live-shaped read results, keyed by request path. Test input only. */
 const LIVE: Record<string, unknown> = {
-  '/api/mdx/analytics': {
-    data: {
-      kpis: [{ label: 'Active programs', metric: '2', meta: 'test' }],
-      phases: [{ phase: 'Intake', k510: { org: 10, peer: 12, units: 'd' }, pma: { org: 20, peer: 25, units: 'd' } }],
-      blockers: [{ cause: 'Test cause', count: 1, median: 3, owner: 'T', pathway: 'k510', trend: 'flat' }],
-      reviewers: [{ code: 'TST', name: 'Test division', n: 2, median: 90, fastest: 80, slowest: 100, firstCycle: 1, orgMedian: 95, pathway: 'k510' }],
-      anaUsage: [{ tool: 'test_tool', calls: 3, accepted: 2, drafts: 1, pathway: 'k510' }],
-      pace24m: [1, 2, 3],
-    },
-  },
   '/api/mdx/engineering/p-test': {
     data: {
       summary: { dhfCompletion: 50, openEcrs: 1, openRisks: 2, openIssues: 1, riskLastUpdated: null },
@@ -177,31 +167,6 @@ function clickEveryButton(container: HTMLElement, maxRounds = 8): { clicked: num
 }
 
 describe('MDX rich-surface interactive smoke', () => {
-  it('Analytics: every button click is handler-safe', async () => {
-    const { container, findAllByText } = wrap(<AnalyticsSurface onAskAna={askAna} />);
-    await findAllByText(/Test cause/);
-    /* Since e1f3fd425 the pathway filters other than "All" are disabled (no
-       current source aggregates by pathway) and the DocumentsPanel is gone, so
-       a count floor no longer describes this surface. Name what it ships
-       instead: the one live filter, the saved-reports retry (the fixture
-       serves no report source, so the honest unavailable state renders), and
-       one Ask-AnA control per blocker and per reviewer row. */
-    const buttons = Array.from(container.querySelectorAll('button')) as HTMLButtonElement[];
-    const label = (b: HTMLButtonElement) => (b.textContent || '').replace(/\s+/g, ' ').trim();
-    expect(buttons.filter((b) => b.disabled).map(label)).toEqual(['510(k)', 'PMA', 'CER']);
-    const enabled = buttons.filter((b) => !b.disabled).map(label);
-    expect(enabled).toHaveLength(4);
-    expect(enabled.slice(0, 2)).toEqual(['All', 'Retry saved reports']);
-    expect(enabled[2]).toMatch(/^1Test cause/);
-    expect(enabled[3]).toMatch(/^TSTTest division/);
-    const { clicked } = clickEveryButton(container);
-    expect(clicked).toBe(4);
-    expect(askAna.mock.calls.map((c) => String(c[0]))).toEqual([
-      expect.stringContaining('blocked on "Test cause"'),
-      expect.stringContaining('Compare our TST (Test division) submissions'),
-    ]);
-  });
-
   it('Postmarket: every button click is handler-safe', () => {
     /* The host mounts this leaf only with a project (MdxSurfaceHost's
        mdx-project-required guard), and its triage request names it. */

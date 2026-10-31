@@ -20,7 +20,7 @@ vi.mock('../surfaces/IvdSurface', () => ({ IvdSurface: ({ onOpenEditor }: { onOp
 import { MdxSurfaceHost } from '../MdxSurfaceHost';
 import { clearShellProject, publishShellProject } from '../../v2/shellProject';
 import { consumeEditorTarget } from '../../v2/editorTarget';
-import { __resetSurfaceActionBus, registerSurfaceActionHandlers } from '../../v2/surfaceActions';
+import { __resetSurfaceActionBus } from '../../v2/surfaceActions';
 
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
@@ -42,16 +42,18 @@ describe('MDX project context isolation', () => {
     expect((screen.getByLabelText('Engineering working note') as HTMLInputElement).value).toBe('');
   });
 
-  it.each([/^New (program|project)$/, /^Create your first (program|project)$/])('the %s creation door opens the Projects wizard instead of asking AnA', (name) => {
+  /* The kit portfolio and its "New project" / "Create your first project" doors folded into Projects (D2, fold F6,
+     2026-10-30), whose own New project opens the wizard (newProjectWizard*.test.tsx). The host draws no portfolio
+     and no creation door of its own: with no project open, it sends the person to Projects, and asks AnA nothing. */
+  it('draws no portfolio and no creation door; with no project open it sends the person to Projects', () => {
     state.programs = [];
     const p = props();
-    render(<MdxSurfaceHost {...p} nav="device-workstream" />);
-    fireEvent.click(screen.getByRole('button', { name }));
+    render(<MdxSurfaceHost {...p} nav="device-510k" />);
+    expect(screen.queryByRole('button', { name: /^New (program|project)$/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Create your first (program|project)$/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Open projects' }));
     expect(p.onAsk).not.toHaveBeenCalled();
     expect(p.onNav).toHaveBeenCalledWith('projects');
-    const openWizard = vi.fn(() => ({ ok: true as const }));
-    registerSurfaceActionHandlers('projects', { 'projects.new-project': openWizard });
-    expect(openWizard).toHaveBeenCalledOnce();
   });
   it('says which postmarket panels are this project\'s, without changing the selected project', () => {
     publishShellProject({ id: A });

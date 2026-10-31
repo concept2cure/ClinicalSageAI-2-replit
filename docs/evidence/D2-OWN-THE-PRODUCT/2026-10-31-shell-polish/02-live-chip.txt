@@ -1,0 +1,3 @@
+project home: h1="BX-204 IND" chip="Open project BX-204" storage={"c2c.shell-project":"{\"id\":\"24fd6124-6ff9-4ec8-8287-5aa23a49443b\",\"productType\":\"drug\",\"title\":\"BX-20"}
+after rail Vault: url=/concept2cure/vault?program=24fd6124-6ff9-4ec8-8287-5aa23a49443b h1="Vault" chip="Open project BX-204"
+{"console":[],"pageErrors":[],"failed":[]}

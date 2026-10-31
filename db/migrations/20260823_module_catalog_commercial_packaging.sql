@@ -1,3 +1,19 @@
+-- AMENDED IN PLACE 2026-10-30 — D2 fold F6: the device workstream folds into Projects (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts device-workstream; its replay deprecates the
+-- existing row. Remove its packaging row too, so the unknown-module guard below
+-- still passes on a fresh database that never holds it. Replayed databases keep
+-- the deprecated row, the tier it was given ('standard'), its subscriptions and
+-- every other module's tier unchanged (projects stays 'free', below the folded
+-- module's tier, so a plan that included it includes Projects).
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/README.md.
+-- AMENDED IN PLACE 2026-10-30 — D2 fold F4: device analytics joins Reporting & analytics (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts device-analytics; its replay deprecates the
+-- existing row. Remove its packaging row too, so the unknown-module guard below
+-- still passes on a fresh database that never holds it. Replayed databases keep
+-- the deprecated row, the tier it was given ('professional'), its subscriptions
+-- and every other module's tier unchanged (insights stays 'standard', at or
+-- below the folded module's tier, so a plan that included it includes insights).
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/README.md.
 -- AMENDED IN PLACE 2026-10-30 — D2 fold F5 item 1: device submission packages into Submission Center (CLAUDE.md Rule 1).
 -- 20260810 no longer upserts device-submission; its replay deprecates the
 -- existing row. Remove its packaging row too, so the unknown-module guard below
@@ -255,7 +271,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('device-presub', 'standard'),
   ('device-software', 'standard'),
   ('device-udi', 'standard'),
-  ('device-workstream', 'standard'),
   ('dispatch-readiness', 'standard'),
   ('doc-journey', 'standard'),
   ('document-authoring', 'standard'),
@@ -298,7 +313,8 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   --   biostatistics, biostat-workbench     FEATURE_TIER_MAP biostatistics:professional
   --   pharmacovigilance, pv-cockpit        post-approval; a pre-approval company has no PV obligation
   --   rbm                                  multi-study clinical operations
-  --   device-postmarket, device-analytics  PMS/PMCF + "Advanced Analytics"
+  --   device-postmarket                    PMS/PMCF + "Advanced Analytics"
+  --                                        (device-analytics folded into insights, 2026-10-30, fold F4)
   --   market-access, reg-change,
   --   lifecycle-mgmt, pediatric, orphan    lifecycle and strategy: value after a first filing, not before
   --   orchestration                        billing.ts "Custom Workflows"
@@ -307,7 +323,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   --   qmp                                  quality-management PROGRAMS, not the compliance record
   ('biostat-workbench', 'professional'),
   ('biostatistics', 'professional'),
-  ('device-analytics', 'professional'),
   ('device-postmarket', 'professional'),
   ('gateway-transmittals', 'professional'),
   ('lifecycle-mgmt', 'professional'),

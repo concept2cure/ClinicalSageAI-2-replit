@@ -141,8 +141,12 @@ const anchorOk = {
 /** Rows the fake client returns per statement, keyed by a substring of the SQL. */
 function answerQueries(overrides: Partial<Record<'regclass' | 'audit_events' | 'tamper_proof_log', unknown>> = {}) {
   m.clientQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+    // Every statement is inside a transaction, and the organisation list (organisation 1) is read first (P-72 slice 1b).
+    if (/^(BEGIN|ROLLBACK)\b/.test(sql)) return { rows: [] };
+    if (sql.includes('FROM public.organizations')) return { rows: [{ id: 1 }] };
     if (sql.includes('to_regclass')) {
-      return overrides.regclass ?? { rows: [{ present: true }] };
+      const regclass = overrides.regclass;
+      return typeof regclass === 'function' ? regclass(params) : regclass ?? { rows: [{ present: true }] };
     }
     if (sql.includes('FROM audit_events')) {
       return (
@@ -233,7 +237,8 @@ describe('runAuditChainIntegrityCheck verifies every audit store', () => {
     expect(m.assertAuditImmutabilityTriggers).toHaveBeenCalledOnce();
     expect(emitWarning).not.toHaveBeenCalled();
     expect(m.reportSecurityAlert).not.toHaveBeenCalled();
-    expect(m.clientRelease).toHaveBeenCalledOnce();
+    // Every connection the sweep took went back: the list, organisation 1's snapshot, the infrastructure one.
+    expect(m.clientRelease).toHaveBeenCalledTimes(3);
   });
 
   it('a broken audit_logs HMAC seal raises the alert path with the failing index and no row content', async () => {
@@ -324,12 +329,9 @@ describe('runAuditChainIntegrityCheck verifies every audit store', () => {
   });
 
   it('an absent audit.tamper_proof_log is reported as missing (an incident), never as verified', async () => {
-    m.clientQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
-      if (sql.includes('to_regclass')) {
-        return { rows: [{ present: params?.[0] !== 'audit.tamper_proof_log' }] };
-      }
-      if (sql.includes('FROM audit_events')) return { rows: [] };
-      throw new Error(`unexpected query in test: ${sql}`);
+    answerQueries({
+      regclass: (params?: unknown[]) => ({ rows: [{ present: params?.[0] !== 'audit.tamper_proof_log' }] }),
+      audit_events: { rows: [] },
     });
     const result = await runAuditChainIntegrityCheck();
     expect(result.stores.find((s) => s.store === 'audit.tamper_proof_log')).toMatchObject({ status: 'missing' });

@@ -90,9 +90,11 @@ describe('breadcrumb client category (finding 128)', () => {
     expect(breadcrumbTierOf(surface('identity-console'))?.label).toBe('Admin');
   });
 
-  it('does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD")', () => {
-    // The device workstream's own name is the old tier's; its parent is Projects.
-    expect(breadcrumbTierOf(surface('device-workstream'))?.label).toBe('Projects');
+  it('does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD"), for every surface', () => {
+    // The device workstream, whose own name was the old tier's, folded into Projects (D2, fold F6, 2026-10-30) and
+    // has no registry row now; the rule it was checked for holds for every surface that remains.
+    expect(UI_SURFACES.some((s) => s.id === 'device-workstream')).toBe(false);
+    for (const s of UI_SURFACES) expect(breadcrumbTierOf(s)?.label, s.id).not.toBe(s.label);
   });
 
   it('never names a category the rail does not list the surface under — for every surface', () => {

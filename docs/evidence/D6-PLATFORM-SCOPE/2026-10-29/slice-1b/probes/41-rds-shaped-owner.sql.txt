@@ -1,0 +1,53 @@
+-- P-72 slice 0: an RDS-shaped copy. Production's applier and table owner is the RDS master: LOGIN, CREATEROLE,
+-- NOSUPERUSER, NOBYPASSRLS. Here install-fresh/deploy-migrate ran as `postgres` (a superuser, as in CI), so every
+-- table, view, sequence, function, type and schema postgres owns (outside pg_catalog/information_schema, extension
+-- members excluded) is handed to c2c_rds_master. A FORCEd table then holds its owner, and every owner-owned
+-- SECURITY DEFINER function, to its policies, as on RDS. Run as a superuser on a scratch copy only.
+\set ON_ERROR_STOP on
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'c2c_rds_master') THEN
+    CREATE ROLE c2c_rds_master LOGIN NOSUPERUSER CREATEROLE NOBYPASSRLS NOREPLICATION PASSWORD 'local-p72-pw';
+  END IF;
+END $$;
+SET search_path = pg_catalog;
+DO $$
+DECLARE r record; n_s int := 0; n_r int := 0; n_f int := 0; n_t int := 0; n_fail int := 0;
+  pg oid := (SELECT oid FROM pg_roles WHERE rolname = 'postgres');
+  ext_objs oid[] := ARRAY(SELECT objid FROM pg_depend WHERE deptype = 'e');
+BEGIN
+  FOR r IN SELECT n.oid, n.nspname FROM pg_namespace n WHERE n.nspowner = pg AND n.nspname NOT LIKE 'pg\_%' AND n.nspname <> 'information_schema' LOOP
+    EXECUTE format('ALTER SCHEMA %I OWNER TO c2c_rds_master', r.nspname); n_s := n_s + 1;
+  END LOOP;
+  FOR r IN SELECT c.oid, c.relkind, format('%I.%I', n.nspname, c.relname) q FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relowner = pg AND c.relkind IN ('r','p','v','m','f','S') AND n.nspname NOT LIKE 'pg\_%' AND n.nspname <> 'information_schema'
+              AND c.oid <> ALL (ext_objs)
+              AND NOT (c.relkind = 'S' AND EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = c.oid AND d.classid = 'pg_class'::regclass AND d.deptype IN ('a','i')))
+            ORDER BY c.relkind DESC LOOP
+    BEGIN
+      EXECUTE format('ALTER %s %s OWNER TO c2c_rds_master',
+        CASE r.relkind WHEN 'v' THEN 'VIEW' WHEN 'm' THEN 'MATERIALIZED VIEW' WHEN 'f' THEN 'FOREIGN TABLE' WHEN 'S' THEN 'SEQUENCE' ELSE 'TABLE' END, r.q);
+      n_r := n_r + 1;
+    EXCEPTION WHEN OTHERS THEN n_fail := n_fail + 1; RAISE NOTICE 'relation % not reassigned: %', r.q, SQLERRM;
+    END;
+  END LOOP;
+  FOR r IN SELECT p.oid, p.prokind FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+            WHERE p.proowner = pg AND n.nspname NOT LIKE 'pg\_%' AND n.nspname <> 'information_schema' AND p.oid <> ALL (ext_objs) LOOP
+    BEGIN
+      EXECUTE format('ALTER %s %s OWNER TO c2c_rds_master', CASE r.prokind WHEN 'p' THEN 'PROCEDURE' WHEN 'a' THEN 'AGGREGATE' ELSE 'FUNCTION' END, r.oid::regprocedure);
+      n_f := n_f + 1;
+    EXCEPTION WHEN OTHERS THEN n_fail := n_fail + 1; RAISE NOTICE 'function % not reassigned: %', r.oid::regprocedure, SQLERRM;
+    END;
+  END LOOP;
+  FOR r IN SELECT t.oid FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace
+            WHERE t.typowner = pg AND t.typtype IN ('e','d','c','r','m') AND n.nspname NOT LIKE 'pg\_%' AND n.nspname <> 'information_schema'
+              AND t.oid <> ALL (ext_objs) AND (t.typtype <> 'c' OR (SELECT relkind FROM pg_class WHERE oid = t.typrelid) = 'c') LOOP
+    BEGIN EXECUTE format('ALTER TYPE %s OWNER TO c2c_rds_master', r.oid::regtype); n_t := n_t + 1;
+    EXCEPTION WHEN OTHERS THEN n_fail := n_fail + 1; RAISE NOTICE 'type % not reassigned: %', r.oid::regtype, SQLERRM;
+    END;
+  END LOOP;
+  RAISE NOTICE 'reassigned to c2c_rds_master: schemas %, relations %, functions %, types %; not reassigned %', n_s, n_r, n_f, n_t, n_fail;
+END $$;
+SELECT pg_get_userbyid(relowner) owner, count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+ WHERE c.relkind IN ('r','p') AND n.nspname NOT LIKE 'pg\_%' AND n.nspname <> 'information_schema' GROUP BY 1 ORDER BY 2 DESC;
+SELECT pg_get_userbyid(p.proowner) owner, count(*) FILTER (WHERE p.prosecdef) definers, count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+ WHERE n.nspname NOT LIKE 'pg\_%' AND n.nspname <> 'information_schema' GROUP BY 1 ORDER BY 3 DESC;

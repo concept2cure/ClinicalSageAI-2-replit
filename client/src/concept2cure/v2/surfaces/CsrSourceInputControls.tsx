@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { CsrSourceReceipt, CsrSourceSelection } from '@shared/csr-source-input';
 import { apiCall, apiErrorText } from '../apiCall';
-import { CsrBuildDraftControl } from './CsrBuildProgress';
-import { CsrRunBuilds } from './CsrRunBuilds';
 import { StudyPivotalDeclarations } from './StudyPivotalDeclarations';
 
 const FORMAT = 'concept2cure.csr-source.v1';
@@ -17,7 +15,7 @@ type Tables = Record<string, Table>;
 type SourcesState = { programId: string; sources: SourceChoice[]; limitReached: boolean; error?: string };
 type SavedState = { programId: string; runId: string; data?: SavedTables; error?: string };
 interface Preview { source: CsrSourceReceipt; approved: boolean; tables: Tables }
-interface SavedTables { runId: string; programId: string; historical: true; studies: Array<{ source: CsrSourceReceipt; tables: Tables }> }
+export interface SavedTables { runId: string; programId: string; historical: true; studies: Array<{ source: CsrSourceReceipt; tables: Tables }> }
 const record = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === 'object' && !Array.isArray(value));
 const text = (value: unknown): value is string => typeof value === 'string' && value.length > 0;
 const uuid = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
@@ -53,6 +51,13 @@ async function request(method: 'GET' | 'POST', path: string, body?: unknown): Pr
   const result = await apiCall<unknown>(method, path, body);
   if (!result.ok || !result.body) throw new Error(apiErrorText(result, 'Clinical source information is unavailable.'));
   return result.body;
+}
+
+/** A saved run's frozen clinical tables, checked whole; read here and by the editor's study-data build (StudyDataBuild). */
+export async function readSavedClinicalTables(programId: string, runId: string): Promise<SavedTables> {
+  const value = await request('GET', `${RUNS}/${encodeURIComponent(runId)}/clinical-tables?programId=${encodeURIComponent(programId)}`);
+  if (!isSaved(value, programId, runId)) throw new Error('The saved clinical table response was incomplete.');
+  return value;
 }
 
 function ClinicalTable({ table }: { table: Table }) {
@@ -120,9 +125,8 @@ export function CsrSourceInputControls({ programId, runId, interactionBusy, onSe
   }, [programId, refresh]);
   useEffect(() => {
     let active = true; setSaved(null);
-    if (programId && runId) void request('GET', `${RUNS}/${encodeURIComponent(runId)}/clinical-tables?programId=${encodeURIComponent(programId)}`).then(value => {
+    if (programId && runId) void readSavedClinicalTables(programId, runId).then(value => {
       if (!active) return;
-      if (!isSaved(value, programId, runId)) throw new Error('The saved clinical table response was incomplete.');
       setSaved({ programId, runId, data: value });
     }).catch(() => { if (active) setSaved({ programId: programId!, runId: runId!, error: 'Couldn’t read the frozen clinical tables for this run.' }); });
     return () => { active = false; };
@@ -172,7 +176,7 @@ export function CsrSourceInputControls({ programId, runId, interactionBusy, onSe
     <ClinicalSourcePicker activeSources={activeSources} blocked={blocked} documentId={documentId} choose={choose} choice={choice} prepare={prepare} previewBusy={previewBusy} />
     {previewError && <p role="alert">{previewError}</p>}
     <ClinicalSourcePreview activePreview={activePreview} blocked={blocked} included={included} setIncluded={setIncluded} onSelectionChange={selectionHandler.current} />
-    <FrozenClinicalTables runId={runId} activeSaved={activeSaved} blocked={blocked} onRetry={() => setSavedRefresh(value => value + 1)} onNav={onNav} />
+    <FrozenClinicalTables runId={runId} activeSaved={activeSaved} blocked={blocked} onRetry={() => setSavedRefresh(value => value + 1)} />
     {/* Pivotal declarations (D5, 2026-10-29) on the CSR card a launch screen shows; the
         CSR workflow board, where they also appear, is not a launch surface. */}
     <StudyPivotalDeclarations scope={{ programId }} />
@@ -207,10 +211,9 @@ function ClinicalSourcePreview({ activePreview, blocked, included, setIncluded, 
       }} /> Include these source tables in the next package run</label>
     </div>}
   </>; }
-function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry, onNav }: {
-  runId: string | null; activeSaved: SavedState | null; blocked: boolean; onRetry: () => void; onNav?: (surface: string) => void;
+function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry }: {
+  runId: string | null; activeSaved: SavedState | null; blocked: boolean; onRetry: () => void;
 }) {
-  const [queued, setQueued] = useState<number | null>(null);
   return <>
     {runId && <div aria-label="Frozen run clinical tables">
       <h4>Frozen clinical tables for {runId}</h4>
@@ -220,10 +223,9 @@ function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry, onNav }: {
         <p>Historical source versions are retained with this run. They can differ from the current Vault version.</p>
         {activeSaved.data.studies.length === 0 && <p>This run has no linked clinical source tables.</p>}
         {activeSaved.data.studies.map(study => <SourceTables key={`${study.source.documentId}:${study.source.sha256}`} source={study.source} tables={study.tables} />)}
-        <CsrBuildDraftControl programId={activeSaved.programId} runId={activeSaved.runId} studies={activeSaved.data.studies} blocked={blocked} onQueued={setQueued} />
-        {/* The build's section review and import into Authoring, narratives, assembly and placement
-            (D2/W1, 2026-10-30): on this launch card, not the csr-workflow board, which production refuses. */}
-        {activeSaved.data.studies.length > 0 && <CsrRunBuilds programId={activeSaved.programId} runId={activeSaved.runId} focus={queued} onNav={onNav} />}
+        {/* The clinical study report is built from its document, in the one editor (CLAUDE.md RULE 4,
+            2026-10-31): Project → Clinical Study Report → Build from the study's data. Not here. */}
+        {activeSaved.data.studies.length > 0 && <p>To build the clinical study report from these tables, open the project’s Clinical Study Report document in the editor and use “Build from the study’s data”.</p>}
       </>}
     </div>}
   </>;

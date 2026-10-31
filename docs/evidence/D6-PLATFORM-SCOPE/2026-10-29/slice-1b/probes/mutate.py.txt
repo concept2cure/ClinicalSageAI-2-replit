@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""Lane C mutations: each is one exact replacement in one repository file, swapped in by swapn.sh (which restores
+the file byte for byte and checks its sha256), with the test it must turn red. A mutation is KILLED when the test
+command exits non-zero."""
+import json, os, subprocess, sys
+R = '/home/user/ClinicalSageAI-2-replit'
+LC = '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/laneC'
+V = ['npx', 'vitest', 'run']
+M = [
+  # ── item 1: retention ──
+  ('R1 sweep each organisation in the system scope', 'server/jobs/retentionCron.ts',
+   "    await runWithTenantScope(\n      { tenantId: String(org.id), orgUuid: org.uuid, role: null, source: 'job', caller: CALLER },\n      () => sweepOrganization(org.id, policies, summary),\n    );",
+   "    await runWithSystemTenantScope(CALLER, () => sweepOrganization(org.id, policies, summary));",
+   'server/jobs/__tests__/retentionCron.org-scope.test.ts'),
+  ('R2 drop the organisation uuid from its scope', 'server/jobs/retentionCron.ts',
+   "{ tenantId: String(org.id), orgUuid: org.uuid, role: null, source: 'job', caller: CALLER }",
+   "{ tenantId: String(org.id), orgUuid: null, role: null, source: 'job', caller: CALLER }",
+   'server/jobs/__tests__/retentionCron.org-scope.test.ts'),
+  ('R3 drop the programme-owner selection', 'server/jobs/retentionCron.ts',
+   "        sql`${vaultDocuments.retentionUntil} < CURRENT_DATE`,\n        sql`${vaultDocuments.programId} IN (SELECT rp.id FROM regulatory_programs rp WHERE rp.organization_id = ${organizationId})`",
+   "        sql`${vaultDocuments.retentionUntil} < CURRENT_DATE`",
+   'server/jobs/__tests__/retentionCron.org-scope.test.ts'),
+  ('R4 dispose of a document that names another organisation', 'server/jobs/retentionCron.ts',
+   "  return Number.isInteger(named) && named > 0 && named !== organizationId ? named : null;",
+   "  return null;",
+   'server/jobs/__tests__/retentionCron.org-scope.test.ts'),
+  ('R5 read every organisation\'s holds', 'server/jobs/retentionCron.ts',
+   ".where(and(isNull(vaultLegalHolds.liftedAt), eq(vaultLegalHolds.organizationId, organizationId)));",
+   ".where(isNull(vaultLegalHolds.liftedAt));",
+   'server/jobs/__tests__/retentionCron.org-scope.test.ts'),
+  ('R6 sweep an organisation with no uuid', 'server/jobs/retentionCron.ts',
+   "    if (!org.uuid) {",
+   "    if (false) {",
+   'server/jobs/__tests__/retentionCron.org-scope.test.ts'),
+  # ── item 2: the integrity sweep ──
+  ('S1 snapshot without BEGIN', 'server/jobs/auditChainIntegritySweep.ts',
+   "    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');\n",
+   "",
+   'server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts'),
+  ('S2 walk without the organisation', 'server/jobs/auditChainOrganizationVerdicts.ts',
+   "await verifyAuditIntegrity(client, { tenantId: organizationId });",
+   "await verifyAuditIntegrity(client);",
+   'server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts'),
+  ('S3 an empty store merges to ok', 'server/jobs/auditChainOrganizationVerdicts.ts',
+   "  if (found.length === 0) return { store, status: 'unverifiable', rowsChecked: 0, reason: nothing };",
+   "  if (found.length === 0) return { store, status: 'ok', rowsChecked: 0 };",
+   'server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts'),
+  ('S4 a refused legacy walk is an error', 'server/jobs/auditChainOrganizationVerdicts.ts',
+   "const status: AuditStoreStatus = isPartialView(err) ? 'unverifiable' : 'error';",
+   "const status: AuditStoreStatus = 'error';",
+   'server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts'),
+  ('S5 anchor verified without the per-organisation opener', 'server/jobs/auditChainIntegritySweep.ts',
+   "verifyAuditChainAnchor(client, anchorStore, new Date(), { inOrganizationScope: inScope });",
+   "verifyAuditChainAnchor(client, anchorStore, new Date(), {});",
+   'server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts'),
+  ('S6 audit_events rows read unfiltered', 'server/jobs/auditChainOrganizationVerdicts.ts',
+   "        WHERE organization_id = $1\n        ORDER BY organization_id, sequence_number ASC`,\n      [organizationId],",
+   "        ORDER BY organization_id, sequence_number ASC`,",
+   'server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts'),
+  ('A1 anchor module reads a head on another tenant\'s connection', 'server/services/audit/chain-anchor.ts',
+   "  if (tenant !== String(organizationId)) {",
+   "  if (false) {",
+   'server/services/audit/__tests__/chain-anchor-own-scope.test.ts'),
+  ('A2 anchor write reads the caller\'s connection', 'server/services/audit/chain-anchor.ts',
+   "  if (inScope) {\n    for (const organizationId of options.organizations ?? []) {",
+   "  if (false) {\n    for (const organizationId of options.organizations ?? []) {",
+   'server/services/audit/__tests__/chain-anchor-own-scope.test.ts'),
+  # ── item 3: verdicts over zero rows ──
+  ('T1 a walk that read fewer rows is a verdict', 'server/services/audit/tenant-chain-verdict.ts',
+   "      if (read < counted.chained) {",
+   "      if (false) {",
+   'server/services/audit/__tests__/chain-head-on-demand.test.ts'),
+  ('T2 count on the admin scope', 'server/services/audit/tenant-chain-verdict.ts',
+   "    { tenantId: String(orgId), role: null, source: 'request', caller: 'audit/tenant-chain-verdict count' },",
+   "    { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'audit/tenant-chain-verdict count' },",
+   'server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts'),
+  ('T3 seal check not held to the count', 'server/services/audit/compliance-reports/integrity-checks.ts',
+   "        if (v.valid && v.verified < sealedRows) {",
+   "        if (false) {",
+   'server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts'),
+  ('T4 verify-chain says ok over no chained row', 'server/routes/c2c/actions.ts',
+   "  if (v.ok && v.rowsChecked === 0) {",
+   "  if (false) {",
+   'server/services/audit/__tests__/chain-head-on-demand.test.ts'),
+  ('T5 the readers drop the walk\'s reason', 'server/services/audit/audited-export.ts',
+   "reason: walk.reason ?? walk.head?.reason ?? 'The chain head could not be checked against its anchor.'",
+   "reason: walk.head?.reason ?? 'The chain head could not be checked against its anchor.'",
+   'server/services/audit/__tests__/chain-head-on-demand.test.ts'),
+  ('S7 audit_events seals read for every organisation', 'server/jobs/auditChainOrganizationVerdicts.ts',
+   "await verifyAuditEventsChainSeals(client, { organizationId });",
+   "await verifyAuditEventsChainSeals(client);",
+   'server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts'),
+  ('C1 the audit_events seal read drops its organisation filter', 'server/services/audit/seal-coverage.ts',
+   "WHERE record_hash IS NOT NULL AND ($1::int IS NULL OR organization_id = $1::int)",
+   "WHERE record_hash IS NOT NULL",
+   'server/services/audit/__tests__/seal-coverage-organization.test.ts'),
+  ('D1 decision-lineage logs the head reason, not the walk reason', 'server/routes/decision-lineage.ts',
+   "reason: v.reason ?? v.head?.reason ?? 'the chain head could not be checked'",
+   "reason: v.head?.reason ?? 'the chain head could not be checked'",
+   'server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts'),
+  ('D2 decision-lineage says VERIFIED over no chained row', 'server/routes/decision-lineage.ts',
+   "  if (v.ok && v.rowsChecked === 0) return { scope: 'organization', ran: false, reason: NO_CHAINED_ROWS_REASON };\n",
+   "",
+   'server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts'),
+  # ── item 4: the four writers ──
+  ('W1 setTenantContextTx takes the platform role', 'server/services/tenant/governed-tenant-context.ts',
+   "  if (isPlatformScopeRole(role)) throw new PlatformScopeRoleRefusedError('setTenantContextTx');\n",
+   "",
+   'server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts'),
+  ('W2 the MCP call client takes the platform role', 'server/mcp/tools/runtime.ts',
+   "  if (isPlatformScopeRole(principal.role)) throw new PlatformScopeRoleRefusedError('mcp tool call');\n",
+   "",
+   'server/mcp/__tests__/mcp-call-client-platform-role.test.ts'),
+  ('W3 catalog scope takes the platform role', 'server/services/ana/catalog-scope.ts',
+   "    if (isPlatformScopeRole(admittedScope.role)) throw new PlatformScopeRoleRefusedError('catalogScope');\n",
+   "",
+   'server/services/ana/__tests__/catalog-scope-platform-role.test.ts'),
+  ('W4 the signed act asks the password first', 'server/routes/governed-signed-act.ts',
+   "  if (isPlatformScopeRole(act.tenantRole)) {",
+   "  if (false) {",
+   'server/routes/__tests__/governed-signed-act-platform-role.test.ts'),
+]
+only = sys.argv[1:] or None
+results = []
+for name, path, old, new, test in M:
+    tag = name.split()[0]
+    if only and tag not in only: continue
+    src = open(f'{R}/{path}').read()
+    if src.count(old) != 1:
+        results.append({'mutation': name, 'error': f'old text occurs {src.count(old)} times'}); continue
+    mf = f'{LC}/r4/mut/{tag}.{os.path.basename(path)}'
+    open(mf, 'w').write(src.replace(old, new))
+    log = f'{LC}/r4/mut/{tag}.log'
+    p = subprocess.run([f'{LC}/swapn.sh', log, path, mf, '--', *V, test], capture_output=True, text=True)
+    restored = 'RESTORE MISMATCH' not in p.stdout and p.returncode == 0
+    tail = open(log).read()
+    failed = [l.strip() for l in tail.splitlines() if l.strip().startswith('×')]
+    summary = next((l.strip() for l in tail.splitlines() if l.strip().startswith('Tests ')), '')
+    killed = 'command exit 0' not in p.stdout
+    results.append({'mutation': name, 'file': path, 'test': test, 'killed': killed, 'restored': restored, 'tests': summary, 'red': failed[:3]})
+    print(json.dumps(results[-1]), flush=True)
+json.dump(results, open(f'{LC}/r4/mut/results.json', 'w'), indent=1)

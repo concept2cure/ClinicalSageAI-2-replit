@@ -467,6 +467,12 @@
    person (FILING_SPINE.md F7). The rows are the canvas list's own rows. */
 .c2c-v2 .pj-rv-group + .pj-rv-group{margin-top:14px;}
 .c2c-v2 .pj-rv-h{margin:0 0 6px;font-size:12px;font-weight:600;color:var(--text-200);}
+/* The project's quality records (Review; QMS_IN_PROJECTS QP2): one count per record, each with its own failure. */
+.c2c-v2 .pj-quality{display:grid;gap:6px;margin:0;}
+.c2c-v2 .pj-quality > div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;font-size:13px;}
+.c2c-v2 .pj-quality dt{color:var(--text-200);}
+.c2c-v2 .pj-quality dd{margin:0;font-variant-numeric:tabular-nums;text-align:right;}
+.c2c-v2 .pj-quality dd[data-tone="error"]{color:var(--danger-000, var(--text-200));}
 .c2c-v2 .pj-rv-n{font-weight:400;color:var(--text-400);}
 /* Submit tab: one row per market, each with its own server verdict, and the
    line under the project header that states them (FILING_SPINE.md F9). The

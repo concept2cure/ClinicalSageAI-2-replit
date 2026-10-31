@@ -369,9 +369,6 @@ export const COMMAND_AUTHORIZATION: Readonly<Record<string, CommandAuthorization
   'se_matrix.patch': {
     effect: 'write', object: 'se_matrix', minRole: 'member', requiresConfirmation: true,
   },
-  'correspondence.ingest': {
-    effect: 'write', object: 'correspondence', minRole: 'member', requiresConfirmation: true,
-  },
 
   // ── PDEV → IND workflow ─────────────────────────────────────────────────
   'pdev.registry.list': { effect: 'read', object: 'pdev_program' },

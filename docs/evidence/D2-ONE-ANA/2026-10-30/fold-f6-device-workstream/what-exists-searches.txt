@@ -1,0 +1,88 @@
+# What-exists searches for fold F6 (Rule 3), run 2026-10-30 against HEAD 55d58630b (git grep at HEAD, so the tree before the fold).
+
+$ git grep -nE "device-workstream" HEAD -- client server shared scripts | wc -l ; first 8 files
+client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx
+client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx
+client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx
+client/src/concept2cure/mdx/surfaceIds.ts
+client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx
+client/src/concept2cure/v2/__tests__/errorState.test.tsx
+client/src/concept2cure/v2/__tests__/navigationReachability.test.ts
+  (47 matching lines)
+
+$ git grep -nE "surfaces/Overview" HEAD -- client server shared scripts | wc -l ; first 8 files
+client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx
+client/src/concept2cure/pdev/App.tsx
+  (3 matching lines)
+
+$ git grep -nE "<Overview\b" HEAD -- client server shared scripts | wc -l ; first 8 files
+client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/Overview.pathwayReadiness.test.tsx
+client/src/concept2cure/v2/surfaces/PvCockpit.tsx
+  (5 matching lines)
+
+$ git grep -nE "ClientReviewZone" HEAD -- client server shared scripts | wc -l ; first 8 files
+client/src/concept2cure/mdx/components/ClientReviewZone.tsx
+client/src/concept2cure/mdx/surfaces/Overview.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/Overview.pathwayReadiness.test.tsx
+  (6 matching lines)
+
+$ git grep -nE "/api/mdx/client-review" HEAD -- client server shared scripts | wc -l ; first 8 files
+client/src/concept2cure/mdx/components/ClientReviewZone.tsx
+client/src/concept2cure/mdx/hooks/useClientReview.ts
+server/routes/__tests__/mdx-client-review-admits-project.test.ts
+server/routes/mdx-client-review.ts
+shared/constants/ui-surface-registry.ui-v2.ts
+  (9 matching lines)
+
+$ git grep -nE "p\.activity|\.activity\b" HEAD -- client server shared scripts | wc -l ; first 8 files
+client/src/concept2cure/mdx/app.css
+client/src/concept2cure/mdx/hooks/useProgramExtras.ts
+client/src/concept2cure/pdev/App.tsx
+client/src/concept2cure/v2/WhatAnaRemembers.tsx
+client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+client/src/concept2cure/v2/editor/SourceImportDialog.tsx
+client/src/concept2cure/v2/styles/surface-text-ramp.css
+client/src/concept2cure/v2/styles/surfaces-v2.css
+  (105 matching lines)
+
+$ git grep -nE "AS activity" HEAD -- client server shared scripts | wc -l ; first 8 files
+server/services/c2c/project-portfolio.ts
+  (1 matching lines)
+
+$ git grep -nE "pathwayCounts|pathway_counts" HEAD -- client server shared scripts | wc -l ; first 8 files
+  (0 matching lines)
+
+$ git grep -nE "filingWithin|filing_within|within60|60 days" HEAD -- client server shared scripts | wc -l ; first 8 files
+client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts
+client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx
+client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx
+client/src/concept2cure/v2/surfaces/ProjectPortfolioFilters.tsx
+client/src/concept2cure/v2/surfaces/Projects.tsx
+scripts/demo/launch-demo/packs/mdx-content.mjs
+scripts/seed/ga-demo.d/50-postmarket.mjs
+server/data/public-csr-reference/pages/34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333.jsonl
+  (282 matching lines)
+
+$ git grep -nE "workstream: 'MDX'" HEAD -- client server shared scripts | wc -l ; first 8 files
+client/src/concept2cure/v2/__tests__/projectDestination.test.ts
+client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx
+client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx
+client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts
+client/src/concept2cure/v2/registryModel.ts
+shared/navigation/__tests__/surface-actions.test.ts
+  (8 matching lines)
+
+$ git grep -nE "HealthKpi|MDX_HEALTH" HEAD -- client server shared scripts | wc -l ; first 8 files
+client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx
+client/src/concept2cure/mdx/data/programs.ts
+client/src/concept2cure/mdx/surfaces/Overview.tsx
+scripts/ci/__tests__/ungated-fixture-fallback-strings.test.mjs
+scripts/ci/check-ungated-fixture-fallback.mjs
+  (12 matching lines)
+
+$ git grep -nE "ProjectClientReview|ClientReviewRoom" HEAD -- client server shared scripts | wc -l ; first 8 files
+  (0 matching lines)

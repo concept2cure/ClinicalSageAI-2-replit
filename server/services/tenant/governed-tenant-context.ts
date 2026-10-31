@@ -17,14 +17,24 @@
  */
 
 import { switchPinTerms } from '../../db/sessionScope';
+import { isPlatformScopeRole, PlatformScopeRoleRefusedError } from '../../db/tenantStore';
 
 interface Queryable { query: (sql: string, params?: unknown[]) => Promise<unknown>; }
 
 /**
  * Stamp the RLS tenant session vars on the current transaction. Call immediately
  * after BEGIN. `app.current_tenant_id` is the numeric org id the policy matches.
+ *
+ * `role` is written to app.current_user_role, which the platform arm of about
+ * 977 tenant policies compares with 'app_super_admin'. A governed transaction
+ * acts for one organisation, so that role is refused, however it is cased or
+ * padded, before any statement: the same refusal a per-user request scope
+ * gives (P-72 slices 1a and 1b, server/db/tenantStore.ts isPlatformScopeRole;
+ * docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/). Until then a caller's
+ * role string opened every tenant's rows for the rest of the transaction.
  */
 export async function setTenantContextTx(client: Queryable, orgId: number | null | undefined, role?: string | null): Promise<void> {
+  if (isPlatformScopeRole(role)) throw new PlatformScopeRoleRefusedError('setTenantContextTx');
   if (orgId == null) return; // governed handlers guard on org context already; no-op defensively
   // The isolation switches are pinned in the same statement (server/db/sessionScope.ts).
   await client.query(`SELECT set_config('app.current_tenant_id', $1, true), ${switchPinTerms(true)}`, [String(orgId)]);

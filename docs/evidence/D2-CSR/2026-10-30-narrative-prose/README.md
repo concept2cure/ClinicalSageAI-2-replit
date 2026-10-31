@@ -65,3 +65,24 @@ After:
 - Concomitant medications stay as WHO-DD records them (upper case). Lower-casing would mangle names such as
   "VITAMIN B12".
 - A model rewrite is still governed by PQ-DRAFT-001; this is the template prose every narrative falls back to.
+
+## Follow-up, read against the CDISC pilot (same day)
+
+All 95 pilot narratives were composed locally with the new composer (pilot data stays outside the repository; only
+counts are filed): **95 composed, 0 refused, 0 fact-gate failures, 0 old read-out phrases, 0 ungrammatical causality
+sentences.** Reading them showed three more things a medical writer would not leave:
+
+1. "a 80-year-old". `indefiniteArticle` (safety-narrative.ts) takes "an" before 8, 11, 18 and 80–89, and before a
+   vowel. Used by the composer and by the withdrawal-only subject sentence (`narrative-compose.ts`).
+2. The D17 list of TEAEs before a per-subject withdrawal read the codes out ("relationship to study treatment
+   recorded as possible, outcome not recovered/not resolved"). It now uses the composer's own vocabulary, exported
+   as `causalityPhrase` and `outcomeState`, so there is one list of these terms, not two: "(mild, not serious,
+   possibly related to study treatment, not resolved)". A value outside the vocabulary is stated as recorded.
+3. The list was in row order (days 3, 3, 22, 3). It is now in onset order: study day, then date; ties keep the rows' order.
+
+| Check | Result |
+|---|---|
+| New cases before the change (`red-2.txt`) | 3 failed: the article, the list wording, the onset order |
+| After: composer, CSR narratives, E2B ICSR, AnA narration tools, pharmacovigilance, narratives route | 56 files, 550 passed |
+| D17 fixtures that matched the old list format | moved to the new format; their assertions are unchanged |
+| Pilot re-run | 95 / 95 composed, 0 gate failures |

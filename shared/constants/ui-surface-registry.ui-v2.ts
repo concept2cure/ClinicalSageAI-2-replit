@@ -346,24 +346,14 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     compliance: [A11Y, TONE],
     notes: 'Regional marketing-application administrative module (eCTD Module 1) — per-agency required-component checklist for EMA/PMDA/MHRA/TGA/HC/Swissmedic/NMPA over the global-RI regional-module1-requirements engine.',
   },
-  {
-    id: 'device-workstream',
-    label: 'Medical Device & IVD',
-    navTier: 'project',
-    layoutMode: 'section-workspace',
-    group: 'device',
-    icon: 'stethoscope',
-    uiKit: 'mdx',
-    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
-    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    apiPrefixes: ['/api/mdx/client-review', '/api/510k/estar', '/api/510k/device', '/api/cer', '/api/cerv2', '/api/ivdr', '/api/manufacturing'],
-    anaToolFamilies: [],
-    sharedContract: '@shared/types/predicate-intelligence',
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'The MDX workstream — one door. Programs portfolio with classification + 510(k)/PMA/CER/De Novo pathway tabs, predicate intelligence, eSTAR/Annex XIV editors. Built in the MDX kit.',
-  },
+  // No device-workstream. The kit portfolio (mdx/surfaces/Overview.tsx) folded into
+  // Projects (D2, fold F6, 2026-10-30; decision P-61 item 5): Projects with its MDX
+  // filter counts the device portfolio on the server, and 'device-workstream' is a
+  // DEEP_LINK_ALIASES entry for 'projects' that applies the filter. Of its claims,
+  // the portfolio itself called only /api/mdx/client-review, which moved to
+  // project-home with the Client Review Room (ui-surface-registry.ts); the device
+  // families it also listed are claimed by the pathway screens that call them
+  // (device-510k, device-cer, device-diagnostics).
   /* ── The device kit's own destinations ──
      These twelve were surfaces the kit rendered but the product could not
      route to. `mdx/App.tsx` drew a second rail with fifteen entries; only five
@@ -519,24 +509,14 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   // DEEP_LINK_ALIASES entry for 'submission-center', whose device filings read
   // /api/510k/estar/submissions (its claim). The screen claimed nothing at the
   // end: it called /api/submission-ops/packages, which no client calls now.
-  {
-    id: 'device-analytics',
-    label: 'Device pathway analytics',
-    navTier: 'specialist',
-    layoutMode: 'section-workspace',
-    group: 'device',
-    icon: 'barChart3',
-    uiKit: 'mdx',
-    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
-    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    apiPrefixes: ['/api/mdx/analytics'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Pathway-scoped device analytics. insights and report-engine answer protocol and report-run questions instead.',
-  },
+  // No device-analytics. Device analytics joined Reporting & analytics at its
+  // tier (D2, fold F4, 2026-10-30; decision P-61 item 3): its status counts,
+  // submission pace and AnA draft acceptance rate are the device section of
+  // GET /api/insights-canvas/overview, over the projects the reader can open,
+  // which `insights` already claims. 'device-analytics' is a DEEP_LINK_ALIASES
+  // entry for 'insights'. Its claim, /api/mdx/analytics, has no client caller
+  // now (the kit-shaped aggregate went with the screen; the facet routes had
+  // none), so no screen claims it and production refuses it.
   {
     id: 'protocol-dev',
     label: 'The protocol workspace',

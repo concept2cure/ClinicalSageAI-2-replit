@@ -1,0 +1,5 @@
+composes, states the withdrawal, lists every preceding TEAE, and attributes no cause 23ms
+lists the preceding TEAEs in onset order, whatever order the rows hold 3ms
+takes "an" before an age read with a vowel sound (8, 11, 18, 80–89) 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 23 passed (26)

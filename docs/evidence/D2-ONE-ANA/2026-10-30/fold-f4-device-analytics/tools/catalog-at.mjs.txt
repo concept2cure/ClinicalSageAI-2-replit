@@ -1,0 +1,51 @@
+// Replays every catalogue writer of C2C_MIGRATION_FILES at a git ref (or the
+// working tree, ref "WT") on a fresh PGlite, as tests/schema-contract/
+// catalog-module-claims.contract.test.ts does, and prints the catalogue rows of
+// the ids given. Read-only on the repo.
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+
+const REPO = '/home/user/ClinicalSageAI-2-replit';
+const { PGlite } = await import(path.join(REPO, 'node_modules/@electric-sql/pglite/dist/index.js'));
+const [ref, ...ids] = process.argv.slice(2);
+const read = (f) => (ref === 'WT' ? fs.readFileSync(path.join(REPO, f), 'utf8')
+  : execFileSync('git', ['-C', REPO, 'show', `${ref}:${f}`], { encoding: 'utf8', maxBuffer: 64 << 20 }));
+
+const tmp = fs.mkdtempSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'set-'));
+const setFile = path.join(tmp, 'migration-set.mjs');
+fs.writeFileSync(setFile, read('scripts/db/migration-set.mjs').replace(/^import .*$/gm, '// $&'));
+let files;
+try {
+  ({ C2C_MIGRATION_FILES: files } = await import(setFile));
+} catch (e) {
+  // migration-set imports node modules; fall back to parsing the array literal.
+  const src = read('scripts/db/migration-set.mjs');
+  const m = src.match(/export const C2C_MIGRATION_FILES\s*=\s*\[([\s\S]*?)\n\];/);
+  files = [...m[1].matchAll(/^\s*'([^']+\.sql)'/gm)].map((x) => x[1]);
+}
+const WRITES = /(INSERT\s+INTO|UPDATE)\s+(public\.)?"?available_modules"?/i;
+const writers = files.filter((f) => { try { return WRITES.test(read(f)); } catch { return false; } });
+const DDL_TABLES = ['organizations', 'users', 'projects', 'module_subscriptions', 'available_modules',
+  'concept2cure_artifacts', 'concept2cure_messages', 'activity_feed'];
+const base = read('migrations/0000_sweet_joseph.sql');
+const pg = new PGlite();
+for (const t of DDL_TABLES) {
+  const m = base.match(new RegExp(`CREATE TABLE "${t}" \\([\\s\\S]*?\\n\\);`));
+  await pg.exec(m[0]);
+}
+for (const f of writers) await pg.exec(read(f));
+const r = await pg.query(
+  `SELECT module_id, metadata::jsonb->'tiers' AS tiers, metadata::jsonb->'industries' AS industries,
+          COALESCE((metadata::jsonb->>'deprecated')::boolean,false) AS deprecated
+     FROM available_modules WHERE module_id = ANY($1) ORDER BY module_id`, [ids]);
+const got = new Map(r.rows.map((x) => [x.module_id, x]));
+console.log(`# ref ${ref}: ${writers.length} catalogue writers replayed on a fresh database`);
+for (const id of ids) {
+  const row = got.get(id);
+  console.log(row ? `${id}: row, tiers ${JSON.stringify(row.tiers)}, industries ${JSON.stringify(row.industries)}, deprecated ${row.deprecated}`
+    : `${id}: no row`);
+}
+await pg.close();
+fs.rmSync(tmp, { recursive: true, force: true });

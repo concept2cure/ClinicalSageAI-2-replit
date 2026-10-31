@@ -36,6 +36,7 @@ async function ensureDocument({ api, tally }, rec) {
   else {
     doc = must(await api('POST', '/api/protocol-development/documents', {
       protocolKind: 'clinical',
+      programId: rec.programId,
       title: T(PROTOCOL.name),
       protocolNumber: STUDY,
       designType: 'interventional',
@@ -203,9 +204,10 @@ async function readPdev({ api }, rec) {
   return `#${mine.id}: objectives ${rec.pdev.objectives}, risks ${rec.pdev.risks}, milestones ${rec.pdev.milestones}, amendments ${rec.pdev.amendments}`;
 }
 
-export async function ensureProtocol(ctx) {
+export async function ensureProtocol(ctx, program) {
   const { run } = ctx;
-  const rec = { title: T(PROTOCOL.name), protocolNumber: STUDY };
+  // The protocol document belongs to the demo program (the server requires programId).
+  const rec = { title: T(PROTOCOL.name), protocolNumber: STUDY, programId: program?.id ?? null };
   run.record('protocol', rec);
   await run.step(`Protocol development: ${STUDY} document`, () => ensureDocument(ctx, rec));
   await run.step('Protocol development: section content', () => ensureSections(ctx, rec));

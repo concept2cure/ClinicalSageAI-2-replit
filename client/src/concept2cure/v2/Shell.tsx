@@ -24,7 +24,9 @@ import { hasKeys, useLiveData } from './dataConnect';
 import { isOrgAdminRole } from './orgAdmin';
 import { canAdministerBilling } from '@shared/constants/permissions';
 import { TaskTray } from './TaskTray';
-import { useShellProject, type ShellProject } from './shellProject';
+import { readShellProject, useShellProject, type ShellProject } from './shellProject';
+import { destinationFor } from './routing';
+import { OPEN_PROGRAM_SURFACE } from './programAction';
 
 import {
   AI_ACTIONS,
@@ -88,7 +90,7 @@ function useShellLeaveGuard(onNav?: (id: string) => void) {
     return true;
   }, [notify]);
   const go = (id: string) => { if (canLeave()) onNav?.(id); };
-  return { canLeave, go, leaveNotice: <C2CToast msg={notice} /> };
+  return { canLeave, go, notify, leaveNotice: <C2CToast msg={notice} /> };
 }
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
@@ -122,7 +124,7 @@ export function Rail({
   onSearch?: () => void;
 }) {
   const { user, logout } = useAuth();
-  const { canLeave, leaveNotice } = useShellLeaveGuard();
+  const { canLeave, notify, leaveNotice } = useShellLeaveGuard();
   const [acct, setAcct] = React.useState(false);
   const acctBtnRef = React.useRef<HTMLButtonElement>(null);
   const acctMenuId = React.useId();
@@ -174,6 +176,12 @@ export function Rail({
        other way there (/tasks, not the action's nav-target alias). */
     if (res?.ok) applySurfaceAction(res.directive, () => onNav(target));
     else onNav(target);
+    /* A project screen with no project open lands on Projects, by the router's own rule
+       (routing.ts destinationFor). Said, so the click is not silent: from Projects it looked dead
+       (found in the running app, 2026-10-31). */
+    if (target !== OPEN_PROGRAM_SURFACE && destinationFor(target, Boolean(readShellProject())).surfaceId === OPEN_PROGRAM_SURFACE) {
+      notify(`Open a project to see its ${s.label}. Choose one in Projects.`, 'ok');
+    }
   };
   const navItem = (s: RailEntry) => {
     const target = s.target ?? s.id;

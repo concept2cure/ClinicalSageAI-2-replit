@@ -133,6 +133,9 @@
 .ro-sev{ font-size:10px; letter-spacing:.05em; text-transform:uppercase; font-weight:600; flex:0 0 62px; }
 .ro-sev.sev-critical{ color:var(--error); font-weight:700; } .ro-sev.sev-high{ color:var(--error); } .ro-sev.sev-medium{ color:var(--warning); } .ro-sev.sev-low{ color:var(--text-400); }
 .ro-li-b{ color:var(--text-100); flex:1; min-width:0; }
+/* The device section's 24-month submission pace (fold F4): one month per cell, the count beside it. */
+.ro-pace{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:0 14px; }
+.ro-pace .ro-li{ border-top:none; padding:3px 0; }
 .ro-li-msg{ display:block; font-size:11px; color:var(--text-400); margin-top:2px; }
 .ro-disc{ margin:0 0 12px; padding:12px 14px; border-left:3px solid var(--warning); background:color-mix(in srgb,var(--warning) 6%,transparent); border-radius:var(--radius-lg); max-width:680px; }
 .ro-disc-h{ font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; color:var(--text-400); margin-bottom:4px; }

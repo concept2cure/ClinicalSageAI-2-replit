@@ -52,7 +52,8 @@ async function seedProgram({ api, run }) {
       targetSubmissionDate: inDays(120),
       deviceClassification: {
         deviceClass: 'II', productCode: 'QNX', regulationNumber: '866.3985', reviewPanel: 'Microbiology',
-        predicateK: 'K223456', intendedUse: INTENDED_USE, flags: ['softwareAiMl', 'cyberDevice', 'clinicalData'],
+        // The eSTAR prints the predicate's trade name beside its number; the server refuses one without the other.
+        predicateK: 'K223456', predicateName: 'SepsiScreen Panel (demo predicate)', intendedUse: INTENDED_USE, flags: ['softwareAiMl', 'cyberDevice', 'clinicalData'],
       },
     }), 201, 'create program');
     row = body.data;
@@ -186,7 +187,7 @@ const reviewerOf = (signer, identity) =>
 async function ensureReviewRequested({ api }, docId, reviewer) {
   const reviews = must(await api('GET', `/api/authoring/documents/${docId}/reviews`), 200, 'list reviews').reviews ?? [];
   if (reviews.some((x) => x.reviewer_email === reviewer.email)) return false;
-  must(await api('POST', `/api/authoring/documents/${docId}/request-review`, { reviewers: [reviewer] }), [200, 201], 'request review');
+  must(await api('POST', `/api/authoring/documents/${docId}/request-review`, { reviewers: [reviewer], route: { reviewDueDate: inDays(7) }, reason: 'Demo: send the 510(k) Summary for review' }), [200, 201], 'request review');
   return true;
 }
 
@@ -215,6 +216,9 @@ async function settleSummaryComment({ api, run }, doc) {
 }
 
 async function submitAndFreezeSummary({ api, run }, doc, reviewer, signer) {
+  // Independent review: the server refuses the author as their own reviewer
+  // (REVIEWER_IS_AUTHOR), so without a second person review and freeze wait.
+  if (!signer) return `review and freeze not executed — ${SIGNER_ABSENT}`;
   const requested = await ensureReviewRequested({ api }, doc.id, reviewer);
   let workflow = 'existing';
   if (doc.status === 'DRAFT') {
@@ -303,9 +307,10 @@ async function seedAuthoring(ctx, programId, signer) {
   });
   await run.step('Authoring: Cybersecurity and Interoperability Summary (review requested)', async () => {
     out.cyber = await ensureAuthoringDoc(ctx, AUTHORING.cyber, programId);
-    await ensureReviewRequested(ctx, out.cyber.id, reviewer);
-    run.record('authoring.cyber', { id: out.cyber.id, title: out.cyber.title, status: out.cyber.status || 'DRAFT', created: out.cyber.created, boundToProgram: out.cyber.bound, sections: out.cyber.sections.map((s) => s.code), reviewRequestedFrom: reviewer.email });
-    return `${out.cyber.id} (${out.cyber.sections.length} sections), review → ${reviewer.email}`;
+    // Independent review needs a second person (REVIEWER_IS_AUTHOR otherwise).
+    if (signer) await ensureReviewRequested(ctx, out.cyber.id, reviewer);
+    run.record('authoring.cyber', { id: out.cyber.id, title: out.cyber.title, status: out.cyber.status || 'DRAFT', created: out.cyber.created, boundToProgram: out.cyber.bound, sections: out.cyber.sections.map((s) => s.code), reviewRequestedFrom: signer ? reviewer.email : null });
+    return `${out.cyber.id} (${out.cyber.sections.length} sections), ${signer ? `review → ${reviewer.email}` : `review ${SIGNER_ABSENT}`}`;
   });
   await run.step('Authoring: does the Review board list the requested reviews? (probe)', async () => {
     const r = probe(run, 'reviewBoard', await ctx.api('GET', '/api/review/board'), 'GET /api/review/board after request-review on two documents');
@@ -351,7 +356,7 @@ async function seedSubmission(ctx, program, vaultDocs) {
     const r = probe(run, 'estarLeafProbe', await api('PUT', `/api/submissions/sequences/${out.sequence.id}/leaves`, {
       sectionCode: d.leaf.estar, title: vaultDocs[d.key].title, documentTable: 'vault_documents', documentUuid: vaultDocs[d.key].id, documentType: d.leaf.documentType, lifecycleOp: 'new', reason: 'Placed by the launch demo pack',
     }), `PUT leaves with sectionCode "${d.leaf.estar}" (an eSTAR slot id) on the 510(k) sequence`);
-    if (r.status === 200) throw new Error('the leaf route accepted an eSTAR section code; the CTD fallback below is no longer needed — revisit the pack');
+    if (r.status === 200) return 'HTTP 200: the leaf route now takes the eSTAR section code; the CTD placements below stay as well';
     finding(run, `Submission Center: the sequence/leaf model is the eCTD one. PUT /api/submissions/sequences/:id/leaves refuses a non-CTD-shaped sectionCode — "${d.leaf.estar}" answered HTTP ${r.status} ${String(r.json?.error?.message ?? '').slice(0, 220)} — and the builder presents eCTD modules. There is no eSTAR section vocabulary on the leaf route, so this pack files the device documents at the closest CTD codes (3.2.P.1, 3.2.R, 5.3.1.4, 5.3.5.2, 1.16, 1.14) with eSTAR documentType tokens; an authoring document cannot be placed as a leaf at all (authoring_documents is not a placeable table).`);
     return `HTTP ${r.status} (recorded as a finding); CTD codes used instead`;
   });
@@ -472,7 +477,7 @@ export async function seed(ctx) {
   const authoring = await seedAuthoring(ctx, program.id, signer);
   const sub = await seedSubmission(ctx, program, vaultDocs);
   await seedReadiness(ctx, program.id, sub);
-  const sops = await seedQms(ctx, signer, vaultDocs, identity);
+  const sops = await seedQms({ ...ctx, programId: program.id }, signer, vaultDocs, identity);
   await run.step('Audit trail: organisation ledger and chain verdict', () => seedAudit(ctx, [
     program.id, String(sub.submission.id), String(sub.sequence.id),
     ...Object.values(vaultDocs).map((v) => v.id), ...Object.values(authoring).map((a) => a.id), ...Object.values(sops).map((s) => String(s.id)),

@@ -1,0 +1,116 @@
+P-72 slice 1b, lane C. The lane's 11 new or extended test files, run with every one of the lane's 17 source files put back
+to HEAD (4323b9149) by swapn.sh (probes/swapn.sh.txt), which restores each file byte for byte and checks its SHA-256.
+Expected: every new test that asserts the fix fails; the controls pass.
+
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /api/c2c/actions/verify-chain answers 409 and names the missing head (a member of organisation 7) 28ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity reports the integrity not ok, with the anchor break 6ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity refuses a tenant membership role of platform_admin with no platform grant (403), and walks nothing 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity refuses a tenant membership role of super_admin with no platform grant (403), and walks nothing 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the licensing history reports the record store broken, not verified 5ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the tenant verdict (ledger, export, compliance reports) is broken for the truncated organisation only 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > npm run ops:verify-audit-chain reports public.audit_logs broken and exits 1 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /api/c2c/actions/verify-chain 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /audit-trail/seal-integrity 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the licensing history keeps the walk verdict and marks the head not verified 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the tenant verdict 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > npm run ops:verify-audit-chain 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok (a member of organisation 7) 6ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok (a platform administrator, estate-wide) 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > npm run ops:verify-audit-chain reports public.audit_logs unverifiable (exit 2), not ok 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > an administrator of organisation 8 gets organisation 8's verdict, and nothing of organisation 7 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a break the walk finds in another organisation's row is said to be there, not named 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a tenant membership role of super_admin with no platform grant gets its own organisation only 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a platform administrator still gets the estate-wide verdict, every organisation's break included 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the ledger (meta.chain) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > a document's history (meta.chain) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the export walk (turn-record and authoring exports) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the signed audit export's manifest 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the integrity attestation's chain row 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the ledger (meta.chain) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the export walk 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the signed audit export's manifest 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the integrity attestation's chain row 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > organisation 8's readers name nothing of organisation 7 1ms
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > the tenant verdict is ok null with the counts, and its head was not checked on that connection 18ms
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > GET /api/c2c/actions/verify-chain answers 503 AUDIT_CHAIN_NOT_VERIFIED with the counts, never ok 12ms
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > the ledger, the export walk, the signed manifest and the attestation say not verified, never "no chained rows" 2ms
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > an organisation that truly has no chained row is still said to have none 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the tenant verdict is the walk, with the head unavailable and ok null (not ok, not broken) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the ledger still returns its entries, and its verdict is unverified 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a document's history still returns its entries, unverified 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the export walk, the signed manifest and the attestation say not verified, with the reason 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a walk that fails still fails: only the head step is caught 2ms
+ × server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > tenant role "app_super_admin": 403 before the precheck, the authority or the password, and nothing reaches the database 41ms
+ × server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > tenant role "APP_SUPER_ADMIN": 403 before the precheck, the authority or the password, and nothing reaches the database 5ms
+ × server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > tenant role " app_super_admin ": 403 before the precheck, the authority or the password, and nothing reaches the database 4ms
+ × server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > tenant role "App_Super_Admin\t": 403 before the precheck, the authority or the password, and nothing reaches the database 4ms
+ ✓ server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > an ordinary tenant role signs, and is the role the transaction carries 4ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member gets their own organisation's chain verdict, and the estate verifier does not run 21ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a break in the member's chain is reported, and another organisation's break is not named 5ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > an anchor that cannot be read is no verdict (503 UNVERIFIABLE) 6ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member with no organisation is refused, and nothing runs 3ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > control: a platform administrator gets the estate verdict 3ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member's report states their organisation's chain, and the estate verifier does not run 8ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member with no organisation gets no report across every organisation 3ms
+ × server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > P-72 slice 1b: a verdict over rows the walk did not read, or over none, is not VERIFIED > a walk that could not read every chained row is no verdict, and the walk's own reason is the one logged 10ms
+ × server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > P-72 slice 1b: a verdict over rows the walk did not read, or over none, is not VERIFIED > an organisation with no chained row is not VERIFIED over nothing, and its report attests to nothing 6ms
+ × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > every statement is inside a transaction: each connection begins before it reads, and every connection goes back 12ms
+ × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > reads each organisation's audit_logs chain and seals in its tenant scope, with no role, for that organisation only 7ms
+ × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > reads each organisation's audit_events rows and seals in its own scope, filtered to it 3ms
+ × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > reads only the organisation list and the stores with no tenant key in the infrastructure scope 3ms
+ × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > a break in one organisation's chain is broken, names that organisation, and still counts the other's rows 4ms
+ × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > legacy rows the walk refuses in an organisation's scope are unverifiable for it, never ok and not an incident 4ms
+ × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > a store in which no organisation has a row verified nothing: unverifiable, never ok 3ms
+ × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > an organisation with no rows neither passes nor fails a store the others verify 3ms
+ × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > the anchor is verified and written per organisation > passes a scope opener that runs in the named organisation's own scope, inside a transaction 5ms
+ × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > the anchor is verified and written per organisation > writes the next anchor from every organisation's head, each read in its own scope 3ms
+ × server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > reads each organisation's documents and holds in its tenant id AND uuid scope, with no role 12ms
+ × server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > reads the programmes the organisation owns, and only its own active holds 4ms
+ × server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > disposes of each organisation's document inside that organisation's scope, audited under it 3ms
+ × server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > an organisation's hold stops disposition of its own expired document, and not another organisation's 2ms
+ × server/jobs/__tests__/retentionCron.org-scope.test.ts > what the sweep refuses to do in an organisation's scope > leaves a document that names another organisation than its programme's owner, counts it, and the job is not clean 2ms
+ × server/jobs/__tests__/retentionCron.org-scope.test.ts > what the sweep refuses to do in an organisation's scope > a document resolved to another organisation at disposal is rolled back, not disposed in this scope 2ms
+ × server/jobs/__tests__/retentionCron.org-scope.test.ts > what the sweep refuses to do in an organisation's scope > an organisation with no uuid is not swept: nothing is read in a uuid-less scope, and the job fails with an alert 1ms
+ × server/jobs/__tests__/retentionCron.org-scope.test.ts > what the sweep refuses to do in an organisation's scope > an operator can sweep the organisations it names, and only those 2ms
+ × server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > a walk that verified none of the 3 sealed rows did not run: it never says valid 9ms
+ × server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > every sealed row verified: valid, with the count from the organisation's own scope 2ms
+ × server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > a seal that does not verify is reported broken, whatever was read 3ms
+ × server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > an organisation with no sealed row is said to have none, and nothing is claimed beyond it 1ms
+ × server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > writes an anchor of every organisation's head, each read on its own connection; the caller's is not read 8ms
+ × server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > verifies every anchored head on its own organisation's connection; the caller's reads only the archive ledger 1ms
+ × server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > a head that changed since the anchor is broken, and names its organisation 1ms
+ × server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > a connection scoped to another tenant is refused, never read as a missing head 1ms
+ ✓ server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > without the opener, a tenant-scoped connection is refused for the cross-tenant read, as before 3ms
+ × server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > principal role "app_super_admin": refused before any connection, and nothing reaches app.current_user_role 12ms
+ × server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > principal role "APP_SUPER_ADMIN": refused before any connection, and nothing reaches app.current_user_role 3ms
+ × server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > principal role " app_super_admin ": refused before any connection, and nothing reaches app.current_user_role 2ms
+ × server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > principal role "App_Super_Admin\n": refused before any connection, and nothing reaches app.current_user_role 1ms
+ ✓ server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > an ordinary role is applied to the call's connection 1ms
+ × server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > admitted role "app_super_admin": refused, and nothing reaches app.current_user_role 15ms
+ × server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > admitted role "APP_SUPER_ADMIN": refused, and nothing reaches app.current_user_role 3ms
+ × server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > admitted role " app_super_admin ": refused, and nothing reaches app.current_user_role 2ms
+ × server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > admitted role "App_Super_Admin\n": refused, and nothing reaches app.current_user_role 2ms
+ ✓ server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > an ordinary membership role is written and the scope admitted 1ms
+ × server/services/audit/__tests__/seal-coverage-organization.test.ts > the audit_events seal check, per organisation > named, it reads and counts that organisation's chained rows only 8ms
+ ✓ server/services/audit/__tests__/seal-coverage-organization.test.ts > the audit_events seal check, per organisation > control: unnamed, it reads every organisation as before 1ms
+ × server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses "app_super_admin" before any statement: nothing reaches app.current_user_role 7ms
+ × server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses "APP_SUPER_ADMIN" before any statement: nothing reaches app.current_user_role 1ms
+ × server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses " app_super_admin " before any statement: nothing reaches app.current_user_role 1ms
+ × server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses "App_Super_Admin\n" before any statement: nothing reaches app.current_user_role 1ms
+ × server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses it with no organisation too: the refusal does not depend on the caller's other arguments 1ms
+ ✓ server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > still stamps the tenant and an ordinary membership role 1ms
+ Test Files  11 failed (11)
+      Tests  50 failed | 47 passed (97)
+   Duration  11.82s (transform 2.51s, setup 250ms, import 9.18s, tests 479ms, environment 1ms)
+
+== Pre-existing, not this lane: server/routes/__tests__/governed-signed-act.request-context.test.ts with governed-signed-act.ts and governed-tenant-context.ts at HEAD
+      Tests  2 failed | 3 passed (5)
+AssertionError: expected "vi.fn()" to be called with arguments: [ 42, 7, { query: [Function Mock] } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -2,6 +2,11 @@
+    42,
+    7,

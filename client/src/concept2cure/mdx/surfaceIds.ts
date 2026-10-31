@@ -15,7 +15,11 @@
  */
 
 export const MDX_SURFACE_IDS = [
-  'device-workstream',
+  // No `device-workstream`. The kit portfolio (surfaces/Overview.tsx) folded into
+  // Projects (D2, fold F6, 2026-10-30; decision P-61 item 5): Projects with its
+  // MDX filter counts the device portfolio on the server, and the Client Review
+  // Room is on each device project's Review step. The old id is a
+  // DEEP_LINK_ALIASES entry for `projects` that applies the MDX filter.
   'device-510k',
   'device-pma',
   'device-cer',
@@ -51,7 +55,11 @@ export const MDX_SURFACE_IDS = [
   // device-filing store, estar_submissions), whose device filings carry a status
   // filter, each draft's gate and each filing's history; the old id is a
   // DEEP_LINK_ALIASES entry that lands there.
-  'device-analytics',
+  // No `device-analytics`. Device analytics joined Reporting & analytics (D2, fold
+  // F4, 2026-10-30; decision P-61 item 3): its status counts, submission pace and
+  // AnA draft acceptance rate are the device section of the Reporting overview,
+  // over the projects the reader can open, and the old id is a DEEP_LINK_ALIASES
+  // entry for `insights`.
 ] as const;
 
 export type MdxSurfaceId = (typeof MDX_SURFACE_IDS)[number];

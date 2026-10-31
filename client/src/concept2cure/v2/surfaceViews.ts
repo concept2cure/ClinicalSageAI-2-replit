@@ -427,7 +427,8 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // gone — the shell owns the chrome and owns the conversation, so none of
   // these claims the rail's column.
   'device-510k': { component: DeviceSurfaces['device-510k'], full: true },
-  'device-analytics': { component: DeviceSurfaces['device-analytics'], full: true },
+  // No device-analytics: it joined Reporting & analytics (D2, fold F4, 2026-10-30);
+  // its address opens `insights` (DEEP_LINK_ALIASES), whose overview carries the device section.
   'device-cer': { component: DeviceSurfaces['device-cer'], full: true },
   'device-clinical-studies': { component: DeviceSurfaces['device-clinical-studies'], full: true },
   'device-diagnostics': { component: DeviceSurfaces['device-diagnostics'], full: true },
@@ -440,7 +441,8 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'device-udi': { component: DeviceSurfaces['device-udi'], full: true },
   // No device-validation: the organization-wide blocker list retired (D2, fold F5
   // item 2, 2026-10-29); its address opens Submission Center (DEEP_LINK_ALIASES).
-  'device-workstream': { component: DeviceSurfaces['device-workstream'], full: true },
+  // No device-workstream: the device portfolio folded into Projects (D2, fold F6,
+  // 2026-10-30); its address opens Projects with the MDX filter (DEEP_LINK_ALIASES).
   'dispatch-readiness': { component: DispatchReadiness, full: true },
   'doc-journey': { component: DocJourney },
   // Full-width editing, with no second AnA input. Requests preserve the saved
