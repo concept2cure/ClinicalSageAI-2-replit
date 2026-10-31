@@ -3,7 +3,7 @@
   "prefix": "[Demo · Lumen]",
   "outcome": "seeded_unqualified",
   "browserQualification": "not_executed",
-  "startedAt": "2026-10-31T22:54:18.695Z",
+  "startedAt": "2026-10-31T23:13:57.158Z",
   "records": {
     "target": {
       "baseUrl": "http://127.0.0.1:5000",
@@ -15,18 +15,23 @@
       "session": "verified",
       "projects": "readable",
       "tasking": "readable",
-      "taskCount": 22,
-      "browser": "not_executed"
+      "taskCount": 7,
+      "browser": "not_executed",
+      "plan": {
+        "tier": "enterprise",
+        "locked": [],
+        "changedTo": null
+      }
     },
     "tally": {
       "created": {
+        "task": 10,
         "plan-document": 4
       },
       "found": {
         "client-workspace": 1,
         "program": 4,
         "vault-document": 5,
-        "task": 10,
         "study-design": 1,
         "cmc-spec": 5,
         "cmc-stability": 2,
@@ -61,12 +66,12 @@
       }
     },
     "summary": {
-      "created": 4,
-      "found": 31
+      "created": 14,
+      "found": 21
     }
   },
   "notes": [
     "Lumen Bioscience demonstration built from public information (data/seeds/lumen-demo). Not affiliated with Lumen Bioscience, Inc.; every specification, stability result, batch, planning assumption and task is illustrative."
   ],
-  "finishedAt": "2026-10-31T22:54:29.737Z"
+  "finishedAt": "2026-10-31T23:14:09.684Z"
 }

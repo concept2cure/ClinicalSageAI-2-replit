@@ -3,7 +3,7 @@
   "prefix": "[Demo · Biotech]",
   "outcome": "seeded_unqualified",
   "browserQualification": "not_executed",
-  "startedAt": "2026-10-31T22:53:53.691Z",
+  "startedAt": "2026-10-31T23:13:32.189Z",
   "records": {
     "target": {
       "baseUrl": "http://127.0.0.1:5000",
@@ -15,11 +15,17 @@
       "session": "verified",
       "projects": "readable",
       "tasking": "readable",
-      "taskCount": 22,
-      "browser": "not_executed"
+      "taskCount": 7,
+      "browser": "not_executed",
+      "plan": {
+        "tier": "enterprise",
+        "locked": [],
+        "changedTo": null
+      }
     },
     "tally": {
       "created": {
+        "task": 6,
         "plan-document": 5
       },
       "found": {
@@ -52,8 +58,7 @@
         "qms-change-link": 1,
         "cmc-spec": 5,
         "cmc-stability": 2,
-        "cmc-batch": 3,
-        "task": 6
+        "cmc-batch": 3
       }
     },
     "identities": {
@@ -920,19 +925,20 @@
     },
     "audit": {
       "window": 500,
-      "entriesBefore": 431,
-      "entriesAfter": 495,
-      "entriesWrittenThisRun": 64,
+      "entriesBefore": 500,
+      "entriesAfter": 500,
+      "entriesWrittenThisRun": 69,
       "eventsThisRun": [
-        "Authoring Section Create"
+        "Authoring Section Create",
+        "C2c Work Task Create"
       ],
       "unchainedThisRun": 0,
       "chain": {
         "store": "audit_logs",
         "legacyRows": 0,
-        "sequencedRows": 495,
+        "sequencedRows": 630,
         "ok": true,
-        "rowsChecked": 495,
+        "rowsChecked": 630,
         "head": {
           "verified": false,
           "status": "not_configured",
@@ -944,8 +950,8 @@
       }
     },
     "summary": {
-      "created": 5,
-      "found": 191
+      "created": 11,
+      "found": 185
     }
   },
   "notes": [
@@ -960,5 +966,5 @@
     "QMS deviation not created: /api/mdx/qms exposes documents, changes (with a \"deviation\" link TYPE by reference), nonconforming products, suppliers, internal audits, management reviews and training — there is no deviation entity to write (server/routes/mdx-qms.ts). SOP-003 Deviation Management describes the process; the register itself is not a launch QMS capability.",
     "QMS personal acknowledgement: Only an effective controlled document can be acknowledged."
   ],
-  "finishedAt": "2026-10-31T22:54:18.694Z"
+  "finishedAt": "2026-10-31T23:13:57.156Z"
 }

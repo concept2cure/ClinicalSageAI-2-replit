@@ -9,17 +9,17 @@
 import { T } from './biotech-content.mjs';
 
 export const BIOTECH_TASKS = [
-  { title: T('Finalise drug substance specification for the IND (§3.2.S.4.1)'), moduleType: 'CMC', priority: 'high', status: 'in-progress', dueInDays: 10,
+  { title: 'Finalise drug substance specification for the IND (§3.2.S.4.1)', moduleType: 'CMC', priority: 'high', status: 'in-progress', dueInDays: 10,
     description: 'Close the acceptance criteria for potency, SEC monomer and host cell protein with QC, then route the specification for approval.' },
-  { title: T('Record the 6-month pull of the drug product stability study'), moduleType: 'CMC', priority: 'medium', status: 'pending', dueInDays: 21,
+  { title: 'Record the 6-month pull of the drug product stability study', moduleType: 'CMC', priority: 'medium', status: 'pending', dueInDays: 21,
     description: 'Enter the 6-month results at 5°C and 25°C/60% RH for lot C2C101-DP-2501 and re-run shelf-life trending.' },
-  { title: T('Review sample size and power for Protocol C2C-101-201'), moduleType: 'Biostatistics', priority: 'high', status: 'review', dueInDays: 7,
+  { title: 'Review sample size and power for Protocol C2C-101-201', moduleType: 'Biostatistics', priority: 'high', status: 'review', dueInDays: 7,
     description: 'Confirm the PASI 75 week-16 assumptions (placebo 8%, active 50%) and the 15% dropout allowance before the protocol is signed.' },
-  { title: T('Draft the Investigator\'s Brochure summary of nonclinical findings'), moduleType: 'Nonclinical', priority: 'medium', status: 'pending', dueInDays: 28,
+  { title: "Draft the Investigator's Brochure summary of nonclinical findings", moduleType: 'Nonclinical', priority: 'medium', status: 'pending', dueInDays: 28,
     description: 'Summarise the 26-week cynomolgus toxicology study and tissue cross-reactivity results for IB section 5.' },
-  { title: T('Complete Form FDA 1571 and 1572 for sequence 0000'), moduleType: 'IND', priority: 'critical', status: 'pending', dueInDays: 14,
+  { title: 'Complete Form FDA 1571 and 1572 for sequence 0000', moduleType: 'IND', priority: 'critical', status: 'pending', dueInDays: 14,
     description: 'Fill the sponsor, investigator and IRB details and attach the signed forms to Module 1 of the original IND.' },
-  { title: T('Approve the clinical protocol synopsis'), moduleType: 'Clinical', priority: 'high', status: 'in-progress', dueInDays: 5,
+  { title: 'Approve the clinical protocol synopsis', moduleType: 'Clinical', priority: 'high', status: 'in-progress', dueInDays: 5,
     description: 'Medical monitor and biostatistics sign-off on Protocol Synopsis C2C-101-201.' },
 ];
 

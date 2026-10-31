@@ -74,6 +74,54 @@ export async function connect({ baseUrl, email, token, onRecord, expectedOrganiz
       taskCount: tasks.json.data.length, browser: 'not_executed' } };
 }
 
+/** The work areas the demo walks through, as rail and catalog name them. */
+export const DEMO_AREAS = {
+  projects: 'Projects', tasks: 'Tasks', 'communication-center': 'Communication', vault: 'Vault',
+  'submission-center': 'Submission Center', cmc: 'CMC / Module 3', rbm: 'Risk-based monitoring',
+  biostatistics: 'Biostatistics', quality: 'Quality', insights: 'Reporting & analytics',
+};
+
+/** The demo areas this organisation's plan leaves locked: [{ id, label, requiredTier }]. */
+async function lockedDemoAreas(api) {
+  const nav = must(await api('GET', '/api/module-subscriptions/navigation'), 200, 'read the organisation\'s subscription');
+  const byId = new Map((nav.surfaces ?? []).map((s) => [s.id, s]));
+  const locked = Object.entries(DEMO_AREAS)
+    .filter(([id]) => byId.get(id)?.entitled === false)
+    .map(([id, label]) => ({ id, label, requiredTier: byId.get(id).requiredTier ?? null }));
+  return { tier: nav.tier ?? null, masterAdmin: nav.masterAdmin === true, locked };
+}
+
+/**
+ * Before seeding, make sure the demo's work areas are open to the organisation,
+ * or say plainly which are not. `plan` (from --plan) is applied only by the
+ * platform owner, through the Master licensing route a person would use, with
+ * a reason on the audit trail; nothing else changes an organisation's plan.
+ */
+export async function ensureDemoPlan({ api, identity }, plan) {
+  let state = await lockedDemoAreas(api);
+  // The owner sees every area whatever the plan; the organisation's other
+  // members see the plan's set, so --plan applies whenever the plan differs.
+  if (plan && state.tier !== plan) {
+    if (!state.masterAdmin) {
+      throw new Error(`--plan ${plan}: only the platform owner can change an organisation's plan, and ${identity.email} is not. Nothing was seeded.`);
+    }
+    must(await api('PATCH', `/api/admin/master/licensing/tenants/${identity.organizationId}/tier`, {
+      tier: plan, reason: 'Demo seed: the demonstration organisation needs every work area the demo shows.',
+    }), 200, `set the organisation's plan to ${plan}`);
+    state = await lockedDemoAreas(api);
+  }
+  if (state.locked.length) {
+    console.warn(`\n⚠ On the ${state.tier ?? 'current'} plan these demo areas are locked for organisation ${identity.organizationId}, and show "not included in your subscription":`);
+    for (const l of state.locked) console.warn(`    ${l.label}${l.requiredTier ? ` (from ${l.requiredTier})` : ''}`);
+    console.warn('  Their records are still seeded. To open them, the platform owner sets the plan in Master licensing → Tenants, or re-runs this with --plan enterprise.\n');
+  } else if (state.masterAdmin && state.tier !== 'enterprise') {
+    console.info(`Every demo area is open to you as platform owner. Other members of organisation ${identity.organizationId} see what the ${state.tier ?? 'current'} plan includes; --plan enterprise opens every area to them.`);
+  } else {
+    console.info(`Every demo area is open on the ${state.tier ?? 'current'} plan.`);
+  }
+  return { tier: state.tier, locked: state.locked.map((l) => l.id), changedTo: plan && state.tier === plan ? plan : null };
+}
+
 /** Explicit ids are positive integers, not preferences inferred from a profile. */
 function optionalPositiveId(value, label) {
   if (value === undefined) return undefined;

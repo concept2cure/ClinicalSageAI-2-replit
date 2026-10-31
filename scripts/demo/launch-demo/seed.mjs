@@ -6,6 +6,7 @@
  *   node scripts/demo/launch-demo/seed.mjs --pack biotech|mdx|all [--purge]
  *     [--base-url http://localhost:5200] [--email founder@example.com]
  *     [--organization-id <id>] [--client-workspace-id <id>] (workspace: biotech only)
+ *     [--plan enterprise]  (platform owner: open every demo work area to the organisation)
  *
  *   npm run demo:seed -- --pack all
  *
@@ -19,7 +20,7 @@
  * manifest of the ids it created to docs/evidence/DEMO/<pack>/manifest.json so
  * demo scripts and evidence can refer to real records.
  */
-import { connect, makeRun } from './lib.mjs';
+import { connect, ensureDemoPlan, makeRun } from './lib.mjs';
 
 const args = process.argv.slice(2);
 const opt = (name, dflt) => {
@@ -49,6 +50,15 @@ if (clientWorkspaceId !== undefined && list.some(pack => pack !== 'biotech')) {
 const ctx = await connect({ baseUrl: opt('base-url'), email: opt('email'),
   expectedOrganizationId: opt('organization-id', process.env.DEMO_EXPECTED_ORGANIZATION_ID), clientWorkspaceId });
 console.info(`Signed in as ${ctx.identity.email} (user ${ctx.identity.userId}, organisation ${ctx.identity.organizationId}) at ${ctx.baseUrl}`);
+
+/* The demo's work areas must be open to the organisation it runs in
+   (2026-10-31: on a lower plan, Communication, CMC / Module 3, Risk-based
+   monitoring and Biostatistics answered "not included in your subscription",
+   and a client demo read the rail as broken). With --plan <tier> the platform
+   owner raises the organisation's plan through Master licensing; otherwise the
+   locked areas and the remedy are said before anything is seeded. */
+const plan = await ensureDemoPlan(ctx, opt('plan'));
+ctx.preflight.plan = plan;
 
 let failed = false;
 for (const pack of list) {

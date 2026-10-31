@@ -137,21 +137,21 @@ export const LMN201_DESIGN = {
 
 export const TASKS = {
   'LMN-201': [
-    { title: T('LMN-201: compile Module 3 drug product section for the enteric capsule'), moduleType: 'CMC', priority: 'high', status: 'in-progress', dueInDays: 12, description: 'Bring the enteric capsule specification, release method and stability data into §3.2.P.' },
-    { title: T('LMN-201: record the 12-month long-term stability pull'), moduleType: 'CMC', priority: 'medium', status: 'pending', dueInDays: 20, description: 'Enter potency and water content at 12 months for lot LMN201-DP-2405 and re-run shelf-life trending.' },
-    { title: T('LMN-201: confirm RePreve sample size assumptions with biostatistics'), moduleType: 'Biostatistics', priority: 'high', status: 'review', dueInDays: 6, description: 'Check the illustrative placebo cure rate and treatment effect behind the 375-participant plan.' },
-    { title: T('LMN-201: prepare the annual IND report'), moduleType: 'IND', priority: 'medium', status: 'pending', dueInDays: 45, description: 'Summarise RePreve enrolment, safety and manufacturing changes for the IND annual report (21 CFR 312.33).' },
-    { title: T('LMN-201: review the synthetic CSR source before table generation'), moduleType: 'Clinical', priority: 'medium', status: 'pending', dueInDays: 15, description: 'Select the SYNTHETIC LMN-201-like CSR source in the Vault and run the source checks. Demonstration only — not clinical evidence.' },
+    { title: 'Compile Module 3 drug product section for the enteric capsule', moduleType: 'CMC', priority: 'high', status: 'in-progress', dueInDays: 12, description: 'Bring the enteric capsule specification, release method and stability data into §3.2.P.' },
+    { title: 'Record the 12-month long-term stability pull', moduleType: 'CMC', priority: 'medium', status: 'pending', dueInDays: 20, description: 'Enter potency and water content at 12 months for lot LMN201-DP-2405 and re-run shelf-life trending.' },
+    { title: 'Confirm RePreve sample size assumptions with biostatistics', moduleType: 'Biostatistics', priority: 'high', status: 'review', dueInDays: 6, description: 'Check the illustrative placebo cure rate and treatment effect behind the 375-participant plan.' },
+    { title: 'Prepare the annual IND report', moduleType: 'IND', priority: 'medium', status: 'pending', dueInDays: 45, description: 'Summarise RePreve enrolment, safety and manufacturing changes for the IND annual report (21 CFR 312.33).' },
+    { title: 'Review the synthetic CSR source before table generation', moduleType: 'Clinical', priority: 'medium', status: 'pending', dueInDays: 15, description: 'Select the SYNTHETIC LMN-201-like CSR source in the Vault and run the source checks. Demonstration only — not clinical evidence.' },
   ],
   'LMN-801': [
-    { title: T('LMN-801: draft the Phase 2 protocol synopsis'), moduleType: 'Clinical', priority: 'high', status: 'in-progress', dueInDays: 14, description: 'Body weight change and lean mass preservation as co-primary candidates.' },
-    { title: T('LMN-801: plan the pre-IND meeting request'), moduleType: 'IND', priority: 'medium', status: 'pending', dueInDays: 30, description: 'Questions on oral delivery of a hormone protein and the nonclinical package.' },
+    { title: 'Draft the Phase 2 protocol synopsis', moduleType: 'Clinical', priority: 'high', status: 'in-progress', dueInDays: 14, description: 'Body weight change and lean mass preservation as co-primary candidates.' },
+    { title: 'Plan the pre-IND meeting request', moduleType: 'IND', priority: 'medium', status: 'pending', dueInDays: 30, description: 'Questions on oral delivery of a hormone protein and the nonclinical package.' },
   ],
   'LMN-301': [
-    { title: T('LMN-301: summarise Phase 1 safety for the Investigator\'s Brochure'), moduleType: 'Clinical', priority: 'medium', status: 'pending', dueInDays: 25, description: 'Single and multiple intranasal doses in healthy volunteers (NCT06030414).' },
-    { title: T('LMN-301: nasal tolerability assessment plan'), moduleType: 'Nonclinical', priority: 'low', status: 'pending', dueInDays: 40, description: 'Local tolerance findings to carry into the next protocol.' },
+    { title: "Summarise Phase 1 safety for the Investigator's Brochure", moduleType: 'Clinical', priority: 'medium', status: 'pending', dueInDays: 25, description: 'Single and multiple intranasal doses in healthy volunteers (NCT06030414).' },
+    { title: 'Nasal tolerability assessment plan', moduleType: 'Nonclinical', priority: 'low', status: 'pending', dueInDays: 40, description: 'Local tolerance findings to carry into the next protocol.' },
   ],
   'LMN-401': [
-    { title: T('LMN-401: field proof-of-concept study outline'), moduleType: 'Clinical', priority: 'medium', status: 'pending', dueInDays: 60, description: 'Planned 2026 field study, informed by the travelers\' diarrhea etiology study (NCT06363890).' },
+    { title: 'Field proof-of-concept study outline', moduleType: 'Clinical', priority: 'medium', status: 'pending', dueInDays: 60, description: 'Planned 2026 field study, informed by the travelers\' diarrhea etiology study (NCT06363890).' },
   ],
 };

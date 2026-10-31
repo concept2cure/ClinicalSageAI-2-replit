@@ -37,7 +37,9 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
   await run.step(`Tasks: ${tasks.length} tasks on ${label}`, async () => {
     const projectId = await boardProjectId(api, program);
     const board = must(await api('GET', '/api/task-management/board'), 200, 'read task board');
-    const have = new Set(rowsOf(board).map((t) => t.title));
+    // Plain titles (each card names its project), so an earlier run is found by
+    // title within this project, not across the organisation.
+    const have = new Set(rowsOf(board).filter((t) => String(t.project) === String(projectId)).map((t) => t.title));
     let created = 0;
     for (const t of tasks) {
       if (have.has(t.title)) { tally.found('task'); continue; }

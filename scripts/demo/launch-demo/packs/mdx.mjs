@@ -29,6 +29,20 @@ import { must, findDemo, sha256, connectSigner, makeMultiPagePdfBuffer } from '.
 import { PROVENANCE, MANUFACTURER, DEVICE, PROGRAM_NAME, INTENDED_USE, inDays, DOSSIER, AUTHORING, SOPS } from './mdx-content.mjs';
 import { PACK, T, SIGNER_ABSENT, CHANGE_NUMBER, rowsOf, latin1, probe, finding } from './mdx-shared.mjs';
 import { qmsDocs, seedQms } from './mdx-qms.mjs';
+import { makeTally } from './biotech-shared.mjs';
+import { ensureTasks } from './work-areas.mjs';
+
+/** NeuroPanel-Dx's 510(k) work on the task board (fictional device; planning values). */
+const MDX_TASKS = [
+  { title: 'Complete the predicate comparison table for the 510(k)', moduleType: 'Medical Device', priority: 'high', status: 'in-progress', dueInDays: 9,
+    description: 'Intended use, technology, analytical performance and labeling, side by side with the predicate.' },
+  { title: 'Close the eSTAR sections still missing required content', moduleType: 'Medical Device', priority: 'critical', status: 'pending', dueInDays: 14,
+    description: 'The eSTAR readiness check lists the required sections without content.' },
+  { title: 'Approve the analytical performance study report', moduleType: 'Quality', priority: 'high', status: 'review', dueInDays: 6,
+    description: 'Precision, linearity, interference and cross-reactivity per CLSI EP05, EP06 and EP07.' },
+  { title: 'Update the cybersecurity bill of materials', moduleType: 'Medical Device', priority: 'medium', status: 'pending', dueInDays: 21,
+    description: 'SBOM and threat model for the analyzer software, per the FDA premarket cybersecurity guidance.' },
+];
 
 // ─── 1. Projects ─────────────────────────────────────────────────────────────
 
@@ -478,6 +492,7 @@ export async function seed(ctx) {
   const sub = await seedSubmission(ctx, program, vaultDocs);
   await seedReadiness(ctx, program.id, sub);
   const sops = await seedQms({ ...ctx, programId: program.id }, signer, vaultDocs, identity);
+  await ensureTasks({ ...ctx, tally: makeTally(run) }, program, MDX_TASKS, 'NeuroPanel-Dx');
   await run.step('Audit trail: organisation ledger and chain verdict', () => seedAudit(ctx, [
     program.id, String(sub.submission.id), String(sub.sequence.id),
     ...Object.values(vaultDocs).map((v) => v.id), ...Object.values(authoring).map((a) => a.id), ...Object.values(sops).map((s) => String(s.id)),
