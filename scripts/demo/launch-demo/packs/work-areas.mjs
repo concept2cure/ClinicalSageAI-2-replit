@@ -179,4 +179,45 @@ export async function ensureStudyDesign({ api, run, tally }, program, protocolDo
   });
 }
 
+/* ───────────────────────── Plan ───────────────────────── */
+
+/** Every deliverable of the IND plan of work that names a template, by its title. */
+function catalogTemplates(catalog) {
+  const out = new Map();
+  const walk = (o) => {
+    if (Array.isArray(o)) { o.forEach(walk); return; }
+    if (!o || typeof o !== 'object') return;
+    if (o.template?.id && typeof o.title === 'string' && !out.has(o.title)) out.set(o.title, o.template);
+    Object.values(o).forEach(walk);
+  };
+  walk(catalog);
+  return out;
+}
+
+/**
+ * Start Plan deliverables from their templates, the create Plan's "Start"
+ * makes (IndDocumentLibrary.tsx createTemplateCopy): the template's title,
+ * module and id, in the project. Plan counts a deliverable as started by its
+ * template; documents the seed authored under its own titles count for none,
+ * so every phase read "0 started" on a seeded project (2026-10-31).
+ */
+export async function ensurePlanDocuments({ api, run, tally }, program, deliverables, label) {
+  await run.step(`Plan: start ${deliverables.length} deliverables on ${label}`, async () => {
+    const catalog = must(await api('GET', '/api/authoring/ind-document-catalog'), 200, 'read the IND plan of work');
+    const templates = catalogTemplates(catalog.data ?? catalog);
+    const docs = rowsOf(must(await api('GET', `/api/authoring/docs?status=all&programId=${encodeURIComponent(program.id)}`), 200, 'list project documents'));
+    const started = new Set(docs.map((d) => d.template_id).filter(Boolean));
+    let created = 0;
+    for (const title of deliverables) {
+      const template = templates.get(title);
+      if (!template) throw new Error(`the IND plan of work has no templated deliverable "${title}"`);
+      if (started.has(template.id)) { tally.found('plan-document'); continue; }
+      must(await api('POST', '/api/authoring/docs', { title: template.title, module: template.module, template_id: template.id, client_program_id: program.id }), [200, 201], `start "${title}"`);
+      tally.created('plan-document');
+      created += 1;
+    }
+    return `${created} started, ${deliverables.length - created} already started`;
+  });
+}
+
 export { dateIn };

@@ -3,7 +3,7 @@
   "prefix": "[Demo · Biotech]",
   "outcome": "seeded_unqualified",
   "browserQualification": "not_executed",
-  "startedAt": "2026-10-31T02:21:52.074Z",
+  "startedAt": "2026-10-31T22:53:53.691Z",
   "records": {
     "target": {
       "baseUrl": "http://127.0.0.1:5000",
@@ -15,17 +15,12 @@
       "session": "verified",
       "projects": "readable",
       "tasking": "readable",
-      "taskCount": 5,
+      "taskCount": 22,
       "browser": "not_executed"
     },
     "tally": {
       "created": {
-        "study-design": 1,
-        "cmc-spec": 5,
-        "cmc-stability": 2,
-        "cmc-stability-results": 2,
-        "cmc-batch": 3,
-        "task": 6
+        "plan-document": 5
       },
       "found": {
         "program": 1,
@@ -47,13 +42,18 @@
         "protocol-milestone": 5,
         "protocol-amendment": 1,
         "protocol-version": 1,
+        "study-design": 1,
         "submission": 1,
         "sequence": 1,
         "leaf": 6,
         "sequence-transition": 1,
         "qms-document": 4,
         "qms-change": 1,
-        "qms-change-link": 1
+        "qms-change-link": 1,
+        "cmc-spec": 5,
+        "cmc-stability": 2,
+        "cmc-batch": 3,
+        "task": 6
       }
     },
     "identities": {
@@ -920,23 +920,19 @@
     },
     "audit": {
       "window": 500,
-      "entriesBefore": 354,
-      "entriesAfter": 374,
-      "entriesWrittenThisRun": 20,
+      "entriesBefore": 431,
+      "entriesAfter": 495,
+      "entriesWrittenThisRun": 64,
       "eventsThisRun": [
-        "C2c Work Task Create",
-        "Cmc Register Create",
-        "Cmc Register Update",
-        "C2c Work Update",
-        "C2c Work Persist"
+        "Authoring Section Create"
       ],
       "unchainedThisRun": 0,
       "chain": {
         "store": "audit_logs",
         "legacyRows": 0,
-        "sequencedRows": 374,
+        "sequencedRows": 495,
         "ok": true,
-        "rowsChecked": 374,
+        "rowsChecked": 495,
         "head": {
           "verified": false,
           "status": "not_configured",
@@ -948,8 +944,8 @@
       }
     },
     "summary": {
-      "created": 19,
-      "found": 174
+      "created": 5,
+      "found": 191
     }
   },
   "notes": [
@@ -964,5 +960,5 @@
     "QMS deviation not created: /api/mdx/qms exposes documents, changes (with a \"deviation\" link TYPE by reference), nonconforming products, suppliers, internal audits, management reviews and training — there is no deviation entity to write (server/routes/mdx-qms.ts). SOP-003 Deviation Management describes the process; the register itself is not a launch QMS capability.",
     "QMS personal acknowledgement: Only an effective controlled document can be acknowledged."
   ],
-  "finishedAt": "2026-10-31T02:22:17.530Z"
+  "finishedAt": "2026-10-31T22:54:18.694Z"
 }

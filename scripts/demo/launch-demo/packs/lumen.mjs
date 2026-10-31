@@ -21,7 +21,7 @@ import fs from 'node:fs';
 import { makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
 import { makeTally } from './biotech-shared.mjs';
 import { CLIENT, CSR_SOURCE_FILE, FOOTER, LMN201_CMC, LMN201_DESIGN, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
-import { ensureCmc, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
+import { ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
 
 const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : []);
 const inDays = (n) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
@@ -149,6 +149,7 @@ export async function seed(ctx) {
   await ensureCsrSource(c, lmn201);
   await ensureStudyDesign(c, lmn201, null, LMN201_DESIGN);
   await ensureCmc(c, lmn201, LMN201_CMC, 'LMN-201');
+  await ensurePlanDocuments(c, lmn201, ['Cover Letter', 'Form FDA 1571', "Investigator's Brochure", 'Introductory Statement and General Investigational Plan'], 'LMN-201');
 
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
   run.record('summary', { created: sum(tally.tally.created), found: sum(tally.tally.found) });
