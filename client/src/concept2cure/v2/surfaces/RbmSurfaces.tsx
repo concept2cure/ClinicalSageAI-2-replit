@@ -410,7 +410,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
       )}
       <div className="rbm-ana-ctx">
         <div className="rbm-ana-ctx-k">On this surface</div>
-        <div className="rbm-ana-ctx-v">{nav.label} — tool <code>{nav.tool}</code></div>
+        <div className="rbm-ana-ctx-v">{nav.label}</div>
         <div className="rbm-ana-ctx-note">{I.info}AnA runs the same 9 RBM tools the buttons run — ask, and results deep-link into the surface. Advisory outputs (plans, reports) are drafts until approved.</div>
       </div>
       <div className="rbm-ana-scroll" ref={endRef}>

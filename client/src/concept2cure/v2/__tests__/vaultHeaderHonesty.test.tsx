@@ -177,3 +177,26 @@ describe('Vault — upload controls', () => {
     expect(upload.title).toMatch(/Open a project first/);
   });
 });
+
+/* UI walk, 2026-10-31: the header's line wrapped on both sides of a dot and
+   left it alone on a line ("IND · 21 CFR 312 / · / 1 authored document"), and
+   the upload type picker was an unlabelled "Other" box beside the buttons. */
+describe('Vault — the header reads as a line, and its picker is named', () => {
+  it('keeps each part with its separator, so a dot never stands alone', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'HLV-333' };
+    vaultWith(() => ok({ success: true, data: { program: 'HLV-333', spine: 'IND · 21 CFR 312', standard: 'pharma', documentCount: 1,
+      documentCounts: { authored: 1, artifacts: 0, uploads: 0 }, tree: [] } }));
+    render(<Vault {...props()} />);
+    await waitFor(() => expect(headerText()).toMatch(/1 authored document/));
+    const parts = [...document.querySelectorAll('.vd-sub-x .vd-sub-part')];
+    expect(parts.map((p) => p.textContent?.trim())).toEqual(['IND · 21 CFR 312', '1 authored document · 0 uploaded files']);
+    expect(parts[1].firstElementChild?.tagName.toLowerCase(), 'the separator belongs to the part it introduces').toBe('svg');
+  });
+
+  it('names the upload type picker on screen', async () => {
+    vaultWith(() => ok({}));
+    render(<Vault {...props()} />);
+    const picker = await screen.findByTestId('vault-upload-type');
+    expect(picker.closest('label')?.textContent).toMatch(/^File type/);
+  });
+});

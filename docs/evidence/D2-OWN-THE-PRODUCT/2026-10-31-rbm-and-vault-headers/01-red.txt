@@ -1,0 +1,17 @@
+ ✓ vaultHeaderHonesty.test.tsx > Vault — header document count > states no count when no project is open and nothing was read 132ms
+ ✓ vaultHeaderHonesty.test.tsx > Vault — header document count > states no count over a FAILED read 42ms
+ ✓ vaultHeaderHonesty.test.tsx > Vault — header document count > states the count once the read succeeds 95ms
+ ✓ vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > an authored build with no files reads as one authored document and no uploads 77
+ ✓ vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > a folder count says what it counts 67ms
+ ✓ vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > names governed artifacts only when there are some, and claims no upload count it
+ ✓ vaultHeaderHonesty.test.tsx > Vault — a refused read is a refusal > a 403 says access was refused, not that the store did not respond 34ms
+ ✓ vaultHeaderHonesty.test.tsx > Vault — a refused read is a refusal > a 5xx says the store did not respond, and offers a retry 245ms
+ ✓ vaultHeaderHonesty.test.tsx > Vault — upload controls > names document types for a reader, not by wire token 27ms
+ ✓ vaultHeaderHonesty.test.tsx > Vault — upload controls > with no project open, Upload is disabled and says why 24ms
+ × vaultHeaderHonesty.test.tsx > Vault — the header reads as a line, and its picker is named > keeps each part with its separator, so a dot never stands alone 42ms
+ × vaultHeaderHonesty.test.tsx > Vault — the header reads as a line, and its picker is named > names the upload type picker on screen 25ms
+ × rbmPageChrome.test.tsx > risk-based monitoring, as a reader meets it > pads its own page, as every sibling surface does 410ms
+ × rbmPageChrome.test.tsx > risk-based monitoring, as a reader meets it > says nothing about a read model under the picker when no project is chosen 153ms
+ × rbmPageChrome.test.tsx > risk-based monitoring, as a reader meets it > names the screen in AnA’s dock, not the tool behind it 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 10 passed (15)
