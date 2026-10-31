@@ -183,6 +183,28 @@ describe('the rail lists the places, then the work areas', () => {
     expect(onNav).toHaveBeenCalledWith('quality');
   });
 
+  /* Found in the running app, 2026-10-31: with no project open, Vault, Tasks, Communication and
+     Quality are project screens, so the router lands on Projects, and from Projects the click
+     looked dead. The rail now says why. */
+  it('says a project screen needs a project when none is open, instead of doing nothing visible', async () => {
+    const { clearShellProject, publishShellProject } = await import('../shellProject');
+    clearShellProject();
+    const { scroll, onNav } = await mountRail();
+    fireEvent.click(within(scroll).getByRole('button', { name: 'Vault' }));
+    expect(onNav).toHaveBeenCalledWith('vault');
+    expect(await screen.findByText('Open a project to see its Vault. Choose one in Projects.')).toBeTruthy();
+    // Tasks too, whose rail target ('tasks') is not its navigation id ('tasking').
+    fireEvent.click(within(scroll).getByRole('button', { name: 'Tasks' }));
+    expect(await screen.findByText('Open a project to see its Tasks. Choose one in Projects.')).toBeTruthy();
+    cleanup();
+    publishShellProject({ id: '11111111-2222-4333-8444-000000000001', title: 'SYN-201 IND' });
+    try {
+      const open = await mountRail();
+      fireEvent.click(within(open.scroll).getByRole('button', { name: 'Vault' }));
+      expect(screen.queryByText(/Open a project to see/)).toBeNull();
+    } finally { clearShellProject(); }
+  });
+
   it('CMC / Module 3 is on the rail beside Quality, and opens CMC', async () => {
     // The founder's decision of 2026-10-22: Quality (QS) sits next to CMC,
     // Vault and Tasking on the rail.
