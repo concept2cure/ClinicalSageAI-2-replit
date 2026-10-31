@@ -1,0 +1,41 @@
+# Red: the four new F4 suites at d581eba7a with only the tests written (2026-10-30), before any product change.
+# npx vitest run <file>; the failure lines, as printed.
+
+## foldDeviceAnalytics.test.ts
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > resolves the old id to Reporting & analytics from a link, an in-app move and AnA, with or without a project open
+AssertionError: expected undefined to be 'insights' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > lands on Reporting & analytics, whose overview reads the device section over the projects the reader can open
+AssertionError: expected 'import React, { useState, useRef, use…' to match /<InsightsDevicePortfolio device=\{dat…/
+ FAIL  client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id, no host publish
+AssertionError: expected { component: [Function Surface], …(1) } to be undefined
+ FAIL  client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > leaves no client code or server route for the organization-wide analytics
+AssertionError: mdx/surfaces/AnalyticsSurface.tsx: expected true to be false // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+AssertionError: expected [ 'projects', 'project-home', …(16) ] to not include 'device-analytics'
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+
+## device-portfolio.pglite.test.ts
+ FAIL  server/services/report-os/__tests__/device-portfolio.pglite.test.ts [ server/services/report-os/__tests__/device-portfolio.pglite.test.ts ]
+Error: Cannot find module '/server/services/report-os/device-portfolio' imported from /home/user/ClinicalSageAI-2-replit/server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ Test Files  1 failed (1)
+      Tests  no tests
+
+## insights-canvas-device-section.test.ts
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/insights-canvas-device-section.test.ts > the overview's device section > is read over the reader's accessible projects, on the request's own connection
+AssertionError: expected undefined to deeply equal { state: 'computed', …(4) }
+ FAIL  server/routes/__tests__/insights-canvas-device-section.test.ts > the overview's device section > is read even when the reader can open no project, and says so as the engine does
+TypeError: Cannot read properties of undefined (reading '2')
+ FAIL  server/routes/__tests__/insights-canvas-device-section.test.ts > the overview's device section > a failed device read is unavailable, with no detail and nothing else of the canvas withdrawn
+AssertionError: expected undefined to deeply equal { state: 'unavailable' }
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+
+## insightsDevicePortfolio.test.tsx
+ FAIL  client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx [ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx ]
+Error: Failed to resolve import "../surfaces/InsightsDevicePortfolio" from "client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx". Does the file exist?
+ Test Files  1 failed (1)
+      Tests  no tests

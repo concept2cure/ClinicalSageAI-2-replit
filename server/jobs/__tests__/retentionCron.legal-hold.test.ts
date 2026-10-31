@@ -48,6 +48,8 @@ const tx = vi.hoisted(() => ({
   }),
   auditThrows: false,
   programOrg: 7 as number | null,
+  /** The organisations the sweep enumerates. */
+  orgs: [7] as number[],
 }));
 
 /** Documents hard-deleted, by id. */
@@ -82,7 +84,12 @@ vi.mock('../../db', () => {
   };
   return {
     db: { select: (...a: unknown[]) => (select(...a), selectChain) },
-    pool: { connect: vi.fn(async () => client), query: vi.fn() },
+    // The organisation list (P-72 slice 1b): the sweep runs once per organisation, in its own scope.
+    pool: {
+      connect: vi.fn(async () => client),
+      query: vi.fn(async (sql: string) =>
+        /FROM public\.organizations/i.test(String(sql)) ? { rows: tx.orgs.map((id) => ({ id, uuid: `00000000-0000-4000-8000-00000000000${id}` })) } : { rows: [] }),
+    },
   };
 });
 vi.mock('../../services/auditService', () => ({
@@ -94,6 +101,7 @@ vi.mock('../../services/auditService', () => ({
 
 vi.mock('../../db/tenantStore', () => ({
   runWithSystemTenantScope: (_label: string, fn: () => unknown) => fn(),
+  runWithTenantScope: (_scope: unknown, fn: () => unknown) => fn(),
 }));
 vi.mock('../../services/security-alerts', () => ({ reportSecurityAlert: vi.fn() }));
 vi.mock('nodemailer', () => ({ default: { createTransport: () => ({ sendMail: vi.fn() }) } }));
@@ -125,11 +133,12 @@ const SOFT_DELETE_POLICY = [
 ];
 
 /**
- * The sweep reads, in order: expired documents, policies, holds.
- * (`Promise.all`, so the order is the array order.)
+ * The sweep reads, in order: the policies (once), then each organisation's
+ * expired documents and its holds (`Promise.all`, so the order is the array
+ * order; P-72 slice 1b).
  */
 function arrange(opts: { docs?: unknown[]; policies?: unknown[]; holds?: unknown[] }) {
-  selectResults = [opts.docs ?? [], opts.policies ?? [], opts.holds ?? []];
+  selectResults = [opts.policies ?? [], opts.docs ?? [], opts.holds ?? []];
   selectCall = 0;
   selectThrowsAt = null;
 }
@@ -142,6 +151,7 @@ beforeEach(() => {
   tx.params.length = 0;
   tx.auditThrows = false;
   tx.programOrg = 7;
+  tx.orgs = [7];
   selectResults = [];
   selectCall = 0;
   selectThrowsAt = null;
@@ -225,7 +235,7 @@ describe('a hold that does not apply does not block', () => {
 
 describe('the sweep fails closed when holds cannot be read', () => {
   it('aborts having deleted nothing, rather than proceeding as if none existed', async () => {
-    selectResults = [[expiredDoc()], HARD_DELETE_POLICY, []];
+    selectResults = [HARD_DELETE_POLICY, [expiredDoc()], []];
     selectCall = 0;
     selectThrowsAt = 2; // the holds read
 
@@ -254,6 +264,7 @@ describe('a disposition is one transaction with its chained audit row (P1-22)', 
   });
 
   it('archive then soft delete, in the same transaction, under the document\'s own organisation', async () => {
+    tx.orgs = [9]; // swept in organisation 9's own run
     arrange({
       docs: [expiredDoc({ organizationId: 9 })],
       policies: [{ policyName: 'purge', archiveBeforeDelete: true, hardDelete: false }],

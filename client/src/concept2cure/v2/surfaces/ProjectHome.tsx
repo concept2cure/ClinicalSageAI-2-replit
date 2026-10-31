@@ -42,6 +42,7 @@ import { editingCopyOf } from '../editor/editingCopy';
 import { sourceReadView } from '@shared/data-room-processing-status';
 import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
 import { ProjectSide } from './ProjectSide';
+import { ProjectClientReview } from './ProjectClientReview';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
 import { mdxProjectPlan } from './ProjectMdxWorkflow';
 import { ProjectPlan } from './ProjectPlan';
@@ -1983,6 +1984,12 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
               {pid && available('quality') && <ProjectQuality key={pid} pid={pid} onNav={onNav} />}
               <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} />
+              {/* What the client sees of this project's work (the Client Review
+                  Room), for this project only: the device portfolio drew it for
+                  the whole organization until it folded into Projects (D2, fold
+                  F6, 2026-10-30; P-61 item 5). The verified integer project and
+                  the program are both admitted by the route before any read. */}
+              {deviceFiling && <ProjectClientReview programId={pid} projectId={sharingProjectId} />}
               <ComingLater stage="review" device={deviceFiling} />
             </div>
           )}

@@ -1,0 +1,384 @@
+# Mutations: each applied alone, its tests (or gate) run, the file restored byte for byte (sha256 checked).
+# tools/mutate.py.txt over tools/mutation-spec-f4.json. 21 of 21 red.
+
+M1: the old id no longer aliases to Reporting
+  file: client/src/concept2cure/v2/registryModel.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > resolves the old id to Reporting & analytics from a link, an in-app move and AnA, with or without a project open
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 24 passed (25))
+    x the mapping > agrees with the screens: each folded id opens its target
+  restored byte for byte: yes (sha256 c499a70a361df369)
+
+M2: the engine reads every project of the organization, not the ones the reader can open
+  file: server/services/report-os/device-portfolio.ts
+  test: server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+  result: RED (5 failed | 10 passed (15))
+    x the device section of the Reporting overview > reads only the projects the reader can open
+    x the device section of the Reporting overview > counts nothing of another tenant, even when its project id is named
+    x the device section of the Reporting overview > says there is no device project when none the reader can open is a device project
+    x the device section of the Reporting overview > rates AnA drafts recorded against a device project the reader can open, and no other draft
+    x the device section of the Reporting overview > gives a genuine zero as zero, and no rate where no AnA draft is recorded
+  restored byte for byte: yes (sha256 c71ed5ee229daeb6)
+
+M3: the engine counts drug projects too (no MDX classification)
+  file: server/services/report-os/device-portfolio.ts
+  test: server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+  result: RED (7 failed | 8 passed (15))
+    x the device section of the Reporting overview > counts device projects the reader can open, by recorded status, and never a drug, deleted or other-tenant project
+    x the device section of the Reporting overview > reads only the projects the reader can open
+    x the device section of the Reporting overview > says there is no device project when none the reader can open is a device project
+    x the device section of the Reporting overview > paces recorded submissions over the 24 calendar months to now, oldest first
+    x the device section of the Reporting overview > rates AnA drafts recorded against a device project the reader can open, and no other draft
+    x an unreadable source is unavailable, never zero > the drafts store missing (42P01) leaves the project figures and withholds only the rate
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > lands on Reporting & analytics, whose overview reads the device section over the projects the reader can open
+  restored byte for byte: yes (sha256 c71ed5ee229daeb6)
+
+M4: the AnA rate counts drafts of any project, not the device projects read
+  file: server/services/report-os/device-portfolio.ts
+  test: server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+  result: RED (2 failed | 13 passed (15))
+    x the device section of the Reporting overview > rates AnA drafts recorded against a device project the reader can open, and no other draft
+    x the device section of the Reporting overview > gives a genuine zero as zero, and no rate where no AnA draft is recorded
+  restored byte for byte: yes (sha256 c71ed5ee229daeb6)
+
+M5: a missing drafts store is reported as zero drafts
+  file: server/services/report-os/device-portfolio.ts
+  test: server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+  result: RED (2 failed | 13 passed (15))
+    x an unreadable source is unavailable, never zero > the drafts store missing (42P01) leaves the project figures and withholds only the rate
+    x an unreadable source is unavailable, never zero > the drafts store missing (42703) leaves the project figures and withholds only the rate
+  restored byte for byte: yes (sha256 c71ed5ee229daeb6)
+
+M6: no recorded draft is a rate of 0%
+  file: server/services/report-os/device-portfolio.ts
+  test: server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+  result: RED (1 failed | 14 passed (15))
+    x the device section of the Reporting overview > gives a genuine zero as zero, and no rate where no AnA draft is recorded
+  restored byte for byte: yes (sha256 c71ed5ee229daeb6)
+
+M7: the route says a failed device read is "no device project"
+  file: server/routes/insights-canvas-routes.ts
+  test: server/routes/__tests__/insights-canvas-device-section.test.ts
+  result: RED (1 failed | 3 passed (4))
+    x the overview's device section > a failed device read is unavailable, with no detail and nothing else of the canvas withdrawn
+  restored byte for byte: yes (sha256 fcf82087f12b2a48)
+
+M8: the route reads the device section over no projects at all
+  file: server/routes/insights-canvas-routes.ts
+  test: server/routes/__tests__/insights-canvas-device-section.test.ts
+  result: RED (1 failed | 3 passed (4))
+    x the overview's device section > is read over the reader's accessible projects, on the request's own connection
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > lands on Reporting & analytics, whose overview reads the device section over the projects the reader can open
+  restored byte for byte: yes (sha256 fcf82087f12b2a48)
+
+M9: the section hides a failed read instead of saying so
+  file: client/src/concept2cure/v2/surfaces/InsightsDevicePortfolio.tsx
+  test: client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx
+  result: RED (2 failed | 6 passed (8))
+    x the device section shows what the device read computed, and nothing else > says a failed read failed, and draws no figure
+    x Reporting & analytics carries the device section from its overview > a failed device read is said on the canvas
+  restored byte for byte: yes (sha256 28d197efc2c53ae0)
+
+M10: the section draws a rate where none is recorded
+  file: client/src/concept2cure/v2/surfaces/InsightsDevicePortfolio.tsx
+  test: client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx
+  result: RED (1 failed | 7 passed (8))
+    x the device section shows what the device read computed, and nothing else > says when no AnA draft is recorded, rather than a rate of zero
+  restored byte for byte: yes (sha256 28d197efc2c53ae0)
+
+M11: the canvas does not mount the device section with a project open
+  file: client/src/concept2cure/v2/surfaces/Insights.tsx
+  test: client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx
+  result: RED (2 failed | 6 passed (8))
+    x Reporting & analytics carries the device section from its overview > on the canvas of an open project
+    x Reporting & analytics carries the device section from its overview > a failed device read is said on the canvas
+  restored byte for byte: yes (sha256 92610d4ac63b4372)
+
+M12: the id is left in the Projects scope list
+  file: shared/constants/launch-scope.ts
+  test: server/services/entitlements/__tests__/launch-scope.test.ts
+  result: RED (1 failed | 45 passed (46))
+    x the folded device analytics > is in no scope list and no new grant: Reporting & analytics holds the device section (D2, fold F4, 2026-10-30)
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+  restored byte for byte: yes (sha256 f5cf2e0e4e644327)
+
+M13: the id is left in the project feature list
+  file: shared/constants/mdx-project-features.ts
+  test: server/services/entitlements/__tests__/launch-scope.test.ts
+  result: RED (2 failed | 44 passed (46))
+    x the scope list itself > reaches MDX as project features without adding app or module grants
+    x the folded device analytics > is in no scope list and no new grant: Reporting & analytics holds the device section (D2, fold F4, 2026-10-30)
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+  restored byte for byte: yes (sha256 fda626e7260040cc)
+
+M14: 20260810's keep-list keeps device-analytics (a deployed row is not deprecated)
+  file: db/migrations/20260810_reconcile_module_catalog.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (1 failed | 28 passed (29))
+    x Retired device analytics > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+  restored byte for byte: yes (sha256 218d9430afd22bb1)
+
+M15: 20260810 upserts the device-analytics row again, as it stood at HEAD (a fresh database holds it)
+  file: db/migrations/20260810_reconcile_module_catalog.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (29 skipped (29))
+  restored byte for byte: yes (sha256 218d9430afd22bb1)
+
+M16: 20260823 keeps the packaging row of a module no fresh database holds
+  file: db/migrations/20260823_module_catalog_commercial_packaging.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (29 skipped (29))
+  restored byte for byte: yes (sha256 1aa313ed7f627728)
+
+# M15 and M16 fail in the suite's beforeAll, on the migrations' own guards, so every case is skipped. The guard message, from a rerun of each:
+M15: exit 1
+error: catalog modules with no tier assigned: device-analytics
+M16: exit 1
+error: packaging names modules that are not in available_modules: device-analytics
+
+M17: a device-analytics subscription no longer carries to Reporting
+  file: server/services/entitlements/folded-module-successors.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (4 failed | 21 passed (25))
+    x the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+    x the module gate, MODULE_ENFORCEMENT=enforce > serves insights's paths to an organization holding only device-analytics
+    x the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+  restored byte for byte: yes (sha256 7bc37dae99899fca)
+
+M18: a launch screen claims /api/mdx/analytics again
+  file: shared/constants/ui-surface-registry.ui-v2.ts
+  test: server/middleware/__tests__/launch-scope-device-features.test.ts
+  result: RED (2 failed | 2 passed (4))
+    x the real registry with the device features in Projects (62a8d5e7) > refuses the retired device analytics family in production: no launch screen claims /api/mdx/analytics (fold F4, 2026-10-30)
+    x the real registry with the device features in Projects (62a8d5e7) > claims no /api/mdx or /api/submission-ops root, nor a family no screen of it calls
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > leaves no client code, no organization-wide aggregate and no claim for the old route
+  restored byte for byte: yes (sha256 7c4314110382f36e)
+
+M19: the organization-wide aggregate is served again at GET /api/mdx/analytics
+  file: server/routes/mdx-analytics.ts
+  test: server/routes/__tests__/mdx-analytics-availability.test.ts
+  result: RED (1 failed | 5 passed (6))
+    x MDX analytics data availability > no longer serves the organization-wide kit aggregate, and reads nothing for it
+  restored byte for byte: yes (sha256 c1106d006887a233)
+
+M20: AnA's kept target still describes the retired panels
+  file: shared/navigation/index.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > resolves the old id to Reporting & analytics from a link, an in-app move and AnA, with or without a project open
+  restored byte for byte: yes (sha256 4c1e7db244a13ef0)
+
+M21: ID_BASELINE not lowered for the retired publisher
+  file: scripts/ci/check-ana-surface-context.mjs
+  cmd: node scripts/ci/check-ana-surface-context.mjs
+  result: RED (the id the router actually mounts, or — if the surface genuinely needs no context — | declare its ID in NO_CONTEXT_NEEDED with a reason.)
+  restored byte for byte: yes (sha256 863141c93c81639a)
+
+# After the run: every one of the 29 lane files mutated or edited matches its pre-run sha256 (sha256sum -c).
+
+# ── Re-run after the upstream merge (base 4323b9149) and F6, 2026-10-30 ~20:10 UTC ──
+# The same spec, two anchors moved (tools/mutation-spec-f4-postmerge.json): M18 now adds the claim to device-udi's
+# entry (device-workstream's entry, its old anchor, retired in F6); M21 is ID_BASELINE 98 -> 99 (98 counts F4, F6 and
+# the agency-meetings retirement). 21 of 21 red, every file restored byte for byte (sha256), all mutated files checked.
+#   mutation-spec-f4-postmerge.json M15: 20260810 upserts the device-analytics row again, as it stood at HEAD (a fresh database holds it)
+#     exit 1; the suite fails before its tests: catalog modules with no tier assigned: device-analytics
+#     restored byte for byte: yes
+#   --
+#   mutation-spec-f4-postmerge.json M16: 20260823 keeps the packaging row of a module no fresh database holds
+#     exit 1; the suite fails before its tests: packaging names modules that are not in available_modules: device-analytics
+#     restored byte for byte: yes
+
+M1: the old id no longer aliases to Reporting
+  file: client/src/concept2cure/v2/registryModel.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > resolves the old id to Reporting & analytics from a link, an in-app move and AnA, with or without a project open
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 25 passed (26))
+    x the mapping > agrees with the screens: each folded id opens its target
+  restored byte for byte: yes (sha256 dfbff87f5ff84261)
+
+M2: the engine reads every project of the organization, not the ones the reader can open
+  file: server/services/report-os/device-portfolio.ts
+  test: server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+  result: RED (5 failed | 10 passed (15))
+    x the device section of the Reporting overview > reads only the projects the reader can open
+    x the device section of the Reporting overview > counts nothing of another tenant, even when its project id is named
+    x the device section of the Reporting overview > says there is no device project when none the reader can open is a device project
+    x the device section of the Reporting overview > rates AnA drafts recorded against a device project the reader can open, and no other draft
+    x the device section of the Reporting overview > gives a genuine zero as zero, and no rate where no AnA draft is recorded
+  restored byte for byte: yes (sha256 c71ed5ee229daeb6)
+
+M3: the engine counts drug projects too (no MDX classification)
+  file: server/services/report-os/device-portfolio.ts
+  test: server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+  result: RED (7 failed | 8 passed (15))
+    x the device section of the Reporting overview > counts device projects the reader can open, by recorded status, and never a drug, deleted or other-tenant project
+    x the device section of the Reporting overview > reads only the projects the reader can open
+    x the device section of the Reporting overview > says there is no device project when none the reader can open is a device project
+    x the device section of the Reporting overview > paces recorded submissions over the 24 calendar months to now, oldest first
+    x the device section of the Reporting overview > rates AnA drafts recorded against a device project the reader can open, and no other draft
+    x an unreadable source is unavailable, never zero > the drafts store missing (42P01) leaves the project figures and withholds only the rate
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > lands on Reporting & analytics, whose overview reads the device section over the projects the reader can open
+  restored byte for byte: yes (sha256 c71ed5ee229daeb6)
+
+M4: the AnA rate counts drafts of any project, not the device projects read
+  file: server/services/report-os/device-portfolio.ts
+  test: server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+  result: RED (2 failed | 13 passed (15))
+    x the device section of the Reporting overview > rates AnA drafts recorded against a device project the reader can open, and no other draft
+    x the device section of the Reporting overview > gives a genuine zero as zero, and no rate where no AnA draft is recorded
+  restored byte for byte: yes (sha256 c71ed5ee229daeb6)
+
+M5: a missing drafts store is reported as zero drafts
+  file: server/services/report-os/device-portfolio.ts
+  test: server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+  result: RED (2 failed | 13 passed (15))
+    x an unreadable source is unavailable, never zero > the drafts store missing (42P01) leaves the project figures and withholds only the rate
+    x an unreadable source is unavailable, never zero > the drafts store missing (42703) leaves the project figures and withholds only the rate
+  restored byte for byte: yes (sha256 c71ed5ee229daeb6)
+
+M6: no recorded draft is a rate of 0%
+  file: server/services/report-os/device-portfolio.ts
+  test: server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+  result: RED (1 failed | 14 passed (15))
+    x the device section of the Reporting overview > gives a genuine zero as zero, and no rate where no AnA draft is recorded
+  restored byte for byte: yes (sha256 c71ed5ee229daeb6)
+
+M7: the route says a failed device read is "no device project"
+  file: server/routes/insights-canvas-routes.ts
+  test: server/routes/__tests__/insights-canvas-device-section.test.ts
+  result: RED (1 failed | 3 passed (4))
+    x the overview's device section > a failed device read is unavailable, with no detail and nothing else of the canvas withdrawn
+  restored byte for byte: yes (sha256 fcf82087f12b2a48)
+
+M8: the route reads the device section over no projects at all
+  file: server/routes/insights-canvas-routes.ts
+  test: server/routes/__tests__/insights-canvas-device-section.test.ts
+  result: RED (1 failed | 3 passed (4))
+    x the overview's device section > is read over the reader's accessible projects, on the request's own connection
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > lands on Reporting & analytics, whose overview reads the device section over the projects the reader can open
+  restored byte for byte: yes (sha256 fcf82087f12b2a48)
+
+M9: the section hides a failed read instead of saying so
+  file: client/src/concept2cure/v2/surfaces/InsightsDevicePortfolio.tsx
+  test: client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx
+  result: RED (2 failed | 6 passed (8))
+    x the device section shows what the device read computed, and nothing else > says a failed read failed, and draws no figure
+    x Reporting & analytics carries the device section from its overview > a failed device read is said on the canvas
+  restored byte for byte: yes (sha256 28d197efc2c53ae0)
+
+M10: the section draws a rate where none is recorded
+  file: client/src/concept2cure/v2/surfaces/InsightsDevicePortfolio.tsx
+  test: client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx
+  result: RED (1 failed | 7 passed (8))
+    x the device section shows what the device read computed, and nothing else > says when no AnA draft is recorded, rather than a rate of zero
+  restored byte for byte: yes (sha256 28d197efc2c53ae0)
+
+M11: the canvas does not mount the device section with a project open
+  file: client/src/concept2cure/v2/surfaces/Insights.tsx
+  test: client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx
+  result: RED (2 failed | 6 passed (8))
+    x Reporting & analytics carries the device section from its overview > on the canvas of an open project
+    x Reporting & analytics carries the device section from its overview > a failed device read is said on the canvas
+  restored byte for byte: yes (sha256 92610d4ac63b4372)
+
+M12: the id is left in the Projects scope list
+  file: shared/constants/launch-scope.ts
+  test: server/services/entitlements/__tests__/launch-scope.test.ts
+  result: RED (1 failed | 46 passed (47))
+    x the folded device analytics > is in no scope list and no new grant: Reporting & analytics holds the device section (D2, fold F4, 2026-10-30)
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+  restored byte for byte: yes (sha256 77990da52da810e2)
+
+M13: the id is left in the project feature list
+  file: shared/constants/mdx-project-features.ts
+  test: server/services/entitlements/__tests__/launch-scope.test.ts
+  result: RED (2 failed | 45 passed (47))
+    x the scope list itself > reaches MDX as project features without adding app or module grants
+    x the folded device analytics > is in no scope list and no new grant: Reporting & analytics holds the device section (D2, fold F4, 2026-10-30)
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+  restored byte for byte: yes (sha256 9f5ddcb0441d150a)
+
+M14: 20260810's keep-list keeps device-analytics (a deployed row is not deprecated)
+  file: db/migrations/20260810_reconcile_module_catalog.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (2 failed | 29 passed (31))
+    x Retired device analytics > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+    x Retired device workstream > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+  restored byte for byte: yes (sha256 d1b8e64a28573f49)
+
+M15: 20260810 upserts the device-analytics row again, as it stood at HEAD (a fresh database holds it)
+  file: db/migrations/20260810_reconcile_module_catalog.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (31 skipped (31))
+  restored byte for byte: yes (sha256 d1b8e64a28573f49)
+
+M16: 20260823 keeps the packaging row of a module no fresh database holds
+  file: db/migrations/20260823_module_catalog_commercial_packaging.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (31 skipped (31))
+  restored byte for byte: yes (sha256 cace554f63aba70a)
+
+M17: a device-analytics subscription no longer carries to Reporting
+  file: server/services/entitlements/folded-module-successors.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (4 failed | 22 passed (26))
+    x the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+    x the module gate, MODULE_ENFORCEMENT=enforce > serves insights's paths to an organization holding only device-analytics
+    x the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+  restored byte for byte: yes (sha256 83dcfadbe1654c8b)
+
+M18: a launch screen (device-udi) claims /api/mdx/analytics again
+  file: shared/constants/ui-surface-registry.ui-v2.ts
+  test: server/middleware/__tests__/launch-scope-device-features.test.ts
+  result: RED (2 failed | 2 passed (4))
+    x the real registry with the device features in Projects (62a8d5e7) > refuses the retired device analytics family in production: no launch screen claims /api/mdx/analytics (fold F4, 2026-10-30)
+    x the real registry with the device features in Projects (62a8d5e7) > claims no /api/mdx or /api/submission-ops root, nor a family no screen of it calls
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > leaves no client code, no organization-wide aggregate and no claim for the old route
+  restored byte for byte: yes (sha256 858b7d4bc37a93b0)
+
+M19: the organization-wide aggregate is served again at GET /api/mdx/analytics
+  file: server/routes/mdx-analytics.ts
+  test: server/routes/__tests__/mdx-analytics-availability.test.ts
+  result: RED (1 failed | 5 passed (6))
+    x MDX analytics data availability > no longer serves the organization-wide kit aggregate, and reads nothing for it
+  restored byte for byte: yes (sha256 c1106d006887a233)
+
+M20: AnA's kept target still describes the retired panels
+  file: shared/navigation/index.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-analytics is folded into Reporting & analytics > resolves the old id to Reporting & analytics from a link, an in-app move and AnA, with or without a project open
+  restored byte for byte: yes (sha256 45a657901b65f82e)
+
+M21: ID_BASELINE not lowered for the retired publisher (98 after F4 and F6; 99 leaves one of them uncounted)
+  file: scripts/ci/check-ana-surface-context.mjs
+  cmd: node scripts/ci/check-ana-surface-context.mjs
+  result: RED (the id the router actually mounts, or — if the surface genuinely needs no context — | declare its ID in NO_CONTEXT_NEEDED with a reason.)
+  restored byte for byte: yes (sha256 44d0d67875ac2fb5)
+

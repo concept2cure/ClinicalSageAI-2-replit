@@ -1,0 +1,218 @@
+[
+ {
+  "id": "M1",
+  "what": "the old id no longer aliases to Reporting",
+  "file": "client/src/concept2cure/v2/registryModel.ts",
+  "old": "  'device-analytics': 'insights',\n",
+  "new": "",
+  "test": [
+   "client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts",
+   "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+  ]
+ },
+ {
+  "id": "M2",
+  "what": "the engine reads every project of the organization, not the ones the reader can open",
+  "file": "server/services/report-os/device-portfolio.ts",
+  "old": "WHERE p.organization_id = $1 AND p.id = ANY($2::int[])",
+  "new": "WHERE p.organization_id = $1 AND $2::int[] IS NOT NULL",
+  "test": [
+   "server/services/report-os/__tests__/device-portfolio.pglite.test.ts"
+  ]
+ },
+ {
+  "id": "M3",
+  "what": "the engine counts drug projects too (no MDX classification)",
+  "file": "server/services/report-os/device-portfolio.ts",
+  "old": "    AND ${workstreamSqlCase('rp.program_type', 'rp.product_type')} = 'MDX'`;",
+  "new": "`;",
+  "test": [
+   "server/services/report-os/__tests__/device-portfolio.pglite.test.ts",
+   "client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts"
+  ]
+ },
+ {
+  "id": "M4",
+  "what": "the AnA rate counts drafts of any project, not the device projects read",
+  "file": "server/services/report-os/device-portfolio.ts",
+  "old": "AND d.project_id = ANY($2::int[])`;",
+  "new": "AND d.project_id IS NOT NULL AND $2::int[] IS NOT NULL`;",
+  "test": [
+   "server/services/report-os/__tests__/device-portfolio.pglite.test.ts"
+  ]
+ },
+ {
+  "id": "M5",
+  "what": "a missing drafts store is reported as zero drafts",
+  "file": "server/services/report-os/device-portfolio.ts",
+  "old": "return { state: 'unavailable' };\n    throw error;",
+  "new": "return { state: 'computed', accepted: 0, pending: 0, acceptanceRate: null };\n    throw error;",
+  "test": [
+   "server/services/report-os/__tests__/device-portfolio.pglite.test.ts"
+  ]
+ },
+ {
+  "id": "M6",
+  "what": "no recorded draft is a rate of 0%",
+  "file": "server/services/report-os/device-portfolio.ts",
+  "old": "acceptanceRate: total > 0 ? Math.round((accepted / total) * 100) : null };",
+  "new": "acceptanceRate: total > 0 ? Math.round((accepted / total) * 100) : 0 };",
+  "test": [
+   "server/services/report-os/__tests__/device-portfolio.pglite.test.ts"
+  ]
+ },
+ {
+  "id": "M7",
+  "what": "the route says a failed device read is \"no device project\"",
+  "file": "server/routes/insights-canvas-routes.ts",
+  "old": ".catch((error: unknown) => deviceSectionUnavailable(organizationId, error));",
+  "new": ".catch((): DevicePortfolioSection => ({ state: 'none' }));",
+  "test": [
+   "server/routes/__tests__/insights-canvas-device-section.test.ts"
+  ]
+ },
+ {
+  "id": "M8",
+  "what": "the route reads the device section over no projects at all",
+  "file": "server/routes/insights-canvas-routes.ts",
+  "old": "readDevicePortfolio(requestPgClient(req), organizationId, accessibleProjectIds, new Date())",
+  "new": "readDevicePortfolio(requestPgClient(req), organizationId, [], new Date())",
+  "test": [
+   "server/routes/__tests__/insights-canvas-device-section.test.ts",
+   "client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts"
+  ]
+ },
+ {
+  "id": "M9",
+  "what": "the section hides a failed read instead of saying so",
+  "file": "client/src/concept2cure/v2/surfaces/InsightsDevicePortfolio.tsx",
+  "old": "if (!device || device.state === 'none') return null;",
+  "new": "if (!device || device.state === 'none' || device.state === 'unavailable') return null;",
+  "test": [
+   "client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx"
+  ]
+ },
+ {
+  "id": "M10",
+  "what": "the section draws a rate where none is recorded",
+  "file": "client/src/concept2cure/v2/surfaces/InsightsDevicePortfolio.tsx",
+  "old": ") : anaDrafts.acceptanceRate === null ? (",
+  "new": ") : anaDrafts.acceptanceRate === -1 ? (",
+  "test": [
+   "client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx"
+  ]
+ },
+ {
+  "id": "M11",
+  "what": "the canvas does not mount the device section with a project open",
+  "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+  "old": "          ))}\n        {deviceSection}\n",
+  "new": "          ))}\n",
+  "test": [
+   "client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx"
+  ]
+ },
+ {
+  "id": "M12",
+  "what": "the id is left in the Projects scope list",
+  "file": "shared/constants/launch-scope.ts",
+  "old": "      'human-factors', 'labeling',",
+  "new": "      'device-analytics', 'human-factors', 'labeling',",
+  "test": [
+   "server/services/entitlements/__tests__/launch-scope.test.ts",
+   "client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts"
+  ]
+ },
+ {
+  "id": "M13",
+  "what": "the id is left in the project feature list",
+  "file": "shared/constants/mdx-project-features.ts",
+  "old": "  'human-factors',\n",
+  "new": "  'device-analytics',\n  'human-factors',\n",
+  "test": [
+   "server/services/entitlements/__tests__/launch-scope.test.ts",
+   "client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts"
+  ]
+ },
+ {
+  "id": "M14",
+  "what": "20260810's keep-list keeps device-analytics (a deployed row is not deprecated)",
+  "file": "db/migrations/20260810_reconcile_module_catalog.sql",
+  "old": "   'device-510k',\n",
+  "new": "   'device-510k',\n   'device-analytics',\n",
+  "test": [
+   "tests/schema-contract/catalog-module-claims.contract.test.ts"
+  ]
+ },
+ {
+  "id": "M15",
+  "what": "20260810 upserts the device-analytics row again, as it stood at HEAD (a fresh database holds it)",
+  "file": "db/migrations/20260810_reconcile_module_catalog.sql",
+  "old": "  ('device-cer', 'Clinical evaluation (CER)',",
+  "new": "  ('device-analytics', 'Device pathway analytics', 'Pathway-scoped device analytics. insights and report-engine answer protocol and report-run questions instead.', 'Intelligence & risk', '/concept2cure/device-analytics', 'barChart3', 560, '{\"tiers\": [], \"industries\": []}'::json),\n  ('device-cer', 'Clinical evaluation (CER)',",
+  "test": [
+   "tests/schema-contract/catalog-module-claims.contract.test.ts"
+  ]
+ },
+ {
+  "id": "M16",
+  "what": "20260823 keeps the packaging row of a module no fresh database holds",
+  "file": "db/migrations/20260823_module_catalog_commercial_packaging.sql",
+  "old": "  ('device-postmarket', 'professional'),\n",
+  "new": "  ('device-analytics', 'professional'),\n  ('device-postmarket', 'professional'),\n",
+  "test": [
+   "tests/schema-contract/catalog-module-claims.contract.test.ts"
+  ]
+ },
+ {
+  "id": "M17",
+  "what": "a device-analytics subscription no longer carries to Reporting",
+  "file": "server/services/entitlements/folded-module-successors.ts",
+  "old": "  'device-analytics': 'insights',\n",
+  "new": "",
+  "test": [
+   "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+  ]
+ },
+ {
+  "id": "M18",
+  "what": "a launch screen (device-udi) claims /api/mdx/analytics again",
+  "file": "shared/constants/ui-surface-registry.ui-v2.ts",
+  "old": "apiPrefixes: ['/api/mdx/udi'],",
+  "new": "apiPrefixes: ['/api/mdx/udi', '/api/mdx/analytics'],",
+  "test": [
+   "server/middleware/__tests__/launch-scope-device-features.test.ts",
+   "client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts"
+  ]
+ },
+ {
+  "id": "M19",
+  "what": "the organization-wide aggregate is served again at GET /api/mdx/analytics",
+  "file": "server/routes/mdx-analytics.ts",
+  "old": "router.get('/analytics/portfolio', async",
+  "new": "router.get(['/analytics', '/analytics/portfolio'], async",
+  "test": [
+   "server/routes/__tests__/mdx-analytics-availability.test.ts"
+  ]
+ },
+ {
+  "id": "M20",
+  "what": "AnA's kept target still describes the retired panels",
+  "file": "shared/navigation/index.ts",
+  "old": "description: 'Reporting & analytics: the device projects you can open, by recorded status, with their submission pace and AnA draft acceptance rate (device analytics joined it).'",
+  "new": "description: 'Device analytics panels.'",
+  "test": [
+   "client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts"
+  ]
+ },
+ {
+  "id": "M21",
+  "what": "ID_BASELINE not lowered for the retired publisher (98 after F4 and F6; 99 leaves one of them uncounted)",
+  "file": "scripts/ci/check-ana-surface-context.mjs",
+  "old": "const ID_BASELINE = 98;",
+  "new": "const ID_BASELINE = 99;",
+  "cmd": [
+   "node scripts/ci/check-ana-surface-context.mjs"
+  ]
+ }
+]

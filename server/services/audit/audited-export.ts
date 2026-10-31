@@ -78,14 +78,15 @@ export const NO_CHAINED_ROWS_REASON = 'No chained rows exist for this organisati
  */
 export function tenantChainVerdict(
   orgId: number,
-  walk: { ok: boolean | null; rowsChecked: number; brokenAt?: ChainBreak; head?: TenantChainHead },
+  walk: { ok: boolean | null; rowsChecked: number; reason?: string; brokenAt?: ChainBreak; head?: TenantChainHead },
 ): { ok: boolean | null; rowsChecked: number; reason?: string; brokenAt?: Record<string, unknown>; head?: TenantChainHead } {
   // The anchored head is carried as the verifier gave it (this organisation's
-  // only); `ok: null` from the verifier is an anchor that could not be read,
-  // and its reason says so (fix round DP-72).
+  // only); `ok: null` from the verifier is a walk that could not read every
+  // chained row (its own reason, P-72 slice 1b) or an anchor that could not be
+  // read (the head's reason, fix round DP-72).
   const head = walk.head ? { head: walk.head } : {};
   if (walk.ok === null) {
-    return { ok: null, rowsChecked: walk.rowsChecked, reason: walk.head?.reason ?? 'The chain head could not be checked against its anchor.', ...head };
+    return { ok: null, rowsChecked: walk.rowsChecked, reason: walk.reason ?? walk.head?.reason ?? 'The chain head could not be checked against its anchor.', ...head };
   }
   if (walk.ok && walk.rowsChecked === 0) return { ok: null, rowsChecked: 0, reason: NO_CHAINED_ROWS_REASON, ...head };
   return {

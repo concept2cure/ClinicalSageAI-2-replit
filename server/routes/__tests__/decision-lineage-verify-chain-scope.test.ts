@@ -20,6 +20,7 @@ const h = vi.hoisted(() => ({
   verifyChain: vi.fn(),
   tenantVerdict: vi.fn(),
   queryDecisions: vi.fn(async () => [] as unknown[]),
+  logError: vi.fn(),
 }));
 
 vi.mock('../../services/auditService', () => ({ default: { verifyChain: () => h.verifyChain() } }));
@@ -27,6 +28,11 @@ vi.mock('../../middleware/requirePlatformAdmin.js', () => ({ resolvePlatformAdmi
 vi.mock('../../middleware/requirePlatformAdmin', () => ({ resolvePlatformAdmin: async () => h.platformAdmin }));
 vi.mock('../../services/audit/tenant-chain-verdict.js', () => ({ verifyTenantChainOnAdminScope: (o: number) => h.tenantVerdict(o) }));
 vi.mock('../../services/audit/tenant-chain-verdict', () => ({ verifyTenantChainOnAdminScope: (o: number) => h.tenantVerdict(o) }));
+// What the route logs as the reason a verdict could not be given (P-72 slice 1b): it never reaches the body.
+vi.mock('../../utils/logger', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  createScopedLogger: (scope: string) => ({ info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: (m: string, c?: unknown) => h.logError(scope, m, c) }),
+}));
 vi.mock('../../services/workflow/DecisionLineageService', () => ({
   decisionLineageService: { queryDecisions: (...a: unknown[]) => h.queryDecisions(...(a as [])) },
 }));
@@ -51,6 +57,7 @@ beforeEach(() => {
   h.verifyChain.mockReset().mockResolvedValue(ESTATE);
   h.tenantVerdict.mockReset().mockResolvedValue({ ok: true, rowsChecked: 12, legacyRows: 0, sequencedRows: 12, head: HEAD });
   h.queryDecisions.mockReset().mockResolvedValue([]);
+  h.logError.mockReset();
 });
 
 describe('GET /api/decision-lineage/verify-chain (DP-77)', () => {
@@ -112,5 +119,38 @@ describe('GET /api/decision-lineage/compliance-report (DP-77)', () => {
     const res = await request(appFor(null)).get('/api/decision-lineage/compliance-report');
     expect(res.status).toBe(403);
     expect(h.queryDecisions).not.toHaveBeenCalled();
+  });
+});
+
+/*
+ * P-72 slice 1b (docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/). The tenant walk runs on the admin scope,
+ * which sees the organisation's rows only through the policies' platform arm. With that arm removed, on a
+ * production-shaped database, it read none of 3 chained rows: the verifier now says so (ok null, with a reason),
+ * and a walk over no chained row checked nothing. Neither is "VERIFIED", and the report attests to neither.
+ */
+describe('P-72 slice 1b: a verdict over rows the walk did not read, or over none, is not VERIFIED', () => {
+  const NOT_READ = "The verifier could read 0 of this organisation's 3 chained audit_logs rows, so the chain is not verified.";
+
+  it("a walk that could not read every chained row is no verdict, and the walk's own reason is the one logged", async () => {
+    h.tenantVerdict.mockResolvedValue({
+      ok: null, rowsChecked: 0, legacyRows: 0, sequencedRows: 0, reason: NOT_READ,
+      head: { ...HEAD, status: 'unavailable', verified: false, reason: 'head not verified against the anchor: not checked' },
+    });
+    const res = await request(appFor(7)).get('/api/decision-lineage/verify-chain');
+    expect([res.status, res.body.chainIntegrity, res.body.entriesVerified]).toEqual([503, 'UNVERIFIABLE', 0]);
+    expect(h.logError).toHaveBeenCalledWith('decision-lineage-api', 'chain verification could not run', { scope: 'organization', reason: NOT_READ });
+  });
+
+  it('an organisation with no chained row is not VERIFIED over nothing, and its report attests to nothing', async () => {
+    h.tenantVerdict.mockResolvedValue({ ok: true, rowsChecked: 0, legacyRows: 0, sequencedRows: 0, head: HEAD });
+    const res = await request(appFor(7)).get('/api/decision-lineage/verify-chain');
+    expect([res.status, res.body.chainIntegrity, res.body.complianceStatus]).toEqual([503, 'UNVERIFIABLE', 'UNVERIFIABLE']);
+    expect(h.logError).toHaveBeenCalledWith('decision-lineage-api', 'chain verification could not run', {
+      scope: 'organization', reason: expect.stringMatching(/^No chained rows exist for this organisation/),
+    });
+    const report = await request(appFor(7)).get('/api/decision-lineage/compliance-report');
+    expect(report.body.chainIntegrity).toMatchObject({ scope: 'organization', status: 'UNVERIFIABLE', entriesVerified: 0 });
+    expect(report.body.complianceFrameworks.find((f: { framework: string }) => f.framework === 'FDA 21 CFR Part 11').status).toBe('UNVERIFIABLE');
+    expect(report.body.attestation).toBeNull();
   });
 });
