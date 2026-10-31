@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The 510(k) and overview surfaces show a tenant its OWN state, or nothing.
+ * The 510(k) surface shows a tenant its OWN state, or nothing.
  *
  * Four fixture leaks survived the sample-mode gate because they never went
  * through it (docs/reports/device-market-readiness-2026-09-07.md §3):
@@ -15,6 +15,11 @@
  *   - the overview's health strip rendered MDX_HEALTH ("Active programs 14",
  *     "Down 3 pts vs last week", "FDA review cycle 87d") for an empty tenant.
  *
+ * The fourth was the kit portfolio's (mdx/surfaces/Overview.tsx). The portfolio
+ * folded into Projects (D2, fold F6, 2026-10-30), whose strip is counted on the
+ * server and whose empty portfolio states no figure
+ * (v2/__tests__/projectsPortfolioEmptyMean.test.tsx), so its case left with it.
+ *
  * Sample mode is off here, as it always is in production.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
@@ -22,7 +27,6 @@ import { render, cleanup, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { K510Surface } from '../surfaces/K510Surface';
-import { Overview } from '../surfaces/Overview';
 import type { Program } from '../data/programs';
 
 afterEach(() => {
@@ -107,18 +111,5 @@ describe('510(k) surface with a program whose predicate service is unreachable',
     await waitFor(() => expect(text()).toContain('Predicate intelligence'));
     expect(text()).not.toContain('canonical example data');
     expect(text()).not.toContain('BX-204');
-  });
-});
-
-describe('overview with an empty tenant (sample mode off)', () => {
-  it('derives the health strip from the empty list, never from MDX_HEALTH', () => {
-    stubFetch(() => 200);
-    const { container } = wrap(<Overview programs={[]} onOpenProgram={() => {}} onAskAna={() => {}} onNewProject={() => {}} />);
-    const text = container.textContent ?? '';
-    expect(text).not.toContain('Down 3 pts');
-    expect(text).not.toContain('9 510(k) · 4 PMA');
-    expect(text).not.toContain('Current cohort');
-    expect(text).not.toContain('DX-102');
-    expect(text).toContain('Active projects');
   });
 });

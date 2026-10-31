@@ -66,6 +66,29 @@
  * (security-alerts.ts) with counts and the first failing identifier, never row
  * content. Unverifiable is logged as a warning and is never reported as ok.
  *
+ * Each organisation in its own scope (P-72 slice 1b, 2026-10-30;
+ * docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/). Until then one pooled
+ * connection, in the system scope, sent every statement outside a
+ * transaction, and the pool applies a scope only when a transaction begins:
+ * the connection saw no tenant, connectionIsTenantScoped said so, and on a
+ * production-shaped database the sweep answered ok:false over 0 rows every
+ * day, with the platform arm or without it. Now the organisations are listed
+ * (an open read), and each one's audit_logs chain, seals and anchored head,
+ * and its audit_events links and seals, are verified on a read-only snapshot
+ * in that organisation's own scope (runWithOrgJobScope), where its policies
+ * admit every one of its rows and nothing of another's; the verdicts are
+ * merged per store, and `organizationId` names where the worst one was found
+ * (auditChainOrganizationVerdicts.ts).
+ * Only the stores with no tenant key (audit.tamper_proof_log, the triggers,
+ * the archive ledger) are read on the infrastructure connection, itself inside
+ * a transaction. Not verified here: audit_logs rows with no tenant, which no
+ * organisation's scope admits, and an organisation's legacy (pre-chain_seq)
+ * rows, which link across tenants: the walk refuses them on a tenant-scoped
+ * connection, so that organisation's chain and seals are `unverifiable`. Both
+ * wait for the platform door the design names for the cross-tenant walk
+ * (docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md §3.4). A store in which
+ * no organisation has a row is `unverifiable`, never ok: nothing was verified.
+ *
  * Read-only and defensive: every store is checked even when another fails,
  * and nothing is thrown, so the sweep cannot affect request handling. Part 11
  * tamper-evidence monitoring defaults ON in production (opt out explicitly
@@ -79,12 +102,7 @@
 
 import cron from 'node-cron';
 import { pool } from '../db.js';
-import { verifyAuditEventsChainSeals, type PoolClient } from '../services/audit/chain.js';
-import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service.js';
-import {
-  summarizeChainLinkage,
-  type AuditEventChainRow,
-} from '../services/audit/chainIntegrityMonitor.js';
+import type { PoolClient } from '../services/audit/chain.js';
 import { assertAuditImmutabilityTriggers } from '../services/audit/audit-immutability-triggers.js';
 import { verifyTamperProofLogRows, type TamperProofLogRow } from '../lib/tamper-proof-audit.js';
 import {
@@ -93,13 +111,22 @@ import {
   writeAuditChainAnchor,
   type AnchorBreak,
   type AuditAnchorStore,
+  type InOrganizationScope,
 } from '../services/audit/chain-anchor.js';
+import {
+  auditEventsVerdicts,
+  guarded,
+  mergeOrganizationVerdicts,
+  verifyOrganization,
+  type OrganizationSweep,
+} from './auditChainOrganizationVerdicts.js';
 import { reportSecurityAlert } from '../services/security-alerts.js';
 import { resolveAuditChainSweepPosture } from '../startup/audit-enforcement.js';
 import { createScopedLogger } from '../utils/logger.js';
-import { runWithSystemTenantScope } from '../db/tenantStore';
+import { runWithOrgJobScope, runWithSystemTenantScope } from '../db/tenantStore';
 import { runScheduledOncePerWindow, windowKeyOf } from '../db/scheduledOnce';
 
+const CALLER = 'audit-chain-integrity-sweep';
 const logger = createScopedLogger('audit-chain-integrity');
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -136,6 +163,8 @@ export interface AuditStoreVerdict {
   rowsChecked?: number;
   /** The first failing identifier — a row id, a sequence number, an index, a trigger name. Never content. */
   firstFailure?: string;
+  /** For a store verified per organisation: the organisation the verdict's firstFailure and reason come from. */
+  organizationId?: number;
   reason?: string;
 }
 
@@ -165,6 +194,8 @@ export interface AuditChainCheckResult {
   brokenAt?: { id: string; expected: string; stored: string };
   /** Set when the sweep itself could not run (no connection). */
   error?: string;
+  /** Organisations whose stores were verified, each in its own scope. */
+  organizations?: number;
   stores: AuditStoreVerdict[];
   /** Stores whose status is an incident: broken, missing or error. */
   failures: AuditStoreName[];
@@ -186,179 +217,6 @@ const INCIDENT_STATUSES: ReadonlySet<AuditStoreStatus> = new Set(['broken', 'mis
 async function tableExists(client: PoolClient, qualified: string): Promise<boolean> {
   const r = await client.query('SELECT to_regclass($1) IS NOT NULL AS present', [qualified]);
   return r.rows[0]?.present === true;
-}
-
-/** Run one store's verifier; a throw is that store's `error`, not the sweep's. */
-async function guarded(
-  store: AuditStoreName,
-  fn: () => Promise<AuditStoreVerdict>,
-): Promise<AuditStoreVerdict> {
-  try {
-    return await fn();
-  } catch (err) {
-    return { store, status: 'error', reason: err instanceof Error ? err.message : String(err) };
-  }
-}
-
-/** audit_logs: the sha256 chain and the HMAC seals, through the canonical integrity service. */
-async function verifyAuditLogsStore(client: PoolClient): Promise<{
-  verdicts: [AuditStoreVerdict, AuditStoreVerdict];
-  rowsChecked: number;
-  brokenAt?: AuditChainCheckResult['brokenAt'];
-}> {
-  try {
-    const integrity = await verifyAuditIntegrity(client);
-    const rowsChecked = integrity.chain.rowsChecked;
-    const chain: AuditStoreVerdict = integrity.chain.ok
-      ? { store: 'audit_logs.chain', status: 'ok', rowsChecked }
-      : {
-          store: 'audit_logs.chain',
-          status: 'broken',
-          rowsChecked,
-          firstFailure: integrity.chain.brokenAt?.id,
-          reason: 'sha256_chain mismatch',
-        };
-    const s = integrity.seals;
-    const seals: AuditStoreVerdict = !s.checked
-      ? { store: 'audit_logs.seals', status: 'unverifiable', reason: s.reason }
-      : !s.valid
-        ? {
-            store: 'audit_logs.seals',
-            status: 'broken',
-            firstFailure: String(s.brokenAt),
-            reason: 'hmac_seal does not verify',
-          }
-        : s.unsealedAfterSealed > 0
-          ? {
-              store: 'audit_logs.seals',
-              status: 'unverifiable',
-              rowsChecked: s.verified,
-              firstFailure: s.firstUnsealedAfterSealed ?? undefined,
-              reason: `${s.unsealedAfterSealed} row(s) written after sealing began carry no hmac_seal; their seals could not be verified`,
-            }
-          : {
-              store: 'audit_logs.seals',
-              status: 'ok',
-              rowsChecked: s.verified,
-              ...(s.unsealed > 0
-                ? { reason: `${s.unsealed} row(s) predate sealing and are covered by the sha256 chain only` }
-                : {}),
-            };
-    const brokenAt = integrity.chain.brokenAt
-      ? {
-          id: integrity.chain.brokenAt.id,
-          expected: integrity.chain.brokenAt.expected,
-          stored: integrity.chain.brokenAt.stored,
-        }
-      : undefined;
-    return { verdicts: [chain, seals], rowsChecked, brokenAt };
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : String(err);
-    return {
-      verdicts: [
-        { store: 'audit_logs.chain', status: 'error', reason },
-        { store: 'audit_logs.seals', status: 'error', reason },
-      ],
-      rowsChecked: 0,
-    };
-  }
-}
-
-/** audit_events: per-org linkage (the monitor's walk) and the HMAC seals. */
-async function verifyAuditEventsStore(client: PoolClient): Promise<AuditStoreVerdict[]> {
-  if (!(await tableExists(client, 'public.audit_events'))) {
-    const reason = 'table absent';
-    return [
-      { store: 'audit_events.linkage', status: 'missing', reason },
-      { store: 'audit_events.seals', status: 'missing', reason },
-    ];
-  }
-
-  const linkage = await guarded('audit_events.linkage', async () => {
-    const { rows } = await client.query(
-      `SELECT id, organization_id, sequence_number, record_hash, previous_hash
-         FROM audit_events
-        ORDER BY organization_id, sequence_number ASC`,
-    );
-    const { broken, hashedEntries, unhashedEntries } = summarizeChainLinkage(
-      rows as unknown as AuditEventChainRow[],
-    );
-    const rowsChecked = rows.length;
-    if (broken.length > 0) {
-      return {
-        store: 'audit_events.linkage',
-        status: 'broken',
-        rowsChecked,
-        firstFailure: String(broken[0].id),
-        reason: `${broken.length} broken link(s)`,
-      };
-    }
-    // Precedence as the monitor applies it: a break outranks "cannot tell",
-    // and "cannot tell" outranks ok. Only a chain in which EVERY row carried a
-    // record_hash may be called verified (WO-16C finding 72).
-    if (rowsChecked === 0) {
-      return { store: 'audit_events.linkage', status: 'unverifiable', rowsChecked, reason: 'no entries: there is no chain to verify' };
-    }
-    if (hashedEntries === 0) {
-      return {
-        store: 'audit_events.linkage',
-        status: 'unverifiable',
-        rowsChecked,
-        reason: 'no row carries a record_hash: the chain has never been hashed, so no link could be checked',
-      };
-    }
-    if (unhashedEntries > 0) {
-      return {
-        store: 'audit_events.linkage',
-        status: 'unverifiable',
-        rowsChecked,
-        reason: `${unhashedEntries} of ${rowsChecked} rows carry no record_hash; the links through them could not be checked`,
-      };
-    }
-    return { store: 'audit_events.linkage', status: 'ok', rowsChecked };
-  });
-
-  const seals = await guarded('audit_events.seals', async () => {
-    if (!process.env.AUDIT_HMAC_KEY) {
-      return {
-        store: 'audit_events.seals',
-        status: 'unverifiable',
-        reason: 'AUDIT_HMAC_KEY not configured; HMAC seals cannot be verified',
-      };
-    }
-    const result = await verifyAuditEventsChainSeals(client);
-    if (!result.valid) {
-      return {
-        store: 'audit_events.seals',
-        status: 'broken',
-        firstFailure: String(result.brokenAt),
-        reason: 'hmac_seal does not verify',
-      };
-    }
-    // Rows exist and none is sealed: the audit_events seal writer has not
-    // shipped (migrations 20260617_audit_events_hmac_seal.sql), so nothing was
-    // verified. This read "ok" every day.
-    if (result.verified === 0 && result.unsealed > 0) {
-      return {
-        store: 'audit_events.seals',
-        status: 'unverifiable',
-        rowsChecked: 0,
-        reason: `none of the ${result.unsealed} chained rows carries an hmac_seal, so no seal was verified`,
-      };
-    }
-    if (result.unsealedAfterSealed > 0) {
-      return {
-        store: 'audit_events.seals',
-        status: 'unverifiable',
-        rowsChecked: result.verified,
-        firstFailure: result.firstUnsealedAfterSealed ?? undefined,
-        reason: `${result.unsealedAfterSealed} row(s) written after their organisation's sealing began carry no hmac_seal`,
-      };
-    }
-    return { store: 'audit_events.seals', status: 'ok', rowsChecked: result.verified };
-  });
-
-  return [linkage, seals];
 }
 
 /** audit.tamper_proof_log: the Part 11 store, walked with the writer's own pure verifier. */
@@ -419,16 +277,21 @@ function anchorAgeOf(anchorKey: string | null, anchoredAt: string | null): Ancho
   return { anchorKey, anchoredAt, hours, staleAfterHours: ANCHOR_STALE_AFTER_HOURS };
 }
 
-/** audit_logs against the latest chain-head anchor in the evidence bucket (P0-8, DP-04), and how old that anchor is. */
+/**
+ * audit_logs against the latest chain-head anchor in the evidence bucket (P0-8,
+ * DP-04), and how old that anchor is. Each anchored head is compared in its own
+ * organisation's scope (`inScope`); `client` reads only the archive ledger.
+ */
 async function verifyAnchorStore(
   client: PoolClient,
   anchorStore: AuditAnchorStore | null,
+  inScope: InOrganizationScope,
 ): Promise<{ verdict: AuditStoreVerdict; age: AnchorAge | null }> {
   const store = 'audit_logs.anchor';
   if (!anchorStore) return { verdict: { store, status: 'unverifiable', reason: ANCHOR_NOT_CONFIGURED }, age: null };
   let age: AnchorAge | null = null;
   const verdict = await guarded(store, async () => {
-    const v = await verifyAuditChainAnchor(client, anchorStore);
+    const v = await verifyAuditChainAnchor(client, anchorStore, new Date(), { inOrganizationScope: inScope });
     age = anchorAgeOf(v.anchorKey, v.anchoredAt);
     if (v.status === 'broken') {
       return { store, status: 'broken', firstFailure: v.breaks[0]?.rowId, reason: v.breaks.map(describeAnchorBreak).join('; ') };
@@ -456,12 +319,15 @@ async function verifyAnchorStore(
 /**
  * Anchor every organisation's head, only over a run that found no incident.
  * `blocking` is every incident but a stale anchor: today's anchor is what ends
- * that one.
+ * that one. Each head is read in its own organisation's scope; `at` is taken
+ * before the first is read (chain-anchor.ts writeAuditChainAnchor).
  */
 async function writeAnchor(
   client: PoolClient,
   anchorStore: AuditAnchorStore | null,
   failures: AuditStoreName[],
+  organizations: readonly number[],
+  inScope: InOrganizationScope,
 ): Promise<AnchorWriteOutcome> {
   if (!anchorStore) return { written: false, reason: ANCHOR_NOT_CONFIGURED };
   if (failures.length > 0) {
@@ -471,8 +337,8 @@ async function writeAnchor(
     };
   }
   try {
-    const { key, organizations } = await writeAuditChainAnchor(client, anchorStore);
-    return { written: true, key, organizations };
+    const written = await writeAuditChainAnchor(client, anchorStore, new Date(), { inOrganizationScope: inScope, organizations });
+    return { written: true, key: written.key, organizations: written.organizations };
   } catch (err) {
     const reason = `anchor write failed: ${err instanceof Error ? err.message : String(err)}`;
     logger.error(`Audit chain head NOT anchored to ${anchorStore.location}: ${reason}`);
@@ -543,15 +409,79 @@ function reportSweepOutcome(
   }
 }
 
-/** One sweep on one connection: verify every store, then anchor a clean state. */
-async function sweepOnce(client: PoolClient, anchorStore: AuditAnchorStore | null): Promise<AuditChainCheckResult> {
-  const auditLogs = await verifyAuditLogsStore(client);
-  const anchor = await verifyAnchorStore(client, anchorStore);
-  const auditEvents = await verifyAuditEventsStore(client);
+/**
+ * A read-only snapshot on one pooled connection, in the caller's scope: the
+ * pool applies that scope when the transaction begins. Every statement the
+ * sweep sends is inside one; outside a transaction the pool applies none.
+ */
+async function onSnapshot<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
+  let rollbackFailed: Error | undefined;
+  try {
+    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+    try {
+      return await fn(client as unknown as PoolClient);
+    } finally {
+      await client.query('ROLLBACK').catch((err: unknown) => {
+        rollbackFailed = err instanceof Error ? err : new Error(String(err));
+      });
+    }
+  } finally {
+    // A connection whose transaction could not be ended is not returned to the pool.
+    client.release(rollbackFailed);
+  }
+}
+
+/** `fn` on a read-only snapshot in ONE organisation's own scope: its tenant id, no role. */
+const inOrganizationSnapshot: InOrganizationScope = (organizationId, fn) =>
+  runWithOrgJobScope(organizationId, CALLER, () => onSnapshot(fn));
+
+/** Every organisation, from `organizations`, whose read policy is open; purged ones keep their row and their audit trail. */
+async function listOrganizations(): Promise<number[]> {
+  return runWithSystemTenantScope(CALLER, () =>
+    onSnapshot(async (client) => {
+      const { rows } = await client.query('SELECT id FROM public.organizations ORDER BY id');
+      return rows.map((r) => Number(r.id)).filter((id) => Number.isSafeInteger(id) && id > 0);
+    }),
+  );
+}
+
+/**
+ * One sweep: every organisation's stores, each in its own scope, then the
+ * stores with no tenant key on `client` (the infrastructure scope), then the
+ * anchor of a clean state.
+ */
+async function sweepOnce(
+  client: PoolClient,
+  organizations: readonly number[],
+  anchorStore: AuditAnchorStore | null,
+): Promise<AuditChainCheckResult> {
+  const auditEventsShape = {
+    present: await tableExists(client, 'public.audit_events'),
+    sealKey: Boolean(process.env.AUDIT_HMAC_KEY),
+  };
+  const perOrganization: OrganizationSweep[] = [];
+  for (const organizationId of organizations) {
+    perOrganization.push(
+      await inOrganizationSnapshot(organizationId, (c) => verifyOrganization(c, organizationId, auditEventsShape)),
+    );
+  }
+  const nothing = organizations.length === 0
+    ? 'no organisation exists, so no audit_logs row was verified'
+    : 'no organisation has a chained audit_logs row, so nothing was verified';
+  const auditLogsVerdicts: [AuditStoreVerdict, AuditStoreVerdict] = [
+    mergeOrganizationVerdicts('audit_logs.chain', perOrganization.map((o) => ({ organizationId: o.organizationId, verdict: o.auditLogs.chain })), nothing),
+    mergeOrganizationVerdicts('audit_logs.seals', perOrganization.map((o) => ({ organizationId: o.organizationId, verdict: o.auditLogs.seals })), nothing),
+  ];
+  const rowsChecked = perOrganization.reduce((n, o) => n + o.auditLogs.rowsChecked, 0);
+  const brokenAt = perOrganization.find((o) => o.auditLogs.brokenAt)?.auditLogs.brokenAt;
+
+  const anchor = await verifyAnchorStore(client, anchorStore, inOrganizationSnapshot);
+  const auditEvents = auditEventsVerdicts(perOrganization, auditEventsShape);
   const tamperProof = await verifyTamperProofStore(client);
   const triggers = await verifyImmutabilityTriggers(client);
 
-  const stores: AuditStoreVerdict[] = [...auditLogs.verdicts, anchor.verdict, ...auditEvents, tamperProof, triggers];
+  const stores: AuditStoreVerdict[] = [...auditLogsVerdicts, anchor.verdict, ...auditEvents, tamperProof, triggers];
   const failures = stores.filter((s) => INCIDENT_STATUSES.has(s.status)).map((s) => s.store);
   const unverifiable = stores.filter((s) => s.status === 'unverifiable').map((s) => s.store);
   const ok = failures.length === 0 && unverifiable.length === 0;
@@ -559,14 +489,15 @@ async function sweepOnce(client: PoolClient, anchorStore: AuditAnchorStore | nul
 
   // After every store is verified, never before: the anchor records a state
   // this run found no incident in, a stale anchor aside.
-  const anchorWrite = await writeAnchor(client, anchorStore, blocking);
+  const anchorWrite = await writeAnchor(client, anchorStore, blocking, organizations, inOrganizationSnapshot);
 
   reportSweepOutcome(
     stores,
     failures,
     unverifiable,
     { anchorWrite, anchorAge: anchor.age },
-    `audit_logs ${auditLogs.rowsChecked} rows, ` +
+    `${organizations.length} organisation(s), each in its own scope: ` +
+      `audit_logs ${rowsChecked} rows, ` +
       `audit_events ${auditEvents[0].rowsChecked ?? 0} rows, ` +
       `tamper_proof_log ${tamperProof.rowsChecked ?? 0} rows, ` +
       `${triggers.rowsChecked ?? 0} immutability triggers, chain heads anchored`,
@@ -574,8 +505,9 @@ async function sweepOnce(client: PoolClient, anchorStore: AuditAnchorStore | nul
 
   return {
     ok,
-    rowsChecked: auditLogs.rowsChecked,
-    ...(auditLogs.brokenAt ? { brokenAt: auditLogs.brokenAt } : {}),
+    rowsChecked,
+    ...(brokenAt ? { brokenAt } : {}),
+    organizations: organizations.length,
     stores,
     failures,
     unverifiable,
@@ -592,26 +524,20 @@ export async function runAuditChainIntegrityCheck(
   options: AuditChainCheckOptions = {},
 ): Promise<AuditChainCheckResult> {
   const anchorStore = options.anchorStore !== undefined ? options.anchorStore : resolveAuditAnchorStore();
-  return runWithSystemTenantScope('audit-chain-integrity-sweep', async () => {
-    try {
-      const client = await pool.connect();
-      try {
-        return await sweepOnce(client, anchorStore);
-      } finally {
-        client.release();
-      }
-    } catch (err: any) {
-      logger.error(`Audit integrity sweep could not run: ${err?.message}`);
-      return {
-        ok: false,
-        rowsChecked: 0,
-        error: err?.message,
-        stores: [],
-        failures: [],
-        unverifiable: [],
-      };
-    }
-  });
+  try {
+    const organizations = await listOrganizations();
+    return await runWithSystemTenantScope(CALLER, () => onSnapshot((client) => sweepOnce(client, organizations, anchorStore)));
+  } catch (err: any) {
+    logger.error(`Audit integrity sweep could not run: ${err?.message}`);
+    return {
+      ok: false,
+      rowsChecked: 0,
+      error: err?.message,
+      stores: [],
+      failures: [],
+      unverifiable: [],
+    };
+  }
 }
 
 /**

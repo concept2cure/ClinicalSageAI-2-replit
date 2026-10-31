@@ -38,7 +38,6 @@ import {
   setEditorTarget,
   type EditorSectionRef,
 } from '../v2/editorTarget';
-import { Overview } from './surfaces/Overview';
 import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
@@ -49,7 +48,6 @@ import { EngineeringSurface } from './surfaces/EngineeringSurface';
 import type { EngineeringPanelsContext } from './surfaces/engineeringPanelsContext';
 import { UdiSurface } from './surfaces/UdiSurface';
 import { PostmarketSurface } from './surfaces/PostmarketSurface';
-import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
 import { PreSubManager } from './presub/PreSubManager';
 import { type Program } from './data/programs';
 import { useMdxPrograms } from './hooks/useMdxPrograms';
@@ -70,7 +68,6 @@ import './files-tree.css';
 import './surface-text-ramp.css';
 import { publishShellProject, useShellProject } from '../v2/shellProject';
 import { usePublishSurfaceContext, type SurfaceContext } from '../v2/surfaceContext';
-import { openNewProject } from '../v2/surfaceActions';
 import { openLetterInCommunication } from '../v2/surfaces/cmcAgencyQuestions';
 
 /* The id list lives in `./surfaceIds` with no component or stylesheet imports,
@@ -97,10 +94,6 @@ const PATHWAY_ANCHOR: Partial<Record<MdxSurfaceId, Program['pathway'] | null>> =
  * the host does not hold the leaves' counts, and absent beats guessed.
  */
 const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }> = {
-  'device-workstream': {
-    title: 'Device portfolio',
-    blurb: 'the device portfolio overview — project cards and portfolio health KPIs.',
-  },
   'device-510k': {
     title: '510(k) pathway',
     blurb:
@@ -142,10 +135,6 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
     title: 'Pre-Sub manager',
     blurb: "the project's FDA Q-Submissions, with their questions, FDA's feedback and the commitments.",
   },
-  'device-analytics': {
-    title: 'Analytics',
-    blurb: 'device analytics panels.',
-  },
 };
 
 /**
@@ -158,15 +147,15 @@ const DEVICE_SCREEN_ACTIONS: string[] = [
   'Signatures, transmissions, uploads and profile changes are governed — AnA proposes them in conversation, never through screen controls',
 ];
 
-/* device-udi and device-presub left this list on 2026-10-29: each reads the
-   open project now (D2, device-features-reach-three). device-tasks left the kit
-   the same day: it folded into Tasks (D2, fold-device-tasks). So did the
-   organization-wide blocker list: a blocker is its filing's readiness (D2, fold
-   F5 item 2, decision P-61 item 2), and the device submission packages: a device
-   filing is Submission Center's (fold F5 item 1, decision P-61 item 1). */
-const ORGANIZATION_VIEWS = new Set<MdxSurfaceId>([
-  'device-analytics',
-]);
+/* No device screen is an organization-wide view now, so the host names none.
+   device-udi and device-presub read the open project since 2026-10-29 (D2,
+   device-features-reach-three). device-tasks folded into Tasks the same day (D2,
+   fold-device-tasks); the organization-wide blocker list retired into each
+   filing's readiness (fold F5 item 2, decision P-61 item 2); the device
+   submission packages are Submission Center's (fold F5 item 1, decision P-61
+   item 1); and device analytics, the last of them, joined Reporting & analytics
+   over the projects the reader can open (D2, fold F4, 2026-10-30; decision P-61
+   item 3; the device section of v2/surfaces/Insights.tsx). */
 
 type ScreenContext = Omit<SurfaceContext, 'surfaceId'>;
 
@@ -210,7 +199,7 @@ function withIvdReadiness(base: ScreenContext, report: IvdReadinessReport | null
 
 function viewScopeNotice(nav: MdxSurfaceId): string | null {
   if (nav === 'device-postmarket') return 'Reporting clocks are for this project; signals, CAPA board, trends and PMS plan execution are not shown until they are read for this project';
-  return ORGANIZATION_VIEWS.has(nav) ? 'Organization-wide view' : null;
+  return null;
 }
 
 export interface MdxSurfaceHostProps extends SurfaceViewProps {
@@ -237,25 +226,6 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     return selectedId ? programs.find(p => String(p.id) === selectedId) ?? null : null;
   }, [programs, selectedId]);
 
-  /** Hand a program off to the shell's project home — there is only one. */
-  const openProgram = React.useCallback(
-    (prog: Program) => {
-      if (typeof window !== 'undefined') {
-        // REPLACE, never merge. Spreading the previous value kept `code`, `ws`,
-        // `status` and `product` from whatever project was open before, and
-        // ProjectHome prefers those over the row it fetches — so opening a
-        // device program after any other project rendered its Project Home with
-        // the PREVIOUS project's submission-type, client-type and status chips.
-        // v2/surfaces/Projects.tsx:389 replaces the whole object; this now
-        // matches it, and omits keys it cannot honestly supply rather than
-        // inheriting stale ones.
-        publishShellProject({ id: String(prog.id), title: prog.title, productType: prog.productType });
-      }
-      onNav('project-home');
-    },
-    [onNav],
-  );
-
   /**
    * Open the one editor — on the section the click named, when it named one.
    *
@@ -267,8 +237,8 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
    * `window.C2C_PROJECT` (set two callbacks up) and `window.C2C_CONVO`
    * (V2App.startShellConversation):
    *
-   *   1. The program hand-off mirrors `openProgram` exactly: REPLACE
-   *      `window.C2C_PROJECT` with the program whose section is being opened,
+   *   1. The program hand-off REPLACES `window.C2C_PROJECT` with the program
+   *      whose section is being opened (as Projects does, v2/surfaces/Projects.tsx),
    *      so the editor's document scope, filing outline and data room all
    *      agree on which program the click meant.
    *   2. The section rides `window.C2C_EDITOR_TARGET` (v2/editorTarget.ts,
@@ -288,7 +258,9 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   const openEditor = React.useCallback(
     (section?: EditorSectionRef) => {
       if (typeof window !== 'undefined' && programForContext) {
-        // REPLACE, never merge — same rule and same reason as openProgram above.
+        // REPLACE, never merge. Spreading the previous value kept `code`, `ws`,
+        // `status` and `product` from whatever project was open before, and
+        // ProjectHome prefers those over the row it fetches.
         publishShellProject({ id: String(programForContext.id), title: programForContext.title, productType: programForContext.productType });
       }
       const docType = nav === 'device-cer' || nav === 'device-diagnostics'
@@ -374,16 +346,15 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   );
 
   /*
-   * One builder, twelve literal publish calls. The AnA coverage gate counts
+   * One builder, ten literal publish calls. The AnA coverage gate counts
    * single-quoted literal surface ids, so a single dynamic
    * `usePublishSurfaceContext(nav, …)` would register as covering nothing —
    * this is the sanctioned multi-id shape (v2/surfaces/UsageBilling.tsx used it
    * for `usage` and `billing` until billing folded into Licensing, 2026-10-29).
    * Only the call whose id matches `nav` publishes; the store treats the
-   * eleven null calls as no-ops (each clears only its own id), and hook order
+   * nine null calls as no-ops (each clears only its own id), and hook order
    * stays fixed because every call runs unconditionally on every render.
    */
-  usePublishSurfaceContext('device-workstream', nav === 'device-workstream' ? anaContext : null);
   usePublishSurfaceContext('device-510k', nav === 'device-510k' ? anaContext : null);
   usePublishSurfaceContext('device-pma', nav === 'device-pma' ? anaContext : null);
   usePublishSurfaceContext('device-cer', nav === 'device-cer' ? anaContext : null);
@@ -394,7 +365,6 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   usePublishSurfaceContext('device-udi', nav === 'device-udi' ? anaContext : null);
   usePublishSurfaceContext('device-postmarket', nav === 'device-postmarket' ? anaContext : null);
   usePublishSurfaceContext('device-presub', nav === 'device-presub' ? anaContext : null);
-  usePublishSurfaceContext('device-analytics', nav === 'device-analytics' ? anaContext : null);
 
   let surface: React.ReactNode;
   switch (nav) {
@@ -440,67 +410,37 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       /* Keyed by the project for the same reason as device-udi. */
       surface = <PreSubManager key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} />;
       break;
-    case 'device-analytics':
-      surface = <AnalyticsSurface onAskAna={onAsk} />;
-      break;
-    case 'device-workstream':
-    default:
-      // The portfolio. Loading and failure are stated rather than rendered as
-      // an empty portfolio, which would read as "you have no programs". Both
-      // are assigned rather than returned early, so they go through the same
-      // wrapper as everything else — an early return here would escape the
-      // scope root and render the status text unstyled.
-      /* THE RAW SERVER STRING IS GONE FROM THE LANE'S ENTRY SURFACE.
-         This read `{liveProgramsResult.error}` — interpolated verbatim into the
-         alert. `useFetchJson` sets that field to `HTTP ${status} ${path}` or to
-         a caught exception's message, so the highest-traffic failure in the MDX
-         lane rendered an API route, or a driver error, at a regulatory
-         director. That is an information-disclosure finding in a regulated
-         product, not a cosmetic one, and it is the exact class W0-4 closed
-         everywhere else. `<ErrorState>` runs every message through the
-         internals filter, so the guarantee holds here by construction rather
-         than by remembering.
-
-         It also had no way out. The hook has exposed `refresh` all along and
-         nothing called it, so a transient failure on the portfolio left the
-         user with a dead screen and no control — UI standards §8. */
-      surface = liveProgramsResult.loading ? (
-        <EmptyState busy title="Loading device projects" testId="mdx-programs-loading" />
-      ) : liveProgramsResult.error ? (
-        <ErrorState
-          variant="panel"
-          title="Couldn't load your device projects"
-          message={liveProgramsResult.error}
-          retry={liveProgramsResult.refresh}
-          testId="mdx-programs-error"
-        />
-      ) : (
-        <Overview programs={programs} onOpenProgram={openProgram} onAskAna={onAsk} onNewProject={() => openNewProject(onNav)} />
-      );
-      break;
+    default: {
+      /* No portfolio here, and no fallthrough. The device portfolio
+         (mdx/surfaces/Overview.tsx, drawn from this branch) folded into
+         Projects with its MDX filter (D2, fold F6, 2026-10-30; decision P-61
+         item 5); 'device-workstream' is an alias of 'projects'. Every id this
+         host is given is a case above, which the compiler checks here. */
+      const unreachable: never = nav;
+      surface = unreachable;
+    }
   }
 
   // The project is the entry point for every MDX feature. Do not mount a leaf
   // against a null program: several older leaves interpret null as org-wide.
-  // The portfolio remains the discovery view that opens the chosen project.
-  if (nav !== 'device-workstream') {
-    if (liveProgramsResult.loading) {
-      surface = <EmptyState busy title="Loading this project's MDX context" testId="mdx-project-loading" />;
-    } else if (liveProgramsResult.error) {
-      surface = <ErrorState variant="panel" title="Couldn't verify this project's MDX context" message={liveProgramsResult.error} retry={liveProgramsResult.refresh} testId="mdx-project-error" />;
-    } else if (!programForContext) {
-      surface = <section data-testid="mdx-project-required">
-        <EmptyState title={selectedId ? 'The selected device or diagnostic project is unavailable' : 'Open a project to continue'}
-          hint="Choose the client project from Projects to open its MDX workflow and evidence." />
-        <button type="button" className="btn ghost" onClick={() => onNav('projects')}>Open projects</button>
-      </section>;
-    } else if (nav === 'device-cer' && isIvdFamily(programForContext.productType)) {
-      surface = <section data-testid="mdx-per-required">
-        <EmptyState title="Diagnostics use a performance evaluation report"
-          hint="Open the diagnostic workflow for scientific validity, analytical performance, clinical performance and the IVDR PER." />
-        <button type="button" className="btn ghost" onClick={() => onNav('device-diagnostics')}>Open diagnostic evidence</button>
-      </section>;
-    }
+  // Projects, with its MDX filter, is the discovery view that opens the chosen
+  // project (the kit portfolio folded into it, D2 fold F6, 2026-10-30).
+  if (liveProgramsResult.loading) {
+    surface = <EmptyState busy title="Loading this project's MDX context" testId="mdx-project-loading" />;
+  } else if (liveProgramsResult.error) {
+    surface = <ErrorState variant="panel" title="Couldn't verify this project's MDX context" message={liveProgramsResult.error} retry={liveProgramsResult.refresh} testId="mdx-project-error" />;
+  } else if (!programForContext) {
+    surface = <section data-testid="mdx-project-required">
+      <EmptyState title={selectedId ? 'The selected device or diagnostic project is unavailable' : 'Open a project to continue'}
+        hint="Choose the client project from Projects to open its MDX workflow and evidence." />
+      <button type="button" className="btn ghost" onClick={() => onNav('projects')}>Open projects</button>
+    </section>;
+  } else if (nav === 'device-cer' && isIvdFamily(programForContext.productType)) {
+    surface = <section data-testid="mdx-per-required">
+      <EmptyState title="Diagnostics use a performance evaluation report"
+        hint="Open the diagnostic workflow for scientific validity, analytical performance, clinical performance and the IVDR PER." />
+      <button type="button" className="btn ghost" onClick={() => onNav('device-diagnostics')}>Open diagnostic evidence</button>
+    </section>;
   }
 
   /*
@@ -523,7 +463,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     <div className="mdx-shell" data-surface="true">
       <div className="page">
         <div className="page-inner">
-          {nav !== 'device-workstream' && programForContext && !liveProgramsResult.loading && !liveProgramsResult.error && (
+          {programForContext && !liveProgramsResult.loading && !liveProgramsResult.error && (
             <nav aria-label="Project context" className="page-actions">
               <button type="button" className="btn ghost" onClick={() => onNav('project-home')}>Return to project workflow</button>
               <span>{programForContext.title}</span>

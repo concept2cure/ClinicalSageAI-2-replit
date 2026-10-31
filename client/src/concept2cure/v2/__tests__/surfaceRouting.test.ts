@@ -85,9 +85,11 @@ describe('the retired kit paths still land somewhere real', () => {
       surfaceId: 'projects', applies: { actionId: 'projects.filter', params: { workstream: 'MDX' } },
     });
     expect(getSurface('mdx')).toBeUndefined();
-    // A2.8 changes only the alias. The old portfolio shell stays until A2.10.
-    expect(getSurface('device-workstream')).toBeDefined();
-    expect(surfaceIdFromLocation('/concept2cure/device-workstream')).toBe('device-workstream');
+    // A2.8 changed only the alias; the old portfolio shell folded into Projects at A2.10 (D2, fold F6, 2026-10-30),
+    // so its own address lands in the same place.
+    expect(getSurface('device-workstream')).toBeUndefined();
+    expect(surfaceIdFromLocation('/concept2cure/device-workstream')).toBe('projects');
+    expect(destinationFor('device-workstream', false)).toEqual(destinationFor('mdx', false));
   });
 
   it('/concept2cure/pdev resolves to itself — it is a real surface id now', () => {

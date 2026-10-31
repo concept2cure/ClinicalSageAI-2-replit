@@ -351,22 +351,29 @@ production build. Both pre-merge proofs and the final combined qualification are
 recorded in `slice-A2/A2.8/`. The device-workstream target/screen and remaining functions
 below stay for A2.10; this does not mark their combined parity row complete.
 
+Folded 2026-10-30 (D2, fold F6; decision P-61 item 5: only figures computed from
+the project's own records, and the Client Review Room admits the project). The
+kit portfolio `mdx/surfaces/Overview.tsx` is deleted and the host draws it from
+no branch; `device-workstream` is an alias of `projects` that applies the MDX
+filter, as `mdx` does, and a subscription carries to Projects (P-61 item 4).
+Evidence: `docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/`.
+
 Do not carry listPrograms' missing access, deleted and archived filters.
 
-- [ ] Pathway filter with counts. From `Overview.tsx:73,85,91-103`. Goes to: a program_type filter on Projects for device clients. Real today.
-- [ ] Status filter with counts. From `Overview.tsx:188-213`. Goes to: counts for each status on Projects. Real today.
-- [ ] Health strip: the pathway split and in-flight count. From `Overview.tsx:30-54,107-142`. Goes to: the Projects summary line. Real today.
-- [ ] Device class, pathway and days to filing on the card. From `Overview.tsx:251-305`. Goes to: the Projects card, or Project home. Real today.
-- [ ] Next blocker for each program. From `Overview.tsx:290-305`. Goes to: metadata->>'blocker' in GET /api/c2c/projects, or Project home's unified work. Real today.
-- [ ] Owners, description and last activity. From `Overview.tsx:306-315`. Goes to: render p.activity on Projects. The team is shown on Project home. Real today.
-- [ ] Ask AnA chip on each program. From `Overview.tsx:263-268`. Goes to: projects.open-program and Project home AnA. No further work is named. Real today.
-- [ ] Readiness report across device programs. From `Overview.tsx:114-121`. Goes to: Projects' "at risk this week" prompt. No further work is named. Real today.
-- [ ] Client Review Room. From `ClientReviewZone.tsx`. Goes to: a mount on Project home that passes the integer projects.id, not the UUID. Real today.
+- [x] Pathway filter with counts. From `Overview.tsx:73,85,91-103`. Goes to: a program_type filter on Projects for device clients. Done before the fold (A2.8): `ProjectPortfolioFilters.tsx`, counted on the server over every pathway the kit offered (`projectsPathwayCounts.test.tsx`).
+- [x] Status filter with counts. From `Overview.tsx:188-213`. Goes to: counts for each status on Projects. The filter is Projects' own, over the loaded page. Its counts are not carried: the kit counted the loaded programs in the browser, and no engine counts status across the portfolio, so a figure past the first page would be a guess (P-61 item 5).
+- [x] Health strip: the pathway split and in-flight count. From `Overview.tsx:30-54,107-142`. Goes to: the Projects summary line. The pathway split is the server's pathway counts. The in-flight and blocked figures are dropped: the kit derived them in the browser from a stage index and a status mapping, and no engine computes them (P-61 item 5).
+- [x] Device class, pathway and days to filing on the card. From `Overview.tsx:251-305`. Goes to: the Projects card, or Project home. The Projects card and list row show the stage, the readiness the server measured and the target filing date; the pathway is the filter and the project home's.
+- [x] Next blocker for each program. From `Overview.tsx:290-305`. Goes to: metadata->>'blocker' in GET /api/c2c/projects, or Project home's unified work. Done before the fold: the Projects card and row show the recorded blocker, or say that none is recorded (`projectsCardStatusReadiness.test.tsx`).
+- [x] Owners, description and last activity. From `Overview.tsx:306-315`. Goes to: render p.activity on Projects. The team is shown on Project home. Done: the card and the list row show the record's last activity (`'Updated ' || to_char(p.updated_at, 'Mon DD')`, already sent by `project-portfolio.ts`), and none where the record holds none (`projectsActivity.test.tsx`).
+- [x] Ask AnA chip on each program. From `Overview.tsx:263-268`. Goes to: projects.open-program and Project home AnA. No further work is named. Not carried as a chip: a project opens from its card, and its home carries AnA.
+- [x] Readiness report across device programs. From `Overview.tsx:114-121`. Goes to: Projects' "at risk this week" prompt. No further work is named. Present on Projects (its Ask AnA), over the filtered portfolio it states.
+- [x] Client Review Room. From `ClientReviewZone.tsx`. Goes to: a mount on Project home that passes the integer projects.id, not the UUID. Done: `v2/surfaces/ProjectClientReview.tsx` on a device project's Review step loads `mdx/ClientReviewRoom.tsx` lazily with the verified integer project and the program; the route admits both before anything is read or shared (since 665873b2d, `mdx-client-review-admits-project.test.ts`). The organization-wide room is drawn nowhere now. `/api/mdx/client-review` moved to project-home's claims.
 - [x] AnA's evidence_sufficiency.assess and reviewer_simulation.run commands. A2.10 actual-source review proves both were already independently in the flat in-scope command inventory and dispatch to the same governed handlers without device-workstream. Historical note/metadata now name project-context use; scope/ownership/confirmation/audit regressions pass. No parallel classification map, new PM-anchor check or grant is claimed. The remaining device shell stays for its other functions. Proof: A2_10_REMAINING_PARITY_REVIEW.md and A2.10 evidence.
-- [ ] Two AnA guided tours. From `demo-scripts.ts:285-287,355-357`. Goes to: retarget them to 'projects' with the MDX filter. Real today.
+- [x] Two AnA guided tours. From `demo-scripts.ts:285-287,355-357`. Goes to: retarget them to 'projects' with the MDX filter. Done: both stop at `mdx`, which opens Projects with the MDX filter.
 - [x] The `/concept2cure/mdx` alias and AnA's `mdx` target. A2.8 routes both through the existing destination resolver to Projects, applying `projects.filter {workstream: 'MDX'}` once. Proof: `surfaceRouting.test.ts`, `projectDestination.test.ts`, `projectDestinationShell.test.tsx` and native `projects-pathway-counts.e2e.ts`; evidence under `slice-A2/A2.8/`. No new filter, query or admission.
-- [ ] The separate `device-workstream` AnA target, shell and catalogue row. Retained for A2.10 until the rest of this row's parity work is complete; A2.8 changes the alias only.
-- [ ] Remembered grid or list view. From `Overview.tsx:64-79`. Goes to: optionally, Projects, with storage access wrapped in try/catch. Real today.
+- [x] The separate `device-workstream` AnA target, shell and catalogue row. The shell and its registry row are gone; the catalogue row is deprecated in place (20260810, 20260823) with its subscriptions kept; AnA's target is kept and resolves to filtered Projects (`foldDeviceWorkstream.test.ts`).
+- [x] Remembered grid or list view. From `Overview.tsx:64-79`. Goes to: optionally, Projects, with storage access wrapped in try/catch. Not carried (optional): Projects opens on the grid, and AnA's `projects.set-view` sets it.
 
 #### From `cro-portfolio`
 Settle cro_clients versus clients as the sponsor key first.
@@ -500,13 +507,20 @@ The mounted, uncalled /api/cer backend must be converged onto device-cer or dele
 ### Into Reporting & analytics (`insights`)
 
 #### From `device-analytics`
-- [ ] Program KPI cards. From `mdx-analytics.ts:278-299`. Goes to: regulatory_programs status counts on every tier, scoped to accessible projects. Real today.
-- [ ] AnA acceptance rate. From `mdx-analytics.ts:286-298`. Goes to: Reporting & analytics, or the device 510(k) step. Real today.
-- [ ] 24-month submission pace. From `mdx-analytics.ts:315-329`. Goes to: Reporting & analytics. Real today.
-- [ ] Open blockers by root cause. From `mdx-analytics.ts:302-312`. Goes to: an organisation-wide aggregation in the portfolio view. Real today.
-- [ ] Ask AnA from a blocker cause. From `AnalyticsSurface.tsx:235-242`. Goes to: on that aggregation. Real today.
-- [ ] Opened from the device project's feature list. From `mdx-project-features.ts:24`. Goes to: Reporting & analytics, changing the feature list and the Projects app list in one commit. Real today.
-- [ ] Server facets with no caller. From `mdx-analytics.ts:67-262`. Goes to: transmittal timing to Submission Center, clinical roll-ups to the device clinical step, and pathway counts to the portfolio. Real today.
+
+Folded 2026-10-30 (D2, fold F4; decision P-61 item 3: device analytics joins
+Reporting & analytics at its tier, standard, over the projects the reader can
+open). The screen, its hook and the kit aggregate `GET /api/mdx/analytics` are
+deleted; the id is an alias of `insights`, and a subscription carries there
+(P-61 item 4). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/`.
+
+- [x] Program KPI cards. From `mdx-analytics.ts:278-299`. Goes to: regulatory_programs status counts on every tier, scoped to accessible projects. Done: the device section of the Reporting overview counts each recorded status over the device projects the reader can open (`server/services/report-os/device-portfolio.ts`, shown by `v2/surfaces/InsightsDevicePortfolio.tsx`). The old cards counted every program of the organization, drug programs included.
+- [x] AnA acceptance rate. From `mdx-analytics.ts:286-298`. Goes to: Reporting & analytics, or the device 510(k) step. Done: in the device section, over AnA-drafted kit sections recorded against those projects through their eSTAR document. A section with no document belongs to no project and is not counted; with none recorded there is no rate, never 0%.
+- [x] 24-month submission pace. From `mdx-analytics.ts:315-329`. Goes to: Reporting & analytics. Done: in the device section, from recorded submission dates of those projects.
+- [x] Open blockers by root cause. From `mdx-analytics.ts:302-312`. Goes to: an organisation-wide aggregation in the portfolio view. Not carried: there is no organization-wide blocker list (P-61 item 2); a blocker is its filing's readiness.
+- [x] Ask AnA from a blocker cause. From `AnalyticsSurface.tsx:235-242`. Goes to: on that aggregation. Not carried, with the aggregation.
+- [x] Opened from the device project's feature list. From `mdx-project-features.ts:24`. Goes to: Reporting & analytics, changing the feature list and the Projects app list in one commit. Done: the id left both lists in the fold; Reporting & analytics is a work area on every segment's rail.
+- [ ] Server facets with no caller. From `mdx-analytics.ts:67-262`. Goes to: transmittal timing to Submission Center, clinical roll-ups to the device clinical step, and pathway counts to the portfolio. Kept and handed on, organization-wide as they are; no launch screen claims `/api/mdx/analytics` since the fold, so production refuses them until a screen reads one over the projects its reader can open.
 
 #### From `report-governance`
 - [ ] List the intelligent_reports register. From `ReportGovernance.tsx:168-195`. Goes to: the ana-ri generate_report command converged onto report-os runs. Existing rows need a read-only home. Real today.
@@ -1038,7 +1052,7 @@ Present: verifying the audit_logs ledger chain (`AdminSurfaces.tsx:706,590-635,1
 | Item | Fns | Pres. | Part. | Miss. | N/a | Real | Fold |
 |---|---|---|---|---|---|---|---|
 | filings-catalog | 13 | 3 | 8 | 2 | 0 | 13 | Yes (A2.10a) |
-| device-workstream | 18 | 5 | 7 | 6 | 0 | 17 | No |
+| device-workstream | 18 | 5 | 7 | 6 | 0 | 17 | Yes (2026-10-30, P-61 item 5) |
 | cro-portfolio | 12 | 1 | 1 | 10 | 0 | 12 | No |
 | mission-control | 16 | 3 | 9 | 4 | 0 | 9 | No |
 
@@ -1087,7 +1101,7 @@ Present: writing the CER and governed export (`GeneratorTab.tsx:1-17`, `useCerEx
 ### insights
 | Item | Fns | Pres. | Part. | Miss. | N/a | Real | Fold |
 |---|---|---|---|---|---|---|---|
-| device-analytics | 12 | 1 | 3 | 4 | 4 | 8 | No |
+| device-analytics | 12 | 1 | 3 | 4 | 4 | 8 | Yes (2026-10-30, P-61 item 3) |
 | report-governance | 9 | 0 | 6 | 3 | 0 | 8 | No |
 | analytics-hub | 6 | 0 | 2 | 1 | 3 | 3 | No |
 
