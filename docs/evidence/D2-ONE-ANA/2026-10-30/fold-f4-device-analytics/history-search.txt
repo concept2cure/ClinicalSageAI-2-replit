@@ -1,0 +1,13 @@
+# History search (working agreement): every file ever deleted, by name. Run 2026-10-30 at d581eba7a.
+# The clone is shallow (true); 1646 commits are reachable.
+
+$ git log --all --diff-filter=D --name-only --format= | grep -c "VaultSurface\|TasksSurface"   # the method finds known deletions
+3
+
+$ git log --all --diff-filter=D --name-only --format= | grep -ci "analytic"
+0
+
+$ git log --all --diff-filter=D --name-only --format= | grep -ci "DevicePortfolio\|device-portfolio"
+0
+
+No analytics screen, hook, route or device-portfolio reader was deleted before; this fold is the first. Nothing is rebuilt beside a deleted one.

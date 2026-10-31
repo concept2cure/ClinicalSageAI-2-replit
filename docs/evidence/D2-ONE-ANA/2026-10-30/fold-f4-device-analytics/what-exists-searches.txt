@@ -1,0 +1,23 @@
+# What-already-exists searches (Rule 3), run on the working tree after the fold's route edit; the matches in insights-canvas-routes.ts are this fold's own comments.
+# At HEAD: git show d581eba7a:server/routes/insights-canvas-routes.ts | grep -ci 'acceptance rate|submission pace|status counts' = 0. lifecycle-calendar.ts and research-compliance-report-providers.ts count obligations and research records by status, not programs.
+## grep -rIl "actual_submission_date" server/services/report-os server/routes/insights* server/routes/report-os* client/src/concept2cure/v2/surfaces/Insights*
+## grep -rIl "draft_source" server/services/report-os server/routes/insights* server/routes/report-os* client/src/concept2cure/v2/surfaces/Insights*
+## grep -rIl "acceptance rate\|acceptanceRate\|acceptRate" server/services/report-os server/routes/insights* server/routes/report-os* client/src/concept2cure/v2/surfaces/Insights*
+server/routes/insights-canvas-routes.ts
+## grep -rIl "pace24m\|submission pace\|submissionPace" server/services/report-os server/routes/insights* server/routes/report-os* client/src/concept2cure/v2/surfaces/Insights*
+server/routes/insights-canvas-routes.ts
+## grep -rIl "byStatus\|status counts\|statusCounts" server/services/report-os server/routes/insights* server/routes/report-os* client/src/concept2cure/v2/surfaces/Insights*
+server/services/report-os/lifecycle-calendar.ts
+server/services/report-os/research-compliance-report-providers.ts
+server/routes/insights-canvas-routes.ts
+## grep -rIl "workstreamSqlCase" server/services/report-os server/routes/insights* server/routes/report-os* client/src/concept2cure/v2/surfaces/Insights*
+## grep -rIl "device" server/services/report-os server/routes/insights* server/routes/report-os* client/src/concept2cure/v2/surfaces/Insights*
+server/services/report-os/taxonomy-global.ts
+server/services/report-os/segment.ts
+server/services/report-os/prediction/report-types.ts
+server/services/report-os/orchestrator.ts
+server/services/report-os/regional/filing-readiness.ts
+server/services/report-os/regional/filing-types.ts
+server/services/report-os/taxonomy.ts
+server/routes/insights-canvas-routes.ts
+client/src/concept2cure/v2/surfaces/Insights.tsx

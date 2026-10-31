@@ -1,0 +1,97 @@
+/**
+ * P-72 slice 1b, lane C: run the controls with the server's own code on a production-shaped copy, as the runtime
+ * role app_service with RLS_ENFORCE=on (run.sh). Organizations A = p72-a (7) and B = p72-b (8).
+ *   1. Seed, each organization in its own scope: three chained audit_logs rows (the production writer) and one
+ *      audit_events row (its hash trigger chains it).
+ *   2. runAuditChainIntegrityCheck, twice, on an in-memory anchor store (the second run verifies the first's anchor).
+ *   3. verifyTenantChainOnAdminScope, verifyTenantSealsOnAdminScope and the readers' verdicts for A and B.
+ *   4. runRetentionSweep, then the owner's view of what it did.
+ *   5. Item 4: setTenantContextTx(client, A, 'app_super_admin') in A's own scope, then a count of B's audit_logs rows.
+ * Prints one JSON line per step. Env: OWNER_URL (the observer), APP_DATABASE_URL (app_service).
+ */
+const REPO = '/home/user/ClinicalSageAI-2-replit';
+const S = `${REPO}/server`;
+const pg = (await import(`${REPO}/node_modules/pg/lib/index.js`)).default;
+const { pool } = await import(`${S}/db.ts`);
+const { runWithTenantScope } = await import(`${S}/db/tenantStore.ts`);
+const { writeChainedAuditRow } = await import(`${S}/services/auditService.ts`);
+const owner = new pg.Pool({ connectionString: process.env.OWNER_URL, max: 1 });
+const orgs = (await owner.query(`SELECT id, uuid::text AS uuid FROM organizations WHERE slug IN ('p72-a','p72-b') ORDER BY slug`)).rows;
+const [A, B] = orgs;
+const out = (step: string, v: unknown) => console.log(JSON.stringify({ step, result: v }, (_k, x) => (typeof x === 'bigint' ? String(x) : x)));
+const safe = async (step: string, fn: () => Promise<unknown>) => { try { out(step, await fn()); } catch (e: any) { out(step, { threw: String(e?.message ?? e).slice(0, 300), code: e?.code }); } };
+const own = (o: { id: number; uuid: string }, caller: string, fn: (c: any) => Promise<unknown>) =>
+  runWithTenantScope({ tenantId: String(o.id), orgUuid: o.uuid, role: null, source: 'job', caller }, async () => {
+    const c = await pool.connect();
+    try { await c.query('BEGIN'); const r = await fn(c); await c.query('COMMIT'); return r; }
+    catch (e) { await c.query('ROLLBACK').catch(() => undefined); throw e; }
+    finally { c.release(); }
+  });
+
+await safe('seed: 3 chained audit_logs rows and 1 audit_events row per organization, each in its own scope', async () => {
+  for (const o of orgs) {
+    await own(o, 'laneC-probe-seed', async (c) => {
+      for (let i = 0; i < 3; i++) await writeChainedAuditRow(c, { action: 'laneC.probe', resourceType: 'probe', resourceId: `p${i}`, details: { i } } as any, o.id, `p${i}`);
+      await c.query(`INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_name) VALUES ($1, 'laneC.probe', 'probe', 1, 'laneC probe')`, [o.id]);
+    });
+  }
+  const logs = (await owner.query(`SELECT tenant_id, count(*)::int AS chained, count(hmac_seal)::int AS sealed, count(chain_seq)::int AS sequenced
+                                     FROM audit_logs WHERE sha256_chain IS NOT NULL GROUP BY 1 ORDER BY 1`)).rows;
+  const events = (await owner.query(`SELECT organization_id, count(*)::int AS rows, count(record_hash)::int AS hashed FROM audit_events GROUP BY 1 ORDER BY 1`)).rows;
+  return { ownerSeesAuditLogs: logs, ownerSeesAuditEvents: events };
+});
+
+const anchors = new Map<string, string>();
+const anchorStore = {
+  location: 'memory://laneC-probe',
+  async put(key: string, body: string) { if (anchors.has(key)) throw new Error(`anchor ${key} exists`); anchors.set(key, body); },
+  async latest() { const k = [...anchors.keys()].sort().at(-1); return k ? { key: k, body: anchors.get(k)! } : null; },
+};
+const brief = (r: any) => r && ({
+  ok: r.ok, rowsChecked: r.rowsChecked, organizations: r.organizations, error: r.error, failures: r.failures, unverifiable: r.unverifiable,
+  stores: (r.stores ?? []).map((s: any) => ({ store: s.store, status: s.status, rowsChecked: s.rowsChecked, organizationId: s.organizationId, firstFailure: s.firstFailure, reason: s.reason?.slice(0, 200) })),
+  anchorWrite: r.anchorWrite,
+});
+const { runAuditChainIntegrityCheck } = await import(`${S}/jobs/auditChainIntegritySweep.ts`);
+await safe('runAuditChainIntegrityCheck (run 1)', async () => brief(await runAuditChainIntegrityCheck({ anchorStore })));
+await safe('runAuditChainIntegrityCheck (run 2, against run 1 anchor)', async () => brief(await runAuditChainIntegrityCheck({ anchorStore })));
+await safe('anchor written: heads per organization', async () => {
+  const k = [...anchors.keys()].sort().at(-1);
+  return k ? { anchors: anchors.size, heads: JSON.parse(anchors.get(k)!).heads.map((h: any) => ({ org: h.organizationId, rows: h.rowCount })) } : null;
+});
+
+const { verifyTenantChainOnAdminScope } = await import(`${S}/services/audit/tenant-chain-verdict.ts`);
+const { verifyTenantSealsOnAdminScope } = await import(`${S}/services/audit/compliance-reports/integrity-checks.ts`);
+const { tenantChainVerdict } = await import(`${S}/services/audit/audited-export.ts`);
+for (const o of orgs) {
+  await safe(`verifyTenantChainOnAdminScope(${o.id}) and the readers' verdict`, async () => {
+    const v: any = await verifyTenantChainOnAdminScope(o.id);
+    const reader: any = tenantChainVerdict(o.id, v);
+    return { ok: v.ok, rowsChecked: v.rowsChecked, legacyRows: v.legacyRows, sequencedRows: v.sequencedRows, reason: v.reason, head: v.head?.status,
+             readers: { ok: reader.ok, reason: reader.reason } };
+  });
+  await safe(`verifyTenantSealsOnAdminScope(${o.id})`, async () => verifyTenantSealsOnAdminScope(o.id));
+}
+
+const { runRetentionSweep } = await import(`${S}/jobs/retentionCron.ts`);
+await safe('runRetentionSweep', async () => runRetentionSweep());
+await safe('owner view after the retention sweep', async () => {
+  const docs = (await owner.query(`SELECT document_code, organization_id, deleted_at IS NOT NULL AS disposed FROM vault.documents
+                                     WHERE document_code IN ('p72-a-doc-2','p72-b-doc-2') ORDER BY 1`)).rows;
+  const holds = (await owner.query(`SELECT organization_id, lifted_at IS NULL AS active FROM vault.legal_holds WHERE reference LIKE 'p72-hold-%' ORDER BY 1`)).rows;
+  const archives = (await owner.query(`SELECT count(*)::int AS n FROM vault.document_archives WHERE archived_by = 'system:retention-job'`)).rows[0].n;
+  const audit = (await owner.query(`SELECT tenant_id, count(*)::int AS n FROM audit_logs WHERE action = 'vault.document.retention_soft_delete' GROUP BY 1 ORDER BY 1`)).rows;
+  return { docs, holds, archives, auditRows: audit };
+});
+
+const { setTenantContextTx } = await import(`${S}/services/tenant/governed-tenant-context.ts`);
+await safe(`item 4: setTenantContextTx(A, 'app_super_admin') in A's own scope, then B's audit_logs rows`, async () =>
+  own(A, 'laneC-probe-item4', async (c) => {
+    const before = (await c.query('SELECT count(*)::int AS n FROM audit_logs WHERE tenant_id = $1', [B.id])).rows[0].n;
+    await setTenantContextTx(c, A.id, 'app_super_admin');
+    const after = (await c.query('SELECT count(*)::int AS n FROM audit_logs WHERE tenant_id = $1', [B.id])).rows[0].n;
+    return { bRowsSeenBefore: before, bRowsSeenAfterTheRoleWasWritten: after };
+  }));
+await owner.end();
+await pool.end?.().catch(() => undefined);
+process.exit(0);

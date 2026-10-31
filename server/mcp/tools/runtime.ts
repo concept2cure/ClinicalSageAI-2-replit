@@ -16,7 +16,7 @@
 import type { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
-import { runWithTenantScope } from '../../db/tenantStore';
+import { isPlatformScopeRole, PlatformScopeRoleRefusedError, runWithTenantScope } from '../../db/tenantStore';
 import type { McpConfig, McpScope } from '../config';
 import { principalOf, type McpPrincipal } from '../auth/platform-token';
 import type { RequestSqlClient } from '../../db/requestDb';
@@ -190,10 +190,21 @@ function render(outcome: ToolOutcome, tool: string): CallToolResult {
 
 /** One lazy physical connection per verified tool call. Identity comes from
  * the SDK's validated principal, not headers, a fabricated Express request or
- * an organization/user field supplied to the model's tool arguments. */
+ * an organization/user field supplied to the model's tool arguments.
+ *
+ * The principal's role is written to app.current_user_role, which the platform
+ * arm of about 977 tenant policies compares with 'app_super_admin'. A tool call
+ * acts for one organisation, so that role is refused here, however it is cased
+ * or padded, before any connection is taken, whatever the caller checked: the
+ * same refusal a per-user request scope gives (P-72 slices 1a and 1b,
+ * server/db/tenantStore.ts isPlatformScopeRole;
+ * docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/). The principal's role
+ * falls back to the token's claim when the membership row has none
+ * (auth/platform-token.ts verifyPlatformBearer). */
 async function createMcpCallSqlClient(principal: McpPrincipal, signal: AbortSignal | undefined): Promise<{
   sqlClient: RequestSqlClient; release(): Promise<void>;
 }> {
+  if (isPlatformScopeRole(principal.role)) throw new PlatformScopeRoleRefusedError('mcp tool call');
   const { pool } = await import('../../db');
   const client = new LazyRequestDbClient(pool, checkedOut => applySessionScope(checkedOut, {
     tenantId: String(principal.organizationId), role: principal.role, orgUuid: principal.organizationUuid,

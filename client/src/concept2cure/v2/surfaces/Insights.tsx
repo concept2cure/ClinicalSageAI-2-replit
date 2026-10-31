@@ -23,6 +23,7 @@ import { CatalogPanel, COUNTS_NOT_NARROWED, ORGANIZATION_WIDE_RECORDS, Organizat
 import { RunsPanel } from './InsightsRunsPanel';
 import { SchedulesPanel } from './InsightsSchedulesPanel';
 import { RunEvidence } from './InsightsRunEvidence';
+import { InsightsDevicePortfolio, type DevicePortfolioView } from './InsightsDevicePortfolio';
 import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
 import type { BundlePdfContent, ReportRunRow } from './insightsLibraryModel';
 import { getSurfaceMeta } from '../registryModel';
@@ -280,6 +281,10 @@ interface CanvasOverview {
   /** The programs the canvas can be opened on, for the picker shown when none is open. */
   programs?: Array<{ programId: string; code: string | null; label: string }>;
   portfolio: CanvasPortfolio;
+  /** Device analytics, folded into Reporting (D2, fold F4, 2026-10-30; decision
+   *  P-61 item 3): the device projects the reader can open, computed by the
+   *  server (report-os/device-portfolio.ts). Absent on a server that predates it. */
+  device?: DevicePortfolioView;
 }
 
 /** The name to call a program in prose.
@@ -2011,7 +2016,11 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   };
   const planNotice = !tierResolved && <div className="ro-dash-note" role="status" data-testid="rc-tier-unresolved">{I.alertTriangle} {REPORT_PLAN_UNVERIFIED} This is not a statement about your plan — try again in a moment, and contact your administrator if it persists.</div>;
   const recoveryNotice = reloaded && <ReportingRecoveryNotice />;
-  const withoutProgram = (content: React.ReactNode) => <div className="rc" {...ownerEvents}><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>{libraryTabs}{recoveryNotice}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />}</div></div>;
+  /* The device section (fold F4): the device projects the reader can open, as
+     the overview computed them, on the Report tab's landing canvas, with or
+     without a project open. It shows nothing for a reader with no device project. */
+  const deviceSection = paneView === 'report' && !report && !dashboard ? <InsightsDevicePortfolio device={data?.device} /> : null;
+  const withoutProgram = (content: React.ReactNode) => <div className="rc" {...ownerEvents}><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>{libraryTabs}{recoveryNotice}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}{deviceSection}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />}</div></div>;
 
   // Four-state render: loading → honest error → honest empty (no flagship
   // program) → the live canvas. No fixture stand-in in any state.
@@ -2270,6 +2279,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
               )}
             </div>
           ))}
+        {deviceSection}
         </div>
       </div>
       {signing && report && reportRunId != null && (

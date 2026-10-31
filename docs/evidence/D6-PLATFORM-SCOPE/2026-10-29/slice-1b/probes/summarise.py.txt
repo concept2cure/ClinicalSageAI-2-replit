@@ -1,0 +1,17 @@
+import json,sys
+def steps(path):
+    out=[]
+    for line in open(path):
+        line=line.strip()
+        try: d=json.loads(line)
+        except Exception: continue
+        if isinstance(d,dict) and 'step' in d: out.append(d)
+    return out
+for path in sys.argv[1:]:
+    print('==', path.split('/')[-1])
+    for d in steps(path):
+        r=d['result']; s=d['step']
+        if isinstance(r,dict) and 'stores' in r:
+            r={k:r.get(k) for k in ('ok','rowsChecked','organizations','failures','unverifiable','error')}
+        if s.startswith('seed'): continue
+        print('  -', s[:75]); print('      ', json.dumps(r)[:600])

@@ -66,6 +66,16 @@
  * On demand (verify-chain, seal-integrity, the licensing history, the tenant
  * verdict, ops:verify-audit-chain): verifyChainHead, below, gives each walk its
  * head verdict, or says in words that the head was not verified.
+ * Per organisation (P-72 slice 1b, 2026-10-30;
+ * docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/). The daily sweep reads
+ * no tenant's rows across tenants: given `inOrganizationScope`, each anchored
+ * head is compared, and each organisation's head read for the next anchor, on
+ * a connection in that organisation's own scope, where its policies admit
+ * every one of its chained rows with or without the platform arm. The
+ * caller's own connection then reads only the archive ledger, which is not
+ * tenant data. The verdict, the archive allowance and the anchor written are
+ * the same as the cross-tenant read's; a connection scoped to another tenant
+ * than the organisation is refused, never read as a missing head.
  *
  * 21 CFR Part 11 §11.10(c)(e); EU GMP Annex 11 §7.1, §9.
  */
@@ -127,6 +137,13 @@ export interface AnchorBreak {
   /** null when it cannot be counted (a legacy head that is gone). */
   currentRows: number | null;
 }
+
+/**
+ * Run `fn` on a connection in ONE organisation's own scope (the integrity
+ * sweep's, P-72 slice 1b): its policies admit that organisation's rows and no
+ * other's.
+ */
+export type InOrganizationScope = <T>(organizationId: number, fn: (client: PoolClient) => Promise<T>) => Promise<T>;
 
 export interface AnchorVerification {
   status: 'ok' | 'broken' | 'not_anchored' | 'unverifiable';
@@ -211,22 +228,54 @@ async function refusePartialView(client: PoolClient): Promise<void> {
   if (await connectionIsTenantScoped(client)) throw new AuditChainPartialViewError();
 }
 
+/**
+ * One organisation's head is read on a connection that sees its rows: its own
+ * scope, or an unscoped one. A connection scoped to another tenant would read
+ * the head as missing; refuse it rather than report a break.
+ */
+async function refuseOtherTenantView(client: PoolClient, organizationId: number): Promise<void> {
+  if (!(await connectionIsTenantScoped(client))) return;
+  const { rows } = await client.query(`SELECT NULLIF(current_setting('app.current_tenant_id', true), '') AS tenant`);
+  const tenant = rows[0]?.tenant == null ? null : String(rows[0].tenant);
+  if (tenant !== String(organizationId)) {
+    throw new AuditChainPartialViewError(
+      `audit chain: this connection is scoped to tenant ${tenant ?? '(none)'}, not to organisation ${organizationId}, ` +
+        "so that organisation's chain head cannot be read on it.",
+    );
+  }
+}
+
 /** Every organisation's chain head and its row count, in one statement (one snapshot). */
 export async function readAuditChainHeads(client: PoolClient): Promise<AnchoredChainHead[]> {
   await refusePartialView(client);
-  // tenant-isolation-safe: the anchor records EVERY organisation's chain head; refusePartialView refuses a tenant-scoped connection
+  return selectChainHeads(client, null);
+}
+
+/**
+ * One organisation's chain head and its row count, or null when it has no
+ * chained row, on a connection that sees its rows (refuseOtherTenantView).
+ */
+export async function readOrganizationChainHead(client: PoolClient, organizationId: number): Promise<AnchoredChainHead | null> {
+  await refuseOtherTenantView(client, organizationId);
+  return (await selectChainHeads(client, organizationId))[0] ?? null;
+}
+
+/** The heads, every organisation's or one's, in one statement (one snapshot). */
+async function selectChainHeads(client: PoolClient, organizationId: number | null): Promise<AnchoredChainHead[]> {
+  // tenant-isolation-safe: every organisation's heads only behind refusePartialView (readAuditChainHeads); one organisation's by its id
   const { rows } = await client.query(
     `SELECT h.tenant_id AS organization_id, h.id::text AS row_id, h.chain_seq::text AS chain_seq,
             h.sha256_chain, h.occurred_at, c.row_count::text AS row_count
        FROM (SELECT DISTINCT ON (tenant_id) tenant_id, id, chain_seq, sha256_chain, occurred_at
                FROM audit_logs
-              WHERE sha256_chain IS NOT NULL AND tenant_id IS NOT NULL
+              WHERE sha256_chain IS NOT NULL AND tenant_id IS NOT NULL AND ($1::int IS NULL OR tenant_id = $1::int)
               ORDER BY tenant_id, ${AUDIT_CHAIN_HEAD_ORDER_SQL}) h
        JOIN (SELECT tenant_id, count(*) AS row_count
                FROM audit_logs
-              WHERE sha256_chain IS NOT NULL AND tenant_id IS NOT NULL
+              WHERE sha256_chain IS NOT NULL AND tenant_id IS NOT NULL AND ($1::int IS NULL OR tenant_id = $1::int)
               GROUP BY tenant_id) c ON c.tenant_id = h.tenant_id
       ORDER BY h.tenant_id`,
+    [organizationId],
   );
   return rows.map((r) => ({
     organizationId: Number(r.organization_id),
@@ -238,17 +287,40 @@ export async function readAuditChainHeads(client: PoolClient): Promise<AnchoredC
   }));
 }
 
+export interface AnchorWriteOptions {
+  /**
+   * Read each organisation's head on a connection in its own scope
+   * (readOrganizationChainHead); `client` is then not read. Requires
+   * `organizations`: every organisation to anchor.
+   */
+  inOrganizationScope?: InOrganizationScope;
+  organizations?: readonly number[];
+}
+
 /**
  * Anchor every organisation's chain head now. `at` is taken before the heads
  * are read, so an archive batch recorded in between counts as "since the
- * anchor" (the lenient side) rather than as a shortfall.
+ * anchor" (the lenient side) rather than as a shortfall. With
+ * `inOrganizationScope`, the heads are read one organisation at a time, each
+ * in its own scope; an organisation with no chained row has no head.
  */
 export async function writeAuditChainAnchor(
   client: PoolClient,
   store: AuditAnchorStore,
   at: Date = new Date(),
+  options: AnchorWriteOptions = {},
 ): Promise<{ key: string; organizations: number }> {
-  const heads = await readAuditChainHeads(client);
+  const inScope = options.inOrganizationScope;
+  if (inScope && !options.organizations) throw new Error('writeAuditChainAnchor: inOrganizationScope needs the organisations to anchor');
+  const heads: AnchoredChainHead[] = [];
+  if (inScope) {
+    for (const organizationId of options.organizations ?? []) {
+      const head = await inScope(organizationId, (c) => readOrganizationChainHead(c, organizationId));
+      if (head) heads.push(head);
+    }
+  } else {
+    heads.push(...(await readAuditChainHeads(client)));
+  }
   const anchor: AuditChainAnchor = { format: AUDIT_ANCHOR_FORMAT, store: ANCHORED_STORE, anchoredAt: at.toISOString(), heads };
   const key = anchorObjectKey(at);
   await store.put(key, JSON.stringify(anchor));
@@ -273,7 +345,7 @@ function breakOf(head: AnchoredChainHead, row: Record<string, unknown> | undefin
 
 /** Each anchored head against the database: present, identical, and the rows at or before it counted. */
 async function compareAnchoredHeads(client: PoolClient, heads: AnchoredChainHead[]): Promise<AnchorBreak[]> {
-  // tenant-isolation-safe: compares EVERY anchored organisation's head; refusePartialView refuses a tenant-scoped connection
+  // tenant-isolation-safe: compares EVERY anchored organisation's head behind refusePartialView, or one organisation's on its own scope's connection (compareInOwnScopes)
   const { rows } = await client.query(
     `SELECT a.ord, h.id IS NOT NULL AS present, h.tenant_id AS head_tenant,
             h.chain_seq::text AS head_seq, h.sha256_chain AS head_sha,
@@ -386,6 +458,24 @@ function verdictOf(breaks: AnchorBreak[], archived: AnchorBreak[], key: string):
 export interface AnchorVerifyOptions {
   /** Compare this organisation's anchored head only; omitted, every head the anchor names. */
   organizationId?: number;
+  /**
+   * Compare each anchored head on a connection in its own organisation's scope
+   * (P-72 slice 1b); `client` then reads only the archive ledger.
+   */
+  inOrganizationScope?: InOrganizationScope;
+}
+
+/** Each anchored head against the database, each on a connection in its own organisation's scope. */
+async function compareInOwnScopes(heads: AnchoredChainHead[], inScope: InOrganizationScope): Promise<AnchorBreak[]> {
+  const breaks: AnchorBreak[] = [];
+  for (const head of heads) {
+    const found = await inScope(head.organizationId, async (c) => {
+      await refuseOtherTenantView(c, head.organizationId);
+      return compareAnchoredHeads(c, [head]);
+    });
+    breaks.push(...found);
+  }
+  return breaks;
 }
 
 /**
@@ -399,7 +489,8 @@ export async function verifyAuditChainAnchor(
   now: Date = new Date(),
   options: AnchorVerifyOptions = {},
 ): Promise<AnchorVerification> {
-  await refusePartialView(client);
+  const inScope = options.inOrganizationScope;
+  if (!inScope) await refusePartialView(client);
   const latest = await store.latest();
   if (!latest) {
     return {
@@ -415,7 +506,7 @@ export async function verifyAuditChainAnchor(
     const scope = org === undefined ? '' : ` for organisation ${org}`;
     return { ...base, status: 'unverifiable', breaks: [], archived: [], reason: `the latest anchor (${latest.key}) records no chain head${scope}` };
   }
-  const found = await compareAnchoredHeads(client, heads);
+  const found = inScope ? await compareInOwnScopes(heads, inScope) : await compareAnchoredHeads(client, heads);
   const { breaks, archived } = splitByArchive(found, heads, await archiveAllowance(client, anchor.anchoredAt, now));
   return { ...base, ...verdictOf(breaks, archived, latest.key), breaks, archived };
 }

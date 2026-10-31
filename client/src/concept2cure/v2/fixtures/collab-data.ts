@@ -63,7 +63,6 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   'haq-manager':            { mod: 'Regulatory',      noun: 'health-authority question', et: 'haq' },
   'ectd-coauthor':          { mod: 'eCTD',            noun: 'eCTD leaf',                 et: 'section' },
   'nda-cockpit':            { mod: 'Regulatory',      noun: 'NDA/BLA filing',            et: 'filing' },
-  'device-workstream':      { mod: 'MedicalDevice',   noun: 'device submission',         et: 'submission' },
   'device-510k':            { mod: 'MedicalDevice',   noun: '510(k) section',            et: 'section' },
   'device-cer':             { mod: 'MedicalDevice',   noun: 'CER section',               et: 'section' },
   'device-diagnostics':     { mod: 'MedicalDevice',   noun: 'diagnostics item',          et: 'device' },

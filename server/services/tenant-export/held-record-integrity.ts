@@ -89,6 +89,8 @@ export interface ExportIntegrity {
 export type LedgerVerifier = (organizationId: number) => Promise<{
   ok: boolean | null;
   rowsChecked: number;
+  /** Why `ok` is null when the walk could not read every chained row (P-72 slice 1b). */
+  reason?: string;
   brokenAt?: unknown;
   head?: { status: string; reason?: string | null };
 }>;
@@ -111,7 +113,7 @@ async function ledgerVerdict(organizationId: number, verify: LedgerVerifier): Pr
     const walk = await verify(organizationId);
     if (walk.ok === false) return { chain: 'audit_logs', verdict: 'BROKEN', entries: walk.rowsChecked, brokenAt: walk.brokenAt ?? walk.head ?? null };
     if (walk.ok === null) {
-      return { chain: 'audit_logs', verdict: 'NOT_VERIFIED', entries: walk.rowsChecked, detail: walk.head?.reason ?? 'The anchored head could not be read.' };
+      return { chain: 'audit_logs', verdict: 'NOT_VERIFIED', entries: walk.rowsChecked, detail: walk.reason ?? walk.head?.reason ?? 'The anchored head could not be read.' };
     }
     return { chain: 'audit_logs', verdict: walk.rowsChecked === 0 ? 'EMPTY' : 'INTACT', entries: walk.rowsChecked };
   } catch (error) {

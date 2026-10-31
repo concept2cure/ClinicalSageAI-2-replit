@@ -96,6 +96,8 @@ const LABEL = /head not verified against the anchor/;
 /** Organisation 7's two newest rows are gone (its anchored head with them); organisation 8 is intact. */
 function answerAnchorStatements(sql: string, params: unknown[] = []) {
   if (sql.includes("current_setting('app.rls_enforce'")) return { rows: [{ rls_enforce: null, role: null }] };
+  // The tenant verdict's own-scope count (P-72 slice 1b): as many chained rows as the walk reads.
+  if (sql.includes('count(*)::int AS chained, count(hmac_seal)::int AS sealed')) return { rows: [{ chained: walkOk.sequencedRows, sealed: 0 }] };
   if (sql.includes('WITH ORDINALITY AS a(organization_id')) {
     const orgs = params[0] as number[];
     return {
@@ -509,6 +511,64 @@ describe('DP-71: every reader of the tenant verdict states what it did about the
       expect(out.meta.chain).toMatchObject({ ok: true, head: { status: 'verified', breaks: [] } });
       expect(JSON.stringify(out.meta.chain)).not.toContain(HEAD_7.rowId);
     });
+  });
+});
+
+/*
+ * P-72 slice 1b (docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/). The
+ * walk runs on the admin scope, which sees another tenant's rows only through
+ * the policies' platform arm. On a production-shaped database with that arm
+ * removed it read none of the tenant's chained rows and answered ok,
+ * rowsChecked 0; every reader then said "valid", or "no chained rows exist".
+ * The tenant's rows are now counted in its own scope first (4 here, as the
+ * walk reads when it can), and a walk that read fewer is no verdict.
+ */
+describe('P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so', () => {
+  const NOT_READ = /could read 0 of this organisation's 4 chained audit_logs rows, so the chain is not verified/;
+
+  beforeEach(() => {
+    process.env.AUDIT_EXPORT_SIGNING_KEY = 'b'.repeat(40);
+    // What the admin scope reads without the platform arm: none of the tenant's rows.
+    h.verifyAuditChain.mockResolvedValue({ ok: true, rowsChecked: 0, tenants: 0, legacyRows: 0, sequencedRows: 0 });
+  });
+
+  it('the tenant verdict is ok null with the counts, and its head was not checked on that connection', async () => {
+    expect(await verifyTenantChainOnAdminScope(7)).toMatchObject({
+      ok: null, rowsChecked: 0, reason: expect.stringMatching(NOT_READ),
+      head: { verified: false, status: 'unavailable', breaks: [], reason: expect.stringMatching(LABEL) },
+    });
+  });
+
+  it('GET /api/c2c/actions/verify-chain answers 503 AUDIT_CHAIN_NOT_VERIFIED with the counts, never ok', async () => {
+    const res = await request(actionsApp()).get('/api/c2c/actions/verify-chain');
+    expect([res.status, res.body]).toEqual([503, { error: 'AUDIT_CHAIN_NOT_VERIFIED', detail: expect.stringMatching(NOT_READ) }]);
+  });
+
+  it('the ledger, the export walk, the signed manifest and the attestation say not verified, never "no chained rows"', async () => {
+    const notRead = expect.stringMatching(NOT_READ);
+    expect((await readAuditLedger(ledgerClient(), 7, 10)).meta.chain).toMatchObject({ ok: null, reason: notRead });
+    expect(await walkTenantChain(7)).toMatchObject({ ok: null, rowsChecked: 0, reason: notRead });
+    const out = await generateSignedAuditExport(exportPool as never, exportRequest, { verifyAuditLogsChain: verifyTenantChainOnAdminScope });
+    expect(out.manifest.auditLogsChain).toMatchObject({ status: 'unverified', reason: notRead });
+    expect(await reportChainRow()).toMatchObject({ verdict: 'not verified', detail: notRead });
+  });
+
+  it('an organisation that truly has no chained row is still said to have none', async () => {
+    // No anchor here: this harness's anchor names organisation 7's head, which an empty chain would read as truncated.
+    delete process.env.AUDIT_ANCHOR_BUCKET;
+    h.dbQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (sql.includes('count(*)::int AS chained, count(hmac_seal)::int AS sealed')) return { rows: [{ chained: 0, sealed: 0 }] };
+      const anchor = answerAnchorStatements(sql, params);
+      if (anchor) return anchor;
+      if (sql.includes('FROM platform_role_grants')) return platformGrantRows(params);
+      throw new Error(`unexpected statement: ${sql.slice(0, 80)}`);
+    });
+    const v = await verifyTenantChainOnAdminScope(7);
+    expect([v.ok, v.rowsChecked, v.reason]).toEqual([true, 0, undefined]);
+    const none = expect.stringMatching(/^No chained rows exist/);
+    expect(await walkTenantChain(7)).toMatchObject({ ok: null, reason: none });
+    const res = await request(actionsApp()).get('/api/c2c/actions/verify-chain');
+    expect(res).toMatchObject({ status: 200, body: { scope: 'organization', ok: null, rowsChecked: 0, reason: none } });
   });
 });
 

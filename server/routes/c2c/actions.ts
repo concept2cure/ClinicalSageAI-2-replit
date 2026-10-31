@@ -46,7 +46,7 @@ import {
 } from '../../services/audit/chain.js';
 import { verifyChainHead } from '../../services/audit/chain-anchor.js';
 import { verifyTenantChainOnAdminScope } from '../../services/audit/tenant-chain-verdict.js';
-import { breakForTenant } from '../../services/audit/audited-export.js';
+import { NO_CHAINED_ROWS_REASON, breakForTenant } from '../../services/audit/audited-export.js';
 import { resolvePlatformAdmin } from '../../middleware/requirePlatformAdmin.js';
 import { withTenantConnection } from '../../db/withTenantConnection.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
@@ -774,6 +774,45 @@ function makeHandler(command: Command) {
 // the head scoped to that organisation, the walk's break redacted as every
 // export redacts it (audited-export.ts breakForTenant), and no estate tenant
 // count. Its anchor-unreadable case (`ok: null`) is a 503 here, not a verdict.
+// So is a walk that could not read every chained row of the organisation
+// (P-72 slice 1b, docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/): the
+// admin-scope walk sees another tenant's rows only through the platform arm,
+// and without it read none of 3 and answered ok. It is AUDIT_CHAIN_NOT_VERIFIED,
+// with the counts. An organisation with no chained row is answered ok: null
+// with the reason every reader gives (audited-export.ts NO_CHAINED_ROWS_REASON):
+// nothing was verified, so there is no verdict either way.
+
+/** The organisation's own verdict as verify-chain answers it (the comment above). */
+function organizationChainAnswer(
+  orgId: number,
+  v: Awaited<ReturnType<typeof verifyTenantChainOnAdminScope>>,
+): { status: number; body: Record<string, unknown> } {
+  if (v.ok === null) {
+    // `reason` (counts only): the walk could not read every chained row. Otherwise the anchor could not be read.
+    return {
+      status: 503,
+      body: {
+        error: v.reason ? 'AUDIT_CHAIN_NOT_VERIFIED' : 'AUDIT_ANCHOR_UNREADABLE',
+        detail: v.reason ?? 'The audit chain could not be verified, so no result is given.',
+      },
+    };
+  }
+  if (v.ok && v.rowsChecked === 0) {
+    return { status: 200, body: { scope: 'organization', ok: null, rowsChecked: 0, reason: NO_CHAINED_ROWS_REASON, head: v.head } };
+  }
+  return {
+    status: v.ok ? 200 : 409,
+    body: {
+      scope: 'organization',
+      ok: v.ok,
+      rowsChecked: v.rowsChecked,
+      legacyRows: v.legacyRows,
+      sequencedRows: v.sequencedRows,
+      ...(v.brokenAt ? { brokenAt: breakForTenant(orgId, v.brokenAt) } : {}),
+      head: v.head,
+    },
+  };
+}
 
 router.get('/verify-chain', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -784,22 +823,8 @@ router.get('/verify-chain', async (req: Request, res: Response) => {
 
   try {
     if (!(await resolvePlatformAdmin(req))) {
-      const v = await verifyTenantChainOnAdminScope(orgId);
-      if (v.ok === null) {
-        return res.status(503).json({
-          error: 'AUDIT_ANCHOR_UNREADABLE',
-          detail: 'The audit chain could not be verified, so no result is given.',
-        });
-      }
-      return res.status(v.ok ? 200 : 409).json({
-        scope: 'organization',
-        ok: v.ok,
-        rowsChecked: v.rowsChecked,
-        legacyRows: v.legacyRows,
-        sequencedRows: v.sequencedRows,
-        ...(v.brokenAt ? { brokenAt: breakForTenant(orgId, v.brokenAt) } : {}),
-        head: v.head,
-      });
+      const { status, body } = organizationChainAnswer(orgId, await verifyTenantChainOnAdminScope(orgId));
+      return res.status(status).json(body);
     }
     const result = await withTenantConnection(
       { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'c2c/actions/verify-chain' },
