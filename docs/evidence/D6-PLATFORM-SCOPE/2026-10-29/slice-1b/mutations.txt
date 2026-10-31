@@ -1,0 +1,230 @@
+P-72 slice 1b, lane C: mutations, each one exact replacement in one repository file (probes/mutate.py.txt).
+Each was swapped in by swapn.sh, its test run, and the file restored byte for byte with its SHA-256 checked.
+A mutation is KILLED when its test exits non-zero. Run on the working tree at base 4323b9149, 2026-10-30, 19:52 UTC.
+After the run every lane source file matched its pre-run SHA-256 (sha256sum -c: all OK).
+
+Unit mutations: 27; killed 27; restored 27.
+
+## R1 sweep each organisation in the system scope  ->  KILLED, restored
+   file: server/jobs/retentionCron.ts
+   test: server/jobs/__tests__/retentionCron.org-scope.test.ts  (Tests  7 failed | 1 passed (8))
+   was:  await runWithTenantScope(
+                { tenantId: String(org.id), orgUuid: org.uuid, role: null, source: 'job', caller: CALLER },
+                () => sweepOrganization(org.id, policies, summary),
+              );
+   now:  await runWithSystemTenantScope(CALLER, () => sweepOrganization(org.id, policies, summary));
+   red:  × server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > reads each organisation's documents and holds in its tenant id AND uuid scope, with no role
+   red:  × server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > disposes of each organisation's document inside that organisation's scope, audited under it
+   red:  × server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > an organisation's hold stops disposition of its own expired document, and not another organisation's
+
+## R2 drop the organisation uuid from its scope  ->  KILLED, restored
+   file: server/jobs/retentionCron.ts
+   test: server/jobs/__tests__/retentionCron.org-scope.test.ts  (Tests  2 failed | 6 passed (8))
+   was:  { tenantId: String(org.id), orgUuid: org.uuid, role: null, source: 'job', caller: CALLER }
+   now:  { tenantId: String(org.id), orgUuid: null, role: null, source: 'job', caller: CALLER }
+   red:  × server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > reads each organisation's documents and holds in its tenant id AND uuid scope, with no role
+   red:  × server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > disposes of each organisation's document inside that organisation's scope, audited under it
+
+## R3 drop the programme-owner selection  ->  KILLED, restored
+   file: server/jobs/retentionCron.ts
+   test: server/jobs/__tests__/retentionCron.org-scope.test.ts  (Tests  1 failed | 7 passed (8))
+   was:  sql`${vaultDocuments.retentionUntil} < CURRENT_DATE`,
+                  sql`${vaultDocuments.programId} IN (SELECT rp.id FROM regulatory_programs rp WHERE rp.organization_id = ${organizationId})`
+   now:  sql`${vaultDocuments.retentionUntil} < CURRENT_DATE`
+   red:  × server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > reads the programmes the organisation owns, and only its own active holds
+
+## R4 dispose of a document that names another organisation  ->  KILLED, restored
+   file: server/jobs/retentionCron.ts
+   test: server/jobs/__tests__/retentionCron.org-scope.test.ts  (Tests  1 failed | 7 passed (8))
+   was:  return Number.isInteger(named) && named > 0 && named !== organizationId ? named : null;
+   now:  return null;
+   red:  × server/jobs/__tests__/retentionCron.org-scope.test.ts > what the sweep refuses to do in an organisation's scope > leaves a document that names another organisation than its programme's owner, counts it, and the job is not clean
+
+## R5 read every organisation's holds  ->  KILLED, restored
+   file: server/jobs/retentionCron.ts
+   test: server/jobs/__tests__/retentionCron.org-scope.test.ts  (Tests  1 failed | 7 passed (8))
+   was:  .where(and(isNull(vaultLegalHolds.liftedAt), eq(vaultLegalHolds.organizationId, organizationId)));
+   now:  .where(isNull(vaultLegalHolds.liftedAt));
+   red:  × server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > reads the programmes the organisation owns, and only its own active holds
+
+## R6 sweep an organisation with no uuid  ->  KILLED, restored
+   file: server/jobs/retentionCron.ts
+   test: server/jobs/__tests__/retentionCron.org-scope.test.ts  (Tests  1 failed | 7 passed (8))
+   was:  if (!org.uuid) {
+   now:  if (false) {
+   red:  × server/jobs/__tests__/retentionCron.org-scope.test.ts > what the sweep refuses to do in an organisation's scope > an organisation with no uuid is not swept: nothing is read in a uuid-less scope, and the job fails with an alert
+
+## S1 snapshot without BEGIN  ->  KILLED, restored
+   file: server/jobs/auditChainIntegritySweep.ts
+   test: server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts  (Tests  2 failed | 8 passed (10))
+   was:  await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+   now:  (deleted)
+   red:  × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > every statement is inside a transaction: each connection begins before it reads, and every connection goes back
+   red:  × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > the anchor is verified and written per organisation > passes a scope opener that runs in the named organisation's own scope, inside a transaction
+
+## S2 walk without the organisation  ->  KILLED, restored
+   file: server/jobs/auditChainOrganizationVerdicts.ts
+   test: server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts  (Tests  4 failed | 6 passed (10))
+   was:  await verifyAuditIntegrity(client, { tenantId: organizationId });
+   now:  await verifyAuditIntegrity(client);
+   red:  × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > reads each organisation's audit_logs chain and seals in its tenant scope, with no role, for that organisation only
+   red:  × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > a break in one organisation's chain is broken, names that organisation, and still counts the other's rows
+   red:  × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > legacy rows the walk refuses in an organisation's scope are unverifiable for it, never ok and not an incident
+
+## S3 an empty store merges to ok  ->  KILLED, restored
+   file: server/jobs/auditChainOrganizationVerdicts.ts
+   test: server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts  (Tests  1 failed | 9 passed (10))
+   was:  if (found.length === 0) return { store, status: 'unverifiable', rowsChecked: 0, reason: nothing };
+   now:  if (found.length === 0) return { store, status: 'ok', rowsChecked: 0 };
+   red:  × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > a store in which no organisation has a row verified nothing: unverifiable, never ok
+
+## S4 a refused legacy walk is an error  ->  KILLED, restored
+   file: server/jobs/auditChainOrganizationVerdicts.ts
+   test: server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts  (Tests  1 failed | 9 passed (10))
+   was:  const status: AuditStoreStatus = isPartialView(err) ? 'unverifiable' : 'error';
+   now:  const status: AuditStoreStatus = 'error';
+   red:  × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > legacy rows the walk refuses in an organisation's scope are unverifiable for it, never ok and not an incident
+
+## S5 anchor verified without the per-organisation opener  ->  KILLED, restored
+   file: server/jobs/auditChainIntegritySweep.ts
+   test: server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts  (Tests  1 failed | 9 passed (10))
+   was:  verifyAuditChainAnchor(client, anchorStore, new Date(), { inOrganizationScope: inScope });
+   now:  verifyAuditChainAnchor(client, anchorStore, new Date(), {});
+   red:  × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > the anchor is verified and written per organisation > passes a scope opener that runs in the named organisation's own scope, inside a transaction
+
+## S6 audit_events rows read unfiltered  ->  KILLED, restored
+   file: server/jobs/auditChainOrganizationVerdicts.ts
+   test: server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts  (Tests  2 failed | 8 passed (10))
+   was:  WHERE organization_id = $1
+                  ORDER BY organization_id, sequence_number ASC`,
+                [organizationId],
+   now:  ORDER BY organization_id, sequence_number ASC`,
+   red:  × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > reads each organisation's audit_events rows and seals in its own scope, filtered to it
+   red:  × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > an organisation with no rows neither passes nor fails a store the others verify
+
+## A1 anchor module reads a head on another tenant's connection  ->  KILLED, restored
+   file: server/services/audit/chain-anchor.ts
+   test: server/services/audit/__tests__/chain-anchor-own-scope.test.ts  (Tests  1 failed | 4 passed (5))
+   was:  if (tenant !== String(organizationId)) {
+   now:  if (false) {
+   red:  × server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > a connection scoped to another tenant is refused, never read as a missing head
+
+## A2 anchor write reads the caller's connection  ->  KILLED, restored
+   file: server/services/audit/chain-anchor.ts
+   test: server/services/audit/__tests__/chain-anchor-own-scope.test.ts  (Tests  4 failed | 1 passed (5))
+   was:  if (inScope) {
+              for (const organizationId of options.organizations ?? []) {
+   now:  if (false) {
+              for (const organizationId of options.organizations ?? []) {
+   red:  × server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > writes an anchor of every organisation's head, each read on its own connection; the caller's is not read
+   red:  × server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > verifies every anchored head on its own organisation's connection; the caller's reads only the archive ledger
+   red:  × server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > a head that changed since the anchor is broken, and names its organisation
+
+## T1 a walk that read fewer rows is a verdict  ->  KILLED, restored
+   file: server/services/audit/tenant-chain-verdict.ts
+   test: server/services/audit/__tests__/chain-head-on-demand.test.ts  (Tests  3 failed | 35 passed (38))
+   was:  if (read < counted.chained) {
+   now:  if (false) {
+   red:  × server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > the tenant verdict is ok null with the counts, and its head was not checked on that connection
+   red:  × server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > GET /api/c2c/actions/verify-chain answers 503 AUDIT_CHAIN_NOT_VERIFIED with the counts, never ok
+   red:  × server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > the ledger, the export walk, the signed manifest and the attestation say not verified, never "no chained rows"
+
+## T2 count on the admin scope  ->  KILLED, restored
+   file: server/services/audit/tenant-chain-verdict.ts
+   test: server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts  (Tests  4 failed (4))
+   was:  { tenantId: String(orgId), role: null, source: 'request', caller: 'audit/tenant-chain-verdict count' },
+   now:  { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'audit/tenant-chain-verdict count' },
+   red:  × server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > a walk that verified none of the 3 sealed rows did not run: it never says valid
+   red:  × server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > every sealed row verified: valid, with the count from the organisation's own scope
+   red:  × server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > a seal that does not verify is reported broken, whatever was read
+
+## T3 seal check not held to the count  ->  KILLED, restored
+   file: server/services/audit/compliance-reports/integrity-checks.ts
+   test: server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts  (Tests  1 failed | 3 passed (4))
+   was:  if (v.valid && v.verified < sealedRows) {
+   now:  if (false) {
+   red:  × server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > a walk that verified none of the 3 sealed rows did not run: it never says valid
+
+## T4 verify-chain says ok over no chained row  ->  KILLED, restored
+   file: server/routes/c2c/actions.ts
+   test: server/services/audit/__tests__/chain-head-on-demand.test.ts  (Tests  1 failed | 37 passed (38))
+   was:  if (v.ok && v.rowsChecked === 0) {
+   now:  if (false) {
+   red:  × server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > an organisation that truly has no chained row is still said to have none
+
+## T5 the readers drop the walk's reason  ->  KILLED, restored
+   file: server/services/audit/audited-export.ts
+   test: server/services/audit/__tests__/chain-head-on-demand.test.ts  (Tests  1 failed | 37 passed (38))
+   was:  reason: walk.reason ?? walk.head?.reason ?? 'The chain head could not be checked against its anchor.'
+   now:  reason: walk.head?.reason ?? 'The chain head could not be checked against its anchor.'
+   red:  × server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > the ledger, the export walk, the signed manifest and the attestation say not verified, never "no chained rows"
+
+## S7 audit_events seals read for every organisation  ->  KILLED, restored
+   file: server/jobs/auditChainOrganizationVerdicts.ts
+   test: server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts  (Tests  1 failed | 9 passed (10))
+   was:  await verifyAuditEventsChainSeals(client, { organizationId });
+   now:  await verifyAuditEventsChainSeals(client);
+   red:  × server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > reads each organisation's audit_events rows and seals in its own scope, filtered to it
+
+## C1 the audit_events seal read drops its organisation filter  ->  KILLED, restored
+   file: server/services/audit/seal-coverage.ts
+   test: server/services/audit/__tests__/seal-coverage-organization.test.ts  (Tests  1 failed | 1 passed (2))
+   was:  WHERE record_hash IS NOT NULL AND ($1::int IS NULL OR organization_id = $1::int)
+   now:  WHERE record_hash IS NOT NULL
+   red:  × server/services/audit/__tests__/seal-coverage-organization.test.ts > the audit_events seal check, per organisation > named, it reads and counts that organisation's chained rows only
+
+## D1 decision-lineage logs the head reason, not the walk reason  ->  KILLED, restored
+   file: server/routes/decision-lineage.ts
+   test: server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts  (Tests  1 failed | 8 passed (9))
+   was:  reason: v.reason ?? v.head?.reason ?? 'the chain head could not be checked'
+   now:  reason: v.head?.reason ?? 'the chain head could not be checked'
+   red:  × server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > P-72 slice 1b: a verdict over rows the walk did not read, or over none, is not VERIFIED > a walk that could not read every chained row is no verdict, and the walk's own reason is the one logged
+
+## D2 decision-lineage says VERIFIED over no chained row  ->  KILLED, restored
+   file: server/routes/decision-lineage.ts
+   test: server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts  (Tests  1 failed | 8 passed (9))
+   was:  if (v.ok && v.rowsChecked === 0) return { scope: 'organization', ran: false, reason: NO_CHAINED_ROWS_REASON };
+   now:  (deleted)
+   red:  × server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > P-72 slice 1b: a verdict over rows the walk did not read, or over none, is not VERIFIED > an organisation with no chained row is not VERIFIED over nothing, and its report attests to nothing
+
+## W1 setTenantContextTx takes the platform role  ->  KILLED, restored
+   file: server/services/tenant/governed-tenant-context.ts
+   test: server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts  (Tests  5 failed | 1 passed (6))
+   was:  if (isPlatformScopeRole(role)) throw new PlatformScopeRoleRefusedError('setTenantContextTx');
+   now:  (deleted)
+   red:  × server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses "app_super_admin" before any statement: nothing reaches app.current_user_role
+   red:  × server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses "APP_SUPER_ADMIN" before any statement: nothing reaches app.current_user_role
+   red:  × server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses " app_super_admin " before any statement: nothing reaches app.current_user_role
+
+## W2 the MCP call client takes the platform role  ->  KILLED, restored
+   file: server/mcp/tools/runtime.ts
+   test: server/mcp/__tests__/mcp-call-client-platform-role.test.ts  (Tests  4 failed | 1 passed (5))
+   was:  if (isPlatformScopeRole(principal.role)) throw new PlatformScopeRoleRefusedError('mcp tool call');
+   now:  (deleted)
+   red:  × server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > principal role "app_super_admin": refused before any connection, and nothing reaches app.current_user_role
+   red:  × server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > principal role "APP_SUPER_ADMIN": refused before any connection, and nothing reaches app.current_user_role
+   red:  × server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > principal role " app_super_admin ": refused before any connection, and nothing reaches app.current_user_role
+
+## W3 catalog scope takes the platform role  ->  KILLED, restored
+   file: server/services/ana/catalog-scope.ts
+   test: server/services/ana/__tests__/catalog-scope-platform-role.test.ts  (Tests  4 failed | 1 passed (5))
+   was:  if (isPlatformScopeRole(admittedScope.role)) throw new PlatformScopeRoleRefusedError('catalogScope');
+   now:  (deleted)
+   red:  × server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > admitted role "app_super_admin": refused, and nothing reaches app.current_user_role
+   red:  × server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > admitted role "APP_SUPER_ADMIN": refused, and nothing reaches app.current_user_role
+   red:  × server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > admitted role " app_super_admin ": refused, and nothing reaches app.current_user_role
+
+## W4 the signed act asks the password first  ->  KILLED, restored
+   file: server/routes/governed-signed-act.ts
+   test: server/routes/__tests__/governed-signed-act-platform-role.test.ts  (Tests  4 failed | 1 passed (5))
+   was:  if (isPlatformScopeRole(act.tenantRole)) {
+   now:  if (false) {
+   red:  × server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > tenant role "app_super_admin": 403 before the precheck, the authority or the password, and nothing reaches the database
+   red:  × server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > tenant role "APP_SUPER_ADMIN": 403 before the precheck, the authority or the password, and nothing reaches the database
+   red:  × server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > tenant role " app_super_admin ": 403 before the precheck, the authority or the password, and nothing reaches the database
+
+Database mutations: the same probe (probes/21-controls.mts.txt) on a fresh production-shaped copy with the platform arm removed,
+with one mutated file swapped in (db-mutation-*.jsonl.txt; summary in db-summary.txt):
+  R2 (retention scope without the organisation uuid): runRetentionSweep scanned 0 of 2 expired documents, disposed of nothing  -> KILLED
+  S1 (the sweep's snapshot without BEGIN): every audit_logs and audit_events store unverifiable, rowsChecked 0, no anchor written  -> KILLED
+  T1 (a walk that read fewer rows is a verdict): verifyTenantChainOnAdminScope ok true over 0 of 3 rows; every reader says 'No chained rows exist'  -> KILLED

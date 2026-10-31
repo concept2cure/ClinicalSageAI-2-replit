@@ -15,7 +15,7 @@
  * own to assert record authenticity.
  */
 
-import { verifyAuditChain, verifyAuditChainSeals, type PoolClient } from './chain.js';
+import { verifyAuditChain, verifyAuditChainSeals, type PoolClient, type VerifyAuditChainOptions } from './chain.js';
 
 export type SealIntegrity =
   | {
@@ -51,10 +51,12 @@ export interface AuditIntegrityResult {
 
 /**
  * Verify the audit_logs integrity. `client` only needs `.query` (a pg pool, a
- * pool client, or any PoolClient-compatible handle).
+ * pool client, or any PoolClient-compatible handle). With `{ tenantId }`, one
+ * organisation's chain and seals only, as the integrity sweep checks each
+ * organisation in its own scope (P-72 slice 1b).
  */
-export async function verifyAuditIntegrity(client: PoolClient): Promise<AuditIntegrityResult> {
-  const chain = await verifyAuditChain(client);
+export async function verifyAuditIntegrity(client: PoolClient, opts: VerifyAuditChainOptions = {}): Promise<AuditIntegrityResult> {
+  const chain = await verifyAuditChain(client, opts);
 
   let seals: SealIntegrity;
   let unverifiable: boolean;
@@ -63,7 +65,7 @@ export async function verifyAuditIntegrity(client: PoolClient): Promise<AuditInt
     seals = { checked: false, reason: 'AUDIT_HMAC_KEY not configured; HMAC seals cannot be verified — integrity unverifiable.' };
     unverifiable = true;
   } else {
-    const result = await verifyAuditChainSeals(client);
+    const result = await verifyAuditChainSeals(client, opts);
     if (result.valid && result.verified === 0 && result.unsealed > 0) {
       // Rows exist and none carries a seal: nothing was verified. This read
       // `checked: true, valid: true` — a pass over zero seals.

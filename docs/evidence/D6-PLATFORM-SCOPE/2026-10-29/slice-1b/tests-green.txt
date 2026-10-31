@@ -1,0 +1,375 @@
+P-72 slice 1b, lane C. Every test of the lane, and the existing tests of each file and caller it touches, on the working tree
+at base 4323b9149 (2026-10-30, 19:51 UTC). Command: npx vitest run <the 32 files below>. Result lines only (stderr omitted).
+One file fails, and it fails the same way with this lane's files at HEAD (tests-red-at-head.txt, last section): it is not
+this lane's, and is reported in the README.
+
+ ✓ server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > principal role "app_super_admin": refused before any connection, and nothing reaches app.current_user_role 4ms
+ ✓ server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > principal role "APP_SUPER_ADMIN": refused before any connection, and nothing reaches app.current_user_role 1ms
+ ✓ server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > principal role " app_super_admin ": refused before any connection, and nothing reaches app.current_user_role 1ms
+ ✓ server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > principal role "App_Super_Admin\n": refused before any connection, and nothing reaches app.current_user_role 0ms
+ ✓ server/mcp/__tests__/mcp-call-client-platform-role.test.ts > the MCP tool call connection and the platform role > an ordinary role is applied to the call's connection 3ms
+ ✓ server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > tenant role "app_super_admin": 403 before the precheck, the authority or the password, and nothing reaches the database 37ms
+ ✓ server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > tenant role "APP_SUPER_ADMIN": 403 before the precheck, the authority or the password, and nothing reaches the database 6ms
+ ✓ server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > tenant role " app_super_admin ": 403 before the precheck, the authority or the password, and nothing reaches the database 4ms
+ ✓ server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > tenant role "App_Super_Admin\t": 403 before the precheck, the authority or the password, and nothing reaches the database 4ms
+ ✓ server/routes/__tests__/governed-signed-act-platform-role.test.ts > signGovernedAct and the platform role > an ordinary tenant role signs, and is the role the transaction carries 5ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member gets their own organisation's chain verdict, and the estate verifier does not run 20ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a break in the member's chain is reported, and another organisation's break is not named 5ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > an anchor that cannot be read is no verdict (503 UNVERIFIABLE) 4ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member with no organisation is refused, and nothing runs 3ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > control: a platform administrator gets the estate verdict 4ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member's report states their organisation's chain, and the estate verifier does not run 4ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member with no organisation gets no report across every organisation 3ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > P-72 slice 1b: a verdict over rows the walk did not read, or over none, is not VERIFIED > a walk that could not read every chained row is no verdict, and the walk's own reason is the one logged 3ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > P-72 slice 1b: a verdict over rows the walk did not read, or over none, is not VERIFIED > an organisation with no chained row is not VERIFIED over nothing, and its report attests to nothing 10ms
+ ✓ server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses "app_super_admin" before any statement: nothing reaches app.current_user_role 2ms
+ ✓ server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses "APP_SUPER_ADMIN" before any statement: nothing reaches app.current_user_role 0ms
+ ✓ server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses " app_super_admin " before any statement: nothing reaches app.current_user_role 0ms
+ ✓ server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses "App_Super_Admin\n" before any statement: nothing reaches app.current_user_role 0ms
+ ✓ server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > refuses it with no organisation too: the refusal does not depend on the caller's other arguments 1ms
+ ✓ server/services/tenant/__tests__/governed-tenant-context-platform-role.test.ts > setTenantContextTx > still stamps the tenant and an ordinary membership role 1ms
+ × server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > keeps authority, signer verification and governed writes on the same pinned client 32ms
+ ✓ server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > refuses absent request context before authority, credentials or transaction writes 7ms
+ ✓ server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > still validates missing signature components before requesting any database context 5ms
+ × server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > keeps an authority refusal ahead of credential verification and the domain transaction 5ms
+ ✓ server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > keeps failed credential accounting outside the domain transaction and leaves the act unsigned 4ms
+ ✓ server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > reads each organisation's documents and holds in its tenant id AND uuid scope, with no role 9ms
+ ✓ server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > reads the programmes the organisation owns, and only its own active holds 3ms
+ ✓ server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > disposes of each organisation's document inside that organisation's scope, audited under it 3ms
+ ✓ server/jobs/__tests__/retentionCron.org-scope.test.ts > each organisation is swept in its own scope > an organisation's hold stops disposition of its own expired document, and not another organisation's 3ms
+ ✓ server/jobs/__tests__/retentionCron.org-scope.test.ts > what the sweep refuses to do in an organisation's scope > leaves a document that names another organisation than its programme's owner, counts it, and the job is not clean 6ms
+ ✓ server/jobs/__tests__/retentionCron.org-scope.test.ts > what the sweep refuses to do in an organisation's scope > a document resolved to another organisation at disposal is rolled back, not disposed in this scope 2ms
+ ✓ server/jobs/__tests__/retentionCron.org-scope.test.ts > what the sweep refuses to do in an organisation's scope > an organisation with no uuid is not swept: nothing is read in a uuid-less scope, and the job fails with an alert 6ms
+ ✓ server/jobs/__tests__/retentionCron.org-scope.test.ts > what the sweep refuses to do in an organisation's scope > an operator can sweep the organisations it names, and only those 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > every statement is inside a transaction: each connection begins before it reads, and every connection goes back 8ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > reads each organisation's audit_logs chain and seals in its tenant scope, with no role, for that organisation only 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > reads each organisation's audit_events rows and seals in its own scope, filtered to it 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > each organisation is verified in its own scope > reads only the organisation list and the stores with no tenant key in the infrastructure scope 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > a break in one organisation's chain is broken, names that organisation, and still counts the other's rows 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > legacy rows the walk refuses in an organisation's scope are unverifiable for it, never ok and not an incident 4ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > a store in which no organisation has a row verified nothing: unverifiable, never ok 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > what a per-organisation verdict says > an organisation with no rows neither passes nor fails a store the others verify 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > the anchor is verified and written per organisation > passes a scope opener that runs in the named organisation's own scope, inside a transaction 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts > the anchor is verified and written per organisation > writes the next anchor from every organisation's head, each read in its own scope 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > a walk that verified none of the 3 sealed rows did not run: it never says valid 4ms
+ ✓ server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > every sealed row verified: valid, with the count from the organisation's own scope 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > a seal that does not verify is reported broken, whatever was read 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/seal-check-coverage.test.ts > the seal check is held to the seals the organisation's own scope counts > an organisation with no sealed row is said to have none, and nothing is claimed beyond it 1ms
+ ✓ server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > admitted role "app_super_admin": refused, and nothing reaches app.current_user_role 4ms
+ ✓ server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > admitted role "APP_SUPER_ADMIN": refused, and nothing reaches app.current_user_role 1ms
+ ✓ server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > admitted role " app_super_admin ": refused, and nothing reaches app.current_user_role 1ms
+ ✓ server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > admitted role "App_Super_Admin\n": refused, and nothing reaches app.current_user_role 0ms
+ ✓ server/services/ana/__tests__/catalog-scope-platform-role.test.ts > catalogScope and the platform role > an ordinary membership role is written and the scope admitted 1ms
+ ✓ server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > writes an anchor of every organisation's head, each read on its own connection; the caller's is not read 3ms
+ ✓ server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > verifies every anchored head on its own organisation's connection; the caller's reads only the archive ledger 2ms
+ ✓ server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > a head that changed since the anchor is broken, and names its organisation 1ms
+ ✓ server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > a connection scoped to another tenant is refused, never read as a missing head 2ms
+ ✓ server/services/audit/__tests__/chain-anchor-own-scope.test.ts > per organisation, each in its own scope > without the opener, a tenant-scoped connection is refused for the cross-tenant read, as before 1ms
+ ✓ server/services/audit/__tests__/seal-coverage-organization.test.ts > the audit_events seal check, per organisation > named, it reads and counts that organisation's chained rows only 4ms
+ ✓ server/services/audit/__tests__/seal-coverage-organization.test.ts > the audit_events seal check, per organisation > control: unnamed, it reads every organisation as before 2ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > refuses a tool the organization denied 2ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > runs it for an organization that did not deny it 27ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > does not let an allowlist for governed mutations strip a read tool, as on the chat doors 1ms
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > the exact native callback passes with a database ledger later within the same JavaScript millisecond 2402ms
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > a verifier strictly after the ledger yields archived/unverifiable, never verified 1786ms
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger at the anchor 1897ms
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger after the verifier 1692ms
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger cutoff in the hot window 1749ms
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger insufficient deletion budget 1987ms
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > reports ok for an intact, sealed chain 31ms
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > detects a tampered row (broken sha256 chain) 15ms
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > fails closed (unverifiable, ok=false) when AUDIT_HMAC_KEY is absent 9ms
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > is unverifiable, not ok, when rows exist and none carries a seal 15ms
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > is unverifiable when a row written after sealing began carries no seal 14ms
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > is ok for an empty log 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > POST /api/audit/reports/convert — a saved sealed snapshot > uses the canonical audit formatter for the full trail snapshot, retains original chain evidence and verifies the new CSV seal 37ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > POST /api/audit/reports/convert — a saved sealed snapshot > refuses a sealed audit snapshot containing another organisation's row before export 13ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > POST /api/audit/reports/convert — a saved sealed snapshot > exports the displayed snapshot as CSV without reading the report again, with source identity and a separate audit event 14ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > POST /api/audit/reports/convert — a saved sealed snapshot > refuses tampered-data before reading or writing 9ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > POST /api/audit/reports/convert — a saved sealed snapshot > refuses tampered-manifest before reading or writing 7ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > POST /api/audit/reports/convert — a saved sealed snapshot > refuses other-tenant before reading or writing 9ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > POST /api/audit/reports/convert — a saved sealed snapshot > refuses member before reading or writing 30ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > POST /api/audit/reports/convert — a saved sealed snapshot > refuses csv-source before reading or writing 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > POST /api/audit/reports/convert — a saved sealed snapshot > refuses release when the conversion cannot be recorded 9ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > a member sees the catalog and that they cannot run it 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > an administrator can run them; a platform administrator too 21ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > no organisation, no catalog 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a non-reader is refused 403 with the audit gate body, before any query 7ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a session without an organisation is refused 403 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > an unknown report is 404 UNKNOWN_REPORT 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > the full audit trail is 409 USE_SIGNED_EXPORT: its run is the signed export 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2026-09-30&to=2026-09-01) is 400 BAD_PERIOD 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (to=2026-02-30) is 400 BAD_PERIOD 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2024-01-01&to=2026-01-01) is 400 BAD_PERIOD 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — a run > reads in a tenant-stamped transaction, records the run, and sends an export that verifies 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > the existing verification endpoint verifies the package, and refuses it after a one-byte change 10ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > a CSV run is one file of titled sections 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > an unknown format is refused rather than read as JSON 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation is ok only when every check is intact, and false when any is broken 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation runs one report at a time: a second concurrent run is 429 REPORT_IN_PROGRESS 9ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > report runs are rate limited per organisation and person: 429 REPORT_RATE_LIMITED 26ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 0 is not a tenant: 403 before anything 7ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of -3 is not a tenant: 403 before anything 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 7.5 is not a tenant: 403 before anything 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of "7abc" is not a tenant: 403 before anything 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/logs: a member is refused (403) 21ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit-logs: a member is refused (403) 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/events: a member is refused (403) 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit: a member is refused (403) 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > owner reads it 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > admin reads it 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > manager reads it 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > a viewer is refused 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a member is refused before the export starts 9ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a session whose organisation is 0 is refused before any read: 0 is not a tenant (SECURITY-9) 17ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself 33ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > an event type outside the vocabulary is refused (400) and nothing is written 11ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > the free-form default is not a type either: a body with no event type is refused 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > metadata must be an object, not a string of any length 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a vocabulary type with a reason is recorded, attributed to the caller 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > in a batch, an unknown type is skipped with the reason and the known one is written 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a batch insert the database refuses is reported as insert_failed, with none of the database text (DP-63) 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a member may not record events at all 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > viewer: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > member: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > owner: records the non-authoritative marker (201), one signature.create row 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > admin: records the non-authoritative marker (201), one signature.create row 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > manager: records the non-authoritative marker (201), one signature.create row 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > an owner still may not claim a binding signature here (forgery guard unchanged) 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > owner of an organisation cannot start the estate-wide check (403) or read its status 11ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > admin of an organisation cannot start the estate-wide check (403) or read its status 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > manager of an organisation cannot start the estate-wide check (403) or read its status 7ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > user of an organisation cannot start the estate-wide check (403) or read its status 19ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > viewer of an organisation cannot start the estate-wide check (403) or read its status 15ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a platform administrator runs the check and reads the status 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a tenant membership role of super_admin with no platform grant is refused (403) on the check and the status 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a tenant membership role of platform_admin with no platform grant is refused (403) on the check and the status 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a tenant membership role of support with no platform grant is refused (403) on the check and the status 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a platform_admin platform grant holder (not on the allowlist, membership role member) runs the check and reads the status 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a support platform grant holder (not on the allowlist, membership role member) runs the check and reads the status 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a super_admin platform grant holder (not on the allowlist, membership role member) runs the check and reads the status 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > another user's grant does not admit this one (403) 2ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a failed check answers 500 without the caught error's text 3ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > reports actual recorded=true queryable=true 69ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > reports actual recorded=false queryable=false 6ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > reports actual recorded=true queryable=false 4ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > refuses a stale viewer role before attempting to write the decision entry 4ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > rejects an invalid entity identifier 0 without recording a decision 4ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > rejects an invalid entity identifier "7-not-an-integer" without recording a decision 5ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > rejects an invalid entity identifier -1 without recording a decision 3ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > rejects an invalid entity identifier 1.5 without recording a decision 3ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > rejects an invalid entity identifier true without recording a decision 6ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > routes exact attempt receipts before the generic entity graph and preserves actual tenant scope 6ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > reports absence only as of the actual receipt read 3ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > decision attempts have a real persistence and exact readback contract > keeps an unavailable read distinct from an absent receipt 3ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: true } 4ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: false } 4ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > keeps the durable response and reports { persisted: false, …(1) } 3ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > reports an unexpected audit rejection without reporting a failed mutation 4ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > reports recovery from the outcome of the next request 5ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > refuses missing authenticated identity {} before writing 4ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > refuses missing authenticated identity {"organizationId":7} before writing 2ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > refuses missing authenticated identity {"organizationId":7,"id":0} before writing 2ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > does not report a completed act or write its audit when the source mutation failed 2ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > returns the exact download with 'true' persistence 3ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > returns the exact download with 'false' persistence 4ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > keeps the actual file when the audit rejects, and reports recovery on the next export 5ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > does not export for missing identity {} 2ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > does not export for missing identity {"organizationId":7} 3ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > does not export for missing identity {"organizationId":0,"id":5} 2ms
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > does not audit a download when the source export fails 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /api/c2c/actions/verify-chain answers 409 and names the missing head (a member of organisation 7) 22ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity reports the integrity not ok, with the anchor break 6ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity refuses a tenant membership role of platform_admin with no platform grant (403), and walks nothing 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity refuses a tenant membership role of super_admin with no platform grant (403), and walks nothing 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the licensing history reports the record store broken, not verified 5ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the tenant verdict (ledger, export, compliance reports) is broken for the truncated organisation only 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > npm run ops:verify-audit-chain reports public.audit_logs broken and exits 1 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /api/c2c/actions/verify-chain 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /audit-trail/seal-integrity 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the licensing history keeps the walk verdict and marks the head not verified 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the tenant verdict 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > npm run ops:verify-audit-chain 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok (a member of organisation 7) 5ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok (a platform administrator, estate-wide) 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > npm run ops:verify-audit-chain reports public.audit_logs unverifiable (exit 2), not ok 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > an administrator of organisation 8 gets organisation 8's verdict, and nothing of organisation 7 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a break the walk finds in another organisation's row is said to be there, not named 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a tenant membership role of super_admin with no platform grant gets its own organisation only 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a platform administrator still gets the estate-wide verdict, every organisation's break included 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the ledger (meta.chain) 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > a document's history (meta.chain) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the export walk (turn-record and authoring exports) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the signed audit export's manifest 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the integrity attestation's chain row 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the ledger (meta.chain) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the export walk 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the signed audit export's manifest 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the integrity attestation's chain row 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > organisation 8's readers name nothing of organisation 7 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > the tenant verdict is ok null with the counts, and its head was not checked on that connection 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > GET /api/c2c/actions/verify-chain answers 503 AUDIT_CHAIN_NOT_VERIFIED with the counts, never ok 6ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > the ledger, the export walk, the signed manifest and the attestation say not verified, never "no chained rows" 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > P-72 slice 1b: a walk that could not read every chained row of the organisation is no verdict, and every reader says so > an organisation that truly has no chained row is still said to have none 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the tenant verdict is the walk, with the head unavailable and ok null (not ok, not broken) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the ledger still returns its entries, and its verdict is unverified 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a document's history still returns its entries, unverified 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the export walk, the signed manifest and the attestation say not verified, with the reason 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a walk that fails still fails: only the head step is caught 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules by default when the audit trail is enabled 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when explicitly opted out, even if the trail is on 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules when explicitly opted in, even if the trail flag is unset 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when neither the trail nor an explicit opt-in is set 0ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules by default in production with nothing else configured 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production even when the audit trail flag is unset 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > respects an explicit production opt-out (ENABLE_AUDIT_CHAIN_CHECK=false) 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production with an explicit opt-in too 0ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies 12ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number 4ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > the plain-chain break still reports brokenAt and alerts, as before 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an absent audit.tamper_proof_log is reported as missing (an incident), never as verified 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no seal at all are unverifiable, not ok 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an audit_logs row written unsealed after sealing began is unverifiable, and named 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_logs rows that all carry no seal are unverifiable, even with the key configured 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > still never throws when the pool itself is unavailable 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > in production without AUDIT_ANCHOR_BUCKET the anchor is "not configured": never ok, never written 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > verifies against the latest anchor FIRST, then writes the new anchor to the configured bucket 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a truncated chain after an anchor is an incident: alerted, and no new anchor papers over it 8ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > with no anchor written yet the head is "not verified" (unverifiable), and the first anchor is written 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > the anchor cannot be read: an incident for that store, and nothing is anchored 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > an incident in another store blocks the new anchor too: a tampered state is never anchored 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a failed anchor write is reported, not swallowed 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > reports the age on a clean run, and a 24-hour-old anchor is not an incident 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > at exactly 48 hours the anchor is not yet stale 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > an anchor older than 48 hours is an incident: alerted, and a fresh anchor is still written to close the window 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor that the database also breaks is broken, and nothing is anchored over it 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor beside another incident does not get a new anchor written over that incident 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > with no anchor yet there is no age to report, and the run says so 1ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > exports inside a tenant-stamped transaction, with the chain verifier 23ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > passes the record filters 6ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > refuses a malformed filter rather than exporting everything 4ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails 7ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > exports inside a tenant-stamped transaction, with the chain verifier 4ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > passes the record filters 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > refuses a malformed filter rather than exporting everything 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > the signed export tells the inspector to use the key its manifest names 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > verification says which key vouched for the export 15ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > a manifest from before key ids verifies and says no key was named 3ms
+ ✓ server/jobs/__tests__/nightly-sweeps-once-per-window.test.ts > a nightly tick on any process claims the day before it runs > retention sweep 24ms
+ ✓ server/jobs/__tests__/nightly-sweeps-once-per-window.test.ts > a nightly tick on any process claims the day before it runs > external intelligence sweep (FDA, EMA, MHRA, TGA, NCBI) 22ms
+ ✓ server/jobs/__tests__/nightly-sweeps-once-per-window.test.ts > a nightly tick on any process claims the day before it runs > audit chain integrity sweep 22ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > a v2 project open: lists that project, not the whole organization 15ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > another project's documents are refused while a project is open, and nothing is listed 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > naming the open project itself is fine 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > no project open: an actor-filtered accessible library, or a named accessible program 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > requires the upstream request executor before source admission 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > refuses a role change between canonical source and request program admission 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > files into the open project 16ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > never into another project while one is open: refused, and nothing is ingested 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > with no project open: refused, pointing to the audited adopt; nothing is ingested 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > read_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > catalog_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > place_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > the open project's own document is read 3ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_project_documents searches the open program only; with no project, the organization 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_document_passages searches the open program only; with no project, the organization 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > an open project with no program > reads nothing: not the organization, and not a named program 1ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > resolveAuditAnchorStore > is null — not configured — without AUDIT_ANCHOR_BUCKET, or with a blank one 1ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > resolveAuditAnchorStore > names the bucket and the anchors/ prefix the task role is granted 1ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > puts one JSON object under the dated key, with an integrity checksum and the bucket default encryption 3ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > writes each key once: the put is conditional (If-None-Match *), so it never replaces an existing anchor 2ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > latest() follows the listing to its last page and returns the newest anchor 25ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > latest() is null when nothing has been anchored 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > a refused listing is an error, never "no anchor" 1ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > keys sort in time order, so the lexically last key is the newest anchor 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > accepts the document the writer produces 1ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses not JSON 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses another format 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses another store 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses no time 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses heads not a list 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a hash that is not sha-256 hex 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a row id that is not a uuid 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a chain_seq that is not a whole number 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a row count of zero 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses an organisation twice 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the archive hot window the verifier excuses nothing inside (DP-68) > is the archive door's own floor, so the verifier and the door cannot drift apart 1ms
+ ✓ server/routes/__tests__/governed-signed-act-hooks.test.ts > precheck: refused before authority and the credential (B7) > a precheck refusal answers with its code and asks for no authority, no password and no transaction 30ms
+ ✓ server/routes/__tests__/governed-signed-act-hooks.test.ts > precheck: refused before authority and the credential (B7) > a precheck that passes is asked before the authority check 6ms
+ ✓ server/routes/__tests__/governed-signed-act-hooks.test.ts > afterSign: on the signing transaction, citing the signature (B7) > runs after the signature row and before COMMIT, with the row’s id 4ms
+ ✓ server/routes/__tests__/governed-signed-act-hooks.test.ts > afterSign: on the signing transaction, citing the signature (B7) > a throw rolls back the act and its signature: no COMMIT, the refusal in its own words 4ms
+ ✓ server/services/ana/__tests__/catalog-gated-tools.test.ts > CATALOG_GATED_TOOLS > names exactly the tools whose handlers call requireCatalog 19ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > a document another process already disposed of gets no second archive and no second audit row 5ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > falls back to archive + soft-delete for a document with no policy, and never hard-deletes it 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > uses the default (archive + soft-delete) when the named policy is unknown or inactive 1ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > applies each matched policy branch: a destroy policy is refused and reported, soft-delete and skip-archive apply 1ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > a per-document failure rolls that document back, counts one error, and the sweep continues 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > an enumeration-level failure makes the sweep itself throw, having disposed of nothing 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns true on a clean sweep 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred 1ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > an enumeration-level failure aborts: returns false, raises the security alert, and skips notification 3ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > emails every configured recipient with the sweep summary 1ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > recipients configured but SMTP not: nothing is sent, and the alert says the summary was not delivered 1ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain states it as unknown, with the reason 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain still says ok over rows it checked 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the signed audit export states the audit_logs chain as unverified, not intact 4ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the integrity attestation says "not verified" for a walk of zero rows, even if handed ok: true 2ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses a viewer before the tool runs, and records the denial 17ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses someone who is no longer a member before the tool runs, and records the denial 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > fails closed when the role cannot be read 3ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > lets an editor run the governed tool 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > does not ask for a role on a tool that is not governed 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a DOCUMENT-scoped hold prevents the hard delete 4ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a PROGRAM-scoped hold covers every document of that program 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > is checked before the policy resolves, so no archive is written either 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > deletes when no hold exists — the guard is not a blanket stop 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > deletes when the only hold covers a DIFFERENT program 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > a LIFTED hold does not block — the query already excludes it 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > the sweep fails closed when holds cannot be read > aborts having deleted nothing, rather than proceeding as if none existed 2ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > soft delete: BEGIN, the organisation, the tombstone, the chained audit row, COMMIT — and the row names the document 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > archive then soft delete, in the same transaction, under the document's own organisation 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a deletion whose audit row cannot be written is rolled back and counted as an error 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a document with no organisation to chain the row under is left in place (nothing is committed unaudited) 1ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=development 1ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=staging 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=test 1ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=unset 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > returns 'active' with a sufficiently long key 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > refuses to boot when the key is unset 1ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > refuses to boot when the key is empty or whitespace-only 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > refuses to boot when the key is too short 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > rejects a too-short key even when unsealed is accepted (weak key is a misconfig) 1ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > returns 'unsealed-accepted' when the operator explicitly accepts an unsealed ledger 2ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > treats a non-"true" accept value as no decision and refuses to boot 1ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > does not echo the key value in the too-short error 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > is case-insensitive on NODE_ENV and the accept flag 1ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > resolveRetentionSweepPosture > explicit false disables, explicit true enables, production defaults on, otherwise opt-in 2ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > schedules the nightly sweep in production with nothing else configured, at the default hour 1ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > honours RETENTION_SWEEP_CRON and an explicit opt-in outside production 3ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > does not schedule when explicitly disabled, even in production 1ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > does not schedule outside production without an opt-in 1ms
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > control: a correctly linked chain is intact 2ms
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > does not report intact over a row whose previous_hash is null after a hashed predecessor 0ms
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > calls it unverified rather than broken, because no mismatch was found 0ms
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > still reports a genuine mismatch as broken 0ms
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > does not count the chain's own genesis row as unlinked 0ms
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > still reports unhashed rows as the reason when there are any 0ms
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > nothing to verify is not verified 0ms
+ Test Files  1 failed | 31 passed (32)
+      Tests  2 failed | 366 passed (368)
+   Duration  58.12s (transform 12.21s, setup 603ms, import 23.60s, tests 28.68s, environment 3ms)
