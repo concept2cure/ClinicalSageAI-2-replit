@@ -84,6 +84,7 @@ import { scopedProposalResult, type EditorProposalReceipt } from './editorPropos
 import { readSavedTemplateContext, savedTemplateFacts, sourceMetadataUnavailable } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
+import { CSR_TEMPLATE_ENTRY, StudyDataBuild } from './StudyDataBuild';
 import { captureAssemblySourceIntent, captureSourceDocumentStartIntent, type AssemblySourceIntent, type AssemblySourceDocumentStartIntent } from './assemblySourceIntent';
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, workbenchNavigationRefusal, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
@@ -4918,6 +4919,8 @@ export function DocumentWorkbench({
         <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
             <AuthoringAssemblyBuild controller={assembly} />
+            {/* A clinical study report is built from the study's data here, in the one editor (RULE 4). */}
+            {programId && docTemplateContext?.templateSource?.entryId === CSR_TEMPLATE_ENTRY && <StudyDataBuild programId={programId} onNav={onNav} />}
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a

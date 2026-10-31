@@ -9,7 +9,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 const { apiRequest } = vi.hoisted(() => ({ apiRequest: vi.fn() }));
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
-import { CsrSourceInputControls } from '../surfaces/CsrSourceInputControls';
+import { StudyDataBuild } from '../editor/StudyDataBuild';
 import { CsrHeadingReview, type CsrBoardHeading } from '../surfaces/CsrBuildProgress';
 import { CsrWorkflow } from '../surfaces/BiopharmaProject';
 import { publishShellProject } from '../shellProject';
@@ -35,6 +35,7 @@ const nav = vi.fn();
 beforeEach(() => {
   studies = [{ source: receipt, tables }];
   apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-30T08:00:00Z' }] });
     if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1', limitReached: false, sources: [] });
     if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies });
     if (path === '/api/csr/jobs') return ok({ jobId: 41, status: 'queued' }, 202);
@@ -42,37 +43,41 @@ beforeEach(() => {
   });
 });
 afterEach(() => { cleanup(); apiRequest.mockReset(); nav.mockReset(); });
-const card = () => render(<CsrSourceInputControls programId={PROGRAM} runId={RUN} interactionBusy={false}
-  onSelectionChange={() => {}} onBusyChange={() => {}} onNav={nav} />);
+/* The build is in the CSR document's editor since 2026-10-31 (CLAUDE.md RULE 4): mount it and choose the run. */
+const card = async () => {
+  render(<StudyDataBuild programId={PROGRAM} onNav={nav} />);
+  fireEvent.change(await screen.findByLabelText(/Saved run with the study’s data/), { target: { value: RUN } });
+};
 
 it('offers "Build CSR draft" only for a saved run that holds retained tables, and binds that run', async () => {
-  card();
+  await card();
   const button = await screen.findByRole('button', { name: /Build CSR draft · NCT05330182/ });
   fireEvent.click(button);
   await screen.findByText(/CSR build 41 is queued/);
   expect(apiRequest).toHaveBeenCalledWith('POST', '/api/csr/jobs', {
     programId: PROGRAM, studyInfo: receipt.studyInfo, evidenceSource: { programId: PROGRAM, runId: RUN, studyId: 'LMN-201-201' },
   });
-  // The board is refused in production (2026-10-30): the queued build is reached on the card, not by navigation.
+  // The board is refused in production (2026-10-30): the queued build is reached in the editor, not by navigation.
   expect(screen.queryByRole('button', { name: /Open build progress/ })).toBeNull();
   expect(nav).not.toHaveBeenCalledWith('csr-workflow');
 });
 
 it('renders no build control for a run with no retained tables', async () => {
   studies = [];
-  card();
-  await screen.findByText('This run has no linked clinical source tables.');
+  await card();
+  await screen.findByText(/This run holds no clinical source tables\./);
   expect(screen.queryByRole('button', { name: /Build CSR draft/ })).toBeNull();
 });
 
 it('shows the server refusal as stated, never a silent empty or a queued build', async () => {
   apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-30T08:00:00Z' }] });
     if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies });
     if (path === '/api/csr/jobs') throw refusal(404, { code: 'CSR_RUN_INPUTS_NOT_FOUND',
       error: 'This saved run has no retained source inputs in the selected project. No job was created.' });
     return ok({ format: 'concept2cure.csr-source.v1', limitReached: false, sources: [] });
   });
-  card();
+  await card();
   fireEvent.click(await screen.findByRole('button', { name: /Build CSR draft/ }));
   const alert = await screen.findByText(/no retained source inputs in the selected project\. No job was created\./);
   expect(alert.getAttribute('role')).toBe('alert');
