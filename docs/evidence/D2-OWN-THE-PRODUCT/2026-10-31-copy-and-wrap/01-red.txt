@@ -1,0 +1,9 @@
+ × CmOverview — counts its submissions in words > says one submission in the singular, with its preparedness index 5061ms
+   → Unable to find an element with the text: 1 submission — RPI 82 average. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your tex
+ × CmOverview — counts its submissions in words > says no preparedness index is computed, rather than "RPI — average" 5017ms
+   → Unable to find an element with the text: 1 submission — no preparedness index computed yet. This could be because the text is broken up by multiple elements. In this case, you can provide a f
+ ✓ CmOverview — counts its submissions in words > counts two or more in the plural 24ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an element with the text: 1 submission — RPI 82 average. This could be because the text is broken up by multiple elements. In this case, you can provide a 
+TestingLibraryElementError: Unable to find an element with the text: 1 submission — no preparedness index computed yet. This could be because the text is broken up by multiple elements. In this case
+      Tests  2 failed | 1 passed | 15 skipped (18)

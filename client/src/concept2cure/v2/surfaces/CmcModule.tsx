@@ -541,6 +541,12 @@ interface CmHeadProps {
   suggest?: string[];
   actions?: React.ReactNode;
 }
+/** The overview's line under its title: "1 submission — RPI 82 average", or that no index is computed yet. */
+function overviewMeta(submissions: number | null, avgRpi: number | null): string {
+  const count = submissions == null ? '— submissions' : `${submissions} ${submissions === 1 ? 'submission' : 'submissions'}`;
+  return `${count} — ${avgRpi == null ? 'no preparedness index computed yet' : `RPI ${avgRpi} average`}`;
+}
+
 function CmHead({ title, meta, ask, suggest, actions }: CmHeadProps) {
   return (
     <>
@@ -780,7 +786,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
       tone={m3Overdue ? 'urgent' : cmcState === 'assessed-clear' && questionsComplete ? 'good' : 'calm'}
       eyebrow={(cmcState === 'not-assessed' || cmcState === 'unreadable') && port.length === 0
         ? 'Is your CMC package ready'
-        : 'Is your CMC package ready across all ' + port.length + ' submissions'}
+        : port.length === 1 ? 'Is your CMC package ready for its submission' : 'Is your CMC package ready across all ' + port.length + ' submissions'}
       headline={cmcState === 'unreadable'
         ? <>{board.error
             ? 'The Module 3 board'
@@ -836,7 +842,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   );
   return (
     <div className="cm-body">
-      <CmHead title="Module 3 overview" meta={`${portfolioUnreadable ? '—' : port.length} submissions — RPI ${avgRpi == null ? '—' : avgRpi} average`} ask={ask} suggest={CMC_SUGGEST.overview} />
+      <CmHead title="Module 3 overview" meta={overviewMeta(portfolioUnreadable ? null : port.length, avgRpi)} ask={ask} suggest={CMC_SUGGEST.overview} />
       {board.loading ? (
         <EmptyState icon={I.beaker} title="Loading the Module 3 board…" busy testId="cmc-board-loading" />
       ) : board.error ? (
@@ -979,7 +985,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
             {secs.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved Module 3 sections'} nav={nav} bar /></div>}
           </div>
           <div className="pj-card" style={{ marginBottom: 16 }}>
-            <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{portfolioUnreadable ? '—' : port.length} submissions</span></div>
+            <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{portfolioUnreadable ? '— submissions' : `${port.length} ${port.length === 1 ? 'submission' : 'submissions'}`}</span></div>
             <div className="pj-card-b" style={{ padding: 0 }}>
               {portfolioUnreadable ? (
                 <div style={{ padding: 12 }}>

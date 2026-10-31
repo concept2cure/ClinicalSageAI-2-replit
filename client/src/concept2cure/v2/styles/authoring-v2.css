@@ -93,16 +93,22 @@
      `opacity:0; position:absolute; pointer-events:none`. Invisible, while
      every jsdom test still passed, because jsdom applies no stylesheet.
      `ci:check-css-selector-shadowing` now fails on that shape. */
+  /* In the 220px outline pane "Harmonised standard" and "outline basis" did
+     not fit on one line: the header set the grid's width, and the text below
+     wrapped at that width and was cut off at the pane's edge. The label wraps
+     under the chip instead, and the column never grows past the pane. */
   .ed-basis {
     padding: 10px 16px;
     border-bottom: 1px solid var(--border);
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 5px;
   }
   .ed-basis-h {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
+    gap: 4px 6px;
   }
   .ed-basis-chip {
     font-size: 10px;

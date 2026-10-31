@@ -305,3 +305,22 @@ describe('rulePackProvenanceSelectSql', () => {
     expect(() => rulePackProvenanceSelectSql('a-b')).toThrow(/unsafe alias/);
   });
 });
+
+describe('describeRulePackProvenance — "not reviewed" is said once', () => {
+  const of = (o: Partial<RulePackProvenance>): RulePackProvenance => ({ ...UNDECLARED_PROVENANCE, ...o });
+
+  // UI walk, 2026-10-31: the IND pack's own note ends "Not reviewed by a
+  // regulatory professional; confirm against current FDA IND eCTD guidance
+  // before filing.", and the editor's outline pane then said it again.
+  it('says "not reviewed" once when the pack\'s own note already says it', () => {
+    const note = 'Module 1 headings transcribed from the FDA Module 1 v2.3 heading list. Not reviewed by a regulatory professional; confirm against current FDA IND eCTD guidance before filing.';
+    const d = describeRulePackProvenance(of({ sourceBasis: 'harmonised_standard', uncertainties: note }));
+    expect(d.detail.match(/not reviewed by a regulatory professional/gi)).toHaveLength(1);
+    expect(d.detail).toContain('confirm against current FDA IND eCTD guidance before filing.');
+  });
+
+  it('still says "not reviewed" when the pack\'s note does not', () => {
+    const d = describeRulePackProvenance(of({ sourceBasis: 'harmonised_standard', uncertainties: 'Headings recalled, not transcribed.' }));
+    expect(d.detail).toMatch(/Headings recalled, not transcribed\. Not reviewed by a regulatory professional\.$/);
+  });
+});
