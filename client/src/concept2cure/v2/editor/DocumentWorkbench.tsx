@@ -4308,8 +4308,10 @@ export function DocumentWorkbench({
         {/* Why there is no outline, said plainly rather than as a blank pane.
             A project with no governed document is usually not a fault: program
             types ivd/device/ide/biologic/anda have no rule pack, and the
-            scaffolder skips them deliberately. */}
-        {filing.reason === 'no-governed-document' && (
+            scaffolder skips them deliberately. Said only when the tree is
+            otherwise empty: above a document's own headings it read as
+            "nothing here" (seen in the running app, 2026-10-31). */}
+        {filing.reason === 'no-governed-document' && docs.length === 0 && (
           <div className="scaf-note" style={{ padding: '10px 12px', fontSize: 12 }}>
             This project has no governed filing document, so there is no section outline to show.
             Projects created before scaffolding — and project types with no rule pack — fall here.
