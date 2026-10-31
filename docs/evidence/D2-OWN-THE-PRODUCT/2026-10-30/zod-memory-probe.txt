@@ -1,0 +1,7 @@
+GHSA-mrhx-c7xc-m3w5 (zod < 4.6.6, "memory exhaustion validating oversized constrained collections"), measured 2026-10-30
+Input: one 2,000,001-byte JSON body (inside the 2 MB /api limit): an array of 1,000,000 numbers,
+validated by z.array(z.string()).max(10).safeParse.
+  zod 3.25.76 (installed)        : issues 1,000,001  heap +268 MB  934 ms
+  zod 4.6.7 (root, v4 API)       : issues 1          heap +0 MB      3 ms
+  zod 4.6.7 'zod/v3' compat path : issues 1,000,001  heap +266 MB
+Conclusion: the request body limit does not mitigate it; only the v4 API fixes it. Moving imports to zod/v3 would not.

@@ -1010,7 +1010,6 @@
    "compute_readiness",
    "compute_sample_size",
    "control_strategy",
-   "correspondence.ingest",
    "create_artifact",
    "create_milestone",
    "create_review_thread",

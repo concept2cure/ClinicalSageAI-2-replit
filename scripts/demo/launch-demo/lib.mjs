@@ -37,13 +37,51 @@ export { makePdfBuffer, sha256 };
  *   email   — dev-login email (local only; server must run ALLOW_DEV_AUTH=1)
  * The token wins when both are present. Refuses when neither is usable.
  */
-export async function connect({ baseUrl, email, token, onRecord } = {}) {
+export async function connect({ baseUrl, email, token, onRecord, expectedOrganizationId, clientWorkspaceId } = {}) {
+  // Validate operator scope before authentication; never truncate a malformed id.
+  const expectedOrg = optionalPositiveId(expectedOrganizationId, 'organization');
+  const workspaceId = optionalPositiveId(clientWorkspaceId, 'client workspace');
   const base = (baseUrl || process.env.DEMO_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
   const auth = await bearerFor(base, { email, token });
   const api = createApiClient({ baseUrl: base, accessToken: auth.accessToken, onRecord: onRecord || (() => {}) });
-  const me = await api('GET', '/api/auth/me');
-  if (me.status !== 200) throw new Error(`could not resolve the signed-in user (${me.status}): ${String(me.text ?? '').slice(0, 200)}`);
-  return { api, baseUrl: base, identity: identityOf(me.json, auth.identity) };
+  // /me can carry an account's default organization; the verified session names
+  // the actual tenant of this bearer and rechecks its membership.
+  const response = await api('GET', '/api/auth/session');
+  if (response.status !== 200) throw new Error(`Demo session verification failed (HTTP ${response.status}). No demo records were written.`);
+  const identity = identityOf(response.json);
+  const expectedEmail = (email || process.env.DEMO_SEED_EMAIL || auth.identity.email || '').trim().toLowerCase();
+  if (expectedEmail && identity.email.toLowerCase() !== expectedEmail) {
+    throw new Error('The signed-in account does not match the requested demo email. No demo records were written.');
+  }
+  if (expectedOrg !== undefined && Number(identity.organizationId) !== expectedOrg) {
+    throw new Error('The signed-in organization does not match the requested demo organization. No demo records were written.');
+  }
+  // Exercise the same protected stores Projects and Tasking use. An empty
+  // provisioned tenant may be seeded; an unread store is not an empty tenant.
+  const projects = await api('GET', '/api/c2c/projects?limit=1');
+  if (projects.status !== 200 || !Array.isArray(projects.json?.data) ||
+      projects.json?.meta?.pendingStore === true || projects.json?.meta?.reconciliationRequired === true) {
+    throw new Error('Demo Projects are unavailable or require access reconciliation. No demo records were written.');
+  }
+  const tasks = await api('GET', '/api/task-management/board');
+  if (tasks.status !== 200 || !Array.isArray(tasks.json?.data) ||
+      tasks.json?.meta?.partial !== false || !Array.isArray(tasks.json?.meta?.unreadSources) ||
+      tasks.json.meta.unreadSources.length > 0) {
+    throw new Error('Demo Tasking could not be read completely. No demo records were written.');
+  }
+  return { api, baseUrl: base, identity, clientWorkspaceId: workspaceId,
+    preflight: { session: 'verified', projects: 'readable', tasking: 'readable',
+      taskCount: tasks.json.data.length, browser: 'not_executed' } };
+}
+
+/** Explicit ids are positive integers, not preferences inferred from a profile. */
+function optionalPositiveId(value, label) {
+  if (value === undefined) return undefined;
+  if ((typeof value !== 'number' && typeof value !== 'string') || !/^[1-9]\d*$/.test(String(value)) ||
+      !Number.isSafeInteger(Number(value))) {
+    throw new Error(`A valid positive ${label} id is required. No demo records were written.`);
+  }
+  return Number(value);
 }
 
 /** A bearer token: the one given (DEMO_SEED_TOKEN) or a local dev-login as the account the operator names. */
@@ -64,14 +102,19 @@ async function bearerFor(base, { email, token }) {
   return { accessToken: auth.accessToken, identity: { email: who } };
 }
 
-/** The signed-in identity from /api/auth/me, whichever envelope the route uses. */
-function identityOf(body, fallback) {
-  const u = body?.user ?? body?.data ?? body ?? {};
-  return {
-    email: u.email ?? fallback.email ?? null,
-    userId: u.id ?? null,
-    organizationId: u.organizationId ?? u.organization_id ?? u.defaultOrganizationId ?? null,
-  };
+/** Only the server-verified session supplies the actor and organization. */
+function identityOf(body) {
+  const u = body?.user;
+  if (body?.authenticated !== true || !u || typeof u !== 'object' || Array.isArray(u) ||
+      u.id == null || u.organizationId == null ||
+      typeof u.email !== 'string' || !u.email.trim() ||
+      typeof u.organizationName !== 'string' || !u.organizationName.trim()) {
+    throw new Error('The demo account has no complete authenticated organization context. No demo records were written.');
+  }
+  optionalPositiveId(u.id, 'user');
+  optionalPositiveId(u.organizationId, 'organization');
+  return { email: u.email.trim(), userId: u.id, organizationId: u.organizationId,
+    organizationName: u.organizationName.trim() };
 }
 
 /** Throw with the response when a call did not answer one of the accepted statuses. */
@@ -83,7 +126,7 @@ export function must(res, accepted, what) {
 
 /** A step runner that prints progress and collects a manifest of what exists after the run. */
 export function makeRun(pack) {
-  const manifest = { pack, prefix: DEMO_PREFIX[pack], startedAt: new Date().toISOString(), records: {}, notes: [] };
+  const manifest = { pack, prefix: DEMO_PREFIX[pack], outcome: 'in_progress', browserQualification: 'not_executed', startedAt: new Date().toISOString(), records: {}, notes: [] };
   return {
     manifest,
     async step(title, fn) {
@@ -103,7 +146,9 @@ export function makeRun(pack) {
     note(text) {
       manifest.notes.push(text);
     },
-    write() {
+    write(outcome = 'unqualified') {
+      if (!['seeded_unqualified', 'purged', 'failed', 'unqualified'].includes(outcome)) throw new Error('Invalid demo run outcome');
+      manifest.outcome = outcome;
       const dir = path.join(MANIFEST_ROOT, pack);
       fs.mkdirSync(dir, { recursive: true });
       manifest.finishedAt = new Date().toISOString();
