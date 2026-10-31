@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { hasKeys, useLiveData, type ListState } from '../dataConnect';
+import { type ListState } from '../dataConnect';
 import type { OnboardingWelcome } from '../onboardingWelcome';
 import { openProjectHome } from '../shellProject';
 import { applySurfaceAction } from '../surfaceActions';
@@ -46,14 +46,8 @@ export interface HomeProgram {
 
 /** How many projects Home lists before "All projects". */
 const HOME_PROJECTS = 5;
-/** How many of the person's conversations Home lists. */
-const HOME_CONVERSATIONS = 5;
-
-/** One of the person's own AnA conversations (GET /api/chat/threads). */
-interface HomeThread { id: string; title: string | null }
-
 /**
- * Your projects — the first thing on Home.
+ * Your projects — on Home, beneath the composer.
  *
  * Four honest states, no fixture (the rule HomeLeadProgram set on 2026-09-07,
  * when a constant named a programme the organization had never created):
@@ -215,55 +209,6 @@ export function HomeTasks({ onNav }: { onNav: (id: string) => void }) {
           queue={queue.data} queueError={queue.error} approvalRows={approvalRows} approvalsError={approvals.error}
           go={onNav} openTask={openTask} />
       </div>
-    </section>
-  );
-}
-
-/**
- * Your recent conversations, newest first. The server lists the caller's own
- * (server/routes/chat/threads.ts, the global recents branch, which had no
- * client caller). A reply without `threads` is a failed read, never an empty
- * list. Each row reopens its thread the way a project's list does.
- */
-export function HomeConversations({ onNav }: { onNav: (id: string) => void }) {
-  const read = useLiveData<{ threads: HomeThread[] }>(
-    `/api/chat/threads?limit=${HOME_CONVERSATIONS}`,
-    [],
-    hasKeys<{ threads: HomeThread[] }>('threads'),
-  );
-  const threads = read.data?.threads ?? [];
-  return (
-    <section className="home-sec" aria-labelledby="home-convos-h">
-      <h2 id="home-convos-h" className="home-sec-h">Recent conversations</h2>
-      {read.loading ? (
-        <div role="status" className="home-note">Loading your conversations…</div>
-      ) : read.error ? (
-        <div role="alert" className="home-note" data-tone="error">
-          <span className="ico">{I.alertTriangle}</span>
-          Couldn&rsquo;t load your conversations. This is a failed read, not an empty list.
-        </div>
-      ) : threads.length === 0 ? (
-        <div className="home-note">No conversations yet. Ask AnA above, and the conversation is kept here.</div>
-      ) : (
-        <ul className="home-list" data-testid="home-conversations">
-          {threads.slice(0, HOME_CONVERSATIONS).map((t) => (
-            <li key={t.id}>
-              <button
-                type="button"
-                className="home-row"
-                title="Resume this conversation"
-                onClick={() => {
-                  window.C2C_CONVO = { id: t.id };
-                  onNav('conversation-thread');
-                }}
-              >
-                <span className="home-row-t">{(t.title || 'Untitled conversation').slice(0, 120)}</span>
-                <span className="home-row-go" aria-hidden="true">{I.right}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   );
 }
