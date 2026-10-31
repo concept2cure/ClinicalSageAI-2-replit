@@ -133,7 +133,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'labeling', label: 'Labeling', description: 'The labeling workstream (documents, symbols, translations).', scope: 'project', group: 'module' },
   { id: 'risk', label: 'Risk Management', description: 'The risk workstream (register, matrix, controls).', scope: 'project', group: 'module' },
   { id: 'shadow-review', label: 'Shadow review', description: 'The simulated-reviewer surface — predicts Refuse-to-File / Complete-Response risk under a chosen regulator lens (FDA, EMA, PMDA, MDR/IVDR notified body) before filing.', scope: 'project', group: 'module' },
-  { id: 'tasking', label: 'Tasks', description: 'The task board / list / kanban.', scope: 'project', group: 'module' },
+  { id: 'tasking', label: 'Tasks', description: 'The task board / list / kanban.', scope: 'global', group: 'module' },
   { id: 'submission-gateway', label: 'Submission Gateway', description: 'The submission gateway (transmittals, validation).', scope: 'project', group: 'module' },
   // A launch-catalog Submission Center screen that no target reached, so AnA
   // could not get to it at all; its compile controls are wave 7 actions.
@@ -161,7 +161,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
       ],
     }],
   },
-  { id: 'quality', label: 'Quality', description: 'The quality management surface (SOP register, controlled documents).', scope: 'project', group: 'module' },
+  { id: 'quality', label: 'Quality', description: 'The quality management surface (SOP register, controlled documents).', scope: 'global', group: 'module' },
   {
     id: 'authoring', label: 'Authoring', description: 'The unified document authoring editor.', scope: 'project', group: 'module',
     params: [{ name: 'authoringDocType', required: false, description: 'Document type to author (drives the editor template).' }],

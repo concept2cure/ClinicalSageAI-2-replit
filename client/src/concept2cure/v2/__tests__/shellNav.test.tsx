@@ -122,7 +122,8 @@ function destinations(scroll: HTMLElement, onNav: ReturnType<typeof vi.fn>): str
   return onNav.mock.calls.map((c) => c[0] as string);
 }
 
-const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault'];
+// Submission Center is back on the rail: the founder looked for it there in a client demo (2026-10-31).
+const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'Submission Center'];
 const WORK_AREAS = ['CMC / Module 3', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
 
 describe('the rail lists the places, then the work areas', () => {
@@ -138,10 +139,10 @@ describe('the rail lists the places, then the work areas', () => {
     expect(Array.from(group.querySelectorAll('button .lbl')).map((l) => l.textContent)).toEqual(WORK_AREAS);
   });
 
-  it('the feature catalog, Submission Center, Conversation and a second task entry are not on the rail', async () => {
+  it('the feature catalog, Conversation and a second task entry are not on the rail', async () => {
     const { scroll } = await mountRail();
     const labels = Array.from(scroll.querySelectorAll('button .lbl')).map((l) => l.textContent);
-    for (const gone of ['Workflows', 'Plan & features', 'Subscription & features', 'Submission Center', 'Conversation', 'My work', 'Tasking']) {
+    for (const gone of ['Workflows', 'Plan & features', 'Subscription & features', 'Conversation', 'My work', 'Tasking']) {
       expect(labels, gone).not.toContain(gone);
     }
   });
