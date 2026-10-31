@@ -50,6 +50,8 @@
    vertically as the single composer was. */
 .c2c-v2 .landing.home-start{align-items:flex-start;padding-top:max(40px,22vh);}
 .c2c-v2 .home-start .landing-center{align-items:stretch;gap:28px;max-width:680px;}
+/* The composer's section on Home: full column width, as Claude's composer. */
+.c2c-v2 .home-start .home-ask{width:100%;}
 .c2c-v2 .home-start .landing-greet{margin-bottom:0;flex-wrap:nowrap;justify-content:center;}
 .c2c-v2 .home-start .landing-greet h1{font-family:var(--font-serif,Georgia,serif);font-size:32px;font-weight:400;letter-spacing:-.01em;flex:0 1 auto;text-align:left;overflow-wrap:anywhere;}
 .c2c-v2 .home-start .landing-greet .landing-segctx-cat{margin-left:auto;}
