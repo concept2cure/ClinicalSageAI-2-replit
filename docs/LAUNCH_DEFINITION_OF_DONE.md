@@ -1398,3 +1398,21 @@ whole MDX namespace or merge clinical-ops/study/deviation stores.
 Contract `docs/design/RBM_NAVIGATION_PROJECT_SETUP_2026-10-30.md`; engineering
 and publication evidence `docs/evidence/D2-RBM-NAVIGATION/2026-10-30/`.
 Hosted deployment, clinical validation and agency acceptance need their own proof.
+
+### P-77 — Biostatistics is a work area on the rail
+
+Founder, 2026-10-31, after a client demo: "My cmc, biostatistics, tasking, projects is
+all gone or utter trash now." Both biostatistics screens existed — `biostatistics`
+(the project's study designs, sized by the deterministic engine, and the governed
+statistical documents it writes) and `biostat-workbench` (29 design calculators and
+the reviewer-risk assessment) — and neither was on the rail or in the catalog, so a
+person could reach them only through ⌘K. The founder's model already named
+Biostatistics a work area to join the rail once in the catalog (the rail decision
+above). It is the ninth launch app: surfaces only (`modules: []`), so the
+professional-tier band and explicit grants keep deciding who holds it, as for CMC
+(P-28) and risk-based monitoring (P-76). The rail's *Work areas* are now CMC /
+Module 3, Risk-based monitoring, Biostatistics, Quality, Reporting & analytics; the
+entry opens `biostatistics`, which loads the open project's own study design and
+links to the calculators. The workbench declares the CLSI engines it calls
+(`/api/diagnostics-performance`), and AnA's `assess_defensibility` is in scope.
+Evidence `docs/evidence/DEMO-RECOVERY/2026-10-31-work-areas/`.

@@ -858,7 +858,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'sigma',
     group: 'clinical',
     uiKit: null,
-    apiPrefixes: ['/api/statistical-defensibility', '/api/biostat'],
+    // The diagnostic-accuracy calculators (biostatCalculatorsIvd.ts) are served by the CLSI engines.
+    apiPrefixes: ['/api/statistical-defensibility', '/api/biostat', '/api/diagnostics-performance'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

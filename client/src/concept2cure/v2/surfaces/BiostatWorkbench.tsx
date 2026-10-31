@@ -688,7 +688,14 @@ export function BiostatWorkbench(props: SurfaceViewProps) {
   return (
     <div className="cm-body">
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Biostatistics workbench</span><span className="s">Reviewer-risk assessment + {CALCULATORS.length} design engines</span></div>
+        <div className="pj-card-h">
+          <span className="t">Biostatistics workbench</span><span className="s">Reviewer-risk assessment + {CALCULATORS.length} design engines</span>
+          {props.onNav && (
+            <button type="button" className="btn ghost small" style={{ marginLeft: 'auto' }} onClick={() => props.onNav?.('biostatistics')}>
+              Your study designs and documents
+            </button>
+          )}
+        </div>
         <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--text-300,#6b6963)' }}>
           The design calculators below run on the server’s statistical engine — deterministic, provenance-stamped, and reference-tested against published tables and closed forms. Nothing is computed in the browser. The defensibility assessment runs on the same engine: it computes the design from the inputs below and judges what it computed.
         </div>

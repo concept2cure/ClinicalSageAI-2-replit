@@ -124,7 +124,8 @@ function destinations(scroll: HTMLElement, onNav: ReturnType<typeof vi.fn>): str
 
 // Submission Center is back on the rail: the founder looked for it there in a client demo (2026-10-31).
 const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'Submission Center'];
-const WORK_AREAS = ['CMC / Module 3', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
+// Biostatistics joined the work areas when it joined the catalog (P-77, 2026-10-31).
+const WORK_AREAS = ['CMC / Module 3', 'Risk-based monitoring', 'Biostatistics', 'Quality', 'Reporting & analytics'];
 
 describe('the rail lists the places, then the work areas', () => {
   it('exactly the places, then the work areas, in order', async () => {

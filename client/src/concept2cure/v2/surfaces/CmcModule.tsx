@@ -1554,7 +1554,12 @@ function byTimePoint(a: StabilityResult, b: StabilityResult): number {
 
 function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   const projectId = cmcProjectUuid();
-  const live = useLiveRows<StabilityStudyApiRow>('/api/cmc/stability-studies');
+  /* With a project open the register reads that project's studies (and any
+     not yet filed to a project), as Specifications and Batch records do
+     (2026-10-31: LMN-201's Stability tab listed C2C-101's studies). */
+  const live = useLiveRows<StabilityStudyApiRow>(
+    projectId ? '/api/cmc/stability-studies?projectId=' + encodeURIComponent(projectId) : '/api/cmc/stability-studies',
+  );
   const [rows, setRows] = useState<StabilityStudyApiRow[]>([]);
   const seededRef = useRef<StabilityStudyApiRow[] | null>(null);
   useEffect(() => {
@@ -1868,17 +1873,14 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Stability register</span>
-          {/* The register table carries no project column — it is the
-              ORGANIZATION's study register by design, while §3.2.S.7/P.8
-              compose from the project-scoped canonical layer the write-through
-              feeds. Say which scope this list is, so this tab and the build
-              tab cannot appear to disagree about what "this project's
-              stability" contains. */}
+          {/* Say which scope this list is, so this tab and the build tab
+              cannot appear to disagree about what "this project's stability"
+              contains: §3.2.S.7/P.8 compose from the project-scoped layer. */}
           <span className="s">
-            {rows.length} studies — ICH Q1A(R2) · organization-wide register
+            {rows.length} {rows.length === 1 ? 'study' : 'studies'} — ICH Q1A(R2)
             {projectId
-              ? ' — new results are linked to the open project'
-              : ' — open a project to link new results to its Module 3'}
+              ? ' · this project, and any not yet filed to a project'
+              : ' · every project — open a project to link new results to its Module 3'}
           </span>
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>

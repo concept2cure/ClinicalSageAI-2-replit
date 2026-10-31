@@ -84,6 +84,31 @@ export async function resolveClientWorkspaceId(req: Request, executor: RequestSq
   throw new Error('Client workspace context required');
 }
 
+/** Whether the request names a client workspace (the `x-client-id` claim). */
+function claimsClientWorkspace(req: Request): boolean {
+  const claimed = (req.tenantContext as Record<string, unknown> | undefined)?.clientWorkspaceId;
+  return claimed != null && claimed !== '';
+}
+
+/**
+ * The client workspace a NAMED project is admitted in: the one the request
+ * claims, or else the project's own. The organisation's first workspace, the
+ * default for a request that names no project, made every project of a second
+ * client "not found" here (2026-10-31: LMN-201, under its own client, opened
+ * its home and answered 404 on CMC's agency questions). Access is still decided
+ * by the project's ownership and sharing, and a claimed workspace must match.
+ */
+export async function admissionWorkspaceId(req: Request, organizationId: number, projectId: number,
+  executor: RequestSqlClient = pool): Promise<number> {
+  if (claimsClientWorkspace(req)) return resolveClientWorkspaceId(req, executor);
+  const own = await executor.query(
+    'SELECT client_workspace_id FROM projects WHERE id = $1 AND organization_id = $2',
+    [projectId, organizationId],
+  );
+  const workspace = Number(own.rows[0]?.client_workspace_id);
+  return Number.isInteger(workspace) && workspace > 0 ? workspace : resolveClientWorkspaceId(req, executor);
+}
+
 export function getActorRole(req: Request): ProjectActorRole {
   const normalized = (req.userRole || 'member').toLowerCase() as ProjectActorRole;
   return normalized || 'member';
@@ -323,7 +348,6 @@ export async function verifyProjectAccess(
   const organizationId = getOrganizationId(req);
   const userId = getUserId(req);
   const actorRole = getActorRole(req);
-  const clientWorkspaceId = await resolveClientWorkspaceId(req);
   try {
     const scope = getProjectScope(projectId);
     if (!scope) {
@@ -331,7 +355,7 @@ export async function verifyProjectAccess(
     }
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId,
+      clientWorkspaceId: await admissionWorkspaceId(req, organizationId, scope.numericId),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -414,7 +438,8 @@ export async function requireProjectAdmission(req: Request, projectId: string | 
   try {
     const organizationId = getOrganizationId(req);
     const { project } = await loadProjectAccessRow({ organizationId, userId: actor.userId,
-      actorRole: actor.role as ProjectActorRole, projectId: scope.numericId, clientWorkspaceId: await resolveClientWorkspaceId(req) });
+      actorRole: actor.role as ProjectActorRole, projectId: scope.numericId,
+      clientWorkspaceId: await admissionWorkspaceId(req, organizationId, scope.numericId) });
     if (!project) throw new ProjectAdmissionRefusal(404, 'PROJECT_NOT_FOUND', 'Project not found.');
     if (forWrite === true) {
       const sharing = await loadProjectSharingState(project.id, organizationId, project);
@@ -462,7 +487,8 @@ async function pinnedWorkspace(req: Request, q: RequestSqlClient, project: Admit
     throw new ProjectAdmissionRefusal(409, 'PROJECT_SCOPE_MISMATCH', 'The tracking record does not match the project you have open. Nothing was changed.');
   }
   const claimed = (req.tenantContext as Record<string, unknown> | undefined)?.clientWorkspaceId;
-  const workspace = current ? current.clientWorkspaceId : await resolveClientWorkspaceId(req, q);
+  const workspace = current ? current.clientWorkspaceId
+    : await admissionWorkspaceId(req, Number(project.organizationId), project.id, q);
   if (!workspace || project.clientWorkspaceId !== workspace || (current && claimed != null && Number(claimed) !== workspace)) {
     throw new ProjectAdmissionRefusal(403, 'PROJECT_WORKSPACE_PERMISSION_DENIED', 'The current client workspace does not match this project.');
   }

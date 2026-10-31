@@ -32,7 +32,7 @@ import {
   sendError,
   sendSuccess,
 } from './shared';
-import { getActorRole, getProjectScope, loadProjectAccessRow, normalizeProjectSettings, projectAdmissionMiddleware, resolveClientWorkspaceId, verifyProjectAccess } from './project-access';
+import { admissionWorkspaceId, getActorRole, getProjectScope, loadProjectAccessRow, normalizeProjectSettings, projectAdmissionMiddleware, verifyProjectAccess } from './project-access';
 
 const logger = createScopedLogger('concept2cure-project-knowledge');
 // People are named through public.actor_name, not a join on users: since users
@@ -72,7 +72,7 @@ router.get('/projects/:projectId/knowledge', async (req: Request, res: Response)
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: await resolveClientWorkspaceId(req),
+      clientWorkspaceId: await admissionWorkspaceId(req, organizationId, scope.numericId),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -253,10 +253,10 @@ router.get('/projects/:projectId/linked', async (req: Request, res: Response) =>
     // A retained relationship is not a read grant on its other project.
     // Re-evaluate canonical sharing now, including after a grant is revoked.
     const visibleRows = [];
-    const clientWorkspaceId = await resolveClientWorkspaceId(req);
     for (const row of rows) {
       const projectId = parseIntegerProjectId(row.other_id);
       if (projectId === null) continue;
+      const clientWorkspaceId = await admissionWorkspaceId(req, organizationId, projectId);
       const access = await loadProjectAccessRow({organizationId,clientWorkspaceId,projectId,
         userId:getUserId(req),actorRole:getActorRole(req)});
       if (access.project) visibleRows.push(row);
@@ -358,7 +358,7 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: await resolveClientWorkspaceId(req),
+      clientWorkspaceId: await admissionWorkspaceId(req, organizationId, scope.numericId),
       projectId: scope.numericId,
       userId,
       actorRole,

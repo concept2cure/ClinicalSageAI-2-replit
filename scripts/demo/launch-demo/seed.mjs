@@ -33,7 +33,7 @@ const opt = (name, dflt) => {
 };
 const flag = (name) => args.includes(`--${name}`);
 
-const PACKS = ['biotech', 'mdx'];
+const PACKS = ['biotech', 'mdx', 'lumen'];
 const chosen = opt('pack', 'all');
 const list = chosen === 'all' ? PACKS : chosen.split(',');
 if (list.length === 0 || list.some(p => !PACKS.includes(p)) || new Set(list).size !== list.length) {

@@ -250,6 +250,19 @@ afterEach(() => {
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
 });
 
+describe('Biostatistics — a preset is a worked example, not the person\'s study', () => {
+  /* 2026-10-31: with no study design recorded, the screen called the oncology
+     preset "your superiority design" on a psoriasis project. */
+  it('says so until a design is loaded or an input is changed', async () => {
+    mount();
+    await engineAnswered();
+    expect(await screen.findByText(/Worked example — Pivotal OS \(survival\), not your study/)).toBeTruthy();
+    expect(screen.queryByText(/is ready to review/i)).toBeNull();
+    fireEvent.change(screen.getByLabelText(/^Alpha$/), { target: { value: '0.04' } });
+    expect(await screen.findByText(/Your sample size rationale is ready to review/i)).toBeTruthy();
+  });
+});
+
 describe('Biostatistics — the statistics come from the server engine', () => {
   it('exports no in-browser statistics engine at all', () => {
     expect(

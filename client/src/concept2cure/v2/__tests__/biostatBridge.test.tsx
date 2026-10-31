@@ -213,13 +213,14 @@ describe('Biostatistics — study design bridge', () => {
     expect(listCall![1]).toContain(encodeURIComponent(PROGRAM.id));
   });
 
-  it('picking a design seeds the engine from the server adapter, not from a preset', async () => {
+  it('with a project open, its first design loads on arrival, seeded from the server adapter, not from a preset', async () => {
+    /* 2026-10-31: the screen opened on the oncology preset and called it "your
+       superiority design" while the project's own design sat unloaded in the list. */
     route();
     mount();
-    await waitFor(() => expect(designRow('BX-204 pivotal in T2D')).toBeTruthy());
-    expect(alphaField().value).toBe('0.05'); // the survival preset
-    fireEvent.click(designRow('BX-204 pivotal in T2D'));
     await waitFor(() => expect(alphaField().value).toBe('0.04'));
+    expect(apiRequest.mock.calls.some((c) => c[1] === '/api/biostat-bridge/designs/STUDY-1/assessment')).toBe(true);
+    expect(screen.getByTitle('Load "BX-204 pivotal in T2D" into the engine').getAttribute('aria-pressed')).toBe('true');
     // The assessment panel shows the SERVER's sizing, provenance-stamped.
     expect(await screen.findByText('526')).toBeTruthy();
     expect(screen.getByText(/c2c-stats 1\.0\.0/)).toBeTruthy();

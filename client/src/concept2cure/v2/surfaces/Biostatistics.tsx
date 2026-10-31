@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
-import { connected, useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
@@ -381,9 +381,13 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const handoff = useAuthoringHandoff();
   const saveToAuthoring = handoff.save;
   const ask = onAsk;
-  const live = connected();
   const [preset, setPreset] = useState('survival');
   const [input, setInput] = useState<EngineInput>(BS_PRESETS.survival.input);
+  /* A preset is a worked example, not the person's study. The answer lead says
+     "your design" only for a loaded study design or inputs the person changed
+     (2026-10-31: it called the oncology example "your superiority design" on a
+     psoriasis project with no design recorded). */
+  const [edited, setEdited] = useState(false);
   const [docType, setDocType] = useState('sample_size_rationale');
   const [toast, fireToast] = useToast();
 
@@ -401,6 +405,15 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const [selectedStudyId, setSelectedStudyId] = useState<string | null>(() => consumeNavParams('biostatistics')?.studyId ?? null);
   const bridge = useDesignAssessment(selectedStudyId);
   const loadedDesign = bridge.assessment;
+  /* With a project open, its own study design is what the engine opens on —
+     once, and never over a choice the person made (a design, a preset or an
+     edited input). The list is already narrowed to the open project. */
+  const autoLoaded = useRef(false);
+  useEffect(() => {
+    if (autoLoaded.current || !program || selectedStudyId || designs.loading || designs.rows.length === 0) return;
+    autoLoaded.current = true;
+    setSelectedStudyId(designs.rows[0].studyId);
+  }, [program, selectedStudyId, designs.loading, designs.rows]);
   useEffect(() => {
     const seed = loadedDesign?.adapter.input;
     if (!seed) return;
@@ -408,6 +421,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
     // this surface's controls hold and what it posts back to the engine.
     setInput(seed as unknown as EngineInput);
     setPreset('design');
+    setEdited(false);
   }, [loadedDesign]);
 
   // Governed statistical documents — the ONE stored, org-scoped slice of this
@@ -421,8 +435,9 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
     ? '/api/ana-biostats/governed-documents?programId=' + encodeURIComponent(String(program.id))
     : '/api/ana-biostats/governed-documents';
   const govDocs = useLiveRows<BiostatPlan>(govDocsPath);
-  const set = (k: string, v: unknown) => setInput((s) => ({ ...s, [k]: v }));
-  const applyPreset = (k: string) => { setPreset(k); setInput(BS_PRESETS[k].input); };
+  const set = (k: string, v: unknown) => { autoLoaded.current = true; setEdited(true); setInput((s) => ({ ...s, [k]: v })); };
+  const applyPreset = (k: string) => { autoLoaded.current = true; setPreset(k); setInput(BS_PRESETS[k].input); setEdited(false); };
+  const isExample = preset !== 'design' && !edited;
 
   /* ── The design, sized by the engine ─────────────────────────────────────
      One request per settled design. `generation` is bumped on every change, so
@@ -702,22 +717,33 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const retryCompute = useCallback(() => setRetryTick((t) => t + 1), []);
 
   return (
-    <div className="bs">
+    <div className="page-inner bs">
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist — clinical {live ? '-- live' : ''}</div>
+          <div className="sp-eyebrow">Clinical statistics</div>
           <h1 className="sp-title">Biostatistics</h1>
           <p className="sp-state">Describe the study once — the statistical engine sizes and judges the design deterministically (ICH E9(R1)) and writes the governed statistical document you actually need to file. Nothing is computed in the browser.</p>
         </div>
+        {onNav && (
+          <button type="button" className="btn ghost" onClick={() => onNav('biostat-workbench')}>
+            {I.sigma} Design calculators
+          </button>
+        )}
       </div>
 
       {ready && docDef && (
         <AnswerLead
           tone={ready.judgment.overallVerdict === 'inadequate' ? 'urgent' : ready.judgment.overallVerdict === 'adequate' ? 'good' : 'calm'}
-          eyebrow={'Your ' + docDef.label.toLowerCase() + ' is ready to review'}
-          headline={<>I've drafted the <b>{docDef.label}</b> for your {ready.input.studyType.replace(/_/g, ' ')} design — <b>{n} subjects</b>, {(ready.computation.power * 100).toFixed(0)}% power, and the design reads as <b>{ready.judgment.overallVerdict}</b>.</>}
-          body={<>Everything below is written, not just calculated — the method, assumptions, and {ready.judgment.fragility.category.replace(/_/g, ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the engine re-sizes it and rewrites the document.</>}
-          reassure={ready.judgment.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it." : "It's drafted to " + (ready.regulatory?.body || input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
+          eyebrow={isExample
+            ? 'Worked example — ' + (BS_PRESETS[preset]?.label ?? 'preset') + ', not your study'
+            : 'Your ' + docDef.label.toLowerCase() + ' is ready to review'}
+          headline={isExample
+            ? <>The engine has drafted the <b>{docDef.label}</b> for a worked example — <b>{n} subjects</b>, {(ready.computation.power * 100).toFixed(0)}% power, and the design reads as <b>{ready.judgment.overallVerdict}</b>.</>
+            : <>I've drafted the <b>{docDef.label}</b> for your {ready.input.studyType.replace(/_/g, ' ')} design — <b>{n} subjects</b>, {(ready.computation.power * 100).toFixed(0)}% power, and the design reads as <b>{ready.judgment.overallVerdict}</b>.</>}
+          body={isExample
+            ? <>Choose your project's study design on the left, or change any input, and the engine sizes your design and rewrites the document.</>
+            : <>Everything below is written, not just calculated — the method, the assumptions and the fragility assessment ({ready.judgment.fragility.category.replace(/_/g, ' ')}) are already in the prose, with a provenance footer for the reviewer. Change any design input and the engine re-sizes it and rewrites the document.</>}
+          reassure={isExample ? undefined : ready.judgment.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it." : "It's drafted to " + (ready.regulatory?.body || input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
           action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: attaching ? 'Filing to the dossier…' : 'File it to the dossier', onClick: () => void attach() } }}
           secondary="Or pick a different document and adjust the design on the left."
         />

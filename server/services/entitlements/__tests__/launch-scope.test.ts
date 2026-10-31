@@ -79,8 +79,8 @@ describe('the scope list itself', () => {
     }
     expect(LAUNCH_APPS.map((app) => app.id)).not.toContain('mdx');
   });
-  it('has eight apps and every app surface is in the id set', () => {
-    expect(LAUNCH_APPS).toHaveLength(8);
+  it('has nine apps and every app surface is in the id set', () => {
+    expect(LAUNCH_APPS).toHaveLength(9);
     for (const a of LAUNCH_APPS) for (const s of a.surfaces) expect(isLaunchSurface(s)).toBe(true);
   });
   it('CMC / Module 3 is a launch app — decision P-28, 2026-10-12', () => {
@@ -474,5 +474,15 @@ describe('Submission Readiness is a Submission Center screen — founder decisio
         'submission-center', 'ectd-compile', 'gateway-transmittals', 'dispatch-readiness', 'quality', 'insights',
       ].sort(),
     );
+  });
+});
+
+describe('Biostatistics in the catalog', () => {
+  it('Biostatistics is a launch app with no module grant — founder request P-77, 2026-10-31', () => {
+    const biostatistics = LAUNCH_APPS.find((a) => a.id === 'biostatistics');
+    expect(biostatistics?.surfaces).toEqual(['biostatistics', 'biostat-workbench']);
+    expect(biostatistics?.modules).toEqual([]);
+    expect(isLaunchSurface('biostatistics')).toBe(true);
+    expect(isLaunchSurface('biostat-workbench')).toBe(true);
   });
 });

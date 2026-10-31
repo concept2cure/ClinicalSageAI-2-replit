@@ -1,0 +1,70 @@
+{
+  "pack": "lumen",
+  "prefix": "[Demo · Lumen]",
+  "outcome": "seeded_unqualified",
+  "browserQualification": "not_executed",
+  "startedAt": "2026-10-31T02:27:44.038Z",
+  "records": {
+    "target": {
+      "baseUrl": "http://127.0.0.1:5000",
+      "userId": "1",
+      "organizationId": "1",
+      "clientWorkspaceId": null
+    },
+    "preflight": {
+      "session": "verified",
+      "projects": "readable",
+      "tasking": "readable",
+      "taskCount": 21,
+      "browser": "not_executed"
+    },
+    "tally": {
+      "created": {},
+      "found": {
+        "client-workspace": 1,
+        "program": 4,
+        "vault-document": 5,
+        "task": 10,
+        "study-design": 1,
+        "cmc-spec": 5,
+        "cmc-stability": 2,
+        "cmc-batch": 3
+      }
+    },
+    "client": {
+      "name": "Lumen Bioscience (demo — not affiliated)",
+      "slug": "lumen-bioscience-demo",
+      "id": 3
+    },
+    "projects": {
+      "LMN-201": {
+        "code": "LMN-201",
+        "title": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+        "id": "94223e96-6cd8-4f3e-80c3-85745b1434b5"
+      },
+      "LMN-801": {
+        "code": "LMN-801",
+        "title": "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+        "id": "6cb0f780-0d47-4d38-8188-1b2a77cdb111"
+      },
+      "LMN-301": {
+        "code": "LMN-301",
+        "title": "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)",
+        "id": "8def3781-5390-4bc6-a344-85a147aebb9f"
+      },
+      "LMN-401": {
+        "code": "LMN-401",
+        "title": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)",
+        "id": "049c6723-12cd-471d-b00d-8135b1636d02"
+      }
+    },
+    "summary": {
+      "created": 0,
+      "found": 31
+    }
+  },
+  "notes": [
+    "Lumen Bioscience demonstration built from public information (data/seeds/lumen-demo). Not affiliated with Lumen Bioscience, Inc.; every specification, stability result, batch, planning assumption and task is illustrative."
+  ],
+  "finishedAt": "2026-10-31T02:27:49.558Z"
+}

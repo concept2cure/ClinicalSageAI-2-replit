@@ -34,6 +34,8 @@ import { ensureProtocol } from './biotech-protocol.mjs';
 import { ensureQms } from './biotech-qms.mjs';
 import { NOT_EXECUTED_NO_SIGNER, asArray, makeTally } from './biotech-shared.mjs';
 import { ensureSubmission } from './biotech-submission.mjs';
+import { BIOTECH_CMC, BIOTECH_STUDY_DESIGN, BIOTECH_TASKS } from './biotech-work-content.mjs';
+import { ensureCmc, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
 
 /* ───────────────────────── 1. Projects ───────────────────────── */
 
@@ -255,9 +257,12 @@ export async function seed(ctx) {
   const program = await ensureProgram(c);
   const vaultDocs = await ensureVault(c, program);
   await ensureAuthoring(c, program);
-  await ensureProtocol(c, program);
+  const protocol = await ensureProtocol(c, program);
+  await ensureStudyDesign(c, program, protocol.id, BIOTECH_STUDY_DESIGN);
   await ensureSubmission(c, program, vaultDocs);
   await ensureQms(c, program);
+  await ensureCmc(c, program, BIOTECH_CMC, 'C2C-101');
+  await ensureTasks(c, program, BIOTECH_TASKS, 'C2C-101');
   await run.step('Audit trail: ledger after the run', () => auditAfterRun(c, before, startedAt));
 
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);

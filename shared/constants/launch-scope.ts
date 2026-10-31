@@ -231,6 +231,18 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     modules: [],
   },
   {
+    id: 'biostatistics',
+    label: 'Biostatistics',
+    // Founder, 2026-10-31 (P-77): "My cmc, biostatistics, tasking, projects is
+    // all gone" — the screens existed and the rail had no entry. The founder's
+    // model already named Biostatistics a work area to join the rail once in the
+    // catalog (P-36's rail decision). Surfaces only, as for risk-based
+    // monitoring (P-76): professional-tier and explicit grants keep deciding who
+    // holds it, and no module is granted to a new organisation.
+    surfaces: ['biostatistics', 'biostat-workbench'],
+    modules: [],
+  },
+  {
     id: 'reporting',
     label: 'Reporting & analytics',
     // Founder decision, 2026-09-26: Reporting and analytics is a central service

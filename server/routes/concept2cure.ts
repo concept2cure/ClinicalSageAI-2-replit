@@ -53,6 +53,7 @@ import {
   loadProjectSharingState,
   normalizeProjectSettings,
   resolveClientWorkspaceId,
+  admissionWorkspaceId,
   requireProjectAdmission,
   ProjectAdmissionRefusal,
 } from './c2c/project-access';
@@ -910,14 +911,13 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const actorRole = getActorRole(req);
-    const clientWorkspaceId = await resolveClientWorkspaceId(req);
     const scope = getProjectScope(req.params.id);
     if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId,
+      clientWorkspaceId: await admissionWorkspaceId(req, organizationId, scope.numericId),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -1381,7 +1381,7 @@ router.delete('/projects/:id', projectRecordAdmission(true), async (req: Request
     // First verify access and capture state for audit
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: await resolveClientWorkspaceId(req),
+      clientWorkspaceId: await admissionWorkspaceId(req, organizationId, scope.numericId),
       projectId: scope.numericId,
       userId,
       actorRole,

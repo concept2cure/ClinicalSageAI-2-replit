@@ -172,6 +172,7 @@ export const RAIL_CORE = [
   { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
   { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker', group: 'work-areas' as const },
   { id: 'rbm', label: 'Risk-based monitoring', icon: 'activity', group: 'work-areas' as const },
+  { id: 'biostatistics', label: 'Biostatistics', icon: 'sigma', group: 'work-areas' as const },
   { id: 'quality', label: 'Quality', icon: 'shieldCheck', group: 'work-areas' as const },
   { id: 'insights', label: 'Reporting & analytics', icon: 'barChart', group: 'work-areas' as const },
 ];
