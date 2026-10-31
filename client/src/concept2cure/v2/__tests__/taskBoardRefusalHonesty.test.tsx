@@ -276,10 +276,34 @@ describe('new task — a refusal is not a "network error"', () => {
     fireEvent.click(await screen.findByRole('button', { name: /New task/i }));
     const dialog = await screen.findByRole('dialog', { name: /New task/i });
     fireEvent.change(within(dialog).getByLabelText(/^Title/), { target: { value: 'Draft 2.7.3' } });
+    fireEvent.change(await within(dialog).findByLabelText('Project'), { target: { value: '3' } });
     fireEvent.click(within(dialog).getByRole('button', { name: /Create task/ }));
 
     await waitFor(() => expect(dialog.textContent).toMatch(/Insufficient permissions/));
     expect(dialog.textContent).not.toMatch(/Network error/);
+  });
+
+  // "When the server answers 400 with a message, show that message."
+  it('shows a 400’s sentence, and says what did not happen when the 400 carries only field codes', async () => {
+    writes = async () => {
+      throw new ApiRequestError('The assignee is not a member of this organization. Nothing was created.', 400,
+        { success: false, code: 'ASSIGNEE_NOT_MEMBER', error: 'The assignee is not a member of this organization. Nothing was created.' });
+    };
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: /New task/i }));
+    const dialog = await screen.findByRole('dialog', { name: /New task/i });
+    fireEvent.change(within(dialog).getByLabelText(/^Title/), { target: { value: 'Draft 2.7.3' } });
+    fireEvent.change(await within(dialog).findByLabelText('Project'), { target: { value: '3' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: /Create task/ }));
+    await waitFor(() => expect(dialog.textContent).toMatch(/The assignee is not a member of this organization\. Nothing was created\./));
+
+    writes = async () => {
+      throw new ApiRequestError("Couldn't complete that request. Try again.", 400,
+        { success: false, error: [{ code: 'invalid_enum_value', path: ['status'], message: 'Invalid enum value' }] });
+    };
+    fireEvent.click(within(dialog).getByRole('button', { name: /Create task/ }));
+    await waitFor(() => expect(dialog.textContent).toMatch(/The task was not created: its details were not accepted/));
+    expect(dialog.textContent).not.toMatch(/invalid_enum_value|Couldn't complete that request/);
   });
 });
 

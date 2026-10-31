@@ -51,6 +51,12 @@ async function openLauncher() {
   await waitFor(() => expect(screen.getByText(/Assign to/)).toBeTruthy());
 }
 
+/** A task is filed under a project: no project is open here, so one is chosen. */
+async function chooseProject() {
+  await screen.findByRole('option', { name: /BX-204/ });
+  fireEvent.change(screen.getByLabelText('Project'), { target: { value: '41' } });
+}
+
 afterEach(() => cleanup());
 beforeEach(() => {
   apiRequest.mockReset();
@@ -88,6 +94,7 @@ describe('CollabLauncher — auto-assign says what is true before the write', ()
     fireEvent.change(screen.getByPlaceholderText(/^e\.g\. Review/), {
       target: { value: 'Resolve the open Module 3 comments' },
     });
+    await chooseProject();
     fireEvent.click(screen.getByRole('button', { name: /Create task/i }));
 
     await waitFor(() =>
@@ -97,9 +104,15 @@ describe('CollabLauncher — auto-assign says what is true before the write', ()
     // The whole point of "auto": the client sends no assignee at all.
     expect('assigneeId' in body).toBe(false);
 
-    // And the confirmation names the person the SERVER returned — not a guess.
-    await waitFor(() => expect(screen.getByText(/TSK-9001/)).toBeTruthy());
-    expect(document.body.textContent).toMatch(/Priya Raman/);
+    // And the confirmation names the person the SERVER returned — not a guess —
+    // and not the server's task id, which means nothing to the reader.
+    const toast = await waitFor(() => {
+      const el = document.querySelector('.cl-toast');
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
+    expect(toast.textContent).toMatch(/assigned to Priya Raman/);
+    expect(toast.textContent).not.toMatch(/TSK-9001/);
   });
 
   it('a manually picked assignee is sent, and no auto note is shown', async () => {
@@ -108,6 +121,7 @@ describe('CollabLauncher — auto-assign says what is true before the write', ()
     expect(note()).toBeNull();
 
     fireEvent.change(screen.getByPlaceholderText(/^e\.g\. Review/), { target: { value: 'Draft the response' } });
+    await chooseProject();
     fireEvent.click(screen.getByRole('button', { name: /Create task/i }));
     await waitFor(() =>
       expect(apiRequest.mock.calls.some((c) => c[1] === '/api/tasks/tasks')).toBe(true),

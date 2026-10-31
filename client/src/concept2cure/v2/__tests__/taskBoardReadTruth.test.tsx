@@ -60,7 +60,7 @@ afterEach(() => {
   __resetSurfaceActionBus();
   clearAuthToken();
   clearNavParams();
-  Reflect.deleteProperty(window, 'C2C_TASK_FILTER');
+  Reflect.deleteProperty(window, 'C2C_PROJECT');
   window.history.replaceState(null, '', '/');
 });
 
@@ -210,11 +210,14 @@ describe('project read failure and complete filter validation', () => {
     await expectRows();
   });
 
-  it('can clear to all projects after the project-options read fails', async () => {
-    Object.assign(window, { C2C_TASK_FILTER: '31' });
+  // The board used to start filtered from window.C2C_TASK_FILTER, which nothing
+  // in the product sets; it starts on the open project now, and only when the
+  // project list can say which of its projects that is.
+  it('does not guess the open project when the project list cannot be read, and can clear to all projects', async () => {
+    Object.assign(window, { C2C_PROJECT: { id: '31313131-3131-4131-8131-313131313131' } });
     readProjects = async () => { throw new Error('Project service unavailable'); };
-    await mount(); await screen.findByRole('button', { name: `Open ${TASKS[0].title}` });
-    expect(screen.queryByRole('button', { name: `Open ${TASKS[1].title}` })).toBeNull();
+    await mount(); await expectRows();
+    expect((screen.getByRole('combobox', { name: 'Filter by project' }) as HTMLSelectElement).value).toBe('all');
     expect(apply('tasking.filter', { project: 'all' }).status).toBe('applied');
     await expectRows();
     expect((screen.getByRole('combobox', { name: 'Filter by project' }) as HTMLSelectElement).value).toBe('all');

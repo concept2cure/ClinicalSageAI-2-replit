@@ -44,6 +44,8 @@ async function createProgram({ api, run, tally, clientWorkspaceId }) {
     name: T(PROGRAM_NAME),
     productName: PRODUCT_NAME,
     programType: 'ind',
+    // The filing the project prepares: Plan reads its lifecycle guide from it.
+    submissionTypeId: 'us_ind',
     // C2C-101 is the fictional monoclonal antibody defined by this pack.
     // IND alone cannot determine product class in the canonical intake.
     productType: 'biologic',

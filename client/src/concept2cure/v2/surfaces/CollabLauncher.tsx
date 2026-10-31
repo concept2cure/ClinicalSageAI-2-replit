@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { liveGetOrNull } from '../dataConnect';
 import { useDialog } from '../useDialog';
@@ -53,7 +53,8 @@ interface QuickTaskForm {
   taskType: string;
   priority: string;
   assignee: string;
-  dueDays: number;
+  /** A date input's `yyyy-mm-dd`; '' for no due date. */
+  due: string;
   criticalPath: boolean;
   regulatoryImpact: boolean;
   approvalRequired: boolean;
@@ -162,7 +163,11 @@ let projects: ProjectEntry[] = [];
 let dirState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
 
 interface AssigneeRow { id: string; name: string; label?: string }
-interface ProjectRow { id: number | string; name?: string; code?: string; projectType?: string; status?: string }
+interface ProjectRow {
+  id: number | string; name?: string; code?: string; projectType?: string; status?: string;
+  /** projects.regulatory_program_id: the open project's UUID this row is anchored to. */
+  regulatoryProgramId?: string | null;
+}
 
 /** Load the org directory once per session. Re-entrant-safe; emits on settle. */
 async function loadDirectory(): Promise<void> {
@@ -194,12 +199,58 @@ async function loadDirectory(): Promise<void> {
     .filter((p) => p && p.id != null)
     .map((p) => ({
       id: String(p.id),
-      label: p.code ? `${p.name || p.code} — ${p.code}` : (p.name || String(p.id)),
+      // The code only when the name does not already carry it ("ONC-221 — NDA — ONC-221").
+      label: p.code && !(p.name || '').includes(p.code) ? `${p.name || p.code} — ${p.code}` : (p.name || p.code || 'Untitled project'),
       type: p.projectType || '',
+      programId: typeof p.regulatoryProgramId === 'string' ? p.regulatoryProgramId : null,
     }));
 
   dirState = people.error || progs.error ? 'error' : 'ready';
   emit();
+}
+
+/**
+ * The task project (a `projects.id`, as a string) that the open project is, or
+ * '' when it is none of the listed ones.
+ *
+ * The shell names the open project by its `regulatory_programs` UUID
+ * (`window.C2C_PROJECT.id`, shellProject.ts); a task belongs to the integer
+ * `projects` row anchored to it by `projects.regulatory_program_id`. The header
+ * Task form was seeded with the UUID itself, so it showed whichever project the
+ * select happened to render first and saved the task with none (2026-10-31
+ * client demo). An id that already is a listed `projects.id` is taken as it is.
+ * Nothing is guessed: no match, or two rows on one program, is '' and the form
+ * asks. Shared with the task board, which seeds its project filter here.
+ */
+export function taskProjectFor(
+  rows: ReadonlyArray<{ id: string | number; programId?: string | null }>,
+  open: unknown,
+): string {
+  const id = typeof open === 'number' && Number.isFinite(open) ? String(open) : typeof open === 'string' ? open.trim() : '';
+  if (!id) return '';
+  const listed = rows.find((r) => String(r.id) === id);
+  if (listed) return String(listed.id);
+  const anchored = rows.filter((r) => typeof r.programId === 'string' && r.programId.toLowerCase() === id.toLowerCase());
+  return anchored.length === 1 ? String(anchored[0].id) : '';
+}
+
+/** Fired after a task is saved from the header Task form, so an open task board re-reads. */
+export const TASK_SAVED_EVENT = 'c2c:task-saved';
+
+/** `yyyy-mm-dd`, `days` from today, in the reader's own calendar: a date input's value. */
+export function dateInputValue(days: number, from: Date = new Date()): string {
+  const d = new Date(from.getFullYear(), from.getMonth(), from.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** A date input's `yyyy-mm-dd` as the end of that day in the reader's timezone,
+ *  as ISO; undefined when empty or not a calendar date. A task due on the 7th
+ *  is not overdue until the 7th is over. */
+export function dueDateIso(value: string): string | undefined {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!m) return undefined;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 23, 59, 59);
+  return d.getMonth() === Number(m[2]) - 1 ? d.toISOString() : undefined;
 }
 
 export const C2C = {
@@ -366,18 +417,24 @@ function clAvatar(id: string): string {
 /* ── Quick task -- unifiedTasks intake, context pre-filled ── */
 
 function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTaskProps) {
-  // `C2C.projects` is the live org list and can legitimately be empty (a new
-  // tenant, or a failed load). The old code indexed [0] unconditionally, which
-  // only ever worked because the list was a three-entry fixture.
-  const projInit = surfaceCtx.project && surfaceCtx.project !== 'all'
-    ? surfaceCtx.project
-    : (C2C.projects[0]?.id ?? '');
+  // The open project, as the task project it is. `surfaceCtx.project` is the
+  // shell's regulatory_programs UUID, never a projects.id, so it is resolved
+  // against the loaded list (taskProjectFor) and not used as the value. With no
+  // match the form starts on "Choose a project", never on whichever row happens
+  // to be first. `C2C.projects` loads on first open, so the seed is applied
+  // again when it arrives — unless the person has already chosen.
+  const openProject = taskProjectFor(C2C.projects, surfaceCtx.project);
 
   const [f, setF] = useState<QuickTaskForm>({
-    title: '', project: projInit, moduleType: surfaceCtx.moduleType || 'Regulatory',
-    taskType: 'action', priority: 'high', assignee: 'auto', dueDays: 7,
+    title: '', project: openProject, moduleType: surfaceCtx.moduleType || 'Regulatory',
+    taskType: 'action', priority: 'high', assignee: 'auto', due: dateInputValue(7),
     criticalPath: false, regulatoryImpact: true, approvalRequired: false, note: '',
   });
+  const projectChosen = useRef(false);
+  useEffect(() => {
+    if (projectChosen.current || !openProject) return;
+    setF(p => (p.project ? p : { ...p, project: openProject }));
+  }, [openProject]);
 
   const set = <K extends keyof QuickTaskForm>(k: K, v: QuickTaskForm[K]) =>
     setF(p => ({ ...p, [k]: v }));
@@ -419,6 +476,12 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
    */
   const create = async (another: boolean) => {
     if (!f.title.trim() || saving) return;
+    // A task belongs to a project. With projects to choose from and none
+    // chosen, nothing is sent: the server would store it under no project.
+    if (C2C.projects.length > 0 && !C2C.projects.some(p => p.id === f.project)) {
+      setSaveErr('Choose the project this task belongs to. Nothing was saved.');
+      return;
+    }
     setSaving(true);
     setSaveErr('');
 
@@ -437,9 +500,8 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
       body.assigneeId = assigneeIdNum;
     }
     if (f.note.trim()) body.description = f.note.trim();
-    if (f.dueDays > 0) {
-      body.dueDate = new Date(Date.now() + f.dueDays * 86400000).toISOString();
-    }
+    const dueDate = dueDateIso(f.due);
+    if (dueDate) body.dueDate = dueDate;
     /* ── The three governance toggles were dropped on submit ─────────────────
        "Critical path", "Regulatory impact" and "Approval gate" set local state
        and never reached the wire, so a task a user explicitly marked as
@@ -490,7 +552,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
         regulatoryImpact: f.regulatoryImpact,
         approvalRequired: f.approvalRequired,
         approvalStatus: f.approvalRequired ? 'pending' : 'not_started',
-        due: f.dueDays <= 0 ? 'today' : ('in ' + f.dueDays + ' day' + (f.dueDays > 1 ? 's' : '')),
+        due: dueDate ? new Date(dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '',
         phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
         sourceEntityType: surfaceCtx.entityType,
         sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
@@ -529,7 +591,10 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
       </div>
       <div className="cl-frow">
         <div className="cl-field"><label htmlFor="cl-project">Project</label>
-          <select id="cl-project" value={f.project} onChange={e => set('project', e.target.value)}>
+          <select id="cl-project" value={f.project} onChange={e => { projectChosen.current = true; set('project', e.target.value); }}>
+            <option value="">{C2C.projects.length ? 'Choose a project'
+              : C2C.directoryState === 'loading' || C2C.directoryState === 'idle' ? 'Loading projects…'
+                : C2C.directoryState === 'error' ? 'Couldn’t load your projects' : 'No projects available'}</option>
             {C2C.projects.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
           </select>
         </div>
@@ -550,8 +615,8 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
             {CL_PRI.map(p => <option key={p} value={p}>{CL_PRI_LABEL[p] ?? p}</option>)}
           </select>
         </div>
-        <div className="cl-field"><label htmlFor="cl-due-in-days">Due in (days)</label>
-          <input id="cl-due-in-days" type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} />
+        <div className="cl-field"><label htmlFor="cl-due">Due date</label>
+          <input id="cl-due" type="date" min={dateInputValue(0)} value={f.due} onChange={e => set('due', e.target.value)} />
         </div>
       </div>
       <div className="cl-field"><label>Assign to</label>
@@ -606,7 +671,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           </button>
         </div>
       </div>
-      <div className="cl-field"><label htmlFor="cl-note-optional">Note <span className="cl-opt">-- optional</span></label>
+      <div className="cl-field"><label htmlFor="cl-note-optional">Note <span className="cl-opt">(optional)</span></label>
         <textarea id="cl-note-optional" rows={2} value={f.note} onChange={e => set('note', e.target.value)} placeholder="Add context for the assignee..." />
       </div>
       {/* The old banner here warned that this "Adds this to the in-session task
@@ -622,7 +687,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           action was ungoverned — the worst direction for a claim to be wrong in
           a Part 11 product. What remains true is only the delivery gap. */}
       <div className="cl-note">
-        <span className="ico">{I.check}</span>Saved to your org board, recorded in the Part 11 audit trail, and the assignee is notified in the app. Email delivery is not wired up yet.
+        <span className="ico">{I.check}</span>Saved to the task board, recorded in the Part 11 audit trail, and the assignee is notified in the app. Email notification is not available yet.
       </div>
       {saveErr && (
         <div className="cl-warn" role="alert">
@@ -750,8 +815,10 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         description: body.trim(),
         dueDate: new Date(Date.now() + 3 * 86400000).toISOString(),
       };
-      const projectIdNum = Number(surfaceCtx.project);
-      if (surfaceCtx.project && Number.isFinite(projectIdNum) && projectIdNum > 0) {
+      /* The open project is a program id; the board files a task under the
+         task-board project that names it (taskProjectFor), or under none. */
+      const projectIdNum = Number(taskProjectFor(C2C.projects, surfaceCtx.project));
+      if (Number.isInteger(projectIdNum) && projectIdNum > 0) {
         taskBody.projectId = projectIdNum;
       }
       if (Number.isInteger(recipientUserId) && recipientUserId > 0) {
@@ -964,7 +1031,12 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
   }, [toast]);
 
   const currentCtx = C2C.getContext();
-  const created = (t?: C2CTask) => setToast(t ? { type: 'task', t } : { type: 'msg' });
+  // Both callers report a task the server saved, so an open task board re-reads
+  // (TaskBoard listens) instead of showing it only after a reload.
+  const created = (t?: C2CTask) => {
+    setToast(t ? { type: 'task', t } : { type: 'msg' });
+    try { window.dispatchEvent(new CustomEvent(TASK_SAVED_EVENT)); } catch { /* no window */ }
+  };
 
   return (
     <>
@@ -980,17 +1052,17 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
         />
       )}
 
-      {/* toast -- confirms the draft task was captured in the in-session store,
-          NOT persisted to the org board (which reads the real endpoint). Copy
-          avoids claiming a board-persistence event that did not occur. */}
+      {/* toast -- confirms a task the server saved. It named the server's task
+          id ("TASK-1761…-3f2a"), which means nothing to the person who typed
+          the title (2026-10-31 client demo); it names the task and the
+          assignee the server chose. The 'msg' toast follows "Send & assign",
+          which saved its task too — it said "not saved to the org board yet". */}
       {toast && (
         <div className="cl-toast" role="status">
           <span className="cl-toast-ic">{I.check}</span>
-          {/* A task IS now persisted, so the toast reports the real, server-issued
-              taskId. The discuss action is still session-only and keeps saying so. */}
           {toast.type === 'task' && toast.t
-            ? <span className="cl-toast-t">Saved to the org board — <b>{toast.t.taskId}</b>{toast.t.assignee ? <> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}</> : null}.</span>
-            : <span className="cl-toast-t">Captured in this session — not saved to the org board yet.</span>}
+            ? <span className="cl-toast-t">Saved to the task board{toast.t.assignee && C2C.team[toast.t.assignee] ? <>, assigned to <b>{C2C.team[toast.t.assignee].n}</b></> : null}.</span>
+            : <span className="cl-toast-t">Message sent, and the task is saved to the task board.</span>}
           <button className="cl-toast-go" onClick={() => { onNav?.('tasks'); setToast(null); }}>Open board {I.arrowRight}</button>
         </div>
       )}

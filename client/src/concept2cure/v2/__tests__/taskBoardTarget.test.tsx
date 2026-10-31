@@ -76,14 +76,14 @@ describe('exact retained task target', () => {
     await waitFor(() => expect(reads().length).toBeGreaterThan(1));
     expect(detail()).toBeNull();
     await act(async () => pending.resolve(response([second])));
-    expect(within(await screen.findByRole('dialog', { name: 'Task detail' })).getByText('TASK-B')).toBeTruthy();
+    expect(within(await screen.findByRole('dialog', { name: 'Task detail' })).getByText(second.description)).toBeTruthy();
     expect(mocks.apiRequest.mock.calls.every(call => call[0] === 'GET')).toBe(true);
   });
 
   it('opens the requested business ID rather than another task with the same title', async () => {
     mocks.search = target(); render(view());
     const detail = await screen.findByRole('dialog', { name: 'Task detail' });
-    expect(within(detail).getByText('TASK-B')).toBeTruthy();
+    expect(within(detail).getByText('Program B')).toBeTruthy();
     expect(within(detail).getByText(second.description)).toBeTruthy();
     expect(within(detail).queryByText(first.description)).toBeNull();
     expect(mocks.apiRequest.mock.calls.every(call => call[0] === 'GET')).toBe(true);
@@ -95,7 +95,7 @@ describe('exact retained task target', () => {
     const before = reads().length;
     mocks.search = target(); mounted.rerender(view());
     const detail = await screen.findByRole('dialog', { name: 'Task detail' });
-    expect(within(detail).getByText('TASK-B')).toBeTruthy();
+    expect(within(detail).getByText(second.description)).toBeTruthy();
     expect(reads().length).toBeGreaterThan(before);
     expect((screen.getByLabelText('Filter by project') as HTMLSelectElement).value).toBe('all');
   });
@@ -156,9 +156,9 @@ describe('task targets require a fresh readable unified-store result', () => {
     readBoard = () => b.promise; navigate(mounted);
     await waitFor(() => expect(reads()).toHaveLength(3));
     await act(async () => b.resolve(response([second])));
-    expect(within(await screen.findByRole('dialog', { name: 'Task detail' })).getByText('TASK-B')).toBeTruthy();
+    expect(within(await screen.findByRole('dialog', { name: 'Task detail' })).getByText(second.description)).toBeTruthy();
     await act(async () => a.resolve(response([first])));
-    expect(within(screen.getByRole('dialog', { name: 'Task detail' })).queryByText('TASK-A')).toBeNull();
+    expect(within(screen.getByRole('dialog', { name: 'Task detail' })).queryByText(first.description)).toBeNull();
   });
 
   it.each([
@@ -166,7 +166,7 @@ describe('task targets require a fresh readable unified-store result', () => {
     { label: 'unprovisioned store', metadata: { pendingStore: true } },
   ])('refuses a target when the $label cannot support it', async ({ metadata }) => {
     meta = metadata; mocks.search = target(); render(view());
-    expect((await screen.findByRole('alert')).textContent).toMatch(/store is unavailable/);
+    expect((await screen.findByRole('alert')).textContent).toMatch(/board's own tasks could not be read/);
     expect(detail()).toBeNull();
   });
 
@@ -268,7 +268,7 @@ describe('native work owns its task screen', () => {
     navigate(mounted);
     expect((await screen.findByRole('alert')).textContent).toMatch(/task detail is open/);
     expect(within(original).getByDisplayValue('Keep this unfinished justification.')).toBeTruthy();
-    expect(within(original).getByText('TASK-A')).toBeTruthy(); expect(reads()).toHaveLength(1);
+    expect(within(original).getByText(first.description)).toBeTruthy(); expect(reads()).toHaveLength(1);
     closeDetail(); expect(detail()).toBeNull(); expect(surfaceLeaveRefusal()).toBeNull();
     await act(async () => {}); expect(detail()).toBeNull();
   });
@@ -322,7 +322,7 @@ async function workflowReady(autoAssign = false) {
   const picker = screen.getByRole('dialog', { name: 'Start workflow from template' });
   const project = await within(picker).findByLabelText('Project');
   fireEvent.change(project, { target: { value: '12' } });
-  if (!autoAssign) fireEvent.click(within(picker).getByRole('button', { name: /Workload-balanced auto-assign/ }));
+  if (!autoAssign) fireEvent.click(within(picker).getByRole('button', { name: /Auto-assign each task/ }));
   await waitFor(() => expect((within(picker).getByRole('button', { name: 'Create 1 tasks' }) as HTMLButtonElement).disabled).toBe(false));
   return within(picker).getByRole('button', { name: 'Create 1 tasks' });
 }

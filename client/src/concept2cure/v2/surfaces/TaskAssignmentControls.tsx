@@ -3,7 +3,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { taskAssignmentId, type TaskAssignmentMeta, type TaskAssignmentResult, type TaskAssignmentRoster, type TaskAssignmentScope } from '@shared/task-assignment';
 import type { TaskActorScope } from '../taskTarget';
 import { ErrorState } from '../dataConnect';
-import { autoAssignSavedTask, loadTaskAssignment, saveTaskAssignment, taskAssignmentHeaders,
+import { autoAssignSavedTask, loadTaskAssignment, saveTaskAssignment, taskAssignmentHeaders, unchangedHolder,
   type AutomaticAssignmentAnswer, type AssignmentFailure } from './taskAssignmentRequest';
 
 export interface TaskAssignmentControlsProps {
@@ -19,6 +19,10 @@ const integer = (value: unknown): number | null => {
 };
 const terminal = (status: string) => status === 'completed' || status === 'cancelled';
 const NOTE = 'Assignment records who does the work. Project access, document review assignments and electronic signing remain separate.';
+/** A current assignee the eligible list does not name. Never the account number. */
+const UNLISTED = 'Someone not on the eligible list';
+const NOT_ASSIGNED = 'The saved task was not assigned. Refresh assignment to check eligible members before retrying.';
+
 
 export function TaskAssignmentControls(props: TaskAssignmentControlsProps) {
   const actorUserId = integer(props.actorScope?.userId); const organizationId = integer(props.actorScope?.organizationId);
@@ -68,16 +72,17 @@ function AssignmentSession(props: TaskAssignmentControlsProps & { scope: TaskAss
   const showFailure = (result: AssignmentFailure) => {
     setNote({ text: result.message, warning: true }); setNeedsRead(true); setUncertain(result.kind === 'unconfirmed');
   };
-  const read = async (automatic = false) => {
-    if (sending.current || !isCurrent()) return;
+  const read = async (automatic = false): Promise<TaskAssignmentRoster | null> => {
+    if (sending.current || !isCurrent()) return null;
     const serial = ++generation.current;
     setLoading(true); setError(''); setSelected('');
     const result = await loadTaskAssignment(props.scope, isCurrent);
-    if (!isCurrent() || serial !== generation.current) return;
+    if (!isCurrent() || serial !== generation.current) return null;
     setLoading(false);
-    if (result.kind !== 'confirmed') { setRoster(null); setError(result.message); return; }
+    if (result.kind !== 'confirmed') { setRoster(null); setError(result.message); return null; }
     setRoster(result.data); setNeedsRead(false); setUncertain(false);
     if (automatic && result.data.meta.canAssign) await automaticAssign(result.data.meta);
+    return result.data;
   };
   useEffect(() => {
     mounted.current = true; void read(props.initialMode === 'automatic');
@@ -92,6 +97,15 @@ function AssignmentSession(props: TaskAssignmentControlsProps & { scope: TaskAss
     const result = props.onAutomatic ? await props.onAutomatic(meta, headers) : await autoAssignSavedTask(meta, headers, isCurrent);
     if (!isCurrent()) return;
     sending.current = false; setBusy(false);
+    if (result.kind === 'unchanged') {
+      // Nothing was written, so there is nothing for the board to re-read.
+      const after = await read();
+      if (!after || !isCurrent()) return;
+      const holder = unchangedHolder(meta, after);
+      if (holder) setNote({ text: `Already with ${holder}, who has the fewest open tasks — nothing changed.`, warning: false });
+      else showFailure({ kind: 'refused', message: NOT_ASSIGNED });
+      return;
+    }
     if (result.kind !== 'confirmed') { showFailure(result); return; }
     setNote({ text: 'Assignment recorded. Rereading the saved assignee.', warning: false });
     props.onSaved(); void read();
@@ -147,10 +161,12 @@ function AssignmentActions({ state: s, actions: a }: AssignmentViewProps) {
   </div>;
 }
 
+/* The saved receipt said "Saved assignee: Account #9. Assigned by Account #7"
+   (2026-10-31 client demo): it names people now, and never an account number. */
 function AssignmentNotices({ note, saved }: Pick<AssignmentViewState, 'note' | 'saved'>) {
   return <>
     {note && <p className="tb-detail-note" role={note.warning ? 'alert' : 'status'}>{note.text}</p>}
-    {saved && <p className="tb-detail-note">Saved assignee: Account #{saved.assigneeId}. Assigned by Account #{saved.assignedBy} at <time dateTime={saved.assignedAt}>{new Date(saved.assignedAt).toLocaleString()}</time>.</p>}
+    {saved && <p className="tb-detail-note">Saved: assigned to {saved.assigneeName || 'the chosen colleague'}{saved.assignedBy === saved.actorUserId ? ' by you' : ''} at <time dateTime={saved.assignedAt}>{new Date(saved.assignedAt).toLocaleString()}</time>.</p>}
   </>;
 }
 
@@ -158,9 +174,9 @@ function AssignmentRead({ state: s, actions: a }: AssignmentViewProps) {
   if (s.loading) return <p className="tb-detail-note" role="status" aria-busy="true">Loading current task assignment…</p>;
   if (s.error || !s.roster) return <ErrorState title="Couldn't load task assignment" message={s.error} retry={a.refresh} retryLabel="Retry assignment read" />;
   const currentId = s.roster.meta.assigneeId;
-  const label = currentId === null ? 'Unassigned' : s.roster.data.find(row => row.id === String(currentId))?.label || `Account #${currentId}`;
+  const label = currentId === null ? 'Unassigned' : s.roster.data.find(row => row.id === String(currentId))?.label || UNLISTED;
   return <>
-    <p className="tb-detail-note">Current assignee: <strong>{label}</strong>{currentId !== null && ` · Account #${currentId}`}</p>
+    <p className="tb-detail-note">Current assignee: <strong>{label}</strong></p>
     {!s.roster.meta.canAssign ? <p className="tb-detail-note">This task cannot currently be reassigned. Its access and task state were checked by the server.</p> :
       s.manual && <AssignmentFields state={s} actions={a} roster={s.roster} />}
   </>;

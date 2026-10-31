@@ -162,7 +162,11 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
     expect(isLaunchSurface('cmc')).toBe(true);
     const ids = RAIL_CORE.map((s) => s.id);
     expect(ids).toContain('cmc');
-    expect(ids.indexOf('quality') - ids.indexOf('cmc'), 'CMC sits directly before Quality').toBe(1);
+    // Risk-based monitoring (P-76) and Biostatistics (P-77) joined the same
+    // work areas since; CMC still opens them and Quality follows in the group.
+    const workAreas = RAIL_CORE.filter((s) => (s as { group?: string }).group === 'work-areas').map((s) => s.id);
+    expect(workAreas[0], 'CMC opens the work areas').toBe('cmc');
+    expect(workAreas.indexOf('quality'), 'Quality is in the work areas beside CMC').toBeGreaterThan(0);
     expect(NAV_HIDDEN.has('cmc')).toBe(false);
     expect(getSurface('cmc')).toBeDefined();
   });

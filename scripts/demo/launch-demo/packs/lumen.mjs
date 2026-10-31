@@ -67,6 +67,7 @@ async function ensureProject({ api, run, tally }, spec, clientWorkspaceId, exist
         name: title,
         productName: spec.code,
         programType: 'ind',
+        submissionTypeId: 'us_ind',
         productType: 'biologic',
         clientWorkspaceId,
         primaryAgency: 'FDA',

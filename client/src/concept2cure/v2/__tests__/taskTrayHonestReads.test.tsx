@@ -135,7 +135,8 @@ describe('TaskTray — the bell badge', () => {
   it('when every count loads and nothing is waiting, there is no badge', async () => {
     serve();
     render(<TaskTray onNav={vi.fn()} />);
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/mdx/notifications/unread-count'));
+    // Reads carry an abort signal since c3794c8fe (stalled reads recover), so match the request, not the arity.
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[0] === 'GET' && c[1] === '/api/mdx/notifications/unread-count')).toBe(true));
     await waitFor(() => expect(trigger().getAttribute('aria-label')).toBe('Your work'));
     expect(document.querySelector('.tt-badge')).toBeNull();
   });
