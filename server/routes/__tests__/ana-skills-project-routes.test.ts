@@ -149,6 +149,16 @@ describe('deploying a skill to a project, or turning one off there', () => {
     const res = await request(appAs(EDITOR, fakeClient())).get(`/api/ana-skills/projects/${PROGRAM}`);
     expect(res.status).toBe(403);
   });
+
+  // 2026-10-31, found in the running app: the session carries its ids as strings ("1", "2"), the
+  // project admission accepts only numbers, so every project home answered 403 to its own admin.
+  it('admits a person whose session states the ids as strings, as numbers', async () => {
+    const { admitAnaProjectScope } = await import('../../services/ana/project-scope-admission');
+    vi.mocked(admitAnaProjectScope).mockClear();
+    const res = await request(appAs({ ...EDITOR, id: '5', organizationId: '42' }, fakeClient())).get(`/api/ana-skills/projects/${PROGRAM}`);
+    expect(res.status).toBe(200);
+    expect(vi.mocked(admitAnaProjectScope).mock.calls[0][1]).toMatchObject({ organizationId: 42, userId: 5 });
+  });
 });
 
 describe('a skill written for a project', () => {

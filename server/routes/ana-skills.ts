@@ -260,10 +260,11 @@ router.get('/usage', writeGuard, async (req: Request, res: Response) => {
  */
 async function projectOf(req: Request, res: Response, ref: unknown, forWrite: boolean): Promise<number | null> {
   try {
+    // The session may state its ids as strings ("1"); admission takes numbers (found in the running app, 2026-10-31).
     const admitted = await admitAnaProjectScope(requestPgClient(req), {
       projectRef: ref,
-      organizationId: (req as any).user?.organizationId,
-      userId: (req as any).user?.id,
+      organizationId: positiveInt((req as any).user?.organizationId),
+      userId: positiveInt((req as any).user?.id),
     });
     if (admitted.projectId === null) {
       res.status(404).json({ error: { code: 'PROJECT_NOT_FOUND', message: 'Project not found.' } });
