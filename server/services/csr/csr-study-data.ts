@@ -50,7 +50,7 @@ export async function freezeCsrStudyData(connectable: RequestConnectable, q: Req
         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8) RETURNING created_at`,
       [studyDataId, scope.organizationId, scope.programId, input.authoringDocumentId, JSON.stringify(snapshot), digest,
         sealSignPayloadDigest(digest, scope.organizationId), scope.userId]);
-      return { studyDataId, createdAt: new Date(rows[0].created_at).toISOString(), createdBy: scope.userId, sources: [loaded.source] };
+      return { studyDataId, createdAt: new Date(String(rows[0].created_at)).toISOString(), createdBy: scope.userId, sources: [loaded.source] };
     },
   });
 }
@@ -64,7 +64,7 @@ export async function listCsrStudyData(q: RequestSqlClient, scope: CsrSourceScop
     ORDER BY created_at DESC, study_data_id DESC LIMIT 50`, [scope.organizationId, scope.programId, authoringDocumentId]);
   return rows.map(row => ({
     studyDataId: String(row.study_data_id),
-    createdAt: new Date(row.created_at).toISOString(),
+    createdAt: new Date(String(row.created_at)).toISOString(),
     createdBy: Number(row.created_by),
     sources: Array.isArray(row.sources) ? row.sources as CsrSourceReceipt[] : [],
   }));
