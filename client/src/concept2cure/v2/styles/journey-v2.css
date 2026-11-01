@@ -411,12 +411,24 @@
 .c2c-v2 .pj-con.is-ok .pj-con-t{color:var(--success);}
 .c2c-v2 .pj-con.is-ok>.ico{color:var(--success);}
 .c2c-v2 .cm-projbar-sm{height:5px;width:64px;display:inline-block;vertical-align:middle;margin-right:7px;}
-.c2c-v2 .cm-list{margin:4px 0 0;padding-left:18px;}
-.c2c-v2 .cm-list li{margin-bottom:3px;}
-/* Was 11px uppercase with letter-spacing (ONE_DESIGN_PLAN §2 retires the
-   uppercase label). Its text — "Drug substance — §3.2.S" — was always
-   sentence case; only this rule shouted it. */
-.c2c-v2 .cm-sub-head{font-size:13px;font-weight:600;color:var(--text-200);margin:24px 0 8px;}
+/* A list of records with an action on each row: the row's own button sits
+   with its sentence, so the gap between items is a line's worth, not three
+   pixels (D5 §A.4.9, where the register-links card became a section). */
+.c2c-v2 .cm-list{margin:4px 0 0;padding-left:18px;font-size:var(--fs-small);}
+.c2c-v2 .cm-list li{margin-bottom:6px;}
+.c2c-v2 .cm-list li .btn{margin-left:8px;vertical-align:baseline;}
+/* The label over a GROUP of registers ("Drug substance — §3.2.S" over the
+   seven §3.2.S registers). Two changes, 2026-11-01:
+   • It was 11px uppercase with letter-spacing (ONE_DESIGN_PLAN §2 retires the
+     uppercase label). Its text was always sentence case; only this rule
+     shouted it.
+   • With D5 §A.4.9 each register became a `.pj-sec` whose title is an `h2`,
+     so a 13px group label sat ABOVE a 15px heading that repeats its first
+     words — "Drug substance — §3.2.S" over "Drug substance". A group label
+     that competes with the headings under it is worse than none, so it reads
+     as the divider it is: a hairline, the label, then the group. */
+.c2c-v2 .cm-sub-head{font-size:var(--fs-small);font-weight:500;color:var(--text-400);margin:40px 0 20px;padding-top:16px;border-top:1px solid var(--border);}
+.c2c-v2 .cm-sub-head:first-child{margin-top:0;padding-top:0;border-top:0;}
 /* A results table nested inside an expanded register row. */
 .c2c-v2 .cm-subtable{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-md);margin:8px 0;}
 .c2c-v2 .cm-subtable th{background:transparent;}
