@@ -35,6 +35,7 @@ import { STEP_DOORS } from '../projectDoors';
 import { openProgramAction } from '../programAction';
 import { FileDropZone } from '../FileDropZone';
 import { ProjectRespond } from './ProjectRespond';
+import { ProjectObjective } from './ProjectObjective';
 import { ProjectMarkets, ProjectStatusLine, regionalPreparationReason } from './ProjectMarkets';
 import { ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState, type RowCopy } from './ProjectDossier';
 import { editingCopyOf } from '../editor/editingCopy';
@@ -2123,6 +2124,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                   )}
                 </section>
               )}
+              {pid && prog?.id === pid && <ProjectObjective programId={pid} canEdit={prog.canChange !== false} onAsk={onAsk} />}
               <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav} />
               {pid && !progState.error && (
                 <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }}
