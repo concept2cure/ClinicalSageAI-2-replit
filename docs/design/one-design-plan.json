@@ -236,7 +236,8 @@
         "server/services/client-intelligence-memory.ts",
         "server/services/lumen-context/intelligence-prefix.ts",
         "server/routes/c2c/projects.ts",
-        "client/src/concept2cure/v2/surfaces/ProjectHome.tsx"
+        "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "server/services/c2c/charter-objectives.ts"
       ]
     },
     {
