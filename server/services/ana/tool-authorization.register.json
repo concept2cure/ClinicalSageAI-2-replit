@@ -5218,16 +5218,6 @@
     "source": "knowledge"
    }
   },
-  "plan_ind_module_authoring": {
-   "class": "read",
-   "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('plan_ind_module_authoring')",
-   "present": {
-    "verb": "plan",
-    "object": "the IND module",
-    "source": "authoring"
-   }
-  },
   "plan_labeling_authoring": {
    "class": "read",
    "writes": "none",

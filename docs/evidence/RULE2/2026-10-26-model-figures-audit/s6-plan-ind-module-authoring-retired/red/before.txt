@@ -1,0 +1,29 @@
+# S6 red: plan-ind-module-authoring-retired.test.ts on trunk 776cb7a34. 8 of 9 fail; the carried-over 2.7 outline pin passes (the replacement already serves it).
+
+ × server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > plan_ind_module_authoring is retired > has no handler: the one it had put the model’s figure into the plan 11ms
+   → expected { …(3) } to be 'no handler' // Object.is equality
+ × server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > plan_ind_module_authoring is retired > is not offered to the model and has no definition 2ms
+   → expected [ 'list_fda_forms', …(791) ] to not include 'plan_ind_module_authoring'
+ × server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > plan_ind_module_authoring is retired > is absent from the authorization register and the launch-scope inventory 3ms
+   → expected [ 'ack_training', …(791) ] to not include 'plan_ind_module_authoring'
+ × server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > plan_ind_module_authoring is retired > its module is gone 2ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > where it was offered, the record-composed 2.5 and 2.7 tools are > the IND interview ends in both, each a registered tool, and offers no draft from its answers 3ms
+   → expected [ 'draft_authoring_document', …(2) ] to not include 'plan_ind_module_authoring'
+ × server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > where it was offered, the record-composed 2.5 and 2.7 tools are > the IND chat is told to compose 2.5 and 2.7 from the records and to pass them no figures 8ms
+   → expected '\n\n## IND submission context (US FDA…' not to contain 'plan_ind_module_authoring'
+ × server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > where it was offered, the record-composed 2.5 and 2.7 tools are > no platform skill names it; the IND, 2.5 and 2.7 skills route to the record tools 90ms
+   → expected [ 'submissions.ind-initial', …(2) ] to deeply equal []
+ × server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > where it was offered, the record-composed 2.5 and 2.7 tools are > no program phase offers it; the phase that produces the pivotal CSRs offers the record tools 1ms
+   → ind_enabling: expected [ 'compute_fih_dose', …(5) ] to not include 'plan_ind_module_authoring'
+ ✓ server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > what it held that the record tools lack is carried over > its 2.7 headings: get_document_template serves the record’s 2.7 outline, headed as the record titles it 229ms
+AssertionError: expected { …(3) } to be 'no handler' // Object.is equality
+AssertionError: expected [ 'list_fda_forms', …(791) ] to not include 'plan_ind_module_authoring'
+AssertionError: expected [ 'ack_training', …(791) ] to not include 'plan_ind_module_authoring'
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected [ 'draft_authoring_document', …(2) ] to not include 'plan_ind_module_authoring'
+AssertionError: expected '\n\n## IND submission context (US FDA…' not to contain 'plan_ind_module_authoring'
+AssertionError: expected [ 'submissions.ind-initial', …(2) ] to deeply equal []
+AssertionError: ind_enabling: expected [ 'compute_fih_dose', …(5) ] to not include 'plan_ind_module_authoring'
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)

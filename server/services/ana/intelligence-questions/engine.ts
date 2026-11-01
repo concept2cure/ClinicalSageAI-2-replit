@@ -557,7 +557,10 @@ export function buildSuggestedActions(
     case 'ind_submission':
       actions.push(
         { label: 'Draft an IND Section', actionType: 'draft_authoring_document', description: 'Look up what the CTD section must contain (get_document_section_requirements), then draft it as an authoring document in the open project (draft_authoring_document; batch_draft_sections for several sections)' },
-        { label: 'Author IND Module 2 Narrative', actionType: 'plan_ind_module_authoring', description: 'Author the Module 2.5 Clinical Overview or 2.7 Clinical Summary from the collected facts (plan_ind_module_authoring)' },
+        // Rule 2 audit S6: Module 2.5 and 2.7 are composed from the program's
+        // completed CSRs, never from the interview's answers.
+        { label: 'Draft Clinical Overview (2.5)', actionType: 'draft_clinical_overview_m2_5', description: "Compose the Module 2.5 Clinical Overview from the program's completed CSRs; with none, it returns the 2.5 outline (draft_clinical_overview_m2_5)" },
+        { label: 'Draft Clinical Summary (2.7)', actionType: 'draft_clinical_summary_m2_7', description: "Compose 2.7.1 to 2.7.4 of the Module 2.7 Clinical Summary from the program's completed CSRs; with none it composes nothing, and get_document_template with template_id clinical_summary gives the 2.7 outline (draft_clinical_summary_m2_7)" },
       );
       break;
     case 'sop_development':
