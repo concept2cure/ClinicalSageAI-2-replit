@@ -5,6 +5,8 @@ import { csrSourceContract } from '../../shared/csr-source-contract.js';
 import { requestConnectable, requestPgClient } from '../db/requestDb.js';
 import { listCsrVaultSources, previewCsrVaultSource, CsrSourceInputError, type CsrSourceScope } from '../services/csr/vault-source-input.js';
 import { readSavedClinicalTables } from '../services/csr/saved-clinical-tables.js';
+import { freezeCsrStudyData, listCsrStudyData } from '../services/csr/csr-study-data.js';
+import { requireEditorAccess } from '../middleware/orgMembership.js';
 import { serverError } from '../lib/api-response.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { recordAuditRow } from '../services/audit/audit-write-outcome.js';
@@ -13,6 +15,8 @@ const log = createScopedLogger('csr-source-inputs');
 type RequireTenant = (req: Request, res: Response) => number | null;
 const Program = z.string().uuid();
 const Preview = CsrSourceSelectionSchema.extend({ programId: Program }).strict();
+const Document = z.string().uuid();
+const Freeze = z.object({ programId: Program, documentId: Document, source: CsrSourceSelectionSchema }).strict();
 function scope(req: Request, res: Response, tenant: RequireTenant, programId: unknown): CsrSourceScope | null {
   const organizationId = tenant(req, res);
   if (organizationId === null) return null;
@@ -54,6 +58,32 @@ export function createCsrSourceInputRouter(tenant: RequireTenant) {
       return res.json({ ...result, meta: { auditTrail } });
     }
     catch (error) { return failure(res, error, 'previewing CSR source tables'); }
+  });
+  /* A document's study data (RULE 4, 2026-10-31): the clinical source frozen as a source of the
+     document, in its project, without a package run (services/csr/csr-study-data.ts). */
+  router.get('/csr/study-data', async (req, res) => {
+    const current = scope(req, res, tenant, req.query.programId); if (!current) return;
+    const documentId = Document.safeParse(req.query.documentId);
+    if (!documentId.success) return res.status(400).json({ error: 'CSR_STUDY_DATA_DOCUMENT_INVALID', message: 'Open the document: a valid document id is required.' });
+    try { return res.json({ studyData: await listCsrStudyData(requestPgClient(req), current, documentId.data.toLowerCase()) }); }
+    catch (error) { return failure(res, error, 'reading the document’s study data'); }
+  });
+  router.post('/csr/study-data', requireEditorAccess, async (req, res) => {
+    const current = scope(req, res, tenant, req.body?.programId); if (!current) return;
+    const parsed = Freeze.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'CSR_SOURCE_SELECTION_INVALID', message: 'Choose the document and an exact Vault source with its recorded SHA-256 digest.' });
+    try {
+      const frozen = await freezeCsrStudyData(requestConnectable(req), requestPgClient(req), current,
+        { authoringDocumentId: parsed.data.documentId.toLowerCase(), selection: parsed.data.source });
+      const auditTrail = await recordAuditRow({ tenantId: current.organizationId, userId: current.userId,
+        action: 'csr_study_data_frozen', resourceType: 'authoring_documents', resourceId: parsed.data.documentId.toLowerCase(),
+        ipAddress: req.ip, userAgent: req.get('user-agent'),
+        details: { programId: current.programId, studyDataId: frozen.studyDataId, sourceDocumentId: frozen.sources[0]?.documentId,
+          sourceSha256: frozen.sources[0]?.sha256, sourceVersion: frozen.sources[0]?.version, clinicalVerification: 'not-established' },
+      }, requestConnectable(req));
+      return res.status(201).json({ ...frozen, meta: { auditTrail } });
+    }
+    catch (error) { return failure(res, error, 'freezing the document’s study data'); }
   });
   router.get('/runs/:runId/clinical-tables', async (req, res) => {
     const current = scope(req, res, tenant, req.query.programId); if (!current) return;

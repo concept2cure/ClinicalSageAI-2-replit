@@ -149,12 +149,13 @@ function useDocumentStartCommand(start: AuthoringDocumentStart | null | undefine
   }, [start, dialogOpen, mayStart, accept]);
 }
 
-function AuthoringRecoveryNotices({ creation, recovery }: {
+function AuthoringRecoveryNotices({ creation, recovery, openDocId }: {
   creation: ReturnType<typeof useAuthoringCreation>; recovery: ReturnType<typeof useAuthoringExport>['recovery'];
+  openDocId: string | null;
 }) {
   return <>
     <ExportRecoveryNotice {...recovery} />
-    {(['document', 'section'] as const).map(kind => <CreationRecoveryNotice key={kind} kind={kind}
+    {(['document', 'section'] as const).map(kind => <CreationRecoveryNotice key={kind} kind={kind} openDocId={openDocId}
       state={creation.state(kind)} disabled={!!creation.refusal} onCheck={() => creation.check(kind)} onOpen={() => creation.open(kind)} />)}
   </>;
 }
@@ -163,11 +164,20 @@ function useCreationFilingScope(programId: string | null | undefined, openProjec
   const session = useAuthoringReadSession(authService.getUser());
   const effectiveProgram = programId === undefined ? openProject : programId;
   const currentFiling = context?.projectId === effectiveProgram ? context : null;
-  const scope = JSON.stringify([effectiveProgram, openProject, currentFiling?.registryId, currentFiling?.filingDocumentId, session.actor, session.key]);
-  const visit = useRef({ scope, generation: 0, projectCurrent: captureShellProjectGuard() });
-  if (visit.current.scope !== scope || !visit.current.projectCurrent()) {
-    visit.current = { scope, generation: visit.current.generation + 1, projectCurrent: captureShellProjectGuard() };
+  const base = JSON.stringify([effectiveProgram, openProject, session.actor, session.key]);
+  const filing: Array<string | null> = [currentFiling?.registryId ?? null, currentFiling?.filingDocumentId ?? null];
+  const visit = useRef({ base, filing, generation: 0, projectCurrent: captureShellProjectGuard() });
+  /* A filing value that was known and is now another (or gone) is a change. One
+     that was not yet read and now is, is the same visit learning its filing:
+     New document opened as soon as the editor drew it said the project had
+     changed, and kept saying it, because the filing read landed a second later. */
+  const filingChanged = visit.current.filing.some((known, i) => known !== null && known !== filing[i]);
+  if (visit.current.base !== base || filingChanged || !visit.current.projectCurrent()) {
+    visit.current = { base, filing, generation: visit.current.generation + 1, projectCurrent: captureShellProjectGuard() };
+  } else if (visit.current.filing.some((known, i) => known !== filing[i])) {
+    visit.current.filing = filing;
   }
+  const scope = JSON.stringify([base, ...visit.current.filing]);
   const currentVisit = visit.current;
   const [formVisit, setFormVisit] = useState<object | null>(null);
   const current = () => visit.current === currentVisit && session.sameRevision() && currentVisit.projectCurrent();
@@ -246,7 +256,7 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
   const createSection = (values: Record<string, string>) => {
     creation.create('section', { code: values.code, title: values.title }, closeDialog);
   };
-  const notices = <AuthoringRecoveryNotices creation={creation} recovery={recovery} />;
+  const notices = <AuthoringRecoveryNotices creation={creation} recovery={recovery} openDocId={docId} />;
 
   return (
     <>
@@ -287,10 +297,16 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
   );
 }
 
-function CreationRecoveryNotice({ kind, state, disabled, onCheck, onOpen }: {
-  kind: CreationKind; state?: CreationState; disabled: boolean; onCheck: () => void; onOpen: () => void;
+/** Created and already open: the toast said so, and "Open created document"
+ *  above the document it names offers nothing. */
+function createdAndOpen(kind: CreationKind, state: CreationState, openDocId: string | null): boolean {
+  return kind === 'document' && state.phase === 'created' && !!openDocId && state.receipt?.id === openDocId;
+}
+
+function CreationRecoveryNotice({ kind, state, disabled, onCheck, onOpen, openDocId }: {
+  kind: CreationKind; state?: CreationState; disabled: boolean; onCheck: () => void; onOpen: () => void; openDocId: string | null;
 }) {
-  if (!state || state.phase === 'pending') return null;
+  if (!state || state.phase === 'pending' || createdAndOpen(kind, state, openDocId)) return null;
   const actions = [];
   if (state.phase === 'unknown') actions.push({
     label: state.checking ? 'Checking…' : kind === 'document' ? 'Check working documents' : 'Check document sections',

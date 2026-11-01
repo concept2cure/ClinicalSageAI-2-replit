@@ -281,7 +281,7 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
   if (!current()) return <EmptyState title="Risk-based monitoring is unavailable for this session" hint="Reopen monitoring after selecting your account and project." />;
 
   return (
-    <div data-screen-label={`RBM — ${nav.label}`}>
+    <div className="rbm-page" data-screen-label={`RBM — ${nav.label}`}>
       <div className="reg-head">
         <div>
           <div className="ph-eyebrow">Clinical — risk-based quality management</div>
@@ -308,11 +308,11 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
                 </option>
               ))}
           </select>
-          <span className="rbm-study-m">
-            {bd && bd.programId === study
-              ? `${bd.summary.sites.total} sites — ${bd.summary.patients.scored} subjects scored`
-              : 'Live RBM read-model'}
-          </span>
+          {/* With no project's board read there is nothing to say here; this
+              read "Live RBM read-model", the implementation's name for it. */}
+          {bd && bd.programId === study && (
+            <span className="rbm-study-m">{`${bd.summary.sites.total} sites — ${bd.summary.patients.scored} subjects scored`}</span>
+          )}
         </div>
       </div>
 

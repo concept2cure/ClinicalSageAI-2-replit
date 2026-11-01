@@ -1,0 +1,42 @@
+# Measured in Chromium before the change: on each launch surface, every visible button's computed box styles with the reset as it was
+# (.c2c-v2 button), then with it rewritten in the live CSSOM to :where(.c2c-v2) button. Only Quality's buttons change.
+## home: 30 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## projects: 29 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## project-home?program=24fd6124-6ff9-4ec8-8287-5aa23a49443b: 318 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## vault?program=24fd6124-6ff9-4ec8-8287-5aa23a49443b: 139 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## tasks?program=24fd6124-6ff9-4ec8-8287-5aa23a49443b: 22 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## communication-center?program=24fd6124-6ff9-4ec8-8287-5aa23a49443b: 28 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## cmc?program=24fd6124-6ff9-4ec8-8287-5aa23a49443b: 42 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## quality?program=24fd6124-6ff9-4ec8-8287-5aa23a49443b: 45 buttons, rule rewritten 1x, 25 would change (25 qms-*)
+## insights?program=24fd6124-6ff9-4ec8-8287-5aa23a49443b: 36 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## rbm?program=24fd6124-6ff9-4ec8-8287-5aa23a49443b: 40 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## submission-center?program=24fd6124-6ff9-4ec8-8287-5aa23a49443b: 33 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## document-authoring: 140 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## help: 21 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+
+# Quality, in detail:
+   qms-tb-btn "Ask AnA" padding-top:0px→5px padding-right:0px→10px padding-bottom:0px→5px padding-left:0px→10px font-weight:400→500
+   qms-tab "SOP register" padding-right:0px→12px padding-left:0px→12px font-size:13px→12.5px
+   qms-tab "Change control" padding-right:0px→12px padding-left:0px→12px font-size:13px→12.5px font-weight:400→500
+   qms-tab "CAPA" padding-right:0px→12px padding-left:0px→12px font-size:13px→12.5px font-weight:400→500
+   qms-tab "Deviations" padding-right:0px→12px padding-left:0px→12px font-size:13px→12.5px font-weight:400→500
+   qms-tab "Nonconformances" padding-right:0px→12px padding-left:0px→12px font-size:13px→12.5px font-weight:400→500
+   qms-tab "Suppliers" padding-right:0px→12px padding-left:0px→12px font-size:13px→12.5px font-weight:400→500
+   qms-tab "Internal audits" padding-right:0px→12px padding-left:0px→12px font-size:13px→12.5px font-weight:400→500
+   qms-tab "Management reviews" padding-right:0px→12px padding-left:0px→12px font-size:13px→12.5px font-weight:400→500
+   qms-btn ghost "Ask AnA for a pre-inspection c" padding-top:0px→7px padding-right:0px→12px padding-bottom:0px→7px padding-left:0px→12px font-size:13px→12.5px font-weight:400→600
+   qms-btn primary "New controlled document" padding-top:0px→7px padding-right:0px→12px padding-bottom:0px→7px padding-left:0px→12px font-size:13px→12.5px font-weight:400→600
+   qms-tpl-card "QM-Quality manualTop-level des" padding-top:0px→14px padding-right:0px→14px padding-bottom:0px→14px padding-left:0px→14px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklch(0.9818 0.0054 95
+   qms-tpl-card "POL-PolicyA governing statemen" padding-top:0px→14px padding-right:0px→14px padding-bottom:0px→14px padding-left:0px→14px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklch(0.9818 0.0054 95
+   qms-tpl-card "SOP-Standard operating procedu" padding-top:0px→14px padding-right:0px→14px padding-bottom:0px→14px padding-left:0px→14px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklch(0.9818 0.0054 95
+   qms-tpl-card "WI-Work instructionTask-level " padding-top:0px→14px padding-right:0px→14px padding-bottom:0px→14px padding-left:0px→14px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklch(0.9818 0.0054 95
+   qms-tpl-card "FORM-FormA controlled template" padding-top:0px→14px padding-right:0px→14px padding-bottom:0px→14px padding-left:0px→14px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklch(0.9818 0.0054 95
+   qms-tpl-card "VP-Validation protocolAn IQ/OQ" padding-top:0px→14px padding-right:0px→14px padding-bottom:0px→14px padding-left:0px→14px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklch(0.9818 0.0054 95
+   qms-tpl-card "SOP-CC-Change-control procedur" padding-top:0px→14px padding-right:0px→14px padding-bottom:0px→14px padding-left:0px→14px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklch(0.9818 0.0054 95
+   qms-tpl-card "CC-Change-request formThe cont" padding-top:0px→14px padding-right:0px→14px padding-bottom:0px→14px padding-left:0px→14px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklch(0.9818 0.0054 95
+   qms-tpl-card "TC-Training curriculumThe role" padding-top:0px→14px padding-right:0px→14px padding-bottom:0px→14px padding-left:0px→14px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklch(0.9818 0.0054 95
+   qms-chip "All" padding-top:0px→3px padding-right:0px→8px padding-bottom:0px→3px padding-left:0px→8px border-top-width:0px→1px border-left-width:0px→1px font-size:13px→11px font-weight:400→500
+   qms-chip "Effective" padding-top:0px→3px padding-right:0px→8px padding-bottom:0px→3px padding-left:0px→8px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklab(0 0 0 / 0) font-size:13px→11px font-weight:
+   qms-chip "Under review" padding-top:0px→3px padding-right:0px→8px padding-bottom:0px→3px padding-left:0px→8px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklab(0 0 0 / 0) font-size:13px→11px font-weig
+   qms-chip "Draft" padding-top:0px→3px padding-right:0px→8px padding-bottom:0px→3px padding-left:0px→8px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklab(0 0 0 / 0) font-size:13px→11px font-weight:400�
+   qms-chip "Job roles" padding-top:0px→3px padding-right:0px→8px padding-bottom:0px→3px padding-left:0px→8px border-top-width:0px→1px border-left-width:0px→1px background-color:rgba(0, 0, 0, 0)→oklab(0 0 0 / 0) font-size:13px→11px font-weight:

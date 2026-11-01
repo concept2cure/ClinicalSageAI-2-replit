@@ -54,23 +54,15 @@ function drop(req: Request, lease: Lease): Promise<void> {
 
 /**
  * Bind `client` as the request's `req.dbClient`, held by the response until it
- * ends (`finish` or `close`, whichever comes first).
+ * ends (`finish` or `close`, whichever comes first). A response that has
+ * already ended holds nothing: the client is released at once, and a query on
+ * it fails closed without taking a connection.
  */
 export function bindRequestDbClient(req: Request, res: Response, client: ReleasableRequestDbClient): void {
   const lease: Lease = { client, holds: 1, released: false };
   req.dbClient = client;
   (req as LeasedRequest)[LEASE] = lease;
   let responseEnded = false;
-  /* The connection's own end, too (2026-10-31). A request whose caller went
-     away while authentication was still running — a page navigated, a badge
-     poll abandoned — is bound after its connection closed, and its response
-     never emits 'finish' or 'close'. Its handler runs on, its first query
-     acquires a pooled connection, and nothing released it: on a local stack
-     17 of 20 abandoned polls each held a connection until the pool was empty
-     and every request waited out its connect timeout. A socket already gone
-     ends the response's hold now; a live one ends it when it closes. The
-     listener leaves with the response, so a kept-alive socket does not
-     collect one per request. */
   const socket = req.socket as (NodeJS.EventEmitter & { destroyed?: boolean }) | undefined;
   const onSocketClose = () => end();
   const end = () => {
@@ -81,7 +73,16 @@ export function bindRequestDbClient(req: Request, res: Response, client: Releasa
   };
   res.on('finish', end);
   res.on('close', end);
-  if (socket?.destroyed) end();
+  // Authentication is asynchronous, so a client that went away first has
+  // already had its 'close', and a response written to a closed socket never
+  // emits 'finish': nothing would return the connection its handler then
+  // takes. Each such request kept one until the pool was exhausted (on a local
+  // stack, 17 of 20 abandoned polls). The connection is asked as well as the
+  // response: outside production the auth boundary hands the authenticator a
+  // stand-in that forwards only `on`. A live socket also ends the hold when it
+  // closes; that listener leaves with the response, so a kept-alive socket
+  // collects none.
+  if (res.destroyed || res.writableFinished || socket?.destroyed) end();
   else socket?.once('close', onSocketClose);
 }
 

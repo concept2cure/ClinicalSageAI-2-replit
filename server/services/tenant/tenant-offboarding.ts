@@ -1146,6 +1146,7 @@ export const PURGE_RETAINED_RECORDS: Readonly<Record<string, string>> = Object.f
   "qms_job_roles": "Training requirement record (who was required to train on which controlled document, set by whom and when), retained with the qms_training_records receipts it gives meaning to; erased with them when QMS retention is decided.",
   "qms_job_role_members": "Training requirement record (who was required to train on which controlled document, set by whom and when), retained with the qms_training_records receipts it gives meaning to; erased with them when QMS retention is decided.",
   "qms_training_assignments": "Training requirement record (who was required to train on which controlled document, set by whom and when), retained with the qms_training_records receipts it gives meaning to; erased with them when QMS retention is decided.",
+  "csr_study_data": "Immutable sealed snapshots of a document's frozen study data contain subject-level clinical observations. Physical erasure requires governed retention review; a populated tenant is refused before any purge write; UPDATE and DELETE are refused by the 20261031 migration.",
   "submission_orchestrator_inputs": "Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.",
 });
 

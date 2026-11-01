@@ -20,10 +20,13 @@ import { useAuth } from '@/services/portal/authService';
 import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
+import { hasKeys, useLiveData } from './dataConnect';
 import { isOrgAdminRole } from './orgAdmin';
 import { canAdministerBilling } from '@shared/constants/permissions';
 import { TaskTray } from './TaskTray';
-import { useShellProject, type ShellProject } from './shellProject';
+import { readShellProject, useShellProject, type ShellProject } from './shellProject';
+import { destinationFor } from './routing';
+import { OPEN_PROGRAM_SURFACE } from './programAction';
 
 import {
   AI_ACTIONS,
@@ -87,7 +90,7 @@ function useShellLeaveGuard(onNav?: (id: string) => void) {
     return true;
   }, [notify]);
   const go = (id: string) => { if (canLeave()) onNav?.(id); };
-  return { canLeave, go, leaveNotice: <C2CToast msg={notice} /> };
+  return { canLeave, go, notify, leaveNotice: <C2CToast msg={notice} /> };
 }
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
@@ -109,6 +112,7 @@ export function Rail({
   setCollapsed,
   segment,
   setSegment,
+  onSearch,
 }: {
   activeId: string;
   onNav: (id: string) => void;
@@ -116,9 +120,11 @@ export function Rail({
   setCollapsed: (v: boolean) => void;
   segment: string;
   setSegment: (id: string) => void;
+  /** Opens the command palette: Claude's "Search" in the sidebar. */
+  onSearch?: () => void;
 }) {
   const { user, logout } = useAuth();
-  const { canLeave, leaveNotice } = useShellLeaveGuard();
+  const { canLeave, notify, leaveNotice } = useShellLeaveGuard();
   const [acct, setAcct] = React.useState(false);
   const acctBtnRef = React.useRef<HTMLButtonElement>(null);
   const acctMenuId = React.useId();
@@ -170,6 +176,12 @@ export function Rail({
        other way there (/tasks, not the action's nav-target alias). */
     if (res?.ok) applySurfaceAction(res.directive, () => onNav(target));
     else onNav(target);
+    /* A project screen with no project open lands on Projects, by the router's own rule
+       (routing.ts destinationFor). Said, so the click is not silent: from Projects it looked dead
+       (found in the running app, 2026-10-31). */
+    if (target !== OPEN_PROGRAM_SURFACE && destinationFor(target, Boolean(readShellProject())).surfaceId === OPEN_PROGRAM_SURFACE) {
+      notify(`Open a project to see its ${s.label}. Choose one in Projects.`, 'ok');
+    }
   };
   const navItem = (s: RailEntry) => {
     const target = s.target ?? s.id;
@@ -251,13 +263,28 @@ export function Rail({
           type; the client type is in the account menu below. Collapsed, the
           heading is a rule, so the two groups still read as two. */}
       <div className="rail-scroll">
+        {/* Claude's sidebar: the places, then Search (the command palette,
+            ⌘K), then Recents. Home is where a conversation starts. */}
         <div className="rail-nav">{places.map(navItem)}</div>
+        {onSearch && (
+          <div className="rail-nav rail-actions">
+            <button type="button" className="nav-item" title="Search (⌘K)" onClick={onSearch}>
+              <span className="ico">{I.search}</span>
+              <span className="lbl">Search</span>
+            </button>
+          </div>
+        )}
         {workAreas.length > 0 && (
           <div className="rail-nav rail-group" role="group" aria-labelledby={workAreasId}>
             <div className="rail-group-h" id={workAreasId}>{RAIL_WORK_AREAS_LABEL}</div>
             {workAreas.map(navItem)}
           </div>
         )}
+        {!collapsed && <RailRecents onOpen={(id) => {
+          if (!canLeave()) return;
+          window.C2C_CONVO = { id };
+          onNav('conversation-thread');
+        }} />}
       </div>
       <div className="rail-foot">
         {collapsed && collapseToggle}
@@ -356,6 +383,43 @@ type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' |
  * client types were plain Tab stops in the rail's list before they moved here,
  * so without this a keyboard user could open the menu and not reach them.
  */
+/** How many of the person's own conversations the sidebar lists. */
+const RAIL_RECENTS = 15;
+
+/**
+ * Recents, as in Claude's sidebar: the person's own AnA conversations, newest
+ * first (GET /api/chat/threads, the same read Home used to list). A reply
+ * without `threads` is a failed read and says so; it is never shown as none.
+ */
+function RailRecents({ onOpen }: { onOpen: (id: string) => void }) {
+  const headId = React.useId();
+  const read = useLiveData<{ threads: Array<{ id: string; title?: string | null }> }>(
+    `/api/chat/threads?limit=${RAIL_RECENTS}`,
+    [],
+    hasKeys<{ threads: Array<{ id: string; title?: string | null }> }>('threads'),
+  );
+  const threads = read.data?.threads ?? [];
+  return (
+    <div className="rail-nav rail-group rail-recents" role="group" aria-labelledby={headId} data-testid="rail-recents">
+      <div className="rail-group-h" id={headId}>Recents</div>
+      {read.loading ? (
+        <div className="rail-recents-note" role="status">Loading…</div>
+      ) : read.error ? (
+        <div className="rail-recents-note" role="alert">Couldn&rsquo;t load your conversations.</div>
+      ) : threads.length === 0 ? (
+        <div className="rail-recents-note">Your conversations appear here.</div>
+      ) : (
+        threads.slice(0, RAIL_RECENTS).map((t) => (
+          <button key={t.id} type="button" className="nav-item rail-recent" title={t.title || 'Untitled conversation'}
+            onClick={() => onOpen(t.id)}>
+            <span className="lbl">{(t.title || 'Untitled conversation').slice(0, 120)}</span>
+          </button>
+        ))
+      )}
+    </div>
+  );
+}
+
 function AccountMenu({
   id,
   name,

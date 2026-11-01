@@ -18,13 +18,14 @@ function fixture() {
   const input = { organizationId: 7, programId: PROGRAM, clinicalStudyData: [source.studyData], clinicalSourceReceipts: [receipt] as CsrSourceReceipt[] | undefined };
   const row = { input_snapshot: input, input_digest: '', input_seal: '' };
   const reseal = () => { row.input_digest = orchestratorInputDigest(input); row.input_seal = sealSignPayloadDigest(row.input_digest, 7) ?? ''; };
-  reseal(); let exists = true, eligible = true;
+  reseal(); let exists = true, eligible = true, frozenForDocument = false;
   const query = vi.fn(async (sql: string, values?: unknown[]) => {
-    if (sql.includes('FROM submission_orchestrator_runs')) { expect(values).toEqual([RUN, 7, PROGRAM]); return { rows: exists ? [row] : [] }; }
+    if (sql.includes('FROM submission_orchestrator_runs')) { expect(values).toEqual([RUN, 7, PROGRAM]); return { rows: exists && !frozenForDocument ? [row] : [] }; }
+    if (sql.includes('FROM csr_study_data')) { expect(values).toEqual([RUN, 7, PROGRAM]); return { rows: exists && frozenForDocument ? [row] : [] }; }
     if (sql.includes('FROM vault.documents d')) { expect(values).toEqual([SOURCE, 7, PROGRAM, receipt.sha256]); return { rows: eligible ? [{ id: SOURCE, content_hash: receipt.sha256 }] : [] }; }
     throw new Error('Unexpected source query');
   });
-  return { input, row, query, reseal, missing: () => { exists = false; }, withdraw: () => { eligible = false; } };
+  return { input, row, query, reseal, missing: () => { exists = false; }, withdraw: () => { eligible = false; }, asDocumentStudyData: () => { frozenForDocument = true; } };
 }
 beforeEach(() => { auth.mockReset().mockResolvedValue({ projectId: 11 }); });
 describe('verified retained CSR aggregate reconstruction', () => {
@@ -118,5 +119,24 @@ describe('the retained study the CSR assembler composes from', () => {
       code: reason === 'superseded' ? 'CSR_SOURCE_CHANGED' : 'CSR_SOURCE_APPROVAL_REQUIRED',
     });
     expect((await readSavedClinicalTables({ query }, scope, RUN)).studies).toHaveLength(1);
+  });
+});
+
+/* A document's study data (RULE 4, 2026-10-31): the clinical source frozen as a source of its CSR document,
+   without a package run (csr-study-data.ts). The same id field names it, and it is verified the same way. */
+describe('a document’s frozen study data, read by the same reader', () => {
+  it('reconstructs the aggregate tables from the document’s sealed snapshot when no package run holds the id', async () => {
+    const f = fixture(); f.asDocumentStudyData();
+    const result = await readSavedClinicalTables({ query: f.query }, scope, RUN);
+    expect(result).toMatchObject({ runId: RUN, programId: PROGRAM, studies: [{ source: { documentId: SOURCE }, tables: { demographics: { rows: expect.any(Array) } } }] });
+    expect(JSON.stringify(result)).not.toContain('participants');
+  });
+  it('refuses an altered document snapshot exactly as it refuses an altered run', async () => {
+    const f = fixture(); f.asDocumentStudyData(); f.row.input_digest = 'forged';
+    await expect(readSavedClinicalTables({ query: f.query }, scope, RUN)).rejects.toMatchObject({ status: 409, code: 'CSR_RUN_INPUTS_INVALID' });
+  });
+  it('is still a 404 when neither a run nor a document holds the id', async () => {
+    const f = fixture(); f.asDocumentStudyData(); f.missing();
+    await expect(readSavedClinicalTables({ query: f.query }, scope, RUN)).rejects.toMatchObject({ status: 404, code: 'CSR_RUN_INPUTS_NOT_FOUND' });
   });
 });

@@ -1,0 +1,9 @@
+# Live, with the fix (response state and the request's socket), dev server (auth boundary in warn mode), PostgreSQL 16, pool max 20
+# Each line: 20 rounds x 6 fetches of the read, each aborted after 15 ms, then GET /api/v1/auth/session
+/api/mdx/notifications/unread-count    120 abandoned -> session 200/26ms
+/api/mdx/notifications/unread-count    120 abandoned -> session 200/20ms
+/api/mdx/notifications/unread-count    120 abandoned -> session 200/20ms
+/api/mdx/notifications/unread-count    120 abandoned -> session 200/22ms
+# Connections the app holds afterwards (pg_stat_activity, by state):
+idle|20
+# 'timeout exceeded when trying to connect' in the server log since restart: 0

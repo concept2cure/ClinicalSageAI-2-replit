@@ -1,9 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import type { CsrSourceSelection } from '@shared/csr-source-input';
+import React, { useEffect, useRef, useState } from 'react';
 import { apiCall, apiErrorText } from '../apiCall';
 import { EsignModal } from '../../_shared/components/EsignModal';
 import { CsrNarrativeReadiness } from './CsrNarrativeReadiness';
-import { CsrSourceInputControls } from './CsrSourceInputControls';
 
 export interface PackageRunControlView {
   runId: string;
@@ -34,28 +32,22 @@ export function OrchestratorRunControls({ programId, sequenceId, run, onLoad, se
   const [readState, setReadState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [sourceBusy, setSourceBusy] = useState(false);
-  const [clinicalSource, setClinicalSource] = useState<{ programId: string; selection: CsrSourceSelection } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [inputGaps, setInputGaps] = useState<string[]>([]);
   const [signedRunId, setSignedRunId] = useState<string | null>(null);
   const signatureRecorded = Boolean(run && signedRunId === run.runId);
   const [signOpen, setSignOpen] = useState(false);
   const [signTarget, setSignTarget] = useState<{ runId: string; submissionId: string } | null>(null);
-  const blocked = busy || signOpen || sourceBusy;
+  const blocked = busy || signOpen;
   const selected = useRef(selectedRunId);
   selected.current = selectedRunId;
   const mounted = useRef(true);
   const scope = useRef(programId);
   const scopeRevision = useRef(0);
   if (scope.current !== programId) { scope.current = programId; ++scopeRevision.current; }
-  const selectClinicalSource = useCallback((selection: CsrSourceSelection | null) => {
-    if (scope.current !== programId) return;
-    setClinicalSource(programId && selection ? { programId, selection } : null);
-  }, [programId]);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => {
-    setError(null); setNotice(null); setInputGaps([]); setSignOpen(false); setSignTarget(null); setSignedRunId(null); setBusy(false); setSourceBusy(false); setClinicalSource(null);
+    setError(null); setNotice(null); setInputGaps([]); setSignOpen(false); setSignTarget(null); setSignedRunId(null); setBusy(false);
   }, [programId]);
   useSavedPackageRuns({ programId, refresh, setRuns, setReadState });
   useEffect(() => {
@@ -72,7 +64,7 @@ export function OrchestratorRunControls({ programId, sequenceId, run, onLoad, se
     const expectedSelection = selected.current;
     setBusy(true); setError(null); setNotice(null);
     try {
-      const data = await request<PackageRunControlView & { inputGaps?: string[]; m3Refusal?: string | null; continuationError?: string | null }>('POST', '/api/submission-orchestrator/runs/for-program', { programId, ...(sequenceId ? { sequenceId } : {}), ...(clinicalSource?.programId === programId ? { clinicalSource: clinicalSource.selection } : {}) });
+      const data = await request<PackageRunControlView & { inputGaps?: string[]; m3Refusal?: string | null; continuationError?: string | null }>('POST', '/api/submission-orchestrator/runs/for-program', { programId, ...(sequenceId ? { sequenceId } : {}) });
       if (!current(expected)) return;
       if (!data.runId) throw new Error('The server did not return a saved run identifier.');
       setRuns(items => [{ runId: data.runId, status: data.status, startedAt: data.startedAt }, ...items.filter(item => item.runId !== data.runId)]);
@@ -99,7 +91,8 @@ export function OrchestratorRunControls({ programId, sequenceId, run, onLoad, se
   return <div className="pj-card-b" style={{ display: 'grid', gap: 10 }}>
     <PackageRunToolbar programId={programId} blocked={blocked} busy={busy} runs={runs} run={run} readState={readState} canSign={canSign} canResume={Boolean(canResume)} signatureRecorded={signatureRecorded} start={start} resume={resume} onLoad={onLoad} openSign={() => { if (run) { setSignTarget({ runId: run.runId, submissionId: run.submissionId }); setSignOpen(true); } }} />
     <PackageRunMessages programId={programId} readState={readState} runs={runs} error={error} notice={notice} inputGaps={inputGaps} blocked={blocked} onRetry={() => { if (!blocked) setRefresh(value => value + 1); }} />
-    <CsrSourceInputControls programId={programId} runId={run && run.runId === selectedRunId ? run.runId : null} interactionBusy={busy || signOpen} onSelectionChange={selectClinicalSource} onBusyChange={setSourceBusy} onNav={onNav} />
+    {/* The study's clinical source is frozen from its clinical study report document, in the editor (RULE 4,
+        2026-10-31: editor/StudyDataSource.tsx), not chosen for a package run here. */}
     <CsrNarrativeReadiness programId={programId} onNav={onNav} interactionBusy={blocked} />
     {signOpen && <EsignModal open={signOpen} action="Sign package release" target={signTarget?.runId ?? ''} targetMeta="Approval binds the frozen package digest. It does not transmit to an agency." meanings={['approval']} onClose={() => setSignOpen(false)} onSign={async input => {
       if (!signTarget || selected.current !== signTarget.runId) throw new Error('Reload the frozen run before signing.');

@@ -1311,6 +1311,7 @@ export function V2App() {
         setCollapsed={(v) => set('railCollapsed', v)}
         segment={segment}
         setSegment={chooseSegment}
+        onSearch={() => setCmdkOpen(true)}
       />
       {/* Phone-width scrim: at <=640px the EXPANDED rail paints over the
           content (app-v2.css keeps the grid at the collapsed strip), and this

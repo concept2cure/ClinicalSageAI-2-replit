@@ -1,0 +1,10 @@
+## mutation: any filing value change retires (the code before)
+ × filing guidance without hiding the global template library > keeps the form when its filing becomes known after it opened, and creates the document 60ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 10 passed | 25 skipped (36)
+## mutation: a filing change never retires
+ × filing guidance without hiding the global template library > rejects a template choice retained from an earlier filing context before sending creation 156ms
+ × filing guidance without hiding the global template library > still requires a reopen when a filing that was known changes to another 87ms
+ × filing guidance without hiding the global template library > requires explicit reopen after filing round trip 110ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 8 passed | 25 skipped (36)

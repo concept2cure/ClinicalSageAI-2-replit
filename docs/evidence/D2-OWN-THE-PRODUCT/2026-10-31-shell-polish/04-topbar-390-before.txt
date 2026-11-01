@@ -1,0 +1,12 @@
+# Before: Home at 390 px. The bar's content (scrollW) is wider than the bar, and Get help ends at x=400 on a 390 px screen.
+header x=56 w=334 scrollW=344 docScrollW=390 vw=390 gap 12px pad 0px 16px
+  crumbs                       x=72 w=0 right=72
+  tb-spacer                    x=84 w=0 right=84
+  tb-proj                      x=96 w=20 right=116
+  tb-org                       x=128 w=28 right=156
+  tb-btn                       x=168 w=17 right=185
+  tb-cmdk                      x=197 w=69 right=266
+  tb-task                      x=278 w=35 right=313
+  tb-btn                       x=325 w=17 right=342
+  tt-trigger tb-btn            x=354 w=17 right=371
+  tb-btn                       x=383 w=17 right=400

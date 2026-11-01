@@ -1,0 +1,19 @@
+## mutation: the response's destroyed state not asked
+ × when the response is destroyed by the time the scope is bound 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+## mutation: the response's finished state not asked
+ × when the response is already finished by the time the scope is bound 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+## mutation: the request's socket not asked
+ × when the client went away first and the scope was given a stand-in response 59ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+## mutation: no check at bind (the code before this change)
+ × when the client went away before the scope was bound 73ms
+ × when the client went away first and the scope was given a stand-in response 55ms
+ × when the response is destroyed by the time the scope is bound 2ms
+ × when the response is already finished by the time the scope is bound 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 2 passed (6)

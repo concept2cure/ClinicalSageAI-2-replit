@@ -1,0 +1,18 @@
+# Chromium, before the fix: the original walk, each launch surface left to load for 7 s, twice
+home             conns(idle,total)=20|20 session=200 135ms failed=0 calls=16
+project-home     conns(idle,total)=20|20 session=200 17ms failed=0 calls=28
+tasks            conns(idle,total)=20|20 session=200 18ms failed=0 calls=14
+communication    conns(idle,total)=20|20 session=200 17ms failed=0 calls=17
+vault            conns(idle,total)=20|20 session=200 18ms failed=0 calls=13
+cmc              conns(idle,total)=20|20 session=200 17ms failed=0 calls=16
+quality          conns(idle,total)=20|20 session=200 20ms failed=0 calls=17
+insights         conns(idle,total)=13|13 session=200 27ms failed=0 calls=12
+home (2)         conns(idle,total)=20|20 session=200 14ms failed=0 calls=16
+project-home (2) conns(idle,total)=20|20 session=200 16ms failed=0 calls=25
+tasks (2)        conns(idle,total)=20|20 session=200 17ms failed=0 calls=14
+communication (2) conns(idle,total)=20|20 session=200 18ms failed=4 calls=17
+vault (2)        conns(idle,total)=20|20 session=200 17ms failed=0 calls=13
+cmc (2)          conns(idle,total)=20|20 session=200 16ms failed=1 calls=16
+quality (2)      conns(idle,total)=20|20 session=500 10008ms failed=5 calls=17
+insights (2)     conns(idle,total)=20|20 session=500 10010ms failed=12 calls=11
+after close: conns=20|20 session=500 10011ms

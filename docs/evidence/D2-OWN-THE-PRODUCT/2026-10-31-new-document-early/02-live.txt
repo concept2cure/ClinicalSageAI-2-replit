@@ -1,0 +1,11 @@
+# Chromium, fresh browser each line: open the editor for BX-204 IND and click New document after the given wait;
+# then the dialog's state each second for 8 s (R = 'The project or filing changed…', u = usable).
+## Before the fix (same server, earlier run):
+wait=0 opened at 3.1s -> RRRRRRRR
+wait=0 opened at 3.7s -> RRRRRRRR
+wait=500 opened at 4.5s -> uuuuuuuu
+## After the fix:
+wait=0 opened at 5.1s -> uuuuuuuu
+wait=0 opened at 5.5s -> uuuuuuuu
+wait=0 opened at 4.6s -> uuuuuuuu
+wait=500 opened at 5.6s -> uuuuuuuu

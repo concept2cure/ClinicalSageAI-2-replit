@@ -248,9 +248,20 @@ export interface SectionStructureIssues {
  */
 export function sectionStructureIssues(orderedCodes: readonly string[]): SectionStructureIssues {
   const codes = orderedCodes.map((c) => String(c ?? '').trim()).filter((c) => c.length > 0);
-  const suggestedOrder = [...codes].sort(compareSectionCode);
+  // Only outline codes have an order of their own. Front and back matter is
+  // coded by name (title_page, table_of_contents, references) and sits where
+  // the document puts it: sorting it with the outline sent every title page
+  // after section 6, and flagged every template that opens with one.
+  const outline = codes.filter((c) => !isNamedMatterCode(c)).sort(compareSectionCode);
+  let next = 0;
+  const suggestedOrder = codes.map((c) => (isNamedMatterCode(c) ? c : outline[next++]));
   const outOfOrder = codes.some((c, i) => c !== suggestedOrder[i]);
   return { duplicateCodes: duplicateSectionCodes(codes), outOfOrder, suggestedOrder };
+}
+
+/** A section coded by its name rather than its place in the outline: title_page, references. */
+function isNamedMatterCode(code: string): boolean {
+  return /^[a-z][a-z0-9]*(?:_[a-z0-9]+)+$/.test(code) || /^[a-z]{3,}$/.test(code);
 }
 
 /**

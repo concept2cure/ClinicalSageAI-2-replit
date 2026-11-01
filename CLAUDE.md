@@ -245,7 +245,20 @@ The founder, 2026-10-31, after saying it for two years: *"We have document types
 diagnostic, by biotech, by pharma. We don't have apps. We don't have cards. We have one product. One canvas,
 one document editor for every document type and every client type."*
 
-- **Concept2Cure is one product.** Not apps. Not cards. Not a screen per capability or per document.
+The founder again, 2026-10-31: *"We don't have a special editor just for CSR reports. We have one document
+editor for every document type across all life science customers, medical device or biotech. One canvas. One
+agent personality, AnA. One editor. One project module. From the project module the document type is selected,
+and feature functionality aligned to that type of document, like a CSR report, appears in the editor and the
+subsequent flow. Never build a card, a workspace, an app."*
+
+- **Concept2Cure is one product:** one canvas, one agent (AnA), one document editor, one project module.
+  Not apps. Not cards. Not workspaces. Not a screen per capability or per document.
+- **The design mirrors Anthropic's Claude** (founder, 2026-10-31): the conversation with AnA, and beside it the
+  canvas and document editor where what AnA builds appears, is read, edited, reviewed, signed and filed. Calm,
+  conversation-first, no dashboards or control walls: intelligence surfaces in the conversation, not as widgets
+  or toolbars. Decided in `docs/design/ONE_ANA_ONE_CANVAS.md` (2026-10-08); the principles are
+  `.claude/skills/claude-ui-design-principles.md`. A screen that does not read like Claude's conversation and
+  canvas is not done.
 - **A document type is data, never a screen.** CSR, IND, protocol, IB, 510(k), CER, PMA, Module 3, QMS
   documents and every other are document types in one catalog, organized by client type (medical device,
   diagnostic, biotech, pharma).
@@ -260,9 +273,21 @@ one document editor for every document type and every client type."*
   editor, and delete the old place in the same change (working agreement: name the replacement by path).
   Known case, 2026-10-31: the CSR controls on Submission Center's eCTD Compile surface
   (`CsrSourceInputControls`, `CsrRunBuilds`, `CsrHeadingReview`, `CsrNarrativeBuild`, `CsrAssemblyControl`),
-  recorded in `docs/design/CSR_END_TO_END_2026-10-29.md` decision 1.
+  recorded in `docs/design/CSR_END_TO_END_2026-10-29.md` decision 1. *2026-10-31:* the build, its review and
+  import, narratives and assembly moved into the CSR document's editor (`editor/StudyDataBuild.tsx`, "Build from
+  the study's data"); Submission Center keeps only the study's data input (clinical source, frozen tables).
+- **A type's functions appear inside the one editor, for that type.** Example: a CSR document shows "Build from
+  the study's data" as a section of the editor (`editor/StudyDataBuild.tsx`). That is the pattern; a separate
+  editor, workspace or card for the type is not.
+- **Still in the app, 2026-10-31, to converge (not extend):** the rail's "CMC / Module 3" work area (Module 3 is a
+  document type: it belongs in the project's document start and the one editor); the project's "Core work"
+  workspaces (`ProjectCoreWork.tsx`: Study & Protocol Design, Risk-based monitoring, Biostatistics). Each is
+  converged by the lane that owns it, its replacement named by path, the old place deleted in the same change.
 - **Before writing any UI, name the editor or project path it extends.** If the honest answer is "a new
   card / screen / panel for this type", stop: it is refused.
+- **Enforced by `npm run ci:one-product`, in `.husky/pre-push`:** no new surface (`UI_SURFACES`) or rail entry
+  (`RAIL_CORE`) beyond `scripts/ci/one-product-baseline.json`, which only shrinks. An addition needs the founder's
+  recorded decision in that file; a session cannot grant itself one.
 - **A screen is not done until it was opened in the running app and used.** Component tests in a simulated
   DOM are not evidence that a screen works.
 

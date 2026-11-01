@@ -78,7 +78,7 @@ export function CsrBuildDraftControl({ programId, runId, studies, blocked, onQue
     setBusy(false);
     if (queued) onQueued?.(jobId);
   };
-  return <div aria-label="CSR draft from this run" style={{ display: 'grid', gap: 6 }}>
+  return <div aria-label="CSR draft from this study data" style={{ display: 'grid', gap: 6 }}>
     <p>Draft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.</p>
     {studies.map(({ source }) => <StudyBuildRow key={source.sha256} source={source} outcome={outcome[source.sha256]}
       disabled={busy || blocked} busy={busy} onStart={() => void start(source)} />)}
@@ -93,7 +93,7 @@ function StudyBuildRow({ source, outcome, disabled, busy, onStart }: {
       {I.fileText} {busy ? 'Starting…' : `Build CSR draft · ${source.protocolNumber}`}
     </button>
     {outcome?.kind === 'queued' && <span role="status">
-      CSR build {outcome.jobId} is queued. Its progress, narratives and files are under “CSR builds from this run”.
+      CSR build {outcome.jobId} is queued. Its progress, narratives and files are under “CSR builds from this study data”.
     </span>}
     {outcome?.kind === 'refused' && <p role="alert">{outcome.text}</p>}
   </div>;

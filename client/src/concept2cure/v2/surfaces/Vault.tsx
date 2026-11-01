@@ -378,6 +378,17 @@ export function vaultCountLabel(v: Pick<VaultDisplayShape, 'documentCount' | 'do
     .join(' · ');
 }
 
+/** The header line's parts, in order: the filing spine, the count, then what needs a person. */
+export function vaultHeaderParts(v: (VaultDisplayShape & { spine?: string | null; unfiledCount?: number; awaitingConfirmationCount?: number }) | null | undefined): string[] {
+  if (!v) return [];
+  return [
+    v.spine || null,
+    vaultCountLabel(v),
+    (v.unfiledCount ?? 0) > 0 ? `${v.unfiledCount} unfiled — needs review` : null,
+    (v.awaitingConfirmationCount ?? 0) > 0 ? `${v.awaitingConfirmationCount} awaiting confirmation` : null,
+  ].filter((x): x is string => Boolean(x));
+}
+
 /**
  * Whether a document counts as settled in its folder's count. An upload is
  * settled when its version is approved (VR-13; FD4's strict default): a
@@ -2030,19 +2041,15 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           <div className="sp-eyebrow">Documents {I.dot} project vault</div>
           <h1 className="vd-title">{getSurfaceMeta('vault').label}</h1>
           <div className="vd-sub">
+            {/* Each part keeps its separator: the line wrapped on both sides of
+                a dot and left it alone on a line of its own (UI walk, 2026-10-31). */}
             <span className="vd-sub-x">
-              {vault && vault.spine ? <>{vault.spine} {I.dot} </> : null}
-              {vault ? (
-                <>
-                  {vaultCountLabel(vault)}
-                </>
-              ) : null}
-              {vault && (vault.unfiledCount ?? 0) > 0 ? (
-                <> {I.dot} {vault.unfiledCount} unfiled — needs review</>
-              ) : null}
-              {vault && (vault.awaitingConfirmationCount ?? 0) > 0 ? (
-                <> {I.dot} {vault.awaitingConfirmationCount} awaiting confirmation</>
-              ) : null}
+              {vaultHeaderParts(vault).map((part, i) => (
+                <React.Fragment key={part}>
+                  {i > 0 ? ' ' : null}
+                  <span className="vd-sub-part">{i > 0 ? <>{I.dot} </> : null}{part}</span>
+                </React.Fragment>
+              ))}
             </span>
           </div>
         </div>
@@ -2081,22 +2088,27 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             reader's vocabulary. The width is the content's, not the row's —
             `.c2c-input` is `width:100%`, which in this wrapping header pushed
             the picker onto a line of its own with the buttons below it. */}
-        <select
-          className="c2c-input"
-          aria-label="Document type for files added next"
-          value={docType}
-          onChange={(e) => setDocType(e.target.value as VaultIngestDocumentType)}
-          disabled={uploading}
-          data-testid="vault-upload-type"
-          title="Document type for files added next; each file's own row can change it"
-          style={{ width: 'auto', maxWidth: 260 }}
-        >
-          {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {vaultIngestTypeLabel(t)}
-            </option>
-          ))}
-        </select>
+        {/* Named on screen: alone, the picker read as a stray "Other" box in
+            the header (UI walk, 2026-10-31). */}
+        <label className="vd-upload-type">
+          <span className="vd-upload-type-l">File type</span>
+          <select
+            className="c2c-input"
+            aria-label="Document type for files added next"
+            value={docType}
+            onChange={(e) => setDocType(e.target.value as VaultIngestDocumentType)}
+            disabled={uploading}
+            data-testid="vault-upload-type"
+            title="Document type for files added next; each file's own row can change it"
+            style={{ width: 'auto', maxWidth: 260 }}
+          >
+            {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {vaultIngestTypeLabel(t)}
+              </option>
+            ))}
+          </select>
+        </label>
         {/* The one drop zone (FileDropZone.tsx, shared with the Data Room):
             files or a folder, chosen or dropped here. The pickers accept
             exactly what POST /api/vault/ingest accepts; what was gathered goes

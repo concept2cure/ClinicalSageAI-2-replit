@@ -1,0 +1,64 @@
+# The regression in the first version, measured: current CSS vs the original reset, on 13 surfaces.
+# Properties: padding, margin, border, background, text-align, font size/weight/family/style, letter-spacing, line-height, text-transform, colour, and the rendered box.
+## FIRST VERSION (32e1eb7dd8): font family of every .btn changed
+## home: 30 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## projects: 29 buttons, rule rewritten 1x, 2 would change (0 qms-*)
+## project-home: 318 buttons, rule rewritten 1x, 289 would change (0 qms-*)
+## vault: 139 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## tasks: 22 buttons, rule rewritten 1x, 2 would change (0 qms-*)
+## communication-center: 28 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## cmc: 42 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## quality: 45 buttons, rule rewritten 1x, 25 would change (25 qms-*)
+## insights: 36 buttons, rule rewritten 1x, 7 would change (0 qms-*)
+## rbm: 40 buttons, rule rewritten 1x, 10 would change (0 qms-*)
+## submission-center: 33 buttons, rule rewritten 1x, 8 would change (0 qms-*)
+## document-authoring: 140 buttons, rule rewritten 1x, 26 would change (0 qms-*)
+## help: 21 buttons, rule rewritten 1x, 1 would change (0 qms-*)
+   btn ghost "Ask AnA" font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif→system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif box:97x32→101x32
+   btn primary "New project" font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif→system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif box:114x32→122x32
+   btn ghost "See this project’s reports in " font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif→system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif box:3
+   btn ghost "Project settings" font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif→system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif box:115x32→127x32
+   btn ghost "Start selected work" font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif→system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif box:156x32→171x3
+   btn ghost "Create from template" font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif→system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif box:167x32→185x
+
+## CORRECTED: identical outside Quality
+## home: 30 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## projects: 29 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## project-home: 318 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## vault: 139 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## tasks: 22 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## communication-center: 28 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## cmc: 42 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## quality: 45 buttons, rule rewritten 1x, 25 would change (25 qms-*)
+## insights: 36 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## rbm: 40 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## submission-center: 33 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## document-authoring: 140 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+## help: 21 buttons, rule rewritten 1x, 0 would change (0 qms-*)
+
+## Quality's 25 buttons, corrected (no font-family change):
+   qms-tb-btn "Ask AnA" padding-top:5px→0px padding-right:10px→0px padding-bottom:5px→0px padding-left:10px→0px font-weight:500→400 box:86x29→66x19
+   qms-tab "SOP register" padding-right:12px→0px padding-left:12px→0px font-size:12.5px→13px line-height:19.375px→20.15px box:132x39→112x39
+   qms-tab "Change control" padding-right:12px→0px padding-left:12px→0px font-size:12.5px→13px font-weight:500→400 line-height:19.375px→20.15px box:138x39→118x39
+   qms-tab "CAPA" padding-right:12px→0px padding-left:12px→0px font-size:12.5px→13px font-weight:500→400 line-height:19.375px→20.15px box:75x39→53x39
+   qms-tab "Deviations" padding-right:12px→0px padding-left:12px→0px font-size:12.5px→13px font-weight:500→400 line-height:19.375px→20.15px box:109x39→88x39
+   qms-tab "Nonconformances" padding-right:12px→0px padding-left:12px→0px font-size:12.5px→13px font-weight:500→400 line-height:19.375px→20.15px box:156x39→137x39
+   qms-tab "Suppliers" padding-right:12px→0px padding-left:12px→0px font-size:12.5px→13px font-weight:500→400 line-height:19.375px→20.15px box:101x39→79x39
+   qms-tab "Internal audits" padding-right:12px→0px padding-left:12px→0px font-size:12.5px→13px font-weight:500→400 line-height:19.375px→20.15px box:133x39→113x39
+   qms-tab "Management reviews" padding-right:12px→0px padding-left:12px→0px font-size:12.5px→13px font-weight:500→400 line-height:19.375px→20.15px box:177x39→159x39
+   qms-btn ghost "Ask AnA for a pre-inspection c" padding-top:7px→0px padding-right:12px→0px padding-bottom:7px→0px padding-left:12px→0px font-size:12.5px→13px font-weight:600→400 line-height:19.375px→20.15px box:291x35→248x22
+   qms-btn primary "New controlled document" padding-top:7px→0px padding-right:12px→0px padding-bottom:7px→0px padding-left:12px→0px font-size:12.5px→13px font-weight:600→400 line-height:19.375px→20.15px box:224x35→186x22
+   qms-tpl-card "QM-Quality manualTop-level des" padding-top:14px→0px padding-right:14px→0px padding-bottom:14px→0px padding-left:14px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→rgba(0, 0,
+   qms-tpl-card "POL-PolicyA governing statemen" padding-top:14px→0px padding-right:14px→0px padding-bottom:14px→0px padding-left:14px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→rgba(0, 0,
+   qms-tpl-card "SOP-Standard operating procedu" padding-top:14px→0px padding-right:14px→0px padding-bottom:14px→0px padding-left:14px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→rgba(0, 0,
+   qms-tpl-card "WI-Work instructionTask-level " padding-top:14px→0px padding-right:14px→0px padding-bottom:14px→0px padding-left:14px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→rgba(0, 0,
+   qms-tpl-card "FORM-FormA controlled template" padding-top:14px→0px padding-right:14px→0px padding-bottom:14px→0px padding-left:14px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→rgba(0, 0,
+   qms-tpl-card "VP-Validation protocolAn IQ/OQ" padding-top:14px→0px padding-right:14px→0px padding-bottom:14px→0px padding-left:14px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→rgba(0, 0,
+   qms-tpl-card "SOP-CC-Change-control procedur" padding-top:14px→0px padding-right:14px→0px padding-bottom:14px→0px padding-left:14px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→rgba(0, 0,
+   qms-tpl-card "CC-Change-request formThe cont" padding-top:14px→0px padding-right:14px→0px padding-bottom:14px→0px padding-left:14px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→rgba(0, 0,
+   qms-tpl-card "TC-Training curriculumThe role" padding-top:14px→0px padding-right:14px→0px padding-bottom:14px→0px padding-left:14px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→rgba(0, 0,
+   qms-chip "All" padding-top:3px→0px padding-right:8px→0px padding-bottom:3px→0px padding-left:8px→0px border-top-width:1px→0px border-left-width:1px→0px font-size:11px→13px font-weight:500→400 line-height:17.05px→20.15px box:32x25→16x20
+   qms-chip "Effective" padding-top:3px→0px padding-right:8px→0px padding-bottom:3px→0px padding-left:8px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→oklab(0.9818 -0.000479898 0.00537863) f
+   qms-chip "Under review" padding-top:3px→0px padding-right:8px→0px padding-bottom:3px→0px padding-left:8px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→oklab(0.9818 -0.000479898 0.00537863
+   qms-chip "Draft" padding-top:3px→0px padding-right:8px→0px padding-bottom:3px→0px padding-left:8px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→oklab(0.9818 -0.000479898 0.00537863) font-
+   qms-chip "Job roles" padding-top:3px→0px padding-right:8px→0px padding-bottom:3px→0px padding-left:8px→0px border-top-width:1px→0px border-left-width:1px→0px background-color:oklch(0.9818 0.0054 95.0986)→oklab(0.9818 -0.000479898 0.00537863) f
