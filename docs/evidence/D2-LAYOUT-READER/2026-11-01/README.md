@@ -100,6 +100,35 @@ All red runs are from the same tests, against the code before this change.
   - the old client met the stand-in's 404 at `/parse` and returned empty text;
   - the extractor never asked the reader.
 
+## Flag off, Vault ingestion is byte-identical (`flag-off-identity/`)
+
+The coordinating session asked for this: with `OSS_INGESTION_DOCLING_PRIMARY` off, which is the default, ingestion
+must be exactly what it was.
+
+**The run.** 40 PDFs in this repository (`pdfs.txt`, every tracked PDF under 3 MB) were each read twice: as the
+sweep reads them (OCR budget, `layout: true`) and as the upload request reads them (`ocr: false`, `layout: true`).
+Each read was done three ways:
+- by `extractDocumentText.ts` as it was at `08debf4e0`, before these commits (`before-08debf4e0.json`);
+- by the new code with the flag unset (`after-flag-unset.json`);
+- by the new code with the flag `false` (`after-flag-false.json`).
+
+**What was compared.** For each read: the method, the length, the SHA-256 of the text, the SHA-256 of the whole
+result (text, method, page spans, coverage, every field) and the result's keys.
+
+**Result.** 160 comparisons (40 files × 2 reads × 2 flag settings), 0 differences. 39 files were read as `pdf-text`
+and one as `none`, as before.
+
+**The check fails when it should** (`red-flag-true-reader-unreachable.json`). With the flag `true` and the reader
+unreachable, all 10 reads of the first five files differ. The text is the same, because the fallback is the
+platform's own extractor, but each result gains `layoutNotUsed`.
+
+**The sweep's chained row.** `vault.document.extracted` adds `layoutDetails(read.extracted)`
+(`server/jobs/vaultProcessingSweep.ts`). That returns `{}` unless the result carries `layout` or `layoutNotUsed`.
+The results above are identical to before and carry neither, so with the flag off the row's details are the same
+keys and values as before.
+
+**How to run it.** The script is `identity.ts`, run from the repository root; its header gives the command.
+
 ## Owed
 
 - **A real reader.** Running the reader on a real study report, and reading the result in Vault's chunks. It was
