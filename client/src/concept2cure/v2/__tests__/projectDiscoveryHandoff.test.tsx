@@ -20,7 +20,13 @@ vi.mock('../surfaces/RegistryBridge', () => ({ getSubmissionTypeContext: () => r
   ? { id: 'us_510k', displayName: '510(k)', pathwayKey: '510k', agency: 'FDA', region: 'US' }
   : { id: 'us_ind', displayName: 'IND', pathwayKey: 'ind', agency: 'FDA', region: 'US' },
 }));
-vi.mock('../MarketSupportLine', () => ({ MarketSupportLine: () => null }));
+/* The wizard reads the market answer for its one setup sentence (2026-10-31);
+   this suite is about discovery, so the read answers loading and says nothing. */
+vi.mock('../MarketSupportLine', () => ({
+  MarketSupportLine: () => null,
+  marketSupportText: () => '',
+  useMarketSupport: () => ({ data: null, loading: true, empty: false, retry: () => {} }),
+}));
 
 import { NewProjectWizard } from '../surfaces/Projects';
 import { ProjectDiscoveryHandoff } from '../surfaces/ProjectDiscoveryHandoff';

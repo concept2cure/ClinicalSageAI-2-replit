@@ -78,7 +78,20 @@ describe('Projects — figures and cards say only what was assessed', () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program soon')).toBeTruthy());
     // 30 days: yes. 120 days, 5 days ago, and no date: no.
-    expect(figure(/filing < 60 days/i)).toBe('1');
+    expect(figure(/filing within 60 days/i)).toBe('1');
+  });
+
+  /* 2026-10-31 client demo: "1 active projects". */
+  it('says one active project in the singular, and several in the plural', async () => {
+    render(<Projects {...props()} />);
+    await waitFor(() => expect(screen.getByText('Program soon')).toBeTruthy());
+    expect(document.querySelector('.pj-summary')?.textContent).toContain('4 active projects');
+    cleanup();
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url === '/api/c2c/projects' ? ok({ data: [row('only', null)] }) : ok({ data: [] }));
+    render(<Projects {...props()} />);
+    await waitFor(() => expect(screen.getByText('Program only')).toBeTruthy());
+    expect(document.querySelector('.pj-summary')?.textContent).toMatch(/\b1 active project(?!s)/);
   });
 
   it('offers no status filter that can only show an empty list', async () => {

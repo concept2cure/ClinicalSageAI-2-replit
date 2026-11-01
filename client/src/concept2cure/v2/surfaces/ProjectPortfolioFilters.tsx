@@ -48,8 +48,12 @@ export function ProjectPortfolioFilters({ workstream, pathway, counts, hasDevice
   workstream: string; pathway: string; counts: PortfolioCounts | null; hasDeviceRows: boolean;
   onWorkstream: (value: string) => void; onPathway: (value: string) => void;
 }) {
-  const pathwaysVisible = workstream === 'MDX' || pathway !== 'all' || hasDeviceRows || (counts?.byWorkstream.MDX ?? 0) > 0;
   const pathways = REGULATORY_PATHWAYS.filter(key => (counts?.byPathway[key] ?? 0) > 0 || key === pathway);
+  /* Drug and biologic applications are pathways too since 2026-10-31 (IND,
+     NDA, BLA…: every one was "Other"), so the row shows whenever there is a
+     choice to make, in any workstream. */
+  const pathwaysVisible = pathway !== 'all' || pathways.length > 1
+    || (counts === null && (workstream === 'MDX' || hasDeviceRows));
   return <div style={{ display: 'grid', gap: 8, marginBottom: 8, justifyItems: 'start' }}>
     <div className="ws-switch" style={{ marginBottom: 0 }} role="group" aria-label="Workstream filters">
       {['all', 'MDX', 'Biotech', 'Pharma'].map(key => <button key={key}

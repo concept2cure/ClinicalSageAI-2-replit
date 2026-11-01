@@ -2060,6 +2060,10 @@
 .c2c-v2 .btn .ico{font-size:15px;}
 .c2c-v2 .btn.primary{background:var(--accent-strong);color:var(--accent-on-strong);}
 .c2c-v2 .btn.primary:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
+/* A disabled button looks disabled and does not lift (2026-10-31: the wizard's
+   Continue looked enabled while it was not). After :hover, so it wins. */
+.c2c-v2 .btn:disabled{opacity:.5;cursor:not-allowed;}
+.c2c-v2 .btn.primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
 .c2c-v2 .btn.ghost{border:1px solid var(--border);color:var(--text-200);}
 .c2c-v2 .btn.ghost:hover{background:var(--bg-100);}
 

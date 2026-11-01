@@ -30,10 +30,12 @@ export function ProjectClientFilter({ value, clients, hasMore, onChange }: {
   value: string; clients: PortfolioClient[]; hasMore: boolean; onChange: (value: string) => void;
 }) {
   const selected = clients.some(client => String(client.id) === value);
+  /* The label sits on the select's line (2026-10-31): it wrapped above it,
+     out of line with the search box and the view switch. */
   return <>
-    {(clients.length > 1 || value !== 'all') && <label>
-      Client{' '}
-      <select className="c2c-input" aria-label="Client" value={value} onChange={event => onChange(event.target.value)}>
+    {(clients.length > 1 || value !== 'all') && <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', fontSize: 12.5, color: 'var(--text-300)' }}>
+      Client
+      <select className="c2c-input" aria-label="Client" value={value} onChange={event => onChange(event.target.value)} style={{ width: 'auto' }}>
         <option value="all">All clients</option>
         {value !== 'all' && !selected && <option value={value}>Selected client</option>}
         {clients.map(client => <option key={client.id} value={String(client.id)}>{client.name}</option>)}

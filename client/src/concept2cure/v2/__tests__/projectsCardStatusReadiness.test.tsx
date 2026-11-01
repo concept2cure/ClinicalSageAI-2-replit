@@ -81,12 +81,16 @@ describe('Projects card — a blocked status carries its cause, or says none is 
     expect(c.textContent).not.toMatch(/No open blockers/);
   });
 
-  it('a program with a recorded blocker shows that blocker, not the no-cause line', async () => {
+  /* 2026-10-31: the portfolio projection carries no blocker (it was a literal
+     NULL, server/services/c2c/project-portfolio.ts), so the card reads none,
+     even from a row that carries one, and a blocked status says no cause is
+     recorded here. A project's blockers are on its project home. */
+  it('reads no blocker from a list row, and a blocked status still says no cause is recorded', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program ivd')).toBeTruthy());
     const c = card('Program ivd');
-    expect(c.textContent).toContain('FAERS signal adjudication pending');
-    expect(c.textContent).not.toMatch(/no cause recorded/i);
+    expect(c.textContent).not.toContain('FAERS signal adjudication pending');
+    expect(c.textContent).toMatch(/no cause recorded/i);
   });
 
   it('an active program makes no blocker claim either way', async () => {
@@ -102,6 +106,12 @@ describe('Projects card — a blocked status carries its cause, or says none is 
     await waitFor(() => expect(listRow('Program nm512')).toBeTruthy());
     expect(listRow('Program nm512').textContent).toMatch(/no cause recorded/i);
     expect(listRow('Program bx256').textContent).not.toMatch(/cause recorded/i);
+    // A Status column, where a Blocker column read "—" on every row (2026-10-31).
+    const head = document.querySelector('.ct-head')?.textContent ?? '';
+    expect(head).toContain('Workstream');
+    expect(head).toContain('Status');
+    expect(head).not.toMatch(/Blocker|\bWS\b/);
+    expect(listRow('Program bx256').textContent).toContain('Active');
   });
 });
 

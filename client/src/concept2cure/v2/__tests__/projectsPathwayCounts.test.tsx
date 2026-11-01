@@ -44,7 +44,7 @@ describe('Projects full-portfolio counts and server pathway filters', () => {
     render(<><Projects {...props()} /><Probe seen={seen} /></>);
     await screen.findByText('Project IDE');
     expect(figure(/active projects/i)).toBe('60');
-    expect(figure(/filing < 60 days/i)).toBe('17');
+    expect(figure(/filing within 60 days/i)).toBe('17');
     expect(figure(/average readiness/i)).toBe('40%');
     expect(screen.getByRole('button', { name: 'MDX 58' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'PMA 20' })).toBeTruthy();
@@ -59,14 +59,14 @@ describe('Projects full-portfolio counts and server pathway filters', () => {
     render(<Projects {...props()} />);
     fireEvent.change(await screen.findByRole('combobox', { name: 'Client' }), { target: { value: '11' } });
     fireEvent.click(await screen.findByRole('button', { name: 'MDX 58' }));
-    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX'));
+    await waitFor(() => expect(apiRequest.mock.lastCall?.slice(0, 2)).toEqual(['GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX']));
     fireEvent.click(screen.getByRole('button', { name: 'PMA 20' }));
-    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX&pathway=pma'));
+    await waitFor(() => expect(apiRequest.mock.lastCall?.slice(0, 2)).toEqual(['GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX&pathway=pma']));
     expect(await screen.findByText('Project PMA')).toBeTruthy();
     expect(screen.queryByText('Project IDE')).toBeNull();
     expect(figure(/active projects/i)).toBe('20');
     fireEvent.click(screen.getByRole('button', { name: 'All pathways 60' }));
-    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX'));
+    await waitFor(() => expect(apiRequest.mock.lastCall?.slice(0, 2)).toEqual(['GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX']));
   });
 
   it('applies the same pathway through the existing surface action and rejects unknown keys', async () => {
@@ -76,7 +76,7 @@ describe('Projects full-portfolio counts and server pathway filters', () => {
     expect(action.ok).toBe(true);
     if (!action.ok) throw new Error(action.error);
     act(() => { expect(applySurfaceAction(action.directive, vi.fn()).status).toBe('applied'); });
-    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', '/api/c2c/projects?ws=MDX&pathway=pma'));
+    await waitFor(() => expect(apiRequest.mock.lastCall?.slice(0, 2)).toEqual(['GET', '/api/c2c/projects?ws=MDX&pathway=pma']));
     expect(resolveSurfaceAction('projects.filter', { pathway: 'made_up' }).ok).toBe(false);
   });
 

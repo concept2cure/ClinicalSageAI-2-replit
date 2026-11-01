@@ -43,7 +43,8 @@ import { usePublishSurfaceContext, type SurfaceContext } from '../surfaceContext
 // Importing RegistryBridge also runs its side effects, which populate the
 // window.GLOBAL_REGISTRY / REG_SEGMENTS that RegistryPicker reads.
 import { RegistryPicker, type FilingBrowseState } from './AnaVerbs';
-import { MarketSupportLine } from '../MarketSupportLine';
+import { marketSupportText, useMarketSupport, type MarketSupportView } from '../MarketSupportLine';
+import { PATHWAY_LABEL, REGULATORY_PATHWAYS, REGULATORY_PATH_TO_PATHWAY, pathwayKey, type RegulatoryPathway } from '@shared/constants/mdx';
 import { getSubmissionTypeContext } from './RegistryBridge';
 import { ProjectDiscoveryHandoff } from './ProjectDiscoveryHandoff';
 import {
@@ -185,6 +186,85 @@ function documentClassLabel(programType: string): string | null {
   return label ? label.charAt(0).toUpperCase() + label.slice(1) : null;
 }
 
+/**
+ * The filing as people name it ("510(k)", "IND", "De Novo"), from the one
+ * pathway vocabulary (shared/constants/mdx.ts). Only a type that IS a pathway
+ * takes its label: an MDR technical file is not "CER", nor a bare IVD "IVDR".
+ * The review read "510K · ivd" (2026-10-31).
+ */
+export function filingLabel(programType: string): string {
+  const classLabel = documentClassLabel(programType);
+  if (classLabel) return classLabel;
+  const key = pathwayKey(programType);
+  const own: RegulatoryPathway | null = (REGULATORY_PATHWAYS as readonly string[]).includes(key) ? key as RegulatoryPathway
+    : Object.hasOwn(REGULATORY_PATH_TO_PATHWAY, key) && REGULATORY_PATH_TO_PATHWAY[key] === 'k510' ? 'k510' : null;
+  return own && own !== 'other' ? PATHWAY_LABEL[own] : key.toUpperCase().replace(/_/g, ' ');
+}
+
+/** A product type as the vocabulary labels it ("In-vitro diagnostic"). */
+function productTypeLabel(value: string | null): string {
+  if (!value) return 'not stated';
+  return PRODUCT_TYPES.find(t => t.value === value)?.label ?? value;
+}
+
+/** A date input's YYYY-MM-DD as the review prints it ("Mar 31, 2027"). */
+export function reviewDate(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return iso.trim() || 'Not set';
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])))
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+}
+
+/** What a step still needs before it can move on, naming the first missing
+ *  field; null when nothing is missing. Continue and Create were disabled with
+ *  no word of why, and a disabled primary looked enabled (2026-10-31). */
+export function wizardMissing(step: number, s: {
+  filingChosen: boolean; workspaceRead: boolean; workspaceChosen: boolean; nameGiven: boolean; classStated: boolean;
+}): string | null {
+  const then = step === 2 ? 'to create the project' : 'to continue';
+  if (step === 0) return s.filingChosen ? null : `Choose a filing type ${then}.`;
+  if (!s.workspaceChosen) return s.workspaceRead ? `Choose a client workspace ${then}.` : 'Checking client workspaces…';
+  if (!s.nameGiven) return `Enter a project name ${then}.`;
+  return s.classStated ? null : `Choose a product type ${then}.`;
+}
+
+/** A name already used by a project on the loaded portfolio page, or null. */
+export function duplicateProjectName(name: string, existing: readonly string[]): string | null {
+  const wanted = name.trim().toLowerCase();
+  if (!wanted) return null;
+  return existing.find(title => title.trim().toLowerCase() === wanted) ?? null;
+}
+
+/**
+ * What the project will get, in one sentence: the outline it is built against.
+ * Read from the same market answer the project's submission rows show
+ * (MarketSupportLine), and only its outline: whether and how a sequence can be
+ * sent is the Submit tab's matter. The wizard opened with the full market line,
+ * "Transmit not proven: FDA onboarding … have not been verified", before a
+ * project existed (2026-10-31). A filing not offered keeps the server's words.
+ */
+export function wizardSetupText(m: Pick<MarketSupportView, 'offered' | 'summary' | 'line' | 'outline'>): string {
+  if (!m.offered) return marketSupportText(m);
+  const pack = m.outline?.state === 'outline' ? m.outline.pack : null;
+  if (pack?.label.trim()) return `The project is built against the ${pack.label.trim()} outline, section by section.`;
+  return 'This filing has no dossier outline here yet: the project is created, and its documents are added to it.';
+}
+
+function WizardFilingSetup({ applicationType, market }: { applicationType: string; market: string }) {
+  const read = useMarketSupport(applicationType, market);
+  const m = read.data?.markets?.[0];
+  if (read.loading) return <span data-testid="market-support" data-state="loading">Checking what this filing sets up…</span>;
+  if (read.error || !m) {
+    return (
+      <span role="status" data-testid="market-support" data-state="error">
+        What this filing sets up could not be read.{' '}
+        <button type="button" className="btn ghost sm" onClick={read.retry}>Retry</button>
+      </span>
+    );
+  }
+  return <span data-testid="market-support" data-state={m.offered ? 'offered' : 'refused'}>{wizardSetupText(m)}</span>;
+}
+
 /** The three steps, in order. One list, read by the step rail, the sub-heading
  *  and the bounds checks below, so a step cannot be renamed in one place and
  *  stay stale in another. */
@@ -213,7 +293,11 @@ function wizardScreenContext(step: number, filing: SelTpl | null, applicationTyp
  *  must offer a way out), and driving it through the whole Projects surface
  *  would test the registry loader rather than the banner. */
 type NewProjectWizardProps = { onClose: () => void; onNav: (id: string) => void; segment?: string;
-  onAsk?: (text: string) => void; onContext?: (context: WizardScreenContext | null) => void };
+  onAsk?: (text: string) => void; onContext?: (context: WizardScreenContext | null) => void;
+  /** The titles of the projects on the loaded portfolio page, so a name already
+   *  in use is said before the project is created. Not a uniqueness rule: the
+   *  server allows it, and a page is not the whole portfolio. */
+  existingNames?: readonly string[] };
 export function NewProjectWizard(props: NewProjectWizardProps) {
   const { onContext } = props;
   const user = useAuthUser();
@@ -237,7 +321,7 @@ export function NewProjectWizard(props: NewProjectWizardProps) {
   return <NewProjectWizardSession key={key} {...props} actor={{ actorUserId, organizationId }} isCurrent={() => current.current === key} />;
 }
 
-function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, actor, isCurrent }: NewProjectWizardProps & { actor: ProjectIntakeActor; isCurrent: () => boolean }) {
+function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, existingNames = [], actor, isCurrent }: NewProjectWizardProps & { actor: ProjectIntakeActor; isCurrent: () => boolean }) {
   const { setCurrentClientWorkspace } = useTenant();
   const capturedActor = useMemo(() => ({ actorUserId: actor.actorUserId, organizationId: actor.organizationId }), [actor.actorUserId, actor.organizationId]);
   // Retain the pending outcome in this view. A ref also protects an Escape or
@@ -255,6 +339,12 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
      below, not in here. */
   const viewRef = useDialog(closeIfSettled);
   const [step, setStep] = useState(0);
+  /* Each step opens at its top. The review step was reached scrolled to where
+     the long filing catalogue had been left (2026-10-31). */
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [step]);
   const [tpl, setTpl] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [product, setProduct] = useState('');
@@ -398,6 +488,12 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
   /* Configure is complete when the name is given and, where the filing type
      leaves it open, the class is chosen. */
   const configured = savedName !== '' && recordedClass !== null && workspace !== null;
+  /* Said beside Continue / Create while it is disabled, and named by it. */
+  const missing = wizardMissing(step, {
+    filingChosen: Boolean(tpl), workspaceRead: workspaceOptions !== null, workspaceChosen: workspace !== null,
+    nameGiven: savedName !== '', classStated: recordedClass !== null,
+  });
+  const sameName = duplicateProjectName(savedName, existingNames);
 
   // Persist a real regulatory program (POST /api/c2c/projects → regulatory_programs)
   // then navigate into it using the id the store assigns. On failure we surface
@@ -571,7 +667,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
         </ol>
       </nav>
 
-      <div className="npw-scroll">
+      <div className="npw-scroll" ref={scrollRef}>
         {/* The registry step is a catalogue and wants the width; the two form
             steps are read line by line and want a measure. One container, two
             widths, rather than one compromise that serves neither. */}
@@ -608,10 +704,10 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
           {step === 1 && selTpl && (
             <div className="npw-form">
               <h2 className="npw-h2">Configure your {selTpl.label} project</h2>
-              {/* What the platform can carry for the market this filing type
-                  opens, in the server's words (FILING_SPINE.md F19). */}
+              {/* What the project will get: the outline it is built against,
+                  from the server's market answer (FILING_SPINE.md F19). */}
               <p className="npw-seg-s" data-testid="npw-market-support">
-                <MarketSupportLine applicationType={programTypeFor(selTpl, uiSeg)} market={selTpl.agency || 'FDA'} />
+                <WizardFilingSetup applicationType={programTypeFor(selTpl, uiSeg)} market={selTpl.agency || 'FDA'} />
               </p>
 
               <ProjectDiscoveryHandoff
@@ -655,8 +751,10 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                     aria-required="true"
                     aria-describedby="npw-name-help"
                   />
-                  <span className="npw-field-help" id="npw-name-help">
-                    Required. The project is listed under this name.
+                  <span className="npw-field-help" id="npw-name-help" data-testid="npw-name-help">
+                    {sameName
+                      ? `A project named “${sameName}” is already in your portfolio. Choose another name, or keep it if this is a separate project.`
+                      : 'Required. The project is listed under this name.'}
                   </span>
                 </label>
 
@@ -743,8 +841,8 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                       aria-describedby="npw-pc-help"
                     />
                     <span className="npw-field-help" id="npw-pc-help">
-                      Three letters. It decides the regulation number, the review panel and which
-                      predicates you can compare against.
+                      The three-letter FDA product code from the product classification database.
+                      Enter its regulation number and review panel below; they are not filled in from it.
                     </span>
                   </label>
 
@@ -757,7 +855,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                       placeholder="e.g. 868.1860"
                       aria-describedby="npw-rn-help"
                     />
-                    <span className="npw-field-help" id="npw-rn-help">21 CFR — the part is the panel.</span>
+                    <span className="npw-field-help" id="npw-rn-help">The 21 CFR regulation listed for the product code.</span>
                   </label>
 
                   <label className="npw-field">
@@ -842,9 +940,11 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                 </>
               )}
 
-              <label className="npw-field npw-field-wide npw-flag">
+              <label className="npw-flag npw-field-wide">
                 <input type="checkbox" checked={riskBasedMonitoring} onChange={event => setRiskBasedMonitoring(event.target.checked)} />
-                <span><span className="npw-field-l">Risk-based monitoring</span>{' '}<span className="npw-field-help">Include risk assessment, monitoring indicators and site oversight for this project. No assessment or monitoring data is created during setup; existing access requirements apply.</span></span>
+                {/* The device flags' checkbox card (npw-flag), not a form field:
+                    as `npw-field` it stacked the box above its words. */}
+                <span><span className="npw-flag-l">Risk-based monitoring</span>{' '}<span className="npw-flag-w">Include risk assessment, monitoring indicators and site oversight for this project. No assessment or monitoring data is created during setup; existing access requirements apply.</span></span>
               </label>
 
               <div className="npw-field npw-field-wide">
@@ -910,13 +1010,13 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                 )}
                 <div className="npw-review-row">
                   <dt>Target date</dt>
-                  <dd>{target || 'Not set'}</dd>
+                  <dd>{reviewDate(target)}</dd>
                 </div>
                 <div className="npw-review-row">
                   <dt>Pathway</dt>
-                  {/* A filing document class names itself: its pathway key is the
-                      'ctd' default, which read "CTD" for a supplement or a CSR. */}
-                  <dd>{documentClassLabel(programType) ?? (selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</dd>
+                  {/* Named as the filing is named (filingLabel), never its key:
+                      "CTD" for a supplement, "510K" for a 510(k). */}
+                  <dd>{filingLabel(programType)}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</dd>
                 </div>
                 {/* Both lines are derived exactly as the create call derives
                     them, so the review step shows what will actually persist.
@@ -929,7 +1029,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                 </div>
                 <div className="npw-review-row">
                   <dt>Recorded as</dt>
-                  <dd>{programType.toUpperCase().replace(/_/g, ' ')} · {recordedClass ?? 'not stated'}</dd>
+                  <dd>{filingLabel(programType)} · {productTypeLabel(recordedClass)}</dd>
                 </div>
                 {/* Only what was actually entered. A device row that reads
                     "Not recorded" is the truth about the programme; filling it
@@ -1052,18 +1152,24 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
           <button type="button" className="btn ghost" disabled={creating} onClick={closeIfSettled}>Cancel</button>
           {step > 0 && <button type="button" className="btn ghost" disabled={creating} onClick={() => setStep(s => s - 1)}>Back</button>}
           <span className="npw-foot-gap" />
+          {/* Why the primary is unavailable, beside it and named by it. */}
+          <span className="npw-field-help" id="npw-missing" role="status" data-testid="npw-missing">
+            {missing && !creating && !writeStopped ? missing : ''}
+          </span>
           {step < 2 && (
             <button
               type="button"
               className="btn primary"
-              disabled={(step === 0 && !tpl) || (step === 1 && !configured)}
+              disabled={missing !== null}
+              aria-describedby={missing ? 'npw-missing' : undefined}
               onClick={() => setStep(s => s + 1)}
             >
               Continue
             </button>
           )}
           {step === 2 && (
-            <button type="button" className="btn primary" disabled={creating || writeStopped || !configured} onClick={doCreate}>
+            <button type="button" className="btn primary" disabled={creating || writeStopped || !configured}
+              aria-describedby={missing ? 'npw-missing' : undefined} onClick={doCreate}>
               {creating ? 'Creating project…' : <>{I.plus} Create project</>}
             </button>
           )}
@@ -1098,10 +1204,11 @@ function PortfolioPagedNote({ paged, settled, count, scopedCounts }: { paged: bo
  * Portfolio row — the display contract projected by GET /api/c2c/projects
  * (server/routes/c2c/projects.ts), one field per real `regulatory_programs`
  * column (phase → stage, target_submission_date → due, lead_user_id → lead),
- * and the home filing's dossier readiness, measured on each read. `blocker` is in the projection but the list query
- * returns it as a literal NULL — no blocker is computed at list level — so it is
- * typed nullable and rendered null-safe, never fabricated. Null means "not
- * assessed here", never "none": the card says nothing about blockers then.
+ * and the home filing's dossier readiness, measured on each read. No blocker:
+ * the list query projected one as a literal NULL, so its column read "—" on
+ * every row, and it is gone from the projection and the list (2026-10-31,
+ * server/services/c2c/project-portfolio.ts). A project's blockers are on its
+ * project home.
  */
 interface ProjPortfolioEntry {
   id: string;
@@ -1118,7 +1225,6 @@ interface ProjPortfolioEntry {
   readinessReason?: string;
   status: string;
   lead: string;
-  blocker: string | null;
   due: string;
   /** target_submission_date as YYYY-MM-DD, or null when none is set. */
   due_date?: string | null;
@@ -1156,6 +1262,9 @@ function daysUntil(isoDate: string | null | undefined, today: Date = new Date())
 
 /** Workstream → chip tone (presentation config, not data). */
 const WS_TONE: Record<string, string> = { MDX: 'ai', Biotech: 'ok', Pharma: 'warn', CRO: 'idle' };
+
+/** The list view's columns: project, workstream, stage, status, lead, due. */
+const LIST_COLUMNS = '1.6fr 100px 1fr 120px 100px 100px';
 
 /* A program whose stored status is `blocked` while the list carries no blocker
    for it. The product writes only active and archived (POST and the close-out
@@ -1246,11 +1355,13 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   }).length;
   const health = useMemo(() => {
     const kv = (value: string) => (live.loading || live.error ? '—' : value);
+    const active = kv(counts ? String(counts.total) : countFloor(projects.length, truncated));
     return [
-    { l: 'Active projects', n: kv(counts ? String(counts.total) : countFloor(projects.length, truncated)), m: 'matching the selected server filters', t: '' },
+    // "1 active project", never "1 active projects" (2026-10-31).
+    { l: active === '1' ? 'Active project' : 'Active projects', n: active, m: 'matching the selected server filters', t: '' },
     // A mean over some of the programs says how many it covers (`q`).
     { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '', q: measuredCover },
-    { l: 'Filing < 60 days', n: kv(counts ? String(counts.filingWithin60Days) : countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
+    { l: 'Filing within 60 days', n: kv(counts ? String(counts.filingWithin60Days) : countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
     ];
   }, [live.loading, live.error, counts, projects.length, truncated, meanReadiness, measuredCover, filingSoon]);
   /* The status filter offers the statuses the portfolio actually holds. It
@@ -1341,7 +1452,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         programs: list.slice(0, 12).map(p => ({
           id: p.id, code: p.code, title: p.title, workstream: p.ws, pathway: p.pathway ?? null, stage: p.stage,
           status: p.status, readiness: p.readiness, readinessState: p.readinessState ?? null, due: p.due,
-          blocker: p.blocker ?? null,
         })),
       },
       availableActions: [
@@ -1476,7 +1586,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      the shell persists, and backing out of a half-filled form would then have to
      unwind that too. */
   if (wizardOpen) {
-    return <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} segment={segment} onAsk={onAsk} onContext={setWizardContext} />;
+    return <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} segment={segment} onAsk={onAsk} onContext={setWizardContext}
+      existingNames={projects.map(project => project.title)} />;
   }
 
   return (
@@ -1599,18 +1710,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
               <div className="pj-card-f">
                 <span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span>
                 <span className={`rd-chip tone-${p.status === 'blocked' ? 'err' : p.status === 'complete' ? 'ok' : 'ai'}`}>{p.status}</span>
-                {/* The blocker keeps its own line and its warning tone: it is
-                    the one thing on this card that changes what you do next,
-                    and colour is not carrying it alone — the icon and the text
-                    both say so. */}
-                {/* Nothing when no blocker came back: the list does not
-                    assess blockers, so "No open blockers" was an all-clear
-                    nothing had checked. */}
-                {p.blocker && <span className="pj-card-blk">{I.alertTriangle} {p.blocker}</span>}
-                {/* A status of blocked with no blocker behind it (NM-512 in the
-                    QA organisation, QA 2026-10-08 j1) says so in words. The red
-                    chip alone read as a finding with its cause withheld. */}
-                {!p.blocker && p.status === 'blocked' && (
+                {/* The list assesses no blockers, so it says nothing of them.
+                    A status of blocked (NM-512 in the QA organisation, QA
+                    2026-10-08 j1) says in words that no cause is recorded:
+                    the red chip alone read as a finding with its cause withheld. */}
+                {p.status === 'blocked' && (
                   <span className="pj-card-blk" title={BLOCKED_NO_CAUSE_TITLE}>{I.alertTriangle} {BLOCKED_NO_CAUSE}</span>
                 )}
               </div>
@@ -1619,11 +1723,13 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         </div>
       ) : (
         <div className="ctable">
-          <div className="ct-head" style={{ gridTemplateColumns: '1.6fr 80px 1fr 120px 100px 90px' }}>
-            <div>Project</div><div>WS</div><div>Stage / readiness</div><div>Blocker</div><div>Lead</div><div>Due</div>
+          {/* Status, where a Blocker column read "—" on every row: the list
+              assesses no blockers (2026-10-31). */}
+          <div className="ct-head" style={{ gridTemplateColumns: LIST_COLUMNS }}>
+            <div>Project</div><div>Workstream</div><div>Stage / readiness</div><div>Status</div><div>Lead</div><div>Due</div>
           </div>
           {list.map(p => (
-            <button key={p.id} className="ct-row" style={{ gridTemplateColumns: '1.6fr 80px 1fr 120px 100px 90px' }} onClick={() => openProj(p)}>
+            <button key={p.id} className="ct-row" style={{ gridTemplateColumns: LIST_COLUMNS }} onClick={() => openProj(p)}>
               <div>
                 <div className="ct-strong">{p.title}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.code}{p.activity ? ` · ${p.activity}` : ''}</div>
@@ -1641,10 +1747,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
                 </div>
               </div>
               <div
-                style={{ fontSize: 11, color: p.blocker || p.status === 'blocked' ? 'var(--warning)' : 'var(--text-400)' }}
-                title={!p.blocker && p.status === 'blocked' ? BLOCKED_NO_CAUSE_TITLE : undefined}
+                style={{ fontSize: 11, color: p.status === 'blocked' ? 'var(--warning)' : 'var(--text-300)' }}
+                title={p.status === 'blocked' ? BLOCKED_NO_CAUSE_TITLE : undefined}
               >
-                {p.blocker ? '1 blocker' : p.status === 'blocked' ? BLOCKED_NO_CAUSE : '—'}
+                {p.status ? p.status[0].toUpperCase() + p.status.slice(1) : 'Not recorded'}
+                {p.status === 'blocked' && <div>{BLOCKED_NO_CAUSE}</div>}
               </div>
               <div style={{ fontSize: 11.5 }}>{p.lead}</div>
               <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.due}</div>

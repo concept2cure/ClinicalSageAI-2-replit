@@ -8,6 +8,7 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: (...args: unknown[]) => intakeFixtureRequest(apiRequest, args) }));
 vi.mock('@/utils/authToken', async (original) => ({ ...(await original<typeof import('@/utils/authToken')>()), getAuthToken: () => 'synthetic-test-session' }));
 import { NewProjectWizard } from '../surfaces/Projects';
+import { PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import { getSubmissionTypeContext } from '../surfaces/RegistryBridge';
 
 const ids = ['eu_mdr_techdoc', 'eu_cer', 'us_510k_ivd', 'us_510k'];
@@ -46,7 +47,8 @@ describe('actual registry search preserves the selected product family across la
     fireEvent.change(screen.getByRole('textbox', { name: /project name/i }), { target: { value: 'Cross-lane device preparation' } });
     fireEvent.change(screen.getByRole('combobox', { name: classLabel }), { target: { value } });
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
-    expect(screen.getByText((content: string) => content.endsWith(` · ${product}`))).toBeDefined();
+    // The review names the product type by its label (2026-10-31), the create sends its value.
+    expect(screen.getByText((content: string) => content.endsWith(` · ${PRODUCT_TYPES.find(t => t.value === product)!.label}`))).toBeDefined();
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: /create project/i })); });
     const posted = () => apiRequest.mock.calls.find(c => c[0] === 'POST' && c[1] === '/api/c2c/projects');
     await vi.waitFor(() => expect(posted()).toBeDefined());
