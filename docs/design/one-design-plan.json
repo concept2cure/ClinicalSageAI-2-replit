@@ -8,7 +8,8 @@
     "P-81",
     "P-82",
     "P-83",
-    "P-84"
+    "P-84",
+    "P-85"
   ],
   "alwaysAllowed": [
     "**/__tests__/**",
@@ -71,7 +72,10 @@
         "client/src/concept2cure/v2/surfaces/AnaCommand.tsx",
         "client/src/concept2cure/v2/surfaces/AnaVerbs.tsx",
         "client/src/concept2cure/v2/surfaces/AnaDocContext.tsx",
-        "client/src/concept2cure/v2/styles/**"
+        "client/src/concept2cure/v2/styles/**",
+        "client/src/concept2cure/v2/surfaces/Surfaces.tsx",
+        "client/src/concept2cure/v2/workDock.ts",
+        "client/src/concept2cure/v2/surfaceViews.ts"
       ]
     },
     {
@@ -172,7 +176,8 @@
         "client/src/concept2cure/v2/surfaces/insights*.ts",
         "client/src/concept2cure/v2/surfaces/insights*.tsx",
         "client/src/concept2cure/v2/surfaces/Compliance*.tsx",
-        "client/src/concept2cure/v2/styles/**"
+        "client/src/concept2cure/v2/styles/**",
+        "client/src/concept2cure/quality/**"
       ]
     },
     {
