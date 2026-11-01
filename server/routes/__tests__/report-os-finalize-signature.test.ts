@@ -290,7 +290,23 @@ describe('POST /runs/:id/finalize needs signing authority from the canonical cer
     expect(res.status).toBe(200);
     expect(h.memberRole).toHaveBeenCalledTimes(2);
     expect(h.memberRole).toHaveBeenNthCalledWith(1, 5, 7);
-    expect(h.memberRole).toHaveBeenNthCalledWith(2, 5, 7, expect.objectContaining({ query: expect.any(Function) }));
+    /* The second check runs on the signing transaction. It is read field by
+       field rather than with toHaveBeenNthCalledWith, which is strict on arity:
+       59cb0f54c4 (P-58/P-59) made checkSigningAuthority forward an optional
+       fourth argument, and the exact-arity form went red on a change that kept
+       the behaviour.
+       That fourth argument is the part worth pinning. It widens the
+       organisation statuses a signer may sign from, and only the custody act
+       (part11/custody-signature.ts) may pass it. Finalize is not that act, so it
+       signs from an active organisation and nothing else. The exact-arity form
+       could not tell those apart: it was red on correct code (an undefined
+       fourth argument) exactly as it was red on a finalize widened to let a
+       departing tenant sign (21 CFR 11.10(g)), so it guarded neither. This form
+       is green on the first and names the widened statuses on the second. */
+    const [userId, organizationId, executor, opts] = h.memberRole.mock.calls[1];
+    expect([userId, organizationId]).toEqual([5, 7]);
+    expect(executor).toEqual(expect.objectContaining({ query: expect.any(Function) }));
+    expect(opts?.organizationStatuses ?? ['active']).toEqual(['active']);
   });
 });
 
