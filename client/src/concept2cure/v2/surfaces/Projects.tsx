@@ -5,7 +5,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import { useTenant } from '@/contexts/TenantContext';
 import { capturedActorHeaders } from '@/utils/authToken';
 import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake-workspace';
-import { createProjectIntake, readProjectIntakeWorkspaces, type IntakeOptionsAnswer } from './projectIntakeRequest';
+import { createProjectIntake, readProjectIntakeWorkspaces, recordIntakeObjective, type IntakeOptionsAnswer } from './projectIntakeRequest';
 import { ClientChoicesNote, ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
 import { PortfolioLine, PortfolioLinesNote, usePortfolioLines } from './PyramidProject';
 import { ProjectPortfolioFilters, WS_LABEL, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices } from './ProjectPortfolioFilters';
@@ -385,6 +385,8 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
   // ProjectTeamSharing.tsx ("Grant sharing").
   const [team] = useState<string[]>([]);
   const [target, setTarget] = useState('');
+  /** The project's objective, optional here: recorded as its charter's objective once the project exists (S1). */
+  const [objective, setObjective] = useState('');
   const [creating, setCreating] = useState(false);
   const [writeStopped, setWriteStopped] = useState(false);
   const [retired, setRetired] = useState(false);
@@ -587,6 +589,15 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
         ws: created.ws || SEG2WS[uiSeg] || 'Biotech',
         status: created.status || 'active',
       });
+      if (objective.trim()) {
+        const stated = await recordIntakeObjective(actor, verifiedWorkspace, created.id, objective.trim(), currentSession);
+        if (!mountedSession()) return;
+        if (stated.kind === 'retired') { setRetired(true); return; }
+        if (stated.kind === 'not-recorded') {
+          setOutcome({ kind: 'notice', message: `The project is created and open. Its objective was not recorded: ${stated.message}. Set it in the project's About card.` });
+          return;
+        }
+      }
       onClose();
       onNav('project-home');
     } finally { pendingCreate.current = false; }
@@ -831,6 +842,15 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
                   <span className="npw-field-l">Target submission date</span>
                   <input className="c2c-input" type="date" value={target} onChange={e => setTarget(e.target.value)} />
                 </label>
+                <div className="npw-field npw-field-wide">
+                  <label className="npw-field-l" htmlFor="npw-objective">Objective (optional)</label>
+                  <textarea id="npw-objective" className="c2c-input" rows={3} value={objective} aria-describedby="npw-objective-help"
+                    onChange={e => setObjective(e.target.value)}
+                    placeholder="What the study set out to show, e.g. that the primary endpoint is met, and what is to be filed." />
+                  <span className="npw-field-help" id="npw-objective-help">
+                    Recorded as the project's objective, with its history. You can add its sources on the project page, or ask AnA to propose it from the protocol and the public record.
+                  </span>
+                </div>
               </div>
 
               {isFdaDeviceFiling && (
@@ -1008,6 +1028,10 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
                 <div className="npw-review-row">
                   <dt>Target date</dt>
                   <dd>{reviewDate(target)}</dd>
+                </div>
+                <div className="npw-review-row">
+                  <dt>Objective</dt>
+                  <dd>{objective.trim() || 'Not stated'}</dd>
                 </div>
                 <div className="npw-review-row">
                   <dt>Pathway</dt>
