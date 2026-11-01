@@ -4,8 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useShellProject } from '../shellProject';
 import { getSurfaceMeta } from '../registryModel';
-import { AnswerLead } from '../AnswerLead';
-import { assessmentState, mayReassure } from '../assessmentState';
+import { assessmentState } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { C2CForm } from '../C2CForm';
@@ -570,37 +569,39 @@ function CmPush({ label, nav, bar }: { label: string; nav?: (id: string) => void
   );
 }
 
-interface CmHeadProps {
-  title: string;
-  meta: string;
-  actions?: React.ReactNode;
-}
-/** The overview's line under its title: "1 submission — RPI 82 average", or that no index is computed yet. */
-function overviewMeta(submissions: number | null, avgRpi: number | null): string {
-  const count = submissions == null ? '— submissions' : `${submissions} ${submissions === 1 ? 'submission' : 'submissions'}`;
-  return `${count} — ${avgRpi == null ? 'no preparedness index computed yet' : `RPI ${avgRpi} average`}`;
-}
+/* `CmHeadProps`, `CmHead` and `Kpi` moved to ./cmcShared on 2026-11-01 (D5
+   §A.4.13/14). Module 3 build and Quality by design each carried their own
+   copy of the header and of `Kpi`; the one lead and the one figure now serve
+   all nine tabs. They could not be imported from here — this file imports
+   those two surfaces, so the import would be a cycle — and cmcShared is where
+   the CMC surfaces' shared plumbing already lives. */
+import { CmHead, Kpi } from './cmcShared';
 
-/* The view's lead, not a page header (D5 §A.4.4). The page has exactly one
-   <h1>, written once by `CmcModule`; each tab opens with an <h2> and one grey
-   line. What left this component:
-   • the "CMC — Module 3 operating system" kicker — an uppercase eyebrow over
-     every one of nine screens, saying what the rail's active item and the
-     page title already say (ONE_DESIGN_PLAN §2);
-   • the orange "Ask AnA" button — AnA's entry on a work area is the starter
-     row below the header (§WA.3 "Actions"), not a button per screen;
-   • the three suggestion tiles — the same prompts, now page-level and the
-     same on every tab, so their position does not move as you switch tabs.
-   `actions` stays: it is where a tab's own act lives, and in a tabbed work
-   area the active tab's lead row is where the ONE primary may sit. */
-function CmHead({ title, meta, actions }: CmHeadProps) {
-  return (
-    <div className="pj-sec-h cm-lead">
-      <h2>{title}</h2>
-      <span className="sec-sub">{meta}</span>
-      {actions && <div className="pj-sec-acts">{actions}</div>}
-    </div>
-  );
+/**
+ * The Overview's one grey line — what the retired answer banner's HEADLINE
+ * said, in the place §WA.4.2 rule 4 sends it (D5 §A.4.8).
+ *
+ * Every arm the banner had is here, so no state it distinguished is now told
+ * as another: a failed read says it failed and says nothing about readiness,
+ * a read in flight asserts nothing, none-recorded is not "none ready", and
+ * the weakest submission is still named when there is an index to rank by.
+ * "Preparedness index", not "RPI": the abbreviation was defined nowhere on
+ * screen.
+ */
+function overviewMeta(
+  state: 'loading' | 'unreadable' | 'ready',
+  submissions: number | null,
+  avgRpi: number | null,
+  weakest?: { sub: string; rpi: number },
+): string {
+  if (state === 'unreadable') return 'The Module 3 board could not be read — nothing below is established.';
+  if (state === 'loading') return 'Reading the Module 3 portfolio…';
+  if (submissions == null) return '— submissions';
+  if (submissions === 0) return 'No CMC submissions are in scope yet.';
+  const count = `${submissions} ${submissions === 1 ? 'submission' : 'submissions'}`;
+  if (avgRpi == null) return `${count} — no preparedness index computed yet`;
+  if (weakest) return `${count} — preparedness ${avgRpi} average, lowest ${weakest.sub} at ${weakest.rpi}`;
+  return `${count} — preparedness ${avgRpi} average`;
 }
 
 /* The page's one ask row (§WA.4.2 rule 4): at most three starters, the first
@@ -609,8 +610,20 @@ function CmHead({ title, meta, actions }: CmHeadProps) {
    from `anaContext.facts.whatToDoHere`, which carries that tab's exact
    `now` sentence, so nothing the box said is lost.
    The other two are the tab's own first two existing suggestions. */
+/* One tab asks a better first question than the generic one: Overview's
+   retired answer banner opened with it, and that question is the reason a
+   CMC lead comes to this screen (D5 §A.4.8). The banner is gone; the
+   question is not. */
+const CMC_FIRST_ASK: Record<string, { label: string; prompt: string }> = {
+  overview: {
+    label: 'Is my CMC package ready for its submission?',
+    prompt:
+      'Is my CMC package ready for its submission? Use the Module 3 board, the section ' +
+      'approvals and the agency questions on this project.',
+  },
+};
 function cmStarters(tab: string, label: string): Array<{ label: string; prompt: string }> {
-  const first = {
+  const first = CMC_FIRST_ASK[tab] ?? {
     label: `What do I do on ${label}?`,
     prompt: `What do I do on the ${label} tab of CMC / Module 3, and what is open on it for this project?`,
   };
@@ -692,18 +705,6 @@ function CmStarters({ tab, label, ask }: { tab: string; label: string; ask: (tex
       ))}
     </div>
   );
-}
-
-/* A KPI is a figure first; `onClick` makes it a door as well. The interactive
-   variant is a real <button> carrying the SAME class and children — the
-   .c2c-v2 button reset (app-v2.css) zeroes the chrome and .reg-kpi supplies
-   the identical box — so the tile looks the same, reads as a control to a
-   screen reader, and gains the focus ring. A tile with nothing behind it stays
-   a plain <div>: a clickable dead end is noise, not an affordance. */
-function Kpi({ l, v, s, tone, onClick, title }: { l: string; v: React.ReactNode; s?: string; tone?: string; onClick?: () => void; title?: string }) {
-  const body = <><div className="reg-kpi-v">{v}</div><div className="reg-kpi-l">{l}{s ? ' — ' + s : ''}</div></>;
-  if (onClick) return <button type="button" className="reg-kpi" data-tone={tone} title={title} onClick={onClick}>{body}</button>;
-  return <div className="reg-kpi" data-tone={tone}>{body}</div>;
 }
 
 /* ═══════════ Overview -- LIVE portfolio + governed section approvals ═══════════ */
@@ -886,7 +887,12 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   };
 
   const rpiRankable = port.filter((p): p is CmcPortfolio & { rpi: number } => typeof p.rpi === 'number');
-  const lowSub = rpiRankable.length ? [...rpiRankable].sort((a, b) => a.rpi - b.rpi)[0] : null;
+  const lowest = rpiRankable.length ? [...rpiRankable].sort((a, b) => a.rpi - b.rpi)[0] : null;
+  /* Named only when naming it says something: with ONE ranked submission the
+     lowest IS the average, and the retired banner still called it "what's
+     holding the portfolio back" — a single filing held back by itself. The
+     same applies when every submission sits at the average. */
+  const lowSub = lowest && rpiRankable.length > 1 && avgRpi != null && lowest.rpi < avgRpi ? lowest : null;
   const inReview = secs.filter((s) => s.st === 'review');
   const drafts = secs.filter((s) => s.st === 'draft');
   const nextSec = inReview[0] || drafts[0];
@@ -911,73 +917,40 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
     findingCount: (irOverdue ?? 0) + (fig.state === 'ready' ? fig.lettersWithoutQuestionsOverdue : 0),
     assessmentRan: secs.length > 0,
   });
-  const cmLead = (
-    <AnswerLead
-      /* Both arms of the inner ternary used to resolve to 'calm', so the
-         'good' tone AnswerLead provides was unreachable here while the
-         NDA cockpit — same session, same assessmentState taxonomy — used it
-         for the identical state. Two sibling surfaces rendering one state in
-         two visual languages is the drift this work is meant to remove. */
-      tone={m3Overdue ? 'urgent' : cmcState === 'assessed-clear' && questionsComplete ? 'good' : 'calm'}
-      eyebrow={(cmcState === 'not-assessed' || cmcState === 'unreadable') && port.length === 0
-        ? 'Is your CMC package ready'
-        : port.length === 1 ? 'Is your CMC package ready for its submission' : 'Is your CMC package ready across all ' + port.length + ' submissions'}
-      headline={cmcState === 'unreadable'
-        ? <>{board.error
-            ? 'The Module 3 board'
-            : sectionsUnreadable && portfolioUnreadable
-              ? 'The submission portfolio and the governed §3.2 section register'
-              : sectionsUnreadable
-                ? 'The governed §3.2 section register'
-                : 'The submission portfolio'} could not be read.</>
-        : cmcState === 'loading'
-          ? <>Reading your Module 3 portfolio&hellip;</>
-          : port.length === 0
-            ? <>No CMC submissions are in scope yet.</>
-            : avgRpi != null && lowSub
-              ? <>Your Module 3 averages <b>RPI {avgRpi}</b> — the <b>{lowSub.sub}</b> at {lowSub.rpi} is what's holding the portfolio back.</>
-              : <>Your Module 3 spans <b>{port.length}</b> {port.length === 1 ? 'submission' : 'submissions'}{avgRpi != null ? <> at an <b>RPI {avgRpi}</b> average</> : <>, with no preparedness index computed for {port.length === 1 ? 'it' : 'any of them'} yet</>}.</>}
-      body={cmcState === 'unreadable'
-        ? <>This is a failed read, not an empty register. Nothing shown or omitted here should be taken as the state of your CMC package. Sign in to your tenant and retry.</>
-        : cmcState === 'loading'
-          ? <>Nothing is being asserted about readiness until the read settles.</>
-          : port.length === 0
-            ? <>Module 3 readiness is measured across an organization's submissions, and there are none recorded. Nothing about this package has been assessed. Create a submission and add its CMC sections, and its specifications, batch analyses, stability data and change control appear here.</>
-            : fig.state === 'unreadable'
-              ? <>This project's agency questions could not be read, so the number overdue is <b>not established</b> — treat it as unknown, not as none. {nextSec ? <>Of what did read: §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
-              : fig.state === 'ready' && fig.questionsOverdue
-              ? <>On this project, <b>{fig.questionsOverdue} Module 3 {fig.questionsOverdue === 1 ? 'question is' : 'questions are'} overdue</b> on {fig.lettersOverdue} {fig.lettersOverdue === 1 ? 'letter' : 'letters'}{overdueSecs.length ? <> (§{overdueSecs.join(', §')})</> : null}. They are answered and approved on the letter, in Communication. {fig.lettersWithoutQuestionsOverdue ? <>{fig.lettersWithoutQuestionsOverdue} more Module 3 {fig.lettersWithoutQuestionsOverdue === 1 ? 'letter is' : 'letters are'} overdue with no question to answer recorded. </> : null}{nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
-              : fig.state === 'ready' && fig.lettersWithoutQuestionsOverdue
-              ? <>On this project, <b>{fig.lettersWithoutQuestionsOverdue} Module 3 {fig.lettersWithoutQuestionsOverdue === 1 ? 'letter is' : 'letters are'} overdue</b> with no question to answer recorded on {fig.lettersWithoutQuestionsOverdue === 1 ? 'it' : 'them'}. Record {fig.lettersWithoutQuestionsOverdue === 1 ? 'its' : 'their'} questions on the letter, or mark it as needing no response, in Communication. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}.</> : null}</>
-              : secs.length === 0
-                ? <>No governed CMC sections have been authored for {port.length === 1 ? 'this submission' : 'these submissions'} yet, so section approval has nothing to report.</>
-                : <>{approved} of {secs.length} sections are approved{nextSec ? <>. §{nextSec.key} ({nextSec.path}) is the next one to move — clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}</> : null}.</>}
-      /* "You're building steadily" is a claim about work in progress, so it
-         requires evidence that work is in progress. mayReassure gates it on the
-         assessed-clear state and on a non-zero readiness percentage; every
-         other state renders no reassurance rather than a softened one. */
-      /* No reassurance while a question is overdue, or while anything the
-         figure leaves out (letters withheld from this person, questions with
-         no section, the earlier file's open rows) could be. The sentence that
-         stood here promised to "route the sign-offs", which CMC cannot do: a
-         response is signed on its letter. */
-      reassure={!irUnknown && !m3Overdue && questionsComplete && mayReassure(cmcState, readyPct)
-        ? "You're building steadily. I'll help you move the next section to approved."
-        : undefined}
-      action={m3Overdue
-        ? { label: 'Open the overdue letters in Communication', onClick: openOverdueLetters,
-            alt: { label: 'Open the Module 3 build board', onClick: () => (window as any).__cmSetTab && (window as any).__cmSetTab('build') } }
-        : { label: 'Advance the next section', onClick: () => ask('Prepare §' + (nextSec ? nextSec.key : '') + ' ' + (nextSec ? nextSec.path : '') + ' for approval'),
-        /* The second action goes where the section actually moves: the build
-           board, which is the only surface that can compile it, show what is
-           blocking it and clear the export gate. */
-        alt: { label: 'Open the Module 3 build board', onClick: () => (window as any).__cmSetTab && (window as any).__cmSetTab('build') } }}
-      secondary="Or work the portfolio and build state below."
-    />
-  );
+  /* The `AnswerLead` banner that stood here is gone (D5 §A.4.8,
+     ONE_DESIGN_PLAN §2 "Retired patterns"). It was the screen's tinted serif
+     answer with an uppercase question over it and a filled orange button —
+     two of CMC's orange fills, and the last uppercase run on this tab. Every
+     part of it has a place, so nothing it said is lost:
+       • its question    → the page's FIRST STARTER (CMC_FIRST_ASK.overview),
+                           which asks AnA the same thing in the same words;
+       • its headline    → this view's grey line (`overviewMeta`), which keeps
+                           all of its arms, including the failed read and the
+                           weakest submission;
+       • its action/alt  → the two ghosts in Section approvals' action row
+                           below, the same handlers, beside the thing they act
+                           on rather than above it;
+       • its body        → the facts it narrated are each already shown: the
+                           failed read is the error EmptyState, the overdue
+                           count and everything it leaves out is the overdue
+                           door's own sub-text, the earlier file is its own
+                           line, and `anaContext` publishes the rest to AnA;
+       • its reassure    → deleted. "You're building steadily" is AnA's voice
+                           and belongs in her reply, not on the page;
+       • its secondary   → deleted. "Or work the portfolio below" is the page
+                           describing itself to the reader looking at it.
+     `assessmentState` stays: it still decides the overdue door's tone. */
   return (
     <div className="cm-body">
-      <CmHead title="Module 3 overview" meta={overviewMeta(portfolioUnreadable ? null : port.length, avgRpi)} />
+      <CmHead
+        title="Module 3 overview"
+        meta={overviewMeta(
+          board.loading ? 'loading' : cmcState === 'unreadable' ? 'unreadable' : 'ready',
+          portfolioUnreadable ? null : port.length,
+          avgRpi,
+          lowSub ?? undefined,
+        )}
+      />
       {board.loading ? (
         <EmptyState icon={I.beaker} title="Loading the Module 3 board…" busy testId="cmc-board-loading" />
       ) : board.error ? (
@@ -989,12 +962,11 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
         />
       ) : (
         <>
-          {cmLead}
-          {/* No KPI strip here. `cmLead` immediately above narrates the same
-              numbers — submissions, RPI, sections approved — in a sentence
-              that also says which one to act on. The ONE tile that stays is
-              agency questions overdue, as a door: the questions behind it are
-              listed on Program records, and each opens on its letter.
+          {/* No figure line of counts here: the view's own grey line above
+              carries the submissions and the preparedness index. The ONE
+              figure that stays is agency questions overdue, as a DOOR: the
+              questions behind it are listed on Approvals & audit, and each
+              opens on its letter.
               Since 2026-10-19 it is per program and the server's figure (the
               letters' own overdue verdict, P-39 item 1): '—' with no program
               open or when the read failed, never 0 for "not read"; a positive
@@ -1015,6 +987,11 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                     ? 'count not established, the agency questions could not be read'
                     : [
                         fig.lettersOverdue ? `on ${fig.lettersOverdue} ${fig.lettersOverdue === 1 ? 'letter' : 'letters'}` : '',
+                        /* Which §3.2 sections the overdue questions are
+                           against. It was a parenthesis in the retired
+                           banner's body; it belongs with the figure it
+                           qualifies (D5 §A.4.8). */
+                        overdueSecs.length ? `§${overdueSecs.join(', §')}` : '',
                         fig.lettersWithoutQuestionsOverdue
                           ? `${fig.lettersWithoutQuestionsOverdue} Module 3 ${fig.lettersWithoutQuestionsOverdue === 1 ? 'letter' : 'letters'} overdue with no question to answer recorded`
                           : '',
@@ -1054,27 +1031,52 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
               CMC lead can act on. The portfolio and build-state cards below
               are reference material, and reference material does not go
               above the thing you came here to do. */}
-          <div className="pj-card">
-            <div className="pj-card-h"><span className="t">Section approvals</span><span className="s">governed — 21 CFR §11</span></div>
-            <div className="pj-card-b" style={{ padding: 0 }}>
+          <section className="pj-sec" aria-label="Section approvals">
+            <div className="pj-sec-h">
+              <h2>Section approvals</h2>
+              <span className="sec-sub">governed, 21 CFR Part 11</span>
+              {/* The retired banner's action and its alternative, beside the
+                  thing they act on. Same handlers, same order of preference:
+                  an overdue letter outranks the next section, because a
+                  response has a date on it and a draft does not. */}
+              <div className="pj-sec-acts">
+                {m3Overdue ? (
+                  <button type="button" className="btn ghost small" onClick={openOverdueLetters}>
+                    Open the overdue letters in Communication
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn ghost small"
+                    disabled={!nextSec}
+                    title={nextSec ? `§${nextSec.key} ${nextSec.path}` : 'Every section is approved'}
+                    onClick={() => ask(`Prepare §${nextSec ? nextSec.key : ''} ${nextSec ? nextSec.path : ''} for approval`)}
+                  >
+                    Advance the next section
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn ghost small"
+                  onClick={() => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('build')}
+                >
+                  Open the Module 3 build board
+                </button>
+              </div>
+            </div>
+            <>
               {sectionsUnreadable ? (
-                <div style={{ padding: 12 }}>
-                  <EmptyState
-                    tone="error"
-                    icon={I.alertTriangle}
-                    title="The Module 3 sections could not be read"
-                    hint="This is a failed read, not an empty register: the governed §3.2 section store did not answer, so nothing here says whether this project has sections or what state they are in. Retry, or check the service is reachable."
-                    testId="cmc-sections-unreadable"
-                  />
-                </div>
+                <EmptyState
+                  tone="error"
+                  icon={I.alertTriangle}
+                  title="The Module 3 sections could not be read"
+                  hint="This is a failed read, not an empty register: the governed §3.2 section store did not answer, so nothing here says whether this project has sections or what state they are in. Retry, or check the service is reachable."
+                  testId="cmc-sections-unreadable"
+                />
               ) : liveSections === null ? (
-                <div style={{ padding: 12 }}>
-                  <EmptyState icon={I.fileText} title="Open a project to see its Module 3 sections" hint="The governed §3.2.S / §3.2.P section list is per project, with each section's approval state." action={openProgramAction(nav)} />
-                </div>
+                <EmptyState icon={I.fileText} title="Open a project to see its Module 3 sections" hint="The governed §3.2.S / §3.2.P section list is per project, with each section's approval state." action={openProgramAction(nav)} />
               ) : secs.length === 0 ? (
-                <div style={{ padding: 12 }}>
-                  <EmptyState icon={I.fileText} title="No Module 3 sections yet" hint="This project has no governed §3.2 sections yet. They appear here with their approval state once created." />
-                </div>
+                <EmptyState icon={I.fileText} title="No Module 3 sections yet" hint="This project has no governed §3.2 sections yet. They appear here with their approval state once created." />
               ) : (
                 /* Completeness sits beside the state because the two are
                    signed together: an approval is a claim about content that
@@ -1116,28 +1118,29 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                   </tr>);
                 })}</tbody></table>
               )}
+            </>
+            {secs.length > 0 && <CmPush label={'Approved Module 3 sections'} nav={nav} bar />}
+          </section>
+          <section className="pj-sec" aria-label="Portfolio">
+            <div className="pj-sec-h">
+              <h2>Portfolio</h2>
+              <span className="sec-sub">{portfolioUnreadable ? '— submissions' : `${port.length} ${port.length === 1 ? 'submission' : 'submissions'}`}</span>
             </div>
-            {secs.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved Module 3 sections'} nav={nav} bar /></div>}
-          </div>
-          <div className="pj-card" style={{ marginBottom: 16 }}>
-            <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{portfolioUnreadable ? '— submissions' : `${port.length} ${port.length === 1 ? 'submission' : 'submissions'}`}</span></div>
-            <div className="pj-card-b" style={{ padding: 0 }}>
+            <>
               {portfolioUnreadable ? (
-                <div style={{ padding: 12 }}>
-                  <EmptyState
-                    tone="error"
-                    icon={I.alertTriangle}
-                    title="The submission portfolio could not be read"
-                    hint="This is a failed read, not an empty register: the submission store did not answer, so no submission, preparedness index or overdue count shown or omitted here is established. Retry, or check the service is reachable."
-                    testId="cmc-portfolio-unreadable"
-                  />
-                </div>
+                <EmptyState
+                  tone="error"
+                  icon={I.alertTriangle}
+                  title="The submission portfolio could not be read"
+                  hint="This is a failed read, not an empty register: the submission store did not answer, so no submission, preparedness index or overdue count shown or omitted here is established. Retry, or check the service is reachable."
+                  testId="cmc-portfolio-unreadable"
+                />
               ) : port.length === 0 ? (
-                <div style={{ padding: 12 }}>
-                  <EmptyState icon={I.fileText} title="No submissions yet" hint="Your regulatory submissions (BLA / MAA / NDA / J-NDA) appear here with their preparedness index and overdue information requests." />
-                </div>
+                <EmptyState icon={I.fileText} title="No submissions yet" hint="Your regulatory submissions (BLA / MAA / NDA / J-NDA) appear here with their preparedness index and overdue information requests." />
               ) : (
-                <table className="reg-tbl"><thead><tr><th>Submission</th><th>Product</th><th>Region</th><th>Type</th><th>Module 3</th><th>RPI</th><th>IR overdue</th></tr></thead>
+                /* "RPI" and "IR overdue" were abbreviations defined nowhere on
+                   screen (§WA.4.2 rule 10). Same two columns, same values. */
+                <table className="reg-tbl"><thead><tr><th>Submission</th><th>Product</th><th>Region</th><th>Type</th><th>Module 3</th><th>Preparedness</th><th>Questions overdue</th></tr></thead>
                 <tbody>{port.map((r, i) => (<tr key={i}><td style={{ fontWeight: 600 }}>{r.sub}</td><td>{r.product}</td><td>{r.region}</td><td><span className="reg-pill neutral">{r.type}</span></td>
                   {/* Spine rows carry the facts a CMC lead reads first: placed
                       Module 3 leaves and sequences from the REAL submission
@@ -1145,8 +1148,8 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                   <td>{r.source === 'spine' ? <span className="cm-meta">{r.m3Leaves ?? 0} placed · {r.sequences ?? 0} seq</span> : <span className="cm-meta">—</span>}</td>
                   <td>{r.rpi == null ? '—' : r.rpi}</td><td>{r.ir == null ? '—' : r.ir}</td></tr>))}</tbody></table>
               )}
-            </div>
-          </div>
+            </>
+          </section>
           {secs.length > 0 && (
             <div className="pj-card" style={{ marginBottom: 16 }}>
               <div className="pj-card-h"><span className="t">Module 3 build state</span><span className="s">§3.2.S — §3.2.P</span></div>
