@@ -24,6 +24,20 @@ The founder decided on 2026-10-31 (P-78) that Concept2Cure is **Claude for life 
 Claude (claude.ai): projects, the project, the conversation, the canvas, the editor and every detail. Every
 capability beneath the UI is brought to life inside that UI.
 
+**What the product is (P-79, 2026-11-01).** The centre is the document and its filing: build it, format it correctly
+and file it in eCTD (3.2.2 and 4.0), with Vault (to compete with Veeva) and AnA doing the work in conversation.
+Everything starts in a project with a goal. Then come:
+1. the project's data room: an immutable catalog with lineage kept in perpetuity;
+2. the protocol: hypothesis and endpoints;
+3. the engines' evidence: biostatistics and safety;
+4. AnA's narrative, which a person edits or directs, and where AnA pushes back when the data do not support a claim;
+5. the one editor;
+6. eCTD filing.
+
+CMC and risk-based monitoring are the featured work areas. Clients are device and diagnostics, biotech and big
+pharma, in the US, EU, Japan, Canada and Australia. The plan's §1a lists what already exists for each step, and its
+packages S1–S8 are the work.
+
 **The plan is `docs/design/ONE_DESIGN_PLAN.md`, and its ledger is `docs/design/one-design-plan.json`.** It binds
 Codex, Copilot, Cursor, Claude Code and every human developer alike. Nobody builds anything outside it.
 

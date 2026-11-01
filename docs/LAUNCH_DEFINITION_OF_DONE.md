@@ -1401,6 +1401,10 @@ Hosted deployment, clinical validation and agency acceptance need their own proo
 
 ### P-77 — Biostatistics is a work area on the rail
 
+*Amended 2026-11-01 (P-79, commit "Biostatistics is reached from the project"): Biostatistics is in the catalog and
+reached from the project's "Start work in this project" (`ProjectCoreWork.tsx`) and ⌘K, not from a rail entry.
+RULE 4's gate refuses a rail entry outside its baseline, and P-36 named none. The rest of this record stands.*
+
 Founder, 2026-10-31, after a client demo: "My cmc, biostatistics, tasking, projects is
 all gone or utter trash now." Both biostatistics screens existed — `biostatistics`
 (the project's study designs, sized by the deterministic engine, and the governed
@@ -1432,3 +1436,62 @@ Copilot instructions. `npm run ci:one-design-plan` in `.husky/pre-push` enforces
 commit names an open package, stays inside it, and adds no unapproved screen, mount or table. The plan changes only
 by founder decision. The selftest shows each refusal. The design system's own "Claude-clone look" rejection is
 reversed for layout and character. Its typeface decision stands for licensing reasons.
+
+### P-79 — The product spine: the project, its data room, the protocol's question, AnA's narrative, the filing
+
+Founder, 2026-11-01, on what the one plan (P-78) is a plan *for*:
+
+> "The system should be obviously centered around document building, ECTD, filing, formatting it correctly, like
+> ECTD 4.0 is an example. That's kind of our center product, what we are, with the Viva parity tools, you know, our
+> DMS, and Anna's ability to do all of this, just like Claude." "A project is where everything starts. You gotta have
+> a project. Okay, what's your project and what's the goal of the project?" "Inside the project, there's gonna be a
+> ton of historical records, AKA the data room, where we catalog everything. So we need to have a very sophisticated
+> data catalog." "Make sure that that data in that catalog is immutable and has a whole history. It might change, it
+> might get amended and updated, but the data lineage of everything that goes into that must be continually captured
+> in perpetuity." "The project needs a protocol. The data room needs to understand the protocol, and then the goal,
+> and then the data." "The statistics, the biostatistics, the safety profile, all that needs to then be written and
+> narrated from the greatest medical writer there is, Anna." "A client needs to be able to see what Anna's written
+> and choose to edit it … and direct Anna to enhance something or strengthen something, or Anna needs to push back
+> and say that, no, this isn't a good idea, or your data doesn't support this, but it may support this." "We also
+> have a risk-based monitoring module that should be profiled. Our CMC module needs to be centered and profiled …
+> the CMC module is complete module 3 in the IND, but we built a data capture environment to be used in the study
+> conduct for chemical manufacturing and controls." "Vault needs to compete with actually Viva." "Our three clients
+> are going to be medical device and diagnostics, and biotech and big pharma. Located in Japan, Australia, Canada,
+> Europe, and the United States. And potentially, we may go to China someday … but that's not now."
+
+What this decides:
+
+- **The centre of the product is the document and its filing.** That means building it, formatting it correctly
+  and filing it in eCTD (3.2.2 and 4.0), with Vault as the document management system and AnA doing the work in
+  conversation. Every work package serves that path.
+- **The spine runs in this order:**
+  1. project and goal;
+  2. data room (catalog, immutability, lineage);
+  3. protocol (hypothesis, endpoints);
+  4. evidence (biostatistics, safety), computed by deterministic engines;
+  5. AnA's narrative, which a person reads, edits, directs or is pushed back on;
+  6. the one editor (review, sign);
+  7. eCTD assembly, validation and filing;
+  8. Vault throughout.
+
+  CMC and risk-based monitoring are the two work areas the spine features. Biostatistics lives inside the project's
+  evidence.
+- **AnA may refuse a claim.** When the data do not support what a person asks it to write, AnA says so, names what
+  the data do support, and cites the engine result or source behind its answer. The figures come from the engines;
+  AnA narrates (RULE 2).
+- **Clients and regions.**
+  - Clients: medical device and diagnostics, biotech, and big pharma. Each is a document-type catalog, not an app
+    (RULE 4).
+  - Regions: the United States, Europe, Japan, Canada and Australia.
+  - China is not now. The NMPA code that exists stays as it is and is not extended.
+- **CMC is two things.** One is Module 3 composition. The other is a data-capture environment used during study
+  conduct. Both stay one CMC work area.
+- **Not decided here** (each needs the founder):
+  1. whether CMC is licensed separately (today it is a professional-tier band, 2026-08-24);
+  2. whether the CMC composition boundary (P-28: small-molecule Module 3 for a US IND) widens to the five regions,
+     biologics or marketing applications;
+  3. whether the clinical-dataset readers deferred on 2026-10-08 (`.xpt`, `.sas7bdat`, Dataset-JSON) come back, so
+     that EDC and ePRO data can enter the catalog as data.
+
+Recorded in `docs/design/ONE_DESIGN_PLAN.md` §1a. That section lists, by path, what already exists for each step
+of the spine and what does not. Its work packages S1–S8 are in the ledger, `docs/design/one-design-plan.json`.

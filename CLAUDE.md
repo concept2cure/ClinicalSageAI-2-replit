@@ -76,6 +76,19 @@ tool.
 - **The design is Claude's.** Concept2Cure looks and works like Claude (claude.ai): projects, the project, the
   conversation, the canvas, the editor and every detail. The plan's §2 is binding, including its list of retired
   patterns.
+- **The product is the spine (P-79, 2026-11-01).** The centre is the document and its filing: build it, format it
+  correctly and file it in eCTD 3.2.2 and 4.0, with Vault (to compete with Veeva) and AnA. Everything starts in a
+  project with a goal. Then come:
+  1. the data room: an immutable catalog with lineage in perpetuity;
+  2. the protocol: hypothesis and endpoints;
+  3. the engines' evidence: biostatistics and safety;
+  4. AnA's narrative, which a person edits or directs, and where AnA pushes back when the data do not support a
+     claim;
+  5. the one editor;
+  6. eCTD filing.
+
+  CMC and risk-based monitoring are the featured work areas. The plan's §1a says, by path, what already exists for
+  each step. Packages S1–S8 are the work.
 - **The codebase lives in that UI.** Every capability beneath the UI is reached in it, or retired by a founder
   decision. None is duplicated (RULE 3) and none is left unreachable.
 - **Nothing is built outside the plan.** Every commit names an open package with a `Plan: <ID>` trailer, stays inside

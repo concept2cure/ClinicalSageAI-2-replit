@@ -1,6 +1,7 @@
 {
   "$comment": "The one plan's ledger (docs/design/ONE_DESIGN_PLAN.md, founder decision P-78, 2026-10-31). Read by scripts/ci/check-one-design-plan.mjs in .husky/pre-push. Changes only under 'Plan: PLAN' with a 'Founder-Decision: P-<n>' trailer.",
   "decision": "P-78",
+  "decisions": ["P-78", "P-79"],
   "alwaysAllowed": [
     "**/__tests__/**",
     "**/*.test.ts",
@@ -145,6 +146,145 @@
     { "id": "F1", "title": "Repairs: defects in shipped behaviour; no new screen, mount or table", "status": "open", "dependsOn": [], "paths": ["**"] },
     { "id": "L1", "title": "Launch rows D1–D10 (docs/LAUNCH_DEFINITION_OF_DONE.md)", "status": "open", "dependsOn": [], "paths": ["**"] },
     { "id": "DATA", "title": "Demo data", "status": "open", "dependsOn": [], "paths": ["scripts/demo/**", "data/seeds/**", "docs/evidence/DEMO/**", "package.json"] },
+    { "id": "S1", "title": "Spine 1: the project and its goal (P-79)", "status": "open", "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Project*.tsx",
+        "client/src/concept2cure/v2/surfaces/project*.ts",
+        "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "server/routes/concept2cure.ts",
+        "server/routes/c2c/**",
+        "shared/constants/**",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    { "id": "S2", "title": "Spine 2: the data room catalog, immutable, with lineage in perpetuity (P-79)", "status": "open", "dependsOn": [],
+      "paths": [
+        "server/services/clinical-regulatory-evidence/**",
+        "server/routes/clinical-regulatory-evidence-routes.ts",
+        "server/services/data-room-retrieval.ts",
+        "shared/data-room-processing-status.ts",
+        "server/routes/data-lineage.ts",
+        "server/routes/decision-lineage*.ts",
+        "server/services/ana/lineage-*.ts",
+        "server/services/ana/drafting-source-lineage.ts",
+        "server/services/ana/document-catalog*.ts",
+        "server/services/vault/**",
+        "server/routes/vault-ingest.ts",
+        "client/src/concept2cure/lineage/**",
+        "client/src/concept2cure/v2/editor/DataRoom*.tsx",
+        "client/src/concept2cure/v2/editor/Source*.tsx",
+        "client/src/concept2cure/v2/surfaces/VaultDataRoomFiling.tsx",
+        "client/src/concept2cure/v2/surfaces/VaultCatalogRecord.tsx",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    { "id": "S3", "title": "Spine 3: protocol (hypothesis, endpoints) to evidence (biostatistics, safety), computed by the engines (P-79)", "status": "open", "dependsOn": [],
+      "paths": [
+        "server/services/study-design/**",
+        "server/services/protocol-*/**",
+        "server/services/biostatistics-*/**",
+        "server/services/ana-biostats/**",
+        "server/services/biostat-*.ts",
+        "server/services/cdisc/**",
+        "server/services/csr/**",
+        "server/services/pharmacovigilance/**",
+        "server/routes/biostat*.ts",
+        "server/routes/ana-biostats*.ts",
+        "server/routes/study-design*.ts",
+        "server/routes/protocol*.ts",
+        "client/src/concept2cure/v2/surfaces/ProtocolDev*.tsx",
+        "client/src/concept2cure/v2/surfaces/Biostat*.tsx",
+        "client/src/concept2cure/v2/surfaces/biostat*.ts*",
+        "client/src/concept2cure/v2/surfaces/SafetyNarrative.tsx",
+        "client/src/concept2cure/v2/editor/StudyData*.tsx",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    { "id": "S4", "title": "Spine 4: AnA the writer: narrates evidence with citations, takes direction, pushes back when the data do not support a claim (P-79)", "status": "open", "dependsOn": [],
+      "paths": [
+        "server/services/ana/**",
+        "server/routes/ana*.ts",
+        "server/routes/ana-ri/**",
+        "client/src/concept2cure/components/ana/**",
+        "client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
+        "client/src/concept2cure/v2/editor/Ana*.tsx",
+        "client/src/concept2cure/v2/editor/ana*.ts",
+        "client/src/concept2cure/v2/editor/citation*.ts"
+      ]
+    },
+    { "id": "S5", "title": "Spine 5: eCTD 3.2.2 and 4.0 assembly, validation and filing, Module 1 for US, EU, JP, CA, AU (P-79)", "status": "open", "dependsOn": [],
+      "paths": [
+        "server/services/ectd/**",
+        "server/services/submission-gateways/**",
+        "server/routes/ectd*.ts",
+        "server/routes/ind-lifecycle*.ts",
+        "server/routes/ind-lifecycle/**",
+        "server/routes/submission*.ts",
+        "server/routes/submissionCenter.routes.ts",
+        "shared/regulatory/**",
+        "services/regulatory/**",
+        "client/src/concept2cure/v2/surfaces/Ectd*.tsx",
+        "client/src/concept2cure/v2/surfaces/Submission*.tsx",
+        "client/src/concept2cure/v2/surfaces/submission*.ts",
+        "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx",
+        "client/src/concept2cure/v2/surfaces/NewSubmissionForm.tsx",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    { "id": "S6", "title": "Spine 6: Vault at Veeva parity, on the existing Vault (P-79)", "status": "open", "dependsOn": [],
+      "paths": [
+        "server/services/vault/**",
+        "server/routes/vault*.ts",
+        "server/integrations/veeva-vault/**",
+        "client/src/concept2cure/v2/surfaces/Vault*.tsx",
+        "client/src/concept2cure/v2/surfaces/vault*.ts",
+        "client/src/concept2cure/v2/useVaultUpload.ts",
+        "client/src/concept2cure/v2/vault*.ts",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    { "id": "S7", "title": "Spine 7: CMC: Module 3 composition and study-conduct data capture, one work area (P-79)", "status": "open", "dependsOn": [],
+      "paths": [
+        "server/services/cmc/**",
+        "server/api/cmc/**",
+        "server/routes/cmc-*.ts",
+        "shared/constants/cmc-*.ts",
+        "server/services/ana/*cmc*",
+        "client/src/concept2cure/v2/surfaces/Cmc*.tsx",
+        "client/src/concept2cure/v2/surfaces/cmc*.ts*",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    { "id": "S8", "title": "Spine 8: risk-based monitoring over the project's study data (P-79)", "status": "open", "dependsOn": [],
+      "paths": [
+        "server/services/rbm/**",
+        "server/routes/mdx-rbm*.ts",
+        "client/src/concept2cure/v2/surfaces/Rbm*.tsx",
+        "client/src/concept2cure/v2/surfaces/rbm*.ts*",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
     { "id": "PLAN", "title": "The plan and its gate (founder decision only)", "status": "open", "dependsOn": [], "paths": ["**"] }
   ],
   "approvedAdditions": []
