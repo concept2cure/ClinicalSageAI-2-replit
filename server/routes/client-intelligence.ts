@@ -41,6 +41,7 @@ import {
 } from '../services/client-intelligence-memory';
 import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
 import { serverError } from '../lib/api-response';
+import { ProjectAdmissionRefusal, requireProjectAdmission } from './c2c/project-access';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
@@ -934,8 +935,61 @@ router.get('/ana/wisdom', async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/client-intelligence/ana/objectives
- * Get client objectives.
+ * The project an objective request names, admitted for this person: its
+ * integer project (a program UUID resolves to its anchor row), or null when it
+ * names none. A project the person may not open answers as the admission
+ * refuses it (404 for one outside their workspace or sharing), never with its
+ * objectives. Until 2026-11-01 the read filtered on the organisation alone, so
+ * any member could read a private project's objectives by its id, and a write
+ * could point an objective, or its links, at any project of the organisation.
+ */
+class ObjectiveRefusal extends Error {
+  constructor(readonly status: number, message: string) { super(message); }
+}
+async function admittedObjectiveProject(req: Request, organizationId: number, raw: unknown, forWrite: boolean): Promise<number> {
+  const { strictProjectRowForRef } = await import('../services/c2c/program-project-anchor');
+  const projectId = await strictProjectRowForRef(async () => (await import('../db')).db as never,
+    { ref: raw, orgId: organizationId, context: 'client-objectives' });
+  if (projectId === null) throw new ObjectiveRefusal(404, 'Project not found');
+  try {
+    await requireProjectAdmission(req, String(projectId), forWrite);
+  } catch (err) {
+    if (err instanceof ProjectAdmissionRefusal) throw new ObjectiveRefusal(err.status, err.message);
+    throw err;
+  }
+  return projectId;
+}
+
+/**
+ * Every project a new objective names is one this person may change (its own)
+ * or open (a linked one), resolved to its integer project; a parent is an
+ * objective of the same project. Rewrites `fields` in place; throws
+ * ObjectiveRefusal for anything it refuses.
+ */
+async function admitObjectiveReferences(req: Request, organizationId: number, fields: Record<string, any>): Promise<void> {
+  if (fields.projectId != null) fields.projectId = await admittedObjectiveProject(req, organizationId, fields.projectId, true);
+  if (fields.linkedProjectIds != null) {
+    if (!Array.isArray(fields.linkedProjectIds)) throw new ObjectiveRefusal(400, 'linkedProjectIds must be a list');
+    const linked: number[] = [];
+    for (const ref of fields.linkedProjectIds) linked.push(await admittedObjectiveProject(req, organizationId, ref, false));
+    fields.linkedProjectIds = linked;
+  }
+  if (fields.parentObjectiveId == null) return;
+  const { db } = await import('../db');
+  const { anaClientObjectives } = await import('shared/schema/ana-intelligence');
+  const { eq, and, isNull } = await import('drizzle-orm');
+  const parent = await db.select({ id: anaClientObjectives.id }).from(anaClientObjectives).where(and(
+    eq(anaClientObjectives.id, Number(fields.parentObjectiveId)),
+    eq(anaClientObjectives.organizationId, organizationId),
+    fields.projectId == null ? isNull(anaClientObjectives.projectId) : eq(anaClientObjectives.projectId, fields.projectId),
+  )).limit(1);
+  if (!parent.length) throw new ObjectiveRefusal(404, 'Parent objective not found');
+}
+
+/**
+ * GET /api/client-intelligence/ana/objectives[?projectId=<id or program uuid>]
+ * A project's objectives, admitted; with no project, the organisation's own
+ * objectives (those filed under no project).
  */
 router.get('/ana/objectives', async (req: Request, res: Response) => {
   try {
@@ -944,18 +998,16 @@ router.get('/ana/objectives', async (req: Request, res: Response) => {
       return sendError(res, 401, 'Authentication required');
     }
 
+    const raw = req.query.projectId ?? req.query.programId;
+    const projectId = raw === undefined || raw === '' ? null
+      : await admittedObjectiveProject(req, organizationId, raw, false);
+
     const { db } = await import('../db');
     const { anaClientObjectives } = await import('shared/schema/ana-intelligence');
-    const { eq, and, desc } = await import('drizzle-orm');
-
-    const projectId = req.query.projectId
-      ? parseInt(req.query.projectId as string, 10)
-      : undefined;
+    const { eq, and, desc, isNull } = await import('drizzle-orm');
 
     const conditions = [eq(anaClientObjectives.organizationId, organizationId)];
-    if (projectId) {
-      conditions.push(eq(anaClientObjectives.projectId, projectId));
-    }
+    conditions.push(projectId === null ? isNull(anaClientObjectives.projectId) : eq(anaClientObjectives.projectId, projectId));
 
     const objectives = await db
       .select()
@@ -966,6 +1018,7 @@ router.get('/ana/objectives', async (req: Request, res: Response) => {
 
     return sendSuccess(res, { objectives });
   } catch (err) {
+    if (err instanceof ObjectiveRefusal) return sendError(res, err.status, err.message);
     return serverError(res, log, 'listing client objectives', err);
   }
 });
@@ -986,6 +1039,7 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
     if (typeof fields.objective !== 'string' || !fields.objective.trim() || typeof fields.category !== 'string') {
       return sendError(res, 400, 'objective and category are required');
     }
+    await admitObjectiveReferences(req, organizationId, fields);
 
     const { db } = await import('../db');
     const { anaClientObjectives } = await import('shared/schema/ana-intelligence');
@@ -1006,6 +1060,7 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
 
     return sendSuccess(res, { objective });
   } catch (err) {
+    if (err instanceof ObjectiveRefusal) return sendError(res, err.status, err.message);
     return serverError(res, log, 'creating the client objective', err);
   }
 });

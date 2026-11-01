@@ -27,7 +27,7 @@ import {
   anaClientObjectives,
   anaProjectCapabilities,
 } from 'shared/schema/ana-intelligence';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, or, isNull } from 'drizzle-orm';
 import { pickWritable } from '../utils/authedOrgId';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -232,14 +232,20 @@ export async function buildWisdomRouterContext(
       return true;
     });
 
-    // Get active objectives
+    // Active objectives: the organisation's own, and this project's when one is
+    // open. Never another project's: until 2026-11-01 this read the top three of
+    // every project in the organisation, across client workspaces, into each
+    // project's context.
     const objectives = await db
       .select()
       .from(anaClientObjectives)
       .where(
         and(
           eq(anaClientObjectives.organizationId, organizationId),
-          sql`${anaClientObjectives.status} != 'achieved'`
+          sql`${anaClientObjectives.status} != 'achieved'`,
+          projectId
+            ? or(isNull(anaClientObjectives.projectId), eq(anaClientObjectives.projectId, projectId))
+            : isNull(anaClientObjectives.projectId)
         )
       )
       .orderBy(
