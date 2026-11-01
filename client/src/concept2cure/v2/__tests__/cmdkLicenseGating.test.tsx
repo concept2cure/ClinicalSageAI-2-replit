@@ -117,7 +117,7 @@ async function mountCmdK() {
   const onAct = vi.fn();
   const onAsk = vi.fn();
   render(<Harness onNav={onNav} onAct={onAct} onAsk={onAsk} />);
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL, undefined, undefined, expect.any(AbortSignal)));
   // The verdicts land a few microtasks after the request; flush them so an
   // assertion of ABSENCE (no lock) cannot pass merely by running too early.
   await act(async () => {

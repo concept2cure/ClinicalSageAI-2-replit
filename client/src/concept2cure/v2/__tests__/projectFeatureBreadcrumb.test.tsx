@@ -190,7 +190,7 @@ describe('⌘K’s hint names Projects for a project feature', () => {
   }
   async function search(text: string) {
     render(<Harness />);
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL, undefined, undefined, expect.any(AbortSignal)));
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
     });

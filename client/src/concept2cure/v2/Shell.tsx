@@ -27,10 +27,13 @@ import { TaskTray } from './TaskTray';
 import { readShellProject, useShellProject, type ShellProject } from './shellProject';
 import { destinationFor } from './routing';
 import { OPEN_PROGRAM_SURFACE } from './programAction';
+import { isMdxProjectFeature } from '@shared/constants/mdx-project-features';
+import { openPaletteProject, paletteProjectResults, usePaletteProjects, type PaletteProject, type PaletteProjectsRead } from './paletteProjects';
 
 import {
   AI_ACTIONS,
   CLIENT_CATEGORIES,
+  DEEP_LINK_ALIASES,
   RAIL_CORE,
   RAIL_WORK_AREAS_LABEL,
   PROJECTS_CRUMB,
@@ -105,6 +108,30 @@ type RailEntry = {
   group?: 'work-areas';
 };
 
+/** The project's page and the old ids that land on it (registryModel.ts DEEP_LINK_ALIASES). */
+const PROJECT_PAGE_IDS: ReadonlySet<string> = new Set([
+  'project-home',
+  ...Object.keys(DEEP_LINK_ALIASES).filter((id) => DEEP_LINK_ALIASES[id] === 'project-home'),
+]);
+
+/** The project's work areas that have no rail entry of their own: they are opened
+ *  from the project's page (ProjectCoreWork.tsx) and work on the open project.
+ *  Biostatistics left the rail for the project (RULE 4); its calculators are its own. */
+const PROJECT_WORK_IDS: ReadonlySet<string> = new Set(['protocol-dev', 'biostatistics', 'biostat-workbench']);
+
+/**
+ * The rail entry a screen is shown under. A screen with its own entry is its own.
+ * The project's page, its work areas and a project feature (crumbed under Projects,
+ * breadcrumbTierOf) have none: inside a project, Projects is the place the person is
+ * in, so the rail marks it. Before 2026-10-31 nothing was marked inside a project.
+ */
+export function railTargetOf(activeId: string): string {
+  if ((RAIL_CORE as readonly RailEntry[]).some((s) => (s.target ?? s.id) === activeId)) return activeId;
+  const inProject = PROJECT_PAGE_IDS.has(activeId) || PROJECT_WORK_IDS.has(activeId) || isMdxProjectFeature(activeId);
+  return inProject ? PROJECTS_CRUMB.id : activeId;
+}
+
+
 export function Rail({
   activeId,
   onNav,
@@ -164,6 +191,7 @@ export function Rail({
   const places = visible.filter((s) => !s.group);
   const workAreas = visible.filter((s) => s.group === 'work-areas');
   const workAreasId = React.useId();
+  const railActive = railTargetOf(activeId);
   /* An entry that `applies` a screen action asks it of the screen as it opens
      it, through the validated bus AnA's moves use: Tasks opens the task
      board on everyone's tasks (registryModel.ts RAIL_CORE). The
@@ -190,7 +218,7 @@ export function Rail({
        looking up an id the catalog has never heard of. */
     const verdict = verdictFor(target);
     const locked = isLocked(verdict);
-    const current = activeId === target;
+    const current = railActive === target;
     return (
       <button
         key={s.id}
@@ -789,6 +817,23 @@ interface CmdKItem {
   /** A screen action asked of the destination as it opens: a rail place's
    *  (Tasks opens on everyone's tasks), or a project step's. */
   applies?: SurfaceApplies;
+  /** A `project` result: the project it opens. */
+  project?: PaletteProject;
+}
+
+/** The Projects group under a search: the matching projects, or a line saying why
+ *  none can be listed (a read still running, or one that failed). A failed read is
+ *  never shown as "no project matches". */
+function projectItems(read: PaletteProjectsRead, term: string): CmdKItem[] {
+  const header: CmdKItem = { id: '_hd_projects', kind: 'header', label: 'Projects' };
+  if (read.state !== 'ready') {
+    if (read.state === 'closed') return [];
+    const label = read.state === 'reading' ? 'Reading projects…' : 'Projects could not be read, so none are listed here.';
+    return [header, { id: '_note_projects', kind: 'note', label }];
+  }
+  const hits = paletteProjectResults(read.projects, term);
+  if (!hits.length) return [];
+  return [header, ...hits.map((p): CmdKItem => ({ id: `project:${p.id}`, kind: 'project', label: p.title, hint: p.code ?? 'Project', icon: 'folder', project: p }))];
 }
 
 /**
@@ -841,6 +886,8 @@ export function CmdK({
   const isOrgAdmin = isOrgAdminRole(user?.roles);
   /** The open project, whose steps the palette lists. */
   const project = useShellProject();
+  /** The organization's projects, which a search matches by title and code. */
+  const projectsRead = usePaletteProjects(open);
   /** The locked destination the human just activated from the palette. */
   const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
   React.useEffect(() => {
@@ -945,6 +992,7 @@ export function CmdK({
       results.push({ id: '_hd_project', kind: 'header', label: 'This project' });
       results.push(...stepHits);
     }
+    results.push(...projectItems(projectsRead, term));
     // Match across every meaningful field, not just label/notes: the kebab id
     // (de-hyphenated so "submission center" matches "submission-center"), the
     // domain group, and the AnA tool families the surface exposes. Cap high —
@@ -990,20 +1038,20 @@ export function CmdK({
         id: 'ask',
         kind: 'ask',
         label: `Ask AnA: "${q.trim()}"`,
-        hint: 'Send to gateway',
+        hint: 'Ask AnA',
         icon: 'sparkles',
       });
     }
     return results;
     /* `verdictFor` is memoised by the provider on the payload, so this list
        rebuilds once — when the verdicts land — and not on every render. */
-  }, [q, term, isCmd, verdictFor, project, isOrgAdmin, platformAdmin]);
+  }, [q, term, isCmd, verdictFor, project, isOrgAdmin, platformAdmin, projectsRead]);
 
-  const selectable = React.useMemo(() => items.filter((it) => it.kind !== 'header'), [items]);
+  const selectable = React.useMemo(() => items.filter((it) => it.kind !== 'header' && it.kind !== 'note'), [items]);
 
   const run = React.useCallback(
     (it?: CmdKItem) => {
-      if (!it || it.kind === 'header') return;
+      if (!it || it.kind === 'header' || it.kind === 'note') return;
       /* A locked destination never navigates — from here any more than from the
          rail. Routing there would 403, or worse render an empty surface that
          reads as "there is nothing here" rather than "your organization has not
@@ -1022,6 +1070,7 @@ export function CmdK({
         if (res.ok) applySurfaceAction(res.directive, () => onNav(target));
         else onNav(target);
       } else if (it.kind === 'nav') onNav(it.id);
+      else if (it.kind === 'project' && it.project) openPaletteProject(it.project, onNav);
       else if (it.kind === 'action') onAct(it.id);
       else onAsk(q.trim());
       onClose();
@@ -1105,6 +1154,9 @@ export function CmdK({
                   {it.label}
                 </div>
               );
+            }
+            if (it.kind === 'note') {
+              return <div key={it.id} className="cmdk-empty" role="status">{it.label}</div>;
             }
             selIdx += 1;
             const si = selIdx;

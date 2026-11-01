@@ -45,7 +45,7 @@ async function search(term: string): Promise<string[]> {
       <CmdK open onClose={() => {}} onNav={vi.fn()} onAsk={vi.fn()} onAct={vi.fn()} />
     </NavEntitlementsProvider>,
   );
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL, undefined, undefined, expect.any(AbortSignal)));
   await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
   fireEvent.change(screen.getByRole('textbox'), { target: { value: term } });
   return [...document.querySelectorAll('.cmdk-list .cmdk-item .lbl')].map((el) => el.textContent ?? '');

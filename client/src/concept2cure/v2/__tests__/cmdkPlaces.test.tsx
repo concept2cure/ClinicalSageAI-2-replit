@@ -65,7 +65,7 @@ function Harness({ onNav }: { onNav: (id: string) => void }) {
 async function mount() {
   const onNav = vi.fn();
   render(<Harness onNav={onNav} />);
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL, undefined, undefined, expect.any(AbortSignal)));
   await act(async () => {
     await new Promise((r) => setTimeout(r, 0));
   });
@@ -104,7 +104,7 @@ describe('⌘K: places, the open project\'s steps, and features already shown', 
     serve();
     await mount();
     expect(rowsUnder('Jump to')).toEqual([
-      'Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'CMC / Module 3', 'Risk-based monitoring', 'Quality', 'Reporting & analytics',
+      'Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'Submission Center', 'CMC / Module 3', 'Risk-based monitoring', 'Quality', 'Reporting & analytics',
     ]);
   });
 
