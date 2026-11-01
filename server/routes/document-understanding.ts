@@ -84,11 +84,24 @@ export interface BoundingBox {
   page: number;
 }
 
+/*
+ * ── NO POSITION IS MEASURED HERE. Corrected 2026-11-01 ───────────────────────
+ * The extractor reads a document's text and never sees a page's layout, yet
+ * every element was answered with a box (x 72, y = reading order × 20,
+ * 468 × 14) and every table cell with x = column × 100, y = row × 20. A caller
+ * drawing those would draw a layout the document does not have. Every `bbox`
+ * below is now null, the shape a measured position would take if a layout
+ * reader ever supplies one, and the page each item came from, which the text
+ * does carry, is stated on its own.
+ */
+
 export interface DocumentElement {
   id: string;
   elementType: DocumentElementType;
   content: string;
-  bbox: BoundingBox;
+  /** Always null: no layout is read (see the note above BoundingBox). */
+  bbox: BoundingBox | null;
+  page: number;
   confidence: number;
   readingOrder: number;
   level?: number; // Heading level (1-6)
@@ -99,7 +112,8 @@ export interface DocumentElement {
 
 export interface TableStructure {
   id: string;
-  bbox: BoundingBox;
+  bbox: BoundingBox | null;
+  page: number;
   rows: number;
   columns: number;
   headerRows: number;
@@ -117,7 +131,7 @@ export interface TableCell {
   colSpan: number;
   content: string;
   isHeader: boolean;
-  bbox: BoundingBox;
+  bbox: BoundingBox | null;
   confidence: number;
 }
 
@@ -126,8 +140,9 @@ export interface FormField {
   label: string;
   value: string;
   fieldType: 'text' | 'checkbox' | 'radio' | 'date' | 'number' | 'signature' | 'dropdown';
-  bbox: BoundingBox;
-  labelBbox: BoundingBox;
+  bbox: BoundingBox | null;
+  labelBbox: BoundingBox | null;
+  page: number;
   confidence: number;
   required: boolean;
   options?: string[]; // For checkbox/radio/dropdown
@@ -324,7 +339,8 @@ function analyzeLayout(text: string, pageNum: number): DocumentElement[] {
       id: uuidv4(),
       elementType,
       content: trimmed,
-      bbox: { x: 72, y: readingOrder * 20, width: 468, height: 14, page: pageNum },
+      bbox: null,
+      page: pageNum,
       confidence,
       readingOrder,
       level,
@@ -376,13 +392,7 @@ function assembleTable(elements: DocumentElement[]): TableStructure {
         colSpan: 1,
         content: parts[colIdx].trim(),
         isHeader: rowIdx === 0,
-        bbox: {
-          x: colIdx * 100,
-          y: rowIdx * 20,
-          width: 100,
-          height: 18,
-          page: elements[0].bbox.page,
-        },
+        bbox: null,
         confidence: 0.8,
       });
     }
@@ -390,7 +400,8 @@ function assembleTable(elements: DocumentElement[]): TableStructure {
 
   return {
     id: uuidv4(),
-    bbox: elements[0].bbox,
+    bbox: null,
+    page: elements[0].page,
     rows: elements.length,
     columns: maxColumns,
     headerRows: 1,
@@ -422,8 +433,9 @@ function extractFormFields(elements: DocumentElement[]): FormField[] {
         label,
         value,
         fieldType,
-        bbox: el.bbox,
-        labelBbox: { ...el.bbox, width: el.bbox.width * 0.4 },
+        bbox: null,
+        labelBbox: null,
+        page: el.page,
         confidence: el.confidence,
         required: /required|\*/i.test(label),
       };
@@ -443,7 +455,7 @@ function buildOutline(elements: DocumentElement[]): OutlineEntry[] {
       const entry: OutlineEntry = {
         title: el.content.substring(0, 200),
         level: el.level || (el.elementType === 'title' ? 0 : 1),
-        page: el.bbox.page,
+        page: el.page,
         elementId: el.id,
         children: [],
       };
