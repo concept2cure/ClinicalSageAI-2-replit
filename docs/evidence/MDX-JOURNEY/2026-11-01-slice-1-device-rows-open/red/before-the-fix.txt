@@ -1,0 +1,15 @@
+ × client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > a software item opens the Software screen 326ms
+ × client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > a governed artifact opens in the one editor 5101ms
+ × client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > says where a row opens, not "the editor" for all of them 86ms
+ × client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > UDI: a labeling document opens Labeling > the label row opens the Labeling screen 61ms
+ × client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > DocumentsPanel draws no dead row control > with no handler a row is not a button 19ms
+ × client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > DocumentsPanel draws no dead row control > with a handler, a click passes the row's id and the row itself 17ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the software row did nothing: expected "vi.fn()" to be called with arguments: [ 'device-software' ]
+AssertionError: the artifact row did nothing: expected "vi.fn()" to be called with arguments: [ 'document-authoring' ]
+AssertionError: expected 'Return to project workflowAurora pump…' not to match /Tap any row to open in the editor/
+AssertionError: the label row did nothing: expected "vi.fn()" to be called with arguments: [ 'labeling' ]
+AssertionError: a row that opens nothing is still a button: expected <button …(2)>…(2)</button> to be null
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'swl-2', { id: 'swl-2', …(8) } ]
+ Test Files  1 failed (1)
+      Tests  6 failed (6)

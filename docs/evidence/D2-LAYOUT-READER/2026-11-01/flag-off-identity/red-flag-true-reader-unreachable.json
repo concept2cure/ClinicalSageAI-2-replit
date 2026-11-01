@@ -1,0 +1,136 @@
+{
+ "label": "after, flag true, reader unreachable",
+ "flag": "true",
+ "files": {
+  "server/tests/fixtures/testdoc.pdf": {
+   "sweep": {
+    "method": "none",
+    "chars": 0,
+    "text": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "result": "7483a045301d3d94cea1f62f9960972c0c1aee185389fbe855304d9be3d0ab78",
+    "keys": [
+     "coverage",
+     "layoutNotUsed",
+     "method",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "none",
+    "chars": 0,
+    "text": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "result": "3bfe61fecee9ac14f418ce0cbaa468ef7e2618daae7f7997b87e34017dfaae45",
+    "keys": [
+     "layoutNotUsed",
+     "method",
+     "ocrDeferred",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-dark/manifest.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "80fd20d2ffd380d218b9cc0d60418e65dd973a188a0342e895fbc728b0fdf026",
+    "result": "37a03c5d4c44e1994046f8b666d30256e5cd05f7cedbd707bec171210b9747fc",
+    "keys": [
+     "layoutNotUsed",
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "80fd20d2ffd380d218b9cc0d60418e65dd973a188a0342e895fbc728b0fdf026",
+    "result": "37a03c5d4c44e1994046f8b666d30256e5cd05f7cedbd707bec171210b9747fc",
+    "keys": [
+     "layoutNotUsed",
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-mobile/manifest.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "b1fd63af9a50507594dea61833e31a98442e7f244d337038cac62c4b167e3624",
+    "result": "ca3ac852209c5aea1b75314b91f9f9e70d34d31d2af129e89d972fe566d70a4f",
+    "keys": [
+     "layoutNotUsed",
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "b1fd63af9a50507594dea61833e31a98442e7f244d337038cac62c4b167e3624",
+    "result": "ca3ac852209c5aea1b75314b91f9f9e70d34d31d2af129e89d972fe566d70a4f",
+    "keys": [
+     "layoutNotUsed",
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-light/manifest.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "b7b7870c348f231074816066f6e995f82be81e7bc3d4ee70c3cb8c1d5d9e9359",
+    "result": "b5df071d40666ed58bab11b8fbc9cd529a76c3d8d5cf08a4d116d5670b5de56d",
+    "keys": [
+     "layoutNotUsed",
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "b7b7870c348f231074816066f6e995f82be81e7bc3d4ee70c3cb8c1d5d9e9359",
+    "result": "b5df071d40666ed58bab11b8fbc9cd529a76c3d8d5cf08a4d116d5670b5de56d",
+    "keys": [
+     "layoutNotUsed",
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/integration/account-inspection.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 1674,
+    "text": "ec1900d1a49fd8a3da2d7c02ab3ab62f9e447129dafacbc15af50e41180476c3",
+    "result": "74f5cf0f76b7ebbd6d04f0d04fc19232fd01a19034894c821fe25904b2cd63d0",
+    "keys": [
+     "layoutNotUsed",
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 1674,
+    "text": "ec1900d1a49fd8a3da2d7c02ab3ab62f9e447129dafacbc15af50e41180476c3",
+    "result": "74f5cf0f76b7ebbd6d04f0d04fc19232fd01a19034894c821fe25904b2cd63d0",
+    "keys": [
+     "layoutNotUsed",
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  }
+ }
+}
