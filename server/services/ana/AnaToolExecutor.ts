@@ -153,15 +153,6 @@ import {
   type OddProvenance,
   type OddProductInput,
 } from 'shared/ana/orphan-drug-designation.js';
-import {
-  buildIndModuleAuthoringPlan,
-  evaluateIndModuleVerification,
-  assessIndModuleSealability,
-  listIndModules,
-  IND_MODULE_TEMPLATES,
-  type IndModuleProvenance,
-  type IndSourceFact,
-} from './ind-module-authoring.js';
 import { adviseEstimand, listEstimandFramework } from './estimands.js';
 import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
 import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
@@ -3046,96 +3037,6 @@ registerToolHandler('plan_orphan_drug_designation', async (input) => {
       'Drive author_docx_native with author_docx_native.{title,content}, then verify_docx_against_source ' +
       'with required_strings. sample/not_assessed drafts and any uncited prevalence/eligibility claim are ' +
       'non-sealable and non-exportable.',
-  });
-});
-
-// IND narrative-module planning (CTD Module 2.5 / 2.7) — E11.
-// Build a transcription scaffold from caller/model-supplied facts and check its
-// own text for the supported template headers and supplied figure values. This
-// does not author or verify a file, qualify study sources, or verify provenance;
-// the planning receipt is always non-sealable, including when labelled live.
-/** The section codes a plan_ind_module_authoring template holds, for its own messages. */
-const indModuleSectionCodes = (moduleId: string) => (IND_MODULE_TEMPLATES[moduleId] ?? []).map((s) => s.code).join(', ');
-
-registerToolHandler('plan_ind_module_authoring', async (input) => {
-  const moduleId = typeof input.module === 'string' ? input.module.trim() : '';
-  if (!moduleId || !listIndModules().includes(moduleId)) {
-    return JSON.stringify({
-      error: `plan_ind_module_authoring requires module to be one of ${listIndModules().join(', ')}.`,
-      modules: listIndModules(),
-    });
-  }
-  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
-  const productName = str(input.product_name);
-  const indication = str(input.indication);
-  if (!productName || !indication) {
-    return JSON.stringify({ error: 'plan_ind_module_authoring requires product_name and indication.' });
-  }
-
-  const facts: IndSourceFact[] = Array.isArray(input.facts)
-    ? (input.facts as unknown[])
-        .map((f) => (f && typeof f === 'object' ? (f as Record<string, unknown>) : null))
-        .filter((f): f is Record<string, unknown> => f !== null)
-        .map((f) => ({
-          sectionId: typeof f.section_id === 'string' ? f.section_id : '',
-          label: typeof f.label === 'string' ? f.label : '',
-          value: typeof f.value === 'string' ? f.value : '',
-          source: typeof f.source === 'string' ? f.source : undefined,
-        }))
-        .filter((f) => f.sectionId && typeof f.value === 'string' && f.value.trim().length > 0)
-    : [];
-
-  const rawProv = typeof input.provenance === 'string' ? input.provenance : '';
-  const provenance: IndModuleProvenance =
-    rawProv === 'live' || rawProv === 'sample' || rawProv === 'not_assessed' ? rawProv : 'not_assessed';
-
-  const plan = buildIndModuleAuthoringPlan({ module: moduleId, productName, indication, facts, provenance });
-  const verification = evaluateIndModuleVerification({
-    documentText: plan.content,
-    requiredStrings: plan.requiredStrings,
-  });
-  const sealability = assessIndModuleSealability({ provenance, verification });
-  // A supplied fact that names no section is said, never dropped (D2 cleanup C4c).
-  const unplaced = plan.unplacedFacts.map((f) => ({ section_id: f.sectionId, label: f.label, value: f.value }));
-  const unplacedBlocker = unplaced.length === 0 ? [] : [
-    `${unplaced.length} supplied ${unplaced.length === 1 ? 'fact names' : 'facts name'} no section of the ${moduleId} template: ` +
-      `${[...new Set(unplaced.map((f) => f.section_id))].join(', ')}. They are not in the plan; name a section by its CTD code ` +
-      `(${indModuleSectionCodes(moduleId)}) or a code below one.`,
-  ];
-
-  return JSON.stringify({
-    source: `AnA IND Module ${moduleId} Authoring (ICH M4E — CTD Module 2)`,
-    status: 'generated',
-    author_docx_native: {
-      title: plan.title,
-      content: plan.content,
-      required_strings: plan.requiredStrings,
-    },
-    verification: {
-      ...verification,
-      scope: 'plan_text_only',
-      artifactVerified: false,
-      sourceVerified: false,
-    },
-    honesty: {
-      sealable: false,
-      provenance: plan.provenance,
-      blockers: [
-        'Planning only: no authored file or independently verified project source evidence was checked. ' +
-          'Verify the actual governed artifact and its qualified sources before sealing.',
-        ...sealability.blockers,
-        ...unplacedBlocker,
-      ],
-      sectionsWithoutFacts: plan.sectionsWithoutFacts,
-      unplacedFacts: unplaced,
-    },
-    note:
-      'This tool builds a transcription scaffold and checks only its supported template headers and ' +
-      'caller/model-supplied strings. The plan body\'s \'verified against the source\' wording means only ' +
-      'supplied-string self-consistency: no authored file, underlying study, source qualification, or ' +
-      'caller-declared provenance was independently verified. This planning receipt is always non-sealable. ' +
-      'Use author_docx_native with author_docx_native.{title,content}, then verify the actual governed artifact ' +
-      'and its qualified source evidence separately; required_strings alone do not establish source qualification.',
   });
 });
 
@@ -20916,14 +20817,28 @@ registerToolHandler('list_intelligence_flows', async (_input, ctx) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 registerToolHandler('start_war_game', async (input, ctx) => {
+  /* Rule 2 (2026-11-01, a finding of session 019ZvHmh): this scored
+     `input.answers`, which the model composes, and recorded the score as
+     WAR_GAME_RUN as if it described the project's interview. The answers now
+     come from the stored interview session, as answer_intelligence_question
+     loads them; answers in the call are not used. */
+  const sessionId = intelligenceSessionId(input);
+  if (!sessionId) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      missing: ['session_id'],
+      message: 'session_id is required: the War Game scores the stored interview, never answers given in the call.',
+    });
+  }
   try {
+    const { loadInterviewSession } = await import('../cmc/interview-sessions.js');
+    const session = await loadInterviewSession({ organizationId: ctx?.organizationId, sessionId });
+    if (session.status === 'abandoned') {
+      return JSON.stringify({ error: `Interview session ${sessionId} was abandoned; it is not war-gamed.`, session_id: sessionId, session_status: session.status });
+    }
     const { runWarGame } = await import('./intelligence-questions/war-game/engine.js');
     const category = String(input.war_game_category || '') as import('./intelligence-questions/war-game/types.js').WarGameCategory;
-    const report = runWarGame(
-      category,
-      String(input.source_flow_id || ''),
-      (input.answers || {}) as Record<string, Record<string, unknown>>,
-    );
+    const report = runWarGame(category, session.flowId, session.state.answers);
     /* Audit log the adversarial audit run — records who ran which War Game and
        the resulting readiness posture (score/assessment). Fire-and-forget. */
     try {
@@ -20933,10 +20848,11 @@ registerToolHandler('start_war_game', async (input, ctx) => {
         userId:     ctx?.userId ?? null,
         action:     'WAR_GAME_RUN',
         resource:   'war_game_report',
-        resourceId: String((report as any)?.id || input.source_flow_id || category),
+        resourceId: String((report as any)?.id || session.flowId || category),
         details: {
           category,
-          sourceFlowId:      String(input.source_flow_id || ''),
+          sessionId,
+          sourceFlowId:      session.flowId,
           overallScore:      (report as any)?.overallScore,
           overallAssessment: (report as any)?.overallAssessment,
           findingCount:      Array.isArray((report as any)?.findings) ? (report as any).findings.length : undefined,
@@ -20945,11 +20861,15 @@ registerToolHandler('start_war_game', async (input, ctx) => {
     } catch { /* never block the tool response on audit failure */ }
     return JSON.stringify({
       success: true,
+      session_id: sessionId,
+      session_status: session.status,
+      ...(input.answers !== undefined ? { answersInCallIgnored: true } : {}),
       war_game_report: report,
     });
   } catch (err: any) {
     return JSON.stringify({
       error: err?.message || 'Failed to run war game simulation',
+      session_id: sessionId,
     });
   }
 });

@@ -1,11 +1,13 @@
 /* Measure what the one labelled-figure lexicon reads out of real regulatory
    prose. Corpus: PubMed phase-III RCT abstracts (open literature). */
 import { readFileSync } from 'node:fs';
-import { extractNumericalFacts } from '../../../../../home/user/ClinicalSageAI-2-replit/server/services/intelligence/cross-artifact-consistency';
+import { extractNumericalFacts } from '../../../../server/services/intelligence/labelled-figures';
 
-const corpus: Array<{ pmid: string; abstract: string }> = JSON.parse(
-  readFileSync(process.argv[2], 'utf8'),
-);
+/* Run from the repository root:
+     npx tsx docs/evidence/F1/2026-11-01-labelled-figure-lexicon/recall.ts        */
+const CORPUS = process.argv[2]
+  ?? new URL('./corpus-pubmed-abstracts.json', import.meta.url).pathname;
+const corpus: Array<{ pmid: string; abstract: string }> = JSON.parse(readFileSync(CORPUS, 'utf8'));
 
 /** Sentences, roughly. */
 function sentences(t: string): string[] {
@@ -36,9 +38,9 @@ for (const doc of corpus) {
   }
 }
 
-console.log(`sentences with a number:        ${withNumber}`);
-console.log(`...of which state a governed figure: ${governed}`);
-console.log(`...of which the lexicon labels:      ${labelled}  (${Math.round(100 * labelled / governed)}%)`);
-console.log(`\nlabels read: ${[...hits.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}×${v}`).join(', ')}`);
-console.log(`\n── ${misses.length} governed sentences the lexicon reads nothing from ──`);
-for (const m of misses) console.log('  ' + m);
+console.info(`sentences with a number:        ${withNumber}`);
+console.info(`...of which state a governed figure: ${governed}`);
+console.info(`...of which the lexicon labels:      ${labelled}  (${Math.round(100 * labelled / governed)}%)`);
+console.info(`\nlabels read: ${[...hits.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}×${v}`).join(', ')}`);
+console.info(`\n── ${misses.length} governed sentences the lexicon reads nothing from ──`);
+for (const m of misses) console.info('  ' + m);

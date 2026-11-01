@@ -14,7 +14,9 @@ describe('the request reads within its budget', () => {
     const extract = read('A clinical overview.');
     const out = await extractInline(Buffer.from('x'), 'text/plain', 'a.txt', { extract });
     expect(out).toEqual({ kind: 'read', extracted: { text: 'A clinical overview.', method: 'utf8' } });
-    expect(extract).toHaveBeenCalledWith(expect.any(Buffer), 'text/plain', 'a.txt', { ocr: false });
+    // A text layer only, never OCR; and the self-hosted layout reader first, when
+    // the deployment turned it on (P-90; the extractor decides, from the flag).
+    expect(extract).toHaveBeenCalledWith(expect.any(Buffer), 'text/plain', 'a.txt', { ocr: false, layout: true });
   });
 
   it('leaves a file over the size cap without reading it', async () => {

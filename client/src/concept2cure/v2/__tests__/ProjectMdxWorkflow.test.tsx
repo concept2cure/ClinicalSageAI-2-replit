@@ -44,10 +44,22 @@ describe('project MDX workflow', () => {
     expect(cer.cadence).toContain('Living evaluation');
     expect(cer.packages.some(p => p.id === 'clinical-evidence')).toBe(true);
     const per = mdxProjectPlan({ ...project, product_type: 'cdx', program_type: 'IVDR', regulatory_path: null })!;
-    expect(per.title).toBe('What this EU IVDR PER needs');
+    /* An IVDR project is the IVDR technical documentation (global-document-registry EU_IVDR); a PER filing
+       is a bare 'ivd' filing the wizard refuses, so no project is a PER (MDX journey M10, 2026-11-01). */
+    expect(per.title).toBe('What this EU IVDR technical documentation needs');
     expect(per.packages.some(p => p.id === 'performance-evaluation')).toBe(true);
     expect(per.packages.some(p => p.id === 'clinical-evidence')).toBe(false);
     expect(per.summary).toContain('PMPF');
+  });
+
+  /* M10 (MDX journey, 2026-11-01): Plan titled an EU MDR technical documentation project "What this EU MDR
+     CER needs" while listing the whole technical file (classification, GSPR, risk, bench, software, the CER,
+     labeling, QMS, Annex II/III assembly: shared/regulatory/work-packages.ts). A stand-alone CER keeps its name. */
+  it('names an EU MDR project by its technical documentation, and a CER project by the CER', () => {
+    expect(mdxProjectPlan({ ...project, program_type: 'MDR', regulatory_path: null })!.title)
+      .toBe('What this EU MDR technical documentation needs');
+    expect(mdxProjectPlan({ ...project, program_type: 'CER', regulatory_path: null })!.title)
+      .toBe('What this EU MDR CER needs');
   });
 
   it('shares evidence across recorded filings without converting a De Novo into a 510(k)', () => {
