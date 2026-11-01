@@ -179,6 +179,19 @@ land, the approval is a signature, and this record is the reasoning behind it.
 Items 4 (CMC / Module 3 and M2.5–2.7 coverage) and 6 (a product provider key)
 remain.
 
+**2026-11-01 — item 4 landed** (`docs/evidence/D4/2026-11-01-pq-module2-module3-coverage/`):
+
+- The bank (v0.6.0) holds two new document types: `module-2-clinical` (2.5 and 2.7) and `module-3-quality`
+  (CMC / Module 3). Each has 12 generation and 12 extraction tasks, above both floors with headroom.
+- Unlike the 0.5.0 passages, every input is real source text, as P-56 requires, and each task names it:
+  - Module 2 comes from three public CSR synopses kept in `csrs/`;
+  - Module 3 comes from eleven CC BY 4.0 articles in PubMed Central.
+- `gold-bank-coverage.test.ts` holds both types at both floors, requires every task to name its source, and checks
+  the synopsis tasks line by line against the PDF.
+- Each task passed an independent regulatory-writer review.
+
+Item 6, a product provider key, remains. When it lands, the PQ runs against this bank, and approval is a signature.
+
 ### The strongest argument against this decision
 
 That it makes a blocked gate more blocked. AnA cannot be credited as an author

@@ -697,7 +697,7 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Generate a complete regulatory document (CSR, CTD section, CER, 510(k), protocol, SAP, IB, ICSR). Produces DOCX, PDF, or XML output. Use when the user asks to create, generate, draft, or build a regulatory document.",
+      "description": "Generate a protocol, a statistical analysis plan or a Module 1 document as DOCX, PDF or XML, from the sections or template the user gives. It does not write a document whose content comes from the project's records, and refuses it by name: a CSR or Module 5 (get_csr_section_evidence, then draft_authoring_document), Module 2 (the draft_*_m2_* composers), Module 3 (compiled in CMC / Module 3), Module 4 (the filed study reports), a CER (assess_stored_cer), a 510(k) (write_kit_section, compose_510k_summary), an IB (draft_authoring_document), an eCTD backbone, an ICSR, or a PMA (withheld until a PMA record path exists). Use when the user asks to generate one of the documents it writes.",
       "scope": "global",
       "governed": false,
       "renderer": "artifact-xml",
@@ -24177,7 +24177,7 @@
       "description": "Run the final pre-transmit QC on a stored sequence and say whether dispatch may proceed. The verdict is the platform's dispatch-readiness assessment of that sequence (the gate freeze, dispatch and transmit enforce: validation findings, Shadow Review, the agency-grade validation gate, the release signature); it is never computed from counts you supply, and a model narrative, when one is configured, only explains it. This does NOT transmit. Tenant comes from the active context; the call is audited.",
       "scope": "project",
       "governed": false,
-      "renderer": "result-card",
+      "renderer": "document-canvas",
       "example": "",
       "inputs": [
         {
@@ -32194,10 +32194,10 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Risk-Based Monitoring (ICH E6(R3)/E8(R1)) advisor: seeds or summarizes a study Risk Assessment (RACT) for a program — Critical-to-Quality (CtQ) factors with likelihood × impact scores, the critical factors, and the rolled-up overall risk level. Use when scoping risk-based quality management for a study. Reads/writes the program's RBM risk assessment.",
+      "description": "Risk-Based Monitoring (ICH E6(R3)/E8(R1)) advisor: seeds a DRAFT or summarizes a study Risk Assessment (RACT) for a program — Critical-to-Quality (CtQ) factors with likelihood × impact scores, the critical factors, and the rolled-up overall risk level. Use when scoping risk-based quality management for a study. A seeded draft needs review and signed approval on the assessment before activation. Reads/writes the program's RBM risk assessment.",
       "scope": "global",
       "governed": false,
-      "renderer": "ranked-cards",
+      "renderer": "document-canvas",
       "example": "",
       "inputs": [
         {

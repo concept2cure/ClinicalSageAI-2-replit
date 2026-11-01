@@ -912,14 +912,23 @@ export const DOCUMENT_REVIEW_TOOLS: AnaTool[] = [
 /** Generate a regulatory document from scratch or template */
 export const GENERATE_DOCUMENT: AnaTool = {
   name: 'generate_document',
-  description: 'Generate a complete regulatory document (CSR, CTD section, CER, 510(k), protocol, SAP, IB, ICSR). Produces DOCX, PDF, or XML output. Use when the user asks to create, generate, draft, or build a regulatory document.',
+  description:
+    'Generate a protocol, a statistical analysis plan or a Module 1 document as DOCX, PDF or XML, from the ' +
+    'sections or template the user gives. It does not write a document whose content comes from the project\'s records, and ' +
+    'refuses it by name: a CSR or Module 5 (get_csr_section_evidence, then draft_authoring_document), Module 2 (the ' +
+    'draft_*_m2_* composers), Module 3 (compiled in CMC / Module 3), Module 4 (the filed study reports), a CER ' +
+    '(assess_stored_cer), a 510(k) (write_kit_section, compose_510k_summary), an IB (draft_authoring_document), an eCTD ' +
+    'backbone, an ICSR, or a PMA (withheld until a PMA record path exists). Use when the user asks to generate one of ' +
+    'the documents it writes.',
   input_schema: {
     type: 'object',
     properties: {
       document_type: {
         type: 'string',
+        // Rule 2 audit S6b: the record documents left the enum, as ectd_backbone
+        // and icsr did; the handler refuses them by name if sent anyway.
         description: 'Type of document to generate',
-        enum: ['csr', 'ctd_module1', 'ctd_module2', 'ctd_module3', 'ctd_module4', 'ctd_module5', 'cer', '510k', 'pma', 'protocol', 'sap', 'ib'],
+        enum: ['ctd_module1', 'protocol', 'sap'],
       },
       title: {
         type: 'string',

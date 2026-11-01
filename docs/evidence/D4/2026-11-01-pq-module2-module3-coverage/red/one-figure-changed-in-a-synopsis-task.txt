@@ -1,0 +1,5 @@
+ × server/eval/pq/__tests__/gold-bank-coverage.test.ts > every owed task names the real document it was cut from > a task cut from a synopsis in csrs/ is that PDF's own text, line by line 1225ms
+   → expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "m2-fesoterodine-oab-primary-extract: \"the difference in the LS means (fesoterodine – placebo) was \"",
+      Tests  1 failed | 3 passed (4)

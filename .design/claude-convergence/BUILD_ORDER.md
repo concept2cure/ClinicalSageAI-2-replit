@@ -885,6 +885,9 @@ with `ls` over the full list. Items to watch:
     `project-home-v2.css` range, or the row type goes to F1 as a shared change. Re-valuing `.ct-row` unscoped would
     restyle 15 other files under `Plan: D2`.
     The lead decides.
+    **Decided by the lead, 2026-11-01:** D2-1 scopes its list's type under `.pj-index`, inside its own
+    `project-home-v2.css` range. `.ct-row` is not re-valued under `Plan: D2`. A shared re-value of `.ctable` and
+    `.ct-row` is an F1 change on its own, if one is ever wanted.
 20. **`.rc-composer` and `.rbm-ana-composer` are not in D0's composer list.** D0 §4.2.16 lists only
     `.landing-composer`, `.pj-composer` and `.ct-composer`, and adds the other two "when their owners (D4, D7)
     confirm". `D7.md` §C.4 item 6 and §D.4 item 3 treat both as already listed. In Insights, `.rc-composer`
@@ -893,6 +896,9 @@ with `ls` over the full list. Items to watch:
     single-line field that §D.4 item 3 describes is `.rc-input`, so listing `.rc-composer` would frame the whole block.
     → Whichever selector is meant, D7 confirms it before D0-2 (Wave 0), or D7-C and D7-D add their selector to D0's
     list in `app-v2.css` (§0 item 4).
+    **Decided by the lead, 2026-11-01:** D0-2 is not reopened. D7-C adds `.rbm-ana-composer`, and D7-D adds
+    `.rc-input` (the single-line field, not the `.rc-composer` block), to D0's composer `:is()` lists in `app-v2.css`,
+    each in its own lane's `app-v2.css` turn.
 
 **Not checked here, and left to the builders:**
 - whether each spec's line ranges still match after D0 lands;
