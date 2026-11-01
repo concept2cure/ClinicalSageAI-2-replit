@@ -19,6 +19,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
+  charterClassification,
   CharterObjectivesRefusal,
   objectivesBodySchema,
   objectivesContextBlock,
@@ -131,5 +132,50 @@ describe('the project objective of record', () => {
   it('refuses a body with no reason, or a source address that is not http', () => {
     expect(objectivesBodySchema.safeParse({ objective: 'O', sources: [] }).success).toBe(false);
     expect(objectivesBodySchema.safeParse({ objective: 'O', reason: 'r', sources: [{ kind: 'registry', title: 't', url: 'javascript:alert(1)' }] }).success).toBe(false);
+  });
+
+  // A recorded section whose stored text is not in the recorded form is an
+  // objective that cannot be read, never "no objective": the project page would
+  // otherwise say "Not stated yet" and offer to state one, and AnA would hold
+  // the work to nothing without knowing a recorded objective was there.
+  it('refuses to read a recorded objective whose stored version cannot be read, rather than reading it as none', async () => {
+    await recordProjectObjectives(db as never, { orgId: 1, userId: 7, projectId: 12, program, body: body('File the NDA.'), now });
+    const charter = (await pg.query<{ id: number }>('SELECT id FROM project_charters WHERE project_id = 12')).rows[0];
+    await pg.query("UPDATE charter_sections SET content = 'File the NDA.' WHERE charter_id = $1 AND section_key = 'objectives'", [charter.id]);
+    await expect(readProjectObjectives(db as never, { orgId: 1, projectId: 12 }))
+      .rejects.toMatchObject({ status: 409, code: 'OBJECTIVES_UNREADABLE' });
+  });
+});
+
+// Every filing the creator accepts starts a charter (the creator rolls back any
+// filing with no document class, so a created project's type is one of
+// PROGRAM_TO_DOC_TYPE's). The charter used to know nine types and seven agency
+// spellings: a CTA in the EU, a CSR under ICH, an EU MDR file or a Japanese
+// certification filing could never state its objective.
+describe("the charter's classification of a program", () => {
+  it.each([
+    ['ind', 'FDA', 'IND', 'FDA'],
+    ['ind', 'us', 'IND', 'FDA'],
+    ['cta', 'EU', 'CTA', 'EMA'],
+    ['cta', 'EMA', 'CTA', 'EMA'],
+    ['jnda', 'PMDA', 'JNDA', 'PMDA'],
+    ['csr', 'ICH / Global', 'CSR', 'ICH'],
+    ['mdr', 'EU / Notified Body', 'MDR', 'EMA'],
+    ['cer', 'EU / Notified Body', 'CER', 'EMA'],
+    ['ind_amendment', 'FDA', 'IND_AMENDMENT', 'FDA'],
+    ['ninsho', 'Registered certification body', 'NINSHO', 'JP_RCB'],
+    ['nda', 'Health Canada', 'NDA', 'HealthCanada'],
+    ['510k', 'FDA', '510K', 'FDA'],
+  ])('%s at %s is a %s charter for %s', (programType, primaryAgency, submissionType, regulatoryRegion) => {
+    expect(charterClassification({ programType, primaryAgency, productName: 'X' })).toEqual({ submissionType, regulatoryRegion, productName: 'X' });
+  });
+
+  it.each([
+    ['biologic', 'FDA', 'application type'],
+    ['other', 'FDA', 'application type'],
+    ['cta', 'Swissmedic', 'primary agency'],
+    ['ind', null, 'primary agency'],
+  ])('refuses %s at %s by name: it records no %s the charter knows', (programType, primaryAgency, missing) => {
+    expect(() => charterClassification({ programType, primaryAgency, productName: 'X' })).toThrow(new RegExp(missing));
   });
 });

@@ -87,6 +87,19 @@ export function bindRequestDbClient(req: Request, res: Response, client: Releasa
 }
 
 /**
+ * True when this request had a client bound and the lease has released it: the
+ * response ended (finished, closed, or its connection gone) and no work that
+ * retained the client still holds it. A handler that asks for the client after
+ * that is answering a request nobody is waiting for; `requestPgClient` and
+ * `requestDb` then refuse with RequestEndedError (REQUEST_ENDED) rather than
+ * the code for a route with no request context at all (db/requestDb.ts).
+ */
+export function requestDbClientReleased(req: Request): boolean {
+  const lease = (req as LeasedRequest)[LEASE];
+  return lease !== undefined && lease.released;
+}
+
+/**
  * Keep the request's bound client past the response: its end no longer
  * releases it, and the caller must call the returned function once, when its
  * own work ends (a second call does nothing). Null when there is nothing to

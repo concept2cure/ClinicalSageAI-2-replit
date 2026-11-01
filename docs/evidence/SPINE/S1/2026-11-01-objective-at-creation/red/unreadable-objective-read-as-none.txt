@@ -1,0 +1,156 @@
+# Skeptic review (2026-11-01): the read of a recorded objective whose stored version cannot be parsed.
+# Run on the builder's final code, before the fix, with the two new cases:
+#   npx vitest run --maxWorkers=2 server/services/c2c/__tests__/charter-objectives.pglite.test.ts server/routes/__tests__/charter-objectives-routes.pglite.test.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/charter-objectives-routes.pglite.test.ts
+    "mode": "off"
+
+stderr | server/routes/__tests__/charter-objectives-routes.pglite.test.ts
+
+stdout | server/routes/__tests__/charter-objectives-routes.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > refuses a version with no reason, without echoing the text
+    "issues": [
+      {
+        "code": "invalid_type",
+        "expected": "string",
+        "received": "undefined",
+        "path": [
+          "reason"
+        ],
+        "message": "Required"
+      }
+    ]
+
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > refuses to record a project's objective for someone the project does not admit, and writes nothing 33ms
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > refuses a version with no reason, without echoing the text 7ms
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > records it for an admitted project, from its program, pinned to that program 36ms
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > reads it back for an admitted reader, and refuses one the project does not admit 11ms
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > records the objective of a project whose filing the charter did not classify before: a CTA in the EU 17ms
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > says who recorded the current version and each version before it, by name where the tenant may name them 8ms
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > tells the reader whether they may record a new version: yes for a writer, no for a reader the project admits only to read 11ms
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > says a locked objective cannot be changed, even by a writer 8ms
+ × server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > fails the read, and returns no record, when the recorded objective cannot be read: never "not stated" 14ms
+   → expected 200 to be 409 // Object.is equality
+stdout | server/services/c2c/__tests__/charter-objectives.pglite.test.ts
+    "mode": "off"
+
+stderr | server/services/c2c/__tests__/charter-objectives.pglite.test.ts
+
+stdout | server/services/c2c/__tests__/charter-objectives.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/c2c/__tests__/charter-objectives.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/c2c/__tests__/charter-objectives.pglite.test.ts
+
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > has none before anything is recorded 9ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > starts the charter from the program's classification and records version 1 29ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > records a change as the next version on the hash chain, keeping the old one in the history 16ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > records nothing when the content is the same 7ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > keeps another organisation's project apart 2ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > refuses to start a charter for a program it cannot classify, and writes nothing 4ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > refuses a change to a locked objective 5ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > cannot rewrite or remove its audit trail 5ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > gives AnA the objective, its criteria and its sources 4ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > refuses a body with no reason, or a source address that is not http 1ms
+ × server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > refuses to read a recorded objective whose stored version cannot be read, rather than reading it as none 28ms
+   → promise resolved "{ charterId: 2, current: null, …(1) }" instead of rejecting
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > ind at FDA is a IND charter for FDA 1ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > ind at us is a IND charter for FDA 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > cta at EU is a CTA charter for EMA 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > cta at EMA is a CTA charter for EMA 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > jnda at PMDA is a JNDA charter for PMDA 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > csr at ICH / Global is a CSR charter for ICH 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > mdr at EU / Notified Body is a MDR charter for EMA 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > cer at EU / Notified Body is a CER charter for EMA 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > ind_amendment at FDA is a IND_AMENDMENT charter for FDA 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > ninsho at Registered certification body is a NINSHO charter for JP_RCB 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > nda at Health Canada is a NDA charter for HealthCanada 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > 510k at FDA is a 510K charter for FDA 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > refuses biologic at FDA by name: it records no application type the charter knows 1ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > refuses other at FDA by name: it records no application type the charter knows 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > refuses cta at Swissmedic by name: it records no primary agency the charter knows 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > refuses ind at null by name: it records no primary agency the charter knows 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > fails the read, and returns no record, when the recorded objective cannot be read: never "not stated"
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/charter-objectives-routes.pglite.test.ts:162:24
+    160|     try {
+    161|       const r = await request(app()).get(`/api/charters/by-project/${P…
+    162|       expect(r.status).toBe(409);
+       |                        ^
+    163|       expect(r.body).toMatchObject({ success: false, error: 'OBJECTIVE…
+    164|       expect(r.body.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > refuses to read a recorded objective whose stored version cannot be read, rather than reading it as none
+AssertionError: promise resolved "{ charterId: 2, current: null, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "charterId": 2,
++   "current": null,
++   "history": [
++     {
++       "actorUserId": 7,
++       "content": {
++         "objective": "File the NDA.",
++         "sources": [
++           {
++             "kind": "protocol",
++             "locator": "Section 2.1, Primary objective",
++             "title": "Protocol LMN-201-301",
++             "url": null,
++           },
++           {
++             "kind": "registry",
++             "locator": null,
++             "title": "ClinicalTrials.gov entry",
++             "url": "https://clinicaltrials.gov/study/NCT00000000",
++           },
++         ],
++         "successCriteria": "Primary endpoint met at alpha 0.025, one-sided.",
++       },
++       "eventType": "created",
++       "occurredAt": "2026-11-01T04:00:05.000Z",
++       "reason": "Taken from protocol LMN-201-301 section 2",
++       "version": 1,
++     },
++   ],
+
+ ❯ server/services/c2c/__tests__/charter-objectives.pglite.test.ts:145:81
+    143|     const charter = (await pg.query<{ id: number }>('SELECT id FROM pr…
+    144|     await pg.query("UPDATE charter_sections SET content = 'File the ND…
+    145|     await expect(readProjectObjectives(db as never, { orgId: 1, projec…
+       |                                                                                 ^
+    146|       .rejects.toMatchObject({ status: 409, code: 'OBJECTIVES_UNREADAB…
+    147|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 34 passed (36)
+   Start at  21:47:41
+   Duration  13.82s (transform 2.87s, setup 181ms, import 6.89s, tests 6.22s, environment 0ms)
+

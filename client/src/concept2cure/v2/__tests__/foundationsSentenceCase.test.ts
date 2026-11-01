@@ -38,8 +38,13 @@ import { describe, expect, it } from 'vitest';
 const STYLES = resolve(__dirname, '../styles');
 const DESIGN_SYSTEM = resolve(__dirname, '../../../../../design-system/colors_and_type.css');
 
-/** selector → why its capitals are the data's job. Starts empty (D0 spec §4.3). */
-const ALLOWLIST: Record<string, string> = {};
+/** selector → why its capitals are the data’s job. Started empty (D0 spec §4.3). */
+const ALLOWLIST: Record<string, string> = {
+  '.c2c-v2 .rd-chip::first-letter':
+    'Capitalises one letter, not the text: it is how the D0 chip (spec §4.2.10) turns a printed value ' +
+    '("planning") into sentence case ("Planning"), and §7.6 measures it. No chip leads with a lower-case ' +
+    'brand form (eCTD, eSTAR). It leaves when the owners map every raw enum to a label (spec §4.7, chip row).',
+};
 
 const UPPERCASE = /text-transform\s*:\s*uppercase\b/gi;
 

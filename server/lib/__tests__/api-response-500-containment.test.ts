@@ -115,3 +115,49 @@ describe('serverError does not leak the underlying failure to the client', () =>
     expect(JSON.stringify(leaky)).toMatch(/relation /i);
   });
 });
+
+/**
+ * F1, 2026-11-01 (docs/evidence/F1/2026-11-01-request-db-context/). A read whose
+ * caller went away fails closed when it asks for its released request client
+ * (server/db/requestDb.ts, RequestEndedError). Nothing failed on the server and
+ * nobody is waiting, so it is not logged as a failure and no 500 is written to
+ * a response that has already ended. Keyed on the code: any other error on the
+ * same request is still a failure.
+ */
+describe('serverError on a request that ended before its database work ran', () => {
+  const ended = () => Object.assign(new Error('The request ended before its database work ran'), { code: 'REQUEST_ENDED' });
+
+  it('notes it, logs no failure and writes nothing to the ended response', () => {
+    const { res, state } = fakeRes({ 'X-Request-Id': 'req-1' });
+    const log = { error: vi.fn(), info: vi.fn() };
+    serverError(res, log, 'doc-list', ended(), { programId: 'p-1' });
+    expect(log.error).not.toHaveBeenCalled();
+    expect(log.info).toHaveBeenCalledWith('doc-list stopped: the request ended before its database work ran',
+      { programId: 'p-1', correlationId: 'req-1', code: 'REQUEST_ENDED' });
+    expect(state.status).toBeUndefined();
+    expect(state.body).toBeUndefined();
+  });
+
+  /* Only a request that was never answered is noted. A handler that sent its own
+     response and then asked for its client lost work after that response (an
+     audit row, a follow-up write): that is a defect in the handler, and it stays
+     a logged failure, as it was before REQUEST_ENDED existed. */
+  it('still logs it as a failure when the handler had already sent its own response', () => {
+    const { res } = fakeRes({ 'X-Request-Id': 'req-2' });
+    res.headersSent = true;
+    const log = { error: vi.fn(), info: vi.fn() };
+    serverError(res, log, 'doc-create', ended());
+    expect(log.info).not.toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalledWith('doc-create failed', expect.objectContaining({ code: 'REQUEST_ENDED', correlationId: 'req-2' }));
+  });
+
+  it('still logs a request with no database context as a failure, with a 500', () => {
+    const { res, state } = fakeRes();
+    const log = { error: vi.fn(), info: vi.fn() };
+    const missing = Object.assign(new Error('Request-scoped database context is required'), { code: 'REQUEST_DB_CONTEXT_REQUIRED' });
+    serverError(res, log, 'doc-list', missing);
+    expect(log.info).not.toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalledWith('doc-list failed', expect.objectContaining({ code: 'REQUEST_DB_CONTEXT_REQUIRED' }));
+    expect(state.status).toBe(500);
+  });
+});
