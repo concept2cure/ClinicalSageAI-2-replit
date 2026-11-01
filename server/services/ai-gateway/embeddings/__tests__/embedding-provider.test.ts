@@ -194,6 +194,8 @@ describe('embedding placement gate (before the SDK client exists)', () => {
       openai: {
         region: 'global',
         zeroRetentionApproved: true,
+        // A test fixture, not an agreement: none is signed today (D6).
+        zeroRetentionAgreement: { reference: 'TEST-ZDR-ADDENDUM-0001', effectiveFrom: '2026-01-01' },
         approvedDataClasses: ['pii', 'phi'],
         approvedIntendedUses: ['chat'],
       },
@@ -506,7 +508,7 @@ describe('probeEmbeddingLane: one short text through the configured lane, at eve
     process.env.NODE_ENV = 'production';
     process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
-      anthropic: { region: 'global', zeroRetentionApproved: true, approvedDataClasses: ['pii'], approvedIntendedUses: ['drafting'] },
+      anthropic: { region: 'global', zeroRetentionApproved: false, approvedDataClasses: [], approvedIntendedUses: ['drafting'] },
     });
     const provider = useLocalLane();
     await expect(probeEmbeddingLane(provider)).resolves.toMatchObject({ ok: true });

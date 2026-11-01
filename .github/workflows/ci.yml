@@ -2325,9 +2325,11 @@ jobs:
           # placement contract (assertSensitivePlacementConfiguration). This is
           # the most fail-closed contract expressible: enforcement on, and the
           # single named deployment approved for NO sensitive data classes —
-          # nothing here claims a contractual zero-retention approval exists.
+          # nothing here claims a contractual zero-retention approval exists,
+          # and since 2026-10-25 a zero-retention approval must name its signed
+          # agreement (docs/AI_SENSITIVE_DATA_PLACEMENT.md), so it says false.
           AI_SENSITIVE_DATA_POLICY_MODE: enforce
-          AI_PROVIDER_PLACEMENT_APPROVALS: '{"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}'
+          AI_PROVIDER_PLACEMENT_APPROVALS: '{"private-deployment":{"region":"us","zeroRetentionApproved":false,"approvedDataClasses":[],"approvedIntendedUses":[]}}'
 
       # The scanner's own account of a boot that could not reach it, before the
       # teardown below deletes the container that holds it.
@@ -2481,7 +2483,7 @@ jobs:
           AI_GATEWAY_DETERMINISTIC=true
           AI_GATEWAY_ACCEPT_DETERMINISTIC=true
           AI_SENSITIVE_DATA_POLICY_MODE=enforce
-          AI_PROVIDER_PLACEMENT_APPROVALS={"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}
+          AI_PROVIDER_PLACEMENT_APPROVALS={"private-deployment":{"region":"us","zeroRetentionApproved":false,"approvedDataClasses":[],"approvedIntendedUses":[]}}
           ALLOWED_ORIGINS=https://image-boot.invalid
           CLAMAV_HOST=127.0.0.1
           CLAMAV_PORT=3310

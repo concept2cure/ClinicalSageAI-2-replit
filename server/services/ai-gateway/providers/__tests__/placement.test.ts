@@ -21,10 +21,12 @@ describe('provider placement registry', () => {
     expect(openai.regions).toContain('global');
   });
 
-  it('marks private-cloud Claude (bedrock) as frontier_private with ZDR by default', () => {
+  // Until 2026-10-25 Bedrock claimed ZDR by default (D6): no lane a third party
+  // runs claims it without the operator's flag now.
+  it('marks private-cloud Claude (bedrock) as frontier_private without ZDR by default', () => {
     const bedrock = resolvePlacement('bedrock');
     expect(bedrock.substrate).toBe('frontier_private');
-    expect(bedrock.zeroDataRetention).toBe(true);
+    expect(bedrock.zeroDataRetention).toBe(false);
   });
 
   it('marks local as the only self-hosted, on-prem, air-gappable substrate', () => {
@@ -45,7 +47,8 @@ describe('placement compliance', () => {
 
   it('excludes shared frontier when zero data retention is required', () => {
     expect(isPlacementCompliant(reg.openai, { zeroDataRetention: true })).toBe(false);
-    expect(isPlacementCompliant(reg.bedrock, { zeroDataRetention: true })).toBe(true);
+    expect(isPlacementCompliant(reg.bedrock, { zeroDataRetention: true })).toBe(false);
+    expect(isPlacementCompliant({ ...reg.bedrock, zeroDataRetention: true }, { zeroDataRetention: true })).toBe(true);
     expect(isPlacementCompliant(reg.local, { zeroDataRetention: true })).toBe(true);
   });
 
@@ -166,11 +169,30 @@ describe('private-cloud residency follows the region the client calls (D6)', () 
 });
 
 describe('private-cloud zero retention (D6)', () => {
-  it('Bedrock is zero-retention unless the operator says otherwise', () => {
-    withEnv({}, () => expect(buildPlacementRegistry().bedrock.zeroDataRetention).toBe(true));
+  it('Bedrock claims zero retention only when the operator records it', () => {
+    withEnv({}, () => expect(buildPlacementRegistry().bedrock.zeroDataRetention).toBe(false));
+    withEnv({ AI_BEDROCK_ZERO_RETENTION: '' }, () => expect(buildPlacementRegistry().bedrock.zeroDataRetention).toBe(false));
     withEnv({ AI_BEDROCK_ZERO_RETENTION: 'false' }, () =>
       expect(buildPlacementRegistry().bedrock.zeroDataRetention).toBe(false),
     );
+    withEnv({ AI_BEDROCK_ZERO_RETENTION: 'true' }, () => expect(buildPlacementRegistry().bedrock.zeroDataRetention).toBe(true));
+  });
+
+  it('no lane a third party runs claims zero retention without configuration; the self-hosted lane does', () => {
+    withEnv({}, () => {
+      const reg = buildPlacementRegistry({});
+      for (const p of ['openai', 'anthropic', 'moonshot', 'bedrock', 'vertex', 'azure'] as const) {
+        expect(reg[p].zeroDataRetention).toBe(false);
+      }
+      expect(reg.local.zeroDataRetention).toBe(true);
+    });
+  });
+
+  it('reads the environment it is given', () => {
+    withEnv({}, () => {
+      expect(buildPlacementRegistry({ ANTHROPIC_ZERO_RETENTION: 'true' }).anthropic.zeroDataRetention).toBe(true);
+      expect(buildPlacementRegistry({}).anthropic.zeroDataRetention).toBe(false);
+    });
   });
 
   it('Vertex and Azure claim zero retention only when the operator records it', () => {
@@ -244,7 +266,7 @@ describe('what the region and the SDK say about residency (D6 review)', () => {
     );
   });
 
-  it('Bedrock zero retention is claimed only for unset or true', () => {
+  it('Bedrock zero retention is claimed only for true', () => {
     for (const v of ['FALSE', '0', 'no', 'off', 'False']) {
       withEnv({ AI_BEDROCK_ZERO_RETENTION: v }, () => expect(buildPlacementRegistry().bedrock.zeroDataRetention).toBe(false));
     }

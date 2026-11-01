@@ -84,8 +84,10 @@ import { modelCallRefusal, type ModelCallRefusalScope } from './model-call-scope
 import {
   decideSensitivePlacement,
   readProviderPlacementApprovals,
+  zeroRetentionInForce,
   type PlacementReasonCode,
   type ProviderPlacementApproval,
+  type ZeroRetentionAgreement,
 } from './sensitive-placement-policy';
 import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { getTenantScope } from '../../db/tenantStore.js';
@@ -1749,13 +1751,19 @@ export class AIGateway {
 
     // (b) The last-mile sensitive-dispatch gate, exactly as executeProvider
     // applies it before a chat SDK call, with intended use 'embedding'.
-    const placementReasonCode = await this.assertSensitiveDispatchAllowed(
+    const clearance = await this.assertSensitiveDispatchAllowed(
       { provider: input.provider } as ModelConfig,
       request,
       requestId,
       startTime,
     );
-    return { requestId, startTime, request, placementReasonCode };
+    return {
+      requestId,
+      startTime,
+      request,
+      placementReasonCode: clearance.reasonCode,
+      zeroRetentionAgreement: clearance.zeroRetentionAgreement,
+    };
   }
 
   /**
@@ -1783,7 +1791,10 @@ export class AIGateway {
         cached: false,
         deterministic: false,
         ...(call.error ? { finishReason: 'error' } : {}),
-        ...(authorization.placementReasonCode ? { placementReasonCode: authorization.placementReasonCode } : {}),
+        ...clearanceFields({
+          reasonCode: authorization.placementReasonCode,
+          zeroRetentionAgreement: authorization.zeroRetentionAgreement,
+        }),
       },
       authorization.request.strategy || this.config.defaultStrategy,
       !call.error,
@@ -1964,7 +1975,7 @@ export class AIGateway {
         withheld: governed.withheld,
       });
     }
-    const placementReasonCode = await this.assertSensitiveDispatchAllowed(
+    const clearance = await this.assertSensitiveDispatchAllowed(
       modelConfig,
       governed.request,
       requestId,
@@ -2017,7 +2028,7 @@ export class AIGateway {
     return {
       ...response,
       ...(governed.withheld.length > 0 ? { withheldServerTools: governed.withheld } : {}),
-      ...(placementReasonCode ? { placementReasonCode } : {}),
+      ...clearanceFields(clearance),
     };
   }
 
@@ -2025,15 +2036,16 @@ export class AIGateway {
   /**
    * Returns the decision's reason code when the screen decided (ALLOW_… here,
    * since a refusal throws), `audit_only:<code>` when it only recorded one, and
-   * undefined when it did not run. The served ledger row records it.
+   * none when it did not run; and, when the dispatch required zero retention,
+   * the agreement it relied on. The served ledger row records both.
    */
   private async assertSensitiveDispatchAllowed(
     modelConfig: ModelConfig,
     request: GatewayRequest,
     requestId: string,
     startTime: number,
-  ): Promise<string | undefined> {
-    if (!this.config.policy.piiDetection) return undefined;
+  ): Promise<SensitiveDispatchClearance> {
+    if (!this.config.policy.piiDetection) return {};
     const detectedDataClass = request.sensitiveDataClass ?? 'unknown';
     // Development retains audit-only usefulness; production always uses the
     // explicit deployment contract and fails closed on unknown classification.
@@ -2048,7 +2060,7 @@ export class AIGateway {
       // 'off' disables screening entirely. 'audit' exists to make otherwise
       // invisible exposure visible, so it still RECORDS the placement signal
       // (content-free, below) even though it never blocks.
-      if (enforcement !== 'audit' || detectedDataClass === 'none') return undefined;
+      if (enforcement !== 'audit' || detectedDataClass === 'none') return {};
     }
     const placement = resolvePlacement(modelConfig.provider);
     let approvals: Record<string, ProviderPlacementApproval>;
@@ -2087,6 +2099,7 @@ export class AIGateway {
     const tenantRegion = request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : undefined;
     const region = selfHosted ? placement.regions[0] : (tenantRegion ?? placement.regions[0]);
     const approval = approvals[modelConfig.provider];
+    const now = new Date();
     const decision = decideSensitivePlacement({
       environment: process.env.NODE_ENV || 'development',
       detectedDataClass,
@@ -2105,9 +2118,12 @@ export class AIGateway {
       },
       provider: modelConfig.provider,
       region,
-      zeroRetentionApproval: approval?.zeroRetentionApproved === true,
+      // The registry's flag, not the approval's: the decision holds the two
+      // against each other (D6, 2026-10-25).
+      registryZeroRetention: placement.zeroDataRetention,
       intendedUse: request.taskType,
       providerApproval: approval,
+      now,
     });
     if (!enforced) {
       // Audit-only (non-production): the deleted route-level screen warned
@@ -2119,11 +2135,12 @@ export class AIGateway {
         classes: [decision.dataClass],
         provider: decision.provider,
         region: decision.region,
-        zeroRetentionApproved: approval?.zeroRetentionApproved === true,
+        // In force by both keys and the agreement's date, as the decision reads it.
+        zeroRetentionApproved: zeroRetentionInForce(modelConfig.provider, placement.zeroDataRetention, approval, now),
         reasonCode: decision.reasonCode,
         enforcement,
       });
-      return `audit_only:${decision.reasonCode}`;
+      return { reasonCode: `audit_only:${decision.reasonCode}` };
     }
     log.info('[ai-gateway] sensitive placement decision', {
       reasonCode: decision.reasonCode,
@@ -2164,7 +2181,10 @@ export class AIGateway {
         'Contact your administrator to review the approved data-placement policy.'
       );
     }
-    return decision.reasonCode;
+    return {
+      reasonCode: decision.reasonCode,
+      ...(decision.zeroRetentionAgreement ? { zeroRetentionAgreement: decision.zeroRetentionAgreement } : {}),
+    };
   }
 
   private async dispatchProvider(
@@ -4035,6 +4055,9 @@ export class AIGateway {
           ...(request.regulatoryContentDetected !== undefined
             ? { regulatoryContentDetected: request.regulatoryContentDetected }
             : {}),
+          // The agreement a sensitive dispatch's zero retention rested on (D6,
+          // 2026-10-25): the row names the contract, not only the posture.
+          ...agreementMetadata(response, success),
         },
       });
     } catch (auditError: any) {
@@ -4837,6 +4860,35 @@ export interface EmbeddingAuthorization {
   /** The governed request: the tenant's floor merged in, the content classified. */
   request: GatewayRequest;
   placementReasonCode?: string;
+  /** The agreement the sensitive-dispatch gate relied on, when the embedding required zero retention. */
+  zeroRetentionAgreement?: ZeroRetentionAgreement;
+}
+
+/**
+ * What the sensitive-dispatch gate decided for one lane: its reason code, and
+ * the zero-retention agreement the dispatch relied on, when it required one.
+ * Empty when the screen did not run.
+ */
+interface SensitiveDispatchClearance {
+  reasonCode?: string;
+  zeroRetentionAgreement?: ZeroRetentionAgreement;
+}
+
+/** A response carrying the agreement its dispatch relied on, beside placementReasonCode. */
+type ClearedResponse = GatewayResponse & { zeroRetentionAgreement?: ZeroRetentionAgreement };
+
+/** The clearance as response fields: only those the gate set. */
+function clearanceFields(clearance: SensitiveDispatchClearance): Partial<ClearedResponse> {
+  return {
+    ...(clearance.reasonCode ? { placementReasonCode: clearance.reasonCode } : {}),
+    ...(clearance.zeroRetentionAgreement ? { zeroRetentionAgreement: clearance.zeroRetentionAgreement } : {}),
+  };
+}
+
+/** The ledger metadata naming the agreement a served call relied on; nothing for any other row. */
+function agreementMetadata(response: GatewayResponse, success: boolean): { zeroRetentionAgreement?: ZeroRetentionAgreement } {
+  const agreement = (response as ClearedResponse).zeroRetentionAgreement;
+  return success && agreement ? { zeroRetentionAgreement: agreement } : {};
 }
 
 /**

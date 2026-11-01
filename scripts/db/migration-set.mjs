@@ -3539,6 +3539,12 @@ export const C2C_MIGRATION_FILES = [
   // 20261022_ana_skills.sql, which creates account_skill_bundles. Public with
   // organization_id INTEGER NOT NULL; additive and IF NOT EXISTS; drops nothing.
   'migrations/20261022c_ana_project_skills.sql',
+  // A Shadow Review run records which leaves it covered and what it read
+  // (2026-10-25, row D7): two nullable columns on shadow_review_runs, after its
+  // creator 20260604_shadow_review.sql. The dispatch gate counts only a run over
+  // the sequence's current leaves. public + organization_id INTEGER already;
+  // additive, IF NOT EXISTS, drops nothing.
+  'migrations/20261025_shadow_review_run_coverage.sql',
 
   // Curated CDI reporting references for the existing CRE/AnA source reader.
   // Retained FDA/CC-BY originals ship under server/data/public-csr-reference;

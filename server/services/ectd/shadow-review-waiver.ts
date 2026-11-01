@@ -43,6 +43,7 @@ import {
   type WaivableShadowReviewFailureCode,
 } from '../../../shared/constants/shadow-review-failure';
 import type { DispatchGateResult } from './dispatch-gate';
+import { shadowReviewCurrency, type ShadowReviewCurrency } from '../shadow-review/shadow-review-coverage';
 import { createScopedLogger } from '../../utils/logger';
 
 const log = createScopedLogger('shadow-review-waiver');
@@ -157,7 +158,7 @@ export async function shadowReviewWaivable(
     };
   }
   if ((await completedShadowReviewRuns(q, { sequenceId, organizationId })) > 0) {
-    return { eligible: false, reason: 'A completed Shadow Review exists for this sequence, so there is no missing review to waive.' };
+    return { eligible: false, reason: 'A completed Shadow Review covers this sequence\'s current leaves, so there is no missing review to waive.' };
   }
   const newest = (await q.query(
     `SELECT id, status, failure_code, COALESCE(updated_at, created_at) AS failed_at FROM shadow_review_runs
@@ -168,17 +169,17 @@ export async function shadowReviewWaivable(
   return newestRunWaivability(newest, params.now ?? new Date(), shadowReviewWaiverWindowHours());
 }
 
-/** Completed, non-deleted Shadow Review runs of a sequence, read on `q` (the pool or a transaction's client). */
+/**
+ * Completed, non-deleted Shadow Review runs over the sequence's CURRENT leaves,
+ * read on `q` (the pool or a transaction's client). Since 2026-10-25 a run over
+ * leaves that have since changed is not counted (shadow-review-coverage.ts):
+ * like a waiver, a review covers the leaves it was given.
+ */
 export async function completedShadowReviewRuns(
   q: WaiverQueryable,
   params: { sequenceId: number; organizationId: number },
 ): Promise<number> {
-  const row = (await q.query(
-    `SELECT count(*)::int AS n FROM shadow_review_runs
-      WHERE sequence_id = $1 AND organization_id = $2 AND status = 'complete' AND deleted_at IS NULL`,
-    [params.sequenceId, params.organizationId],
-  )).rows[0] as { n: number } | undefined;
-  return Number(row?.n ?? 0);
+  return (await shadowReviewCurrency(q, params)).current;
 }
 
 /** Why a waiver citing `failedRunId` is refused, given what is offered, or null. Pure. */
@@ -347,20 +348,43 @@ export interface ShadowPresenceVerdict extends DispatchGateResult {
 const signatureLabel = (w: ShadowReviewWaiverStatus): string =>
   String(w.signatureId ?? w.signatureActionId ?? 'of record');
 
+/** The presence gate's sentence when the only completed reviews were over other leaves (2026-10-25). */
+export function staleShadowReviewBlocker(runId: number | null): string {
+  return (
+    `Shadow Review run #${runId ?? 'of record'} was completed over different leaves: the sequence's documents changed ` +
+    'after it ran, so it does not cover this dossier. Run Shadow Review again before transmitting.'
+  );
+}
+
+/** …and when whether a completed review covers the current leaves could not be determined. */
+export const UNDETERMINED_SHADOW_COVERAGE_BLOCKER =
+  'Whether the completed Shadow Review covers this sequence\'s current leaves could not be determined (its leaf ' +
+  'manifest could not be derived), so no review is relied on. Try again, or run Shadow Review.';
+
 /**
- * The presence gate given the completed-run count and the resolved waiver.
- * A completed review clears it whatever the waiver says. With none, only an
- * ACTIVE waiver clears it, and then as not assessed — who waived it, under
- * which signature, because of which failed run. Every other state blocks with
- * its own sentence. Pure. It answers only "has a review run": open critical
+ * The presence gate given the count of completed reviews over the CURRENT
+ * leaves and the resolved waiver. A current review clears it whatever the
+ * waiver says. With none, only an ACTIVE waiver clears it, and then as not
+ * assessed — who waived it, under which signature, because of which failed run.
+ * Every other state blocks with its own sentence; with no waiver, a review over
+ * earlier leaves, or one whose coverage could not be determined, says so
+ * (`stale`, from shadowReviewCurrency) rather than reading as never reviewed.
+ * Pure. It answers only "has a review of these leaves run": open critical
  * findings are the structural gate's, and a waiver never reaches them.
  */
 export function evaluateShadowPresenceWithWaiver(
   shadowReviewRunCount: number,
   waiver: ShadowReviewWaiverStatus,
+  stale?: Pick<ShadowReviewCurrency, 'stale' | 'newestStaleRunId' | 'undetermined'>,
 ): ShadowPresenceVerdict {
   if (shadowReviewRunCount > 0) return { cleared: true, blockers: [] };
   const sig = signatureLabel(waiver);
+  if (waiver.state === 'none' && stale?.undetermined) {
+    return { cleared: false, blockers: [UNDETERMINED_SHADOW_COVERAGE_BLOCKER] };
+  }
+  if (waiver.state === 'none' && stale && stale.stale > 0) {
+    return { cleared: false, blockers: [staleShadowReviewBlocker(stale.newestStaleRunId)] };
+  }
   switch (waiver.state) {
     case 'active':
       return {

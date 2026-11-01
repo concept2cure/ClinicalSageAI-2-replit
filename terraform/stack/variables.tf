@@ -405,6 +405,46 @@ variable "ai_provider_placement_approvals" {
     ])
     error_message = "Each ai_provider_placement_approvals entry must be {region: non-blank string, zeroRetentionApproved: bool, approvedDataClasses: [\"pii\"|\"phi\"...], approvedIntendedUses: [non-blank strings]}, and approving pii or phi requires zeroRetentionApproved = true. The app refuses to boot on anything else."
   }
+  validation {
+    # D6 (2026-10-25): a zero-retention approval names the agreement it rests
+    # on, as readProviderPlacementApprovals requires: zeroRetentionAgreement =
+    # {reference: non-blank string, effectiveFrom: a date written YYYY-MM-DD}.
+    # "local", the self-hosted lane, needs none: no third party receives its
+    # text (ADR-0014 §1.5). An agreement given on any entry must be well formed.
+    # formatdate() refuses a date that is not one, such as 2026-02-30. A JSON
+    # null is no agreement, as the app reads it.
+    condition = alltrue([
+      for provider, a in try(jsondecode(var.ai_provider_placement_approvals), {}) : try(
+        try(a.zeroRetentionAgreement, null) == null
+        ? (a.zeroRetentionApproved != true || provider == "local")
+        : (
+          tostring(a.zeroRetentionAgreement.reference) == a.zeroRetentionAgreement.reference
+          && trimspace(a.zeroRetentionAgreement.reference) != ""
+          && tostring(a.zeroRetentionAgreement.effectiveFrom) == a.zeroRetentionAgreement.effectiveFrom
+          && can(regex("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", a.zeroRetentionAgreement.effectiveFrom))
+          && can(formatdate("YYYY-MM-DD", "${a.zeroRetentionAgreement.effectiveFrom}T00:00:00Z"))
+        ),
+        false
+      )
+    ])
+    error_message = "An ai_provider_placement_approvals entry with zeroRetentionApproved = true must name the agreement it rests on: \"zeroRetentionAgreement\": {\"reference\": \"<the signed agreement or addendum>\", \"effectiveFrom\": \"YYYY-MM-DD\"} (\"local\" excepted). The app refuses to boot without it (docs/AI_SENSITIVE_DATA_PLACEMENT.md)."
+  }
+  validation {
+    # The other key. The app's production boot refuses a zero-retention
+    # approval that the placement registry does not confirm: the provider's
+    # own flag (ANTHROPIC_ZERO_RETENTION, OPENAI_ZERO_RETENTION,
+    # AI_BEDROCK_ZERO_RETENTION, AI_VERTEX_ZERO_RETENTION,
+    # AI_AZURE_ZERO_RETENTION) must be true too. This stack sets none of them,
+    # so such an approval for any provider but "local" would crash-loop every
+    # task. Recording one is a change to this stack: the provider's flag in the
+    # task definition (main.tf) beside the approval, and this rule relaxed for
+    # that provider. No agreement is signed today (D6 owes the Anthropic BAA).
+    condition = alltrue([
+      for provider, a in try(jsondecode(var.ai_provider_placement_approvals), {}) :
+      provider == "local" || try(a.zeroRetentionApproved != true, true)
+    ])
+    error_message = "ai_provider_placement_approvals approves zero retention for a provider other than \"local\", and this stack sets no zero-retention flag for it (ANTHROPIC_ZERO_RETENTION and the rest), so the app's boot check refuses it. Add the flag to the task definition with the agreement, or approve no zero retention."
+  }
 }
 
 variable "tags" {

@@ -1,0 +1,133 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/vault/__tests__/document-section-structure.test.ts
+{
+  "timestamp": "2026-10-25T21:36:22.087Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-25T21:36:22.089Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-section-structure.test.ts
+{
+  "timestamp": "2026-10-25T21:36:22.089Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-section-structure.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3 Summary of Clinical Efficacy is a section heading 3ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 3.2.S.4.2 Analytical Procedures is a section heading 1ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 3.2.P.5.1 Specifications is a section heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 3.2.P Drug Product is a section heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 11.4.1 Efficacy Results is a section heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 11.4.1.1 Analysis of efficacy is a section heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1. Introduction is a section heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 9 INVESTIGATIONAL PLAN is a section heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3. Summary of Clinical Efficacy is a section heading 1ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > reads the tab pdf-parse writes between a number and its title as a separator 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 14.2.1 Summary of Primary Efficacy Endpoint is a caption 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 11-3: Proportion of Responders at Week 24 is a caption 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > TABLE 2 DEMOGRAPHIC CHARACTERISTICS is a caption 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Figure 3 Kaplan-Meier Plot of Time to Progression is a caption 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Figure 14.2.1.1 - Mean Change From Baseline is a caption 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 14.2.1 is a caption 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 14.2.1 (Continued) is a caption 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1. Patients aged 18 years or older is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2) Signed informed consent is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1) Introduction is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.1 The study was conducted in accordance with GCP. is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 4.2 Patients were excluded if any of the following applied: is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 12 is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3 is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 3.2.S.4.2 is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1	Placebo	45	(23.1%) is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.1	Examplinib 20 mg	212	102 (48.2%) is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1 Placebo 45 (23.1%) is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 12.5 mg/kg was administered once daily is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2016 Revision of the Standard is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 12.10.2026 Screening Visit is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3 Summary of Clinical Efficacy ........................ 45 is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3 Summary of Clinical Efficacy . . . . . . 45 is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 3 shows the demographic profile of the randomised population is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 3. Demographics were balanced across arms. is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table of Contents is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Tables 3 and 4 Summarise the Results is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Figure shows the mean is not a heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > a long line is not a heading, however it starts 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > a one-segment number needs a title-cased title; a dotted one only a capital 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > finds only line-initial headings, never a numbered item inside a paragraph 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > records the exact span and the page of each heading 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > gives no page when the page spans were not verified 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > a run of contents entries is not structure 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > page numbers on their own lines do not break a contents run 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > a list of tables is not a set of captions 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > a section opening straight into its subsections is structure 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > two headings in a row are kept 1ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > chunkTypeOf — TABLE only for a demonstrably tabular block > tab-separated rows are a table, including a spreadsheet rendering 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > chunkTypeOf — TABLE only for a demonstrably tabular block > prose with a caption, or with a stray tab, is text 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > chunkTypeOf — TABLE only for a demonstrably tabular block > a table that is less than half the chunk is text 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > chunkTypeOf — TABLE only for a demonstrably tabular block > one row is not a table, and a heading with a tab is not a row 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > builds the path by numbering, and pops back up for a sibling 1ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > files a section only under the sections its number names 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a chunk at the heading itself is in that section 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a chunk before the first heading has no section, and says so with NULL 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a document with no detectable heading leaves every chunk NULL 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a statistic in a table stays mapped to its narrative block > a table chunk is named by its caption, with its section as the path above it 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a statistic in a table stays mapped to its narrative block > narrative after the table stays under the section: where a table ends is not in the text 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a statistic in a table stays mapped to its narrative block > a figure caption names nothing, and ends the reach of the table caption before it 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a statistic in a table stays mapped to its narrative block > the next numbered section ends the table and pops its sibling 0ms
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > is deterministic 0ms
+ ✓ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > writes section_title, section_hierarchy and chunk_type, by where each chunk starts 50ms
+ ✓ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > the chunk that quotes the statistic is a TABLE filed under its caption and its section 29ms
+ ✓ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > keeps the page number beside the section 32ms
+ ✓ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > a document with no detectable heading stores NULL sections and the TEXT default 13ms
+ × server/services/__tests__/rag-vault-section-citation.pglite.integration.test.ts > a Vault passage is cited by its section and its page > the passage quoting the statistic carries its section title, and the locator keeps the page 91ms
+   → expected { …(17) } to match object { …(3) }
+(17 matching properties omitted from actual)
+ ✓ server/services/__tests__/rag-vault-section-citation.pglite.integration.test.ts > a Vault passage is cited by its section and its page > a passage before the first heading has no section, and its locator is the page alone 41ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/rag-vault-section-citation.pglite.integration.test.ts > a Vault passage is cited by its section and its page > the passage quoting the statistic carries its section title, and the locator keeps the page
+AssertionError: expected { …(17) } to match object { …(3) }
+(17 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "locator": "p.2 · 11.4.1 Primary Efficacy Endpoint",
++   "locator": "11.4.1 Primary Efficacy Endpoint",
+    "pageNumber": 2,
+    "sectionTitle": "11.4.1 Primary Efficacy Endpoint",
+  }
+
+ ❯ server/services/__tests__/rag-vault-section-citation.pglite.integration.test.ts:106:21
+    104|     const quoting = hits.find(d => d.content.includes('102 of 212 subj…
+    105|     expect(quoting).toBeDefined();
+    106|     expect(quoting).toMatchObject({ sectionTitle: SECTION, pageNumber:…
+       |                     ^
+    107|   });
+    108|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 67 passed (68)
+   Start at  21:36:20
+   Duration  8.77s (transform 1.44s, setup 107ms, import 3.39s, tests 4.68s, environment 0ms)
+
