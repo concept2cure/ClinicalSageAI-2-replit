@@ -1,5 +1,10 @@
 I re-derived the plan's claims from the code at HEAD `0c69304aa`. The plan needs material corrections before it can be executed: one P-14 gap makes its new class sentence false, one slice duplicates a cleanup slice, two slices land in an order that breaks Rule 2, and one proposed test cannot fail. Nothing was edited, staged or run; only grep/sed/git and file reads were used.
 
+> **Status 2026-11-01:** Slices 1–2 done. Slice 3 is partial (F1), and Slice 4 is open (S5). Slices 5–7 wait on the
+> founder, because P-55 approved them and P-83 makes the writing workstreams sections of the filing project. See
+> `../../2026-11-01-plan-alignment/README.md`.
+
+
 # Adversarial review of the 3b plan, with the corrected plan
 
 ## 0. What moved since the planner's HEAD `a9593ef98`

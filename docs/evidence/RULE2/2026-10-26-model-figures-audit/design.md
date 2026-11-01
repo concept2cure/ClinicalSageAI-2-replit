@@ -19,7 +19,8 @@
 > | S5a COA/PRO | done | `s5a-coa-pro/` |
 > | S5a pediatric | done | `s5a-pediatric/` |
 > | S5a vaccine | done; three other clinical families remain queued | `s5a-vaccine/` |
-> | S5a remaining, S5b–S5d, S6–S14 | queued | — |
+> | S6b | done; PMA withheld per P-55 R-7 | `s6b-generate-document-records/` |
+> | S5a remaining, S5b–S5d, S6, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
