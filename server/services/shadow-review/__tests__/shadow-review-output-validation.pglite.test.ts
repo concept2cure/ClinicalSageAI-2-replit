@@ -43,6 +43,10 @@ beforeAll(async () => {
   await h.pglite.exec(
     fs.readFileSync(path.resolve(__dirname, '../../../../migrations/20261015b_shadow_finding_disposition.sql'), 'utf8'),
   );
+  // 2026-10-25: the coverage columns the run now writes (the leaves it covered, what it read).
+  await h.pglite.exec(
+    fs.readFileSync(path.resolve(__dirname, '../../../../migrations/20261025_shadow_review_run_coverage.sql'), 'utf8'),
+  );
   await h.pglite.exec(`
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1,'A','ind','biotech','fda',${ORG},${USER}), (2,'B','ind','biotech','fda',${ORG},${USER}),
@@ -160,7 +164,7 @@ describe('runShadowReview — the gate score is the severity aggregate, never th
     expect(stored.rtf).toBeCloseTo(expected.rtf, 3);
     expect(stored.crl).toBe(0);
     expect(result.scoreBasis).toBe('severity_aggregate');
-    expect(stored.prompt_version).toBe('shadow-review@v1.1');
+    expect(stored.prompt_version).toBe('shadow-review@v1.2');
   });
 
   it('an empty sequence is a critical refuse-to-file finding the server records, whatever the model says', async () => {

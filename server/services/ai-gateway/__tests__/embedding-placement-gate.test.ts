@@ -104,6 +104,8 @@ const APPROVAL_OPENAI_CHAT_ONLY = JSON.stringify({
   openai: {
     region: 'global',
     zeroRetentionApproved: true,
+    // A test fixture, not an agreement: none is signed today (D6).
+    zeroRetentionAgreement: { reference: 'TEST-ZDR-ADDENDUM-0001', effectiveFrom: '2026-01-01' },
     approvedDataClasses: ['pii', 'phi'],
     approvedIntendedUses: ['chat'],
   },

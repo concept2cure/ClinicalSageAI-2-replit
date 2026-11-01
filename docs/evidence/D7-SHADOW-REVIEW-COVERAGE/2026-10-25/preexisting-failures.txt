@@ -1,0 +1,11 @@
+Three suites fail identically with and without this change (run 2026-10-25, the three changed
+source files swapped back to HEAD f8e0d3210 and run again): 24 failures both ways.
+
+  server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts          6
+  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts 13
+  server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts        5
+
+Cause, the same in all three: "Company legal requirement configuration could not be verified
+for this tenant." Their databases lack the company legal registry tables
+(migrations/20261018_company_legal_registry.sql) that the dispatch assessment now reads; the
+route answers 500. Not this change's, and not fixed here.

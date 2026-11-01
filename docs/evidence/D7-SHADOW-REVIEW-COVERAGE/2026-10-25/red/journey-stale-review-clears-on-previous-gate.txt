@@ -1,0 +1,7 @@
+   → Journey step "a-review-of-earlier-leaves-does-not-clear-the-changed-sequence" expected a block; got success
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Error: Journey step "a-review-of-earlier-leaves-does-not-clear-the-changed-sequence" expected a block; got success
+    426|           evidence: { ...evidence, error: 'expected to be blocked but …
+    428|         throw new Error(`Journey step "${name}" expected a block; got …
+ ❯ tests/golden-journeys/drug-nda-ectd.journey.test.ts:1095:5
+      Tests  1 failed (1)

@@ -200,6 +200,7 @@ const R = new JourneyRecorder(
     'migrations/20260604_shadow_review.sql',
     'migrations/20261015_shadow_review_waiver.sql', // P-34: a failed run records its failure_code
     'migrations/20261015b_shadow_finding_disposition.sql', // P-35: the dispatch count reads who closed each critical
+    'migrations/20261025_shadow_review_run_coverage.sql', // a run records the leaves it covered; the dispatch count reads it
     'db/migrations/20260725_esig_gate_columns_port.sql',
     'migrations/20260813d_esignature_governed_unification.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
@@ -282,6 +283,7 @@ beforeAll(async () => {
       'migrations/20260604_shadow_review.sql',
       'migrations/20261015_shadow_review_waiver.sql', // P-34: a failed run records its failure_code
       'migrations/20261015b_shadow_finding_disposition.sql', // P-35: the dispatch count reads who closed each critical
+      'migrations/20261025_shadow_review_run_coverage.sql', // a run records the leaves it covered; the dispatch count reads it
       // C-17: electronic_signatures.organization_id / bound_payload_digest /
       // superseded_by. D6: signed_target / binding_basis + nullable document
       // anchor, which is what a governed `sign` on an eCTD sequence needs.
@@ -1010,11 +1012,14 @@ describe('golden journey — drug NDA / eCTD', () => {
       // covered by its own tests. Seeding the row the gate actually counts —
       // status 'complete', same org, not deleted — keeps the journey honest
       // about which half it is exercising.
+      // Since 2026-10-25 a completed run counts only over the leaves it covered,
+      // so the seeded run records the digest of the sequence's leaves now.
+      const { reviewedLeavesDigest } = await import('../../server/services/shadow-review/shadow-review-coverage');
       await jdb.pool.query(
         `INSERT INTO shadow_review_runs
-           (sequence_id, organization_id, region, lens, status, summary, created_by)
-         VALUES ($1, $2, 'fda', 'fda_filing', 'complete', 'Journey-seeded completed run', $3)`,
-        [sequenceId, ORG, USER],
+           (sequence_id, organization_id, region, lens, status, summary, created_by, leaf_manifest_digest)
+         VALUES ($1, $2, 'fda', 'fda_filing', 'complete', 'Journey-seeded completed run', $3, $4)`,
+        [sequenceId, ORG, USER, await reviewedLeavesDigest(jdb.pool as never, sequenceId, ORG)],
       );
 
       const res = await asPrincipal(ORG, USER)(
@@ -1088,6 +1093,47 @@ describe('golden journey — drug NDA / eCTD', () => {
         status: res.status,
         message: res.body?.error?.message,
       };
+    });
+
+    // ── A review covers the leaves it read (2026-10-25) ────────────────────
+    await R.expectBlocked('a-review-of-earlier-leaves-does-not-clear-the-changed-sequence', async () => {
+      // The 2.7 leaf was placed after the completed review above, so that review
+      // did not read it. It used to clear the presence gate all the same.
+      const res = await asPrincipal(ORG, USER)(
+        request(app).get(`/api/submissions/sequences/${sequenceId}/dispatch-readiness`),
+      );
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      const blockers = res.body.gate.blockers as string[];
+      return {
+        blocked:
+          res.body.shadowReviewRunCount === 0 &&
+          res.body.shadowReviewStaleRunCount > 0 &&
+          blockers.some((b) => /completed over different leaves/.test(b)),
+        shadowReviewRunCount: res.body.shadowReviewRunCount,
+        shadowReviewStaleRunCount: res.body.shadowReviewStaleRunCount,
+        blockers,
+      };
+    });
+
+    await R.step('shadow-review-reruns-over-the-changed-leaves-and-reads-their-text', async () => {
+      const run = await asPrincipal(ORG, USER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/shadow-review`),
+      ).send({ lens: 'fda_filing' });
+      expect(run.status, JSON.stringify(run.body)).toBe(200);
+      const stored = await jdb.pool.query(
+        `SELECT leaf_manifest_digest, input_coverage FROM shadow_review_runs WHERE id = $1`,
+        [run.body.runId],
+      );
+      const row = stored.rows[0] as { leaf_manifest_digest: string | null; input_coverage: { textSent: boolean; leaves: Array<{ sectionCode: string; status: string }> } };
+      expect(row.leaf_manifest_digest).toBeTruthy();
+      expect(row.input_coverage.textSent).toBe(true);
+      const res = await asPrincipal(ORG, USER)(
+        request(app).get(`/api/submissions/sequences/${sequenceId}/dispatch-readiness`),
+      );
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(res.body.shadowReviewRunCount).toBeGreaterThan(0);
+      expect((res.body.gate.blockers as string[]).some((b) => /Shadow Review/i.test(b))).toBe(false);
+      return { runId: run.body.runId, coverage: row.input_coverage.leaves };
     });
 
     // ── 10. KNOWN-BAD: a package names its applicant from the record ────────

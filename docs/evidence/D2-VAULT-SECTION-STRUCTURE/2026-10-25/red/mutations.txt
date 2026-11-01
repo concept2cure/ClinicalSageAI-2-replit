@@ -1,0 +1,45 @@
+=== mutation: tab-in-title-allowed
+      Tests  62 passed (62)
+=== mutation: terminal-period-allowed
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.1 The study was conducted in accordance with GCP. is not a heading
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 4.2 Patients were excluded if any of the following applied: is not a heading
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 3. Demographics were balanced across arms. is not a heading
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 59 passed (62)
+=== mutation: contents-run-rule-off
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > a run of contents entries is not structure
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > page numbers on their own lines do not break a contents run
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > a list of tables is not a set of captions
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 59 passed (62)
+=== mutation: bare-number-title-case-off
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1. Patients aged 18 years or older is not a heading
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > a one-segment number needs a title-cased title; a dotted one only a capital
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 60 passed (62)
+=== mutation: path-by-depth-not-number
+ × server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > files a section only under the sections its number names
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 61 passed (62)
+=== mutation: caption-names-text-chunks
+ × server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a statistic in a table stays mapped to its narrative block > narrative after the table stays under the section: where a table ends is not in the text
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 61 passed (62)
+=== mutation: table-by-line-count
+ × server/services/vault/__tests__/document-section-structure.test.ts > chunkTypeOf — TABLE only for a demonstrably tabular block > a table that is less than half the chunk is text
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 61 passed (62)
+=== mutation: tab-in-title-allowed (rerun after adding rows of words, which only the tab rule rejects)
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 3.1	Screening Visit	Day -28	Informed Consent is not a heading
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1	Adverse Event	Serious	Related is not a heading
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 62 passed (64)
+=== mutation: dot-leader-allowed
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3 Summary of Clinical Efficacy ........................ 45 is not a heading
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3 Summary of Clinical Efficacy . . . . . . 45 is not a heading
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 62 passed (64)
+=== mutation: numbers-majority-allowed
+ × server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1 Placebo 45 (23.1%) is not a heading
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 63 passed (64)
