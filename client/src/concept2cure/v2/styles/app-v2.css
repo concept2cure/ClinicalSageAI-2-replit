@@ -150,29 +150,29 @@
 
 /* Page header: a quiet context line, the serif title, one line of description,
    and the actions on the right (`.ph-acts`: one primary, quiet secondaries). */
-.c2c-v2 :is(.ph, .sp-head, .reg-head, .cm-head, .surface-head, .pj-head, .adm-access .page-header) {
+.c2c-v2 :is(.ph, .sp-head, .reg-head, .surface-head, .pj-head, .adm-access .page-header) {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 12px 24px; flex-wrap: wrap; margin: 0 0 24px;
 }
-.c2c-v2 :is(.ph, .sp-head, .reg-head, .cm-head, .surface-head, .pj-head, .adm-access .page-header) > :first-child { flex: 1 1 420px; min-width: 0; }
+.c2c-v2 :is(.ph, .sp-head, .reg-head, .surface-head, .pj-head, .adm-access .page-header) > :first-child { flex: 1 1 420px; min-width: 0; }
 /* The context line: what was the uppercase orange eyebrow. Same text, quiet. */
-.c2c-v2 :is(.ph-eyebrow, .sp-eyebrow, .reg-eyebrow, .cm-kicker, .surface-kicker, .pj-eyebrow, .adm-access .page-eyebrow) {
+.c2c-v2 :is(.ph-eyebrow, .sp-eyebrow, .reg-eyebrow, .surface-kicker, .pj-eyebrow, .adm-access .page-eyebrow) {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 6px;
   font-size: var(--fs-small); font-weight: 400; line-height: 1.4;
   letter-spacing: 0; text-transform: none; color: var(--text-300);
 }
-.c2c-v2 :is(.ph-title, .sp-title, .reg-title, .cm-title, .adm-access .page-title) {
+.c2c-v2 :is(.ph-title, .sp-title, .reg-title, .adm-access .page-title) {
   margin: 0; font-family: var(--font-serif); font-size: var(--fs-title); line-height: 1.25;
   font-weight: 500; letter-spacing: -0.01em; color: var(--text-100); overflow-wrap: anywhere;
 }
-.c2c-v2 :is(.ph-sub, .sp-state, .reg-sub, .cm-head .cm-meta, .adm-access .page-sub) {
+.c2c-v2 :is(.ph-sub, .sp-state, .reg-sub, .adm-access .page-sub) {
   margin: 6px 0 0; max-width: 68ch; font-size: var(--fs-body); line-height: 1.5; color: var(--text-300);
 }
 .c2c-v2 :is(.ph-sub, .sp-state, .reg-sub) b { color: var(--text-200); font-weight: 600; }
 .c2c-v2 .ph-acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 0 0 auto; }
 @media (max-width: 640px) {
-  .c2c-v2 :is(.ph-title, .sp-title, .reg-title, .cm-title, .adm-access .page-title) { font-size: 22px; }
-  .c2c-v2 :is(.ph, .sp-head, .reg-head, .cm-head, .surface-head, .pj-head) > :not(:first-child) { flex: 1 1 100%; }
+  .c2c-v2 :is(.ph-title, .sp-title, .reg-title, .adm-access .page-title) { font-size: 22px; }
+  .c2c-v2 :is(.ph, .sp-head, .reg-head, .surface-head, .pj-head) > :not(:first-child) { flex: 1 1 100%; }
 }
 
 /* Section headings. */
@@ -2319,15 +2319,6 @@
 /* `dim` and `err` are emitted by fifteen call sites (`rd-chip tone-` + tone) and had no rule: a
    "no sources" or "failed" chip rendered as unstyled text. */
 .c2c-v2 .tone-dim{background:var(--bg-100);color:var(--text-400);}
-/* The tone vocabulary above is a CHIP's. `EmptyState` renders
-   `c2c-empty-state tone-idle` (dataConnect.tsx:711), so `.tone-idle` — same
-   specificity as `.c2c-empty-state`, declared later — won, and every one of
-   the 579 empty states in the app drew a chip's tinted panel behind it,
-   through D0 §4.2.12's `background: none`. Found rendering CMC's registers as
-   sections, where the panel is the whole width of the page. The honest fix is
-   for the component to stop borrowing a chip's class; until it does (it is
-   outside this package's files), the collision is undone here. */
-.c2c-v2 .c2c-empty-state.tone-idle{background:none;}
 .c2c-v2 .tone-err{background:var(--error-muted);color:var(--error);}
 
 /* ── Labeling / IFU workbench ── */
