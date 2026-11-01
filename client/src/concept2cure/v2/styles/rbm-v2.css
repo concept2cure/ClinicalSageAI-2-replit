@@ -406,7 +406,9 @@
 
   /* governed approval dialog */
   .rbm-modal-scrim{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px;}
-  .rbm-modal{width:440px;max-width:100%;background:var(--bg-000);border:1px solid var(--border-strong);border-radius:var(--radius-2xl);box-shadow:var(--shadow-lg);padding:20px 22px;}
+  /* Chrome: the centred dialog's (app-v2.css, D0 block). Its padding stays, and it scrolls inside
+     itself, since the shared dialog clips at 86vh and this one has no scrolling body of its own. */
+  .rbm-modal{padding:20px 22px;overflow-y:auto;}
   .rbm-modal-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--text-100);margin-bottom:10px;}
   .rbm-modal-h svg{width:15px;height:15px;color:var(--accent-100);}
   .rbm-modal-what{font-size:12.5px;line-height:1.55;color:var(--text-200);background:var(--bg-050);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 12px;margin-bottom:13px;}

@@ -10,7 +10,6 @@
      ================================================================ */
 
   .pdev{ padding:26px 30px 80px; }
-  .pdev .sp-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:16px; }
 
   /* Overall readiness card */
   .pdev-ready{ display:flex; align-items:center; gap:20px; background:var(--bg-000); border:1px solid var(--border); border-radius:var(--radius-lg,14px); padding:18px 22px; margin:16px 0 22px; }
@@ -24,8 +23,6 @@
   .pdev-ready-bar .fill{ position:absolute; left:0; top:0; bottom:0; border-radius:5px; background:var(--accent-100); }
   .pdev-ready-bar .thr{ position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--text-300); }
 
-  .pj-seclbl{ font-size:12px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:.04em; margin:18px 0 10px; }
-  .pj-seclbl .s{ font-weight:500; text-transform:none; letter-spacing:0; color:var(--text-400); }
 
   /* Workstream strip */
   .pdev-ws-strip{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
@@ -51,28 +48,14 @@
   .pdev-act-meta{ font-size:10.5px; color:var(--text-400); margin-top:5px; }
   .pdev-act-actions{ display:flex; align-items:center; gap:7px; flex-shrink:0; }
 
-  /* chips */
-  .rd-chip{ font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:20px; white-space:nowrap; }
-  /* An entitlement status is a short SENTENCE ("Included from Professional",
-     "Turned off for this workspace"), not the one-word state `.rd-chip` was
-     sized for. coverage-v2.css additionally sets `text-transform:uppercase` and
-     `white-space:nowrap` on the same class, which turns those into a shouted
-     line that runs off the edge of a 280px launch card in the Apps catalog.
-     Two classes so the override beats either sheet regardless of import order;
-     shape, colour and weight are still the chip's. */
-  .rd-chip.rd-chip-sentence{ white-space:normal; text-transform:none; letter-spacing:0; }
+  /* chips: the canonical .rd-chip and its tones are in app-v2.css (D0 block). */
   /* Inline single-line input for the collaboration toolbar (lock-takeover
      reason). Matches .tb-field's input treatment so the two surfaces do not
      drift, but sized for a toolbar row rather than a form column. */
   .rd-input{ font:inherit; font-size:12px; padding:6px 9px; border:1px solid var(--border-control); border-radius:var(--radius-md); background:var(--bg-000); color:var(--text-100); }
   .rd-input::placeholder{ color:var(--text-500); }
   .rd-input:focus{ outline:none; border-color:var(--accent-200); box-shadow:0 0 0 3px var(--accent-000); }
-  .rd-chip.tone-ok{ background:var(--success-muted); color:var(--success); }
-  .rd-chip.tone-err{ background:var(--error-muted); color:var(--error); }
-  .rd-chip.tone-warn{ background:var(--warning-muted); color:var(--warning); }
-  .rd-chip.tone-ai{ background:var(--accent-000); color:var(--accent-200); }
   .rd-chip.tone-flight{ background:#eef2fb; color:#3a5bbf; }
-  .rd-chip.tone-idle{ background:var(--bg-200); color:var(--text-200); }
 
   /* buttons */
   .pdev-btn{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius-lg); border:1px solid var(--border-strong); background:var(--bg-000); color:var(--text-100); cursor:pointer; transition:background var(--dur); }
@@ -121,8 +104,6 @@
   .pdev-draft-sec .l{ font-size:13px; font-weight:600; color:var(--text-100); margin-bottom:3px; }
   .pdev-draft-sec .p{ font-size:12.5px; color:var(--text-300); line-height:1.55; }
   .pdev-sheet-f{ display:flex; justify-content:flex-end; gap:10px; padding:16px 22px; border-top:1px solid var(--border); }
-  .pdev-toast{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%); background:var(--text-100); color:var(--bg-000); font-size:13px; font-weight:600; padding:11px 18px; border-radius:10px; display:flex; align-items:center; gap:8px; z-index:1300; box-shadow:0 8px 28px rgba(0,0,0,.24); }
-  .pdev-toast svg{ width:15px; height:15px; }
 
   /* ================================================================
      project-detail — Project workspace
@@ -706,17 +687,9 @@
 .c2c-v2 .ml-chip[data-tone="off"]{ color:var(--text-300); }
 
 /* ── Tier picker ─────────────────────────────────────────────────────────── */
-.c2c-v2 .ml-seg{ display:inline-flex; flex-wrap:wrap; gap:4px; }
-.c2c-v2 .ml-seg-btn{
-  display:inline-flex; align-items:center; gap:4px; padding:4px 9px;
-  border:1px solid var(--border-control); border-radius:99px;
-  background:var(--bg-000); font-size:11.5px; font-weight:500; color:var(--text-200);
-  cursor:pointer; white-space:nowrap; transition:background var(--dur) var(--ease);
-}
-.c2c-v2 .ml-seg-btn:hover{ background:var(--bg-050); }
-/* The tick is a redundant cue, not the only one: selection also changes the
-   fill and the border, so the state does not rest on colour alone. */
-.c2c-v2 .ml-seg-btn[data-on]{ background:var(--accent-strong); border-color:var(--accent-100); color:var(--accent-on-strong); font-weight:600; }
+/* The picker is the canonical segmented control (app-v2.css, D0 block). The tick
+   is a redundant cue, not the only one: the selected item also lifts onto its
+   own fill and ring, so the state does not rest on colour alone. */
 .c2c-v2 .ml-seg-tick{ display:inline-flex; }
 .c2c-v2 .ml-seg-tick svg{ width:12px; height:12px; }
 

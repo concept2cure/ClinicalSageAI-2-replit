@@ -595,12 +595,14 @@ h3, .h3 {
 h4, .h4 { font-family: var(--font-sans); font-size: 0.875rem; line-height: 1.45; font-weight: 600; color: var(--ink); margin: 0; }
 
 /* Body */
+/* The bare `p` sets no face, so a reading surface's serif reaches its paragraphs
+   without restating it (D0, from D4 §D4.K). */
 .body, p, .p {
-  font-family: var(--font-sans);
   font-size: 0.875rem; /* 14px — plan §2 */
   line-height: var(--leading-relaxed);
   color: var(--ink); margin: 0;
 }
+.body, .p { font-family: var(--font-sans); }
 .body-lg {
   font-family: var(--font-sans);
   font-size: 0.9375rem;   /* 15px */

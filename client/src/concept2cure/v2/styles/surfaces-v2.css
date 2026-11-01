@@ -11,12 +11,11 @@
 .c2c-v2 .landing-greet{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
 .c2c-v2 .landing-greet h1{font-size:28px;font-weight:500;letter-spacing:-.02em;color:var(--text-100);}
 .c2c-v2 .landing-mark{font-size:32px;color:var(--accent-100);line-height:1;}
-.c2c-v2 .landing-composer{width:100%;background:var(--bg-000);border:1px solid var(--bg-200);border-radius:16px;padding:0;box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;flex-direction:column;overflow:hidden;position:relative;}
-/* The composer textarea clears its own outline — ring the composer when
-   focus lands inside it. The base drop-shadow is preserved after the ring. */
-.c2c-v2 .landing-composer:focus-within{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000),0 1px 6px rgba(0,0,0,.06);}
-.c2c-v2 .landing-input{width:100%;border:none;outline:none;background:transparent;resize:none;font-size:15px;line-height:1.5;padding:16px 18px 8px;color:var(--text-100);font-family:inherit;}
-.c2c-v2 .landing-input::placeholder{color:var(--text-400);}
+/* The composer's chrome, its focus edge and its text are the canonical composer's
+   (app-v2.css, D0 block): the textarea clears its own outline, the composer's
+   border shows focus. */
+.c2c-v2 .landing-composer{width:100%;padding:0;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.c2c-v2 .landing-input{width:100%;border:none;outline:none;background:transparent;resize:none;padding:16px 18px 8px;font-family:inherit;}
 .c2c-v2 .landing-crow{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 10px;}
 .c2c-v2 .landing-crow-l{display:flex;align-items:center;gap:4px;position:relative;}
 .c2c-v2 .landing-crow-r{display:flex;align-items:center;gap:6px;position:relative;}
@@ -27,8 +26,6 @@
 .c2c-v2 .landing-engine:hover{background:var(--bg-100);}
 .c2c-v2 .landing-eng-mode{color:var(--text-400);font-weight:400;}
 .c2c-v2 .landing-eng-chev{font-size:12px;color:var(--text-400);}
-.c2c-v2 .landing-send{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;background:var(--accent-strong);color:var(--accent-on-strong);font-size:16px;transition:opacity var(--dur);}
-.c2c-v2 .landing-send:disabled{opacity:.5;cursor:default;}
 .c2c-v2 .landing-plus-menu{position:absolute;bottom:40px;left:0;background:var(--bg-000);border:1px solid var(--bg-200);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);padding:4px;min-width:200px;z-index:10;}
 .c2c-v2 .landing-plus-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:7px;font-size:12.5px;color:var(--text-200);text-align:left;transition:background var(--dur);}
 .c2c-v2 .landing-plus-menu button:hover{background:var(--bg-100);}
@@ -40,9 +37,7 @@
 .c2c-v2 .landing-mode-menu .lm-label{font-weight:600;}
 .c2c-v2 .landing-mode-menu .lm-desc{font-size:11px;color:var(--text-400);}
 .c2c-v2 .landing-segctx-cat{font-size:13px;font-weight:600;color:var(--accent-200);}
-.c2c-v2 .landing-newproj{display:inline-flex;align-items:center;gap:7px;margin-top:4px;padding:9px 16px;border-radius:var(--radius-lg);background:var(--accent-strong);color:var(--accent-on-strong);font-size:13px;font-weight:600;transition:background var(--dur);}
-.c2c-v2 .landing-newproj:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
-.c2c-v2 .landing-newproj .ico{font-size:15px;}
+.c2c-v2 .landing-newproj{margin-top:4px;}
 
 /* ════ Home: where a client starts (docs/design/CLIENT_JOURNEY_2026-10-25.md) ════
    Projects first, then tasks, Ask AnA and recent conversations, top-aligned in
@@ -57,7 +52,6 @@
 .c2c-v2 .home-start .landing-greet .landing-segctx-cat{margin-left:auto;}
 .c2c-v2 .home-sec{display:flex;flex-direction:column;gap:10px;width:100%;}
 .c2c-v2 .home-sec-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.c2c-v2 .home-sec-h{font-size:15px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .home-sec-inline{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;}
 .c2c-v2 .home-note{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;line-height:1.5;color:var(--text-300);}
 .c2c-v2 .home-note[data-tone="error"]{color:var(--error);}
@@ -146,9 +140,6 @@
 .c2c-v2 .ws-switch{display:inline-flex;gap:2px;padding:3px;background:var(--bg-100);border-radius:var(--radius-lg);margin-bottom:18px;}
 .c2c-v2 .ws-btn{padding:6px 14px;border-radius:var(--radius-md);font-size:12.5px;font-weight:500;color:var(--text-300);white-space:nowrap;}
 .c2c-v2 .ws-btn.on{background:var(--bg-000);color:var(--text-100);box-shadow:var(--v2-shadow-xs);}
-.c2c-v2 .seg{display:inline-flex;gap:2px;padding:3px;background:var(--bg-100);border-radius:var(--radius-lg);}
-.c2c-v2 .seg-b{padding:5px 12px;border-radius:var(--radius-md);font-size:12px;font-weight:500;color:var(--text-300);}
-.c2c-v2 .seg-b.on{background:var(--bg-000);color:var(--text-100);box-shadow:var(--v2-shadow-xs);}
 
 /* metrics */
 .c2c-v2 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
@@ -198,10 +189,6 @@
 .c2c-v2 .dt-eyebrow{font-size:11px;color:var(--text-400);font-weight:500;}
 .c2c-v2 .dt-eyebrow .agency{color:var(--text-200);}
 .c2c-v2 .dt-title{font-size:17px;font-weight:600;letter-spacing:-.01em;margin:5px 0 0;}
-.c2c-v2 .tabs{display:flex;gap:2px;padding:8px 20px 0;border-bottom:1px solid var(--border);}
-.c2c-v2 .tab{padding:8px 14px;font-size:12.5px;font-weight:500;color:var(--text-400);border-bottom:2px solid transparent;margin-bottom:-1px;}
-.c2c-v2 .tab.on{color:var(--text-100);border-bottom-color:var(--accent-100);}
-.c2c-v2 .tab-body{padding:20px;}
 .c2c-v2 .gate-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .c2c-v2 .gate-cell{display:flex;gap:10px;align-items:center;border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;background:var(--bg-000);}
 /* ── Submission Content Plan ── */
@@ -247,7 +234,6 @@
 .c2c-v2 .cp-prev-flag{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--warning);background:var(--warning-muted);border-radius:var(--radius-md);padding:7px 10px;margin-top:9px;}
 .c2c-v2 .cp-prev-flag svg{width:13px;height:13px;flex-shrink:0;}
 .c2c-v2 .cp-prev-acts{display:flex;flex-direction:column;gap:6px;flex-shrink:0;padding-top:8px;}
-.c2c-v2 .btn.sm{padding:6px 10px;font-size:11.5px;}
 .c2c-v2 .gate-ico{font-size:16px;color:var(--success);}
 .c2c-v2 .gate-cell[data-ok="false"] .gate-ico{color:var(--warning);}
 .c2c-v2 .gate-k{font-size:11px;color:var(--text-400);}
@@ -286,7 +272,7 @@
 .c2c-v2 .vault-search .ico{font-size:15px;color:var(--text-400);}
 .c2c-v2 .vault-search input{flex:1;font-size:13px;}
 .c2c-v2 .ctable{border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;background:var(--bg-050);}
-.c2c-v2 .ct-head{display:grid;gap:12px;padding:10px 14px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);font-weight:600;border-bottom:1px solid var(--border);background:var(--bg-100);}
+.c2c-v2 .ct-head{display:grid;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:var(--fs-caption);font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-300);background:transparent;}
 .c2c-v2 .ct-row{display:grid;gap:12px;padding:11px 14px;font-size:12px;border-bottom:1px solid var(--border);align-items:center;width:100%;}
 .c2c-v2 .ct-row:last-child{border-bottom:0;}
 .c2c-v2 .ct-row:hover{background:var(--bg-000);}
