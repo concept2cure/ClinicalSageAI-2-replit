@@ -16773,7 +16773,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess the bias risk profile of an RWE study across three epidemiologic domains (selection bias, information bias, confounding) with specific bias identification, direction-of-bias assessment (toward null, away from null, unpredictable), severity grading (high/moderate/low), and actionable mitigation strategies referencing the primary literature. Returns an itemized bias inventory, an overall bias risk grade, a tailored sensitivity analysis plan (E-value per VanderWeele & Ding 2017, negative control outcomes/exposures per Schuemie et al. 2020, probabilistic bias analysis per Lash et al. 2009, multiple PS methods), and — when an observed effect estimate with confidence interval is provided — computes the E-value to quantify the minimum strength of unmeasured confounding needed to explain away the observed association. Use when conducting or reviewing a bias assessment for any RWE study — this is a required component of the FDA RWE Framework 2018, ISPE/ISPOR reporting guidelines (RECORD-PE, REPEAT, HARPER), and EMA DARWIN EU study protocols. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Assess the bias risk profile of an RWE study across three epidemiologic domains (selection bias, information bias, confounding) with specific bias identification, direction-of-bias assessment (toward null, away from null, unpredictable), severity grading (high/moderate/low), and actionable mitigation strategies referencing the primary literature. Returns an itemized bias inventory, an overall bias risk grade, a tailored sensitivity analysis plan (E-value per VanderWeele & Ding 2017, negative control outcomes/exposures per Schuemie et al. 2020, probabilistic bias analysis per Lash et al. 2009, multiple PS methods), and — when an observed effect estimate with confidence interval is provided — computes the E-value to quantify the minimum strength of unmeasured confounding needed to explain away the observed association. Use when conducting or reviewing a bias assessment for any RWE study — this is a required component of the FDA RWE Framework 2018, ISPE/ISPOR reporting guidelines (RECORD-PE, REPEAT, HARPER), and EMA DARWIN EU study protocols. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. A required input that is left out or malformed is refused by name: ask the user for it, never supply a guess. An optional true/false fact that is left out remains not_stated, and dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -16800,14 +16800,14 @@
         {
           "name": "selfReportedOutcome",
           "type": "boolean",
-          "required": true,
-          "description": "Whether the primary outcome is self-reported (e.g., patient-reported symptoms, PRO instruments). Self-reported outcomes introduce recall and social desirability biases not present with objectively measured outcomes."
+          "required": false,
+          "description": "Whether the primary outcome is self-reported (e.g., patient-reported symptoms, PRO instruments). Self-reported outcomes introduce recall and social desirability biases not present with objectively measured outcomes. Omitted or null stays no"
         },
         {
           "name": "differentialSurveillance",
           "type": "boolean",
-          "required": true,
-          "description": "Whether there is likely differential healthcare utilization or surveillance intensity between treatment groups (e.g., newly treated patients have more frequent visits, leading to greater outcome detection in that group)."
+          "required": false,
+          "description": "Whether there is likely differential healthcare utilization or surveillance intensity between treatment groups (e.g., newly treated patients have more frequent visits, leading to greater outcome detection in that group). Omitted or null sta"
         },
         {
           "name": "nUnmeasuredConfounders",
@@ -16818,8 +16818,8 @@
         {
           "name": "hasActiveComparator",
           "type": "boolean",
-          "required": true,
-          "description": "Whether an active comparator (another treatment for the same indication) is used. Absence of an active comparator creates high risk of confounding by indication (treated vs. untreated patients differ systematically)."
+          "required": false,
+          "description": "Whether an active comparator (another treatment for the same indication) is used. Absence of an active comparator creates high risk of confounding by indication (treated vs. untreated patients differ systematically). Omitted or null stays n"
         },
         {
           "name": "observedEffectEstimate",
@@ -16838,10 +16838,7 @@
         "studyDesign",
         "exposureType",
         "dataSource",
-        "selfReportedOutcome",
-        "differentialSurveillance",
-        "nUnmeasuredConfounders",
-        "hasActiveComparator"
+        "nUnmeasuredConfounders"
       ],
       "derived": true
     },
@@ -16851,7 +16848,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess the regulatory acceptability of a planned RWE submission across seven evidence requirements (pre-registration, validated outcomes, data relevance, data reliability, study design appropriateness, sensitivity analyses, transparency/reproducibility), returning an overall acceptability grade (high/moderate/low/insufficient), authority-specific regulatory pathway guidance, relevant regulatory precedents (Ibrance palbociclib label expansion 2019, Prograf tacrolimus pediatric 2021, Sentinel active surveillance, BEST vaccine safety monitoring), key guidance documents filtered by authority, and prioritized recommendations. Covers FDA (RWE Framework 2018, Draft Guidance on EHR/Claims 2021, Externally Controlled Trials 2023, RWD Submission Guidance 2023), EMA (DARWIN EU 2022), PMDA (Registry Data Guidance 2021), ICH E8(R1), and Health Canada pathways, with authority-specific guidance filtering for global or regional submissions. Use when planning an RWE regulatory strategy, preparing a pre-submission meeting (Type B) package, or evaluating whether a study design meets the evidentiary bar for a specific regulatory purpose — label expansion, new indication, post-marketing safety/effectiveness, comparative effectiveness, formulary/coverage, pediatric extrapolation, or accelerated approval confirmation. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Assess the regulatory acceptability of a planned RWE submission across seven evidence requirements (pre-registration, validated outcomes, data relevance, data reliability, study design appropriateness, sensitivity analyses, transparency/reproducibility), returning an overall acceptability grade (high/moderate/low/insufficient), authority-specific regulatory pathway guidance, relevant regulatory precedents (Ibrance palbociclib label expansion 2019, Prograf tacrolimus pediatric 2021, Sentinel active surveillance, BEST vaccine safety monitoring), key guidance documents filtered by authority, and prioritized recommendations. Covers FDA (RWE Framework 2018, Draft Guidance on EHR/Claims 2021, Externally Controlled Trials 2023, RWD Submission Guidance 2023), EMA (DARWIN EU 2022), PMDA (Registry Data Guidance 2021), ICH E8(R1), and Health Canada pathways, with authority-specific guidance filtering for global or regional submissions. Use when planning an RWE regulatory strategy, preparing a pre-submission meeting (Type B) package, or evaluating whether a study design meets the evidentiary bar for a specific regulatory purpose — label expansion, new indication, post-marketing safety/effectiveness, comparative effectiveness, formulary/coverage, pediatric extrapolation, or accelerated approval confirmation. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. A required input that is left out or malformed is refused by name: ask the user for it, never supply a guess. An optional true/false fact that is left out remains not_stated, and dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -16884,20 +16881,20 @@
         {
           "name": "preRegistered",
           "type": "boolean",
-          "required": true,
-          "description": "Whether the study protocol is pre-registered (e.g., on ClinicalTrials.gov, EU PAS Register, ENCEPP) before data access. FDA and EMA strongly recommend pre-registration to reduce investigator degrees of freedom and increase credibility."
+          "required": false,
+          "description": "Whether the study protocol is pre-registered (e.g., on ClinicalTrials.gov, EU PAS Register, ENCEPP) before data access. FDA and EMA strongly recommend pre-registration to reduce investigator degrees of freedom and increase credibility. Omit"
         },
         {
           "name": "validatedOutcomes",
           "type": "boolean",
-          "required": true,
+          "required": false,
           "description": "Whether validated algorithms with known operating characteristics (PPV, sensitivity, specificity) are used for the primary outcome and exposure definitions. FDA Draft Guidance on RWD (2021) emphasizes the need for validated variable definit"
         },
         {
           "name": "existingTrialData",
           "type": "boolean",
-          "required": true,
-          "description": "Whether concurrent or historical randomized trial data exists for the same or closely related question. Existing trial data lowers the evidentiary bar for supportive/complementary RWE and enables triangulation."
+          "required": false,
+          "description": "Whether concurrent or historical randomized trial data exists for the same or closely related question. Existing trial data lowers the evidentiary bar for supportive/complementary RWE and enables triangulation. Omitted or null stays not_sta"
         },
         {
           "name": "sampleSize",
@@ -16911,9 +16908,6 @@
         "authority",
         "studyDesign",
         "dataSource",
-        "preRegistered",
-        "validatedOutcomes",
-        "existingTrialData",
         "sampleSize"
       ],
       "derived": true
@@ -23385,7 +23379,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select the optimal propensity score estimation method (logistic regression, GBM, LASSO) and application method (1:1 matching, 1:k matching, IPTW, overlap weights, stratification, doubly robust) based on sample size, confounder dimensionality, treatment prevalence, outcome rarity, clinical equipoise, and the target estimand (ATT, ATE, or ATO per Li et al. 2019). Returns a primary recommendation with rationale, ranked alternatives, a complete diagnostics plan (SMD < 0.1 threshold per Austin 2011, variance ratios, positivity assessment per Petersen et al. 2012, effective sample size, C-statistic interpretation, negative control outcomes per Schuemie et al. 2020), pre-specified sensitivity analyses (E-value per VanderWeele & Ding 2017, alternative PS methods, trimming thresholds, hdPS, quantitative bias analysis per Lash et al. 2009), and trimming strategy guidance. Use when planning the confounding adjustment strategy for any observational comparative study — this is a required component of the statistical analysis plan for regulatory-grade RWE. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Select the optimal propensity score estimation method (logistic regression, GBM, LASSO) and application method (1:1 matching, 1:k matching, IPTW, overlap weights, stratification, doubly robust) based on sample size, confounder dimensionality, treatment prevalence, outcome rarity, clinical equipoise, and the target estimand (ATT, ATE, or ATO per Li et al. 2019). Returns a primary recommendation with rationale, ranked alternatives, a complete diagnostics plan (SMD < 0.1 threshold per Austin 2011, variance ratios, positivity assessment per Petersen et al. 2012, effective sample size, C-statistic interpretation, negative control outcomes per Schuemie et al. 2020), pre-specified sensitivity analyses (E-value per VanderWeele & Ding 2017, alternative PS methods, trimming thresholds, hdPS, quantitative bias analysis per Lash et al. 2009), and trimming strategy guidance. Use when planning the confounding adjustment strategy for any observational comparative study — this is a required component of the statistical analysis plan for regulatory-grade RWE. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. A required input that is left out or malformed is refused by name: ask the user for it, never supply a guess. An optional true/false fact that is left out remains not_stated, and dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",
@@ -23935,7 +23929,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Generate a complete target trial emulation protocol following the Hernan/Robins causal inference framework (Causal Inference: What If, 2020). Maps each of the seven protocol components (eligibility, treatment strategies, treatment assignment, follow-up, outcome, causal contrast, analysis plan) from the hypothetical randomized trial to their observational data analogs, identifies design-level biases (immortal time bias per Suissa 2008, prevalent user bias per Ray 2003, time-zero misalignment, confounding by indication), and produces a pre-registration-ready protocol template with bias mitigations and an emulation checklist. Use when designing any comparative effectiveness or safety study from RWD that requires causal inference — the target trial framework is the methodological standard endorsed by FDA (RWE Framework 2018), ICH E8(R1), and ISPE/ISPOR good practices. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Generate a complete target trial emulation protocol following the Hernan/Robins causal inference framework (Causal Inference: What If, 2020). Maps each of the seven protocol components (eligibility, treatment strategies, treatment assignment, follow-up, outcome, causal contrast, analysis plan) from the hypothetical randomized trial to their observational data analogs, identifies design-level biases (immortal time bias per Suissa 2008, prevalent user bias per Ray 2003, time-zero misalignment, confounding by indication), and produces a pre-registration-ready protocol template with bias mitigations and an emulation checklist. Use when designing any comparative effectiveness or safety study from RWD that requires causal inference — the target trial framework is the methodological standard endorsed by FDA (RWE Framework 2018), ICH E8(R1), and ISPE/ISPOR good practices. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. A required input that is left out or malformed is refused by name: ask the user for it, never supply a guess. An optional true/false fact that is left out remains not_stated, and dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -32447,7 +32441,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Score a real-world data source across six FDA-aligned quality dimensions (completeness, accuracy, linkage, longitudinality, sample size, data capture breadth) with dimension-specific weights that adapt to the study question type per the FDA RWE Framework (2018) data relevance and data reliability requirements. Returns a weighted overall fitness-for-purpose score (0-100), per-dimension scores with identified gaps and actionable recommendations, source-type-specific strengths and limitations, and a regulatory acceptability assessment covering FDA data relevance, data reliability, and data governance requirements per the FDA Draft Guidance on RWD (2021). Use when evaluating whether a specific RWD source (claims, EHR, registry, biobank, linked claims-EHR, or integrated delivery network) is adequate for a planned regulatory-grade study — this is a prerequisite step under the FDA RWE Framework 2018 and EMA DARWIN EU methodology. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Score a real-world data source across six FDA-aligned quality dimensions (completeness, accuracy, linkage, longitudinality, sample size, data capture breadth) with dimension-specific weights that adapt to the study question type per the FDA RWE Framework (2018) data relevance and data reliability requirements. Returns a weighted overall fitness-for-purpose score (0-100), per-dimension scores with identified gaps and actionable recommendations, source-type-specific strengths and limitations, and a regulatory acceptability assessment covering FDA data relevance, data reliability, and data governance requirements per the FDA Draft Guidance on RWD (2021). Use when evaluating whether a specific RWD source (claims, EHR, registry, biobank, linked claims-EHR, or integrated delivery network) is adequate for a planned regulatory-grade study — this is a prerequisite step under the FDA RWE Framework 2018 and EMA DARWIN EU methodology. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. A required input that is left out or malformed is refused by name: ask the user for it, never supply a guess. An optional true/false fact that is left out remains not_stated, and dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -32480,38 +32474,38 @@
         {
           "name": "deathLinkage",
           "type": "boolean",
-          "required": true,
-          "description": "Whether the source is linked to death records (e.g., National Death Index, state death registries). Critical for mortality outcomes and identifying informative censoring from death."
+          "required": false,
+          "description": "Whether the source is linked to death records (e.g., National Death Index, state death registries). Critical for mortality outcomes and identifying informative censoring from death. Omitted or null stays not_stated: the dimensions that read"
         },
         {
           "name": "hasLabResults",
           "type": "boolean",
-          "required": true,
-          "description": "Whether the source captures structured laboratory results (e.g., HbA1c, creatinine, biomarkers). Essential for lab-based outcomes and biomarker-based eligibility criteria."
+          "required": false,
+          "description": "Whether the source captures structured laboratory results (e.g., HbA1c, creatinine, biomarkers). Essential for lab-based outcomes and biomarker-based eligibility criteria. Omitted or null stays not_stated: the dimensions that read it and th"
         },
         {
           "name": "hasClinicalNotes",
           "type": "boolean",
-          "required": true,
-          "description": "Whether the source captures unstructured clinical notes that can be used for NLP-based variable extraction or chart review validation."
+          "required": false,
+          "description": "Whether the source captures unstructured clinical notes that can be used for NLP-based variable extraction or chart review validation. Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness"
         },
         {
           "name": "hasPharmacyDispensing",
           "type": "boolean",
-          "required": true,
-          "description": "Whether the source captures pharmacy dispensing/fill records (not just prescribing orders). Essential for reliable medication exposure measurement via PDC/MPR."
+          "required": false,
+          "description": "Whether the source captures pharmacy dispensing/fill records (not just prescribing orders). Essential for reliable medication exposure measurement via PDC/MPR. Omitted or null stays not_stated: the dimensions that read it and the overall sc"
         },
         {
           "name": "hasProcedures",
           "type": "boolean",
-          "required": true,
-          "description": "Whether the source captures procedure codes (CPT, ICD-10-PCS, HCPCS)."
+          "required": false,
+          "description": "Whether the source captures procedure codes (CPT, ICD-10-PCS, HCPCS). Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed."
         },
         {
           "name": "hasValidationStudy",
           "type": "boolean",
-          "required": true,
-          "description": "Whether a published or internal validation study exists for the key variable definitions (outcome and exposure algorithms) in this data source. FDA strongly recommends validated variable definitions."
+          "required": false,
+          "description": "Whether a published or internal validation study exists for the key variable definitions (outcome and exposure algorithms) in this data source. FDA strongly recommends validated variable definitions. Omitted or null stays not_stated: the di"
         },
         {
           "name": "continuousEnrollmentPct",
@@ -32531,12 +32525,6 @@
         "studyQuestion",
         "estimatedSampleSize",
         "longitudinalYears",
-        "deathLinkage",
-        "hasLabResults",
-        "hasClinicalNotes",
-        "hasPharmacyDispensing",
-        "hasProcedures",
-        "hasValidationStudy",
         "continuousEnrollmentPct",
         "geographicCoverage"
       ],
@@ -33380,7 +33368,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select the optimal RWE study design from a catalog of nine epidemiologic designs (new-user active-comparator cohort, prevalent-user cohort, nested case-control, self-controlled case series, self-controlled risk interval, interrupted time series, difference-in-differences, regression discontinuity, instrumental variable) based on the causal question type, outcome characteristics, and data features. Returns the primary design recommendation with strengths, limitations, and bias considerations; ranked alternative designs; a selection rationale grounded in the Hernan/Robins causal inference framework; and a design-specific implementation checklist. The new-user active-comparator design is the default for treatment effect questions per FDA RWE Framework 2018 guidance; quasi-experimental designs (DiD, ITS, RD) are recommended when natural experiments exist; self-controlled designs (SCCS, SCRI) are recommended for acute outcomes per ISPE guidelines. Use when choosing between observational study architectures for treatment effect estimation, safety signal detection, or policy impact evaluation. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Select the optimal RWE study design from a catalog of nine epidemiologic designs (new-user active-comparator cohort, prevalent-user cohort, nested case-control, self-controlled case series, self-controlled risk interval, interrupted time series, difference-in-differences, regression discontinuity, instrumental variable) based on the causal question type, outcome characteristics, and data features. Returns the primary design recommendation with strengths, limitations, and bias considerations; ranked alternative designs; a selection rationale grounded in the Hernan/Robins causal inference framework; and a design-specific implementation checklist. The new-user active-comparator design is the default for treatment effect questions per FDA RWE Framework 2018 guidance; quasi-experimental designs (DiD, ITS, RD) are recommended when natural experiments exist; self-controlled designs (SCCS, SCRI) are recommended for acute outcomes per ISPE guidelines. Use when choosing between observational study architectures for treatment effect estimation, safety signal detection, or policy impact evaluation. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. A required input that is left out or malformed is refused by name: ask the user for it, never supply a guess. An optional true/false fact that is left out remains not_stated, and dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",

@@ -10,7 +10,8 @@
  * quantitative bias analysis, and regulatory acceptability assessment across
  * FDA, EMA, PMDA, and Health Canada pathways. Each tool is a thin, validated
  * wrapper over a pure deterministic engine — no LLM, no network calls. The output
- * is reproducible and submission-defensible. Handlers live in AnaToolExecutor.ts
+ * is a reproducible worksheet over the stated inputs; no program source records
+ * are read. Handlers live in AnaToolExecutor.ts
  * (registerToolHandler) and dynamic-import `../rwe/rwe-methodology-knowledge`
  * through the runStatsTool deterministic envelope.
  *
@@ -35,7 +36,10 @@
 import type { AnaTool } from '../ai-gateway/types';
 
 const DETERMINISTIC_NOTE =
-  'Deterministic — identical input always yields identical output. No LLM, no network.';
+  'Deterministic worksheet over stated inputs; no LLM, network or program source-record read. ' +
+  'A required input that is left out or malformed is refused by name: ask the user for it, never supply a guess. ' +
+  'An optional true/false fact that is left out remains not_stated, and dependent conclusions remain not_assessed or null. ' +
+  'Report those states and ask for the missing facts.';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Target Trial Emulation
@@ -120,27 +124,27 @@ export const SCORE_RWE_DATA_SOURCE: AnaTool = {
       },
       deathLinkage: {
         type: 'boolean',
-        description: 'Whether the source is linked to death records (e.g., National Death Index, state death registries). Critical for mortality outcomes and identifying informative censoring from death.',
+        description: 'Whether the source is linked to death records (e.g., National Death Index, state death registries). Critical for mortality outcomes and identifying informative censoring from death. Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       hasLabResults: {
         type: 'boolean',
-        description: 'Whether the source captures structured laboratory results (e.g., HbA1c, creatinine, biomarkers). Essential for lab-based outcomes and biomarker-based eligibility criteria.',
+        description: 'Whether the source captures structured laboratory results (e.g., HbA1c, creatinine, biomarkers). Essential for lab-based outcomes and biomarker-based eligibility criteria. Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       hasClinicalNotes: {
         type: 'boolean',
-        description: 'Whether the source captures unstructured clinical notes that can be used for NLP-based variable extraction or chart review validation.',
+        description: 'Whether the source captures unstructured clinical notes that can be used for NLP-based variable extraction or chart review validation. Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       hasPharmacyDispensing: {
         type: 'boolean',
-        description: 'Whether the source captures pharmacy dispensing/fill records (not just prescribing orders). Essential for reliable medication exposure measurement via PDC/MPR.',
+        description: 'Whether the source captures pharmacy dispensing/fill records (not just prescribing orders). Essential for reliable medication exposure measurement via PDC/MPR. Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       hasProcedures: {
         type: 'boolean',
-        description: 'Whether the source captures procedure codes (CPT, ICD-10-PCS, HCPCS).',
+        description: 'Whether the source captures procedure codes (CPT, ICD-10-PCS, HCPCS). Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       hasValidationStudy: {
         type: 'boolean',
-        description: 'Whether a published or internal validation study exists for the key variable definitions (outcome and exposure algorithms) in this data source. FDA strongly recommends validated variable definitions.',
+        description: 'Whether a published or internal validation study exists for the key variable definitions (outcome and exposure algorithms) in this data source. FDA strongly recommends validated variable definitions. Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       continuousEnrollmentPct: {
         type: 'number',
@@ -154,8 +158,7 @@ export const SCORE_RWE_DATA_SOURCE: AnaTool = {
     },
     required: [
       'sourceType', 'studyQuestion', 'estimatedSampleSize', 'longitudinalYears',
-      'deathLinkage', 'hasLabResults', 'hasClinicalNotes', 'hasPharmacyDispensing',
-      'hasProcedures', 'hasValidationStudy', 'continuousEnrollmentPct', 'geographicCoverage',
+      'continuousEnrollmentPct', 'geographicCoverage',
     ],
   },
 };
@@ -292,11 +295,11 @@ export const ASSESS_RWE_BIAS_RISK: AnaTool = {
       },
       selfReportedOutcome: {
         type: 'boolean',
-        description: 'Whether the primary outcome is self-reported (e.g., patient-reported symptoms, PRO instruments). Self-reported outcomes introduce recall and social desirability biases not present with objectively measured outcomes.',
+        description: 'Whether the primary outcome is self-reported (e.g., patient-reported symptoms, PRO instruments). Self-reported outcomes introduce recall and social desirability biases not present with objectively measured outcomes. Omitted or null stays not_stated: the reporting/recall bias is listed ungraded.',
       },
       differentialSurveillance: {
         type: 'boolean',
-        description: 'Whether there is likely differential healthcare utilization or surveillance intensity between treatment groups (e.g., newly treated patients have more frequent visits, leading to greater outcome detection in that group).',
+        description: 'Whether there is likely differential healthcare utilization or surveillance intensity between treatment groups (e.g., newly treated patients have more frequent visits, leading to greater outcome detection in that group). Omitted or null stays not_stated: the surveillance/detection bias is listed ungraded.',
       },
       nUnmeasuredConfounders: {
         type: 'number',
@@ -304,7 +307,7 @@ export const ASSESS_RWE_BIAS_RISK: AnaTool = {
       },
       hasActiveComparator: {
         type: 'boolean',
-        description: 'Whether an active comparator (another treatment for the same indication) is used. Absence of an active comparator creates high risk of confounding by indication (treated vs. untreated patients differ systematically).',
+        description: 'Whether an active comparator (another treatment for the same indication) is used. Absence of an active comparator creates high risk of confounding by indication (treated vs. untreated patients differ systematically). Omitted or null stays not_stated: confounding by indication is listed ungraded, never reported as no comparator.',
       },
       observedEffectEstimate: {
         type: 'number',
@@ -315,7 +318,7 @@ export const ASSESS_RWE_BIAS_RISK: AnaTool = {
         description: 'Optional lower bound of the 95% confidence interval for the effect estimate (the bound closest to the null). Used together with observedEffectEstimate for E-value computation.',
       },
     },
-    required: ['studyDesign', 'exposureType', 'dataSource', 'selfReportedOutcome', 'differentialSurveillance', 'nUnmeasuredConfounders', 'hasActiveComparator'],
+    required: ['studyDesign', 'exposureType', 'dataSource', 'nUnmeasuredConfounders'],
   },
 };
 
@@ -364,22 +367,22 @@ export const ASSESS_RWE_REGULATORY_ACCEPTABILITY: AnaTool = {
       },
       preRegistered: {
         type: 'boolean',
-        description: 'Whether the study protocol is pre-registered (e.g., on ClinicalTrials.gov, EU PAS Register, ENCEPP) before data access. FDA and EMA strongly recommend pre-registration to reduce investigator degrees of freedom and increase credibility.',
+        description: 'Whether the study protocol is pre-registered (e.g., on ClinicalTrials.gov, EU PAS Register, ENCEPP) before data access. FDA and EMA strongly recommend pre-registration to reduce investigator degrees of freedom and increase credibility. Omitted or null stays not_stated: the pre-registration and transparency requirements are not_assessed.',
       },
       validatedOutcomes: {
         type: 'boolean',
-        description: 'Whether validated algorithms with known operating characteristics (PPV, sensitivity, specificity) are used for the primary outcome and exposure definitions. FDA Draft Guidance on RWD (2021) emphasizes the need for validated variable definitions.',
+        description: 'Whether validated algorithms with known operating characteristics (PPV, sensitivity, specificity) are used for the primary outcome and exposure definitions. FDA Draft Guidance on RWD (2021) emphasizes the need for validated variable definitions. Omitted or null stays not_stated: the validated-definitions requirement is not_assessed.',
       },
       existingTrialData: {
         type: 'boolean',
-        description: 'Whether concurrent or historical randomized trial data exists for the same or closely related question. Existing trial data lowers the evidentiary bar for supportive/complementary RWE and enables triangulation.',
+        description: 'Whether concurrent or historical randomized trial data exists for the same or closely related question. Existing trial data lowers the evidentiary bar for supportive/complementary RWE and enables triangulation. Omitted or null stays not_stated: no recommendation assumes it either way.',
       },
       sampleSize: {
         type: 'number',
         description: 'Study sample size. Scored against regulatory benchmarks: >= 500 is adequate for most regulatory purposes; >= 100 is marginal; < 100 is generally insufficient for regulatory-grade RWE.',
       },
     },
-    required: ['purpose', 'authority', 'studyDesign', 'dataSource', 'preRegistered', 'validatedOutcomes', 'existingTrialData', 'sampleSize'],
+    required: ['purpose', 'authority', 'studyDesign', 'dataSource', 'sampleSize'],
   },
 };
 
