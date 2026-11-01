@@ -121,7 +121,8 @@ The person is planning, assembling, validating or dispatching a submission in th
       'assess_submission_package',
       'list_fda_forms',
       'prepare_fda_form',
-      'plan_ind_module_authoring',
+      'draft_clinical_overview_m2_5',
+      'draft_clinical_summary_m2_7',
       'lookup_submission_deficiencies',
     ],
     references: [
@@ -142,7 +143,7 @@ A sponsor is preparing an original IND for a drug or biologic: what 21 CFR 312.2
 3. Read the IND screen's state before reporting progress. It shows the Module 1 forms and the sections placed in the filing with their status, and its readiness is the verdict the server's IND readiness engine returns, not a count you make. \`assess_submission_package\` reads the same project's package progress. A drafted section is not complete; a form counts as done only when it is signed with a signature record behind it, or a signed copy the sponsor attested to is filed.
 4. Forms. \`list_fda_forms\` shows which forms the registry holds and how fully each is implemented. \`prepare_fda_form\` prepares Form 1571 (the IND application), Form 1572 (Statement of Investigator, one for each investigator) or Form 3674 (the ClinicalTrials.gov certification) as an editable draft from values the person supplies. It never signs or submits: the sponsor's authorised representative signs the 1571, and each investigator signs their own 1572.
 5. Cross-references. Content held by someone else, such as a drug master file, is referenced with a Letter of Authorization from its holder on file. A required Module 3 heading with neither a leaf nor a cross-reference covered by a Letter of Authorization blocks the original sequence, and a cross-reference with no Letter of Authorization blocks every sequence of the IND.
-6. Module 2 summaries: \`plan_ind_module_authoring\` plans a 2.5 or 2.7 scaffold from structured facts. Supply facts from the program's study records only; the scaffold is a plan, not a verified document.
+6. Module 2 summaries: \`draft_clinical_overview_m2_5\` and \`draft_clinical_summary_m2_7\` compose 2.5 and 2.7 from the program's completed clinical study reports. Do not pass results, counts or rates to them. With no completed CSR, 2.5 returns its outline and 2.7 composes nothing; say so.
 7. CMC: the platform composes Module 3 for a small-molecule US IND (decision P-28). For a biologic IND, AnA can advise on Module 3 and the sponsor authors it in the editor.
 8. Before filing, \`lookup_submission_deficiencies\` (type \`ind\`) lists the deficiencies reviewers most often raise on an IND; check the draft against them.
 9. The 30-day period. Under 21 CFR 312.40 an IND goes into effect 30 days after FDA receives it, unless FDA notifies the sponsor that the investigation is on clinical hold, or earlier if FDA notifies the sponsor that it may begin. The date comes from the IND screen's 30-day clock, computed from the recorded receipt date; never compute it yourself. The study also needs IRB approval before it begins.

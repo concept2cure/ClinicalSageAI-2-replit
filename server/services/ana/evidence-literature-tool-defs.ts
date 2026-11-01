@@ -486,60 +486,6 @@ export const PLAN_ORPHAN_DRUG_DESIGNATION: AnaTool = {
   },
 };
 
-// IND narrative-module planning (E11). A supplied-string scaffold with a
-// plan-text self-check, without authored-file or independent source verification.
-export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
-  name: 'plan_ind_module_authoring',
-  description:
-    'Plan an IND transcription scaffold (CTD Module 2.5 Clinical Overview or 2.7 Clinical Summary) from ' +
-    'unverified caller/model-supplied structured facts. Returns the author_docx_native title + markdown ' +
-    'content with supported template headers and required_strings for later transcription checks. ' +
-    'The returned verification is plan-text self-consistency only: this tool does not author a file or ' +
-    'independently verify an artifact, underlying study, source qualification, or provenance. The planning ' +
-    'receipt is always non-sealable, even with provenance live and verification.ok true. Verify the actual ' +
-    'governed artifact and its qualified source evidence separately before sealing. Supply facts in `facts`.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      module: {
-        type: 'string',
-        enum: ['2.5', '2.7'],
-        description: 'Supported CTD Module 2 template to plan: 2.5 (Clinical Overview) or 2.7 (Clinical Summary).',
-      },
-      product_name: { type: 'string', description: 'Product / compound name for the title + running header.' },
-      indication: { type: 'string', description: 'Proposed indication.' },
-      facts: {
-        type: 'array',
-        description:
-          'Unverified caller/model-supplied facts/figures to transcribe verbatim. Each value becomes a ' +
-          'required_strings entry for plan-text self-consistency; this does not qualify the underlying source.',
-        items: {
-          type: 'object',
-          properties: {
-            section_id: {
-              type: 'string',
-              description: 'Which template section the fact belongs in: its CTD code (e.g. 2.5.4, 2.7.4) or a code below one (e.g. 2.7.4.2.1.2 goes in 2.7.4). The earlier ids (e.g. overview_efficacy, summary_clinical_safety) are still accepted. A fact that names no section is reported in honesty.unplacedFacts, not planned.',
-            },
-            label: { type: 'string', description: 'Human label for the fact (e.g. "Primary endpoint response rate").' },
-            value: {
-              type: 'string',
-              description: 'The supplied figure/string to transcribe and self-check (e.g. "42.3%", "200 mg", "24 months").',
-            },
-            source: { type: 'string', description: 'Optional supplied source pointer (table/dataset id), not resolved or verified.' },
-          },
-          required: ['section_id', 'label', 'value'],
-        },
-      },
-      provenance: {
-        type: 'string',
-        enum: ['live', 'sample', 'not_assessed'],
-        description: 'Caller-declared provenance label; it does not establish source qualification or sealability. All planning receipts are non-sealable.',
-      },
-    },
-    required: ['module', 'product_name', 'indication'],
-  },
-};
-
 export const ADVISE_GCP: AnaTool = {
   name: 'advise_gcp',
   description:

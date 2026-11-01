@@ -153,15 +153,6 @@ import {
   type OddProvenance,
   type OddProductInput,
 } from 'shared/ana/orphan-drug-designation.js';
-import {
-  buildIndModuleAuthoringPlan,
-  evaluateIndModuleVerification,
-  assessIndModuleSealability,
-  listIndModules,
-  IND_MODULE_TEMPLATES,
-  type IndModuleProvenance,
-  type IndSourceFact,
-} from './ind-module-authoring.js';
 import { adviseEstimand, listEstimandFramework } from './estimands.js';
 import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
 import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
@@ -3046,96 +3037,6 @@ registerToolHandler('plan_orphan_drug_designation', async (input) => {
       'Drive author_docx_native with author_docx_native.{title,content}, then verify_docx_against_source ' +
       'with required_strings. sample/not_assessed drafts and any uncited prevalence/eligibility claim are ' +
       'non-sealable and non-exportable.',
-  });
-});
-
-// IND narrative-module planning (CTD Module 2.5 / 2.7) — E11.
-// Build a transcription scaffold from caller/model-supplied facts and check its
-// own text for the supported template headers and supplied figure values. This
-// does not author or verify a file, qualify study sources, or verify provenance;
-// the planning receipt is always non-sealable, including when labelled live.
-/** The section codes a plan_ind_module_authoring template holds, for its own messages. */
-const indModuleSectionCodes = (moduleId: string) => (IND_MODULE_TEMPLATES[moduleId] ?? []).map((s) => s.code).join(', ');
-
-registerToolHandler('plan_ind_module_authoring', async (input) => {
-  const moduleId = typeof input.module === 'string' ? input.module.trim() : '';
-  if (!moduleId || !listIndModules().includes(moduleId)) {
-    return JSON.stringify({
-      error: `plan_ind_module_authoring requires module to be one of ${listIndModules().join(', ')}.`,
-      modules: listIndModules(),
-    });
-  }
-  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
-  const productName = str(input.product_name);
-  const indication = str(input.indication);
-  if (!productName || !indication) {
-    return JSON.stringify({ error: 'plan_ind_module_authoring requires product_name and indication.' });
-  }
-
-  const facts: IndSourceFact[] = Array.isArray(input.facts)
-    ? (input.facts as unknown[])
-        .map((f) => (f && typeof f === 'object' ? (f as Record<string, unknown>) : null))
-        .filter((f): f is Record<string, unknown> => f !== null)
-        .map((f) => ({
-          sectionId: typeof f.section_id === 'string' ? f.section_id : '',
-          label: typeof f.label === 'string' ? f.label : '',
-          value: typeof f.value === 'string' ? f.value : '',
-          source: typeof f.source === 'string' ? f.source : undefined,
-        }))
-        .filter((f) => f.sectionId && typeof f.value === 'string' && f.value.trim().length > 0)
-    : [];
-
-  const rawProv = typeof input.provenance === 'string' ? input.provenance : '';
-  const provenance: IndModuleProvenance =
-    rawProv === 'live' || rawProv === 'sample' || rawProv === 'not_assessed' ? rawProv : 'not_assessed';
-
-  const plan = buildIndModuleAuthoringPlan({ module: moduleId, productName, indication, facts, provenance });
-  const verification = evaluateIndModuleVerification({
-    documentText: plan.content,
-    requiredStrings: plan.requiredStrings,
-  });
-  const sealability = assessIndModuleSealability({ provenance, verification });
-  // A supplied fact that names no section is said, never dropped (D2 cleanup C4c).
-  const unplaced = plan.unplacedFacts.map((f) => ({ section_id: f.sectionId, label: f.label, value: f.value }));
-  const unplacedBlocker = unplaced.length === 0 ? [] : [
-    `${unplaced.length} supplied ${unplaced.length === 1 ? 'fact names' : 'facts name'} no section of the ${moduleId} template: ` +
-      `${[...new Set(unplaced.map((f) => f.section_id))].join(', ')}. They are not in the plan; name a section by its CTD code ` +
-      `(${indModuleSectionCodes(moduleId)}) or a code below one.`,
-  ];
-
-  return JSON.stringify({
-    source: `AnA IND Module ${moduleId} Authoring (ICH M4E — CTD Module 2)`,
-    status: 'generated',
-    author_docx_native: {
-      title: plan.title,
-      content: plan.content,
-      required_strings: plan.requiredStrings,
-    },
-    verification: {
-      ...verification,
-      scope: 'plan_text_only',
-      artifactVerified: false,
-      sourceVerified: false,
-    },
-    honesty: {
-      sealable: false,
-      provenance: plan.provenance,
-      blockers: [
-        'Planning only: no authored file or independently verified project source evidence was checked. ' +
-          'Verify the actual governed artifact and its qualified sources before sealing.',
-        ...sealability.blockers,
-        ...unplacedBlocker,
-      ],
-      sectionsWithoutFacts: plan.sectionsWithoutFacts,
-      unplacedFacts: unplaced,
-    },
-    note:
-      'This tool builds a transcription scaffold and checks only its supported template headers and ' +
-      'caller/model-supplied strings. The plan body\'s \'verified against the source\' wording means only ' +
-      'supplied-string self-consistency: no authored file, underlying study, source qualification, or ' +
-      'caller-declared provenance was independently verified. This planning receipt is always non-sealable. ' +
-      'Use author_docx_native with author_docx_native.{title,content}, then verify the actual governed artifact ' +
-      'and its qualified source evidence separately; required_strings alone do not establish source qualification.',
   });
 });
 
