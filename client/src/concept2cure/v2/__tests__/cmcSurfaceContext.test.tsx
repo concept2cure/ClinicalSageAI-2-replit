@@ -109,6 +109,12 @@ describe('CMC publishes what the screen is showing', () => {
     expect(seen!.facts?.whatToDoHere).toMatch(/Register each study/);
   });
 
+});
+
+/* The two halves of the CMC work area (D5 §A.3). Their own block: these drive
+   the frame rather than the context channel above, and keeping them there put
+   that describe past the 100-line cap. */
+describe('CMC opens on one of its two halves', () => {
   it('comes back to the tab you left in the other half', async () => {
     /* One piece of state, the tab; the half is read off it. So switching away
        and back does not reset the view (D5 §A.6 item 2). */

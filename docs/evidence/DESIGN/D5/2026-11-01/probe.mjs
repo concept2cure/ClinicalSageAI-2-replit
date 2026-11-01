@@ -29,11 +29,11 @@ await page.screenshot({ path: `${OUT}/cmc-overview-full-${TAG}.png`, fullPage: t
 const probe = await page.evaluate(() => {
   const root = document.querySelector('[data-work-area]');
   if (!root) return { error: 'no [data-work-area] on the page' };
-  const cs = (el) => getComputedStyle(el);
+  const cs = (el) => globalThis.getComputedStyle(el);
   const upper = [...root.querySelectorAll('*')].filter((el) => cs(el).textTransform === 'uppercase'
     && (el.textContent || '').trim().length > 0);
   const accent = cs(document.querySelector('.c2c-v2')).getPropertyValue('--accent-strong').trim();
-  const norm = (c) => { const d = document.createElement('div'); d.style.color = c; document.body.appendChild(d); const v = getComputedStyle(d).color; d.remove(); return v; };
+  const norm = (c) => { const d = document.createElement('div'); d.style.color = c; document.body.appendChild(d); const v = globalThis.getComputedStyle(d).color; d.remove(); return v; };
   const want = norm(accent);
   const fills = [...root.querySelectorAll('button, a, .btn')].filter((el) => cs(el).backgroundColor === want);
   const h1 = root.querySelectorAll('h1.ph-title');
