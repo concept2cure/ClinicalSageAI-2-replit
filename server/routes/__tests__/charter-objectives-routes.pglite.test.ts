@@ -155,7 +155,7 @@ describe('the project objective routes', () => {
 
   it('fails the read, and returns no record, when the recorded objective cannot be read: never "not stated"', async () => {
     const where = "section_key = 'objectives' AND charter_id = (SELECT id FROM project_charters WHERE project_id = 10)";
-    const [{ content }] = (await h.pg.query<{ content: string }>(`SELECT content FROM charter_sections WHERE ${where}`)).rows;
+    const [{ content }] = (await h.pg.query(`SELECT content FROM charter_sections WHERE ${where}`)).rows as Array<{ content: string }>;
     await h.pg.exec(`UPDATE charter_sections SET content = 'not the recorded form' WHERE ${where}`);
     try {
       const r = await request(app()).get(`/api/charters/by-project/${PROGRAM}/objectives`);
