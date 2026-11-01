@@ -1,0 +1,544 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/project-settings.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/c2c/__tests__/project-settings.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:18:16.910Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:18:16.911Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-settings.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:18:16.912Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > reads saved scope and a bound revision, deriving current mutation authority 145ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > saves the three normalized fields and actual chained reason/before/after receipt atomically 84ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > preserves the RBM setup choice and unrelated metadata when project settings change 56ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > clears optional values and writes only actual differences 63ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > preserves a recorded calendar day in year 0001 through the canonical writer 64ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {} 25ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"description":3} 24ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"priority":"urgent"} 32ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"2030-02-29"} 31ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"0000-01-01"} 23ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"2030-3-04"} 27ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"name":"Changed"} 22ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"leadUserId":13} 23ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"status":"archived"} 27ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"metadata":{}} 27ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"clientWorkspaceId":2} 25ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses unknown envelope fields, short reason and malformed revision 37ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses an unchanged-only patch and a retired revision without audit 53ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > retires revisions when the canonical workspace changes 38ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 2 29ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 3 32ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 0 26ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 2147483648 21ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 1.0 26ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 01 22ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim null 21ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > uses current lead/role/active membership and rejects a share edit as program management 53ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > rechecks actor admission inside the owned transaction 24ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > keeps archived programs read-only without adding an inactive-workspace policy 49ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > conceals a foreign program and refuses an unresolved foreign workspace relationship 14ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > fails unavailable for unverifiable saved values instead of inventing a priority 11ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > retires private read access when a saved share is revoked 21ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > preserves the canonical open role vocabulary for a current programme lead 46ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > rolls the actual profile update back when the canonical audit insert fails 49ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > rolls profile and audit back if the final saved receipt cannot be read before COMMIT 55ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > reports uncertainty after actual COMMIT with a lost reply and discards once without subsequent SQL 48ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > reports uncertainty when rollback acknowledgement is lost, and never reuses that connection 44ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > nullable legacy canonical workspace > retains a null parent without a resolver fallback and refuses any supplied client claim 61ms
+stderr | server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > keeps exact project intelligence and project wisdom while excluding client/global facts
+{
+  "timestamp": "2026-11-01T21:18:24.053Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > keeps exact project intelligence and project wisdom while excluding client/global facts 2552ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > does not broaden an explicitly unresolved project into organization recall 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > retains organization caller behavior and separates cached A/B/organization contexts 2ms
+stderr | server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program UUID beginning with digits loads its anchor row's intelligence, never the integer its digits spell
+{
+  "timestamp": "2026-11-01T21:18:26.555Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program UUID beginning with digits loads its anchor row's intelligence, never the integer its digits spell 2086ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program with no anchor row loads no project intelligence 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a legacy integer project loads its own intelligence 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a malformed project id loads none 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > a program and the integer its digits spell are different cache entries 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > invalidating a program by its UUID clears its entry 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the project's objective of record (P-80) > is read for the open project and put before AnA, with its sources 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the project's objective of record (P-80) > is not read when no project is open 0ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when client stalls 8ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when project stalls 10ms
+stderr | server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > keeps healthy wisdom when another source fails
+{
+  "timestamp": "2026-11-01T21:18:28.712Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when wisdom stalls 562ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > never falls back to client recall during stalled program resolution or starts late project reads 6ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > shares one deadline across program resolution and dependent recall 17ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > keeps healthy wisdom when another source fails 1643ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not allow a late timed-out result to fill the cache 2ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not cache degraded recall, allowing the next turn to recover 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > caches healthy empty recall and honors TTL and invalidation 2ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not query without an organization or share healthy recall between organizations 1ms
+ ✓ tests/schema-contract/project-charters-declared-columns.contract.test.ts > the premises this contract rests on > project_charters is NOT on the drizzle push surface 43ms
+ ✓ tests/schema-contract/project-charters-declared-columns.contract.test.ts > the premises this contract rests on > charters.ts selects every declared column, unqualified 2ms
+ ✓ tests/schema-contract/project-charters-declared-columns.contract.test.ts > the premises this contract rests on > pma-workflow-routes.ts names pma_config in raw SQL 1ms
+ ✓ tests/schema-contract/project-charters-declared-columns.contract.test.ts > the premises this contract rests on > the declaration parses to a real column list 1ms
+ ✓ tests/schema-contract/project-charters-declared-columns.contract.test.ts > every declared column exists on a provisioned database > leaves no declared column unprovided by base-creator ∪ applier 66ms
+ ✓ tests/schema-contract/project-charters-declared-columns.contract.test.ts > every declared column exists on a provisioned database > puts every column 0012 lacks on the replaying applier 59ms
+ ✓ tests/schema-contract/project-charters-declared-columns.contract.test.ts > every declared column exists on a provisioned database > provides pma_config, which raw SQL names explicitly 62ms
+stderr | tests/unit/charters-routes.test.ts > POST /api/charters > (6) CONTRACT DEVIATION — audit failure does NOT roll back the charter INSERT; 201 is still returned (best-effort audit by design)
+{
+  "timestamp": "2026-11-01T21:18:33.466Z",
+  "level": "error",
+  "message": "[charters] charter.created audit row was not persisted — row created without audit",
+  "context": {
+    "err": "audit DB down",
+    "charterId": 555,
+    "organizationId": 100
+  }
+}
+
+stderr | tests/unit/charters-routes.test.ts > POST /api/charters/:charterId/commitments — closed-enum Zod gate > (9) invalid category is rejected at the Zod gate (400), no insert
+{
+  "timestamp": "2026-11-01T21:18:33.479Z",
+  "level": "warn",
+  "message": "[charters] Invalid commitment payload",
+  "context": {
+    "issues": [
+      {
+        "received": "submission",
+        "code": "invalid_enum_value",
+        "options": [
+          "regulatory_submission",
+          "agency_engagement",
+          "agency_meeting",
+          "regulatory_approval",
+          "clinical_hold_response",
+          "fda_deficiency_response",
+          "document_delivery",
+          "quality_assurance",
+          "team_deliverable",
+          "evidence_gathering",
+          "manufacturing_commitment",
+          "nonclinical_commitment",
+          "clinical_commitment",
+          "data_integrity",
+          "ectd_assembly",
+          "safety_report",
+          "pediatric_commitment",
+          "rems_commitment",
+          "post_market_commitment"
+        ],
+        "path": [
+          "category"
+        ],
+        "message": "Invalid enum value. Expected 'regulatory_submission' | 'agency_engagement' | 'agency_meeting' | 'regulatory_approval' | 'clinical_hold_response' | 'fda_deficiency_response' | 'document_delivery' | 'quality_assurance' | 'team_deliverable' | 'evidence_gathering' | 'manufacturing_commitment' | 'nonclinical_commitment' | 'clinical_commitment' | 'data_integrity' | 'ectd_assembly' | 'safety_report' | 'pediatric_commitment' | 'rems_commitment' | 'post_market_commitment', received 'submission'"
+      },
+      {
+        "code": "invalid_type",
+        "expected": "string",
+        "received": "undefined",
+        "path": [
+          "title"
+        ],
+        "message": "Required"
+      },
+      {
+        "code": "invalid_type",
+        "expected": "string",
+        "received": "undefined",
+        "path": [
+          "dueDate"
+        ],
+        "message": "Required"
+      },
+      {
+        "code": "invalid_union",
+        "unionErrors": [
+          {
+            "issues": [
+              {
+                "code": "invalid_type",
+                "expected": "object",
+                "received": "undefined",
+                "path": [
+                  "owner"
+                ],
+                "message": "Required"
+              }
+            ],
+            "name": "ZodError"
+          },
+          {
+            "issues": [
+              {
+                "code": "invalid_type",
+                "expected": "object",
+                "received": "undefined",
+                "path": [
+                  "owner"
+                ],
+                "message": "Required"
+              }
+            ],
+            "name": "ZodError"
+          }
+        ],
+        "path": [
+          "owner"
+        ],
+        "message": "Invalid input"
+      }
+    ],
+    "charterId": 555,
+    "organizationId": 100
+  }
+}
+
+stderr | tests/unit/charters-routes.test.ts > POST /api/charters/:charterId/commitments — closed-enum Zod gate > (10) cross-org commitment probe — same 400 (validation precedes any tenant write)
+{
+  "timestamp": "2026-11-01T21:18:33.484Z",
+  "level": "warn",
+  "message": "[charters] Invalid commitment payload",
+  "context": {
+    "issues": [
+      {
+        "received": "submission",
+        "code": "invalid_enum_value",
+        "options": [
+          "regulatory_submission",
+          "agency_engagement",
+          "agency_meeting",
+          "regulatory_approval",
+          "clinical_hold_response",
+          "fda_deficiency_response",
+          "document_delivery",
+          "quality_assurance",
+          "team_deliverable",
+          "evidence_gathering",
+          "manufacturing_commitment",
+          "nonclinical_commitment",
+          "clinical_commitment",
+          "data_integrity",
+          "ectd_assembly",
+          "safety_report",
+          "pediatric_commitment",
+          "rems_commitment",
+          "post_market_commitment"
+        ],
+        "path": [
+          "category"
+        ],
+        "message": "Invalid enum value. Expected 'regulatory_submission' | 'agency_engagement' | 'agency_meeting' | 'regulatory_approval' | 'clinical_hold_response' | 'fda_deficiency_response' | 'document_delivery' | 'quality_assurance' | 'team_deliverable' | 'evidence_gathering' | 'manufacturing_commitment' | 'nonclinical_commitment' | 'clinical_commitment' | 'data_integrity' | 'ectd_assembly' | 'safety_report' | 'pediatric_commitment' | 'rems_commitment' | 'post_market_commitment', received 'submission'"
+      },
+      {
+        "code": "invalid_type",
+        "expected": "string",
+        "received": "undefined",
+        "path": [
+          "title"
+        ],
+        "message": "Required"
+      },
+      {
+        "code": "invalid_type",
+        "expected": "string",
+        "received": "undefined",
+        "path": [
+          "dueDate"
+        ],
+        "message": "Required"
+      },
+      {
+        "code": "invalid_union",
+        "unionErrors": [
+          {
+            "issues": [
+              {
+                "code": "invalid_type",
+                "expected": "object",
+                "received": "undefined",
+                "path": [
+                  "owner"
+                ],
+                "message": "Required"
+              }
+            ],
+            "name": "ZodError"
+          },
+          {
+            "issues": [
+              {
+                "code": "invalid_type",
+                "expected": "object",
+                "received": "undefined",
+                "path": [
+                  "owner"
+                ],
+                "message": "Required"
+              }
+            ],
+            "name": "ZodError"
+          }
+        ],
+        "path": [
+          "owner"
+        ],
+        "message": "Invalid input"
+      }
+    ],
+    "charterId": 12345,
+    "organizationId": 100
+  }
+}
+
+stderr | tests/unit/charters-routes.test.ts > POST /api/charters/:charterId/commitments — closed-enum Zod gate > (11) commitment audit row — not written because validation rejects first
+{
+  "timestamp": "2026-11-01T21:18:33.488Z",
+  "level": "warn",
+  "message": "[charters] Invalid commitment payload",
+  "context": {
+    "issues": [
+      {
+        "received": "submission",
+        "code": "invalid_enum_value",
+        "options": [
+          "regulatory_submission",
+          "agency_engagement",
+          "agency_meeting",
+          "regulatory_approval",
+          "clinical_hold_response",
+          "fda_deficiency_response",
+          "document_delivery",
+          "quality_assurance",
+          "team_deliverable",
+          "evidence_gathering",
+          "manufacturing_commitment",
+          "nonclinical_commitment",
+          "clinical_commitment",
+          "data_integrity",
+          "ectd_assembly",
+          "safety_report",
+          "pediatric_commitment",
+          "rems_commitment",
+          "post_market_commitment"
+        ],
+        "path": [
+          "category"
+        ],
+        "message": "Invalid enum value. Expected 'regulatory_submission' | 'agency_engagement' | 'agency_meeting' | 'regulatory_approval' | 'clinical_hold_response' | 'fda_deficiency_response' | 'document_delivery' | 'quality_assurance' | 'team_deliverable' | 'evidence_gathering' | 'manufacturing_commitment' | 'nonclinical_commitment' | 'clinical_commitment' | 'data_integrity' | 'ectd_assembly' | 'safety_report' | 'pediatric_commitment' | 'rems_commitment' | 'post_market_commitment', received 'submission'"
+      },
+      {
+        "code": "invalid_type",
+        "expected": "string",
+        "received": "undefined",
+        "path": [
+          "title"
+        ],
+        "message": "Required"
+      },
+      {
+        "code": "invalid_type",
+        "expected": "string",
+        "received": "undefined",
+        "path": [
+          "dueDate"
+        ],
+        "message": "Required"
+      },
+      {
+        "code": "invalid_union",
+        "unionErrors": [
+          {
+            "issues": [
+              {
+                "code": "invalid_type",
+                "expected": "object",
+                "received": "undefined",
+                "path": [
+                  "owner"
+                ],
+                "message": "Required"
+              }
+            ],
+            "name": "ZodError"
+          },
+          {
+            "issues": [
+              {
+                "code": "invalid_type",
+                "expected": "object",
+                "received": "undefined",
+                "path": [
+                  "owner"
+                ],
+                "message": "Required"
+              }
+            ],
+            "name": "ZodError"
+          }
+        ],
+        "path": [
+          "owner"
+        ],
+        "message": "Invalid input"
+      }
+    ],
+    "charterId": 555,
+    "organizationId": 100
+  }
+}
+
+stderr | tests/unit/charters-routes.test.ts > POST /api/charters/:charterId/commitments — closed-enum Zod gate > (12) invalid commitment.category — closed-enum Zod gate returns 400
+{
+  "timestamp": "2026-11-01T21:18:33.491Z",
+  "level": "warn",
+  "message": "[charters] Invalid commitment payload",
+  "context": {
+    "issues": [
+      {
+        "received": "NOT_A_CATEGORY",
+        "code": "invalid_enum_value",
+        "options": [
+          "regulatory_submission",
+          "agency_engagement",
+          "agency_meeting",
+          "regulatory_approval",
+          "clinical_hold_response",
+          "fda_deficiency_response",
+          "document_delivery",
+          "quality_assurance",
+          "team_deliverable",
+          "evidence_gathering",
+          "manufacturing_commitment",
+          "nonclinical_commitment",
+          "clinical_commitment",
+          "data_integrity",
+          "ectd_assembly",
+          "safety_report",
+          "pediatric_commitment",
+          "rems_commitment",
+          "post_market_commitment"
+        ],
+        "path": [
+          "category"
+        ],
+        "message": "Invalid enum value. Expected 'regulatory_submission' | 'agency_engagement' | 'agency_meeting' | 'regulatory_approval' | 'clinical_hold_response' | 'fda_deficiency_response' | 'document_delivery' | 'quality_assurance' | 'team_deliverable' | 'evidence_gathering' | 'manufacturing_commitment' | 'nonclinical_commitment' | 'clinical_commitment' | 'data_integrity' | 'ectd_assembly' | 'safety_report' | 'pediatric_commitment' | 'rems_commitment' | 'post_market_commitment', received 'NOT_A_CATEGORY'"
+      },
+      {
+        "code": "invalid_type",
+        "expected": "string",
+        "received": "undefined",
+        "path": [
+          "title"
+        ],
+        "message": "Required"
+      },
+      {
+        "code": "invalid_type",
+        "expected": "string",
+        "received": "undefined",
+        "path": [
+          "dueDate"
+        ],
+        "message": "Required"
+      },
+      {
+        "code": "invalid_union",
+        "unionErrors": [
+          {
+            "issues": [
+              {
+                "code": "invalid_type",
+                "expected": "object",
+                "received": "undefined",
+                "path": [
+                  "owner"
+                ],
+                "message": "Required"
+              }
+            ],
+            "name": "ZodError"
+          },
+          {
+            "issues": [
+              {
+                "code": "invalid_type",
+                "expected": "object",
+                "received": "undefined",
+                "path": [
+                  "owner"
+                ],
+                "message": "Required"
+              }
+            ],
+            "name": "ZodError"
+          }
+        ],
+        "path": [
+          "owner"
+        ],
+        "message": "Invalid input"
+      }
+    ],
+    "charterId": 555,
+    "organizationId": 100
+  }
+}
+
+ ✓ tests/unit/charters-routes.test.ts > POST /api/charters > (1) returns 201 with { charterId, status: "draft" } when authenticated and project belongs to org 32ms
+ ✓ tests/unit/charters-routes.test.ts > POST /api/charters > (2) returns 401 when unauthenticated (no req.user) 5ms
+ ✓ tests/unit/charters-routes.test.ts > POST /api/charters > (3) returns 403 when authenticated but no organizationId in JWT 4ms
+ ✓ tests/unit/charters-routes.test.ts > POST /api/charters > (4) returns 403 when projectId belongs to a different org (no existence leak) 4ms
+ ✓ tests/unit/charters-routes.test.ts > POST /api/charters > (5) writes an audit row capturing actor (userId), entity id (resourceId), payload (details), and ip address 4ms
+ ✓ tests/unit/charters-routes.test.ts > POST /api/charters > (6) CONTRACT DEVIATION — audit failure does NOT roll back the charter INSERT; 201 is still returned (best-effort audit by design) 4ms
+ ✓ tests/unit/charters-routes.test.ts > GET /api/charters/:charterId > (7) returns the charter when the org-scoped SELECT finds a row 4ms
+ ✓ tests/unit/charters-routes.test.ts > GET /api/charters/:charterId > (8) returns 404 on cross-org probe (collapsed with not-found, no existence leak) 3ms
+ ✓ tests/unit/charters-routes.test.ts > POST /api/charters/:charterId/commitments — closed-enum Zod gate > (9) invalid category is rejected at the Zod gate (400), no insert 6ms
+ ✓ tests/unit/charters-routes.test.ts > POST /api/charters/:charterId/commitments — closed-enum Zod gate > (10) cross-org commitment probe — same 400 (validation precedes any tenant write) 4ms
+ ✓ tests/unit/charters-routes.test.ts > POST /api/charters/:charterId/commitments — closed-enum Zod gate > (11) commitment audit row — not written because validation rejects first 3ms
+ ✓ tests/unit/charters-routes.test.ts > POST /api/charters/:charterId/commitments — closed-enum Zod gate > (12) invalid commitment.category — closed-enum Zod gate returns 400 3ms
+
+ Test Files  6 passed (6)
+      Tests  78 passed (78)
+   Start at  21:18:11
+   Duration  22.39s (transform 4.37s, setup 210ms, import 3.09s, tests 17.87s, environment 1ms)
+

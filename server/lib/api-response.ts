@@ -32,6 +32,8 @@ export { isConversionCapacityError };
 
 interface ScopedLogger {
   error: (message: string, context?: unknown) => void;
+  /** For what is not a failure: a request whose caller left (serverError). */
+  info?: (message: string, context?: unknown) => void;
 }
 
 /**
@@ -158,6 +160,27 @@ export function serverError(
       ? res.getHeader('X-Request-Id')
       : undefined;
   const correlationId = typeof header === 'string' && header ? header : null;
+
+  /* A request whose caller went away before its database work ran: the lease
+     released its client when the response ended, and the handler failed closed
+     asking for it (RequestEndedError, server/db/requestDb.ts). Nothing failed on
+     the server and nobody is waiting, so it is noted, not logged as a failure,
+     and no 500 is written to a response that has already ended. Keyed on the
+     code, so any other error on a cancelled request is still logged as the
+     failure it is, and only for a request that was never answered: a handler
+     that sent its own response and then asked for its client lost work after
+     that response, a defect that stays a logged failure. Until 2026-11-01
+     these were "<where> failed" with REQUEST_DB_CONTEXT_REQUIRED, which the
+     2026-10-26 launch walk read as Quality's reads failing
+     (docs/evidence/F1/2026-11-01-request-db-context/). */
+  if ((err as { code?: unknown } | null)?.code === 'REQUEST_ENDED' && !res.headersSent) {
+    log.info?.(`${where} stopped: the request ended before its database work ran`, {
+      ...extra,
+      correlationId,
+      code: 'REQUEST_ENDED',
+    });
+    return res;
+  }
 
   log.error(`${where} failed`, {
     ...extra,

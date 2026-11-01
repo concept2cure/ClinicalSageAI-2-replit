@@ -57,9 +57,9 @@
 .c2c-v2 .pj-ring svg{transform:rotate(-90deg);}
 .c2c-v2 .pj-ring-v{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .c2c-v2 .pj-ring-v b{font-size:20px;font-weight:600;color:var(--text-100);font-variant-numeric:tabular-nums;line-height:1;}
-.c2c-v2 .pj-ring-v span{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);margin-top:2px;}
+.c2c-v2 .pj-ring-v span{font-size:var(--fs-caption);color:var(--text-400);margin-top:2px;}
 .c2c-v2 .pj-target{text-align:right;}
-.c2c-v2 .pj-target .l{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);}
+.c2c-v2 .pj-target .l{font-size:var(--fs-caption);color:var(--text-400);}
 .c2c-v2 .pj-target .v{font-size:15px;font-weight:600;color:var(--text-100);margin-top:2px;}
 .c2c-v2 .pj-target .agency{font-size:11px;color:var(--accent-200);margin-top:2px;font-weight:500;}
 
@@ -76,7 +76,7 @@
 .c2c-v2 .pj-stage[data-st="active"] .pj-stage-dot{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--accent-on-strong);box-shadow:0 0 0 4px var(--accent-000);}
 .c2c-v2 .pj-stage[data-sel] .pj-stage-dot{transform:scale(1.06);}
 .c2c-v2 .pj-stage-btn{display:block;width:100%;padding-right:8px;}
-.c2c-v2 .pj-stage-num{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);}
+.c2c-v2 .pj-stage-num{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);}
 .c2c-v2 .pj-stage-lbl{font-size:12px;font-weight:600;color:var(--text-300);line-height:1.3;margin:2px 0 4px;}
 .c2c-v2 .pj-stage[data-st="done"] .pj-stage-lbl, .c2c-v2 .pj-stage[data-st="active"] .pj-stage-lbl{color:var(--text-100);}
 .c2c-v2 .pj-stage[data-sel] .pj-stage-lbl{color:var(--accent-200);}
@@ -92,13 +92,13 @@
 
 /* Selected stage detail */
 .c2c-v2 .pj-detail-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:6px;}
-.c2c-v2 .pj-detail-eye{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-200);}
+.c2c-v2 .pj-detail-eye{font-size:var(--fs-caption);font-weight:600;color:var(--text-300);}
 .c2c-v2 .pj-detail-t{font-size:18px;font-weight:600;color:var(--text-100);margin:3px 0 0;}
 .c2c-v2 .pj-detail-st{flex-shrink:0;}
 .c2c-v2 .pj-gate{display:flex;gap:9px;align-items:flex-start;background:var(--bg-050);border:1px solid var(--border);border-left:3px solid var(--accent-100);border-radius:var(--radius-md);padding:10px 12px;margin:12px 0 16px;}
 .c2c-v2 .pj-gate .ico{color:var(--accent-200);flex-shrink:0;margin-top:1px;}
 .c2c-v2 .pj-gate .ico svg{width:15px;height:15px;}
-.c2c-v2 .pj-gate .l{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);font-weight:600;}
+.c2c-v2 .pj-gate .l{font-size:var(--fs-caption);color:var(--text-400);font-weight:600;}
 .c2c-v2 .pj-gate .v{font-size:12.5px;color:var(--text-200);line-height:1.5;margin-top:2px;}
 .c2c-v2 .pj-what{font-size:13px;line-height:1.6;color:var(--text-300);margin:0 0 4px;}
 .c2c-v2 .pj-deliv{display:flex;flex-direction:column;gap:6px;}
@@ -167,7 +167,7 @@
 .c2c-v2 .pj-blk{display:flex;flex-direction:column;gap:7px;}
 .c2c-v2 .pj-blk-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border);}
 .c2c-v2 .pj-blk-row:last-child{border-bottom:0;}
-.c2c-v2 .pj-sev{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:var(--radius-sm);flex-shrink:0;}
+.c2c-v2 .pj-sev{font-size:var(--fs-caption);font-weight:600;padding:2px 7px;border-radius:var(--radius-sm);flex-shrink:0;}
 .c2c-v2 .pj-sev[data-s="high"]{background:var(--error-muted);color:var(--error);}
 .c2c-v2 .pj-sev[data-s="med"]{background:var(--warning-muted);color:var(--warning);}
 .c2c-v2 .pj-sev[data-s="low"]{background:var(--bg-200);color:var(--text-300);}
@@ -198,7 +198,7 @@
 .c2c-v2 .ae-pstage:last-child::after{display:none;}
 .c2c-v2 .ae-pstage[data-k="validate"]{border-color:var(--success);background:var(--success-muted);}
 .c2c-v2 .ae-pstage[data-k="draft"]{border-color:var(--accent-100);background:var(--accent-000);}
-.c2c-v2 .ae-pstage-n{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-200);}
+.c2c-v2 .ae-pstage-n{font-size:var(--fs-caption);font-weight:600;color:var(--text-200);}
 .c2c-v2 .ae-pstage-ic{width:22px;height:22px;color:var(--accent-200);margin:8px 0 6px;}
 .c2c-v2 .ae-pstage-ic svg{width:20px;height:20px;}
 .c2c-v2 .ae-pstage[data-k="validate"] .ae-pstage-ic{color:var(--success);}
@@ -212,13 +212,13 @@
 .c2c-v2 .ae-sys[data-on]{border-color:var(--accent-100);background:var(--accent-000);}
 .c2c-v2 .ae-sys-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
 .c2c-v2 .ae-sys-loc{font-family:var(--font-mono);font-size:10.5px;font-weight:600;color:var(--accent-200);background:var(--bg-100);border-radius:5px;padding:2px 7px;}
-.c2c-v2 .ae-sys-mod{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);}
+.c2c-v2 .ae-sys-mod{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);}
 .c2c-v2 .ae-sys-t{font-size:13.5px;font-weight:600;color:var(--text-100);line-height:1.3;margin-bottom:8px;}
 .c2c-v2 .ae-sys-track{height:5px;border-radius:3px;background:var(--bg-200);overflow:hidden;margin-bottom:6px;}
 .c2c-v2 .ae-sys-track span{display:block;height:100%;background:var(--accent-100);}
 .c2c-v2 .ae-sys-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:10.5px;color:var(--text-400);}
 .c2c-v2 .ae-sys-tags{display:flex;gap:4px;}
-.c2c-v2 .ae-sys-tag{font-size:10px;font-weight:600;padding:1px 6px;border-radius:var(--radius-sm);background:var(--ai-muted);color:var(--ai);text-transform:uppercase;letter-spacing:.02em;}
+.c2c-v2 .ae-sys-tag{font-size:var(--fs-caption);font-weight:600;padding:1px 6px;border-radius:var(--radius-sm);background:var(--ai-muted);color:var(--ai);}
 .c2c-v2 .ae-sys-tag[data-tmpl]{background:var(--success-muted);color:var(--success);}
 
 /* System detail sheet */
@@ -253,10 +253,10 @@
 .c2c-v2 .ae-flow-step{flex:1;min-width:150px;background:var(--bg-050);border:1px solid var(--border);border-radius:var(--radius-md);padding:9px 11px;margin-right:20px;position:relative;margin-bottom:8px;}
 .c2c-v2 .ae-flow-step::after{content:'→';position:absolute;right:-15px;top:50%;transform:translateY(-50%);color:var(--text-400);}
 .c2c-v2 .ae-flow-step:last-child{margin-right:0;}.c2c-v2 .ae-flow-step:last-child::after{display:none;}
-.c2c-v2 .ae-flow-k{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--accent-200);}
+.c2c-v2 .ae-flow-k{font-size:var(--fs-caption);font-weight:600;color:var(--text-300);}
 .c2c-v2 .ae-flow-v{font-size:11.5px;color:var(--text-200);line-height:1.4;margin-top:3px;}
 .c2c-v2 .ae-auto-val{background:var(--bg-050);border-left:3px solid var(--success);border-radius:var(--radius-sm);padding:9px 12px;}
-.c2c-v2 .ae-auto-val-l{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--success);margin-bottom:4px;}
+.c2c-v2 .ae-auto-val-l{font-size:var(--fs-caption);font-weight:600;color:var(--success);margin-bottom:4px;}
 .c2c-v2 .ae-auto-val-t{font-size:11.5px;color:var(--text-300);line-height:1.5;}
 
 /* ════════════════════════════════════════════════════════════════════
@@ -281,7 +281,7 @@
 .c2c-v2 .sp-starter:hover{background:var(--bg-100);}
 .c2c-v2 .sp-starter .sk{width:14px;height:14px;flex-shrink:0;color:var(--text-300);}.c2c-v2 .sp-starter .sk svg{width:14px;height:14px;}
 .c2c-v2 .sp-sec{margin-bottom:22px;}
-.c2c-v2 .sp-sample{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-300);background:var(--bg-100);border-radius:var(--radius-sm);padding:2px 6px;}
+.c2c-v2 .sp-sample{font-size:var(--fs-caption);font-weight:600;color:var(--text-300);background:var(--bg-100);border-radius:var(--radius-sm);padding:2px 6px;}
 .c2c-v2 .sp-queue{display:flex;flex-direction:column;gap:8px;}
 .c2c-v2 .sp-q{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);padding:11px 13px;transition:border-color var(--dur);}
 .c2c-v2 .sp-q:hover{border-color:var(--text-400);}
@@ -298,7 +298,7 @@
 .c2c-v2 .sp-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--border);}
 .c2c-v2 .sp-row:last-child{border-bottom:0;}
 .c2c-v2 .sp-tag{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--text-300);background:var(--bg-100);border-radius:var(--radius-sm);padding:2px 7px;flex-shrink:0;white-space:nowrap;}
-.c2c-v2 .sp-tag2{font-size:10px;font-weight:600;color:var(--text-400);background:var(--bg-100);border-radius:var(--radius-sm);padding:2px 7px;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em;}
+.c2c-v2 .sp-tag2{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);background:var(--bg-100);border-radius:var(--radius-sm);padding:2px 7px;flex-shrink:0;}
 .c2c-v2 .sp-row-b{flex:1;min-width:0;display:flex;flex-direction:column;}
 /* `.sp-row-b` is `flex:1 1 0%` with `min-width:0`, so when the row's other
    columns take 242 of its 298px the label is handed 56 and shrinks below its
@@ -307,7 +307,7 @@
    about the row's proportions rather than a wrapping one — ledger L111. */
 .c2c-v2 .sp-row-t{font-size:12.5px;font-weight:500;color:var(--text-100);line-height:1.35;overflow-wrap:break-word;}
 .c2c-v2 .sp-row-s{font-size:11px;color:var(--text-400);margin-top:1px;overflow-wrap:break-word;}
-.c2c-v2 .sp-sev{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:var(--radius-sm);flex-shrink:0;}
+.c2c-v2 .sp-sev{font-size:var(--fs-caption);font-weight:600;padding:2px 7px;border-radius:var(--radius-sm);flex-shrink:0;}
 .c2c-v2 .sp-sev[data-s="high"]{background:var(--error-muted);color:var(--error);}
 .c2c-v2 .sp-sev[data-s="med"]{background:var(--warning-muted);color:var(--warning);}
 .c2c-v2 .sp-sev[data-s="low"]{background:var(--bg-200);color:var(--text-300);}
@@ -360,7 +360,7 @@
 .c2c-v2 .cm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
 .c2c-v2 .cm-matrix{overflow-x:auto;}
 .c2c-v2 .cm-matrix table{border-collapse:collapse;width:100%;font-size:12px;}
-.c2c-v2 .cm-matrix th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);font-weight:600;padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;}
+.c2c-v2 .cm-matrix th{font-size:var(--fs-caption);color:var(--text-400);font-weight:600;padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;}
 .c2c-v2 .cm-matrix th:first-child{text-align:left;}
 .c2c-v2 .cm-matrix td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;color:var(--text-300);}
 .c2c-v2 .cm-matrix td:first-child{text-align:left;font-weight:600;color:var(--text-100);white-space:nowrap;}
@@ -411,12 +411,24 @@
 .c2c-v2 .pj-con.is-ok .pj-con-t{color:var(--success);}
 .c2c-v2 .pj-con.is-ok>.ico{color:var(--success);}
 .c2c-v2 .cm-projbar-sm{height:5px;width:64px;display:inline-block;vertical-align:middle;margin-right:7px;}
-.c2c-v2 .cm-list{margin:4px 0 0;padding-left:18px;}
-.c2c-v2 .cm-list li{margin-bottom:3px;}
-/* Was 11px uppercase with letter-spacing (ONE_DESIGN_PLAN §2 retires the
-   uppercase label). Its text — "Drug substance — §3.2.S" — was always
-   sentence case; only this rule shouted it. */
-.c2c-v2 .cm-sub-head{font-size:13px;font-weight:600;color:var(--text-200);margin:24px 0 8px;}
+/* A list of records with an action on each row: the row's own button sits
+   with its sentence, so the gap between items is a line's worth, not three
+   pixels (D5 §A.4.9, where the register-links card became a section). */
+.c2c-v2 .cm-list{margin:4px 0 0;padding-left:18px;font-size:var(--fs-small);}
+.c2c-v2 .cm-list li{margin-bottom:6px;}
+.c2c-v2 .cm-list li .btn{margin-left:8px;vertical-align:baseline;}
+/* The label over a GROUP of registers ("Drug substance — §3.2.S" over the
+   seven §3.2.S registers). Two changes, 2026-11-01:
+   • It was 11px uppercase with letter-spacing (ONE_DESIGN_PLAN §2 retires the
+     uppercase label). Its text was always sentence case; only this rule
+     shouted it.
+   • With D5 §A.4.9 each register became a `.pj-sec` whose title is an `h2`,
+     so a 13px group label sat ABOVE a 15px heading that repeats its first
+     words — "Drug substance — §3.2.S" over "Drug substance". A group label
+     that competes with the headings under it is worse than none, so it reads
+     as the divider it is: a hairline, the label, then the group. */
+.c2c-v2 .cm-sub-head{font-size:var(--fs-small);font-weight:500;color:var(--text-400);margin:40px 0 20px;padding-top:16px;border-top:1px solid var(--border);}
+.c2c-v2 .cm-sub-head:first-child{margin-top:0;padding-top:0;border-top:0;}
 /* A results table nested inside an expanded register row. */
 .c2c-v2 .cm-subtable{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-md);margin:8px 0;}
 .c2c-v2 .cm-subtable th{background:transparent;}
@@ -440,7 +452,7 @@
    having no source data both still read as live controls. */
 .c2c-v2 .nda-open:disabled{opacity:.5;cursor:not-allowed;}
 .c2c-v2 .pj-toolgrp{margin-bottom:16px;}
-.c2c-v2 .pj-toolgrp-l{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:8px;}
+.c2c-v2 .pj-toolgrp-l{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);margin-bottom:8px;}
 .c2c-v2 .sp-tone-err{color:var(--error);font-weight:600;}
 .c2c-v2 .sp-tone-warn{color:var(--warning);font-weight:600;}
 .c2c-v2 .sp-tone-ok{color:var(--success);font-weight:600;}

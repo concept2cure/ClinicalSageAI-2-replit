@@ -1,0 +1,63 @@
+# Mutation A: the released-lease check removed from boundClient (server/db/requestDb.ts); serverError branch kept
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-list (/api/mdx/qms/documents), boundary warn 43ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > change-list (/api/mdx/qms/changes), boundary warn 10ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-review-due (/api/mdx/qms/documents/review-due), boundary warn 7ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > training-compliance (/api/mdx/qms/training/compliance), boundary warn 8ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unread-count (/api/mdx/notifications/unread-count), boundary warn 7ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/u
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-list (/api/mdx/qms/documents), boundary enforce 5ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > change-list (/api/mdx/qms/changes), boundary enforce 6ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-review-due (/api/mdx/qms/documents/review-due), boundary enforce 11ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > training-compliance (/api/mdx/qms/training/compliance), boundary enforce 8ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unread-count (/api/mdx/notifications/unread-count), boundary enforce 17ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/u
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing re
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing re
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > change-list (/api/mdx/qms/changes): the client left at standing r
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > training-compliance (/api/mdx/qms/training/compliance): the clien
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > unread-count (/api/mdx/notifications/unread-count): the client le
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > loading unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a route with no scope installer still names the defect > REQUEST_DB_CONTEXT_REQUIRED, logged as a failure 4ms
+✓ server/db/__tests__/requestDb.test.ts > requestDb > returns a Drizzle wrapper bound to req.dbClient when one is set 32ms
+✓ server/db/__tests__/requestDb.test.ts > requestDb > fails closed with a typed error when dbClient is missing 2ms
+✓ server/db/__tests__/requestDb.test.ts > requestDb > fails closed when dbClient does not implement query 1ms
+✓ server/db/__tests__/requestDb.test.ts > requestDb > caches the wrapper on the request to avoid rebuilding per call 29ms
+✓ server/db/__tests__/requestDb.test.ts > requestPgClient (raw-SQL sibling for tables without a Drizzle schema) > hands back the request-scoped client itself 0ms
+✓ server/db/__tests__/requestDb.test.ts > requestPgClient (raw-SQL sibling for tables without a Drizzle schema) > fails closed with the same typed error when context is missing 1ms
+✓ server/db/__tests__/requestDb.test.ts > requestConnectable transaction ownership > keeps a healthy borrowed connection pinned but propagates uncertain completion to its actual owner 2ms
+× server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > is refused as REQUEST_ENDED by requestPgClient, requestDb and requestConnectable, still failing closed as a missing contex
+✓ server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > leaves REQUEST_DB_CONTEXT_REQUIRED to a request that never had a client 1ms
+× server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > serves a client retained past the response, and refuses it once its holder lets go 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+Tests  8 failed | 21 passed (29)
+
+# Mutation B: the REQUEST_ENDED branch disabled in serverError (server/lib/api-response.ts); requestDb.ts fixed
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-list (/api/mdx/qms/documents), boundary warn 51ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > change-list (/api/mdx/qms/changes), boundary warn 12ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-review-due (/api/mdx/qms/documents/review-due), boundary warn 12ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > training-compliance (/api/mdx/qms/training/compliance), boundary warn 11ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unread-count (/api/mdx/notifications/unread-count), boundary warn 9ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/u
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-list (/api/mdx/qms/documents), boundary enforce 6ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > change-list (/api/mdx/qms/changes), boundary enforce 6ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-review-due (/api/mdx/qms/documents/review-due), boundary enforce 7ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > training-compliance (/api/mdx/qms/training/compliance), boundary enforce 6ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unread-count (/api/mdx/notifications/unread-count), boundary enforce 6ms
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/u
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing re
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing re
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > change-list (/api/mdx/qms/changes): the client left at standing r
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > training-compliance (/api/mdx/qms/training/compliance): the clien
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > unread-count (/api/mdx/notifications/unread-count): the client le
+× server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > loading unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d
+✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a route with no scope installer still names the defect > REQUEST_DB_CONTEXT_REQUIRED, logged as a failure 4ms
+✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > answers a missing-relation error without naming the relation 4ms
+✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > rejects the other driver-error shapes, not just the one that was reported 2ms
+✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > still gives the operator everything needed to find the real error 4ms
+✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > sends a code the client will not display and a sentence it will 1ms
+✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > omits the reference rather than inventing one when no request id was set 1ms
+✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > is falsifiable: the pre-fix behaviour would fail these assertions 0ms
+× server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > notes it, logs no failure and writes nothing to the ended response 7ms
+✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > still logs a request with no database context as a failure, with a 500 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+Tests  7 failed | 20 passed (27)

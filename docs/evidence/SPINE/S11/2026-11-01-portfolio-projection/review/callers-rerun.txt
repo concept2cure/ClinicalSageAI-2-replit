@@ -1,0 +1,12 @@
+# Review: affected callers (9 server route test files, 8 Projects surface test files)
+## server: exit 1, the 3 pre-existing projects-client-workspaces pathway-count failures only
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > counts all 60 admitted programs while measuring only the 50 returned rows 87ms
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > filters pathways before paging and preserves independent usable facets 65ms
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > keeps Other rows visible and countable rather than dropping unknown filing types 47ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 8 passed (9)
+      Tests  3 failed | 178 passed (181)
+
+## client: exit 0
+ Test Files  8 passed (8)
+      Tests  42 passed (42)

@@ -18,7 +18,7 @@
 .rc-ana-scroll{ flex:1; min-height:0; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; }
 
 .rc-opener{ background:var(--bg-000); border:1px solid var(--border); border-radius:var(--radius-md,12px); padding:14px; }
-.rc-op-head{ display:flex; align-items:center; gap:7px; font-size:10.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--ai,#6a9bcc); margin-bottom:8px; }
+.rc-op-head{ display:flex; align-items:center; gap:7px; font-size:var(--fs-caption); font-weight:600; color:var(--ai,#6a9bcc); margin-bottom:8px; }
 .rc-op-headline{ font-size:14.5px; font-weight:600; color:var(--text-100); line-height:1.4; margin-bottom:6px; }
 .rc-op-body{ font-size:12.5px; color:var(--text-300); line-height:1.55; margin-bottom:11px; }
 .rc-preset-btn{ display:inline-flex; align-items:center; gap:7px; width:100%; justify-content:center; background:var(--accent-strong); color:var(--accent-on-strong); border:none; border-radius:9px; padding:9px 12px; font-size:12.5px; font-weight:600; cursor:pointer; transition:background var(--dur) var(--ease); }
@@ -49,7 +49,7 @@
 
 .rc-composer{ border-top:1px solid var(--border); padding:11px 14px 13px; background:var(--bg-050); }
 .rc-tier{ display:flex; align-items:center; gap:5px; margin-bottom:9px; }
-.rc-tier-lbl{ font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-400); margin-right:3px; }
+.rc-tier-lbl{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin-right:3px; }
 .rc-tier-b{ background:var(--bg-000); border:1px solid var(--border); color:var(--text-300); font-size:11px; font-weight:600; padding:4px 9px; border-radius:7px; cursor:pointer; }
 .rc-tier-b.on{ background:var(--accent-strong); color:var(--accent-on-strong); border-color:var(--accent-strong); }
 .rc-input{ display:flex; align-items:flex-end; gap:8px; background:var(--bg-000); border:1px solid var(--border-control); border-radius:13px; padding:8px 8px 8px 12px; transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
@@ -73,16 +73,16 @@
 .rc-ep-h{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:var(--text-100); }
 .rc-ep-h svg{ width:15px; height:15px; color:var(--accent-200); }
 .rc-ep-s{ font-size:12.5px; color:var(--text-300); line-height:1.55; margin:6px 0 8px; }
-.rc-ep-types{ font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-400); }
+.rc-ep-types{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); }
 
 /* ── Governed report artifact ── */
 .ro-report{ max-width:760px; }
 .ro-rep-head{ margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--border); }
-.ro-rep-eyebrow{ display:flex; align-items:center; gap:8px; font-size:10.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text-400); margin-bottom:7px; }
+.ro-rep-eyebrow{ display:flex; align-items:center; gap:8px; font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin-bottom:7px; }
 .ro-region{ background:var(--bg-100); color:var(--text-300); padding:1px 6px; border-radius:5px; font-size:10px; letter-spacing:.03em; }
 .ro-rep-title{ font-size:22px; font-weight:600; color:var(--text-100); margin:0 0 9px; line-height:1.25; }
 .ro-rep-meta{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--text-400); }
-.ro-status{ font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; padding:2px 9px; border-radius:999px; }
+.ro-status{ font-size:var(--fs-caption); font-weight:600; padding:2px 9px; border-radius:999px; }
 /* Reporting review 2026-10-01 (DESIGN-1, DESIGN-2): these mixed a status hue
    toward #000, which sinks the dark theme's tokens to 2.6-3.6:1, and the
    critical tag was a fixed #8a3a3a (1.98:1 on dark). They now use the design
@@ -94,14 +94,14 @@
 .ro-truth{ display:flex; align-items:flex-start; gap:7px; font-size:11.5px; color:var(--text-300); line-height:1.5; margin-top:11px; padding:9px 11px; background:var(--bg-050); border-radius:var(--radius-lg); }
 .ro-truth svg{ width:13px; height:13px; flex-shrink:0; margin-top:1px; color:var(--text-400); }
 .ro-sec{ margin-bottom:22px; }
-.ro-sec-h{ font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text-400); margin:0 0 12px; }
+.ro-sec-h{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin:0 0 12px; }
 .ro-sec-body{ display:flex; flex-wrap:wrap; gap:0 14px; }
 .ro-sec-body > *{ width:100%; }
 
 .ro-summary{ font-size:13.5px; color:var(--text-200); line-height:1.6; margin:0 0 12px; max-width:680px; }
 .ro-narr{ margin:0 0 12px; max-width:680px; }
 .ro-narr-body{ font-family:var(--font-serif,Georgia,serif); font-size:14px; color:var(--text-100); line-height:1.65; margin:0; }
-.ro-narr-tag{ font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:var(--text-400); font-weight:600; margin:6px 0 0; }
+.ro-narr-tag{ font-size:var(--fs-caption); color:var(--text-400); font-weight:600; margin:6px 0 0; }
 .ro-metric{ width:auto !important; min-width:150px; background:var(--bg-000); border:1px solid var(--border); border-radius:10px; padding:11px 13px; margin:0 12px 12px 0; }
 .ro-m-lbl{ font-size:11px; color:var(--text-400); margin-bottom:5px; }
 .ro-m-val{ font-size:23px; font-weight:600; color:var(--text-100); line-height:1; }
@@ -130,7 +130,7 @@
 .ro-list{ list-style:none; margin:0 0 12px; padding:0; width:100%; max-width:680px; }
 .ro-li{ display:flex; align-items:baseline; gap:9px; padding:7px 0; border-top:1px dashed var(--border); font-size:12.5px; }
 .ro-li:first-child{ border-top:none; }
-.ro-sev{ font-size:10px; letter-spacing:.05em; text-transform:uppercase; font-weight:600; flex:0 0 62px; }
+.ro-sev{ font-size:var(--fs-caption); font-weight:600; flex:0 0 62px; }
 .ro-sev.sev-critical{ color:var(--error); font-weight:700; } .ro-sev.sev-high{ color:var(--error); } .ro-sev.sev-medium{ color:var(--warning); } .ro-sev.sev-low{ color:var(--text-400); }
 .ro-li-b{ color:var(--text-100); flex:1; min-width:0; }
 /* The device section's 24-month submission pace (fold F4): one month per cell, the count beside it. */
@@ -138,7 +138,7 @@
 .ro-pace .ro-li{ border-top:none; padding:3px 0; }
 .ro-li-msg{ display:block; font-size:11px; color:var(--text-400); margin-top:2px; }
 .ro-disc{ margin:0 0 12px; padding:12px 14px; border-left:3px solid var(--warning); background:color-mix(in srgb,var(--warning) 6%,transparent); border-radius:var(--radius-lg); max-width:680px; }
-.ro-disc-h{ font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; color:var(--text-400); margin-bottom:4px; }
+.ro-disc-h{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin-bottom:4px; }
 .ro-disc-m{ font-size:12.5px; color:var(--text-100); margin-bottom:4px; }
 .ro-disc-s{ font-size:11.5px; color:var(--text-400); }
 .ro-disc-n{ font-size:11.5px; color:var(--text-400); margin-top:4px; font-style:italic; }
@@ -157,7 +157,7 @@
 .ro-pack-card:hover{ border-color:var(--accent-200); transform:translateY(-1px); box-shadow:var(--shadow-sm,0 2px 8px rgba(20,20,19,.05)); }
 .ro-pack-card.is-locked{ cursor:default; opacity:.9; background:var(--bg-050); }
 .ro-pack-card.is-locked:hover{ transform:none; box-shadow:none; border-color:var(--border); }
-.ro-pack-fam{ display:flex; align-items:center; gap:6px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-400); }
+.ro-pack-fam{ display:flex; align-items:center; gap:6px; font-size:var(--fs-caption); font-weight:600; color:var(--text-400); }
 .ro-pack-title{ font-size:13.5px; font-weight:600; color:var(--text-100); line-height:1.35; }
 .ro-pack-kpi{ display:flex; align-items:baseline; gap:6px; margin-top:auto; }
 .ro-pack-kpi .v{ font-size:20px; font-weight:600; color:var(--text-100); }
@@ -218,7 +218,7 @@
 .rl-table{ width:100%; border-collapse:collapse; background:var(--bg-000); }
 .rl-cap{ caption-side:top; text-align:left; font-size:11px; color:var(--text-400); padding:0 0 7px; }
 .rl-table th, .rl-table td{ text-align:left; font-size:12px; padding:9px 11px; border-bottom:1px solid var(--border); vertical-align:top; }
-.rl-table th{ font-weight:600; color:var(--text-400); font-size:10.5px; letter-spacing:.04em; text-transform:uppercase; background:var(--bg-050); }
+.rl-table th{ font-weight:600; color:var(--text-400); font-size:var(--fs-caption); background:var(--bg-050); }
 .rl-table td{ color:var(--text-200); }
 .rl-table tr:last-child td{ border-bottom:none; }
 .rl-pick-h{ width:62px; }
