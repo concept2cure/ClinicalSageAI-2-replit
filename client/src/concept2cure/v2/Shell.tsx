@@ -24,7 +24,7 @@ import { hasKeys, useLiveData } from './dataConnect';
 import { isOrgAdminRole } from './orgAdmin';
 import { canAdministerBilling } from '@shared/constants/permissions';
 import { TaskTray } from './TaskTray';
-import { readShellProject, shellProgramName, useShellProject, type ShellProject } from './shellProject';
+import { readShellProject, shellProgramName, updateShellProject, useShellProject, type ShellProject } from './shellProject';
 import { destinationFor } from './routing';
 import { OPEN_PROGRAM_SURFACE } from './programAction';
 import { isMdxProjectFeature } from '@shared/constants/mdx-project-features';
@@ -793,6 +793,32 @@ function shellProjectName(project: ShellProject | null): string {
   return String(project?.code ?? '').trim() || String(project?.title ?? '').trim();
 }
 
+const isNamedProgram = hasKeys<{ id: string; name: string | null; code: string | null }>('id');
+
+/**
+ * A project opened by its link alone (a new tab, a reload, a shared link, a
+ * bookmark) is in the shell by id only, so the top bar had no name to show for
+ * it and a work area's way back read "Project" (UI walks, 2026-10-31 and
+ * 2026-11-01: the project's agency inbox; the CMC session, 2026-11-02, on
+ * ProjectBack). The top bar reads the project once (GET /api/c2c/projects/:id)
+ * and names it in the shell's channel, as Projects does on opening one, so
+ * every reader of the channel has its name. A name the shell already has is
+ * kept, and a read that answered for another project names nothing.
+ */
+function useNameProjectOpenedById(project: ShellProject | null): void {
+  const unnamed = project && !String(project.title ?? '').trim() && !String(project.code ?? '').trim()
+    ? String(project.id).trim().toLowerCase()
+    : null;
+  const read = useLiveData(unnamed ? `/api/c2c/projects/${encodeURIComponent(unnamed)}` : null, [unnamed], isNamedProgram);
+  const row = read.data;
+  React.useEffect(() => {
+    if (!unnamed || !row || String(row.id).toLowerCase() !== unnamed) return;
+    const live = readShellProject();
+    if (!live || String(live.id).trim().toLowerCase() !== unnamed || live.title || live.code) return;
+    updateShellProject({ ...(row.name ? { title: row.name } : {}), ...(row.code ? { code: row.code } : {}) });
+  }, [unnamed, row]);
+}
+
 /** Screens that name themselves in their own body (Home's greeting, the conversation's
  *  header), so the bar adds no page crumb there (D1.md §D1.B step 1). */
 const SELF_NAMED_SURFACES: ReadonlySet<string> = new Set(['home', 'conversation-thread']);
@@ -840,6 +866,7 @@ export function TopBar({
   /* The shell's one project channel: the crumb changes the moment a screen opens
      another project. */
   const openProject = useShellProject();
+  useNameProjectOpenedById(openProject);
   const projectName = shellProjectName(openProject);
   const projectTitle = [openProject?.code, openProject?.title].map((v) => String(v ?? '').trim()).filter(Boolean).join(' — ');
   const onProjectPage = surface.id === 'project-home';

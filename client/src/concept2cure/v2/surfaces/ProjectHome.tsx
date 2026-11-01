@@ -1804,16 +1804,9 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
     const productType = prog?.product_type;
     if (pid && productType) updateShellProject({ productType });
   }, [pid, prog?.product_type]);
-  /* A project opened by its link alone (a reload, a shared link) is in the
-     shell by id, so the top bar could only say "Open project" while this page
-     named it. Once the read answers for this project, it names it there, as
-     Projects does on opening one; a name the shell already has is kept. */
-  useEffect(() => {
-    if (!pid || prog?.id !== pid) return;
-    const live = readShellProject();
-    if (!live || String(live.id) !== pid || live.title || live.code) return;
-    updateShellProject({ ...(prog.name ? { title: prog.name } : {}), ...(prog.code ? { code: prog.code } : {}) });
-  }, [pid, prog?.id, prog?.name, prog?.code]);
+  /* A project opened by its link alone is named in the shell by the top bar's
+     project chip (Shell.tsx useNameProjectOpenedById), on every screen, not
+     only this one. */
 
 
   const noProject = !pid;
