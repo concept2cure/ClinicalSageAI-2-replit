@@ -12,7 +12,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { evaluateCommit, globToRegExp, run, LEDGER_PATH } from './check-one-design-plan.mjs';
+import { anaToolNames, evaluateCommit, globToRegExp, run, ANA_TOOL_INVENTORY, LEDGER_PATH } from './check-one-design-plan.mjs';
 
 let failed = 0;
 const expect = (label, ok) => {
@@ -31,7 +31,8 @@ const ledger = {
   ],
   approvedAdditions: [{ kind: 'surface', name: 'approved-screen', package: 'F1' }],
 };
-const commit = (message, files, additions = []) => ({ sha: 'deadbeefcafe', message, files: files.map((p) => ({ status: 'M', path: p })), additions });
+const commit = (message, files, additions = [], extra = {}) => ({ sha: 'deadbeefcafe', message, files: files.map((p) => ({ status: 'M', path: p })), additions, ...extra });
+const after6 = { completesRequired: true, completesMissing: [] };
 const refused = (c, pattern) => evaluateCommit(ledger, c).some((f) => pattern.test(f.reason));
 const accepted = (c) => evaluateCommit(ledger, c).length === 0;
 
@@ -50,6 +51,17 @@ expect('refuses an approved addition under another package', refused(commit('X\n
 expect('refuses a plan change outside PLAN', refused(commit('X\n\nPlan: F1', ['CLAUDE.md']), /changes the plan/));
 expect('refuses a plan change without a founder decision', refused(commit('X\n\nPlan: PLAN', ['docs/design/ONE_DESIGN_PLAN.md']), /Founder-Decision/));
 expect('accepts a plan change under PLAN with a founder decision', accepted(commit('X\n\nPlan: PLAN\nFounder-Decision: P-78', ['docs/design/ONE_DESIGN_PLAN.md', LEDGER_PATH])));
+
+console.log('Part 1b — RULE 6: nothing new, finish what exists');
+expect('refuses a commit that names nothing it completes', refused(commit('X\n\nPlan: F1', ['client/x.ts'], [], after6), /names nothing it completes/));
+expect('refuses a Completes trailer naming nothing that existed', refused(commit('X\n\nPlan: F1\nCompletes: client/gone.ts', ['client/x.ts'], [], { completesRequired: true, completesMissing: ['client/gone.ts'] }), /names nothing that existed/));
+expect('accepts a commit that names what it completes', accepted(commit('X\n\nPlan: F1\nCompletes: client/x.ts', ['client/x.ts'], [], after6)));
+expect('a PLAN commit needs no Completes trailer', accepted(commit('X\n\nPlan: PLAN\nFounder-Decision: P-80', [LEDGER_PATH], [], after6)));
+expect('a commit before RULE 6 is not asked for one', accepted(commit('X\n\nPlan: F1', ['client/x.ts'])));
+expect('refuses a new route file', refused(commit('X\n\nPlan: F1\nCompletes: server/routes', ['server/routes/new-thing.ts'], [{ kind: 'route', name: 'server/routes/new-thing.ts' }], after6), /adds a route "server\/routes\/new-thing\.ts"/));
+expect('refuses a new service', refused(commit('X\n\nPlan: F1\nCompletes: server/services', ['server/services/new-engine/a.ts'], [{ kind: 'service', name: 'server/services/new-engine' }], after6), /adds a service/));
+expect('refuses a new AnA tool', refused(commit('X\n\nPlan: F1\nCompletes: server/services/ana', [ANA_TOOL_INVENTORY], [{ kind: 'ana-tool', name: 'brand_new_tool' }], after6), /adds a ana-tool "brand_new_tool"/));
+expect('reads every AnA tool name, in scope and held', [...anaToolNames(JSON.stringify({ tools: { inScope: ['a'], hiddenApp: [{ surfaces: ['s'], names: ['b'] }] } }))].sort().join() === 'a,b');
 
 console.log('Part 2 — real git history');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'one-design-plan-'));
@@ -77,6 +89,30 @@ try {
   write('migrations/20990101_new.sql', 'CREATE TABLE IF NOT EXISTS public.brand_new (id int);\n'); g('add', '.'); g('commit', '-q', '-m', 'A new table\n\nPlan: F1');
   r = run({ cwd: dir, range: `${base}..HEAD` });
   expect('git: a new table in a new migration is refused', r.findings.some((f) => /adds a table "public.brand_new"/.test(f.reason)));
+  g('reset', '-q', '--hard', 'HEAD~1');
+
+  // RULE 6 starts at the commit that puts "completesRequired" into the ledger.
+  // Work that existed before RULE 6, including a new service, is judged by the rules of its own time.
+  write('server/services/vault/existing.ts', 'export {};\n'); write(ANA_TOOL_INVENTORY, JSON.stringify({ tools: { inScope: ['old_tool'], hiddenApp: [] } }));
+  g('add', '.'); g('commit', '-q', '-m', 'Existing work\n\nPlan: F1');
+  write(LEDGER_PATH, JSON.stringify({ ...ledger, completesRequired: true })); g('add', '.'); g('commit', '-q', '-m', 'RULE 6\n\nPlan: PLAN\nFounder-Decision: P-80');
+  r = run({ cwd: dir, range: `${base}..HEAD` });
+  expect('git: commits before RULE 6, and RULE 6 itself, are not asked to name what they complete', r.findings.length === 0);
+
+  const attempt = (label, files, message, pattern) => {
+    for (const [file, text] of Object.entries(files)) write(file, text);
+    g('add', '.'); g('commit', '-q', '-m', message);
+    const res = run({ cwd: dir, range: `${base}..HEAD` });
+    expect(label, pattern ? res.findings.some((f) => pattern.test(f.reason)) : res.findings.length === 0);
+    g('reset', '-q', '--hard', 'HEAD~1');
+  };
+  attempt('git: after RULE 6, a commit that names nothing it completes is refused', { 'server/services/vault/existing.ts': 'export const a = 1;\n' }, 'Work\n\nPlan: F1', /names nothing it completes/);
+  attempt('git: a Completes trailer naming a path that did not exist is refused', { 'server/services/vault/existing.ts': 'export const a = 1;\n' }, 'Work\n\nPlan: F1\nCompletes: server/services/vault/ghost.ts', /names nothing that existed/);
+  attempt('git: finishing an existing file, named, is accepted', { 'server/services/vault/existing.ts': 'export const a = 1;\n' }, 'Work\n\nPlan: F1\nCompletes: server/services/vault/existing.ts', null);
+  attempt('git: a new file inside an existing service folder is accepted', { 'server/services/vault/split.ts': 'export {};\n' }, 'Split\n\nPlan: F1\nCompletes: server/services/vault', null);
+  attempt('git: a new route file is refused', { 'server/routes/new-thing.ts': 'export {};\n' }, 'Route\n\nPlan: F1\nCompletes: README.md', /adds a route "server\/routes\/new-thing\.ts"/);
+  attempt('git: a new service folder is refused', { 'server/services/new-engine/a.ts': 'export {};\n' }, 'Engine\n\nPlan: F1\nCompletes: README.md', /adds a service "server\/services\/new-engine"/);
+  attempt('git: a new AnA tool in the inventory is refused', { [ANA_TOOL_INVENTORY]: JSON.stringify({ tools: { inScope: ['old_tool', 'brand_new_tool'], hiddenApp: [] } }) }, 'Tool\n\nPlan: F1\nCompletes: README.md', /adds a ana-tool "brand_new_tool"/);
 } finally {
   fs.rmSync(dir, { recursive: true, force: true });
 }

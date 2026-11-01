@@ -35,6 +35,19 @@ Codex, Copilot, Cursor, Claude Code and every human developer alike. Nobody buil
 `npm run ci:one-design-plan` in `.husky/pre-push` refuses anything else. There is no bypass.
 
 
+
+## RULE 6 — nothing new; finish what exists (see `CLAUDE.md`)
+
+The founder decided on 2026-11-01 (P-80) that **no agent builds anything new**. Work continues and finishes what is
+in place, with working UI in the Claude design. The vision is Veeva, Weave Bio, Artos and Certara merged as one and
+built by Anthropic as Claude for life sciences, and the code for it already exists here.
+
+- **Name what you finish.** End every commit with a `Completes: <path>` trailer, next to `Plan: <ID>`. The path is
+  an existing file or folder, found by searching first.
+- **Add nothing new.** Add no screen, route file, service, table, mount or AnA tool. `ci:one-design-plan` refuses
+  them unless the founder approved them in the ledger.
+- **Split inside the folder.** A file split out of a large one goes inside the folder it came from.
+
 ## ⚠️ CRITICAL: SINGLE BRANCH DEVELOPMENT ONLY
 
 **ALL development work MUST happen on this branch:**

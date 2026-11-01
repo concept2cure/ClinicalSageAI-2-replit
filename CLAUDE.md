@@ -107,6 +107,29 @@ tool.
 
 ---
 
+## RULE 6 — NOTHING NEW. FINISH WHAT EXISTS. ABSOLUTE, FOR EVERYONE.
+
+The founder, 2026-11-01 (P-80): *"No agent is allowed to build anything new. However, they're allowed to continue and
+finish and conclude with brilliant working UI everything that's in place."* And the vision: *"Veeva, Weave Bio,
+Artos, Certara, all merged as one and then built by Anthropic, Claude for life sciences: that is what you must build
+and never break from the Claude type UI."*
+
+- **Nothing new.** No new screen, route file, service, table, mount, AnA tool, engine, integration or model. The
+  code for the vision exists already. The work is to finish it, reach it, fix it or converge it, and bring it to
+  life in the Claude UI (RULE 5).
+- **Name what you finish.** Every commit carries a `Completes: <path>` trailer naming the existing file or folder it
+  finishes. Search first (RULE 3) to find that path.
+- **Split, don't add.** A file split out of a large one goes inside the folder it came from.
+- **The only door is the founder.** An addition is an `approvedAdditions` entry, under `Plan: PLAN` with a
+  `Founder-Decision: P-<n>`. There is no bypass.
+- **Enforced by** `npm run ci:one-design-plan` in `.husky/pre-push`, with no bypass. `npm run
+  ci:one-design-plan:selftest` shows it refusing:
+  - a commit with no `Completes:` trailer;
+  - a `Completes:` path that did not exist;
+  - a new route file, service or AnA tool.
+
+---
+
 ## RULE 1 — every migration re-runs on every deploy. Removing schema is not a DROP.
 
 `applyMigrationFiles` (`scripts/db/migration-set.mjs:1899`) reads and **executes

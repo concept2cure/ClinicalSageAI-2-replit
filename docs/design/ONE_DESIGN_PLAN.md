@@ -197,13 +197,13 @@ whether work may be committed under it:
 | ID | Package | Depends on | Status |
 |---|---|---|---|
 | D0 | **Foundations.** The canonical page header, card, button set, segmented control, empty state, inspector, artifact panel and composer, built from the tokens. The retired classes are removed from the shared CSS. | — | open |
-| D1 | **Shell, Home and the conversation.** The sidebar with Recents, the greeting and composer, the conversation thread, the top bar, ⌘K, the task tray and notifications. | D0 | queued |
-| D2 | **Projects.** The grid of cards, search, quiet filters, and the New project flow. | D0 | queued |
-| D3 | **The project page.** The main column and composer, Project knowledge, the quiet stages, documents, filing state and work-area doors. | D0 | queued |
-| D4 | **The canvas and the editor.** The artifact panel beside the conversation, and the quiet editor with the inspector. One editor. | D0 | queued |
-| D5 | **Work areas I.** CMC / Module 3 and Biostatistics on the one page pattern. | D0 | queued |
-| D6 | **Work areas II.** Tasks, Communication and Vault. | D0 | queued |
-| D7 | **Work areas III.** Submission Center, Quality, Risk-based monitoring, and Reporting & analytics. | D0 | queued |
+| D1 | **Shell, Home and the conversation.** The sidebar with Recents, the greeting and composer, the conversation thread, the top bar, ⌘K, the task tray and notifications. | — | open |
+| D2 | **Projects.** The grid of cards, search, quiet filters, and the New project flow. | — | open |
+| D3 | **The project page.** The main column and composer, Project knowledge, the quiet stages, documents, filing state and work-area doors. | — | open |
+| D4 | **The canvas and the editor.** The artifact panel beside the conversation, and the quiet editor with the inspector. One editor. | — | open |
+| D5 | **Work areas I.** CMC / Module 3 and Biostatistics on the one page pattern. | — | open |
+| D6 | **Work areas II.** Tasks, Communication and Vault. | — | open |
+| D7 | **Work areas III.** Submission Center, Quality, Risk-based monitoring, and Reporting & analytics. | — | open |
 | R1 | **Reach.** Every server capability with no UI caller is reached in its package's screen, or retired by a founder decision. The inventory and each reach are filed under `docs/evidence/DESIGN/R1/`. | — | open |
 | F1 | **Repairs.** Defects in shipped behaviour, such as the 2026-10-31 running-app audit findings. Repairs add no screen, mount or table. | — | open |
 | L1 | **Launch rows** D1–D10 of `docs/LAUNCH_DEFINITION_OF_DONE.md`, as defined there. | — | open |
@@ -252,3 +252,34 @@ Each design package (D0–D7) runs its own work in this order:
    split. If the plan really is wrong, ask the founder.
 6. **Scope, not branches.** Parallel sessions split work by package and file set (RULE 0). They never put two
    sessions on the same file at once.
+
+## 5. RULE 6 — nothing new; finish what exists (founder decision P-80, 2026-11-01)
+
+**The design packages open now.** D1–D7 stop waiting on D0, by the same decision ("Get to it"). Each builds on §2,
+and uses D0's components where they have landed. The founder's complaint is the UI, and a parallel session was
+already giving Project home Claude's shape (`eab6799360`). Two sessions still never work on the same file at once
+(§4.6).
+
+> The founder: "No agent is allowed to build anything new. However, they're allowed to continue and finish and
+> conclude with brilliant working UI everything that's in place."
+
+**The vision it serves.** Veeva, Weave Bio, Artos and Certara, merged into one and built by Anthropic as Claude for
+life sciences, without ever breaking from Claude's UI. The code for each already exists in this repository:
+
+| Named | What it brings | Where it already is |
+|---|---|---|
+| Veeva | Regulated content, submissions and quality | Vault (S6), Submission Center (S5), Quality |
+| Weave Bio | AI-native IND and submission authoring | AnA (S4) and the one editor (D4) |
+| Artos | Drafting from the study's own data | The data room (S2), through the evidence (S3), to AnA (S4) |
+| Certara | Biostatistics, modelling, data standards, regulatory writing | The evidence engines and CDISC conformance (S3), AnA (S4) |
+
+**How the gate holds it** (`npm run ci:one-design-plan`, from the ledger's `completesRequired`):
+1. Every commit carries `Completes: <path>`, naming a file or folder that existed before it. `Plan: PLAN` commits
+   are exempt.
+2. A new route file, a new service (folder, or a file directly under `server/services/` or `services/`) and a new
+   AnA tool are refused unless `approvedAdditions` lists them. So are a screen, a mount and a table.
+3. Splitting a large file is not new. The new file goes inside the folder it came from, and the commit names that
+   folder in `Completes:`.
+
+**Before the first line of any work.** Search first (RULE 3) and write "What already exists". The work is then
+named as what it is: complete, reach, fix or converge.

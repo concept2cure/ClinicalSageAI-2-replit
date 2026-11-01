@@ -17,7 +17,17 @@
  *      that package;
  *   4. a change to the plan itself — the plan, its ledger, this gate, or the
  *      rule files every tool reads — is `Plan: PLAN` with a
- *      `Founder-Decision: P-<n>` trailer.
+ *      `Founder-Decision: P-<n>` trailer;
+ *   5. RULE 6 (founder decision P-80, 2026-11-01: "no agent is allowed to build
+ *      anything new … they're allowed to continue and finish and conclude with
+ *      brilliant working UI everything that's in place"): it names what it
+ *      finishes — one or more `Completes: <path>` trailers, each a file or
+ *      folder that existed before the commit — and it adds no route file, no
+ *      service (a new folder, or a new file directly, under server/services/ or
+ *      services/) and no AnA tool (a name new to the AnA tool inventory)
+ *      unless approvedAdditions lists it. PLAN commits are exempt from the
+ *      trailer. Only commits after RULE 6's introduction (the ledger's
+ *      "completesRequired") are asked for it.
  *
  * There is no bypass. RULE 0 held only once its bypass was removed; a rule
  * whose escape hatch is printed in its own refusal is a suggestion.
@@ -36,6 +46,10 @@ const REGISTRY_FILE = /^shared\/constants\/ui-surface-registry[^/]*\.ts$/;
 const VIEWS_FILE = 'client/src/concept2cure/v2/surfaceViews.ts';
 const MOUNT_FILE = /^server\/(bootstrap\/[^/]+\.ts|index\.ts)$/;
 const MIGRATION_FILE = /^(migrations|db\/migrations)\/.+\.sql$/;
+const ROUTE_FILE = /^server\/(routes|api)\/.+\.(ts|mts|js|mjs)$/;
+const SERVICE_FILE = /^(server\/services|services)\/([^/]+)(\/)?/;
+const TEST_FILE = /(^|\/)(__tests__|__mocks__|tests?)\/|\.(test|spec)\.[cm]?[jt]sx?$|\.fixture\.[cm]?[jt]s$/;
+export const ANA_TOOL_INVENTORY = 'server/services/ana/ana-launch-scope.inventory.json';
 
 /* ── Pure core ─────────────────────────────────────────────────────────── */
 
@@ -64,17 +78,19 @@ const matchesAny = (file, globs) => globs.some((g) => globToRegExp(g).test(file)
 export function trailers(message) {
   const plan = /^Plan:\s*(\S+)\s*$/m.exec(message)?.[1] ?? null;
   const decision = /^Founder-Decision:\s*(P-\d+)\s*$/m.exec(message)?.[1] ?? null;
-  return { plan, decision };
+  const completes = [...message.matchAll(/^Completes:\s*(\S+)\s*$/gm)].map((m) => m[1].replace(/\/+$/, ''));
+  return { plan, decision, completes };
 }
 
 /**
- * commit: { sha, message, files: [{status, path}], additions: [{kind, name}] }
+ * commit: { sha, message, files: [{status, path}], additions: [{kind, name}],
+ *           completesRequired?: boolean, completesMissing?: string[] }
  * Returns findings: [{ sha, reason }]. Empty means the commit is inside the plan.
  */
 export function evaluateCommit(ledger, commit) {
   const out = [];
   const say = (reason) => out.push({ sha: commit.sha, reason });
-  const { plan, decision } = trailers(commit.message);
+  const { plan, decision, completes } = trailers(commit.message);
   if (!plan) {
     say('names no package: add a "Plan: <ID>" trailer naming an open package of docs/design/one-design-plan.json');
     return out;
@@ -92,6 +108,10 @@ export function evaluateCommit(ledger, commit) {
     .filter((p) => !ledger.planFiles.includes(p) && !matchesAny(p, ledger.alwaysAllowed) && !matchesAny(p, pkg.paths));
   if (outside.length) say(`changes files outside package ${plan}: ${outside.slice(0, 8).join(', ')}${outside.length > 8 ? ` and ${outside.length - 8} more` : ''}`);
 
+  if (commit.completesRequired && plan !== 'PLAN') {
+    if (!completes.length) say('names nothing it completes (RULE 6: nothing new, finish what exists): add a "Completes: <path>" trailer naming the existing file or folder this work finishes');
+    for (const p of commit.completesMissing ?? []) say(`"Completes: ${p}" names nothing that existed before this commit (RULE 6)`);
+  }
   for (const a of commit.additions) {
     const approved = ledger.approvedAdditions.some((x) => x.kind === a.kind && x.name === a.name && x.package === plan);
     if (!approved) say(`adds a ${a.kind} "${a.name}" the plan does not approve under ${plan} (approvedAdditions)`);
@@ -113,6 +133,16 @@ export const createdTables = (text) => new Set([...text.matchAll(/CREATE\s+TABLE
 
 const diffSet = (after, before) => [...after].filter((x) => !before.has(x));
 
+/** Every tool name in the AnA tool inventory (in scope or held for a hidden app). */
+export function anaToolNames(text) {
+  let doc;
+  try { doc = JSON.parse(text || '{}'); } catch { return new Set(); }
+  const tools = doc?.tools ?? {};
+  const inScope = Array.isArray(tools.inScope) ? tools.inScope : [];
+  const hidden = Array.isArray(tools.hiddenApp) ? tools.hiddenApp.flatMap((g) => (Array.isArray(g?.names) ? g.names : [])) : [];
+  return new Set([...inScope, ...hidden].filter((n) => typeof n === 'string'));
+}
+
 /* ── The git layer ─────────────────────────────────────────────────────── */
 
 function git(cwd, args, { allowFail = false } = {}) {
@@ -124,8 +154,9 @@ function git(cwd, args, { allowFail = false } = {}) {
   }
 }
 const show = (cwd, rev, file) => git(cwd, ['show', `${rev}:${file}`], { allowFail: true }) ?? '';
+const existsAt = (cwd, rev, file) => git(cwd, ['cat-file', '-e', `${rev}:${file}`], { allowFail: true }) !== null;
 
-function additionsOf(cwd, sha, files) {
+function additionsOf(cwd, sha, files, rule6 = false) {
   const parent = `${sha}^`;
   const out = [];
   for (const f of files) {
@@ -136,6 +167,14 @@ function additionsOf(cwd, sha, files) {
       for (const id of diffSet(viewKeys(show(cwd, sha, f.path)), viewKeys(show(cwd, parent, f.path)))) out.push({ kind: 'surface', name: id });
     } else if (MOUNT_FILE.test(f.path)) {
       for (const p of diffSet(mountPaths(show(cwd, sha, f.path)), mountPaths(show(cwd, parent, f.path)))) out.push({ kind: 'mount', name: p });
+    } else if (rule6 && f.path === ANA_TOOL_INVENTORY) {
+      for (const n of diffSet(anaToolNames(show(cwd, sha, f.path)), anaToolNames(show(cwd, parent, f.path)))) out.push({ kind: 'ana-tool', name: n });
+    } else if (rule6 && f.status === 'A' && ROUTE_FILE.test(f.path) && !TEST_FILE.test(f.path)) {
+      out.push({ kind: 'route', name: f.path });
+    } else if (rule6 && f.status === 'A' && SERVICE_FILE.test(f.path) && !TEST_FILE.test(f.path)) {
+      const [, root, first, slash] = SERVICE_FILE.exec(f.path);
+      const service = slash ? `${root}/${first}` : f.path;
+      if (!slash || !existsAt(cwd, parent, service)) out.push({ kind: 'service', name: service });
     } else if (f.status === 'A' && MIGRATION_FILE.test(f.path)) {
       for (const t of createdTables(show(cwd, sha, f.path))) {
         const [, name] = t.split('.');
@@ -152,6 +191,8 @@ function additionsOf(cwd, sha, files) {
 export function collectCommits({ cwd, range }) {
   const intro = git(cwd, ['log', '--format=%H', '--diff-filter=A', '--', LEDGER_PATH]).trim().split('\n').filter(Boolean).pop();
   if (!intro) return { intro: null, commits: [] };
+  // RULE 6 applies from the commit that put "completesRequired" into the ledger.
+  const rule6 = git(cwd, ['log', '--format=%H', '-S', '"completesRequired"', '--', LEDGER_PATH], { allowFail: true })?.trim().split('\n').filter(Boolean).pop() ?? null;
   const shas = git(cwd, ['rev-list', '--no-merges', '--reverse', range]).trim().split('\n').filter(Boolean);
   const commits = [];
   for (const sha of shas) {
@@ -163,7 +204,9 @@ export function collectCommits({ cwd, range }) {
       const status = parts[0][0];
       return { status, path: parts[parts.length - 1] };
     });
-    commits.push({ sha, message, files, additions: additionsOf(cwd, sha, files) });
+    const completesRequired = Boolean(rule6) && sha !== rule6 && git(cwd, ['merge-base', '--is-ancestor', rule6, sha], { allowFail: true }) !== null;
+    const completesMissing = completesRequired ? trailers(message).completes.filter((p) => !existsAt(cwd, `${sha}^`, p)) : [];
+    commits.push({ sha, message, files, additions: additionsOf(cwd, sha, files, completesRequired), completesRequired, completesMissing });
   }
   return { intro, commits };
 }

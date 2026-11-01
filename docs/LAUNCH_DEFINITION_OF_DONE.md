@@ -1495,3 +1495,43 @@ What this decides:
 
 Recorded in `docs/design/ONE_DESIGN_PLAN.md` §1a. That section lists, by path, what already exists for each step
 of the spine and what does not. Its work packages S1–S8 are in the ledger, `docs/design/one-design-plan.json`.
+
+### P-80 — RULE 6: nothing new. Finish what exists, in the Claude UI
+
+Founder, 2026-11-01:
+
+> "There's another hard, absolute rule that no agent is allowed to build anything new. However, they're allowed to
+> continue and finish and conclude with brilliant working UI everything that's in place." "It all exists. Everything
+> is already in existence, mostly. But in a project, I don't think that you have the ability to set what the ultimate
+> objective of the study was. But you can add that. Otherwise, it's just the UI that needs to match that." "That's
+> another problem I have with Claude Code, is you just jump in and do things and make assumptions without seeing if
+> it's been already done before." "If you had Veeva, Weave Bio, Artos, and you merged them all together and had
+> that built by Anthropic as life sciences for Claude, that would be who you are, who I'm building." "Veeva -
+> www.weave.bio - Artos - centara - all merged as one and than build by anthropic Claud for life sciences: that is
+> what you must build and never break from the Claud type UI."
+
+What this decides:
+
+- **RULE 6, absolute, for every developer and agent.** Nothing new is built. Work continues, finishes and concludes
+  what is in place, and brings it to life in the Claude UI (P-78).
+- **Every commit names what it finishes.** It carries a `Completes: <path>` trailer naming a file or folder that
+  existed before it. `ci:one-design-plan` refuses a commit without one, or one naming nothing that existed.
+- **These count as new, and need a founder decision in `approvedAdditions`:**
+  - a route file, a service (a new folder, or a new file directly under `server/services/` or `services/`) and an
+    AnA tool, which `ci:one-design-plan` now refuses;
+  - a screen, a mount and a table, which it already refused.
+- **The one addition the founder named.** The project states its ultimate objective. This completes the objective
+  record that exists (`ana_client_objectives`, its API in `server/routes/client-intelligence.ts`, and AnA's context
+  in `server/services/ana-context-router.ts`). It reaches that record from the project.
+- **The vision.** Concept2Cure is what Veeva, Weave Bio, Artos and Certara would be if merged into one and built by
+  Anthropic as Claude for life sciences. The founder wrote "centara", read here as Certara. Each brings:
+  - **Veeva:** the regulated content and submission platform, which is our Vault, Submission Center and Quality;
+  - **Weave Bio:** AI-native IND and submission authoring, which is AnA and the one editor;
+  - **Artos:** document drafting from the study's own data, which is the data room to AnA's narrative;
+  - **Certara:** biostatistics, modelling, data standards and regulatory writing, which are the evidence engines,
+    CDISC conformance and the medical writer.
+
+  Nothing in that list is built new. Each is the existing code of a spine package, finished. The UI never breaks
+  from Claude's.
+- **The UI work starts now.** The design packages D1–D7 open without waiting for D0. The UI is what has not yet
+  brought the code to life.
