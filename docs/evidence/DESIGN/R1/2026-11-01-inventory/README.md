@@ -33,7 +33,12 @@ one file).
    - `out-of-scope`: refused with 403;
    - `unmapped`: refused when `LAUNCH_SCOPE_API_UNATTRIBUTED=enforce`;
    - `never-gated` and `infrastructure`: always served.
-4. **Owning package.** The route file is matched against each package's `paths` in `docs/design/one-design-plan.json`.
+4. **Second pass** (`method/match2.py`). A route the exact pass missed is marked **probable** when a single client
+   file names both its mount root and its last literal segment as a path piece. This catches URLs built from a
+   base constant plus a suffix. It has false positives in both directions: for example, `POST /api/chat/stream`
+   is DEAD by `LAUNCH_EXCLUDED_API` but reads as probable, because `useAnaChat.ts` names `/api/chat` and
+   `/api/ana-ri/stream`. So a **probable** row is a lead to check, and a **none** row is the firmer finding.
+5. **Owning package.** The route file is matched against each package's `paths` in `docs/design/one-design-plan.json`.
 
 **Limits.** "Not called" means no literal in the client names the path:
 - A URL assembled from variables declared in another file reads as not called. This **under**-counts callers, so
@@ -45,19 +50,24 @@ one file).
 
 | Client caller | Production verdict | Handlers |
 |---|---|---:|
-| called | launch | 958 |
-| called | out-of-scope | 148 |
-| called | never-gated | 76 |
-| called | unmapped | 34 |
-| called | infrastructure | 14 |
-| not called | unmapped | 1386 |
-| not called | out-of-scope | 593 |
-| not called | launch | 555 |
-| not called | never-gated | 119 |
-| not called | infrastructure | 40 |
+| exact | infrastructure | 14 |
+| exact | launch | 958 |
+| exact | never-gated | 76 |
+| exact | out-of-scope | 148 |
+| exact | unmapped | 34 |
+| none | infrastructure | 32 |
+| none | launch | 341 |
+| none | never-gated | 72 |
+| none | out-of-scope | 428 |
+| none | unmapped | 1310 |
+| probable | infrastructure | 8 |
+| probable | launch | 214 |
+| probable | never-gated | 47 |
+| probable | out-of-scope | 165 |
+| probable | unmapped | 76 |
 
-- **1230 handlers are called by a screen** and **2693 are not.**
-- **236 route files (1765 handlers) have no client caller at all.**
+- **1230 handlers are called by a screen (exact)**, **510 probably are**, and **2183 have no caller found by either pass.**
+- **171 route files (1227 handlers) have no client caller found by either pass.** (The exact pass alone found 236 files and 1,765 handlers.)
 
 ### 1. Called by a screen, refused in production: 182 handlers
 
@@ -152,84 +162,81 @@ reached in the screen of the package that owns it, or put to the founder for ret
 
 | Owning package | Handlers |
 |---|---:|
-| none (no package path claims the file) | 302 |
-| S3 | 90 |
-| S5 | 64 |
-| S4 | 39 |
-| S7 | 27 |
-| S12 | 26 |
-| S8 | 20 |
-| S10 | 12 |
-| S1 | 9 |
+| none (no package path claims the file) | 209 |
+| S3 | 69 |
+| S5 | 29 |
+| S4 | 26 |
+| S10 | 8 |
+| S1 | 4 |
+| S8 | 3 |
 | S9 | 2 |
-| S6 | 1 |
 
-By route file (largest first):
+By route file (largest first). Only rows with no caller found by either pass are counted:
 
 | Not called | Route file | Packages | Example |
 |---:|---|---|---|
-| 48 | `server/routes/ivd-lifecycle.ts` | — | `POST /api/ivd-lifecycle/authoring/emdr` |
-| 45 | `server/routes/submissions.ts` | S5 | `GET /api/submissions/:id` |
-| 39 | `server/routes/biostatPlatform.ts` | S3 | `GET /api/biostat/continuum/:threadId` |
-| 29 | `server/routes/ana-ri.ts` | S4 | `GET /api/ana-ri/actions` |
-| 19 | `server/routes/mdx-rbm.ts` | S8 | `GET /api/mdx/rbm-assessments/:id` |
-| 17 | `server/routes/ivdr-routes.ts` | — | `GET /api/ivdr/cdx-workflows` |
-| 15 | `server/routes/biostat-design-stats.ts` | S3 | `POST /api/biostat/assurance` |
-| 14 | `server/routes/submission-ops.ts` | S5 | `DELETE /api/submission-ops/artifact-section-map/:mappingId` |
-| 13 | `server/routes/manufacturing-routes.ts` | — | `GET /api/manufacturing/ai/review` |
+| 45 | `server/routes/ivd-lifecycle.ts` | — | `POST /api/ivd-lifecycle/authoring/emdr` |
+| 29 | `server/routes/biostatPlatform.ts` | S3 | `GET /api/biostat/continuum/:threadId` |
+| 19 | `server/routes/ana-ri.ts` | S4 | `GET /api/ana-ri/commands` |
+| 19 | `server/routes/submissions.ts` | S5 | `GET /api/submissions/:id` |
+| 13 | `server/routes/biostat-design-stats.ts` | S3 | `POST /api/biostat/assurance` |
 | 13 | `server/routes/users.ts` | — | `GET /api/user` |
-| 12 | `server/routes/ivdr-binder-routes.ts` | — | `GET /api/ivdr/binder` |
-| 12 | `server/routes/regulatory-correspondence.ts` | S10 | `GET /api/regulatory-correspondence/analytics/deficiency-patterns` |
-| 11 | `server/routes/diagnostics-performance.ts` | — | `POST /api/diagnostics-performance/analytical/detection-capability` |
-| 10 | `server/routes/coauthor.ts` | — | `POST /api/coauthor/documents/:docId/compile` |
-| 10 | `server/routes/taskManagement.routes.ts` | — | `DELETE /api/task-management/tasks/:taskId` |
-| 9 | `server/routes/ana-biostats.ts` | S3, S4 | `POST /api/ana-biostats/compare` |
-| 9 | `server/api/cmc/module3OperatingSystemRoutes.ts` | S7, S12 | `POST /api/cmc/module3-os/compile/:projectId` |
+| 12 | `server/routes/manufacturing-routes.ts` | — | `POST /api/manufacturing/ai/simulate-deficiency` |
+| 11 | `server/routes/ivdr-routes.ts` | — | `GET /api/ivdr/cdx-workflows` |
+| 10 | `server/routes/diagnostics-performance.ts` | — | `POST /api/diagnostics-performance/analytical/detection-capability` |
 | 9 | `server/routes/fda-forms.routes.ts` | — | `GET /api/fda-forms/applicable` |
-| 9 | `server/routes/irb.ts` | — | `POST /api/irb/submissions/:id/amendments` |
-| 8 | `server/routes/cer-routes.ts` | — | `POST /api/cer/faers/data` |
+| 9 | `server/routes/ivdr-binder-routes.ts` | — | `GET /api/ivdr/binder` |
 | 8 | `server/routes/clients-routes.ts` | — | `DELETE /api/clients/:id` |
-| 8 | `server/routes/project-rules.ts` | — | `DELETE /api/project-rules/:ruleId` |
-| 7 | `server/routes/cerv2-ai-routes.ts` | — | `POST /api/cerv2/ai/analyze-section` |
-| 7 | `server/routes/mdx-ivdr.ts` | — | `GET /api/mdx/ivdr/:programId` |
+| 8 | `server/routes/regulatory-correspondence.ts` | S10 | `GET /api/regulatory-correspondence/analytics/deficiency-patterns` |
+| 7 | `server/routes/ana-biostats.ts` | S3, S4 | `POST /api/ana-biostats/compare` |
+| 7 | `server/routes/irb.ts` | — | `POST /api/irb/submissions/:id/amendments` |
 | 7 | `server/routes/protocol-consent.ts` | S3 | `PATCH /api/protocol-consent/elements/:id` |
-| 6 | `server/routes/mdx-cdx.ts` | — | `GET /api/mdx/cdx/:programId` |
-| 6 | `server/routes/unifiedTasks.routes.ts` | — | `GET /api/regulatory/tasks/:id` |
-| 5 | `server/routes/c2c/documents.ts` | S1 | `GET /api/c2c/documents/:id` |
+| 6 | `server/routes/cer-routes.ts` | — | `POST /api/cer/faers/data` |
+| 6 | `server/routes/project-rules.ts` | — | `DELETE /api/project-rules/:ruleId` |
+| 6 | `server/routes/submission-ops.ts` | S5 | `GET /api/submission-ops/packages/:packageId/milestones` |
 | 5 | `server/routes/company-document-governance.ts` | — | `PUT /api/client-branding/company-documents/branding-policy` |
-| 5 | `server/api/cmc/routes.ts` | S7, S12 | `GET /api/cmc/projects/:projectId/process-capability` |
 | 5 | `server/routes/ind-forms.routes.ts` | — | `POST /api/ind-forms/1572/pdf-all` |
-| 5 | `server/routes/mdx-labeling.ts` | — | `GET /api/mdx/labeling/:id` |
-| 5 | `server/routes/protocol-amendments.ts` | S3 | `GET /api/protocol-amendments/amendments/:id` |
-| 5 | `server/routes/protocol-deviations.ts` | S3 | `PATCH /api/protocol-deviations/capa/:id/status` |
 | 5 | `server/routes/statistical-defensibility.ts` | — | `POST /api/statistical-defensibility/consistency` |
 | 5 | `server/routes/tenants-simple.ts` | — | `DELETE /api/tenants/:id` |
 | 4 | `server/routes/cerv2-sections.ts` | — | `DELETE /api/cerv2-sections/:sectionId` |
-| 4 | `server/routes/cerv2-document-routes.ts` | — | `GET /api/cerv2/documents` |
-| 4 | `server/routes/company-document-designs.ts` | — | `GET /api/client-branding/company-documents/designs/:id` |
-| 4 | `server/api/cmc/sourceEvidenceRoutes.ts` | S7, S12 | `GET /api/cmc/module3-os/source-evidence/:projectId` |
-| 4 | `server/routes/c2c/reviews.ts` | S1 | `PATCH /api/concept2cure/review-tasks/:taskId` |
-| 4 | `server/routes/csr-jobs.ts` | — | `GET /api/csr/jobs/:jobId` |
-| 4 | `server/routes/csr-jobs-assembly.ts` | — | `GET /api/csr/jobs/:jobId/assembly/:assemblyId/lifecycle` |
-| 4 | `server/routes/mdx-clia.ts` | — | `GET /api/mdx/clia/:id` |
+| 4 | `server/routes/cerv2-ai-routes.ts` | — | `POST /api/cerv2/ai/analyze-section` |
+| 4 | `server/routes/mdx-ivdr.ts` | — | `GET /api/mdx/ivdr/per` |
 | 4 | `server/routes/tenant-config.ts` | — | `GET /api/tenant-config/:tenantId/settings` |
-| 3 | `server/routes/company-documents.ts` | — | `POST /api/client-branding/company-documents/legal-documents` |
-| 3 | `server/api/cmc/batchRecordRoutes.ts` | S7, S12 | `PUT /api/cmc/batch-records/:id` |
-| 3 | `server/api/cmc/specificationRoutes.ts` | S7, S12 | `PUT /api/cmc/specifications/:id` |
-| 3 | `server/routes/human-factors.ts` | — | `POST /api/human-factors/hfe-completeness` |
-| 3 | `server/routes/mdx-notifications.ts` | — | `PUT /api/mdx/notification-subscriptions/:category` |
-| 3 | `server/routes/mdx-udi.ts` | — | `GET /api/mdx/udi/:id` |
-| 3 | `server/routes/predicate-intelligence.ts` | — | `GET /api/predicate-intelligence/candidates/:id` |
+| 3 | `server/routes/mdx-cdx.ts` | — | `GET /api/mdx/cdx/concordance/:id` |
+| 3 | `server/routes/mdx-rbm.ts` | S8 | `POST /api/mdx/rbm-assessments/seed` |
 | 3 | `server/routes/projects-management.ts` | — | `DELETE /api/projects/:projectId` |
-| 3 | `server/routes/protocol-reviews.ts` | S3 | `PATCH /api/protocol-reviews/comments/:id/resolve` |
+| 3 | `server/routes/protocol-amendments.ts` | S3 | `POST /api/protocol-amendments/amendments/:id/changes` |
+| 3 | `server/routes/protocol-deviations.ts` | S3 | `PATCH /api/protocol-deviations/capa/:id/status` |
+| 3 | `server/routes/unifiedTasks.routes.ts` | — | `POST /api/regulatory/tasks/:id/link` |
+| 3 | `server/routes/taskManagement.routes.ts` | — | `POST /api/task-management/tasks/:taskId/notify` |
 | 2 | `server/routes/510k-estar-routes.ts` | — | `POST /api/510k/estar/registration/assess` |
-| 2 | `server/routes/authoring-actions.ts` | — | `GET /api/authoring-actions/decision-context/:projectId` |
 | 2 | `server/routes/biostat-bridge.ts` | S3 | `GET /api/biostat-bridge/computation-runs/:runId/reproduce` |
-| 2 | `server/routes/company-document-identity.ts` | — | `GET /api/client-branding/company-documents/legacy-adoption` |
-| 2 | `server/routes/ectd-compile.ts` | S5 | `GET /api/ectd-compile/:projectIdent/filed-state` |
-| 2 | `server/routes/esignature.ts` | — | `POST /api/esignature/verify-mfa` |
+| 2 | `server/routes/c2c/documents.ts` | S1 | `GET /api/c2c/documents/by-legacy/cerv2-section/:id` |
+| 2 | `server/routes/cerv2-document-routes.ts` | — | `POST /api/cerv2/documents/:documentId/save` |
+| 2 | `server/routes/company-document-designs.ts` | — | `POST /api/client-branding/company-documents/designs/:id/proof` |
+| 2 | `server/routes/c2c/reviews.ts` | S1 | `POST /api/concept2cure/review-tasks/:taskId/reopen` |
+| 2 | `server/routes/csr-jobs-assembly.ts` | — | `GET /api/csr/jobs/:jobId/assembly/:assemblyId/lifecycle` |
+| 2 | `server/routes/human-factors.ts` | — | `POST /api/human-factors/hfe-completeness` |
+| 2 | `server/routes/ind-lifecycle/documents.routes.ts` | S5 | `POST /api/ind-lifecycle/annual-report/line-listing` |
+| 2 | `server/routes/ivd-assessments.ts` | — | `DELETE /api/ivd-assessments/:id` |
+| 2 | `server/routes/mdx-clia.ts` | — | `POST /api/mdx/clia/:id/apply-waiver` |
+| 2 | `server/routes/mdx-notifications.ts` | — | `POST /api/mdx/notifications/:id/archive` |
+| 2 | `server/routes/protocol-milestones.ts` | S3, S9 | `GET /api/protocol-milestones/documents/:id/timeline` |
+| 2 | `server/routes/protocol-reviews.ts` | S3 | `PATCH /api/protocol-reviews/comments/:id/resolve` |
+| 1 | `server/routes/k510-document-preview.ts` | — | `GET /api/510k/projects/:projectIdent/document-preview` |
+| 1 | `server/routes/company-legal-workflows.ts` | — | `GET /api/client-branding/company-documents/legal-workflows/catalog` |
+| 1 | `server/routes/csr-jobs.ts` | — | `POST /api/csr/jobs/:jobId/cancel` |
+| 1 | `server/routes/ectd-compile.ts` | S5 | `GET /api/ectd-compile/:projectIdent/filed-state` |
+| 1 | `server/routes/ectd-export.ts` | S5 | `POST /api/ectd/validate/preflight` |
+| 1 | `server/routes/ha-interactions.ts` | — | `POST /api/ha-interactions/interactions/:id/questions` |
+| 1 | `server/routes/mdx-udi.ts` | — | `POST /api/mdx/udi/:id/submit-gudid` |
+| 1 | `server/routes/predicate-intelligence.ts` | — | `PATCH /api/predicate-intelligence/candidates/:id/status` |
+| 1 | `server/routes/protocol-risks.ts` | S3 | `GET /api/protocol-risks/documents/:id/register` |
+| 1 | `server/routes/realtime-collab.ts` | — | `DELETE /api/realtime-collab/rooms/:documentId/users/me` |
+| 1 | `server/routes/region-profiles.ts` | — | `GET /api/region-profiles/:region` |
+| 1 | `server/routes/validate-completeness.ts` | — | `GET /api/validate-completeness/health` |
 
-### 3. Route files with no client caller at all: 236
+### 3. Route files with no client caller at all: 171
 
 These files are candidates for the founder to retire (RULE 6: nothing new; each is reached or retired). The full
 list is in `inventory.json`. The 40 largest:
@@ -281,7 +288,10 @@ list is in `inventory.json`. The 40 largest:
 
 1. **Defects first (F1).** Check every row of §1 whose caller is a launch screen against the running app with
    `LAUNCH_SCOPE_ENFORCE=on`. That walk is shared with the design session.
-2. **Reach, package by package (§2).** For each route file, confirm the row is truly not called (the limits above).
+2. **Reach, package by package (§2).** For each route file, confirm the row is truly not called (the limits above;
+   spot-check, 2026-11-01: `/api/csr/jobs/:jobId/headings` and `…/assembly/:assemblyId/place` are called by
+   `CsrRunBuilds.tsx` and `CsrAssemblyControl.tsx` through a base constant, which the exact pass missed and the
+   second pass catches).
    Then name the screen in the owning package that should call it, and reach it there under that package's plan
    ID, in a file no other session holds.
 3. **Retirement list (§3) for the founder.** No file is deleted by this package without a founder decision. That
