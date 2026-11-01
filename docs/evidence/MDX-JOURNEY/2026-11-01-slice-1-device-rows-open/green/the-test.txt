@@ -1,0 +1,10 @@
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > a software item opens the Software screen 269ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > a governed artifact opens in the one editor 101ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > says where a row opens, not "the editor" for all of them 89ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > UDI: a labeling document opens Labeling > the label row opens the Labeling screen 63ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > DocumentsPanel draws no dead row control > with no handler a row is not a button 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > DocumentsPanel draws no dead row control > with a handler, a click passes the row's id and the row itself 21ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > what AnA is told about the device screens is true > names the screens' own controls, and does not claim they are absent 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > what AnA is told about the device screens is true > says that nothing here sends a filing to an agency 0ms
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
