@@ -24,7 +24,8 @@ rows below are deleted; Wave 1b in eleven lanes after D5-0 (its §3).
 | Files | Held by | For |
 |---|---|---|
 | `server/services/ectd/prior-sequence-loader.ts`, `server/services/submission-gateways/index.ts`, the filed-state route in `server/routes/ectd-compile.ts`, `client/src/concept2cure/v2/surfaces/EctdFiledState.tsx` (copy only) | RIM (`011e42…`) | F1 slice 1: what the agency holds is what was sent (no migration) |
-| `server/services/submission-service/submission-service.ts`, `fda-esg-receipts.ts` | RIM | F1 slice 2: a test-environment send is not a filing |
+| `server/services/submission-service/submission-service.ts`, `filed-dispatch.ts`, `server/services/submission-gateways/fda-esg-receipts.ts`; copy only in `SubmissionSeqWorkspaces.tsx`, `SubmissionCenter.tsx`, `As2ReceiptUpload.tsx` | RIM | F1 slice 2 (after slice 1): a test-environment send is not a filing |
+| S10's G3 files: `shared/agency/**`, `server/services/agency-responses/**` | RIM | S10 (after slices 1 and 2): the letter splitter keeps its verbatim contract (no footers, control characters, signature blocks or duplicate numbers in a question) |
 | `server/services/ana/AnaToolExecutor.ts` (the `generate_document` handler), `server/services/ana/intelligence-questions/engine.ts` | filing types (`011Fyq…`) | Rule 2 S6b, under S4 |
 | `server/services/ana/ana-launch-scope.inventory.json`, `tool-authorization.register.json`, `evidence-literature-tool-defs.ts`, `skills/library/{submissions,medical-writing}.ts`, `ind-module-authoring.ts` (deleted, replacement named) | filing types | Rule 2 S6 (S4): `plan_ind_module_authoring` converges onto the Module 2.5 and 2.7 drafting tools |
 | `server/services/{pharmacovigilance,dose-optimization,rwe}/*-knowledge.ts` and their `ana/*Tools.ts` | filing types | Rule 2 S5a (F1): an unstated fact is unknown, never a default |
@@ -39,10 +40,12 @@ rows below are deleted; Wave 1b in eleven lanes after D5-0 (its §3).
 |---|---|---|---|
 | UI and workflow redesign (`01JbQU…`) | D0, then the D1–D7 build order | D0 | — |
 | CMC Module UI and data integration (`01GJidg5…`) | S7 behaviour, D5 layout | S7 | D5 after D0-2, per `D5.md` |
-| RIM system build-out (`011e42…`) | S5 behaviour, D7 layout (Submission Center) | S5 | D7 after D0-2, per `D7.md` |
+| RIM system build-out (`011e42…`) | S5 behaviour, F1 repairs, S10, D7 layout (Submission Center) | F1, then S10 | D7 after D0-2, per `D7.md` |
 | Regulatory document AI architecture (`017CFk…`) | L1 (AI-gateway placement, zero retention), S6 or S2 (Vault chunking) | L1, S6 | D6 (Vault) layout through the coordinator |
 | Biotech FDA filing types build-out (`011Fyq…`) | F1, S4 or S3 (the Rule 2 audit slices) | F1 | through the coordinator |
 | R1 inventory and protocol (`01QoxbL…`) | R1, S3 | R1 | through the coordinator |
+
+S10 (the agency's communications back into the project) is held by RIM since 2026-11-01; its earlier holder (`011Dpx…`) has ended.
 
 ## What every session does
 

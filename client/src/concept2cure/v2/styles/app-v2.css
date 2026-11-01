@@ -3864,3 +3864,67 @@
 .c2c-v2 .tb-proj-lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .c2c-v2 .tb-proj[data-empty="true"]{border-style:dashed;color:var(--text-300);font-weight:400;}
 .c2c-v2 .tb-proj[data-empty="true"] .ico{color:var(--text-300);}
+
+/* ════ Work-area page pattern (ONE_DESIGN_PLAN §2 "A work area"; D5 §WA.4.1) ════
+   Every work area's root carries data-work-area="<surface id>" beside its
+   container class. Built from D0's primitives; this block only PLACES them —
+   it defines no primitive of its own, so the one-definition rule holds.
+   Shared by D5, D6 and D7.
+
+   Written first against a tree where D0 had not landed, so it carried bridge
+   rules: the ARIA selected states, the Lora page title, `.page-inner`'s
+   metrics, the quiet figure line, the section heading ramp, `.ph-acts`, and
+   `var(--fs-small, 13px)` fallbacks for tokens that did not exist. D0-1 and
+   D0-2 landed (bacc0d343, 2270a9f2b) while this was being built, and every one
+   of those is now canonical above. They are deleted here rather than left as a
+   second definition of the same thing. What remains is placement, plus the two
+   rules whose owners (D1's starter row, D3's typographic section and
+   disclosure) have not landed yet — each noted with who takes it. */
+/* D1's row (D1.md:447), carried verbatim as §WA.4.1 directs while D1 is open;
+   whichever of the two lands second drops its copy. */
+.c2c-v2 .sp-starters[data-layout="row"]{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0;}
+.c2c-v2 [data-work-area] > .pj-back{margin:0 0 12px;}
+.c2c-v2 [data-work-area] > .ph{margin:0 0 16px;}
+.c2c-v2 [data-work-area] > .sp-starters[data-layout="row"]{justify-content:flex-start;margin:0 0 24px;}
+.c2c-v2 [data-work-area] > .seg{margin:0 0 16px;}
+.c2c-v2 [data-work-area] .tabs{margin:0 0 24px;}
+/* A tab body that brought its own page padding drops it: the page provides the
+   gutters. `.cm-body` is shared with twelve surfaces outside D5's packages
+   (Submission Center, PV, Mission Control …), so it is scoped here rather than
+   edited in journey-v2.css, where it would move all of them at once. */
+.c2c-v2 [data-work-area] .cm-body{padding:0;max-width:none;margin:0;}
+/* Sections are typographic, not boxed (the project page's treatment, D3 §4.12;
+   one rule for both — whichever of D3 and this lands second drops its copy). */
+.c2c-v2 :is(.pj-main, [data-work-area]) .pj-sec{background:none;border:0;border-radius:0;padding:0;}
+.c2c-v2 :is(.pj-main, [data-work-area]) .pj-sec + .pj-sec{margin-top:32px;}
+.c2c-v2 [data-work-area] .pj-sec > .reg-tbl{margin:0;}
+/* The section's lead: heading and count together, actions right. `.pj-sec-h`
+   is space-between, which with three children strands the count in the middle. */
+.c2c-v2 [data-work-area] .pj-sec-h{justify-content:flex-start;margin-bottom:12px;}
+.c2c-v2 [data-work-area] .pj-sec-h > .pj-sec-acts{margin-left:auto;}
+/* An empty register inside a section is one quiet line and its action, left
+   aligned and without the icon D0 §4.2.12 keeps for a whole-surface empty. */
+.c2c-v2 [data-work-area] .pj-sec .c2c-empty-state:not(.tone-error){align-items:flex-start;text-align:left;padding:4px 0 0;gap:4px;}
+.c2c-v2 [data-work-area] .pj-sec .c2c-empty-state:not(.tone-error) .c2c-empty-ic{display:none;}
+.c2c-v2 [data-work-area] .pj-sec .c2c-empty-state:not(.tone-error) .c2c-empty-t{font-size:var(--fs-small);}
+/* The disclosure (D3's .pj-more, generalised; D3 keeps its side-column
+   overrides and drops this copy when it lands). */
+.c2c-v2 [data-work-area] .pj-more{margin-top:16px;}
+.c2c-v2 :is(.pj-main, .pj-side, [data-work-area]) .pj-more > summary{cursor:pointer;padding:6px 0;font-size:var(--fs-small);font-weight:500;color:var(--text-200);}
+.c2c-v2 :is(.pj-main, .pj-side, [data-work-area]) .pj-more > summary:hover{color:var(--text-100);}
+.c2c-v2 :is(.pj-main, .pj-side, [data-work-area]) .pj-more[open] > summary{margin-bottom:6px;}
+.c2c-v2 [data-work-area] .pj-more > :not(summary){font-size:var(--fs-small);line-height:1.55;color:var(--text-300);}
+/* Docked inspector beside the main column (Vault's library, RBM's AnA). The one
+   class the pattern adds: a layout modifier on an existing element, not a
+   component. */
+.c2c-v2 [data-work-area] .wa-split{display:grid;grid-template-columns:minmax(0, 1fr) 360px;gap:24px;align-items:start;}
+@media (max-width: 1023px){.c2c-v2 [data-work-area] .wa-split{grid-template-columns:minmax(0, 1fr);}}
+/* Phone: the page never scrolls sideways; a wide table scrolls inside its section. */
+@media (max-width: 640px){
+  .c2c-v2 [data-work-area] .pj-sec > .reg-tbl,
+  .c2c-v2 [data-work-area] .pj-sec > .pj-card-b > .reg-tbl{display:block;overflow-x:auto;}
+  .c2c-v2 [data-work-area] .pj-sec-h{flex-wrap:wrap;}
+  .c2c-v2 [data-work-area] .pj-sec-acts{justify-content:flex-start;width:100%;}
+  .c2c-v2 [data-work-area] > .sp-starters[data-layout="row"]{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+  .c2c-v2 [data-work-area] > .sp-starters[data-layout="row"] .sp-starter{flex:0 0 auto;max-width:80vw;}
+}

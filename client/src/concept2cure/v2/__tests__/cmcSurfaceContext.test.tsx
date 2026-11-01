@@ -96,9 +96,41 @@ describe('CMC publishes what the screen is showing', () => {
     expect(seen!.facts?.tabLabel).toBe('Overview');
     expect(seen!.summary).toMatch(/Overview tab of the CMC Module 3 operating system/);
 
-    fireEvent.click(screen.getByRole('button', { name: /Stability/ }));
+    /* Stability is in the Study records half (D5 §A.3), so the journey is the
+       half and then the tab — and the half is DERIVED from the open tab, so
+       choosing it lands on that half's first view. */
+    fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
+    await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Substance & product'));
+    fireEvent.click(screen.getByRole('tab', { name: 'Stability' }));
     await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Stability'));
     expect(seen!.summary).toMatch(/Stability tab/);
+    /* And the sentence the retired "What to do now" band printed is published
+       for this tab, so the page's first starter can answer it (D5 §A.5). */
+    expect(seen!.facts?.whatToDoHere).toMatch(/Register each study/);
+  });
+
+});
+
+/* The two halves of the CMC work area (D5 §A.3). Their own block: these drive
+   the frame rather than the context channel above, and keeping them there put
+   that describe past the 100-line cap. */
+describe('CMC opens on one of its two halves', () => {
+  it('comes back to the tab you left in the other half', async () => {
+    /* One piece of state, the tab; the half is read off it. So switching away
+       and back does not reset the view (D5 §A.6 item 2). */
+    wire({ success: true, data: null });
+    renderCmc();
+    await waitFor(() => expect(seen).not.toBeNull());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Batch records' }));
+    await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Batch records'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Module 3' }));
+    await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Overview'));
+    /* Study records reopens on Batch records, not on the half's first tab. */
+    fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
+    await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Batch records'));
   });
 
   it('gives AnA a vocabulary for driving the screen', async () => {
