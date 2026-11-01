@@ -1,0 +1,8 @@
+# Green 4: static gates over the working tree
+# npm run -s ci:sql-interpolation
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+# exit 0
+
+# npm run -s ci:column-reachability
+[ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+# exit 0
