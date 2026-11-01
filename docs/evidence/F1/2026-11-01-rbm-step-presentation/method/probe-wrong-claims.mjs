@@ -28,14 +28,14 @@ const cases = [
 
 let ok = 0;
 const base = checkStepPresentation(root);
-console.log(`baseline: ${base.findings.length} finding(s), ${base.stats.engineClaims} engine claims`);
+console.info(`baseline: ${base.findings.length} finding(s), ${base.stats.engineClaims} engine claims`);
 for (const [label, edit, code, tool] of cases) {
   const r = copy();
   edit(r);
   const { findings } = checkStepPresentation(root, { register: r });
   const hit = findings.find(f => f.code === code && f.tool === tool);
-  console.log(`${hit ? 'FAILS AS IT SHOULD' : 'DID NOT FAIL      '}  ${label}\n        ${hit ? `${hit.code} ${hit.tool}: ${hit.detail}` : JSON.stringify(findings)}`);
+  console.info(`${hit ? 'FAILS AS IT SHOULD' : 'DID NOT FAIL      '}  ${label}\n        ${hit ? `${hit.code} ${hit.tool}: ${hit.detail}` : JSON.stringify(findings)}`);
   if (hit) ok++;
 }
-console.log(`\n${ok}/${cases.length} wrong claims refused.`);
+console.info(`\n${ok}/${cases.length} wrong claims refused.`);
 process.exit(ok === cases.length ? 0 : 1);

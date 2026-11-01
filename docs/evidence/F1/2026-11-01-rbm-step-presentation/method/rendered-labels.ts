@@ -31,7 +31,7 @@ for (const [tool, input] of TOOLS) {
   const live = presentStep(tool, input);
   const done = presentStep(tool, input, null, { status: 'success', result: '{}' } as never);
   const held = presentStep(tool, input, null, { status: 'error', result: '{"error":"x"}' } as never);
-  console.log(
+  console.info(
     [tool.padEnd(30), live.source.padEnd(8), `live: ${live.label}`, `| finished (success): ${done.label}`, `| finished (error): ${held.label}`, live.preview ? `| preview: ${live.preview}` : ''].join(' '),
   );
 }
