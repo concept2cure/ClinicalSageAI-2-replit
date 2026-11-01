@@ -7152,10 +7152,24 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>, 
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'generate_document requires tenant context (organizationId).' });
   }
+  // Rule 2 audit S6b (2026-11-01): an omitted type was built as a CSR, and a
+  // CSR, Module 2-5, CER, 510(k) or IB was built from text the model wrote.
+  // Each is refused before either mode runs, naming its record path.
+  const documentType = typeof input.document_type === 'string' ? input.document_type.trim() : '';
+  if (!documentType) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      missing: ['document_type'],
+      message: 'document_type is required: name the document to generate.',
+    });
+  }
+  const { recordDocumentRefusal } = await import('./generate-document-refusals.js');
+  const refusal = recordDocumentRefusal(documentType);
+  if (refusal) return refusal;
+
   const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
   const builder = getMasterDocumentBuilder();
 
-  const documentType = input.document_type as string || 'csr';
   const title = input.title as string || 'Untitled Document';
   const sections = (input.sections as Array<{ number: string; title: string; content: string }>) || [];
   const outputFormat = (input.output_format as string) || 'docx';
@@ -7208,17 +7222,8 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>, 
   // 'ectd_backbone' and 'icsr' used to be generated here from scratch: a
   // backbone with sequence 0000 and operation=new hardcoded, no modules and
   // a 'Product' placeholder; an ICSR with an invented report id and 'Unknown'
-  // drug and reaction. Neither was a regulatory artefact. The backbone comes
-  // from the submission packager and an ICSR from the safety-report register.
-  if (documentType === 'ectd_backbone' || documentType === 'icsr') {
-    return JSON.stringify({
-      success: false,
-      message: documentType === 'ectd_backbone'
-        ? 'An eCTD backbone is produced by assembling a submission sequence, not drafted as a document. Use the submission assembly tools.'
-        : 'An ICSR is composed from a recorded safety report, not drafted as a document. Use the IND safety-report tools.',
-    });
-  }
-
+  // drug and reaction. They are refused above, with the record documents
+  // (generate-document-refusals.ts), before sections can reach a builder.
   return JSON.stringify({
     success: false,
     message: 'Please provide sections content or a template path to generate a document.',

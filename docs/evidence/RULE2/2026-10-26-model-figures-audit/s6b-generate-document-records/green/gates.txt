@@ -1,0 +1,5 @@
+# S6b gates
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+[ci:eslint-warning-ratchet] --since origin/concept2cure-v2 (d914c2618) -- 4 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since origin/concept2cure-v2.
+manifest:ana regenerated: docs/ana-capability-manifest.json
