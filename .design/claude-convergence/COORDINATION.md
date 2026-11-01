@@ -36,6 +36,7 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | `server/services/ana/ana-launch-scope.inventory.json`, `tool-authorization.register.json`, `evidence-literature-tool-defs.ts`, `skills/library/{submissions,medical-writing}.ts`, `ind-module-authoring.ts` (deleted, replacement named) | filing types | Rule 2 S6 (S4): `plan_ind_module_authoring` converges onto the Module 2.5 and 2.7 drafting tools |
 | `server/services/{pharmacovigilance,dose-optimization,rwe}/*-knowledge.ts` and their `ana/*Tools.ts` | filing types | Rule 2 S5a (F1): an unstated fact is unknown, never a default |
 | `surfaces/Insights.tsx`, `InsightsCatalogPanel.tsx`, `InsightsRunsPanel.tsx`, `InsightsSchedulesPanel.tsx`, `InsightsBundlesPanel.tsx`, `ComplianceReports.tsx` and their tests, `styles/insights-v2.css` | Reporting analytics (`011HLkY…`) | L11, D7-D (Reporting & analytics' layout), from 2026-11-01. The find field is `.c2c-input`, not a composer (BUILD_ORDER §5.2 item 20). |
+| `server/services/ana/intelligence-questions/flows/**` (not `engine.ts`), `server/services/ana/intelligence-questions/programme-facts.ts` | session `019ZvHmh…` (relayed by the founder) | S4, "asks the right questions": the founder's 2026-10-12 positions-with-Other directive, by extending the existing flows (designation, paediatric plan, comparability already appear in them). Starts with a "What already exists" README; no new file under `server/` (RULE 6); `shared/regulatory/*-positions.ts` is outside S4's paths. |
 | `server/services/ectd/assess-dispatch-readiness.ts` (the sequence read answers only for a live sequence) | RIM | F1 repair B, after slice 2 |
 | `server/routes/ind-lifecycle/shared.ts` (`fail()` maps through `SUBMISSION_ERROR_STATUS`) and its contract test | RIM | F1 repair C, after slice 2 |
 | `server/routes/authoring.router.ts` (the approval, freeze and sign gate), `server/services/authoring/draft-figure-check.ts`, `draft-source-references.ts`, `client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx` (behaviour only: the 409 asked in the existing C2CForm step) | AI architecture (`017CFk…`) | L1: an unverified figure blocks an approval or a seal until the signer acknowledges it (founder decision, numbered P-89 when recorded). Before L2 reaches D4-3, which moves the bar's mount. |
@@ -53,6 +54,7 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | Codebase market readiness (`01Gx2fiw…`) | asked for its package and file list, 2026-11-01 | reading; RIM holds the filed-state loader | through the coordinator |
 | MDX 510(k) eSTAR demo (`01P6GW…`) | the Part 11 audit (`8b8c6bc15`, evidence); its 21 open fixes need file lists first | — | through the coordinator |
 | Reporting analytics (`011HLkY…`) | D7 (L11), F1 | L11, D7-D | Insights and Compliance reports |
+| `019ZvHmh…` (cannot receive messages; the founder relays) | F1 (`7be209e9c`, one war-game report shape), S4 | S4 questions, above | none |
 
 S10 (the agency's communications back into the project) is held by RIM since 2026-11-01; its earlier holder (`011Dpx…`) has ended.
 
@@ -63,6 +65,12 @@ S10 (the agency's communications back into the project) is held by RIM since 202
   /api/audit/reviews/:id/sign` is listed `caller: null` but `ComplianceReviewRecords.tsx:212` calls it. Before retiring
   any `caller: null` route, search the client for its path segments and record the search. The coordinator is
   fixing the analyser under R1.
+- **A shallow clone hides deletions.** `git log --all --diff-filter=D` (RULE 3, the working agreement) finds nothing
+  that predates the clone's depth. Check `git rev-parse --is-shallow-repository`; if it says `true`, run
+  `git fetch --unshallow origin concept2cure-v2` before any deletion search.
+- **R1 rows found by sessions:** the war-game report has had no renderer since `WarGameReport.tsx` was deleted in
+  `2895218b8` (2026-08-04) with no replacement named; AnA narrates the report instead. Reach it in the conversation
+  and canvas, or retire it by founder decision.
 
 ## What every session does
 
