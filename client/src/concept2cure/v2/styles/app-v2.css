@@ -3682,23 +3682,26 @@
 /* ── shell-required blocks from kit coverage.css (AnswerLead + account menu) ──
    Ported here because the Phase-1 shell needs them before the coverage surface
    family lands; skip these blocks when porting coverage.css in Phase 3. */
-.c2c-v2 .al-lead{ border-radius:14px; padding:20px 22px; margin-bottom:18px; border:1px solid var(--accent-muted); background:var(--accent-000); }
-.c2c-v2 .al-lead.al-urgent{ border-color:color-mix(in srgb, var(--warning) 40%, transparent); background:color-mix(in srgb, var(--warning) 8%, var(--bg-000)); }
-.c2c-v2 .al-lead.al-good{ border-color:color-mix(in srgb, var(--success) 40%, transparent); background:color-mix(in srgb, var(--success) 8%, var(--bg-000)); }
-.c2c-v2 .al-k{ display:flex; align-items:center; gap:6px; font-size:var(--fs-caption); color:var(--text-300); font-weight:600; margin-bottom:9px; }
-.c2c-v2 .al-urgent .al-k{ color:var(--warning); }
-.c2c-v2 .al-good .al-k{ color:var(--success); }
-.c2c-v2 .al-k svg{ width:14px; height:14px; }
-.c2c-v2 .al-h{ font-family:var(--font-serif,Georgia,serif); font-size:21px; line-height:1.34; color:var(--text-100); margin-bottom:9px; max-width:66ch; }
-.c2c-v2 .al-h b{ font-weight:600; }
-.c2c-v2 .al-b{ font-size:14px; line-height:1.65; color:var(--text-300); max-width:72ch; }
-.c2c-v2 .al-re{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text-300); margin-top:10px; font-style:italic; }
-.c2c-v2 .al-re svg{ width:14px; height:14px; flex-shrink:0; }
-.c2c-v2 .al-act{ display:flex; align-items:center; gap:12px; margin-top:16px; flex-wrap:wrap; }
-.c2c-v2 .al-btn{ display:inline-flex; align-items:center; gap:7px; background:var(--accent-strong); color:var(--accent-on-strong); border:none; border-radius:9px; padding:9px 16px; font-size:13.5px; font-weight:500; cursor:pointer; }
-.c2c-v2 .al-btn svg{ width:15px; height:15px; }
-.c2c-v2 .al-btn2{ display:inline-flex; align-items:center; gap:6px; background:var(--bg-000); color:var(--text-200); border:1px solid var(--border); border-radius:9px; padding:9px 14px; font-size:13px; cursor:pointer; }
-.c2c-v2 .al-note{ font-size:12.5px; color:var(--text-300); }
+/* D0-4 (ONE_DESIGN_PLAN §2): the quiet lead. No panel, no serif, no orange:
+   the action is `btn ghost al-btn` and the alt `btn al-btn2` (AnswerLead.tsx), so
+   the header's one primary stays the view's only orange. Serif only at
+   data-emphasis="verdict", the one screen where the answer is the screen. */
+.c2c-v2 .al-lead { max-width: 72ch; margin: 0 0 24px; padding: 0; border: 0; border-radius: 0; background: none; }
+.c2c-v2 .al-k { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; font-size: var(--fs-small); font-weight: 500; line-height: 1.4; letter-spacing: 0; text-transform: none; color: var(--text-300); }
+.c2c-v2 .al-urgent .al-k { color: var(--warning); }
+.c2c-v2 .al-good .al-k { color: var(--success); }
+.c2c-v2 .al-k svg { width: 14px; height: 14px; }
+.c2c-v2 .al-h { margin: 0 0 4px; font-family: var(--font-sans); font-size: var(--fs-section); font-weight: 600; line-height: 1.45; color: var(--text-100); }
+.c2c-v2 .al-h b { font-weight: 600; }
+.c2c-v2 .al-lead[data-emphasis="verdict"] .al-h { font-family: var(--font-serif); font-size: 20px; font-weight: 500; line-height: 1.35; }
+.c2c-v2 .al-b { font-size: var(--fs-body); line-height: 1.6; color: var(--text-300); }
+.c2c-v2 .al-re { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: var(--fs-small); font-style: normal; color: var(--text-300); }
+.c2c-v2 .al-re svg { width: 14px; height: 14px; flex-shrink: 0; }
+.c2c-v2 .al-act { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 12px; }
+/* The lead's own actions never run past the row at phone width (the D0 before-probes found six screens
+   scrolling sideways at 390). It also keeps the `al-btn` / `al-btn2` hooks defined in one stylesheet. */
+.c2c-v2 .al-act :is(.al-btn, .al-btn2) { max-width: 100%; }
+.c2c-v2 .al-note { font-size: var(--fs-small); color: var(--text-300); }
 .c2c-v2 .acct-scrim{ position:fixed; inset:0; z-index:40; }
 .c2c-v2 .acct-menu{ position:absolute; bottom:calc(100% + 6px); left:8px; right:auto; min-width:248px; max-width:calc(100vw - 24px); max-height:calc(100vh - 88px); overflow-y:auto; z-index:50; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.18); padding:6px; }
 .c2c-v2 .acct-head{ display:flex; align-items:center; gap:9px; padding:8px 10px 10px; border-bottom:1px solid var(--border); margin-bottom:6px; }
