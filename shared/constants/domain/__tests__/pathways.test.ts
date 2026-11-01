@@ -5,7 +5,7 @@ import * as productTypes from '../product-types';
 import { REGIONAL_DEVICE_APPLICATION_CLASSES } from '../../../regulatory/filing-catalog';
 
 const cases: Array<[string | null, string | null, string]> = [
-  ['510K', null, 'k510'], [' 510(K) ', null, 'k510'], ['de-novo', null, 'k510'],
+  ['510K', null, 'k510'], [' 510(K) ', null, 'k510'], ['de-novo', null, 'de_novo'], ['510k', 'de_novo', 'de_novo'],
   ['PMA', null, 'pma'], ['CER', null, 'cer'], ['MDR', '510k', 'cer'],
   ['MDR_TD', 'pma', 'cer'], ['IVDR_TD', '510k', 'ivdr'], ['IVD', '510k', 'k510'],
   ['IVDR', null, 'ivdr'], ['IDE', null, 'ide'], ['device', null, 'device'],
@@ -13,7 +13,11 @@ const cases: Array<[string | null, string | null, string]> = [
   ['SHONIN', null, 'shonin'], ['ninsho', null, 'ninsho'], ['todokede', null, 'todokede'],
   ['IVD_APPROVAL', null, 'ivd_approval'], ['JP_CDX', null, 'jp_cdx'],
   ['unknown', 'IVDR', 'ivdr'], ['unknown', 'unknown', 'other'],
-  ['IND', null, 'other'], [null, null, 'other'], ['', '', 'other'],
+  // Drug and biologic applications have their own pathways (2026-10-31): they
+  // were all "Other", so the Projects pathway filter could not find an IND.
+  ['IND', null, 'ind'], ['nda', null, 'nda'], ['BLA', null, 'bla'], ['anda', null, 'anda'],
+  ['cta', null, 'cta'], ['MAA', null, 'maa'], ['jnda', null, 'other'],
+  [null, null, 'other'], ['', '', 'other'],
   ['__proto__', 'constructor', 'other'],
 ];
 
