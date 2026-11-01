@@ -37,7 +37,6 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | `server/services/ana/intelligence-questions/flows/**` (not `engine.ts`), `server/services/ana/intelligence-questions/programme-facts.ts` | session `019ZvHmh…` (relayed by the founder) | S4, "asks the right questions": the founder's 2026-10-12 positions-with-Other directive, by extending the existing flows (designation, paediatric plan, comparability already appear in them). Starts with a "What already exists" README; no new file under `server/` (RULE 6); `shared/regulatory/*-positions.ts` is outside S4's paths. |
 | `server/services/ectd/assess-dispatch-readiness.ts` (the sequence read answers only for a live sequence) | RIM | F1 repair B, after slice 2 |
 | `server/routes/ind-lifecycle/shared.ts` (`fail()` maps through `SUBMISSION_ERROR_STATUS`) and its contract test | RIM | F1 repair C, after slice 2 |
-| `server/routes/authoring.router.ts` (the approval, freeze and sign gate), `server/services/authoring/draft-figure-check.ts`, `draft-source-references.ts`, `client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx` (behaviour only: the 409 asked in the existing C2CForm step) | AI architecture (`017CFk…`) | L1: an unverified figure blocks an approval or a seal until the signer acknowledges it (P-89, landed `ae3681cb9`; released when its flag-off evidence lands). Before L2 reaches D4-3, which moves the bar's mount. |
 
 ## Who works where
 
@@ -46,7 +45,7 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | UI and workflow redesign (`01JbQU…`) | D0, then the D1–D7 build order | D0-5, D4-1, D2-1, L1, L8, the editor's masked suites | L1–L4, L7, L8, L10 |
 | CMC Module UI and data integration (`01GJidg5…`) | S7 behaviour, D5 layout | D5-2, then L6 (D5-3, D5-4) | D5-0 and D5-1 landed |
 | RIM system build-out (`011e42…`) | S5 behaviour, F1 repairs, S10, S9, D7 layout (Submission Center) | F1 slices 1–2, repairs A–C, then P-86, P-87, S10, S9 with P-88 | L9 (D7-A1, D7-A2) |
-| Regulatory document AI architecture (`017CFk…`) | L1 (AI-gateway placement, zero retention), S6 or S2 (Vault chunking) | L1, S6 | D6 (Vault) layout through the coordinator |
+| Regulatory document AI architecture (`017CFk…`) | L1 (AI-gateway placement, zero retention), S6 or S2 (Vault chunking) | P-89 (`ae3681cb9`) and P-90 (`7d96a4b3f`, flag-off identity `5cde42780`) landed; no holds | D6 (Vault) layout through the coordinator |
 | Biotech FDA filing types build-out (`011Fyq…`) | F1, S4 or S3 (the Rule 2 audit slices) | F1 | through the coordinator |
 | R1 inventory and protocol (`01QoxbL…`) | ended (not reachable, 2026-11-01); R1 passes to the coordinator | — | — |
 | Codebase market readiness (`01Gx2fiw…`) | asked for its package and file list, 2026-11-01 | reading; RIM holds the filed-state loader | through the coordinator |
