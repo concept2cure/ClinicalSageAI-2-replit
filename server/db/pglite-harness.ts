@@ -738,7 +738,8 @@ CREATE TABLE IF NOT EXISTS shadow_review_runs (
   model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
   organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(),
   deleted_at TIMESTAMPTZ,
-  failure_code TEXT, waiver_signature_action_id TEXT, waived_failed_run_id INTEGER
+  failure_code TEXT, waiver_signature_action_id TEXT, waived_failed_run_id INTEGER,
+  leaf_manifest_digest TEXT, input_coverage JSONB
 );
 CREATE TABLE IF NOT EXISTS shadow_review_findings (
   id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,

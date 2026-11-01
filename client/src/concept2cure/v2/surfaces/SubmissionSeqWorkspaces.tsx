@@ -71,6 +71,7 @@ import {
   type WaiverRequest,
 } from './ShadowReviewWaiver';
 import { ShadowFindingList, type DispositionRequest, type ShadowFindingRow } from './ShadowFindingDisposition';
+import { ShadowRunCoverage } from './ShadowRunCoverage';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -1437,6 +1438,8 @@ interface ShadowRunRow {
   createdAt: string | null;
   /** A failed run's closed failure code (P-34); absent on an older server. */
   failureCode?: string | null;
+  /** What the reviewer read (2026-10-25; ShadowRunCoverage.tsx); absent on an older run. */
+  inputCoverage?: unknown;
 }
 
 // GET /shadow-review/:runId/findings → shadow_review_findings rows, each with
@@ -1653,6 +1656,7 @@ export function ShadowReviewWorkspace({
             {run && (
               <div className="sc-mt">
                 {run.summary ? <div className="scaf-note sc-mb">{run.summary}</div> : null}
+                <ShadowRunCoverage run={run} />
                 {run.status === 'waived' ? (
                   <WaivedRunNote run={run} />
                 ) : findings.loading ? (

@@ -222,6 +222,39 @@ describe('POST /docs/:docId/file-to-vault', () => {
     expect(verdict.rowsChecked).toBeGreaterThanOrEqual(3);
   });
 
+  // LX-10 (2026-11-01). The filing row recorded the document's version and a
+  // digest of its sections, never which revision of each it rendered, so a Vault
+  // rendition could not be walked back to who or what wrote each section.
+  it('names, for each filed section, the revision it rendered, its origin and its machine authors', async () => {
+    const docId = await draftDocument('Module 2.5 Clinical Overview — provenance filed');
+    const sections = (await jdb.pool.query(
+      `SELECT id::text AS id, code FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id`,
+      [docId, ORG],
+    )).rows as Array<{ id: string; code: string }>;
+    const heads = (await jdb.pool.query(
+      `SELECT DISTINCT ON (section_id) section_id::text AS section_id, id::text AS id, origin, chain_sha256
+         FROM doc_revisions WHERE tenant_id = $1 AND section_id = ANY($2::uuid[])
+        ORDER BY section_id, created_at DESC, id DESC`,
+      [ORG, sections.map((x) => x.id)],
+    )).rows as Array<{ section_id: string; id: string; origin: string; chain_sha256: string }>;
+    expect(heads).toHaveLength(sections.length);
+
+    const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const row = (await jdb.pool.query(
+      `SELECT new_values FROM audit_logs WHERE tenant_id = $1 AND action = 'authoring.document.file_to_vault' AND record_id = $2`,
+      [ORG, docId],
+    )).rows[0] as { new_values: Record<string, unknown> | string };
+    const details = typeof row.new_values === 'string' ? JSON.parse(row.new_values) : row.new_values;
+    expect(details.sectionRevisions).toEqual(sections.map((sec) => {
+      const head = heads.find((x) => x.section_id === sec.id)!;
+      return {
+        sectionId: sec.id, code: sec.code, revisionId: head.id, origin: head.origin, chainSha256: head.chain_sha256,
+        machineContributors: ['ana'], matchesFiledText: true,
+      };
+    }));
+  });
+
   it('refuses 409 DOCUMENT_HAS_NO_PROGRAM for an org-wide document — nothing filed', async () => {
     const docId = await legacyOrgWideDocument('Org-wide working notes');
     const before = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.documents');

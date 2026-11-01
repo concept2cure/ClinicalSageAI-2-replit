@@ -159,3 +159,28 @@ describe('a missing or failed source store is not an empty source history', () =
     expect(statements).toEqual([]);
   });
 });
+
+describe('each filed section names the revision it rendered (LX-10, 2026-11-01)', () => {
+  const HEAD = {
+    sectionId: '66666666-6666-4666-8666-666666666666', code: '2.5.1', revisionId: '77777777-7777-4777-8777-777777777777',
+    origin: 'ai-draft-accept', chainSha256: 'c'.repeat(64), machineContributors: ['ana'], matchesFiledText: true,
+  };
+
+  it('a receipt that records them projects them onto the derivation the package carries', async () => {
+    await record({ sourceVersion: 'v1.0', sourceSectionsSha256: 'b'.repeat(64), sectionRevisions: [HEAD] });
+    const result = await readAuthoringVaultFilingReceipt(q, input);
+    expect(result).toMatchObject({ status: 'recorded', source: { sectionRevisions: [HEAD] } });
+  });
+
+  it('a receipt recorded before them states none, rather than an empty list', async () => {
+    await record({ sourceVersion: 'v1.0', sourceSectionsSha256: 'b'.repeat(64) });
+    const result = await readAuthoringVaultFilingReceipt(q, input);
+    expect(result.status).toBe('recorded');
+    expect((result as { source: Record<string, unknown> }).source).not.toHaveProperty('sectionRevisions');
+  });
+
+  it('a malformed revision head is not projected as provenance', async () => {
+    await record({ sourceVersion: 'v1.0', sourceSectionsSha256: 'b'.repeat(64), sectionRevisions: [{ ...HEAD, chainSha256: 'not-a-hash' }] });
+    expect(await readAuthoringVaultFilingReceipt(q, input)).toEqual({ status: 'unverified', reason: 'receipt_malformed' });
+  });
+});

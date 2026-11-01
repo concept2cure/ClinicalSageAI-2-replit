@@ -24,6 +24,13 @@
  * shared API is an operator action (a signed addendum + the provider-side
  * setting), tracked by flipping the relevant entry — not assumed here.
  *
+ * Every lane a third party runs claims zero retention only when its flag
+ * ({@link ZERO_RETENTION_FLAGS}) says so; none claims it by default. The flag is
+ * one of two keys: AI_PROVIDER_PLACEMENT_APPROVALS must also approve zero
+ * retention for the provider and name the agreement it rests on, and the
+ * production boot refuses the two when they disagree
+ * (sensitive-placement-policy.ts, D6, 2026-10-25).
+ *
  * @module server/services/ai-gateway/providers/placement
  */
 
@@ -110,14 +117,29 @@ function derivedRegions(region: string, baseUrlOverride?: string): Array<DataRes
 }
 
 /**
- * Bedrock's zero-retention flag, parsed strictly. Unset or 'true' claims zero
- * retention (the service stores no prompts); 'false' does not; any other value
- * claims nothing, and the production boot check refuses it. Until 2026-09-26
- * every value but the exact string 'false' — 'FALSE', '0', 'no' — claimed it.
+ * The variable that records each lane's zero retention, for the lanes a third
+ * party runs. Moonshot has none: it is never a zero-retention lane. `local` has
+ * none: it is self-hosted, and no third party receives its text.
+ */
+export const ZERO_RETENTION_FLAGS = {
+  openai: 'OPENAI_ZERO_RETENTION',
+  anthropic: 'ANTHROPIC_ZERO_RETENTION',
+  bedrock: 'AI_BEDROCK_ZERO_RETENTION',
+  vertex: 'AI_VERTEX_ZERO_RETENTION',
+  azure: 'AI_AZURE_ZERO_RETENTION',
+} as const satisfies Partial<Record<ProviderName, string>>;
+
+/**
+ * Bedrock's zero-retention flag, parsed strictly. 'true' claims zero retention;
+ * unset, 'false' or any other value does not, and the production boot check
+ * refuses a value that is neither true nor false. Until 2026-09-26 every value
+ * but the exact string 'false' — 'FALSE', '0', 'no' — claimed it. Until
+ * 2026-10-25 an unset flag claimed it too: zero retention on Bedrock depends on
+ * the account's model-invocation logging, which this process cannot see, so the
+ * claim was made for every deployment that had not thought about it (D6).
  */
 function bedrockZeroRetention(env: NodeJS.ProcessEnv = process.env): boolean {
-  const raw = env.AI_BEDROCK_ZERO_RETENTION;
-  return raw === undefined || raw.trim() === '' || raw.trim().toLowerCase() === 'true';
+  return env[ZERO_RETENTION_FLAGS.bedrock]?.trim().toLowerCase() === 'true';
 }
 
 /** The residency codes a cloud lane can claim. */
@@ -147,9 +169,10 @@ function declaredTokens(raw: string | undefined): string[] {
 function envRegions(
   envVar: string,
   fallback: Array<DataResidency | 'global'>,
+  env: NodeJS.ProcessEnv = process.env,
 ): Array<DataResidency | 'global'> {
   const known = [
-    ...new Set(declaredTokens(process.env[envVar]).filter(t => CLOUD_RESIDENCY_CODES.includes(t as DataResidency))),
+    ...new Set(declaredTokens(env[envVar]).filter(t => CLOUD_RESIDENCY_CODES.includes(t as DataResidency))),
   ] as Array<DataResidency | 'global'>;
   return known.length > 0 ? known : fallback;
 }
@@ -162,20 +185,20 @@ function envRegions(
  * its region, so Azure claims residency only when declared, and no residency
  * otherwise.
  */
-export function buildPlacementRegistry(): Record<ProviderName, ProviderPlacement> {
+export function buildPlacementRegistry(env: NodeJS.ProcessEnv = process.env): Record<ProviderName, ProviderPlacement> {
   return {
     openai: {
       provider: 'openai',
       substrate: 'frontier_shared',
       regions: ['global'],
-      zeroDataRetention: process.env.OPENAI_ZERO_RETENTION === 'true',
+      zeroDataRetention: env[ZERO_RETENTION_FLAGS.openai] === 'true',
       note: 'Shared frontier API. ZDR requires a signed zero-retention agreement; set OPENAI_ZERO_RETENTION=true once it is in force.',
     },
     anthropic: {
       provider: 'anthropic',
       substrate: 'frontier_shared',
       regions: ['global'],
-      zeroDataRetention: process.env.ANTHROPIC_ZERO_RETENTION === 'true',
+      zeroDataRetention: env[ZERO_RETENTION_FLAGS.anthropic] === 'true',
       note: 'Shared first-party Claude API. ZDR requires a signed agreement; set ANTHROPIC_ZERO_RETENTION=true once in force.',
     },
     moonshot: {
@@ -188,31 +211,32 @@ export function buildPlacementRegistry(): Record<ProviderName, ProviderPlacement
     bedrock: {
       provider: 'bedrock',
       substrate: 'frontier_private',
-      regions: derivedRegions(bedrockClientRegion(), process.env[BASE_URL_OVERRIDES.bedrock]),
-      // Default true: Amazon Bedrock does not store or log prompts and
-      // completions, and model providers have no access to them — a property
-      // of the service, which DPA §6.2 relies on ("Yes by default"). Set
-      // AI_BEDROCK_ZERO_RETENTION=false if model-invocation logging is enabled.
-      zeroDataRetention: bedrockZeroRetention(),
-      note: 'Claude in your AWS account. No prompt storage or model-training on customer data by default; residency follows the region the client calls (AI_BEDROCK_REGION / AWS_REGION).',
+      regions: derivedRegions(bedrockClientRegion(env), env[BASE_URL_OVERRIDES.bedrock]),
+      // Explicit only, like every other lane a third party runs. Bedrock stores
+      // no prompts unless model-invocation logging is on in the account, and
+      // this process cannot see that setting; AI_BEDROCK_ZERO_RETENTION=true
+      // records that it is off, and the approval's zeroRetentionAgreement names
+      // the contract.
+      zeroDataRetention: bedrockZeroRetention(env),
+      note: 'Claude in your AWS account. Residency follows the region the client calls (AI_BEDROCK_REGION / AWS_REGION); zero retention only when AI_BEDROCK_ZERO_RETENTION=true (model-invocation logging off).',
     },
     vertex: {
       provider: 'vertex',
       substrate: 'frontier_private',
-      regions: derivedRegions(vertexClientRegion(), process.env[BASE_URL_OVERRIDES.vertex]),
+      regions: derivedRegions(vertexClientRegion(env), env[BASE_URL_OVERRIDES.vertex]),
       // Explicit only: zero retention on Vertex depends on project-side
       // settings (caching, abuse-monitoring logging), so it is claimed only
       // when the operator records it with AI_VERTEX_ZERO_RETENTION=true.
-      zeroDataRetention: process.env.AI_VERTEX_ZERO_RETENTION === 'true',
+      zeroDataRetention: env[ZERO_RETENTION_FLAGS.vertex] === 'true',
       note: 'Claude / Gemini in your GCP project. Residency follows the region the client calls (AI_VERTEX_REGION); zero retention only when AI_VERTEX_ZERO_RETENTION=true.',
     },
     azure: {
       provider: 'azure',
       substrate: 'frontier_private',
-      regions: envRegions('AI_AZURE_RESIDENCY', ['global']),
+      regions: envRegions('AI_AZURE_RESIDENCY', ['global'], env),
       // Explicit only: Azure OpenAI retains prompts for abuse monitoring unless
       // the tenant is approved for modified abuse monitoring.
-      zeroDataRetention: process.env.AI_AZURE_ZERO_RETENTION === 'true',
+      zeroDataRetention: env[ZERO_RETENTION_FLAGS.azure] === 'true',
       note: 'OpenAI models in your Azure tenant. Residency only when declared with AI_AZURE_RESIDENCY; zero retention only when AI_AZURE_ZERO_RETENTION=true (modified abuse monitoring approved).',
     },
     local: {
@@ -236,6 +260,15 @@ export function resolvePlacement(provider: ProviderName): ProviderPlacement {
 /** Reset the memoized registry (tests / env changes). */
 export function resetPlacementRegistry(): void {
   cachedRegistry = null;
+}
+
+/**
+ * True when the provider runs on infrastructure the deployment controls
+ * (substrate `self_hosted`), so no third party receives its text. False for a
+ * name the registry does not know.
+ */
+export function isSelfHostedProvider(provider: string): boolean {
+  return (buildPlacementRegistry() as Record<string, ProviderPlacement | undefined>)[provider]?.substrate === 'self_hosted';
 }
 
 export interface PlacementRequirement {

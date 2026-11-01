@@ -39,8 +39,10 @@ describe('production audit export key posture (fires on config import)', () => {
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
       anthropic: {
         region: 'us',
-        zeroRetentionApproved: true,
-        approvedDataClasses: ['pii'],
+        // The fail-closed interim value: no zero-retention agreement exists
+        // (D6), so no zero retention and no sensitive data classes.
+        zeroRetentionApproved: false,
+        approvedDataClasses: [],
         approvedIntendedUses: ['drafting'],
       },
     });

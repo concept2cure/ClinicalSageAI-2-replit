@@ -693,8 +693,10 @@ export interface DispatchReadinessResponse {
   validationErrors: number;
   /** Open critical Shadow Review findings counted from the database. */
   unacknowledgedShadowCriticals: number;
-  /** Completed Shadow Review runs for this sequence. */
+  /** Completed Shadow Review runs over this sequence's current leaves. */
   shadowReviewRunCount: number;
+  /** Completed runs over leaves that have since changed (they clear nothing). */
+  shadowReviewStaleRunCount?: number;
   /** Gate clear but no Shadow Review has run — dispatch allowed, never reviewed. */
   shadowReviewMissing: boolean;
   /** Hard gate verdict over the server-computed inputs. */

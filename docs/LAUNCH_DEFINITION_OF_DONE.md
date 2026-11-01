@@ -1671,3 +1671,19 @@ both":
 
 Nothing else in the plan changes.
 
+### P-85 — Home, the dock and Quality join their design packages
+
+The founder, 2026-11-01, answering the coordinating session's question. The merged build order
+(`.design/claude-convergence/BUILD_ORDER.md` §0) listed two ledger fixes that the D1 and D7 specs request, and only
+the founder changes the plan. The founder chose "Approve both":
+
+- **D1** (the shell, Home and the conversation) names:
+  - `client/src/concept2cure/v2/surfaces/Surfaces.tsx`, where `Home` is defined: the greeting, the composer row and
+    the starters (`D1.md` §0.2, §D1.C);
+  - `client/src/concept2cure/v2/workDock.ts`, so that the progress dock opens on request, not by default (§D1.E);
+  - `client/src/concept2cure/v2/surfaceViews.ts`, for the lazy fallback's wording. D1 adds no view.
+- **D7** (Submission Center, Quality, risk-based monitoring, and Reporting & analytics) names
+  `client/src/concept2cure/quality/**`, the Quality work area (`D7.md` §D7-B).
+
+Nothing new is built: these files exist, and the packages only gain the paths to finish them. Nothing else in the
+plan changes.

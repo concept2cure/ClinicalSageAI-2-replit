@@ -42,6 +42,7 @@ vi.mock('../release-signature-status', async (importOriginal) => ({
 }));
 
 import { assessSequenceDispatchReadiness, readinessOptionsForSequence } from '../assess-dispatch-readiness';
+import { coverCurrentLeaves } from '../../shadow-review/__tests__/review-covers-current-leaves';
 import { CLINICAL_HOLD_NOT_ASSESSED_NOTE } from '../ind-program-findings';
 
 let harness: IndPgliteDb;
@@ -109,7 +110,12 @@ async function recordSafetyReport(submissionId: number, opts: { deadline: string
   );
 }
 
-const assess = (sequenceId: number) => assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG, asOf: AS_OF });
+// The completed review seeded with each sequence is over the leaves as they stand
+// when the suite assesses (2026-10-25): this suite is about the structural gate.
+const assess = async (sequenceId: number) => {
+  await coverCurrentLeaves({ query: q }, sequenceId, ORG);
+  return assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG, asOf: AS_OF });
+};
 type Assessment = Awaited<ReturnType<typeof assess>>;
 const byCode = (a: Assessment, code: string) => a.readiness.findings.filter((f) => f.code === code);
 const structural = (a: Assessment) => a.gates.find((g) => g.key === 'structural')!;
