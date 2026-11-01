@@ -2,7 +2,7 @@
   "mode": "narrow-only",
   "base": "http://127.0.0.1:5000",
   "email": "jm.smith@concept2cure.pro",
-  "startedAt": "2026-11-01T16:21:41.924Z",
+  "startedAt": "2026-11-01T16:38:47.788Z",
   "steps": [
     {
       "name": "sign in (one dev-login)",
@@ -43,5 +43,5 @@
   "apiErrors": [],
   "consoleErrors": [],
   "outcome": "passed",
-  "finishedAt": "2026-11-01T16:21:58.966Z"
+  "finishedAt": "2026-11-01T16:39:03.509Z"
 }
