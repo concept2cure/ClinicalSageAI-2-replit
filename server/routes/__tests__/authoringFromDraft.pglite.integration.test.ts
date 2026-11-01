@@ -322,8 +322,12 @@ describe('a program holds many documents (control tower, 2026-09-21)', () => {
       title: 'IB — Investigator Brochure', module: 'M2', client_program_id: PROGRAM_B,
     });
     expect(first.status, JSON.stringify(first.body)).toBe(201);
-    // The first document takes the filing's editing copy, exactly as before.
-    expect(first.body.governance).toEqual({ bound: true, c2cDocumentId: FILING_B });
+    // 2026-10-31: the FIRST document no longer takes the filing. It used to,
+    // so the demo's protocol synopsis became the IND's editing copy and every
+    // Module 1–5 row on Project home opened it. A create that names no filing
+    // is a working document of the project, and says so.
+    expect(first.body.governance.bound).toBe(false);
+    expect(String(first.body.governance.reason)).toMatch(/working document of the project/);
 
     const second = await author(request(app).post('/api/authoring/docs')).send({
       title: 'Protocol synopsis', module: 'M5', client_program_id: PROGRAM_B,
@@ -332,10 +336,23 @@ describe('a program holds many documents (control tower, 2026-09-21)', () => {
     // In the program, unbound, and it says why.
     expect(second.body.document.client_program_id).toBe(PROGRAM_B);
     expect(second.body.governance.bound).toBe(false);
-    expect(String(second.body.governance.reason)).toContain(FILING_B);
-    expect(String(second.body.governance.reason)).toContain(first.body.document.id);
     const row = await jdb.pool.query('SELECT c2c_document_id FROM authoring_documents WHERE id = $1', [second.body.document.id]);
     expect((row.rows[0] as { c2c_document_id: string | null }).c2c_document_id).toBeNull();
+
+    // The filing's editing copy is the document created AS that copy: the
+    // create names the filing (the editor's filing list, FilingMarkets.tsx).
+    const copy = await author(request(app).post('/api/authoring/docs')).send({
+      title: 'IND — editing copy', client_program_id: PROGRAM_B, c2c_document_id: FILING_B,
+    });
+    expect(copy.status, JSON.stringify(copy.body)).toBe(201);
+    expect(copy.body.governance).toEqual({ bound: true, c2cDocumentId: FILING_B });
+
+    // A second copy of the same filing is refused, and nothing is created.
+    const again = await author(request(app).post('/api/authoring/docs')).send({
+      title: 'IND — second copy', client_program_id: PROGRAM_B, c2c_document_id: FILING_B,
+    });
+    expect(again.status, JSON.stringify(again.body)).toBe(409);
+    expect(again.body.code).toBe('FILING_NOT_BOUND');
 
     // And a third, drafted by AnA through from-draft, lands in the same program.
     const third = await author(request(app).post('/api/authoring/docs/from-draft')).send(
@@ -347,17 +364,19 @@ describe('a program holds many documents (control tower, 2026-09-21)', () => {
     const listed = await author(request(app).get('/api/authoring/docs').query({ programId: PROGRAM_B }));
     expect(listed.status).toBe(200);
     const titles = listed.body.documents.map((d: { title: string }) => d.title);
-    expect(titles).toEqual(expect.arrayContaining(['IB — Investigator Brochure', 'Protocol synopsis', 'Module 2.5 draft #2']));
+    expect(titles).toEqual(expect.arrayContaining(['IB — Investigator Brochure', 'Protocol synopsis', 'Module 2.5 draft #2', 'IND — editing copy']));
+    expect(titles).not.toContain('IND — second copy');
 
     // Each listed document says which filing it is the editing copy of, so the
     // outline offers "start this section" only in that copy (FILING_SPINE F4).
     const bindingOf = (docs: Array<{ title: string; c2c_document_id: string | null }>, title: string) =>
       docs.find(d => d.title === title)?.c2c_document_id;
-    expect(bindingOf(listed.body.documents, 'IB — Investigator Brochure')).toBe(FILING_B);
+    expect(bindingOf(listed.body.documents, 'IND — editing copy')).toBe(FILING_B);
+    expect(bindingOf(listed.body.documents, 'IB — Investigator Brochure')).toBeNull();
     expect(bindingOf(listed.body.documents, 'Protocol synopsis')).toBeNull();
     expect(bindingOf(listed.body.documents, 'Module 2.5 draft #2')).toBeNull();
     const firstGot = await author(request(app).get(`/api/authoring/docs/${first.body.document.id}`));
-    expect(firstGot.body.document.c2c_document_id).toBe(FILING_B);
+    expect(firstGot.body.document.c2c_document_id).toBeNull();
     const thirdGot = await author(request(app).get(`/api/authoring/docs/${third.body.data.doc.id}`));
     expect(thirdGot.body.document.c2c_document_id).toBeNull();
 

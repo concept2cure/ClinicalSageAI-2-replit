@@ -121,11 +121,14 @@ const renameCode = async () =>
 // Created IN a project (PF-07). The binding question under test is unchanged:
 // the governed-document resolver is mocked to name a filing either way, so the
 // only thing that decides bound vs unbound is the c2c_document_id column state.
-const createDoc = async () =>
+// Since 2026-10-31 only a create that NAMES the filing is bound to it
+// (resolveBinding), so the column question is asked of a named create; one that
+// names none is a working document and never consults the column.
+const createDoc = async (named = false) =>
   request(makeApp())
     .post('/api/authoring/docs')
     .set('Authorization', await bearer())
-    .send({ title: 'A doc', module: 'M3', client_program_id: OWNED_PROGRAM_ID });
+    .send({ title: 'A doc', module: 'M3', client_program_id: OWNED_PROGRAM_ID, ...(named ? { c2c_document_id: 'C2C-DOC-1' } : {}) });
 
 beforeEach(() => {
   mockQuery.mockReset();
@@ -183,7 +186,7 @@ describe('renaming a section code where the column IS present', () => {
 describe('creating a document when the check could NOT RUN', () => {
   it('does not claim the deployment lacks the column', async () => {
     wire('throws');
-    const res = await createDoc();
+    const res = await createDoc(true);
 
     // Asserting a schema fact from a query that threw is the defect.
     const body = JSON.stringify(res.body);
@@ -208,7 +211,7 @@ describe('creating a document when the check could NOT RUN', () => {
 
   it('DOES name the column when it is genuinely absent', async () => {
     wire('absent');
-    const res = await createDoc();
+    const res = await createDoc(true);
 
     expect(JSON.stringify(res.body)).toMatch(/has no c2c_document_id column/i);
   });

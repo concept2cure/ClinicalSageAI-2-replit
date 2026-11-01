@@ -108,11 +108,14 @@ function wire(columnPresent: boolean) {
   });
 }
 
-async function createDoc() {
+/* `named`: the create names the filing it is the editing copy of. Since
+   2026-10-31 only such a create is bound (resolveBinding); one that names none
+   is a working document of the project and never references the column. */
+async function createDoc(named = false) {
   return request(makeApp())
     .post('/api/authoring/docs')
     .set('Authorization', await bearer())
-    .send({ title: 'A doc', module: 'M3', client_program_id: PROGRAM_ID });
+    .send({ title: 'A doc', module: 'M3', client_program_id: PROGRAM_ID, ...(named ? { c2c_document_id: 'C2C-DOC-1' } : {}) });
 }
 
 beforeEach(() => {
@@ -149,13 +152,37 @@ describe('POST /docs — governed binding column', () => {
     expect(body).not.toContain('C2C-DOC-1');
   });
 
-  it('still binds when the column IS present', async () => {
+  it('still binds when the column IS present and the create names the filing', async () => {
     wire(true);
-    await createDoc();
+    const res = await createDoc(true);
 
+    expect(res.status).toBe(201);
+    expect(res.body.governance).toEqual({ bound: true, c2cDocumentId: 'C2C-DOC-1' });
     const insert = mockClientQuery.mock.calls
       .map(c => String(c[0]))
       .find(s => s.includes('INSERT INTO authoring_documents'));
     expect(insert).toContain('c2c_document_id');
+  });
+
+  it('refuses a named filing copy it cannot bind when the column is ABSENT, and creates nothing', async () => {
+    wire(false);
+    const res = await createDoc(true);
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('FILING_NOT_BOUND');
+    const inserted = mockClientQuery.mock.calls.some(c => String(c[0]).includes('INSERT INTO authoring_documents'));
+    expect(inserted).toBe(false);
+  });
+
+  it('does not bind a create that names no filing, even when the resolver has one (2026-10-31)', async () => {
+    wire(true);
+    const res = await createDoc();
+
+    expect(res.status).toBe(201);
+    expect(res.body.governance.bound).toBe(false);
+    const insert = mockClientQuery.mock.calls
+      .map(c => String(c[0]))
+      .find(s => s.includes('INSERT INTO authoring_documents'));
+    expect(insert).not.toContain('c2c_document_id');
   });
 });
