@@ -639,40 +639,14 @@ export interface AnaChatMessage {
   intelligenceFlowComplete?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceFlowCompleteEvent;
   /**
    * War Game report — FDA auditor simulation results, as the stream's
-   * `war_game_report` event carries them (server war-game/types.ts
-   * WarGameReport). No component renders it since WarGameReport.tsx was
+   * `war_game_report` event carries them: the shared WarGameReport, not a copy
+   * of it. Until 2026-11-01 (F1) this was an inline structural copy that typed
+   * `category` and `dimension` as bare `string` and the coverage fields as
+   * optional. No component renders it since WarGameReport.tsx was
    * deleted on 2026-08-04 (2895218b8); AnA narrates the report, and its
    * executiveSummary states how many checks could not be assessed.
    */
-  warGameReport?: {
-    id: string;
-    category: string;
-    sourceFlowId: string;
-    timestamp: string;
-    overallScore: number;
-    overallAssessment: 'audit_ready' | 'needs_work' | 'significant_gaps' | 'not_ready';
-    findings: Array<{
-      id: string;
-      dimension: string;
-      severity: 'info' | 'warning' | 'critical';
-      title: string;
-      question: string;
-      observation: string;
-      requirement: string;
-      reference: string;
-      recommendation: string;
-      relatedFields: string[];
-    }>;
-    dimensionScores: Record<string, { score: number; findingCount: number }>;
-    executiveSummary: string;
-    topPriorities: string[];
-    regulatoryRiskLevel: 'low' | 'moderate' | 'high' | 'critical';
-    /** Checks in the auditor, and how many its source interview could feed (2026-10-22). */
-    rulesTotal?: number;
-    rulesAssessed?: number;
-    /** Checks that read a question the interview does not ask: no finding, no score. */
-    notAssessed?: Array<{ ruleId: string; title: string; unaskedFields: string[] }>;
-  };
+  warGameReport?: import('../../../../../shared/types/intelligence-questions.js').WarGameReport;
   /**
    * Reporting Canvas — a governed report render or a best-practices suggestion
    * set produced by the reporting tools (generate_report / suggest_reports).

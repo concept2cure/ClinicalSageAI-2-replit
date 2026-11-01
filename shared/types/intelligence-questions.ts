@@ -404,7 +404,21 @@ export interface IntelligenceAnswerPayload {
   answers: Record<string, unknown>;
 }
 
-/* ─── War Game types (shared with client for report rendering) ─────── */
+/* ─── War Game types — the one definition ──────────────────────────────
+ *
+ * The report shape the war-game engine returns and the AnA stream carries.
+ * `server/.../war-game/types.ts` re-exports these and the client reads them.
+ *
+ * 2026-11-01 (F1): this was one of THREE hand-written copies, and it had
+ * drifted. When the engine gained `rulesTotal`, `rulesAssessed` and
+ * `notAssessed` (2026-10-22, the not-assessed checks of
+ * docs/evidence/D2-ANA-WAR-GAME-READS/), the server copy and the client's
+ * inline copy were updated and this one was not — so the copy whose comment
+ * said it was "shared with client" was the one missing the fields that say how
+ * much of a war game could not be assessed. Nothing imported it, which is how
+ * it could go stale silently. One definition now, so a field added to the
+ * report reaches every reader or fails to compile.
+ */
 
 export type WarGameCategory =
   | 'protocol'
@@ -457,6 +471,15 @@ export interface WarGameReport {
   executiveSummary: string;
   topPriorities: string[];
   regulatoryRiskLevel: 'low' | 'moderate' | 'high' | 'critical';
+  /** Rules in the auditor. */
+  rulesTotal: number;
+  /** Rules whose every read is a field the source interview asks. */
+  rulesAssessed: number;
+  /**
+   * Rules that read a field the source interview does not ask. They produce
+   * no finding and no score: "missing" there means "never asked".
+   */
+  notAssessed: Array<{ ruleId: string; title: string; unaskedFields: string[] }>;
 }
 
 export interface RiskScoreResult {
