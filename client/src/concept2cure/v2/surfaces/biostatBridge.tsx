@@ -225,8 +225,13 @@ export function StudyDesignCard({ designs, selectedId, onSelect }: {
                 <span className="sp-row-b">
                   <span className="sp-row-t">{d.title}</span>
                   <span className="sp-row-s">{[d.phase && 'Phase ' + d.phase, d.indication].filter(Boolean).join(' · ')}{d.readiness.primaryEndpoint ? ' · ' + d.readiness.primaryEndpoint : ''}</span>
+                  {/* Labelled, and under the title rather than beside it: in the
+                      300px column a labelled chip beside the title squeezed it
+                      to a word per line. */}
+                  <span style={{ display: 'block', marginTop: 4 }}>
+                    <span className={'rd-chip tone-' + readinessTone(d.readiness.percent)} title="Share of applicable statistical checks that pass">Statistical readiness {d.readiness.percent}%</span>
+                  </span>
                 </span>
-                <span className={'rd-chip tone-' + readinessTone(d.readiness.percent)} title="Statistical readiness — share of applicable checks that pass">{d.readiness.percent}%</span>
               </button>
             ))}
           </div>
@@ -243,12 +248,19 @@ export function StudyDesignCard({ designs, selectedId, onSelect }: {
  * placed. Its own component so the panel stays inside the repo's complexity
  * budget rather than suppressing the rule.
  */
+/** "a" or "an" as the label is SAID: an acronym by its first letter's name
+ *  ("an IND", "an NDA", "a BLA"), a word by its first sound ("a De Novo"). */
+function article(label: string): 'a' | 'an' {
+  return /^[A-Z][A-Z(]/.test(label) ? (/^[AEFHILMNORSX]/.test(label) ? 'an' : 'a') : (/^[aeiou]/i.test(label) ? 'an' : 'a');
+}
+
 function FilingSentence({ filing }: { filing: DesignAssessment['filing'] }) {
   const app = filing.applicationType;
   if (app) {
+    const label = APP_LABELS[app] ?? app;
     return (
       <div style={{ fontSize: 12 }}>
-        Files as a <b>{APP_LABELS[app] ?? app}</b>
+        Files as {article(label)} <b>{label}</b>
         {filing.projectId === null ? <span style={muted}> — the project has no tracking record yet, so tasks and documents cannot be bound to it</span> : null}.
       </div>
     );
@@ -285,7 +297,7 @@ export function DesignBridgePanel({ state, onNav, onApplied, onTasksRaised, fire
       <div className="pj-card-b" style={{ padding: 12, display: 'grid', gap: 10 }}>
         {/* Readiness — the design record's own checks. */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12 }}>
-          <span className={'rd-chip tone-' + readinessTone(a.readiness.percent)}>{a.readiness.percent}% ready</span>
+          <span className={'rd-chip tone-' + readinessTone(a.readiness.percent)}>Statistical readiness {a.readiness.percent}%</span>
           <span style={muted}>{readinessChecksOf(a.readiness).filter((c) => c.ok).length} of {readinessChecksOf(a.readiness).length} statistical checks pass</span>
         </div>
 

@@ -25,6 +25,7 @@
  * @module client/src/concept2cure/v2/surfaces/biostatEngineResult
  */
 import React, { useState } from 'react';
+import { parameterLabel } from '@shared/biostat-vocabulary';
 
 /* The two formatting primitives both halves of this pair use. They are
    declared in this module because it is the lower of the two: the bridge
@@ -308,7 +309,8 @@ export function EngineAssumptionsTable({ assumptions: raw }: { assumptions: Comp
         <tbody>
           {assumptions.map((x) => (
             <tr key={x.parameter}>
-              <td style={{ whiteSpace: 'nowrap' }}>{x.parameter}</td>
+              {/* The engine's key (`effect_size`, `dropoutRate`) said as words. */}
+              <td style={{ whiteSpace: 'nowrap' }}>{parameterLabel(x.parameter)}</td>
               <td style={{ fontFamily: 'var(--font-mono)' }}>{String(x.value)}</td>
               <td>{SOURCE_LABEL[x.source] ?? x.source}</td>
               <td><span className={'rd-chip tone-' + (x.sensitivity === 'high' ? 'warn' : 'idle')}>{x.sensitivity}</span></td>

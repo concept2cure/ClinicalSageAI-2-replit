@@ -27,8 +27,58 @@ import type {
   DocumentMetadata,
   StatisticalDocumentType,
 } from './types';
+import {
+  ACTION_LABELS,
+  AGENCY_LABELS,
+  ASSUMPTION_SOURCE_LABELS,
+  COMPARATOR_LABELS,
+  ENDPOINT_TYPE_LABELS,
+  ESTIMAND_STRATEGY_LABELS,
+  FRAGILITY_LABELS,
+  MISSING_DATA_METHOD_LABELS,
+  OBJECTIVE_LABELS,
+  STUDY_TYPE_LABELS,
+  TRACK_LABELS,
+  VERDICT_LABELS,
+  parameterLabel,
+  vocabLabel,
+  vocabPhrase,
+} from '../../../shared/biostat-vocabulary';
+import { canonicalPhase } from './input-normalizer';
+import { phaseNumbers } from '../../../shared/clinical-phase';
 
 const ENGINE_VERSION = '1.0.0';
+
+/* ── The words the document prints ─────────────────────────────────────────
+   Until 2026-10-31 this generator interpolated the engine's enum keys into the
+   prose ("Study Type: dose_response", "Estimand Strategy: treatment_policy",
+   an assumptions table of `effect_size | user_provided`). A governed document a
+   sponsor files cannot read like a database row. Every vocabulary value is
+   printed through its label (shared/biostat-vocabulary.ts — the same map the
+   Biostatistics form's options use); the figures are untouched. */
+const studyLabel = (v: unknown) => vocabLabel(STUDY_TYPE_LABELS, v);
+const studyPhrase = (v: unknown) => vocabPhrase(STUDY_TYPE_LABELS, v);
+const endpointLabel = (v: unknown) => vocabLabel(ENDPOINT_TYPE_LABELS, v);
+const endpointPhrase = (v: unknown) => vocabPhrase(ENDPOINT_TYPE_LABELS, v);
+const objectiveLabel = (v: unknown) => vocabLabel(OBJECTIVE_LABELS, v);
+const agencyLabel = (v: unknown) => vocabLabel(AGENCY_LABELS, v);
+const estimandLabel = (v: unknown) => vocabLabel(ESTIMAND_STRATEGY_LABELS, v);
+const missingDataLabel = (v: unknown) => vocabLabel(MISSING_DATA_METHOD_LABELS, v);
+const comparatorLabel = (v: unknown) => vocabLabel(COMPARATOR_LABELS, v);
+const verdictLabel = (v: unknown) => vocabLabel(VERDICT_LABELS, v);
+const actionLabel = (v: unknown) => vocabLabel(ACTION_LABELS, v);
+const fragilityLabel = (v: unknown) => vocabLabel(FRAGILITY_LABELS, v);
+const sourceLabel = (v: unknown) => vocabLabel(ASSUMPTION_SOURCE_LABELS, v);
+const capitalized = (v: unknown) => { const s = String(v ?? ''); return s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' '); };
+
+/** The phase as the sponsor wrote it, said once as a phase, and how the rules read it when that differs. */
+function phaseLine(raw: unknown): string {
+  const written = String(raw ?? '').trim();
+  const canonical = canonicalPhase(written);
+  if (!canonical) return written;
+  if (new Set(phaseNumbers(written)).size > 1) return `${written} (judged against Phase ${canonical} expectations)`;
+  return `Phase ${canonical}`;
+}
 
 export class DocumentGenerator {
 
@@ -118,17 +168,17 @@ export class DocumentGenerator {
   ): string {
     const n = comp.adjustedTotal ?? comp.sampleSize.total;
     const trackLabel = this.trackLabel(input.clientTrack);
-    const bodyLabel = regulatory?.body ?? 'FDA';
-    const fragLabel = judgment.fragility.category;
+    const bodyLabel = agencyLabel(regulatory?.body ?? 'FDA');
+    const fragLabel = fragilityLabel(judgment.fragility.category);
 
     let content = `# Sample Size Rationale\n\n`;
     content += `## Study Context\n`;
     content += `- **Track**: ${trackLabel}\n`;
-    content += `- **Study Type**: ${input.studyType}\n`;
-    content += `- **Endpoint Type**: ${input.endpointType}\n`;
-    content += `- **Objective**: ${input.objectiveType}\n`;
+    content += `- **Study Type**: ${studyLabel(input.studyType)}\n`;
+    content += `- **Endpoint Type**: ${endpointLabel(input.endpointType)}\n`;
+    content += `- **Objective**: ${objectiveLabel(input.objectiveType)}\n`;
     if (input.indication) content += `- **Indication**: ${input.indication}\n`;
-    if (input.phase) content += `- **Phase**: ${input.phase}\n`;
+    if (input.phase) content += `- **Phase**: ${phaseLine(input.phase)}\n`;
     content += `- **Target Regulatory Body**: ${bodyLabel}\n\n`;
 
     content += `## Sample Size Determination\n\n`;
@@ -141,7 +191,7 @@ export class DocumentGenerator {
     content += `| Parameter | Value | Source | Sensitivity |\n`;
     content += `|-----------|-------|--------|-------------|\n`;
     for (const a of comp.assumptions) {
-      content += `| ${a.parameter} | ${a.value} | ${a.source} | ${a.sensitivity} |\n`;
+      content += `| ${parameterLabel(a.parameter)} | ${a.value} | ${sourceLabel(a.source)} | ${capitalized(a.sensitivity)} |\n`;
     }
     content += `\n`;
 
@@ -184,15 +234,15 @@ export class DocumentGenerator {
 
     // Judgment summary
     content += `## Statistical Assessment\n\n`;
-    content += `- **Overall Verdict**: ${judgment.overallVerdict}\n`;
-    content += `- **Action Recommendation**: ${judgment.actionRecommendation}\n`;
+    content += `- **Overall Verdict**: ${verdictLabel(judgment.overallVerdict)}\n`;
+    content += `- **Action Recommendation**: ${actionLabel(judgment.actionRecommendation)}\n`;
     content += `- **Fragility**: ${fragLabel} (index: ${judgment.fragility.fragilityIndex})\n`;
-    content += `- **Confidence Level**: ${judgment.confidence.level} (${judgment.confidence.score}/100)\n\n`;
+    content += `- **Confidence Level**: ${capitalized(judgment.confidence.level)} (${judgment.confidence.score}/100)\n\n`;
 
     if (judgment.fragility.sensitiveParameters.length > 0) {
       content += `### Sensitivity Points\n\n`;
       for (const sp of judgment.fragility.sensitiveParameters) {
-        content += `- **${sp.parameter}**: current=${sp.currentValue}, breakpoint=${sp.breakpointValue} (${sp.percentMargin}% margin)\n`;
+        content += `- **${parameterLabel(sp.parameter)}**: current ${sp.currentValue}, breakpoint ${sp.breakpointValue} (${sp.percentMargin}% margin)\n`;
       }
       content += `\n`;
     }
@@ -235,15 +285,15 @@ export class DocumentGenerator {
     content += `${judgment.roleExplanations.executive}\n\n`;
 
     content += `## Risk Classification\n\n`;
-    content += `- **Overall Risk**: ${judgment.overallRisk}\n`;
-    content += `- **Action**: ${judgment.actionRecommendation}\n`;
-    content += `- **Confidence**: ${judgment.confidence.level}\n\n`;
+    content += `- **Overall Risk**: ${capitalized(judgment.overallRisk)}\n`;
+    content += `- **Action**: ${actionLabel(judgment.actionRecommendation)}\n`;
+    content += `- **Confidence**: ${capitalized(judgment.confidence.level)}\n\n`;
 
     content += `## Dimension Analysis\n\n`;
     content += `| Dimension | Verdict | Score | Key Flags |\n`;
     content += `|-----------|---------|-------|-----------|\n`;
     for (const dim of judgment.dimensions) {
-      content += `| ${dim.name} | ${dim.verdict} | ${dim.score}/100 | ${dim.flags.join('; ') || 'None'} |\n`;
+      content += `| ${dim.name} | ${verdictLabel(dim.verdict)} | ${dim.score}/100 | ${dim.flags.join('; ') || 'None'} |\n`;
     }
     content += `\n`;
 
@@ -310,7 +360,7 @@ export class DocumentGenerator {
     content += `|-----------|-------|--------|-------------|------------|\n`;
     for (const a of comp.assumptions) {
       const sp = judgment.fragility.sensitiveParameters.find(p => p.parameter === a.parameter);
-      content += `| ${a.parameter} | ${a.value} | ${a.source} | ${a.sensitivity} | ${sp ? sp.breakpointValue : 'N/A'} |\n`;
+      content += `| ${parameterLabel(a.parameter)} | ${a.value} | ${sourceLabel(a.source)} | ${capitalized(a.sensitivity)} | ${sp ? sp.breakpointValue : 'N/A'} |\n`;
     }
     content += `\n`;
 
@@ -320,7 +370,7 @@ export class DocumentGenerator {
     if (judgment.fragility.sensitiveParameters.length > 0) {
       content += `### Critical Parameters\n\n`;
       for (const sp of judgment.fragility.sensitiveParameters) {
-        content += `- **${sp.parameter}**: ${sp.percentMargin}% margin before power drops below threshold (current: ${sp.currentValue}, breakpoint: ${sp.breakpointValue})\n`;
+        content += `- **${parameterLabel(sp.parameter)}**: ${sp.percentMargin}% margin before power drops below threshold (current: ${sp.currentValue}, breakpoint: ${sp.breakpointValue})\n`;
       }
       content += `\n`;
     }
@@ -359,23 +409,22 @@ export class DocumentGenerator {
     input: StatisticalInput,
     comp: ComputationResult,
     judgment: JudgmentResult,
-    domain: DomainAdaptation,
-    regulatory?: RegulatoryCustomization
+    _domain: DomainAdaptation,
+    _regulatory?: RegulatoryCustomization
   ): string {
-    const bodyLabel = regulatory?.body ?? 'FDA';
     let content = `# Statistical Analysis Plan — Section Draft\n\n`;
 
     content += `## 1. Study Objectives and Endpoints\n\n`;
     content += `### Primary Objective\n`;
-    content += `${input.objectiveType} assessment using ${input.endpointType} endpoint.\n\n`;
+    content += `${objectiveLabel(input.objectiveType)} assessment using a ${endpointPhrase(input.endpointType)} endpoint.\n\n`;
     content += `### Primary Endpoint\n`;
-    content += `Type: ${input.endpointType}. Study type: ${input.studyType}.\n\n`;
+    content += `Type: ${endpointPhrase(input.endpointType)}. Study type: ${studyPhrase(input.studyType)}.\n\n`;
 
     content += `## 2. Study Design\n\n`;
-    content += `- Design: ${input.studyType}\n`;
+    content += `- Design: ${studyLabel(input.studyType)}\n`;
     content += `- Groups: ${input.numberOfGroups ?? 2}\n`;
     content += `- Allocation ratio: ${input.allocationRatio}:1\n`;
-    content += `- Comparator: ${input.comparatorType ?? 'placebo'}\n\n`;
+    content += `- Comparator: ${comparatorLabel(input.comparatorType ?? 'placebo')}\n\n`;
 
     content += `## 3. Sample Size Determination\n\n`;
     content += `A sample size of ${comp.adjustedTotal ?? comp.sampleSize.total} subjects (${comp.sampleSize.perGroup} per group) provides ${(comp.power * 100).toFixed(1)}% power to detect a ${input.effectSize} ${input.endpointType === 'binary' ? 'difference in proportions' : input.endpointType === 'time_to_event' ? 'hazard ratio reduction' : 'effect size'} at a two-sided significance level of ${input.alpha}.\n\n`;
@@ -410,11 +459,11 @@ export class DocumentGenerator {
 
     content += `## 6. Estimand Framework\n\n`;
     if (input.estimandStrategy) {
-      content += `### Estimand Strategy: ${input.estimandStrategy}\n\n`;
+      content += `### Estimand Strategy: ${estimandLabel(input.estimandStrategy)}\n\n`;
       content += `Per ICH E9(R1), the estimand is defined by:\n`;
       content += `- **Population**: [Study-specific]\n`;
-      content += `- **Variable**: ${input.endpointType} endpoint\n`;
-      content += `- **Intercurrent event handling**: ${input.estimandStrategy}\n`;
+      content += `- **Variable**: ${endpointLabel(input.endpointType)} endpoint\n`;
+      content += `- **Intercurrent event handling**: ${estimandLabel(input.estimandStrategy)} strategy\n`;
       content += `- **Summary measure**: [Study-specific]\n\n`;
     } else {
       content += `Estimand framework should be defined per ICH E9(R1) prior to study conduct.\n\n`;
@@ -422,7 +471,7 @@ export class DocumentGenerator {
 
     content += `## 7. Missing Data Handling\n\n`;
     if (input.missingDataMethod) {
-      content += `### Primary Approach: ${input.missingDataMethod}\n\n`;
+      content += `### Primary Approach: ${missingDataLabel(input.missingDataMethod)}\n\n`;
       if (comp.missingDataImpact) {
         content += `Expected missing data rate: ${(comp.missingDataImpact.expectedMissingRate * 100).toFixed(0)}%.\n`;
         content += `Effective sample size after missing data: ${comp.missingDataImpact.effectiveSampleSize}.\n`;
@@ -512,7 +561,7 @@ export class DocumentGenerator {
     content += `### Sample Size Justification\n`;
     content += `The sample size of ${comp.adjustedTotal ?? comp.sampleSize.total} was determined using ${comp.method} with the following assumptions:\n`;
     for (const a of comp.assumptions.filter(a => a.source === 'user_provided')) {
-      content += `- ${a.parameter}: ${a.value}\n`;
+      content += `- ${parameterLabel(a.parameter)}: ${a.value}\n`;
     }
     content += `\n`;
 
@@ -601,7 +650,7 @@ export class DocumentGenerator {
     content += `This note supports the statistical design and analysis approach for inclusion in the regulatory submission to ${regulatory?.body ?? 'the target regulatory authority'}.\n\n`;
 
     content += `## Statistical Design Summary\n\n`;
-    content += `- Study type: ${input.studyType}\n`;
+    content += `- Study type: ${studyLabel(input.studyType)}\n`;
     content += `- Total sample size: ${comp.adjustedTotal ?? comp.sampleSize.total}\n`;
     content += `- Primary method: ${comp.method}\n`;
     content += `- Power: ${(comp.power * 100).toFixed(1)}%\n`;
@@ -616,9 +665,9 @@ export class DocumentGenerator {
     content += `\n`;
 
     content += `## Statistical Rigor Assessment\n\n`;
-    content += `- Overall verdict: ${judgment.overallVerdict}\n`;
-    content += `- Confidence: ${judgment.confidence.level}\n`;
-    content += `- Fragility: ${judgment.fragility.category}\n\n`;
+    content += `- Overall verdict: ${verdictLabel(judgment.overallVerdict)}\n`;
+    content += `- Confidence: ${capitalized(judgment.confidence.level)}\n`;
+    content += `- Fragility: ${fragilityLabel(judgment.fragility.category)}\n\n`;
 
     content += this.provenanceFooter();
     return content;
@@ -671,13 +720,13 @@ export class DocumentGenerator {
     const n = comp.adjustedTotal ?? comp.sampleSize.total;
     const body = regulatory?.body ?? input.regulatoryBody ?? 'FDA';
     let c = `# Statistical Analysis Plan\n\n`;
-    c += `*${this.trackLabel(input.clientTrack)} · ${input.studyType} · ${input.objectiveType}*\n\n`;
+    c += `*${this.trackLabel(input.clientTrack)} · ${studyLabel(input.studyType)} · ${objectiveLabel(input.objectiveType)}*\n\n`;
 
-    c += `## 1. Introduction\n\nThis Statistical Analysis Plan (SAP) specifies the analyses for a ${input.studyType} study with a ${input.endpointType} primary endpoint. It is written to ${body} expectations and should be finalized and signed prior to database lock and unblinding.\n\n`;
+    c += `## 1. Introduction\n\nThis Statistical Analysis Plan (SAP) specifies the analyses for a ${studyPhrase(input.studyType)} study with a ${endpointPhrase(input.endpointType)} primary endpoint. It is written to ${agencyLabel(body)} expectations and should be finalized and signed prior to database lock and unblinding.\n\n`;
 
-    c += `## 2. Study Objectives and Endpoints\n\n- **Primary objective**: ${input.objectiveType} evaluation via the ${input.endpointType} primary endpoint.\n- **Study type**: ${input.studyType}${input.nonInferiorityMargin ? ` (non-inferiority margin ${input.nonInferiorityMargin})` : ''}${input.equivalenceMargin ? ` (equivalence margin ${input.equivalenceMargin})` : ''}.\n\n`;
+    c += `## 2. Study Objectives and Endpoints\n\n- **Primary objective**: ${objectiveLabel(input.objectiveType)} evaluation via the ${endpointPhrase(input.endpointType)} primary endpoint.\n- **Study type**: ${studyLabel(input.studyType)}${input.nonInferiorityMargin ? ` (non-inferiority margin ${input.nonInferiorityMargin})` : ''}${input.equivalenceMargin ? ` (equivalence margin ${input.equivalenceMargin})` : ''}.\n\n`;
 
-    c += `## 3. Study Design\n\n- Design: ${input.studyType}\n- Number of groups: ${input.numberOfGroups ?? 2}\n- Allocation ratio: ${input.allocationRatio}:1\n- Comparator: ${input.comparatorType ?? 'placebo'}\n\n`;
+    c += `## 3. Study Design\n\n- Design: ${studyLabel(input.studyType)}\n- Number of groups: ${input.numberOfGroups ?? 2}\n- Allocation ratio: ${input.allocationRatio}:1\n- Comparator: ${comparatorLabel(input.comparatorType ?? 'placebo')}\n\n`;
 
     c += `## 4. Analysis Populations\n\n- **Intention-to-treat (ITT)**: all randomized subjects, analyzed as randomized. Primary population for efficacy.\n- **Per-protocol (PP)**: subjects without major protocol deviations. Supportive${input.studyType === 'non_inferiority' || input.studyType === 'equivalence' ? ' — co-primary for non-inferiority/equivalence per ICH E9.' : '.'}\n- **Safety**: all subjects who received any study intervention, analyzed as treated.\n\n`;
 
@@ -694,11 +743,11 @@ export class DocumentGenerator {
       c += `Single primary endpoint — no multiplicity adjustment required for the primary comparison. Pre-specify a testing hierarchy for any key secondary endpoints.\n\n`;
     }
 
-    c += `## 8. Estimand (ICH E9(R1))\n\n${input.estimandStrategy ? `Strategy for intercurrent events: **${input.estimandStrategy}**. Define population, variable (${input.endpointType}), intercurrent-event handling, and population-level summary measure explicitly.` : 'Define the estimand (population, variable, intercurrent-event strategy, summary measure) before study conduct per ICH E9(R1).'}\n\n`;
+    c += `## 8. Estimand (ICH E9(R1))\n\n${input.estimandStrategy ? `Strategy for intercurrent events: **${estimandLabel(input.estimandStrategy)}**. Define population, variable (${endpointPhrase(input.endpointType)}), intercurrent-event handling, and population-level summary measure explicitly.` : 'Define the estimand (population, variable, intercurrent-event strategy, summary measure) before study conduct per ICH E9(R1).'}\n\n`;
 
     c += `## 9. Missing Data\n\n`;
     if (input.missingDataMethod && comp.missingDataImpact) {
-      c += `Primary approach: **${input.missingDataMethod}**. Expected missing rate ${(comp.missingDataImpact.expectedMissingRate * 100).toFixed(0)}%; effective N ${comp.missingDataImpact.effectiveSampleSize}; adjusted power ${(comp.missingDataImpact.adjustedPower * 100).toFixed(1)}%; bias risk ${comp.missingDataImpact.biasRisk}. ${comp.missingDataImpact.recommendation}\n\n`;
+      c += `Primary approach: **${missingDataLabel(input.missingDataMethod)}**. Expected missing rate ${(comp.missingDataImpact.expectedMissingRate * 100).toFixed(0)}%; effective N ${comp.missingDataImpact.effectiveSampleSize}; adjusted power ${(comp.missingDataImpact.adjustedPower * 100).toFixed(1)}%; bias risk ${comp.missingDataImpact.biasRisk}. ${comp.missingDataImpact.recommendation}\n\n`;
     } else {
       c += `Pre-specify the missing-data approach (e.g. MMRM for longitudinal endpoints, multiple imputation otherwise) and a tipping-point sensitivity analysis.\n\n`;
     }
@@ -733,7 +782,7 @@ export class DocumentGenerator {
     const k = input.interimAnalyses && input.interimAnalyses > 0 ? input.interimAnalyses : 1;
     const n = comp.adjustedTotal ?? comp.sampleSize.total;
     let c = `# Interim Analysis Plan\n\n`;
-    c += `## 1. Purpose\n\nThis plan governs ${k} planned interim ${k === 1 ? 'analysis' : 'analyses'} for a ${input.studyType} study (target N = ${n}, ${(comp.power * 100).toFixed(0)}% power at α = ${input.alpha}). It controls the overall Type I error and defines stopping rules.\n\n`;
+    c += `## 1. Purpose\n\nThis plan governs ${k} planned interim ${k === 1 ? 'analysis' : 'analyses'} for a ${studyPhrase(input.studyType)} study (target N = ${n}, ${(comp.power * 100).toFixed(0)}% power at α = ${input.alpha}). It controls the overall Type I error and defines stopping rules.\n\n`;
     c += `## 2. Timing\n\nInterim ${k === 1 ? 'analysis is' : 'analyses are'} planned at approximately ${Array.from({ length: k }, (_, i) => `${Math.round(((i + 1) / (k + 1)) * 100)}%`).join(', ')} of planned information (events/completers).\n\n`;
     c += `## 3. Alpha Spending\n\nA group-sequential design with an O'Brien–Fleming-type alpha-spending function is recommended to preserve a conservative early boundary and a near-nominal final boundary. The cumulative spend at the final analysis equals the study-wide α = ${input.alpha}.\n\n| Look | Information fraction | Indicative two-sided boundary (Z) |\n|---|---|---|\n`;
     for (let i = 1; i <= k; i++) {
@@ -760,7 +809,7 @@ export class DocumentGenerator {
     regulatory?: RegulatoryCustomization
   ): string {
     let c = `# Data Safety Monitoring Board (DSMB) Charter\n\n`;
-    c += `## 1. Purpose and Scope\n\nThe DSMB (also DMC) safeguards the safety and interests of subjects in this ${input.studyType} study (target N = ${comp.adjustedTotal ?? comp.sampleSize.total}) and the integrity of the trial. It operates independently of the sponsor and investigators.\n\n`;
+    c += `## 1. Purpose and Scope\n\nThe DSMB (also DMC) safeguards the safety and interests of subjects in this ${studyPhrase(input.studyType)} study (target N = ${comp.adjustedTotal ?? comp.sampleSize.total}) and the integrity of the trial. It operates independently of the sponsor and investigators.\n\n`;
     c += `## 2. Membership\n\n- Independent clinician(s) with relevant therapeutic expertise\n- Independent biostatistician\n- A chair with prior DSMB experience\n\nMembers have no competing financial or intellectual interests in the outcome.\n\n`;
     c += `## 3. Responsibilities\n\n- Review accumulating safety data at pre-specified intervals\n- Review interim efficacy at planned looks (see Interim Analysis Plan)\n- Recommend continue / modify / pause / stop\n\n`;
     c += `## 4. Meetings\n\n- **Organizational** (before first subject)\n- **Periodic safety reviews** (e.g. by enrollment/exposure milestones)\n- **Interim analyses**: ${input.interimAnalyses && input.interimAnalyses > 0 ? `${input.interimAnalyses} planned` : 'safety-only unless protocol specifies efficacy looks'}\n\n`;
@@ -794,12 +843,12 @@ export class DocumentGenerator {
     // of it.
     const toConfirm = (what: string) => `[DATA TO BE INSERTED: ${what}]`;
     let c = `# Statistical Methods (CSR §9.7, ICH E3)\n\n`;
-    c += `## 9.7.1 Statistical and Analytical Plans\n\nThe study was planned as a ${input.studyType} design with a ${input.endpointType} primary endpoint, to be analyzed by ${comp.method}. ${toConfirm('whether the analyses followed the pre-specified SAP, and every deviation from it')}\n\n`;
+    c += `## 9.7.1 Statistical and Analytical Plans\n\nThe study was planned as a ${studyPhrase(input.studyType)} design with a ${endpointPhrase(input.endpointType)} primary endpoint, to be analyzed by ${comp.method}. ${toConfirm('whether the analyses followed the pre-specified SAP, and every deviation from it')}\n\n`;
     c += `## 9.7.1.1 Analysis Populations\n\n${toConfirm('the efficacy and safety analysis populations as analyzed, and their definitions')}\n\n`;
     c += `## 9.7.1.2 Primary Endpoint Analysis\n\nThe primary endpoint was planned to be compared between arms using ${comp.method} at a two-sided α = ${input.alpha}, with the point estimate reported with its ${((1 - input.alpha) * 100).toFixed(0)}% confidence interval${comp.confidenceInterval ? ` (planned CI [${comp.confidenceInterval.lower}, ${comp.confidenceInterval.upper}])` : ''}.\n\n`;
     c += `## 9.7.1.3 Sample Size\n\nThe planned sample size of ${n} (${comp.sampleSize.perGroup}/group) provided ${(comp.power * 100).toFixed(1)}% power. ${comp.formula}\n\n`;
     c += `## 9.7.2 Multiplicity\n\n${comp.multiplicityResult && comp.multiplicityResult.endpointCount > 1 ? comp.multiplicityResult.recommendation : `One primary comparison is planned. ${toConfirm('how secondary endpoints were tested and how multiplicity was controlled')}`}\n\n`;
-    c += `## 9.7.3 Handling of Missing Data\n\n${input.missingDataMethod ? `The plan specifies ${input.missingDataMethod} for missing data. ${toConfirm('the method used and the sensitivity analyses performed')}` : toConfirm('how missing data were handled, and the sensitivity analyses performed')}\n\n`;
+    c += `## 9.7.3 Handling of Missing Data\n\n${input.missingDataMethod ? `The plan specifies ${missingDataLabel(input.missingDataMethod)} for missing data. ${toConfirm('the method used and the sensitivity analyses performed')}` : toConfirm('how missing data were handled, and the sensitivity analyses performed')}\n\n`;
     c += `## 9.7.4 Interim Analyses\n\n${input.interimAnalyses && input.interimAnalyses > 0 ? `The plan specifies ${input.interimAnalyses} interim ${input.interimAnalyses === 1 ? 'analysis' : 'analyses'} under a pre-specified alpha-spending function with DSMB oversight. ${toConfirm('the interim analyses conducted and their outcomes')}` : `No interim efficacy analysis is specified in the plan. ${toConfirm('whether any interim analysis was conducted')}`}\n\n`;
     if (judgment.fragility.category !== 'robust') {
       c += `## 9.7.5 Robustness\n\nResult robustness was assessed (fragility index ${judgment.fragility.fragilityIndex}); conclusions were examined under alternative assumptions.\n\n`;
@@ -819,12 +868,12 @@ export class DocumentGenerator {
     _domain: DomainAdaptation
   ): string {
     let c = `# Tables, Listings & Figures (TLF) Shell Plan\n\n`;
-    c += `Planned outputs for a ${input.studyType} study (N = ${comp.adjustedTotal ?? comp.sampleSize.total}). Shells are organized by ICH E3 domain.\n\n`;
+    c += `Planned outputs for a ${studyPhrase(input.studyType)} study (N = ${comp.adjustedTotal ?? comp.sampleSize.total}). Shells are organized by ICH E3 domain.\n\n`;
     c += `## Tables\n\n| ID | Title | Population |\n|---|---|---|\n`;
     c += `| 14.1.1 | Subject disposition | All randomized |\n`;
     c += `| 14.1.2 | Protocol deviations | All randomized |\n`;
     c += `| 14.1.3 | Demographics and baseline characteristics | ITT; Safety |\n`;
-    c += `| 14.2.1 | Primary endpoint (${input.endpointType}) analysis — ${comp.method} | ITT |\n`;
+    c += `| 14.2.1 | Primary endpoint (${endpointPhrase(input.endpointType)}) analysis — ${comp.method} | ITT |\n`;
     c += `| 14.2.2 | Primary endpoint — PP sensitivity | PP |\n`;
     c += `| 14.2.3 | Secondary endpoints | ITT |\n`;
     if (comp.multiplicityResult && comp.multiplicityResult.endpointCount > 1) c += `| 14.2.4 | Multiplicity-adjusted testing summary | ITT |\n`;
@@ -857,7 +906,7 @@ export class DocumentGenerator {
   ): string {
     const groups = input.numberOfGroups ?? 2;
     let c = `# Randomization & Blinding Plan\n\n`;
-    c += `## 1. Allocation\n\nSubjects are randomized ${input.allocationRatio}:1 across ${groups} arm${groups === 1 ? '' : 's'} for this ${input.studyType} study (target N = ${comp.adjustedTotal ?? comp.sampleSize.total}).\n\n`;
+    c += `## 1. Allocation\n\nSubjects are randomized ${input.allocationRatio}:1 across ${groups} arm${groups === 1 ? '' : 's'} for this ${studyPhrase(input.studyType)} study (target N = ${comp.adjustedTotal ?? comp.sampleSize.total}).\n\n`;
     c += `## 2. Method\n\nPermuted-block randomization with randomly varying block sizes is recommended to balance arms while protecting allocation concealment. ${input.studyType === 'single_arm' ? 'Single-arm study — randomization not applicable; document enrollment order instead.' : 'Stratify by key prognostic factors (e.g. site, baseline severity) to control confounding.'}\n\n`;
     c += `## 3. Allocation Concealment\n\nThe randomization list is generated by an independent statistician and held in a secure IWRS/IRT. Sites obtain assignments at the point of randomization only.\n\n`;
     c += `## 4. Blinding\n\n${input.comparatorType === 'placebo' ? 'Double-blind: subjects, investigators, and outcome assessors are masked using matching placebo.' : 'Specify the blinding level (open-label, single-, or double-blind). Where blinding is infeasible, use blinded independent endpoint adjudication.'}\n\n`;
@@ -888,13 +937,10 @@ export class DocumentGenerator {
     return `${typeLabels[type]} (${trackLabel})${suffix}`;
   }
 
+  /* The track's label is the shared vocabulary's (TRACK_LABELS): this switch
+     held a second copy of it until 2026-10-31, and an unknown track printed raw. */
   private trackLabel(track: string): string {
-    switch (track) {
-      case 'biotech_pharma': return 'Pharma/Biotech';
-      case 'medical_device': return 'Medical Device';
-      case 'diagnostics_ivd': return 'Diagnostics/IVD';
-      default: return track;
-    }
+    return vocabLabel(TRACK_LABELS, track);
   }
 
   private provenanceFooter(): string {

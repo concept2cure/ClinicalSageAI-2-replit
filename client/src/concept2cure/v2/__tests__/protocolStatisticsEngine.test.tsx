@@ -191,10 +191,12 @@ describe('protocol-dev Statistics tab — the engine computes in the tab', () =>
 
     // The assumptions the engine used, each with where the value came from.
     const assumptions = screen.getByRole('table', { name: /Assumptions the engine used/i });
-    expect(within(assumptions).getByText('dropoutRate')).toBeTruthy();
+    // Named as a reader says them, not as the engine's keys (2026-10-31).
+    expect(within(assumptions).getByText('Dropout rate')).toBeTruthy();
     expect(within(assumptions).getByText('0.15')).toBeTruthy();
     expect(within(assumptions).getByText(/default/)).toBeTruthy();
-    expect(within(assumptions).getByText('variance')).toBeTruthy();
+    expect(within(assumptions).getByText('Variance')).toBeTruthy();
+    expect(within(assumptions).queryByText('dropoutRate')).toBeNull();
 
     // The judgment, by dimension, with the engine's reason for each.
     const judged = screen.getByRole('table', { name: /Judged by dimension/i });

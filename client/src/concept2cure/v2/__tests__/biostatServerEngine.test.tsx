@@ -253,13 +253,19 @@ afterEach(() => {
 describe('Biostatistics — a preset is a worked example, not the person\'s study', () => {
   /* 2026-10-31: with no study design recorded, the screen called the oncology
      preset "your superiority design" on a psoriasis project. */
-  it('says so until a design is loaded or an input is changed', async () => {
+  /* And changing an input does not make it the person's study either: until
+     2026-10-31 one edit to the oncology example turned it into "your design".
+     "Your" is keyed on where the inputs came from — a recorded study design. */
+  it('says so until a design is loaded — an edited example is still an example', async () => {
     mount();
     await engineAnswered();
     expect(await screen.findByText(/Worked example — Pivotal OS \(survival\), not your study/)).toBeTruthy();
     expect(screen.queryByText(/is ready to review/i)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Copy the example to the editor' })).toBeTruthy();
     fireEvent.change(screen.getByLabelText(/^Alpha$/), { target: { value: '0.04' } });
-    expect(await screen.findByText(/Your sample size rationale is ready to review/i)).toBeTruthy();
+    expect(await screen.findByText(/Worked example \(modified\) — Pivotal OS \(survival\), not your study/)).toBeTruthy();
+    expect(screen.queryByText(/is ready to review/i)).toBeNull();
+    expect(document.body.textContent ?? '').not.toMatch(/for your [\w\s–-]+ design/i);
   });
 });
 
@@ -356,12 +362,17 @@ describe('Biostatistics — the statistics come from the server engine', () => {
     mount();
     await waitFor(() => expect(rendered()).toMatch(/Sample Size Determination/));
 
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    // A worked example here, so the bar's action says it copies the example.
+    fireEvent.click(screen.getByRole('button', { name: /Copy example to editor/ }));
     await waitFor(() =>
       expect(apiRequest.mock.calls.some((c) => c[1] === '/api/authoring/sections')).toBe(true),
     );
     const section = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections')![2];
-    expect(section.content).toBe(DOC_MARKDOWN);
+    // The engine's document as the page renders it: the editor stores section
+    // content verbatim, so Markdown arrived as "## …" and "|---|" (2026-10-31).
+    expect(section.content).toBe(document.querySelector('.bs-doc-render')!.innerHTML);
+    expect(section.content).toMatch(/<h2[^>]*>Sample Size Determination<\/h2>/);
+    expect(section.content).not.toMatch(/(^|\n)#{1,6} /);
   });
 });
 

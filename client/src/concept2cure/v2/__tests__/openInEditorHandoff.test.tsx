@@ -123,6 +123,12 @@ const engineDocumentContent = (type: string) => [
   '### Formula',
   'Events = (z_a + z_b)^2 * (1+r)^2 / (r * ln(HR)^2), HR=0.620, events=247',
   '',
+  '### Assumptions',
+  '',
+  '| Parameter | Value | Source | Sensitivity |',
+  '|-----------|-------|--------|-------------|',
+  '| Event rate | 0.55 | Stated | High |',
+  '',
   '### Result',
   '',
   '- **Sample size per group**: 311',
@@ -147,6 +153,12 @@ const engineDocument = (type: string) => ({
   status: 'draft',
   provenance: { generatedAt: '2026-10-11T00:00:00.000Z', engineVersion: '1.0.0' },
 });
+
+/* With no study design recorded the page is on a worked example, so the
+   document bar's action says it copies the example (2026-10-31) and the saved
+   title says it is one. */
+const BIO_OPEN = /Copy example to editor/;
+const EXAMPLE = ' — worked example: Pivotal OS (survival)';
 
 /** The engine has answered and its document is on screen, so the hand-off has
  *  something to hand off. */
@@ -218,7 +230,7 @@ describe('Biostatistics — Open in editor', () => {
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
 
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
 
     // Nothing is claimed before the server answers: the old handler navigated
     // synchronously, which is exactly the behaviour being removed.
@@ -227,23 +239,29 @@ describe('Biostatistics — Open in editor', () => {
     await waitFor(() => expect(secCalls()).toHaveLength(1));
 
     const doc = docCalls()[0][2];
-    expect(doc).toMatchObject({ title: 'Sample Size Rationale', module: 'M5', client_program_id: PROGRAM });
+    expect(doc).toMatchObject({ title: 'Sample Size Rationale' + EXAMPLE, module: 'M5', client_program_id: PROGRAM });
 
     const sec = secCalls()[0][2];
     expect(sec).toMatchObject({
       doc_id: 'D-77',
-      title: 'Sample Size Rationale',
+      title: 'Sample Size Rationale' + EXAMPLE,
       // NOT a CTD number: the editor binds outline nodes by exact code match, so
       // a numeric code here would assert a filing position this surface cannot
       // know.
       code: 'sample_size_rationale',
     });
 
-    // The deliverable actually travels — and it is the ENGINE's document, byte
-    // for byte, not a browser draft reconstructed from the same inputs.
-    expect(sec.content).toBe(engineDocumentContent('sample_size_rationale'));
-    expect(sec.content).toMatch(/^# Sample Size Rationale/);
-    expect(sec.content).toMatch(/## Sample Size Determination/);
+    // The deliverable actually travels — the ENGINE's document, not a browser
+    // draft — and it arrives as the document the page renders: HTML headings
+    // and tables. Until 2026-10-31 the engine's Markdown was sent verbatim and
+    // the editor showed "## Study Context" and "|---|---|".
+    expect(sec.content).toMatch(/<h1[^>]*>Sample Size Rationale<\/h1>/);
+    expect(sec.content).toMatch(/<h2[^>]*>Sample Size Determination<\/h2>/);
+    expect(sec.content).toMatch(/<table[\s>]/);
+    expect(sec.content).toMatch(/<td[^>]*>Event rate<\/td>/);
+    expect(sec.content).not.toMatch(/(^|\n)#{1,6} /);
+    expect(sec.content).not.toContain('|---');
+    expect(sec.content).toBe(document.querySelector('.bs-doc-render')?.innerHTML);
     expect(sec.content.length).toBeGreaterThan(400);
 
     // And only then the navigation.
@@ -255,7 +273,7 @@ describe('Biostatistics — Open in editor', () => {
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
     await waitFor(() => expect(onNav).toHaveBeenCalled());
     expect(writtenKeys()).not.toContain('c2c_biostat_doc');
   });
@@ -267,7 +285,7 @@ describe('Biostatistics — Open in editor', () => {
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
     await waitFor(() => expect(docCalls()).toHaveLength(1));
     expect(docCalls()[0][2]).toMatchObject({ client_program_id: '11111111-2222-3333-4444-555555555555' });
   });
@@ -279,7 +297,7 @@ describe('Biostatistics — Open in editor', () => {
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
-    const btn = screen.getByRole('button', { name: /Open in editor/ });
+    const btn = screen.getByRole('button', { name: BIO_OPEN });
     fireEvent.click(btn);
     fireEvent.click(btn);
     await waitFor(() => expect(onNav).toHaveBeenCalled());
@@ -294,9 +312,9 @@ describe('Biostatistics — Open in editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'DSMB / DMC Charter' }));
     // The engine writes the newly chosen document before it can be handed off.
     await biostatDocReady('Data Safety Monitoring Board');
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
     await waitFor(() => expect(secCalls()).toHaveLength(1));
-    expect(docCalls()[0][2]).toMatchObject({ title: 'DSMB / DMC Charter', client_program_id: PROGRAM });
+    expect(docCalls()[0][2]).toMatchObject({ title: 'DSMB / DMC Charter' + EXAMPLE, client_program_id: PROGRAM });
     expect(secCalls()[0][2]).toMatchObject({ code: 'dsmb_charter' });
     expect(secCalls()[0][2].content).toMatch(/DSMB|Data Monitoring/i);
   });
@@ -309,7 +327,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
 
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
 
     expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(screen.queryByText(/Nothing was saved/)).toBeNull();
@@ -324,7 +342,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
     expect(await screen.findByText(/isn’t authenticated/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
@@ -336,7 +354,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
 
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
 
     expect(await screen.findByText(/its text did not save/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
@@ -354,7 +372,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
     expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
@@ -517,7 +535,7 @@ describe('Open in editor with no project open — nothing is created (PF-07)', (
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
     await expectRefusedWithoutProject(onNav, '.bs-doc-render', /Sample Size Determination/);
   });
 
@@ -526,7 +544,7 @@ describe('Open in editor with no project open — nothing is created (PF-07)', (
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
     await expectRefusedWithoutProject(onNav, '.bs-doc-render', /Sample Size Determination/);
   });
 

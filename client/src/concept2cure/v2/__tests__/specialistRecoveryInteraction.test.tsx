@@ -197,8 +197,8 @@ describe('independent actual caller recovery admission', () => {
     const pending = deferred<Response>(); createReply = () => pending.promise;
     render(<Biostatistics {...props('biostatistics')} />);
     await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
-    const open = screen.getByRole('button', { name: 'Open in document editor' });
-    const attach = screen.getByRole('button', { name: 'File it to the dossier' });
+    const open = screen.getByRole('button', { name: 'Copy the example to the editor' });
+    const attach = screen.getByRole('button', { name: 'Save the example as a working document' });
     act(() => { fireEvent.click(open); fireEvent.click(attach); });
     expect(authoringCalls()).toHaveLength(1);
     await act(async () => pending.resolve(docReceipt()));
@@ -225,7 +225,7 @@ async function clickRecovery(label: string) {
 async function prepareBiostatistics() {
   const view = render(<Biostatistics {...props('biostatistics')} />);
   await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
-  return { ...view, action: screen.getByRole('button', { name: 'File it to the dossier' }) };
+  return { ...view, action: screen.getByRole('button', { name: 'Save the example as a working document' }) };
 }
 async function prepareCalculator() {
   const view = render(<BiostatWorkbench {...props('biostat-workbench')} />);

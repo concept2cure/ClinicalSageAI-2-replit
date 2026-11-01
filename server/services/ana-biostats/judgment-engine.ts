@@ -19,6 +19,24 @@ import type {
   EndpointMethodFit,
   RoleExplanations,
 } from './types';
+import { phaseOf } from './input-normalizer';
+import {
+  COMPARATOR_LABELS,
+  ENDPOINT_TYPE_LABELS,
+  ESTIMAND_STRATEGY_LABELS,
+  MISSING_DATA_METHOD_LABELS,
+  STUDY_TYPE_LABELS,
+  TRACK_LABELS,
+  parameterLabel,
+  vocabLabel,
+  vocabPhrase,
+} from '../../../shared/biostat-vocabulary';
+
+/* Every phase rule below reads `phaseOf(input)` — the one reading of a phase
+   as written ("Phase 3", "III", "2/3"), in input-normalizer.ts. Until
+   2026-10-31 they compared `input.phase === 'III'` and no caller sent that, so
+   none of them ever fired. Rationale and flag prose names vocabulary values by
+   their labels (shared/biostat-vocabulary.ts); the verdicts stay the keys. */
 
 export class JudgmentEngine {
 
@@ -89,7 +107,7 @@ export class JudgmentEngine {
     }
 
     // Phase-specific calibration
-    if (input.phase === 'III' && power < 0.80) {
+    if (phaseOf(input) === 'III' && power < 0.80) {
       flags.push('Phase III confirmatory trial with <80% power is a significant regulatory risk');
       score = Math.min(score, 25);
       verdict = 'inadequate';
@@ -127,7 +145,7 @@ export class JudgmentEngine {
     }
 
     // Phase III confirmatory considerations
-    if (input.phase === 'III' && comp.sampleSize.total < 100) {
+    if (phaseOf(input) === 'III' && comp.sampleSize.total < 100) {
       flags.push('Phase III with <100 total subjects is unusual — verify regulatory alignment');
       score -= 20;
       verdict = 'marginal';
@@ -227,7 +245,7 @@ export class JudgmentEngine {
       name: 'Design Appropriateness',
       verdict,
       score,
-      rationale: `${input.studyType} design with ${input.endpointType} endpoint for ${input.clientTrack} track.`,
+      rationale: `${vocabLabel(STUDY_TYPE_LABELS, input.studyType)} design with a ${vocabPhrase(ENDPOINT_TYPE_LABELS, input.endpointType)} endpoint, ${vocabPhrase(TRACK_LABELS, input.clientTrack)} track.`,
       flags,
     };
   }
@@ -293,7 +311,7 @@ export class JudgmentEngine {
       name: 'Overinterpretation Risk',
       verdict,
       score,
-      rationale: `Study type: ${input.studyType}. Design complexity and sample size considered.`,
+      rationale: `Study type: ${vocabPhrase(STUDY_TYPE_LABELS, input.studyType)}. Design complexity and sample size considered.`,
       flags,
     };
   }
@@ -318,7 +336,7 @@ export class JudgmentEngine {
     }
 
     if (!input.multiplicityMethod || input.multiplicityMethod === 'none') {
-      if (input.phase === 'III') {
+      if (phaseOf(input) === 'III') {
         score = 25;
         flags.push(`Phase III with ${endpoints} endpoints and no multiplicity correction — regulatory rejection risk`);
       } else {
@@ -360,7 +378,8 @@ export class JudgmentEngine {
     // ICH E9(R1) requires estimand framework for pharma
     if (input.clientTrack === 'biotech_pharma') {
       if (!input.estimandStrategy) {
-        if (input.phase === 'III' || input.phase === 'II') {
+        const phase = phaseOf(input);
+        if (phase === 'III' || phase === 'II') {
           score = 40;
           flags.push('No estimand strategy specified — ICH E9(R1) requires explicit estimand framework for confirmatory trials');
           flags.push('Specify: population, variable, intercurrent event handling, summary measure');
@@ -369,7 +388,7 @@ export class JudgmentEngine {
           flags.push('Estimand strategy not specified — recommended per ICH E9(R1)');
         }
       } else {
-        flags.push(`Estimand strategy: ${input.estimandStrategy}`);
+        flags.push(`Estimand strategy: ${vocabPhrase(ESTIMAND_STRATEGY_LABELS, input.estimandStrategy)}`);
         if (input.estimandStrategy === 'treatment_policy' && input.attritionRate > 0.20) {
           score -= 10;
           flags.push('Treatment policy estimand with high dropout may not reflect true treatment effect');
@@ -391,7 +410,7 @@ export class JudgmentEngine {
       name: 'Estimand Clarity',
       verdict,
       score,
-      rationale: `${input.estimandStrategy ? `Estimand: ${input.estimandStrategy}.` : 'No estimand framework specified.'} ${input.clientTrack === 'biotech_pharma' ? 'ICH E9(R1) compliance expected.' : ''}`,
+      rationale: `${input.estimandStrategy ? `Estimand: ${vocabPhrase(ESTIMAND_STRATEGY_LABELS, input.estimandStrategy)} strategy.` : 'No estimand framework specified.'} ${input.clientTrack === 'biotech_pharma' ? 'ICH E9(R1) compliance expected.' : ''}`,
       flags,
     };
   }
@@ -417,7 +436,7 @@ export class JudgmentEngine {
     }
 
     if (!input.missingDataMethod) {
-      if (input.phase === 'III') {
+      if (phaseOf(input) === 'III') {
         score -= 15;
         flags.push('No missing data handling method specified for Phase III — pre-specify in SAP');
       } else {
@@ -425,7 +444,7 @@ export class JudgmentEngine {
         flags.push('Missing data handling method not specified');
       }
     } else {
-      flags.push(`Method: ${input.missingDataMethod}`);
+      flags.push(`Method: ${vocabLabel(MISSING_DATA_METHOD_LABELS, input.missingDataMethod)}`);
       if (input.missingDataMethod === 'LOCF') {
         score -= 10;
         flags.push('LOCF is no longer recommended as primary analysis by FDA/EMA — consider MMRM or MI');
@@ -457,7 +476,7 @@ export class JudgmentEngine {
       name: 'Missing Data Risk',
       verdict,
       score,
-      rationale: `Expected missing rate: ${(missingRate * 100).toFixed(0)}%. ${input.missingDataMethod ? `Handling: ${input.missingDataMethod}.` : 'No method specified.'}`,
+      rationale: `Expected missing rate: ${(missingRate * 100).toFixed(0)}%. ${input.missingDataMethod ? `Handling: ${vocabPhrase(MISSING_DATA_METHOD_LABELS, input.missingDataMethod)}.` : 'No method specified.'}`,
       flags,
     };
   }
@@ -472,7 +491,7 @@ export class JudgmentEngine {
     const comparator = input.comparatorType ?? 'placebo';
 
     if (input.studyType === 'single_arm') {
-      if (input.clientTrack === 'biotech_pharma' && input.phase === 'III') {
+      if (input.clientTrack === 'biotech_pharma' && phaseOf(input) === 'III') {
         score = 35;
         flags.push('Single-arm Phase III — limited regulatory acceptance without strong justification');
       } else if (input.clientTrack === 'medical_device') {
@@ -499,7 +518,7 @@ export class JudgmentEngine {
     if (comparator === 'historical') {
       score -= 15;
       flags.push('Historical control introduces potential bias from temporal changes in standard of care');
-      if (input.phase === 'III') {
+      if (phaseOf(input) === 'III') {
         score -= 15;
         flags.push('Historical control rarely acceptable for Phase III confirmatory evidence');
       }
@@ -530,7 +549,7 @@ export class JudgmentEngine {
       name: 'Comparator Appropriateness',
       verdict,
       score,
-      rationale: `Comparator: ${comparator}. Study type: ${input.studyType}.`,
+      rationale: `Comparator: ${vocabPhrase(COMPARATOR_LABELS, comparator)}. Study type: ${vocabPhrase(STUDY_TYPE_LABELS, input.studyType)}.`,
       flags,
     };
   }
@@ -641,7 +660,7 @@ export class JudgmentEngine {
       case 'moderate':
         return `The design is moderately sensitive to assumptions. ${params.length > 0 ? `Key parameter(s) have ${params[0].percentMargin.toFixed(0)}% margin before power drops below threshold.` : ''} Consider sensitivity analyses in the SAP.`;
       case 'fragile':
-        return `The design is fragile. Small changes in assumptions (especially ${params.map(p => p.parameter).join(', ')}) could undermine study conclusions. Strongly recommend formal sensitivity analysis and contingency planning.`;
+        return `The design is fragile. Small changes in assumptions (especially ${params.map(p => parameterLabel(p.parameter).toLowerCase()).join(', ')}) could undermine study conclusions. Strongly recommend formal sensitivity analysis and contingency planning.`;
       case 'very_fragile':
         return `The design is very fragile and should be revisited. Multiple assumptions are at or near breakpoints. The study risks being underpowered under realistic scenario variations. Recommend revising assumptions or increasing sample size before proceeding.`;
     }
@@ -866,7 +885,7 @@ export class JudgmentEngine {
     const trackLabel = input.clientTrack === 'biotech_pharma' ? 'pharma/biotech' : input.clientTrack === 'medical_device' ? 'device' : 'diagnostic';
 
     return {
-      technical: `${comp.method} yields N=${n} (${comp.sampleSize.perGroup}/group) at ${powerPct}% power, α=${input.alpha}. Effect size: ${input.effectSize}. Fragility: ${fragility.category} (index ${fragility.fragilityIndex}). ${fragility.sensitiveParameters.map(p => `${p.parameter} has ${p.percentMargin}% margin to breakpoint`).join('; ')}.`,
+      technical: `${comp.method} yields N=${n} (${comp.sampleSize.perGroup}/group) at ${powerPct}% power, α=${input.alpha}. Effect size: ${input.effectSize}. Fragility: ${fragility.category.replace(/_/g, ' ')} (index ${fragility.fragilityIndex}). ${fragility.sensitiveParameters.map(p => `${parameterLabel(p.parameter)} has ${p.percentMargin}% margin to breakpoint`).join('; ')}.`,
 
       clinical: `This ${trackLabel} study requires ${n} subjects total to detect the expected treatment effect with ${powerPct}% confidence. ${verdict === 'adequate' ? 'The design is statistically sound.' : verdict === 'marginal' ? 'The design has some statistical concerns that should be addressed.' : 'The design has significant statistical limitations.'}${input.attritionRate > 0.15 ? ` Note: a ${(input.attritionRate * 100).toFixed(0)}% dropout rate is assumed.` : ''}`,
 

@@ -6,13 +6,25 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
-import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
+import { useAuthoringHandoff, openSavedAuthoring, type AuthoringHandoffResult } from '../authoringHandoff';
 import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { consumeNavParams } from '../navParams';
-import { readShellProject } from '../shellProject';
+import { readShellProject, shellProgramId, type ShellProject } from '../shellProject';
+import { setEditorTarget } from '../editorTarget';
+import { isDeviceFamily } from '@shared/constants/domain/product-types';
+import {
+  AGENCY_LABELS,
+  ENDPOINT_TYPE_LABELS,
+  STUDY_TYPE_LABELS,
+  TRACK_LABELS,
+  vocabLabel,
+  vocabOptions,
+  vocabPhrase,
+  type VocabularyMap,
+} from '@shared/biostat-vocabulary';
 import {
   DesignBridgePanel,
   FilingPlacementNote,
@@ -347,6 +359,51 @@ const BS_PRESETS: Record<string, Preset> = {
 
 function vf(v: string): number | undefined { return v === undefined || v === null || v === '' ? undefined : parseFloat(v); }
 
+/** The worked example a project with no recorded design opens on: diagnostic
+ *  accuracy for a device or diagnostic project, the survival example otherwise.
+ *  (2026-10-31: an IVD project opened on an oncology survival preset.) */
+function defaultPresetFor(project: ShellProject | null): string {
+  return isDeviceFamily(project?.productType) ? 'ivd' : 'survival';
+}
+
+/* ── Working documents saved from this page, this session ───────────────────
+   "File it to the dossier" filed nothing: it called the same writer as "Open in
+   document editor" and created another working document on every click
+   (2026-10-31 audit). Filing is the editor's act — "Place into filing"
+   (surfaces/AuthoringPlaceIntoFiling.tsx) places an authored document into a
+   sequence — so this page says what it does, "Save as a working document", and
+   reuses the copy it already saved for the same project, source (the design or
+   the example) and document type when the text has not changed. The hand-off's
+   own lane remembers only its LAST payload, so saving the rationale, then the
+   SAP, then the rationale again minted a third document; this remembers each. */
+interface SavedWorkingDoc { docId: string; programId: string; code: string; content: string; title: string }
+
+/** Whether the copy saved earlier is still readable — the same document read
+ *  the hand-off's own recovery confirms with (authoringHandoffRecovery.ts). A
+ *  copy someone deleted, or a read that fails, is never "reused": a new one is
+ *  written instead. */
+async function stillSaved(prior: SavedWorkingDoc): Promise<boolean> {
+  try {
+    const res = await apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(prior.docId)}`);
+    const body = (await res.json().catch(() => null)) as { success?: unknown; document?: { id?: unknown } } | null;
+    return res.ok && body?.success === true && body.document?.id === prior.docId;
+  } catch {
+    return false;
+  }
+}
+
+/** One engine vocabulary as a select: every value the engine accepts, by its label. */
+function VocabSelect({ label, map, value, onChange }: { label: string; map: VocabularyMap; value: string | undefined; onChange: (v: string) => void }) {
+  return (
+    <label className="bs-f"><span>{label}</span>
+      <select value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
+        {value && !Object.prototype.hasOwnProperty.call(map, value) && <option value={value}>{vocabLabel(map, value)}</option>}
+        {vocabOptions(map).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </label>
+  );
+}
+
 /* The design is re-sized on the server, so a keystroke is a request. Coalesce
    the burst a user types into one call; the generation counter below is what
    keeps a late answer from landing on a newer design. */
@@ -375,19 +432,78 @@ type DocState =
   | { kind: 'ready'; markdown: string; title: string; version?: number; status?: string; engineVersion?: string }
   | { kind: 'failed'; message: string };
 
+/**
+ * The answer lead over the document: what the engine drafted, for which study.
+ *
+ * A worked example is always called one — edited or not — and its two actions
+ * say they copy an example (2026-10-31: an edited oncology example became "your
+ * design", and its actions read as the project's own document). Neither action
+ * files anything: "Save as a working document" replaced "File it to the
+ * dossier", which filed nothing; filing is "Place into filing" in the editor.
+ */
+function ResultLead({ ready, docLabel, n, example, agency, busy, onOpen, onSave }: {
+  ready: Extract<EngineState, { kind: 'ready' }>;
+  docLabel: string;
+  n: number;
+  /** The worked example on screen, or null when the inputs came from the project's study design. */
+  example: { name: string; modified: boolean } | null;
+  agency: string;
+  busy: boolean;
+  onOpen: () => void;
+  onSave: () => void;
+}) {
+  const verdict = ready.judgment.overallVerdict;
+  const verdictWords = verdict.replace(/_/g, ' ');
+  const power = (ready.computation.power * 100).toFixed(0);
+  const figures = <><b>{n} subjects</b>, {power}% power, and the design reads as <b>{verdictWords}</b></>;
+  if (example) {
+    return (
+      <AnswerLead
+        tone="calm"
+        eyebrow={`Worked example${example.modified ? ' (modified)' : ''} — ${example.name}, not your study`}
+        headline={<>The engine has drafted the <b>{docLabel}</b> for a worked example — {figures}.</>}
+        body={example.modified
+          ? <>You changed the example’s inputs. It is still an example, not your project’s design: choose your project’s study design on the left to size your own study.</>
+          : <>Choose your project’s study design on the left, or change any input, and the engine sizes it and rewrites the document.</>}
+        action={{ label: busy ? 'Copying to the editor…' : 'Copy the example to the editor', onClick: onOpen,
+          alt: { label: busy ? 'Saving…' : 'Save the example as a working document', onClick: onSave } }}
+        secondary="Or pick a different document and adjust the design on the left."
+      />
+    );
+  }
+  return (
+    <AnswerLead
+      tone={verdict === 'inadequate' ? 'urgent' : verdict === 'adequate' ? 'good' : 'calm'}
+      eyebrow={`Your ${docLabel.toLowerCase()} is ready to review`}
+      headline={<>I've drafted the <b>{docLabel}</b> for your {vocabPhrase(STUDY_TYPE_LABELS, ready.input.studyType)} design — {figures}.</>}
+      body={<>Everything below is written, not just calculated — the method, the assumptions and the fragility assessment ({ready.judgment.fragility.category.replace(/_/g, ' ')}) are already in the prose, with a provenance footer for the reviewer. Change any design input and the engine re-sizes it and rewrites the document.</>}
+      reassure={verdict === 'inadequate'
+        ? 'I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it.'
+        : `It’s drafted to ${agency} expectations. Read it, adjust it, and open it in the editor to file it.`}
+      action={{ label: busy ? 'Saving to the editor…' : 'Open in document editor', onClick: onOpen,
+        alt: { label: busy ? 'Saving…' : 'Save as a working document', onClick: onSave } }}
+      secondary="Or pick a different document and adjust the design on the left."
+    />
+  );
+}
+
 /* ════ Biostatistics surface ════ */
 
 export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const handoff = useAuthoringHandoff();
   const saveToAuthoring = handoff.save;
   const ask = onAsk;
-  const [preset, setPreset] = useState('survival');
-  const [input, setInput] = useState<EngineInput>(BS_PRESETS.survival.input);
-  /* A preset is a worked example, not the person's study. The answer lead says
-     "your design" only for a loaded study design or inputs the person changed
-     (2026-10-31: it called the oncology example "your superiority design" on a
-     psoriasis project with no design recorded). */
+  const [preset, setPreset] = useState(() => defaultPresetFor(readShellProject()));
+  const [input, setInput] = useState<EngineInput>(() => BS_PRESETS[defaultPresetFor(readShellProject())].input);
+  /* A preset is a worked example, not the person's study — edited or not. "Your
+     design" is said only when the inputs came from a recorded study design
+     (preset === 'design'); an edited example is "Worked example (modified)".
+     2026-10-31: it called the oncology example "your superiority design" on a
+     psoriasis project, and an edited example became "your design". */
   const [edited, setEdited] = useState(false);
+  /* Set once the person picks a preset or changes an input: from then on the
+     page never waits for, or replaces their choice with, the project's design. */
+  const [personChose, setPersonChose] = useState(false);
   const [docType, setDocType] = useState('sample_size_rationale');
   const [toast, fireToast] = useToast();
 
@@ -435,9 +551,28 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
     ? '/api/ana-biostats/governed-documents?programId=' + encodeURIComponent(String(program.id))
     : '/api/ana-biostats/governed-documents';
   const govDocs = useLiveRows<BiostatPlan>(govDocsPath);
-  const set = (k: string, v: unknown) => { autoLoaded.current = true; setEdited(true); setInput((s) => ({ ...s, [k]: v })); };
-  const applyPreset = (k: string) => { autoLoaded.current = true; setPreset(k); setInput(BS_PRESETS[k].input); setEdited(false); };
-  const isExample = preset !== 'design' && !edited;
+  const set = (k: string, v: unknown) => { autoLoaded.current = true; setPersonChose(true); setEdited(true); setInput((s) => ({ ...s, [k]: v })); };
+  const applyPreset = (k: string) => { autoLoaded.current = true; setPersonChose(true); setPreset(k); setInput(BS_PRESETS[k].input); setEdited(false); };
+  /* Keyed on the SOURCE of the inputs, not on whether they were edited. */
+  const isExample = preset !== 'design';
+  const exampleName = BS_PRESETS[preset]?.label ?? 'preset';
+  /* While the open project's study design is still loading, the engine is not
+     asked to size a worked example first (2026-10-31: the oncology example
+     flashed, with its verdict, before the project's own design replaced it). It
+     falls back to an example only when the project has no design the engine can
+     size, the read failed, or the person chose one. */
+  const designPending = (!!program && (designs.loading || (designs.rows.length > 0 && !selectedStudyId)))
+    || (!!selectedStudyId && !bridge.assessment && !bridge.error);
+  const holdForDesign = !personChose && preset !== 'design' && designPending;
+  /* Project home publishes the project's product type once its read model
+     loads, which can be after this page mounted: follow it until the person
+     chooses, so a device or diagnostic project is not left on the survival example. */
+  const wantedExample = defaultPresetFor(program);
+  useEffect(() => {
+    if (personChose || edited || preset === 'design' || preset === wantedExample) return;
+    setPreset(wantedExample);
+    setInput(BS_PRESETS[wantedExample].input);
+  }, [wantedExample, personChose, edited, preset]);
 
   /* ── The design, sized by the engine ─────────────────────────────────────
      One request per settled design. `generation` is bumped on every change, so
@@ -453,6 +588,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   useEffect(() => {
     const gen = ++generation.current;
     setEngine({ kind: 'computing' });
+    if (holdForDesign) return undefined;
     const timer = setTimeout(async () => {
       const r = await postEngine<ComputeResponse>('/api/ana-biostats/compute', input);
       if (gen !== generation.current) return;
@@ -493,7 +629,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       });
     }, COMPUTE_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [input, retryTick]);
+  }, [input, retryTick, holdForDesign]);
 
   const docDef = docById(docType);
 
@@ -569,43 +705,81 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
      Unconfirmed writes keep the document on this surface with an honest notice. */
   const opening = handoff.state?.phase === 'pending';
   const attaching = opening;
+  const savedWorking = useRef(new Map<string, SavedWorkingDoc>());
+
+  /* What reaches the editor is the document as the page renders it — HTML, the
+     same `html` the preview shows. Until 2026-10-31 this sent `md`, the engine's
+     Markdown, and the editor stores section content verbatim, so the person
+     opened "## Study Context" and "|---|---|" instead of headings and tables. */
+  const docTitle = docDef?.label || 'Statistical document';
+  /* A worked example is saved under a title that says so, so an oncology
+     example can never sit in a project looking like that project's document. */
+  const savedTitle = isExample ? `${docTitle} — worked example: ${exampleName}` : docTitle;
+  const docCode = docDef?.id || 'statistical_document';
+  const savedKey = `${shellProgramId() ?? ''}|${isExample ? 'example:' + preset : 'design:' + (selectedStudyId ?? '')}|${docType}`;
+  /* Synchronous when there is nothing to reuse, so a first click reaches the
+     writer in the same tick and the hand-off's one creation lane still blocks
+     a second, simultaneous click. */
+  const savedCandidate = (): SavedWorkingDoc | null => {
+    const prior = savedWorking.current.get(savedKey);
+    return prior && prior.content === html && prior.programId === shellProgramId() ? prior : null;
+  };
+  const confirmed = async (prior: SavedWorkingDoc): Promise<SavedWorkingDoc | null> => {
+    if (await stillSaved(prior)) return prior;
+    savedWorking.current.delete(savedKey);
+    return null;
+  };
+  const remember = (r: AuthoringHandoffResult) => {
+    if (r.ok) savedWorking.current.set(savedKey, { docId: r.docId, programId: r.programId, code: r.code, content: html, title: savedTitle });
+  };
+  const write = () => saveToAuthoring({
+    // Statistical documentation files under Module 5; the server would default to M3.
+    title: savedTitle, module: filingModule, code: docCode, content: html, subject: 'the document',
+  });
 
   const openEditor = async () => {
     if (handoff.blocked) return;
-    const title = docDef?.label || 'Statistical document';
-    if (!md.trim()) { fireToast('Nothing to open yet — the engine has not returned the document.', 'error'); return; }
-    // Statistical documentation files under Module 5; the server would
-    // default to M3.
-    const r = await saveToAuthoring({
-      title, module: filingModule, code: docDef?.id || 'statistical_document',
-      content: md, subject: 'the document',
-    });
+    if (!html.trim()) { fireToast('Nothing to open yet — the engine has not returned the document.', 'error'); return; }
+    const candidate = savedCandidate();
+    const prior = candidate ? await confirmed(candidate) : null;
+    if (prior && onNav) {
+      // The copy saved earlier this session, unchanged: open it, write nothing.
+      setEditorTarget({ docType: null, docId: prior.docId, programId: prior.programId, code: prior.code });
+      onNav('document-authoring');
+      return;
+    }
+    const r = await write();
     // Navigate only on a clean write. On a half-failure the document exists
     // but is empty, so going there would show the user an editor without
     // their work — stay put and say so.
     if (!r.isCurrent()) return;
     if (!r.ok) { fireToast(r.message, 'error'); return; }
+    remember(r);
     if (onNav) openSavedAuthoring(r, onNav);
     else fireToast(r.message);
   };
-  /** Save a working document without leaving this surface. The server reports
-   * governed filing binding separately; an unbound working copy stays unbound
-   * and its reason remains visible in the shared confirmation. */
-  const attach = async () => {
+  /** Save a working document without leaving this surface. It files nothing:
+   * placing a document into a submission is the editor's "Place into filing".
+   * The server reports governed binding separately; an unbound working copy
+   * stays unbound and its reason remains visible in the shared confirmation. */
+  const saveWorking = async () => {
     if (handoff.blocked) return;
-    const label = docDef?.label || 'Document';
-    if (!md.trim()) {
-      fireToast('Nothing to file yet — the engine has not returned the document.', 'error');
+    if (!html.trim()) { fireToast('Nothing to save yet — the engine has not returned the document.', 'error'); return; }
+    const candidate = savedCandidate();
+    const prior = candidate ? await confirmed(candidate) : null;
+    if (prior) {
+      fireToast(`Already saved as the working document “${prior.title}”. Nothing new was written — open it from Document authoring.`);
       return;
     }
-    const r = await saveToAuthoring({
-      title: label, module: filingModule, code: docDef?.id || 'statistical_document',
-      content: md, subject: 'the document',
-    });
+    const r = await write();
     if (!r.isCurrent()) return;
     if (!r.ok) { fireToast(r.message, 'error'); return; }
-    fireToast(r.message + (placement?.required === 'not_applicable'
-      ? ' This is an internal design document, not a submission document for this filing.' : ''));
+    remember(r);
+    fireToast(r.message + (isExample
+      ? ' It is a copy of a worked example, not this project’s study.'
+      : placement?.required === 'not_applicable'
+        ? ' This is an internal design document, not a submission document for this filing.'
+        : ' To file it, open it in the editor and use Place into filing.'));
   };
   const groups = DOC_REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   /* 'insufficient_information' is the engine's third state — a dimension it had
@@ -651,7 +825,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
     }
     return {
       summary:
-        'Biostatistics — a ' + (docDef?.label ?? 'statistical document') + ' drafted for a ' + engine.input.studyType.replace(/_/g, ' ')
+        'Biostatistics — a ' + (docDef?.label ?? 'statistical document') + ' drafted for a ' + vocabPhrase(STUDY_TYPE_LABELS, engine.input.studyType)
         + ' design (' + presetLabel + ' preset): ' + n + ' subjects, ' + (engine.computation.power * 100).toFixed(0) + '% power, overall verdict '
         + engine.judgment.overallVerdict + '; ' + gov + '.',
       facts: {
@@ -670,7 +844,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         'Adjust any design input or preset — the engine re-sizes the design and rewrites the document',
         'Pick a different statistical document type to generate',
         'Refine the document with AnA',
-        'Opening in the editor and attaching to the dossier both file a real governed document (genesis revision + Part 11 audit row) — AnA proposes them in conversation, never through screen controls.',
+        'Opening in the editor and saving a working document both create a working document in the project (genesis revision + Part 11 audit row); neither files it — filing is "Place into filing" in the editor. AnA proposes them in conversation, never through screen controls.',
       ],
     };
   }, [engine, docDef, preset, n, govDocs.loading, govDocs.error, govDocs.empty, govDocs.rows, loadedDesign, placement, designs.loading, designs.error, designs.rows.length]);
@@ -732,20 +906,15 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       {ready && docDef && (
-        <AnswerLead
-          tone={ready.judgment.overallVerdict === 'inadequate' ? 'urgent' : ready.judgment.overallVerdict === 'adequate' ? 'good' : 'calm'}
-          eyebrow={isExample
-            ? 'Worked example — ' + (BS_PRESETS[preset]?.label ?? 'preset') + ', not your study'
-            : 'Your ' + docDef.label.toLowerCase() + ' is ready to review'}
-          headline={isExample
-            ? <>The engine has drafted the <b>{docDef.label}</b> for a worked example — <b>{n} subjects</b>, {(ready.computation.power * 100).toFixed(0)}% power, and the design reads as <b>{ready.judgment.overallVerdict}</b>.</>
-            : <>I've drafted the <b>{docDef.label}</b> for your {ready.input.studyType.replace(/_/g, ' ')} design — <b>{n} subjects</b>, {(ready.computation.power * 100).toFixed(0)}% power, and the design reads as <b>{ready.judgment.overallVerdict}</b>.</>}
-          body={isExample
-            ? <>Choose your project's study design on the left, or change any input, and the engine sizes your design and rewrites the document.</>
-            : <>Everything below is written, not just calculated — the method, the assumptions and the fragility assessment ({ready.judgment.fragility.category.replace(/_/g, ' ')}) are already in the prose, with a provenance footer for the reviewer. Change any design input and the engine re-sizes it and rewrites the document.</>}
-          reassure={isExample ? undefined : ready.judgment.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it." : "It's drafted to " + (ready.regulatory?.body || input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
-          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: attaching ? 'Filing to the dossier…' : 'File it to the dossier', onClick: () => void attach() } }}
-          secondary="Or pick a different document and adjust the design on the left."
+        <ResultLead
+          ready={ready}
+          docLabel={docDef.label}
+          n={n}
+          example={isExample ? { name: exampleName, modified: edited } : null}
+          agency={vocabLabel(AGENCY_LABELS, ready.regulatory?.body || input.regulatoryBody || 'FDA')}
+          busy={opening || attaching}
+          onOpen={() => void openEditor()}
+          onSave={() => void saveWorking()}
         />
       )}
 
@@ -770,17 +939,22 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           </div>
           <div className="pj-card">
-            <div className="pj-card-h"><span className="t">Study design</span><span className="s">the engine re-sizes it live</span></div>
+            <div className="pj-card-h"><span className="t">Design inputs</span><span className="s">the engine re-sizes it live</span></div>
             <div className="pj-card-b" style={{ padding: 12 }}>
               <div className="bs-presets">
-                {loadedDesign && <button className={'bs-preset' + (preset === 'design' ? ' on' : '')} onClick={() => { const seed = loadedDesign.adapter.input; if (seed) { setInput(seed as unknown as EngineInput); setPreset('design'); } }} disabled={!loadedDesign.adapter.input} title={loadedDesign.adapter.input ? 'The loaded study design' : 'The loaded design cannot be sized until its blocking gaps are resolved'}>{I.sigma} {loadedDesign.title}</button>}
-                {Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => applyPreset(k)}>{p.label}</button>)}
+                {loadedDesign && <button className={'bs-preset' + (preset === 'design' ? ' on' : '')} onClick={() => { const seed = loadedDesign.adapter.input; if (seed) { setInput(seed as unknown as EngineInput); setPreset('design'); setEdited(false); } }} disabled={!loadedDesign.adapter.input} title={loadedDesign.adapter.input ? 'The loaded study design' : 'The loaded design cannot be sized until its blocking gaps are resolved'}>{I.sigma} {loadedDesign.title}</button>}
+                {Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => applyPreset(k)} title="A worked example, not your study">{p.label}</button>)}
               </div>
+              {/* Every option is the engine's own vocabulary, by its label
+                  (shared/biostat-vocabulary.ts). The study-type list used to
+                  omit values the engine accepts, so a dose–response design
+                  showed "superiority" — the first option — while being sized
+                  as dose–response. */}
               <div className="bs-fields">
-                <label className="bs-f"><span>Track</span><select value={input.clientTrack} onChange={(e) => set('clientTrack', e.target.value)}>{['biotech_pharma', 'medical_device', 'diagnostics_ivd'].map((x) => <option key={x} value={x}>{x.replace(/_/g, ' / ')}</option>)}</select></label>
-                <label className="bs-f"><span>Agency</span><select value={input.regulatoryBody} onChange={(e) => set('regulatoryBody', e.target.value)}>{['FDA', 'EMA', 'MHRA', 'PMDA', 'NMPA', 'TGA', 'Health_Canada'].map((x) => <option key={x}>{x}</option>)}</select></label>
-                <label className="bs-f"><span>Study type</span><select value={input.studyType} onChange={(e) => set('studyType', e.target.value)}>{['superiority', 'non_inferiority', 'equivalence', 'single_arm', 'performance', 'diagnostic_accuracy'].map((x) => <option key={x} value={x}>{x.replace(/_/g, ' ')}</option>)}</select></label>
-                <label className="bs-f"><span>Endpoint</span><select value={input.endpointType} onChange={(e) => set('endpointType', e.target.value)}>{['continuous', 'binary', 'time_to_event', 'ordinal', 'count', 'composite', 'sensitivity_specificity', 'auc_roc', 'agreement'].map((x) => <option key={x} value={x}>{x === 'auc_roc' ? 'AUC / ROC' : x.replace(/_/g, ' ')}</option>)}</select></label>
+                <VocabSelect label="Track" map={TRACK_LABELS} value={input.clientTrack} onChange={(v) => set('clientTrack', v)} />
+                <VocabSelect label="Agency" map={AGENCY_LABELS} value={input.regulatoryBody} onChange={(v) => set('regulatoryBody', v)} />
+                <VocabSelect label="Study type" map={STUDY_TYPE_LABELS} value={input.studyType} onChange={(v) => set('studyType', v)} />
+                <VocabSelect label="Endpoint" map={ENDPOINT_TYPE_LABELS} value={input.endpointType} onChange={(v) => set('endpointType', v)} />
                 <label className="bs-f"><span>Alpha</span><input type="number" step="0.005" value={input.alpha} onChange={(e) => set('alpha', vf(e.target.value) || 0.05)} /></label>
                 <label className="bs-f"><span>Power</span><input type="number" step="0.05" value={input.powerTarget} onChange={(e) => set('powerTarget', vf(e.target.value) || 0.8)} /></label>
                 {usesEffect && <label className="bs-f"><span>{isSurv ? 'HR reduction' : isBin ? 'Delta rate' : 'Effect (d)'}</span><input type="number" step="0.01" value={input.effectSize} onChange={(e) => set('effectSize', vf(e.target.value) || 0)} /></label>}
@@ -840,30 +1014,29 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
               )}
             </div>
           </div>
-          {selectedStudyId && (
-            <DesignBridgePanel
-              state={bridge}
-              onNav={onNav}
-              fireToast={fireToast}
-              onApplied={() => { bridge.reload(); setDesignReload((k) => k + 1); }}
-              onTasksRaised={() => bridge.reload()}
-            />
-          )}
         </div>
 
         {/* Center: the DOCUMENT — the deliverable */}
         <div className="bs-doc">
+          {/* Two lines: the document and its actions, then where it came from
+              and where it files, in plain text. The bar used to squeeze all
+              four onto one line in monospace, wrapping titles and buttons
+              mid-word (2026-10-31 audit). */}
           <div className="bs-doc-bar">
-            <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{/* Provenance describes where THIS document came from. It is
-                  generated by the statistical engine from the engine's own
-                  computation and judgment, and the version and status below are
-                  the ones it stamped on the document — not a literal written
-                  here, and not `connected()`, which is a global API-reachability
-                  flag with no bearing on how the document was produced. */}
-                Deterministic engine{doc.kind === 'ready' && doc.engineVersion ? ' — v' + doc.engineVersion : ''}{doc.kind === 'ready' && doc.status ? ' — ' + doc.status : ''}</span>{placement && <span className="bs-doc-prov" style={{ marginLeft: 8 }}><FilingPlacementNote placement={placement} /></span>}</div>
-            <div className="bs-doc-bar-a">
-              <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
-              <button className="bs-da primary" onClick={() => void openEditor()} disabled={handoff.blocked || doc.kind !== 'ready'}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
+            <div className="bs-doc-bar-row">
+              <span className="bs-doc-kind">{docDef?.label}</span>
+              <div className="bs-doc-bar-a">
+                <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
+                <button className="bs-da primary" onClick={() => void openEditor()} disabled={handoff.blocked || doc.kind !== 'ready'}>{I.penLine} {opening ? 'Saving to the editor…' : isExample ? 'Copy example to editor' : 'Open in editor'}</button>
+              </div>
+            </div>
+            {/* Provenance describes where THIS document came from: generated by
+                the statistical engine from its own computation and judgment,
+                with the version and status it stamped on the document — not a
+                literal written here, and not `connected()`. */}
+            <div className="bs-doc-meta">
+              Deterministic engine{doc.kind === 'ready' && doc.engineVersion ? ', version ' + doc.engineVersion : ''}{doc.kind === 'ready' && doc.status ? ' · ' + doc.status : ''}
+              {isExample ? ' · worked example, not your study' : placement ? <> · <FilingPlacementNote placement={placement} /></> : null}
             </div>
           </div>
           <div className="bs-doc-page">
@@ -901,6 +1074,22 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         </div>
       </div>
 
+      {/* The design assessment and the statistical review are wide tables —
+          assumptions, dimensions, a risk table with findings and actions. They
+          were rendered inside the 300px left column, one word per line
+          (2026-10-31 audit). They get the page's full width, under the document. */}
+      {selectedStudyId && (
+        <div className="bs-assess">
+          <DesignBridgePanel
+            state={bridge}
+            onNav={onNav}
+            fireToast={fireToast}
+            onApplied={() => { bridge.reload(); setDesignReload((k) => k + 1); }}
+            onTasksRaised={() => bridge.reload()}
+          />
+        </div>
+      )}
+
       <div className="pj-card" style={{ marginTop: 14 }}>
         {/* The list is org-scoped (every persisted statistical_summary artifact for the
             tenant), so the sub-label reads "org-scoped" — not "this project", which would
@@ -920,7 +1109,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
             <EmptyState
               icon={I.fileText}
               title="No governed statistical documents yet"
-              hint="Generate a document above and run it through the AnA Biostats workflow. Once persisted, every SAP, sample-size rationale, or DSMB charter your team files appears here — org-scoped, with its real status."
+              hint="Statistical documents persisted for this project appear here, with their real status."
             />
           ) : (
             <div className="sp-list">

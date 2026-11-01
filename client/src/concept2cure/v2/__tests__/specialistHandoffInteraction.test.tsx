@@ -285,7 +285,7 @@ describe('Biostatistics distinguishes saved working documents from filed documen
     createReply = () => docReceipt(bound);
     render(<Biostatistics {...props('biostatistics')} />);
     await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
-    fireEvent.click(screen.getByRole('button', { name: 'File it to the dossier' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save the example as a working document' }));
     await waitFor(() => expect(document.querySelector('.de-toast')).not.toBeNull());
     const message = document.querySelector('.de-toast')?.textContent ?? '';
     expect(authoringCalls()).toHaveLength(2);
@@ -351,7 +351,7 @@ describe('other existing specialist controls use the exact editor target', () =>
     const onNav = vi.fn(() => targets.push(consumeEditorTarget()));
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
-    fireEvent.click(screen.getByRole('button', { name: 'Open in document editor' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy the example to the editor' }));
     await waitFor(() => expect(onNav).toHaveBeenCalledWith('document-authoring'));
     expect(targets[0]).toMatchObject({ docId: DOC_ID, programId: PROGRAM, sectionCode: 'sample_size_rationale' });
   });

@@ -158,13 +158,18 @@ function writeRoute(path: string, body: any, opts: { applyOk?: boolean }) {
   return null;
 }
 
-function route(opts: { assessment?: Record<string, unknown>; applyOk?: boolean } = {}) {
+function route(opts: { assessment?: Record<string, unknown>; applyOk?: boolean; designDelayMs?: number } = {}) {
   posted.length = 0;
+  /* A design read slower than the engine's 180 ms debounce: what a real
+     network does, and what let the worked example be sized first. */
+  const slow = () => (opts.designDelayMs ? new Promise((r) => setTimeout(r, opts.designDelayMs)) : Promise.resolve());
   apiRequest.mockImplementation(async (method: string, path: string, body?: any) => {
     if (method === 'GET' && path.startsWith('/api/biostat-bridge/designs?program_id=')) {
+      await slow();
       return { ok: true, status: 200, json: async () => ({ data: DESIGNS }) };
     }
     if (method === 'GET' && /^\/api\/biostat-bridge\/designs\/STUDY-1\/assessment$/.test(path)) {
+      await slow();
       return { ok: true, status: 200, json: async () => ({ data: assessment(opts.assessment) }) };
     }
     if (method === 'GET' && /^\/api\/biostat-bridge\/designs\/STUDY-2\/assessment$/.test(path)) {
@@ -270,7 +275,7 @@ describe('Biostatistics — study design bridge', () => {
     // authoring hand-off's `module` on a generator that HAS a placement.)
     fireEvent.click(screen.getByRole('button', { name: /Sample Size Rationale/ }));
     await engineDocReady('sample_size_rationale');
-    fireEvent.click(screen.getAllByRole('button', { name: /File it to the dossier/ })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Save as a working document$/ })[0]);
     await waitFor(() => expect(posted.some((p) => p.path === '/api/authoring/docs')).toBe(true));
     expect(posted.find((p) => p.path === '/api/authoring/docs')!.body).toMatchObject({ module: 'M5', client_program_id: PROGRAM.id });
   });
@@ -341,7 +346,37 @@ describe('Biostatistics — study design bridge', () => {
     // A clean row is still a row — it says which standard it meets.
     expect(within(table).getByText(/complete ICH E9\(R1\) estimand/)).toBeTruthy();
   });
+});
 
+describe('Biostatistics — the loaded design, where and when it shows', () => {
+  /* 2026-10-31 audit: the assessment and the review — wide tables of
+     assumptions, dimensions, findings and actions — rendered inside the 300px
+     left column, a word per line. They get the full width, under the document. */
+  it('renders the assessment and the review full width, not in the 300px design column', async () => {
+    route();
+    mount();
+    await waitFor(() => expect(alphaField().value).toBe('0.04'));
+    const review = await screen.findByRole('table', { name: /Statistical risk summary/ });
+    expect(review.closest('.bs-side'), 'the review is inside the narrow left column').toBeNull();
+    expect(review.closest('.bs-assess')).not.toBeNull();
+    const assessment = screen.getByText('Design assessment');
+    expect(assessment.closest('.bs-side')).toBeNull();
+    // Below the document, not beside it.
+    const doc = document.querySelector('.bs-doc-layout')!;
+    expect(doc.compareDocumentPosition(assessment) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('with a project open, never sizes a worked example before the project\'s design arrives', async () => {
+    route({ designDelayMs: 400 });
+    mount();
+    await waitFor(() => expect(alphaField().value).toBe('0.04'), { timeout: 4000 });
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ana-biostats/compute')).toBe(true));
+    const computed = apiRequest.mock.calls.filter((c) => c[1] === '/api/ana-biostats/compute').map((c) => (c[2] as { alpha?: number }).alpha);
+    expect(computed.every((a) => a === 0.04), `the engine was asked to size alphas ${computed.join(', ')}`).toBe(true);
+  });
+});
+
+describe('Biostatistics — study design bridge, cross-links', () => {
   it('cross-links open the protocol workspace, the task board and the submission center', async () => {
     route();
     const onNav = mount();
