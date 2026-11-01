@@ -477,7 +477,7 @@ Drafting, structuring or checking a clinical study report for an interventional 
       'code_meddra',
       'check_dossier_consistency',
       'medical_writing_review',
-      'generate_document',
+      'draft_authoring_document',
       'lookup_ich_guideline',
     ],
     references: [
@@ -502,7 +502,7 @@ Writing a first Investigator's Brochure (IB), updating one for new nonclinical, 
    - The DSUR uses the IB edition in effect at the start of its reporting period as its reference (ICH E2F); record which edition that was.
 6. Revision: review the IB on the cycle the sponsor's procedures set (at least annually is the long-standing GCP expectation) and revise it when significant new information arises. Significant new safety information reaches investigators promptly, not at the next edition (in the US, 21 CFR 312.55). The IND annual report describes IB revisions and includes the revised IB (21 CFR 312.33).
 7. Check consistency with \`check_dossier_consistency\` against the protocol, the nonclinical summaries and the latest DSUR (doses, exposure margins, risks), and heading coverage with \`medical_writing_review\` (document type ib). Coverage is not completeness.
-8. Produce the formatted document with \`generate_document\` (document type ib) from approved section content; producing it is not approving it.
+8. Draft each section in the project's IB document with \`draft_authoring_document\`, from the sources found in step 1; the formatted IB is exported from that document in the editor once it is approved. Producing it is not approving it.
 
 ## Pitfalls reviewers raise
 - An RSI that is out of date, not clearly identified, or lists reactions without a basis.
