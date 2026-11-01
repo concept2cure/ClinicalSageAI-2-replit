@@ -1,0 +1,188 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > maps every leaf, Modules 1 to 5, from the backbone that declares it, at its heading 10ms
+   → expected [ …(5) ] to deeply equal [ …(5) ]
+ × server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > reports no leaf missing that the archive holds, and no error at all 2ms
+   → expected [ { severity: 'error', …(3) } ] to deeply equal []
+ × server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > reads the application, sequence and applicant from the regional backbone 2ms
+   → expected { format: 'fda_ectd', …(6) } to match object { format: 'fda_ectd', …(4) }
+(2 matching properties omitted from actual)
+ × server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > recognizes the sequence root's index-md5.txt as structure 1ms
+   → expected { Object (relativePath, fileName, ...) } to match object { …(2) }
+(9 matching properties omitted from actual)
+ × server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the reader refuses part of > does not map a leaf whose bytes are not the ones its backbone checksums, and says why 6ms
+   → expected { …(11) } to match object { reviewStatus: 'mapped', …(1) }
+(9 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > maps every leaf, Modules 1 to 5, from the backbone that declares it, at its heading
+AssertionError: expected [ …(5) ] to deeply equal [ …(5) ]
+
+- Expected
++ Received
+
+  [
+    [
+      "clinical-overview.pdf",
+-     "backbone_xml",
+-     "mapped",
++     "filename_heuristic",
++     "suggested",
+      "2.5",
+    ],
+    [
+      "cover.pdf",
+-     "backbone_xml",
+-     "mapped",
+-     "1.2",
++     "filename_heuristic",
++     "suggested",
++     "1",
+    ],
+    [
+      "drug-product.pdf",
+-     "backbone_xml",
+-     "mapped",
+-     "3.2.P",
++     "filename_heuristic",
++     "suggested",
++     "3",
+    ],
+    [
+      "pivotal-study-report.pdf",
+-     "backbone_xml",
+-     "mapped",
+-     "5.3.5",
++     "filename_heuristic",
++     "suggested",
++     "5",
+    ],
+    [
+      "toxicology.pdf",
+-     "backbone_xml",
+-     "mapped",
+-     "4.2.3",
++     "filename_heuristic",
++     "suggested",
++     "4",
+    ],
+  ]
+
+ ❯ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts:68:105
+     66|   it('maps every leaf, Modules 1 to 5, from the backbone that declares…
+     67|     const leaves = detected.files.filter((f) => SPEC.some(([, file]) =…
+     68|     expect(leaves.map((f) => [f.fileName, f.mappingSource, f.reviewSta…
+       |                                                                                                         ^
+     69|       SPEC.map(([section, file]) => [file, 'backbone_xml', 'mapped', s…
+     70|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > reports no leaf missing that the archive holds, and no error at all
+AssertionError: expected [ { severity: 'error', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "code": "missing_required_leaf",
++     "filePath": "1-2/cover.pdf",
++     "message": "Backbone references \"1-2/cover.pdf\" but the file is missing from the archive.",
++     "severity": "error",
++   },
++ ]
+
+ ❯ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts:80:69
+     78|
+     79|   it('reports no leaf missing that the archive holds, and no error at …
+     80|     expect(detected.findings.filter((f) => f.severity === 'error')).to…
+       |                                                                     ^
+     81|   });
+     82|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > reads the application, sequence and applicant from the regional backbone
+AssertionError: expected { format: 'fda_ectd', …(6) } to match object { format: 'fda_ectd', …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "applicationId": "654321",
++   "applicationId": null,
+    "format": "fda_ectd",
+    "region": "fda",
+-   "sequence": "0000",
+-   "sponsor": "Acme Biologics Inc.",
++   "sequence": null,
++   "sponsor": null,
+  }
+
+ ❯ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts:84:22
+     82|
+     83|   it('reads the application, sequence and applicant from the regional …
+     84|     expect(detected).toMatchObject({ format: 'fda_ectd', region: 'fda'…
+       |                      ^
+     85|   });
+     86|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > recognizes the sequence root's index-md5.txt as structure
+AssertionError: expected { Object (relativePath, fileName, ...) } to match object { …(2) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "mappingSource": "structure_path",
++   "mappingSource": "fallback",
+    "reviewStatus": "skipped",
+  }
+
+ ❯ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts:88:76
+     86|
+     87|   it('recognizes the sequence root\'s index-md5.txt as structure', () …
+     88|     expect(detected.files.find((f) => f.relativePath === 'index-md5.tx…
+       |                                                                            ^
+     89|   });
+     90| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the reader refuses part of > does not map a leaf whose bytes are not the ones its backbone checksums, and says why
+AssertionError: expected { …(11) } to match object { reviewStatus: 'mapped', …(1) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "mappedCtdSection": "5.3.5",
+-   "reviewStatus": "mapped",
++   "reviewStatus": "suggested",
+  }
+
+ ❯ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts:104:74
+    102|     const ov = out.files.find((f) => f.relativePath === 'm2/2-5/clinic…
+    103|     expect(ov?.reviewStatus).not.toBe('mapped');
+    104|     expect(out.files.find((f) => f.relativePath === 'm5/5-3-5/csr.pdf'…
+       |                                                                          ^
+    105|     expect(out.findings).toContainEqual(expect.objectContaining({ seve…
+    106|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  21:52:55
+   Duration  1.41s (transform 681ms, setup 82ms, import 886ms, tests 168ms, environment 0ms)
+

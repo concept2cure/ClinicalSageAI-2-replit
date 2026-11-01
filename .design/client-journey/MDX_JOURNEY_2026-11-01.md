@@ -130,7 +130,7 @@ Each is a repair of shipped behaviour (F1): no screen, mount or table.
 | M3 | An EU IVDR project's "Assemble the technical documentation" opens `IvdSurface`, whose only assembly is the FDA eSTAR, defaulting to 510(k). | `IvdSurface.tsx:627-636` | search |
 | M4 | Every device filing row in Submission Center says "Open 510(k) surface", PMA and IVD included, and its empty hint says filings are tracked from 510(k) only. | `DeviceFilings.tsx:250-260` | search |
 | M5 | The seeded 510(k) template files sections B1, B2, C1 and D1 under other sections' headings, and SE1 and SE2 reach no node. Its codes were never corrected. | `server/services/intelligence/template-seeds.ts:189`; evidence `docs/evidence/ANA-REASONING/2026-10-05/r16/template-outline-code-collision/` | search |
-| M6 | An IVD 510(k)'s outline uses the IVD performance sections, so it has no cover letter, substantial equivalence or labeling sections. | `shared/regulatory/device-authoring-sections.ts` (`us_510k_ivd_sections`) | search; check against FDA's IVD eSTAR |
+| M6 | **Corrected 2026-11-01 by a trace of the creation path; the first wording here was wrong.** An IVD 510(k) gets the generic 510(k) governed outline (`k510:fda` `fda-estar-510k-v1.1`, A–G), and it does keep its cover letter, SE and labeling. What breaks: (a) the outline has no node for IVD analytical performance, so the IVD eSTAR's always-required `ivd-analytical-performance` slot (`estar-mapper.ts:375-420`) never reads present from governed content and an IVD 510(k) cannot reach "ready"; the nIVD-only E1 biocompatibility and E5 bench nodes stay mandatory; (b) the built-in template "US · 510(k) for IVD" is the `us_510k_ivd_sections` blueprint (`project-bootstrap.ts:906`, IVD_PERFORMANCE_SECTIONS, codes 1–6), whose sections reach no outline node, and which shows EU IVDR citations (Annex XIII, Article 56) to a US client through the template, AnA's briefs and the readiness digest; (c) the eSTAR variant is chosen two ways: `K510Surface` takes IVD from the product type, `EstarFilingPanel.tsx:605` and `510k-estar-routes.ts:1336,1402` default to the nIVD form. | `shared/regulatory/project-bootstrap.ts:906`, `server/services/pathway-engines/estar/estar-mapper.ts`, `migrations/20261005c_k510_denovo_estar_outline_v1_1.sql`, `mdx/surfaces/EstarFilingPanel.tsx` | trace |
 | M7 | De Novo has no pathway door and no Submit assembly door. Its eSTAR exists only on `device-510k`. | `ProjectMdxWorkflow.tsx:31-36`, `ProjectMarkets.tsx:421-437` | search |
 | M8 | Labeling's empty state ("Create a device IFU…") has no create action, and no client code creates a labeling document. | `v2/surfaces/Labeling.tsx:482,545` | search |
 | M9 | Respond tells a device project its markets are on Submit, which refuses device markets. | `ProjectRespond.tsx:209` vs `ProjectMarkets.tsx:517` | search |
@@ -150,8 +150,9 @@ on, not raced.
    `mdx/surfaces/DeviceFilings.tsx`, `v2/surfaces/ProjectMdxWorkflow.tsx` (title only, which also matches D3's
    `Project*.tsx`, so the coordinator is told first), and the two registry note strings. No other session holds
    any of these today.
-2. **The 510(k) outline is the eSTAR's** (F1): M5 and M6, checked against FDA's nIVD and IVD eSTAR structure and
-   the vendored templates.
+2. **The 510(k) outline is the eSTAR's** (F1): M5 (the seeded template's codes) now. M6(b) and (c) next. M6(a) needs an IVD
+   510(k) outline version: a new rule-pack row, seeded by migration (RULE 1), checked against the vendored IVD
+   eSTAR v7.1 sections. It is data, not a table, but it is new content, so it is put to the founder before it is built.
 3. **Each pathway's door opens its own filing** (F1 and R1): M3 (the IVDR door reaches the existing MDR/IVDR
    technical-file assembler, after its placeholder identity is fixed) and M7 (De Novo). This is done with the R1
    lane (`01QoxbL`) because it reaches an endpoint no client calls.

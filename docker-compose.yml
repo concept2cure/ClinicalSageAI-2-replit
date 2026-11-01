@@ -296,6 +296,13 @@ services:
       # FILE_SCAN_UNAVAILABLE), and /readyz reports the scanner (virusScan).
       CLAMAV_HOST: clamav
       CLAMAV_PORT: '3310'
+      # ── Layout reader (P-90; the docling service below, profile: ingestion) ──
+      # Off unless OSS_INGESTION_DOCLING_PRIMARY=true. When on, Vault reads each
+      # PDF with it (tables cell by cell); a PDF it cannot read is read as before,
+      # and the extraction's audit row says why (server/services/ocr/extractDocumentText.ts).
+      OSS_INGESTION_DOCLING_PRIMARY: ${OSS_INGESTION_DOCLING_PRIMARY:-false}
+      DOCLING_BASE_URL: ${DOCLING_BASE_URL:-http://docling:5001}
+      DOCLING_API_KEY: ${DOCLING_API_KEY:-}
     volumes:
       - vaultdata:/app/storage
     logging:
@@ -321,6 +328,25 @@ services:
     ports:
       - '9998:9998'
     restart: unless-stopped
+    profiles: ['ingestion']
+    networks:
+      - c2c
+
+  # The self-hosted Docling layout reader (docling-serve), admitted by P-90
+  # (docs/LAUNCH_DEFINITION_OF_DONE.md). It reads a PDF's reading order,
+  # headings and tables for Vault ingestion. Documents reach it on c2c from the
+  # app and go nowhere else: no host port, and remote services and third-party
+  # plugins off. Set DOCLING_API_KEY so it answers only the app. CPU image,
+  # pinned by digest (released 2026-10-13; docs/evidence/D2-LAYOUT-READER/).
+  docling:
+    image: ghcr.io/docling-project/docling-serve-cpu:v1.37.0@sha256:6eda9c524992147c1b0b06a1a9be4894bd68b1f43c86d92c32f996c4c60d18a3
+    restart: unless-stopped
+    environment:
+      DOCLING_SERVE_API_KEY: ${DOCLING_API_KEY:-}
+      DOCLING_SERVE_ENABLE_UI: 'false'
+      DOCLING_SERVE_ENABLE_REMOTE_SERVICES: 'false'
+      DOCLING_SERVE_ALLOW_EXTERNAL_PLUGINS: 'false'
+      DOCLING_SERVE_MAX_DOCUMENT_TIMEOUT: '600'
     profiles: ['ingestion']
     networks:
       - c2c

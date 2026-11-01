@@ -1,0 +1,10 @@
+/**
+ * The two things a user can truthfully do from any device screen. No operable
+ * screen actions are advertised because none are registered for the device
+ * surfaces; governed operations are proposed by AnA in conversation only.
+ */
+const DEVICE_SCREEN_ACTIONS: string[] = [
+  "Ask AnA about what is on this screen — the registers and counts render from the org's live device data",
+  'Signatures, transmissions, uploads and profile changes are governed — AnA proposes them in conversation, never through screen controls',
+];
+
