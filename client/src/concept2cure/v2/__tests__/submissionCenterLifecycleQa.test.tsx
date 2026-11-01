@@ -335,16 +335,24 @@ describe('the Builder says what the server knows about each leaf', () => {
   });
 
   it('an identical re-placement says nothing was placed, and an original offers only New', async () => {
+    /* The Builder places the project's documents (2026-10-31): the cover
+       letter is filed as its filing copy, 5, and the leaf names that copy. */
+    const COVER = 'c0e00000-0000-4000-8000-0000000000c0';
+    const PROJECT = '07000000-0000-4000-8000-000000000007';
     mockApi((method, url) => {
-      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves?submissionId=7') return ok([]);
-      if (method === 'GET' && url === '/api/coauthor/documents') return ok({ documents: [{ id: 5, title: 'Cover Letter', moduleNumber: '1.2', status: 'approved' }] });
+      if (method === 'GET' && url === '/api/submissions') return ok([{ ...SUBS[0], programId: PROJECT }]);
+      if (method === 'GET' && url.startsWith('/api/submissions/sequences/21/leaves?')) return ok([]);
+      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [{ id: COVER, title: 'Cover Letter', module: 'M1', status: 'approved' }] });
+      if (method === 'GET' && url === `/api/authoring/docs/${COVER}/sections`) return ok({ sections: [{ code: '1.2', title: 'Cover Letter', content: '<p>Saved letter.</p>' }] });
+      if (method === 'POST' && url === '/api/coauthor/documents') return ok({ success: true, written: false, document: { id: 5, status: 'approved', metadata: { source: 'authoring-document', docId: COVER } } });
       if (method === 'PUT' && url === '/api/submissions/sequences/21/leaves') return ok({ id: 62, sequenceId: 21, sectionCode: '1.2', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 5, unchanged: true, auditTrail: null });
       return undefined;
     });
     await ready();
     openWorkspace('Builder');
-    fireEvent.click(await screen.findByRole('button', { name: /Place a Co-Author document as a leaf/ }));
-    fireEvent.change(await screen.findByLabelText('Source document'), { target: { value: '5' } });
+    fireEvent.click(await screen.findByRole('button', { name: /Place a project document as a leaf/ }));
+    fireEvent.change(await screen.findByLabelText('Source document'), { target: { value: COVER } });
+    fireEvent.change(screen.getByLabelText('Section code'), { target: { value: '1.2' } });
     const ops = within(screen.getByLabelText('Lifecycle operation')).getAllByRole('option').map((o) => o.textContent);
     expect(ops).toEqual(['New']);
     fireEvent.change(screen.getByLabelText(/^Reason for this placement/), { target: { value: 'Cover letter for the IND' } });

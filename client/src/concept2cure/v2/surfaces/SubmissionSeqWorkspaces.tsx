@@ -50,6 +50,10 @@ import { useSurfaceAvailable } from '../surfaceAvailable';
 /* The Truth Engine's recorded cross-document checks, which had no screen: the
    route's own comment said no browser client called it. */
 import { SubmissionConsistency } from './SubmissionConsistency';
+/* The editor's Place into filing step, shared: a project document is placed as its
+   filing copy. placeIntoFilingCopy.ts imports mutateVerbatim from here; both are
+   used only inside functions, so the import cycle is inert. */
+import { takeFilingCopy, leafFailure } from './placeIntoFilingCopy';
 import { SubmissionModule2Qc } from './SubmissionModule2Qc';
 import { stashNavParamsForTarget } from '../navParams';
 import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
@@ -573,47 +577,31 @@ function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
   );
 }
 
-// GET /api/coauthor/documents → { documents, total, returned, offset } (coauthor_documents rows).
-interface CoauthorDocRow {
-  id: number;
+// GET /api/authoring/docs?status=all&programId= → { documents }: the project's
+// documents, the list the editor and Project home read (2026-10-31).
+interface ProjectDocRow {
+  id: string;
   title: string;
-  moduleNumber: string | null; // e.g. "3.2.S.4.1" — prefills the section code
+  module: string | null;
   status: string;
 }
-interface CoauthorDocPage {
-  documents: CoauthorDocRow[];
-  /** The organization's count under the page's own search; absent from an older server. */
-  total?: number;
+interface ProjectDocPage {
+  documents: ProjectDocRow[];
 }
 
-/** The list's page size (the route's default). */
-const DOC_PAGE = 50;
-
-/** The co-author list read: `q` searches title and module number, `offset` pages. */
-function coauthorDocsPath(query: string, offset: number): string {
-  const params = new URLSearchParams();
-  if (query) params.set('q', query);
-  if (offset > 0) params.set('offset', String(offset));
-  const qs = params.toString();
-  return `/api/coauthor/documents${qs ? `?${qs}` : ''}`;
+/** The project's documents, or null when the submission names no project. */
+function projectDocsPath(programId: string | null | undefined): string | null {
+  return programId ? `/api/authoring/docs?status=all&programId=${encodeURIComponent(programId)}` : null;
 }
 
 /**
- * What the picker shows of the list. QA 2026-10-08 (j6): it listed 50 of 53
- * documents and said nothing, so three could not be placed. Never silent: the
- * count it shows of how many there are, or that every one is shown.
+ * What the picker shows of the project's documents. Never silent (QA
+ * 2026-10-08, j6: a 50-row page hid three documents): the whole project list
+ * is read, and a search says how many of how many it matched.
  */
-function docCoverage(shown: number, total: number | null, query: string): string {
-  if (query) {
-    if (total === null) return `${shown} document${shown === 1 ? '' : 's'} shown for “${query}”.`;
-    return shown < total
-      ? `${shown} of ${total} documents matching “${query}” shown.`
-      : `${total} document${total === 1 ? ' matches' : 's match'} “${query}”.`;
-  }
-  if (total === null) return `${shown} documents shown; the server did not say how many there are, so search if one is missing.`;
-  return shown < total
-    ? `${shown} of ${total} documents shown, most recently updated first. Search by title or module number, or show more.`
-    : `All ${total} documents shown.`;
+function docCoverage(shown: number, total: number, query: string): string {
+  if (query) return `${shown} of ${total} document${total === 1 ? '' : 's'} match “${query}”.`;
+  return `All ${total} document${total === 1 ? '' : 's'} of this project shown.`;
 }
 
 /** What a leaf write did, for the Builder to re-read what changed. */
@@ -676,118 +664,132 @@ function lifecycleOpNote(seq: SeqRow, op: string): string {
 }
 
 /**
- * The co-author documents the Builder can place, read a page at a time:
- * `search` as typed, asked of the server (`q`) once typing pauses; `showMore`
- * reads the next page (`offset`) of the same list, and a new search starts over.
+ * The project's documents the Builder can place: the whole project list, read
+ * once the form opens, and searched as typed by title or module.
+ *
+ * It listed the organization's Co-Author documents (GET /api/coauthor/documents)
+ * until 2026-10-31: an org-wide list of copies rather than the project's own
+ * documents, read from a store a deployment built from the migration set does
+ * not have, so the readiness finding "Place a leaf at 3.2.S" ended in "Couldn't
+ * load the Co-Author documents".
  */
-function useCoauthorDocList(open: boolean) {
+function useProjectDocList(open: boolean, programId: string | null | undefined) {
   const [search, setSearch] = React.useState('');
-  const [query, setQuery] = React.useState('');
-  React.useEffect(() => {
-    const t = setTimeout(() => setQuery(search.trim()), 250);
-    return () => clearTimeout(t);
-  }, [search]);
-  const docsPath = open ? coauthorDocsPath(query, 0) : null;
-  const docs = useLiveData<CoauthorDocPage>(docsPath, [docsPath], hasKeys<CoauthorDocPage>('documents'));
-  const [more, setMore] = React.useState<{ forPath: string | null; rows: CoauthorDocRow[]; loading: boolean; error: boolean }>({
-    forPath: null,
-    rows: [],
-    loading: false,
-    error: false,
-  });
-  const extra = more.forPath === docsPath ? more : { rows: [] as CoauthorDocRow[], loading: false, error: false };
-  const rows = [...(Array.isArray(docs.data?.documents) ? docs.data.documents : []), ...extra.rows];
-  const total = typeof docs.data?.total === 'number' ? docs.data.total : null;
-  const showMore = async () => {
-    if (extra.loading || !docsPath) return;
-    const forPath = docsPath;
-    setMore({ forPath, rows: extra.rows, loading: true, error: false });
-    const r = await liveGetOrNull<CoauthorDocPage>(coauthorDocsPath(query, rows.length), hasKeys<CoauthorDocPage>('documents'));
-    const next = Array.isArray(r.data?.documents) ? r.data.documents : null;
-    setMore((m) =>
-      m.forPath !== forPath ? m : { forPath, rows: next ? [...m.rows, ...next] : m.rows, loading: false, error: next === null },
-    );
-  };
-  // The organization has none at all: nothing to search either.
-  const noneAtAll = !query && !docs.loading && !docs.error && docs.data !== null && rows.length === 0;
-  return { search, setSearch, query, docs, rows, total, more: extra, showMore, noneAtAll };
+  const docsPath = open ? projectDocsPath(programId) : null;
+  const docs = useLiveData<ProjectDocPage>(docsPath, [docsPath], hasKeys<ProjectDocPage>('documents'));
+  const all = Array.isArray(docs.data?.documents) ? docs.data.documents : [];
+  const query = search.trim();
+  const needle = query.toLowerCase();
+  const rows = needle
+    ? all.filter((d) => String(d.title ?? '').toLowerCase().includes(needle) || String(d.module ?? '').toLowerCase().includes(needle))
+    : all;
+  // The project has none at all: nothing to search either.
+  const noneAtAll = !docs.loading && !docs.error && docs.data !== null && all.length === 0;
+  return { search, setSearch, query, docs, rows, total: all.length, noneAtAll };
 }
 
-type CoauthorDocList = ReturnType<typeof useCoauthorDocList>;
+type ProjectDocList = ReturnType<typeof useProjectDocList>;
 
 /** The search box, the document select, and how much of the list it shows — never a silent cut-off. */
-function CoauthorDocField({ list, doc, onChoose, disabled }: { list: CoauthorDocList; doc: CoauthorDocRow | null; onChoose: (d: CoauthorDocRow | null) => void; disabled?: boolean }) {
-  const { rows, total, query, docs, more } = list;
+function ProjectDocField({ list, doc, onChoose, disabled }: { list: ProjectDocList; doc: ProjectDocRow | null; onChoose: (d: ProjectDocRow | null) => void; disabled?: boolean }) {
+  const { rows, total, query } = list;
   // The chosen document stays offered when a later search no longer lists it.
   const options = doc && !rows.some((d) => d.id === doc.id) ? [doc, ...rows] : rows;
   return (
     <>
       <div className="sc-field">
         <label htmlFor="sc-leaf-doc-find">Find a document</label>
-        <input
-          id="sc-leaf-doc-find"
-          className="sc-subpick"
-          type="search"
-          placeholder="Title or module number, e.g. 4.2.2"
-          value={list.search}
-          disabled={disabled}
-          onChange={(e) => list.setSearch(e.target.value)}
-        />
+        <input id="sc-leaf-doc-find" className="sc-subpick" type="search" placeholder="Title or module, e.g. Quality"
+          value={list.search} disabled={disabled} onChange={(e) => list.setSearch(e.target.value)} />
       </div>
       <div className="sc-field">
         <label htmlFor="sc-leaf-doc">Source document</label>
         {options.length === 0 ? (
-          <span id="sc-leaf-doc" className="sp-row-s" role="status">
-            {docs.loading ? 'Searching…' : `No Co-Author document matches “${query}”.`}
-          </span>
+          <span id="sc-leaf-doc" className="sp-row-s" role="status">No document of this project matches “{query}”.</span>
         ) : (
-          <select
-            id="sc-leaf-doc"
-            className="sc-subpick"
-            value={doc?.id ?? ''}
-            disabled={disabled}
-            aria-describedby="sc-leaf-doc-coverage"
-            onChange={(e) => onChoose(options.find((x) => x.id === Number(e.target.value)) ?? null)}
-          >
+          <select id="sc-leaf-doc" className="sc-subpick" value={doc?.id ?? ''} disabled={disabled}
+            aria-describedby="sc-leaf-doc-coverage" onChange={(e) => onChoose(options.find((x) => x.id === e.target.value) ?? null)}>
             <option value="">Choose a document…</option>
             {options.map((d) => (
               <option key={d.id} value={d.id}>
-                {d.title}
-                {d.moduleNumber ? ` · ${d.moduleNumber}` : ''} · {d.status}
+                {d.title}{d.module ? ` · ${d.module}` : ''} · {d.status}
               </option>
             ))}
           </select>
         )}
-        {rows.length > 0 && (
-          <span id="sc-leaf-doc-coverage" className="sp-row-s" role="status">
-            {docs.loading ? 'Searching… ' : ''}
-            {docCoverage(rows.length, total, query)}
-            {more.error ? ' The next documents could not be read; try again.' : ''}
-          </span>
-        )}
-        {total !== null && rows.length < total && (
-          <button type="button" className="sc-trans-b" disabled={disabled || more.loading} onClick={() => void list.showMore()}>
-            {more.loading ? 'Reading…' : `Show ${Math.min(DOC_PAGE, total - rows.length)} more`}
-          </button>
-        )}
+        <span id="sc-leaf-doc-coverage" className="sp-row-s" role="status">{docCoverage(rows.length, total, query)}</span>
       </div>
     </>
   );
 }
 
-/** Place a Co-Author document into the sequence as a leaf — a REAL persisted
- *  PUT (upsertLeaf), sourced from the real coauthor_documents list. No source
- *  document, no leaf: the picker never invents a document to place. */
-function AddLeafForm({ seq, onDone, isCurrent, placeAt, onCancel }: {
+const NO_LEAF_EFFECT: LeafWriteEffect = { changed: false, sequenceChanged: false };
+
+type LeafPlacementOutcome = ReturnType<typeof placementAnswer>;
+
+/** A failed step of a placement, as the form reports it. */
+const failedPlacement = (text: string, unconfirmed: boolean): LeafPlacementOutcome => ({
+  notice: { tone: unconfirmed ? 'warn' : 'err', text }, effect: NO_LEAF_EFFECT, confirmed: false, unconfirmed,
+});
+
+/**
+ * Place a project document as a leaf, the way the editor's Place into filing
+ * does (AuthoringPlaceIntoFiling.tsx): the document's filing copy is taken from
+ * its SAVED sections (takeFilingCopy, placeIntoFilingCopy.ts), then the leaf is
+ * placed on that copy. A leaf names a renderable store, and an authoring
+ * document is not one (leaf-document-tables.ts). Null when the context changed.
+ */
+async function placeProjectDocument(
+  seq: SeqRow, doc: ProjectDocRow, form: { sectionCode: string; op: string; reason: string; payload: ReturnType<typeof studyTaggingPlacement>['payload'] }, current: () => boolean,
+): Promise<LeafPlacementOutcome | null> {
+  const copy = await takeFilingCopy(doc.id, doc.title, form.sectionCode, form.reason, { current });
+  if (!copy) return null;
+  if (!copy.ok) return failedPlacement(copy.verdict.text, copy.unconfirmed);
+  const expected = { sequenceId: seq.id, sectionCode: form.sectionCode, lifecycleOp: form.op,
+    documentTable: 'coauthor_documents' as const, documentId: copy.snapshotId, ...form.payload };
+  const r = await mutateVerbatim<FilingLeafReceipt>('PUT', `/api/submissions/sequences/${seq.id}/leaves`, {
+    sectionCode: form.sectionCode, title: doc.title, lifecycleOp: form.op,
+    documentTable: expected.documentTable, documentId: copy.snapshotId, reason: form.reason, ...form.payload,
+  });
+  if (!current()) return null;
+  if (!matchingLeafReceipt(r.data, expected)) {
+    const failure = leafFailure(r, copy.snapshotId, seq.sequenceNumber, form.sectionCode);
+    return failedPlacement(failure.verdict.text, failure.unconfirmed);
+  }
+  return placementAnswer(seq, doc.title, r, expected);
+}
+
+/** The project a submission belongs to, or null. */
+const projectOf = (submission: SubLike | undefined): string | null => submission?.programId ?? null;
+
+/** True while the project's documents cannot be offered: no project, the read pending or failed, or none at all. */
+const projectDocListBlocked = (list: ProjectDocList, programId: string | null | undefined): boolean =>
+  !programId || (list.docs.loading && list.docs.data === null) || Boolean(list.docs.error) || list.noneAtAll;
+
+/** Why the project's documents cannot be offered, or null when they can. */
+function ProjectDocListState({ list, programId }: { list: ProjectDocList; programId: string | null | undefined }) {
+  if (!programId) return <div className="scaf-note">This submission is not in a project, so there is no project document to place. Place a file from the Vault instead (below).</div>;
+  if (list.docs.loading && list.docs.data === null) return <div role="status" className="scaf-note">Loading the project&#39;s documents…</div>;
+  if (list.docs.error) return <div className="sc-verdict tone-err" role="status">Couldn&#39;t load the project&#39;s documents — {redactInternals(list.docs.error, 'the read did not settle')}. Nothing to place.</div>;
+  if (list.noneAtAll) return <div className="scaf-note">This project has no documents yet. Start one from the project, or place a file from the Vault instead (below).</div>;
+  return null;
+}
+
+/** Place a project document into the sequence as a leaf — its filing copy,
+ *  then a REAL persisted PUT (upsertLeaf) on that copy (placeProjectDocument).
+ *  No source document, no leaf: the picker never invents a document to place. */
+function AddLeafForm({ seq, programId, onDone, isCurrent, placeAt, onCancel }: {
   seq: SeqRow; onDone: (n: Notice, effect: LeafWriteEffect) => void; isCurrent: () => boolean;
+  /** The submission's project, whose documents are offered. */
+  programId: string | null | undefined;
   /** Open at this section: the Builder was sent here by a readiness finding (F18). */
   placeAt?: { code: string | null } | null;
   /** The person closed the form without placing. */
   onCancel?: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
-  const list = useCoauthorDocList(open);
-  const [doc, setDoc] = React.useState<CoauthorDocRow | null>(null);
+  const list = useProjectDocList(open, programId);
+  const [doc, setDoc] = React.useState<ProjectDocRow | null>(null);
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
   const [reason, setReason] = React.useState('');
@@ -800,11 +802,11 @@ function AddLeafForm({ seq, onDone, isCurrent, placeAt, onCancel }: {
   const effectiveOp = isOriginalSequence(seq) ? 'new' : op;
   const tagging = studyTaggingPlacement(section, effectiveOp, seq.region, study);
   const disabled = saving || unconfirmed;
+  const ready = !!doc && !!section.trim() && placementReasonOk(reason) && tagging.valid;
   const clearStudy = () => setStudy({ studyId: '', stfFileTag: '' });
-  const choose = (value: CoauthorDocRow | null) => {
+  const choose = (value: ProjectDocRow | null) => {
     if (value?.id !== doc?.id) clearStudy();
     setDoc(value);
-    if (value?.moduleNumber && !section.trim()) setSection(value.moduleNumber);
   };
   const changeSection = (value: string) => {
     if ((normalizeCtdCode(value) ?? value.trim()) !== (normalizeCtdCode(section) ?? section.trim())) clearStudy();
@@ -817,19 +819,15 @@ function AddLeafForm({ seq, onDone, isCurrent, placeAt, onCancel }: {
     setStudy({ studyId: '', stfFileTag: '' });
   }, [placeAt]);
   const place = async () => {
-    if (!isCurrent() || !live.current || pending.current || disabled || !doc || !section.trim() || !placementReasonOk(reason) || !tagging.valid) return;
+    if (!isCurrent() || !live.current || pending.current || disabled || !doc || !ready) return;
     pending.current = true;
     setSaving(true);
-    const expected = { sequenceId: seq.id, sectionCode: section.trim(), lifecycleOp: effectiveOp,
-      documentTable: 'coauthor_documents' as const, documentId: doc.id, ...tagging.payload };
-    const r = await mutateVerbatim<FilingLeafReceipt>('PUT', `/api/submissions/sequences/${seq.id}/leaves`, {
-      sectionCode: expected.sectionCode, title: doc.title, lifecycleOp: effectiveOp,
-      documentTable: expected.documentTable, documentId: doc.id, reason: reason.trim(), ...tagging.payload,
-    });
-    if (!live.current || !isCurrent()) return;
+    const current = () => live.current && isCurrent();
+    const answer = await placeProjectDocument(seq, doc,
+      { sectionCode: section.trim(), op: effectiveOp, reason: reason.trim(), payload: tagging.payload }, current);
+    if (!answer || !current()) return;
     pending.current = false;
     setSaving(false);
-    const answer = placementAnswer(seq, doc.title, r, expected);
     setUnconfirmed(answer.unconfirmed);
     onDone(answer.notice, answer.effect);
     if (answer.confirmed) {
@@ -837,17 +835,16 @@ function AddLeafForm({ seq, onDone, isCurrent, placeAt, onCancel }: {
     }
   };
   if (!open) return <div className="cm-pushbar sc-mt">
-    <button type="button" className="sc-trans-b" onClick={() => setOpen(true)}>{I.plus} Place a Co-Author document as a leaf</button>
+    <button type="button" className="sc-trans-b" onClick={() => setOpen(true)}>{I.plus} Place a project document as a leaf</button>
   </div>;
   return <div className="sc-mt">
-    {list.docs.loading && list.docs.data === null ? <div role="status" className="scaf-note">Loading the Co-Author documents…</div>
-      : list.docs.error ? <div className="sc-verdict tone-err" role="status">Couldn&#39;t load the Co-Author documents — {redactInternals(list.docs.error, 'the read did not settle')}. Nothing to place.</div>
-      : list.noneAtAll ? <div className="scaf-note">No Co-Author documents in this organization. Place a document from the editor or the Vault instead (below).</div>
+    {projectDocListBlocked(list, programId) ? <ProjectDocListState list={list} programId={programId} />
       : <div className="sc-leafform">
-        <CoauthorDocField list={list} doc={doc} onChoose={choose} disabled={disabled} />
+        <p className="scaf-note" style={{ flexBasis: '100%' }}>Placing files a copy of the document&#39;s saved sections and places that copy as the leaf; unsaved edits do not travel with it.</p>
+        <ProjectDocField list={list} doc={doc} onChoose={choose} disabled={disabled} />
         <AddLeafPlacementFields seq={seq} section={section} onSection={changeSection} op={effectiveOp} onOp={setOp}
           study={study} onStudy={setStudy} tagging={tagging} reason={reason} onReason={setReason} disabled={disabled} />
-        <button type="button" className="sp-primary sc-btn" disabled={disabled || !doc || !section.trim() || !placementReasonOk(reason) || !tagging.valid} onClick={place}>
+        <button type="button" className="sp-primary sc-btn" disabled={disabled || !ready} onClick={place}>
           {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
         </button>
         {unconfirmed && <button type="button" className="sc-trans-b" onClick={() => onDone({ tone: 'warn', text: 'Checking the current sequence leaves and audit history. Review them before another placement; this read does not confirm the earlier write or its audit.' }, { changed: false, sequenceChanged: false, reconcile: true })}>Check sequence leaves</button>}
@@ -1115,7 +1112,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
           </div>
         ) : !leaves.loading && !leaves.error ? (
           <>
-            <AddLeafForm seq={seq} onDone={afterWrite} isCurrent={() => isScopeCurrent() && leaves.isCurrent()} placeAt={arrival.placeAt} onCancel={arrival.done} />
+            <AddLeafForm seq={seq} programId={projectOf(submission)} onDone={afterWrite} isCurrent={() => isScopeCurrent() && leaves.isCurrent()} placeAt={arrival.placeAt} onCancel={arrival.done} />
             <BuilderSources onNav={onNav} />
           </>
         ) : null}

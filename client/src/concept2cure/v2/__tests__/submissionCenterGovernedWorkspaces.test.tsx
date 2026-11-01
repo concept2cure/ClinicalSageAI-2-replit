@@ -274,19 +274,27 @@ describe('sequence selector drives the per-sequence workspaces', () => {
 /* PX-1 (docs/evidence/reviews/2026-09-24/lenses.md): a placement's audit row
    recorded what changed and never why. The Builder's placement form now takes
    the reason, keeps Place disabled below the server's floor, and sends it. */
-describe('placing a Co-Author document carries its reason', () => {
+describe('placing a project document carries its reason', () => {
+  /* The Builder places the project's documents (2026-10-31): the clinical
+     summary is filed as its filing copy, 88, and the leaf names that copy. */
   const REASON = 'Clinical summary approved for sequence 0000';
+  const SUMMARY = '5a000000-0000-4000-8000-00000000005a';
+  const PROJECT = '07000000-0000-4000-8000-000000000007';
+  const reply = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
   beforeEach(() =>
     mockApi((method, url) => {
-      if (method === 'GET' && url === '/api/coauthor/documents') {
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({ documents: [{ id: 88, title: 'M2.7 Clinical Summary', moduleNumber: '2.7.3', status: 'draft' }] }),
-        };
+      if (method === 'GET' && url === '/api/submissions') return reply(SUBS.map((s) => ({ ...s, programId: PROJECT })));
+      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) {
+        return reply({ success: true, documents: [{ id: SUMMARY, title: 'M2.7 Clinical Summary', module: 'M2', status: 'draft' }] });
+      }
+      if (method === 'GET' && url === `/api/authoring/docs/${SUMMARY}/sections`) {
+        return reply({ sections: [{ code: '2.7.3', title: 'Clinical summary', content: '<p>Saved summary.</p>' }] });
+      }
+      if (method === 'POST' && url === '/api/coauthor/documents') {
+        return reply({ success: true, written: true, document: { id: 88, status: 'draft', metadata: { source: 'authoring-document', docId: SUMMARY } } });
       }
       if (method === 'PUT' && url === '/api/submissions/sequences/21/leaves') {
-        return { ok: true, status: 200, json: async () => ({ id: 612, sectionCode: '2.7.3' }) };
+        return reply({ id: 612, sequenceId: 21, sectionCode: '2.7.3', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 88 });
       }
       return undefined;
     }),
@@ -296,10 +304,10 @@ describe('placing a Co-Author document carries its reason', () => {
     render(<SubmissionCenter {...props()} />);
     await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
     await openWorkspace('Builder');
-    fireEvent.click(await screen.findByRole('button', { name: /Place a Co-Author document as a leaf/ }));
-    fireEvent.change(await screen.findByLabelText('Source document'), { target: { value: '88' } });
+    fireEvent.click(await screen.findByRole('button', { name: /Place a project document as a leaf/ }));
+    fireEvent.change(await screen.findByLabelText('Source document'), { target: { value: SUMMARY } });
+    fireEvent.change(screen.getByLabelText('Section code'), { target: { value: '2.7.3' } });
     const place = screen.getByRole('button', { name: /Place leaf in the sequence/ }) as HTMLButtonElement;
-    expect((screen.getByLabelText('Section code') as HTMLInputElement).value).toBe('2.7.3');
     expect(place.disabled, 'no reason given yet').toBe(true);
 
     fireEvent.change(screen.getByLabelText(/^Reason for this placement/), { target: { value: REASON } });
@@ -313,6 +321,7 @@ describe('placing a Co-Author document carries its reason', () => {
         expect.objectContaining({ documentId: 88, sectionCode: '2.7.3', reason: REASON }),
       ),
     );
+    expect(apiRequest).toHaveBeenCalledWith('POST', '/api/coauthor/documents', expect.objectContaining({ sourceAuthoringDocId: SUMMARY, changeReason: REASON }));
   });
 });
 

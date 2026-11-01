@@ -87,7 +87,6 @@ beforeEach(() => {
     if (method === 'GET' && url === '/api/submissions/68/sequences') return ok(SEQS);
     if (method === 'GET' && url === '/api/submissions/sequences/29/leaves') return ok([]);
     if (method === 'GET' && url === '/api/510k/estar/submissions') return ok({ submissions: FILINGS });
-    if (method === 'GET' && url === '/api/coauthor/documents') return ok({ documents: [] });
     if (method === 'GET' && url === `/api/c2c/project-vault/${PID}`) {
       return ok({ success: true, data: { program: 'BX-204', spine: 'IND · 21 CFR 312', standard: 'pharma', documentCount: 0, tree: [] } });
     }
@@ -184,10 +183,12 @@ describe('No dead ends on the filing path (F16)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open the Vault' }));
     expect(onNav).toHaveBeenLastCalledWith('vault');
 
-    // With no Co-Author documents, the empty state no longer sends the person there.
-    fireEvent.click(screen.getByRole('button', { name: /Place a Co-Author document as a leaf/ }));
-    await waitFor(() => expect(apiRequest.mock.calls.some(([, u]) => u === '/api/coauthor/documents')).toBe(true));
-    await waitFor(() => expect(document.body.textContent).toMatch(/No Co-Author documents in this organization/));
+    // The form places the project's documents (2026-10-31). This submission
+    // names no project, so it says so and points at the Vault — never at the
+    // Co-Author, whose list it no longer reads.
+    fireEvent.click(screen.getByRole('button', { name: /Place a project document as a leaf/ }));
+    await waitFor(() => expect(document.body.textContent).toMatch(/This submission is not in a project/));
+    expect(apiRequest.mock.calls.some(([, u]) => String(u).startsWith('/api/coauthor/documents'))).toBe(false);
     expect(document.body.textContent).not.toMatch(/author one in the eCTD Co-Author/);
   });
 
