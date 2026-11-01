@@ -15,7 +15,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { daysTo, dueInWords } from '../surfaces/AgencyInbox';
-import { utcDaysUntil } from '@shared/utils/utc-day';
+import { utcDayText, utcDaysUntil } from '@shared/utils/utc-day';
 import { letterOverdue } from '../../../../../server/services/agency-responses/response-logic';
 
 afterEach(() => { vi.useRealTimers(); });
@@ -48,5 +48,18 @@ describe('the inbox counts UTC calendar days, as the server does', () => {
     expect(dueInWords('2026-10-14T00:00:00.000Z')).toBe('5 days ago');
     expect(dueInWords('2026-10-14T00:00:00.000Z', true)).toBe('5d ago');
     expect(dueInWords(null)).toBeNull();
+  });
+});
+
+describe('a stored day in words (utcDayText)', () => {
+  it('reads a date and an instant as their UTC day, at any hour', () => {
+    expect(utcDayText('2030-06-30')).toBe('Jun 30, 2030');
+    expect(utcDayText('2026-10-16T00:00:00.000Z')).toBe('Oct 16, 2026');
+    expect(utcDayText('2026-10-16T23:59:00.000Z')).toBe('Oct 16, 2026');
+  });
+  it('is null for no date or one that does not parse', () => {
+    expect(utcDayText(null)).toBeNull();
+    expect(utcDayText('')).toBeNull();
+    expect(utcDayText('not a date')).toBeNull();
   });
 });

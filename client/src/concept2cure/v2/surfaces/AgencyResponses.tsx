@@ -683,6 +683,7 @@ function ScopedAgencyResponses({
 
       {!closed && viewer.canWrite && (
         <LetterQuestionProposals base={base} version={version} readOwner={readOwner} disabled={busy}
+          responseRequired={data?.letter.responseRequired !== false}
           onRecord={(p) => setAdding({ questionRef: p.ref, questionText: p.text })} />
       )}
 
@@ -694,7 +695,9 @@ function ScopedAgencyResponses({
       {questions.length === 0 ? (
         <p className="cc-q-note">
           No questions are recorded on this letter.
-          {!data?.letter.responseRequired && ' Record each question as the agency numbered and worded it; each then takes a response and an approval.'}
+          {data?.letter.responseRequired
+            ? ' Record each question as the agency numbered and worded it; each then takes a response and an approval.'
+            : ' The letter needs no response.'}
         </p>
       ) : (
         <ol className="cc-q-list">
@@ -879,10 +882,10 @@ function ScopedAgencyResponses({
             governed: 'Recorded with your reason in the audit trail.',
             submitLabel: 'Record commitment',
             fields: [
-              { key: 'commitmentType', label: 'Type', type: 'select', options: COMMITMENT_TYPES, required: true },
-              { key: 'description', label: 'What was committed', type: 'textarea', required: true },
+              { key: 'commitmentType', label: 'Type', type: 'select', options: COMMITMENT_TYPES, required: true, half: true },
               { key: 'dueDate', label: 'Due date', type: 'date', half: true },
-              { key: 'regulatoryBasis', label: 'Regulatory basis', type: 'text', placeholder: 'e.g. 21 CFR 314.81(b)(2)(vii)', half: true },
+              { key: 'description', label: 'What was committed', type: 'textarea', required: true },
+              { key: 'regulatoryBasis', label: 'Regulatory basis', type: 'text', placeholder: 'e.g. 21 CFR 314.81(b)(2)(vii)' },
               { key: 'reason', label: 'Reason', type: 'text', required: true },
             ],
           }}
@@ -901,10 +904,10 @@ function ScopedAgencyResponses({
             governed: 'Recorded with your reason in the audit trail.',
             submitLabel: 'Record commitment',
             fields: [
-              { key: 'commitmentType', label: 'Type', type: 'select', options: COMMITMENT_TYPES, required: true, default: fromLetter.commitmentType },
-              { key: 'description', label: 'What the letter requires', type: 'textarea', required: true, default: fromLetter.text.replace(/\s+/g, ' ').trim() },
+              { key: 'commitmentType', label: 'Type', type: 'select', options: COMMITMENT_TYPES, required: true, half: true, default: fromLetter.commitmentType },
               { key: 'dueDate', label: 'Due date', type: 'date', half: true, ...(fromLetter.dueDate ? { default: fromLetter.dueDate } : {}) },
-              { key: 'regulatoryBasis', label: 'Regulatory basis', type: 'text', half: true, default: fromLetter.recordBasis },
+              { key: 'description', label: 'What the letter requires', type: 'textarea', required: true, default: fromLetter.text.replace(/\s+/g, ' ').trim() },
+              { key: 'regulatoryBasis', label: 'Regulatory basis', type: 'text', default: fromLetter.recordBasis },
               { key: 'reason', label: 'Reason', type: 'text', placeholder: 'e.g. Recording the approval letter received 2026-10-12', required: true },
             ],
           }}

@@ -143,7 +143,7 @@ describe('a guarded surface still renders real values', () => {
     expect(txt, 'linkedSectionCodes join output').toContain('§3.2.P.8 §3.2.S.7');
     expect(txt, 'extracted issue 1').toContain('Additional stability data required');
     expect(txt, 'extracted issue 2').toContain('Clarify batch genealogy');
-    expect(txt, 'a sibling read that was already guarded').toContain('shared client c2c');
+    expect(txt, 'a sibling read that was already guarded').toContain('Your team and Concept2Cure');
 
     // Structural, not textual: the chip ELEMENT exists, and the issues list has
     // two items. Text-only assertions pass on a stray title attribute.

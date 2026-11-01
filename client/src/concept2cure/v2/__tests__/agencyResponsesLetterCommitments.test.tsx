@@ -21,7 +21,7 @@ import { clearAuthToken } from '@/utils/authToken';
 const TOKEN = `fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`;
 const letter = { id: 'ace_9', sourceType: 'uploaded_official_correspondence', communicationType: 'Approval letter',
   sourceChannel: 'esg', linkedSectionCodes: [], receivedDate: '2026-10-12T00:00:00Z', urgency: 'normal', responseRequired: false,
-  extractedIssues: [], humanReviewStatus: 'triaged', closureStatus: 'in_progress' } as CommRow;
+  extractedIssues: [], humanReviewStatus: 'triaged', closureStatus: 'in_progress' } as unknown as CommRow;
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data, headers: new Headers() }) as Response;
 const QUESTIONS = { success: true, data: { letter: { id: 'ace_9', communicationType: 'Approval letter', closureStatus: 'in_progress',
   dueDate: null, responseRequired: false, closeRefusal: null },
@@ -98,5 +98,24 @@ describe('the commitments a letter imposes, proposed (extract commitments)', () 
     fireEvent.change(inputs[1], { target: { value: 'Recording the approval letter of 2026-10-12' } });
     fireEvent.click(screen.getByRole('button', { name: 'Record commitment' }));
     await waitFor(() => expect(onCommitmentRecorded).toHaveBeenCalledTimes(1));
+  });
+
+  it('keeps the long basis whole in a full-width field', async () => {
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Record commitment 4321-1 from the letter' }));
+    const basis = screen.getByLabelText(/^Regulatory basis/) as HTMLInputElement;
+    expect(basis.value).toBe('FDCA 505(o)(3) · 4321-1');
+    expect(basis.closest('.half')).toBeNull();
+  });
+
+  it('does not tell a letter that asks nothing to record its questions by hand', async () => {
+    const fallback = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, path: string) => path.endsWith('/question-proposals')
+      ? Promise.resolve(ok({ success: true, data: { sources: [{ sourceId: 4, title: 'Approval letter.pdf', state: 'read' }], proposals: [] } }))
+      : fallback(method, path));
+    mount();
+    await screen.findByText(/^No numbered questions were found in the letter's text\.$/);
+    expect(screen.queryByText(/Record each question by hand/)).toBeNull();
+    expect(screen.getByText(/No questions are recorded on this letter\. The letter needs no response\./)).toBeTruthy();
   });
 });

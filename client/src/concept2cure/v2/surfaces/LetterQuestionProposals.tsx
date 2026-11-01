@@ -16,6 +16,7 @@
  * @module client/src/concept2cure/v2/surfaces/LetterQuestionProposals
  */
 import React from 'react';
+import { utcDayText } from '@shared/utils/utc-day';
 import { useLiveData, type DataReadOwner } from '../dataConnect';
 
 export interface LetterQuestionProposal {
@@ -33,12 +34,14 @@ function isPayload(v: unknown): v is ProposalsPayload {
 
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
-export function LetterQuestionProposals({ base, version, readOwner, disabled, onRecord }: {
+export function LetterQuestionProposals({ base, version, readOwner, disabled, onRecord, responseRequired = true }: {
   base: string;
   version: number;
   readOwner: DataReadOwner;
   disabled: boolean;
   onRecord: (p: LetterQuestionProposal) => void;
+  /** False for a letter that asks nothing (an approval letter): it is not told to record its questions by hand. */
+  responseRequired?: boolean;
 }) {
   const read = useLiveData<ProposalsPayload>(`${base}/question-proposals`, [base, version], isPayload, readOwner);
   if (read.loading && !read.data) return null;
@@ -60,7 +63,9 @@ export function LetterQuestionProposals({ base, version, readOwner, disabled, on
         </p>
       ))}
       {readCount > 0 && data.proposals.length === 0 && (
-        <p className="cc-q-note" role="note">No numbered questions were found in the letter's text. Record each question by hand.</p>
+        <p className="cc-q-note" role="note">
+          No numbered questions were found in the letter's text.{responseRequired ? ' Record each question by hand.' : ''}
+        </p>
       )}
       {data.proposals.length > 0 && (
         <>
@@ -105,7 +110,6 @@ function isCommitmentPayload(v: unknown): v is CommitmentProposalsPayload {
 }
 
 const KIND = { pmr: 'Postmarketing requirement', pmc: 'Postmarketing commitment' } as const;
-const day = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
 /**
  * The commitments the letter's own text imposes (an approval letter's PMRs and
@@ -140,7 +144,7 @@ export function LetterCommitmentProposals({ base, version, readOwner, disabled, 
         {proposals.map((p) => (
           <li key={`${p.sourceId}:${p.start}`} className="cc-q-proposal">
             <span className="cc-comm-t">{p.ref}</span>{' '}
-            <span className="cc-q-note">{KIND[p.commitmentType]}, {p.basis}{p.dueDate ? `, due ${day(p.dueDate)}` : ''}.</span>{' '}
+            <span className="cc-q-note">{KIND[p.commitmentType]}, {p.basis}{p.dueDate ? `, due ${utcDayText(p.dueDate) ?? p.dueDate}` : ''}.</span>{' '}
             <span title={p.text}>{clip(p.text.replace(/\s+/g, ' '), 220)}</span>{' '}
             {p.recordedCommitmentId !== null ? (
               <span className="cc-q-note">Recorded</span>

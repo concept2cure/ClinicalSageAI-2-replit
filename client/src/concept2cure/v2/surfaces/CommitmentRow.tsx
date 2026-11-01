@@ -10,6 +10,7 @@
  * there and not named; the server sends nothing else about it.
  */
 import React from 'react';
+import { utcDayText } from '@shared/utils/utc-day';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import type { ShapeGuard } from '../dataConnect';
 import { I } from '../icons';
@@ -243,11 +244,13 @@ export function CommitmentRowView({
         <div className="cc-row-s mono">
           {[
             c.regulatory_basis,
-            c.due_date ? 'due ' + c.due_date : null,
-            c.fulfilled_date ? 'fulfilled ' + c.fulfilled_date : null,
+            c.due_date ? 'due ' + (utcDayText(c.due_date) ?? c.due_date) : null,
+            c.fulfilled_date ? 'fulfilled ' + (utcDayText(c.fulfilled_date) ?? c.fulfilled_date) : null,
             c.source_question_id != null
               ? `made in the answer to ${c.source_question_ref ?? 'a question'}${c.source_communication_type ? ` of ${c.source_communication_type}` : ''}`
-              : null,
+              : c.source_communication_type
+                ? `recorded from ${c.source_communication_type}`
+                : null,
           ]
             .filter(Boolean)
             .join(' · ') || '—'}

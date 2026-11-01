@@ -137,7 +137,7 @@ describe('Communication opens the letter another screen links to', () => {
     await waitFor(() => expect(document.activeElement).toBe(region));
     expect(document.querySelector('div[aria-label]:not([role])')).toBeNull();
     // Its content is not replaced by a label: the due line and actions stay readable inside it.
-    expect(region.textContent).toMatch(/received 2026-10-16/);
+    expect(region.textContent).toMatch(/received Oct 16, 2026/);
   });
 
   it('an id that is not id-shaped opens nothing', async () => {

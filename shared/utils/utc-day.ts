@@ -19,6 +19,14 @@ export function utcDay(value: string | null | undefined): string | null {
   return Number.isNaN(t.getTime()) ? null : t.toISOString().slice(0, 10);
 }
 
+/** A stored date or instant as its UTC calendar day in words ('Jun 30, 2030'); null when there is none or it does not parse. */
+export function utcDayText(value: string | null | undefined): string | null {
+  const day = utcDay(value);
+  return day
+    ? new Date(`${day}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+    : null;
+}
+
 /** Whole UTC calendar days from `today` to `due` (0 on the day, negative once the day has passed); null when either is missing. */
 export function utcDaysUntil(due: string | null | undefined, today: string | null | undefined): number | null {
   const d = utcDay(due);

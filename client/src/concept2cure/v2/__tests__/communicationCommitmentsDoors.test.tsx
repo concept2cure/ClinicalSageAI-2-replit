@@ -153,6 +153,9 @@ describe('Meetings & commitments, through both doors of the one register', () =>
     expect(await screen.findByText('Submit 24-month stability data')).toBeTruthy();
     expect(screen.getByText('Pediatric study (PREA)')).toBeTruthy();
     expect(screen.getByText(/made in the answer to Q2 of Information request/)).toBeTruthy();
+    // The due day in words, not the register's yyyy-mm-dd.
+    expect(screen.getAllByText(/due Jun 30, 2027/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/due 2027-06-30/)).toBeNull();
   });
 
   it("signs a project's PMC through the project's door, and the organisation's PMR through its own", async () => {
