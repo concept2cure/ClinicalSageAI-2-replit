@@ -81,12 +81,20 @@ export interface AuthoringFilingBarProps {
   docRevision?: string;
 }
 
-type Dialog = 'freeze' | 'freeze-unsettled' | 'esign' | 'esign-unsettled' | null;
+type Dialog = 'freeze' | 'freeze-unsettled' | 'freeze-figures' | 'esign' | 'esign-unsettled' | 'esign-figures' | null;
 
 const FROZEN_STATES = new Set(['FROZEN', 'APPROVED']);
 
 /** What the server said is still outstanding on this document. */
 interface Unresolved { openComments: number; pendingEdits: number }
+
+/** A figure the text states that its section's cited sources do not hold (P-89, 409 FIGURES_UNVERIFIED). */
+interface UnverifiedFigure {
+  key: string; sectionCode: string; sectionTitle: string; text: string; reason: 'not_in_cited_source' | 'source_unavailable';
+}
+interface UnverifiedFigures { digest: string; items: UnverifiedFigure[] }
+/** The figures the server named, and the keys the signer acknowledged once they kept every one. */
+interface FigureQuestion { list: UnverifiedFigures; acknowledged: string[] | null }
 
 /** "1 unresolved comment and 2 tracked changes" — the same phrasing the server
  *  uses, built here so the dialog can restate it without echoing server text. */
@@ -159,6 +167,45 @@ const APPROVAL_UNSETTLED_FORM = (title: string, unresolved: Unresolved): C2CForm
     },
   ],
 });
+
+/* P-89 (2026-11-01): an approval or a seal is refused while the text states a
+ * figure its section's cited sources do not hold, unless the signer
+ * acknowledges each one. So the question is asked figure by figure, each
+ * starting at "Go back and correct it": the signature reopens only when the
+ * signer has chosen to keep every one, and the server records each. Keeping
+ * one and correcting another goes back, because the act would seal both. */
+const FIGURES_FORM = (act: 'freeze' | 'approve', title: string, figures: UnverifiedFigures): C2CFormConfig => {
+  const n = figures.items.length;
+  const one = n === 1;
+  return {
+    eyebrow: act === 'freeze' ? 'Part 11 · content freeze' : 'Part 11 · approval',
+    title: one ? 'A figure is not in its cited source' : 'Figures are not in their cited sources',
+    sub:
+      `“${title}” states ${n} figure${one ? '' : 's'} that the sources ${one ? 'its section cites do' : 'their sections cite do'} not hold. ` +
+      `${act === 'freeze' ? 'Freezing' : 'An approval'} seals the text for filing. Keep ${one ? 'it' : 'each one'} only if you have checked ` +
+      'it yourself. Signing goes ahead only when every figure is kept.',
+    governed: true,
+    submitLabel: 'Continue',
+    fields: figures.items.map((f, i) => ({
+      key: `figure-${i}`,
+      label: `${f.text} · ${f.sectionCode} ${f.sectionTitle}`.trim(),
+      type: 'seg' as const,
+      required: true,
+      desc: f.reason === 'source_unavailable'
+        ? 'Its section’s cited source could no longer be read, so this figure was not checked.'
+        : 'Not found in the excerpts this section cites.',
+      options: [{ value: 'correct', label: 'Go back and correct it' }, { value: 'keep', label: 'Keep it as written' }],
+    })),
+  };
+};
+
+/** Whether the signer kept every figure the form asked about. */
+const keptEveryFigure = (figures: UnverifiedFigures, v: Record<string, string>) =>
+  figures.items.every((_, i) => v[`figure-${i}`] === 'keep');
+
+/** The sentence under the signature's target once figures were acknowledged. */
+const figuresAcknowledgedMeta = (n: number): string =>
+  `You kept ${n} figure${n === 1 ? '' : 's'} not found in ${n === 1 ? 'its' : 'their'} cited sources. Your signature records each one.`;
 
 /** The line under the approval dialog's target once the approver chose to approve it as it stands. */
 function approveAsItStandsMeta(unresolved: Unresolved): string {
@@ -233,12 +280,14 @@ export async function postAuthoringSignature(
   input: SignInput,
   adoptWorkflowSource = false,
   acknowledgeUnresolved = false,
+  acknowledgedFigures: readonly string[] | null = null,
 ): Promise<{ meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER'; hash?: string; signedAt?: string; notApproved: string[] }> {
   const meaning = AUTHORING_MEANING[input.meaning];
   if (!meaning) throw new Error('This document cannot carry that meaning. Nothing was signed.');
   let res: Response;
   try {
-    res = await apiRequest('POST', `/api/authoring/docs/${docId}/e-sign`, signatureBody(input, meaning, adoptWorkflowSource, acknowledgeUnresolved));
+    res = await apiRequest('POST', `/api/authoring/docs/${docId}/e-sign`,
+      signatureBody(input, meaning, adoptWorkflowSource, acknowledgeUnresolved, acknowledgedFigures));
   } catch (e) {
     // An approval of an unsettled document is a question for the approver, not a failure (2026-10-30).
     throw approvalQuestionOr(e);
@@ -308,22 +357,43 @@ export function notApprovedNote(keys: readonly string[]): string {
   );
 }
 
-/** What /e-sign is sent. Adoption goes only with a review; the acknowledgement only with an approval. */
-function signatureBody(input: SignInput, meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER', adopt: boolean, acknowledge: boolean) {
+/** What /e-sign is sent. Adoption goes only with a review; the acknowledgements only with an approval. */
+function signatureBody(input: SignInput, meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER', adopt: boolean, acknowledge: boolean,
+  figures: readonly string[] | null) {
+  const approval = meaning === 'APPROVER';
   return {
     password: input.password,
     ...(input.totp ? { mfaToken: input.totp } : {}),
     meaning,
     intent: input.reason,
     ...(meaning === 'REVIEWER' && adopt ? { adoptWorkflowSource: true } : {}),
-    ...(meaning === 'APPROVER' && acknowledge ? { acknowledgeUnresolved: true } : {}),
+    ...(approval && acknowledge ? { acknowledgeUnresolved: true } : {}),
+    ...(approval && figures?.length ? { acknowledgedFigures: [...figures] } : {}),
   };
 }
 
-/** A "not settled" refusal as the approver's question; anything else unchanged. */
+/** A "not settled" or "figures unverified" refusal as the approver's question; anything else unchanged. */
 function approvalQuestionOr(e: unknown): unknown {
   const unresolved = notSettledCounts(e);
-  return unresolved ? new ApprovalNotSettled(unresolved) : e;
+  if (unresolved) return new ApprovalNotSettled(unresolved);
+  const figures = unverifiedFiguresIn(e);
+  return figures ? new ApprovalFiguresUnverified(figures) : e;
+}
+
+/** The server refused an approval over unverified figures; the ones it named (P-89). */
+class ApprovalFiguresUnverified extends Error {
+  constructor(readonly figures: UnverifiedFigures) {
+    super('Not approved — figures are not in their cited sources. Nothing was signed.');
+    this.name = 'ApprovalFiguresUnverified';
+  }
+}
+
+/** The figures a FIGURES_UNVERIFIED refusal named, or null for any other failure. */
+function unverifiedFiguresIn(e: unknown): UnverifiedFigures | null {
+  const err = e as Partial<ApiRequestError>;
+  if (err?.code !== 'FIGURES_UNVERIFIED') return null;
+  const named = (err.payload as { unverifiedFigures?: UnverifiedFigures } | undefined)?.unverifiedFigures;
+  return named && Array.isArray(named.items) && named.items.length > 0 ? named : null;
 }
 
 /** The server refused an approval because the document is not settled; what it named. */
@@ -334,10 +404,11 @@ class ApprovalNotSettled extends Error {
   }
 }
 
-/** What the freeze endpoint answered: sealed, or refused as not settled. */
+/** What the freeze endpoint answered: sealed, or refused as not settled or over unverified figures. */
 type FreezeOutcome =
   | { kind: 'sealed'; hash?: string; frozenAt?: string }
-  | { kind: 'not-settled'; unresolved: Unresolved };
+  | { kind: 'not-settled'; unresolved: Unresolved }
+  | { kind: 'figures'; figures: UnverifiedFigures };
 
 /** The outstanding work the server named when it refused, or null for any other failure. */
 function notSettledCounts(e: unknown): Unresolved | null {
@@ -353,21 +424,35 @@ function notSettledCounts(e: unknown): Unresolved | null {
  * thrown as the sentence to show; "not settled" is returned, because it is a
  * question for the user rather than a failure.
  */
-async function postFreeze(docId: string, input: SignInput, acknowledge: boolean): Promise<FreezeOutcome> {
+/** What /freeze is sent: the acknowledgements only after the server asked and the signer chose. */
+function freezeBody(input: SignInput, meaning: 'AUTHOR' | 'REVIEWER', acknowledge: boolean, figures: readonly string[] | null) {
+  return {
+    reason: input.reason,
+    meaning,
+    password: input.password,
+    ...(input.totp ? { mfaToken: input.totp } : {}),
+    ...(acknowledge ? { acknowledgeUnresolved: true } : {}),
+    ...(figures?.length ? { acknowledgedFigures: [...figures] } : {}),
+  };
+}
+
+/** A freeze refusal that is a question for the signer (not settled, or figures), or null. */
+function freezeQuestion(e: unknown): FreezeOutcome | null {
+  const unresolved = notSettledCounts(e);
+  if (unresolved) return { kind: 'not-settled', unresolved };
+  const named = unverifiedFiguresIn(e);
+  return named ? { kind: 'figures', figures: named } : null;
+}
+
+async function postFreeze(docId: string, input: SignInput, acknowledge: boolean, figures: readonly string[] | null): Promise<FreezeOutcome> {
   const meaning = FREEZE_MEANING[input.meaning];
   if (!meaning) throw new Error('A freeze is signed as its author or a reviewer. Nothing was sealed.');
   let res: Response;
   try {
-    res = await apiRequest('POST', `/api/authoring/docs/${docId}/freeze`, {
-      reason: input.reason,
-      meaning,
-      password: input.password,
-      ...(input.totp ? { mfaToken: input.totp } : {}),
-      ...(acknowledge ? { acknowledgeUnresolved: true } : {}),
-    });
+    res = await apiRequest('POST', `/api/authoring/docs/${docId}/freeze`, freezeBody(input, meaning, acknowledge, figures));
   } catch (e) {
-    const unresolved = notSettledCounts(e);
-    if (unresolved) return { kind: 'not-settled', unresolved };
+    const question = freezeQuestion(e);
+    if (question) return question;
     /* `apiRequest` THROWS on a non-2xx and the server answers `{ code,
        message }`, so the sentence is read from it — never "[object Object]". */
     const err = e as Partial<ApiRequestError> & { message?: string };
@@ -427,6 +512,8 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
   const [notApprovedKeys, setNotApprovedKeys] = useState<string[]>([]);
   /** Set when the server refused the freeze because work is outstanding. */
   const [unresolved, setUnresolved] = useState<Unresolved | null>(null);
+  /** Set when the server refused an approval or a seal over unverified figures (P-89). */
+  const { figures, setFigures, onFiguresChoice } = useFigureQuestion(setDialog, () => setUnresolved(null));
   const frozen = FROZEN_STATES.has(docStatus);
   const consentToken = workflowConsentToken(docId, docRevision, docStatus, workflowOrigin);
   const { adoptRef, onMeaningChange, renderMeaningDetails } = useWorkflowAdoption(consentToken, dialog, workflowOrigin);
@@ -437,9 +524,11 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
   const onUnsettledChoice = (v: Record<string, string>) => {
     /* "Go back and resolve them" closes and lets them work. Offering the choice
        and then ignoring half of it would be worse than not offering it. */
-    if (v.acknowledge !== 'seal') setUnresolved(null);
+    if (v.acknowledge !== 'seal') { setUnresolved(null); setFigures(null); }
     setDialog(v.acknowledge === 'seal' ? 'freeze' : null);
   };
+
+  const closeAll = () => { setUnresolved(null); setFigures(null); setDialog(null); };
 
   /* Runs after the dialog has checked the password (and code) with the server.
      A throw is shown in the dialog, which stays open; nothing is sealed. */
@@ -447,7 +536,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
     if (refusalRef.current.freeze) throw new Error(refusalRef.current.freeze);
     /* The acknowledgement is only ever sent after the server refused AND the
        user deliberately chose to seal it anyway. Never a default, never inferred. */
-    const out = await postFreeze(docId, input, unresolved !== null);
+    const out = await postFreeze(docId, input, unresolved !== null, figures?.acknowledged ?? null);
     if (out.kind === 'not-settled') {
       /* Re-ask rather than report a failure: the document is not broken, it
          is unfinished, and the form says so and offers both ways forward. */
@@ -455,18 +544,22 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       setDialog('freeze-unsettled');
       throw new Error('Not frozen — the document is not settled. Nothing was sealed.');
     }
+    if (out.kind === 'figures') {
+      setFigures({ list: out.figures, acknowledged: null });
+      setDialog('freeze-figures');
+      throw new Error('Not frozen — figures are not in their cited sources. Nothing was sealed.');
+    }
     fireToast('Document frozen and sealed' + (out.hash ? ' · ' + String(out.hash).slice(0, 12) + '…' : '') + '.');
-    setUnresolved(null);
+    setUnresolved(null); setFigures(null);
     onChanged();
     return signedManifest(input, out.frozenAt, out.hash);
   };
 
   /** The approval's not-settled answer: go back, or reopen the signature to approve it as it stands. */
   const onApprovalUnsettledChoice = (v: Record<string, string>) => {
-    if (v.acknowledge !== 'approve') setUnresolved(null);
+    if (v.acknowledge !== 'approve') { setUnresolved(null); setFigures(null); }
     setDialog(v.acknowledge === 'approve' ? 'esign' : null);
   };
-  const closeEsign = () => { setUnresolved(null); setDialog(null); };
 
   /* Runs after the dialog has checked the password (and code) with the server.
      A throw is shown in the dialog, which stays open; nothing is signed. The
@@ -477,14 +570,18 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
     let signed;
     try {
       signed = await postAuthoringSignature(docId, input, input.meaning === 'review' && adoptRef.current,
-        input.meaning === 'approval' && unresolved !== null);
+        input.meaning === 'approval' && unresolved !== null, input.meaning === 'approval' ? figures?.acknowledged ?? null : null);
     } catch (e) {
-      if (!(e instanceof ApprovalNotSettled)) throw e;
-      setUnresolved(e.unresolved);
-      setDialog('esign-unsettled');
+      if (e instanceof ApprovalFiguresUnverified) {
+        setFigures({ list: e.figures, acknowledged: null });
+        setDialog('esign-figures');
+      } else if (e instanceof ApprovalNotSettled) {
+        setUnresolved(e.unresolved);
+        setDialog('esign-unsettled');
+      }
       throw e;
     }
-    setUnresolved(null);
+    setUnresolved(null); setFigures(null);
     setNotApprovedKeys(signed.notApproved);
     fireToast(signedToast(signed));
     onChanged();
@@ -509,53 +606,92 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
         <RefusalNote id={notApprovedNoteId} testId="esign-not-approved" text={notApprovedNote(notApprovedKeys)} />
       )}
 
-      {dialog === 'freeze' && (
-        <EsignModal
-          open
-          action="Freeze and seal"
-          target={docTitle}
-          targetMeta={freezeTargetMeta(unresolved, signerIsAuthor)}
-          defaultMeaning="authorship"
-          meanings={freezeMeanings(signerIsAuthor)}
-          signer={signer}
-          onClose={() => { setUnresolved(null); setDialog(null); }}
-          onSign={doFreeze}
-          commitRefusal={freezeRefusal}
-        />
-      )}
-      {dialog === 'freeze-unsettled' && unresolved && (
-        <C2CForm
-          config={UNSETTLED_FORM(docTitle, unresolved)}
-          onCancel={() => { setUnresolved(null); setDialog(null); }}
-          onSubmit={onUnsettledChoice}
-        />
-      )}
-      <EsignDialogs dialog={dialog} docTitle={docTitle} unresolved={unresolved} reviewOnly={reviewOnly} signerIsAuthor={signerIsAuthor} signer={signer}
+      <FreezeDialogs dialog={dialog} docTitle={docTitle} unresolved={unresolved} figures={figures} signerIsAuthor={signerIsAuthor} signer={signer}
+        freezeRefusal={freezeRefusal} onSign={doFreeze} onClose={closeAll} onChoice={onUnsettledChoice} onFiguresChoice={onFiguresChoice('freeze')} />
+      <EsignDialogs dialog={dialog} docTitle={docTitle} unresolved={unresolved} figures={figures} reviewOnly={reviewOnly} signerIsAuthor={signerIsAuthor} signer={signer}
         esignRefusal={esignRefusal} onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
-        onSign={doSign} onClose={closeEsign} onChoice={onApprovalUnsettledChoice} />
+        onSign={doSign} onClose={closeAll} onChoice={onApprovalUnsettledChoice} onFiguresChoice={onFiguresChoice('esign')} />
     </>
   );
 }
 
-/** The E-sign dialog, and the approval's not-settled question when the server asked it (2026-10-30). */
-function EsignDialogs({ dialog, docTitle, unresolved, reviewOnly, signerIsAuthor, signer, esignRefusal, onMeaningChange, renderMeaningDetails, onSign, onClose, onChoice }: {
-  dialog: Dialog; docTitle: string; unresolved: Unresolved | null; reviewOnly?: boolean; signerIsAuthor?: boolean;
+/**
+ * The figure question's state (P-89): the figures the server named, and the
+ * answer. Every figure kept reopens the signature with each key acknowledged;
+ * anything else goes back and drops the other acknowledgement with it.
+ */
+function useFigureQuestion(setDialog: (d: Dialog) => void, dropUnresolved: () => void) {
+  const [figures, setFigures] = useState<FigureQuestion | null>(null);
+  const onFiguresChoice = (reopen: 'freeze' | 'esign') => (v: Record<string, string>) => {
+    if (!figures || !keptEveryFigure(figures.list, v)) {
+      dropUnresolved(); setFigures(null); setDialog(null);
+      return;
+    }
+    setFigures({ list: figures.list, acknowledged: figures.list.items.map((f) => f.key) });
+    setDialog(reopen);
+  };
+  return { figures, setFigures, onFiguresChoice };
+}
+
+/** The Freeze dialog, and its questions when the server asked them (not settled; figures, P-89). */
+function FreezeDialogs({ dialog, docTitle, unresolved, figures, signerIsAuthor, signer, freezeRefusal, onSign, onClose, onChoice, onFiguresChoice }: {
+  dialog: Dialog; docTitle: string; unresolved: Unresolved | null; figures: FigureQuestion | null; signerIsAuthor?: boolean;
+  signer: AuthoringFilingBarProps['signer']; freezeRefusal?: string | null;
+  onSign: (input: SignInput) => Promise<EsigSignedManifest>; onClose: () => void;
+  onChoice: (v: Record<string, string>) => void; onFiguresChoice: (v: Record<string, string>) => void;
+}) {
+  if (dialog === 'freeze-unsettled' && unresolved) {
+    return <C2CForm config={UNSETTLED_FORM(docTitle, unresolved)} onCancel={onClose} onSubmit={onChoice} />;
+  }
+  if (dialog === 'freeze-figures' && figures) {
+    return <C2CForm config={FIGURES_FORM('freeze', docTitle, figures.list)} onCancel={onClose} onSubmit={onFiguresChoice} />;
+  }
+  if (dialog !== 'freeze') return null;
+  return (
+    <EsignModal
+      open
+      action="Freeze and seal"
+      target={docTitle}
+      targetMeta={withFiguresMeta(freezeTargetMeta(unresolved, signerIsAuthor), figures)}
+      defaultMeaning="authorship"
+      meanings={freezeMeanings(signerIsAuthor)}
+      signer={signer}
+      onClose={onClose}
+      onSign={onSign}
+      commitRefusal={freezeRefusal}
+    />
+  );
+}
+
+/** The target line with the figures the signer kept, when they kept any (P-89). */
+function withFiguresMeta(meta: string, figures: FigureQuestion | null): string {
+  return figures?.acknowledged ? `${meta} ${figuresAcknowledgedMeta(figures.acknowledged.length)}` : meta;
+}
+
+/** The E-sign dialog, and the approval's questions when the server asked them (not settled, 2026-10-30; figures, P-89). */
+function EsignDialogs({ dialog, docTitle, unresolved, figures, reviewOnly, signerIsAuthor, signer, esignRefusal, onMeaningChange, renderMeaningDetails, onSign, onClose, onChoice, onFiguresChoice }: {
+  dialog: Dialog; docTitle: string; unresolved: Unresolved | null; figures: FigureQuestion | null; reviewOnly?: boolean; signerIsAuthor?: boolean;
   signer: AuthoringFilingBarProps['signer']; esignRefusal?: string | null;
   onMeaningChange: (m: EsigMeaning) => void; renderMeaningDetails: (m: EsigMeaning, disabled: boolean) => React.ReactNode;
   onSign: (input: SignInput) => Promise<EsigSignedManifest>; onClose: () => void; onChoice: (v: Record<string, string>) => void;
+  onFiguresChoice: (v: Record<string, string>) => void;
 }) {
   if (dialog === 'esign-unsettled' && unresolved) {
     return <C2CForm config={APPROVAL_UNSETTLED_FORM(docTitle, unresolved)} onCancel={onClose} onSubmit={onChoice} />;
   }
+  if (dialog === 'esign-figures' && figures) {
+    return <C2CForm config={FIGURES_FORM('approve', docTitle, figures.list)} onCancel={onClose} onSubmit={onFiguresChoice} />;
+  }
   if (dialog !== 'esign') return null;
   const offer = esignOffer(reviewOnly, signerIsAuthor);
+  const approving = unresolved !== null || !!figures?.acknowledged;
   return (
     <EsignModal
       open
       action="Sign document"
       target={docTitle}
-      targetMeta={unresolved ? approveAsItStandsMeta(unresolved) : offer.targetMeta}
-      defaultMeaning={unresolved ? 'approval' : 'review'}
+      targetMeta={withFiguresMeta(unresolved ? approveAsItStandsMeta(unresolved) : offer.targetMeta, figures)}
+      defaultMeaning={approving ? 'approval' : 'review'}
       meanings={offer.meanings}
       onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
       signer={signer}

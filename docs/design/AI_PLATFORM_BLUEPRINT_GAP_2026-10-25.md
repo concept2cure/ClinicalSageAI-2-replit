@@ -51,8 +51,8 @@ for regulated text to leave the platform outside the AI gateway (`server/service
   table cell and form field. It now returns null where no position was measured.
 
 **Owed:**
-- Table-cell-level structure, and tables that span pages. That needs a layout reader: the Docling
-  client exists and is off. It is new capability unless a founder decision admits it.
+- Tables that span pages. Table cells are read since P-90 (2026-11-01), when a deployment turns the
+  Docling reader on. A table split across two pages is still two tables.
 - AnA's two looser heading detectors (`document-analysis.ts` `detectHeading`,
   `ana/document-search-core.ts` `extractHeadingOutline`) should converge onto `detectHeadingLine`
   (zero duplication; S4).
@@ -123,8 +123,9 @@ Template Library's return is parked (P-53).
 - The PQ harness, with a pinned protocol and a per-item faithfulness floor.
 - A production refusal of high-risk drafting by any model whose PQ has not passed
   (`ai-gateway/model-governance.ts`).
-- The deterministic figure checker: advisory in AnA, and on Authoring save it marks figures
-  `unverified`.
+- The deterministic figure checker: advisory in AnA. On Authoring save it marks figures `unverified`.
+  Since P-89 (2026-11-01), approval and seal check the signed text again and refuse until each unverified
+  figure is acknowledged.
 
 **Owed:**
 - **The top launch blocker.** Opus 5.5 and Opus 5 are both `pq: pending`, so production refuses
@@ -189,11 +190,27 @@ measure of the reviewer's accuracy. Each is new capability (RULE 6).
 - Re-checking sealed documents when a cited guidance is superseded. That is new capability unless
   it is a reach for the existing scanner, which is R1's to decide.
 
-## Decisions owed to the founder
+## Decisions the founder made (2026-11-01)
 
-1. **Whether an unchecked figure blocks a signature.** Today every figure check marks or warns and
-   none blocks. The recommendation is to block approval or seal unless the signer acknowledges each
-   unverified figure, which fits RULE 2: numbers come from engines. It changes a signed act, so it
-   is the founder's decision, not a session's.
-2. **Whether the Docling layout reader is admitted.** It is self-hosted, behind its flag, and would
-   give table-cell structure (capability 1).
+The founder answered both questions this record owed with "Yes" (`docs/LAUNCH_DEFINITION_OF_DONE.md`):
+
+1. **P-89: an unverified figure blocks an approval or a seal unless the signer acknowledges each one.** Done:
+   - **The check.** Approval and freeze re-check the text being signed against its cited sources, inside the signing
+     transaction (`draft-source-references.ts` `savedSourceExcerptsForSigning`; `draft-figure-check.ts`
+     `unverifiedFiguresAtSigning`).
+   - **The refusal.** While a figure is unverified, the act is refused with 409 `FIGURES_UNVERIFIED`, naming each
+     figure (`authoring.router.ts` `figuresRefused`). This happens before re-authentication.
+   - **The acknowledgement.** The signing dialog asks about each figure (`AuthoringFilingBar.tsx`). The
+     acknowledgement is recorded on the act's transaction.
+   - **Evidence:** `docs/evidence/D5-SIGNATURE-FIGURE-GATE/2026-11-01/`.
+   - **Not covered.** Figures in sections that cite no sources are outside the check. Covering them would take a
+     further founder decision.
+2. **P-90: the self-hosted Docling layout reader is admitted**, behind `oss.ingestion.docling_primary`, off by
+   default. Done:
+   - The client speaks docling-serve's real v1 interface (`server/integrations/docling/client.ts`). It used to call
+     a `/parse` endpoint the reader does not have.
+   - Vault ingestion asks for it through the one extractor. A PDF's tables come out as rows and cells the chunker
+     reads as tables.
+   - The reader is a pinned, portless `docling` service in `docker-compose.yml`.
+   - **Evidence:** `docs/evidence/D2-LAYOUT-READER/2026-11-01/`.
+   - **Owed:** a run on a real reader, which this environment's network refuses.
