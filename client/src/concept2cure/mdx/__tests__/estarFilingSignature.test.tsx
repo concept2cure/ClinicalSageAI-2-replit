@@ -151,3 +151,23 @@ describe('filing an eSTAR from the panel', () => {
     );
   });
 });
+
+/* MDX journey M6(c), 2026-11-01: the panel assessed readiness and started tracking against the nIVD eSTAR
+   unless the user noticed and changed a select, while the 510(k) surface's official eSTAR panel already took
+   the IVD form from the program's product type (officialEstarVariantFor). The panel now starts from the
+   variant its surface passes; the select remains for a product type nobody recorded. */
+describe('the filing panel starts from the program\'s eSTAR variant', () => {
+  const variantSelect = () => screen.getAllByRole('combobox')[0] as HTMLSelectElement;
+
+  it('an IVD program\'s panel starts on the IVD form', async () => {
+    stubApi();
+    render(<EstarFilingPanel programId={PROGRAM_ID} defaultVariant="ivd" />);
+    await waitFor(() => expect(variantSelect().value, 'an IVD project was assessed against the nIVD eSTAR').toBe('ivd'));
+  });
+
+  it('with no variant passed it reads as a device, as before', async () => {
+    stubApi();
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
+    await waitFor(() => expect(variantSelect().value).toBe('device'));
+  });
+});
