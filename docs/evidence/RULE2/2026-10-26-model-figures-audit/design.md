@@ -18,7 +18,8 @@
 > | S5-0 | done; stated-input labels are independent of R-2 availability | `s5-0-stated-basis/` |
 > | S5a COA/PRO | done | `s5a-coa-pro/` |
 > | S5a pediatric | done | `s5a-pediatric/` |
-> | S5a vaccine | done; three other clinical families remain queued | `s5a-vaccine/` |
+> | S5a vaccine | done | `s5a-vaccine/` |
+> | S5a pharmacovigilance | done; dose optimization and RWE remain queued | `s5a-pharmacovigilance/` |
 > | S6b | done; PMA withheld per P-55 R-7 | `s6b-generate-document-records/` |
 > | S5a remaining, S5b–S5d, S6, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
@@ -511,8 +512,8 @@ evidence are filed under `s5a-coa-pro/`.
 `not_stated`; dependent validation, fit, positioning and strategy conclusions remain
 `not_assessed`. Decisive explicit evidence still determines an answer. Unassessed anchors
 cannot supply a responder threshold. Required context/decision enums and malformed numeric
-evidence use the existing parameter-refusal mechanism. Pediatric and vaccine are completed below;
-the three other S5a families remain queued. Their read-only inventory is in
+evidence use the existing parameter-refusal mechanism. Pediatric, vaccine and pharmacovigilance are completed
+below; dose optimization and RWE remain queued. Their read-only inventory is in
 `s5a-coa-pro/queued-clinical-families.md`.
 
 - **S5a (clinical):** `coaProTools`, `doseOptimizationTools`, `pediatricTools`, `vaccineTools`, `rweMethodologyTools`, `pharmacovigilanceTools`.
@@ -549,7 +550,27 @@ incompatible clinical prerequisites do not select Phase 3 endpoints; pediatric b
 does not assume source data. Lot planning discloses defaults, validates the supported
 reciprocal-margin approximation, reuses canonical normal quantiles and reports exact
 input margins/power. Runtime context and recognized aliases are validated. No source
-reader, app or service was added. Dose optimization, RWE and pharmacovigilance remain queued.
+reader, app or service was added. Pharmacovigilance is completed below; dose optimization and
+RWE remain queued.
+
+**S5a pharmacovigilance — What already exists (execution audit):** the six functions in
+`pharmacovigilance/pharmacovigilance-knowledge.ts` are already reached by
+`pharmacovigilanceTools.ts` and the executor's shared stated-input wrapper. Extend them
+and their result types; reuse `refuseUnlessStated`, `ComputationRefusal` and
+`booleanInputStates`, and keep causality's existing `unknown` answers. The separate
+recorded-case engine (`compliance/pharmacovigilanceService.ts`) already refuses a 7- or
+15-day window without a seriousness criterion; it serves persisted cases and is not
+imported. No deleted PV implementation was found; the history is shallow. Evidence:
+`s5a-pharmacovigilance/`.
+
+**Pharmacovigilance execution result:** thirteen optional boolean inputs report their
+stated value or `not_stated`, and the required ones are refused by name. An expedited
+development case without its seriousness criteria gets no 7- or 15-day clock, and stage
+`both` asks for the case source. An unstated EEA origin, EURD listing, first-three-years
+status or information sufficiency leaves that obligation, cadence or WHO-UMC category not
+assessed. An unstated DME status leaves 1-2 cases undetermined, an unstated modifier
+withholds a tier it could move, and an unstated EU authorisation or risk profile leaves
+QPPV, PSMF and RMP need null. No source reader, app or service was added.
 - **S5b (device and diagnostics):**
   - `biomarkerTools` and `ivdLifecycleTools`: `assess_iso17511_traceability`, `assess_scientific_validity`, `assess_shelf_life_stability`, `assess_accelerated_stability`;
   - `digitalHealthTools`, `medicalDeviceTools`, `assess_qms`, `assess_pathway_eligibility`.
