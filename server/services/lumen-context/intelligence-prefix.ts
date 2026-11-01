@@ -66,6 +66,14 @@ export function invalidateIntelligencePrefix(
   intelligencePrefixCache.delete(intelligencePrefixCacheKey(organizationId, projectId));
 }
 
+/** The project's objective of record, its charter's objectives section (services/c2c/charter-objectives.ts,
+ *  P-80): AnA holds every narrative to it. */
+async function objectiveBlock(organizationId: number, projectId: number, signal: AbortSignal): Promise<string | null> {
+  const [{ db }, objectives] = await Promise.all([import('../../db.js'), import('../c2c/charter-objectives.js')]);
+  if (signal.aborted) return null;
+  return objectives.objectivesContextBlock(await objectives.readProjectObjectives(db as never, { orgId: organizationId, projectId }));
+}
+
 /** A turn-wide deadline for optional intelligence recall, including resolution. */
 function createRecallBudget() {
   const unavailable = new Set<string>();
@@ -116,12 +124,8 @@ export async function getIntelligencePrefix(
   const cacheKey = intelligencePrefixCacheKey(organizationId, projectId);
   const cached = intelligencePrefixCache.get(cacheKey);
   const now = Date.now();
-  if (cached && cached.expiresAt > now) {
-    return cached.value;
-  }
-  if (cached) {
-    intelligencePrefixCache.delete(cacheKey);
-  }
+  if (cached && cached.expiresAt > now) return cached.value;
+  if (cached) intelligencePrefixCache.delete(cacheKey);
 
   const { unavailable, recall } = createRecallBudget();
   // An explicit project never falls back to organization portfolio recall,
@@ -134,7 +138,7 @@ export async function getIntelligencePrefix(
     const clientPromise = projectSelected ? Promise.resolve(null)
       : recall('client intelligence', () => buildClientIntelligenceContext(organizationId), null);
     const parsedProjectId = await recall('project resolution', signal => intelligenceProject(organizationId, projectId, signal), null);
-    const [clientCtx, projectCtx, wisdomBlock] = await Promise.all([
+    const [clientCtx, projectCtx, wisdomBlock, objective] = await Promise.all([
       clientPromise,
       parsedProjectId
         ? recall('project intelligence', () => buildProjectIntelligenceContext(parsedProjectId, organizationId), null)
@@ -148,6 +152,7 @@ export async function getIntelligencePrefix(
             return signal.aborted ? null : buildWisdomContext(parsedProjectId, organizationId, undefined, undefined, { projectOnly: true });
           }, null)
         : Promise.resolve(null),
+      parsedProjectId ? recall('project objective', signal => objectiveBlock(organizationId, parsedProjectId, signal), null) : Promise.resolve(null),
     ]);
 
     const parts: string[] = [];
@@ -166,6 +171,7 @@ ${clientCtx}
 ---`);
     }
 
+    if (objective) parts.push(`\n---${objective}\n---`);
     if (projectCtx) {
       parts.push(`
 ---
