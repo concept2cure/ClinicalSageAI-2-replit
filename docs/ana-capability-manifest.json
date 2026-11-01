@@ -4722,7 +4722,7 @@
         "id": "clinical_pharmacology",
         "label": "Clinical pharmacology"
       },
-      "description": "Assess exposure-response (E-R) for both efficacy and safety to inform dose selection. Sorts E-R points by exposure and deterministically computes whether the efficacy relationship is effectively flat over the studied range, whether safety rises with exposure, and a qualitative therapeutic-window classification (wide / moderate / narrow / indeterminate), with the underlying metrics (absolute and relative response ranges, slope signs). Returns interpretation and dose implications — e.g., a flat efficacy curve with rising toxicity supports a lower dose. Cites ICH E4 and the FDA dose-optimization draft guidance (Jan 2023). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned design recommendations and regulatory citations verbatim — do NOT recompute, re-rank designs, or substitute your own regulatory interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Assess exposure-response (E-R) for both efficacy and safety to inform dose selection. Sorts E-R points by exposure and deterministically computes whether the efficacy relationship is effectively flat over the studied range, whether safety rises with exposure, and a qualitative therapeutic-window classification (wide / moderate / narrow / indeterminate), with the underlying metrics (absolute and relative response ranges, slope signs). Returns interpretation and dose implications — e.g., a flat efficacy curve with rising toxicity supports a lower dose. A curve with fewer than 2 valid points has its flags not_assessed and its metrics null. Cites ICH E4 and the FDA dose-optimization draft guidance (Jan 2023). Deterministic over stated inputs; no LLM or network. An unanswered boolean is not_stated; what depends on it is not_assessed or null: ask for it. Report results and citations verbatim; do not recompute, re-rank or reinterpret. Relay a validation error; ask for the value.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -16407,7 +16407,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Evaluate an oncology development program against FDA Project Optimus expectations and return alignment gaps with prioritized recommendations. Checks whether dose was selected by MTD/3+3 alone, whether ≥2 doses were studied in a randomized comparison, whether dose-/exposure-response was characterized for both efficacy and safety, whether PK and PD/target-engagement data are adequate, whether longitudinal (multi-cycle) tolerability and patient-reported outcomes (e.g., PRO-CTCAE) were assessed, and whether optimization is planned before the marketing application. Accounts for the intended treatment setting (earlier-line/adjuvant raises the tolerability bar per Project FrontRunner). Cites the FDA dose-optimization draft guidance (Jan 2023). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned design recommendations and regulatory citations verbatim — do NOT recompute, re-rank designs, or substitute your own regulatory interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Evaluate an oncology development program against FDA Project Optimus expectations and return alignment gaps with prioritized recommendations. Checks whether dose was selected by MTD/3+3 alone, whether ≥2 doses were studied in a randomized comparison, whether dose-/exposure-response was characterized for both efficacy and safety, whether PK and PD/target-engagement data are adequate, whether longitudinal (multi-cycle) tolerability and patient-reported outcomes (e.g., PRO-CTCAE) were assessed, and whether optimization is planned before the marketing application. Accounts for the intended treatment setting (earlier-line/adjuvant raises the tolerability bar per Project FrontRunner). Cites the FDA dose-optimization draft guidance (Jan 2023). Deterministic over stated inputs; no LLM or network. An unanswered boolean is not_stated; what depends on it is not_assessed or null: ask for it. Report results and citations verbatim; do not recompute, re-rank or reinterpret. Relay a validation error; ask for the value.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -16429,7 +16429,7 @@
           "name": "doseSelectedByMtdAlone",
           "type": "boolean",
           "required": true,
-          "description": "Was dose selected solely by MTD / 3+3?"
+          "description": "Was dose selected solely by MTD / 3+3? Omitted is not_stated. Any omitted pillar fact is neither met nor a gap, and the score is null and the tier not_assessed until all eight are stated."
         },
         {
           "name": "randomizedDoseComparisonConducted",
@@ -21838,7 +21838,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a dose-expansion / backfill cohort strategy to enrich PK, PD, biomarker, target-engagement, preliminary-activity, and tolerability data at cleared lower dose levels while escalation continues. Returns a per-dose backfill cohort plan (recommended patients and data to collect), the total backfill sample size, the objectives addressed, operational considerations, and warnings — supporting the Project Optimus goal of characterizing the full dose-response rather than only the MTD. Cites the FDA dose-optimization draft guidance (Jan 2023). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned design recommendations and regulatory citations verbatim — do NOT recompute, re-rank designs, or substitute your own regulatory interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Design a dose-expansion / backfill cohort strategy to enrich PK, PD, biomarker, target-engagement, preliminary-activity, and tolerability data at cleared lower dose levels while escalation continues. Returns a per-dose backfill cohort plan (recommended patients and data to collect), the total backfill sample size, the objectives addressed, operational considerations, and warnings — supporting the Project Optimus goal of characterizing the full dose-response rather than only the MTD. Cites the FDA dose-optimization draft guidance (Jan 2023). Deterministic over stated inputs; no LLM or network. An unanswered boolean is not_stated; what depends on it is not_assessed or null: ask for it. Report results and citations verbatim; do not recompute, re-rank or reinterpret. Relay a validation error; ask for the value.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -21872,7 +21872,7 @@
           "name": "biopsyFeasible",
           "type": "boolean",
           "required": false,
-          "description": "Whether a tumor biopsy (paired/on-treatment) is feasible."
+          "description": "Whether a tumor biopsy (paired/on-treatment) is feasible. Omitted is not_stated: with a PD, target-engagement or biomarker objective the cohort sizes are null."
         },
         {
           "name": "maxBackfillPatients",
@@ -23620,7 +23620,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a randomized multi-dose comparison (≥2 doses) for oncology dose optimization, the centerpiece of the Project Optimus expectation. Returns the number of arms, recommended doses, allocation ratio, and an endpoint strategy (activity endpoint plus tolerability/PRO co-primary or key-secondary), with sample-size considerations framed for dose comparison rather than superiority to control, and guidance on timing relative to registration (pre-, within-, or post-registration). Handles the common goal of demonstrating non-inferior activity at a lower, better-tolerated dose. Cites the FDA dose-optimization draft guidance (Jan 2023). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned design recommendations and regulatory citations verbatim — do NOT recompute, re-rank designs, or substitute your own regulatory interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Design a randomized multi-dose comparison (≥2 doses) for oncology dose optimization, the centerpiece of the Project Optimus expectation. Returns the number of arms, recommended doses, allocation ratio, and an endpoint strategy (activity endpoint plus tolerability/PRO co-primary or key-secondary), with sample-size considerations framed for dose comparison rather than superiority to control, and guidance on timing relative to registration (pre-, within-, or post-registration). Handles the common goal of demonstrating non-inferior activity at a lower, better-tolerated dose. Cites the FDA dose-optimization draft guidance (Jan 2023). Deterministic over stated inputs; no LLM or network. An unanswered boolean is not_stated; what depends on it is not_assessed or null: ask for it. Report results and citations verbatim; do not recompute, re-rank or reinterpret. Relay a validation error; ask for the value.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -23654,7 +23654,7 @@
           "name": "goalNonInferiorActivityLowerDose",
           "type": "boolean",
           "required": false,
-          "description": "Whether the comparison is intended to demonstrate non-inferior activity at a lower dose."
+          "description": "Whether the comparison is intended to demonstrate non-inferior activity at a lower dose. Omitted is not_stated, and no illustrative sample size is given."
         },
         {
           "name": "feasibleSampleSize",
@@ -23672,7 +23672,7 @@
           "name": "tolerabilityCoPrimary",
           "type": "boolean",
           "required": false,
-          "description": "Whether the program also wants a tolerability/PRO primary or co-primary endpoint."
+          "description": "Whether the program also wants a tolerability/PRO primary or co-primary endpoint. Omitted is not_stated, and the endpoint role is not assessed."
         }
       ],
       "requiredInputs": [
@@ -33115,7 +33115,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select a dose-escalation design for an oncology first-in-human / dose-finding study. Encodes the Project Optimus-era preference for model-assisted (BOIN, mTPI-2, Keyboard) and model-based (CRM) designs over the rule-based 3+3, and routes to time-to-event variants (TITE-CRM/TITE-BOIN) when late-onset or cumulative toxicity is anticipated. Returns a recommended design with profile, design family, ranked alternatives, the applied target toxicity rate, an explicit statement on whether the 3+3 is discouraged for the context, operating-characteristic tradeoffs, and warnings. Cites the FDA dose-optimization draft guidance (Jan 2023) and the model-assisted design literature. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned design recommendations and regulatory citations verbatim — do NOT recompute, re-rank designs, or substitute your own regulatory interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Select a dose-escalation design for an oncology first-in-human / dose-finding study. Encodes the Project Optimus-era preference for model-assisted (BOIN, mTPI-2, Keyboard) and model-based (CRM) designs over the rule-based 3+3, and routes to time-to-event variants (TITE-CRM/TITE-BOIN) when late-onset or cumulative toxicity is anticipated. Returns a recommended design with profile, design family, ranked alternatives, the applied target toxicity rate, an explicit statement on whether the 3+3 is discouraged for the context, operating-characteristic tradeoffs, and warnings. Cites the FDA dose-optimization draft guidance (Jan 2023) and the model-assisted design literature. Deterministic over stated inputs; no LLM or network. An unanswered boolean is not_stated; what depends on it is not_assessed or null: ask for it. Report results and citations verbatim; do not recompute, re-rank or reinterpret. Relay a validation error; ask for the value.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -33143,7 +33143,7 @@
           "name": "targetToxicityRate",
           "type": "number",
           "required": false,
-          "description": "Target toxicity rate (probability, 0–1). Default 0.25 if unspecified."
+          "description": "Target toxicity rate (probability strictly between 0 and 1). Omitted, it defaults to 0.25 and the result says so; a value outside that range is refused."
         },
         {
           "name": "dltWindowDays",
@@ -33155,13 +33155,13 @@
           "name": "lateOnsetToxicityExpected",
           "type": "boolean",
           "required": false,
-          "description": "Whether late-onset/cumulative toxicity is anticipated."
+          "description": "Whether late-onset/cumulative toxicity is anticipated. Omitted is not_stated: unless the modality or a DLT window > 28 days indicates late onset, no design is recommended."
         },
         {
           "name": "realTimeStatisticianAvailable",
           "type": "boolean",
           "required": false,
-          "description": "Whether a trial statistician can support real-time adaptation."
+          "description": "Whether a trial statistician can support real-time adaptation. Omitted is not_stated, and no design is recommended."
         },
         {
           "name": "optimalBiologicalDoseSought",
@@ -33325,7 +33325,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Recommend a Phase 2 dose (RP2D) by integrating the MTD, PK exposure, target engagement/PD, longitudinal safety/tolerability, and efficacy across evaluated dose levels — explicitly NOT defaulting to the MTD. Returns a recommended RP2D, a per-dose evaluation (selected / viable / too toxic / sub-therapeutic / insufficient data), a selection rationale, and an explicit statement on the MTD-versus-RP2D relationship, plus warnings when activity plateaus below the MTD (favoring a lower dose). Cites the FDA dose-optimization draft guidance (Jan 2023) and ICH E4. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned design recommendations and regulatory citations verbatim — do NOT recompute, re-rank designs, or substitute your own regulatory interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Recommend a Phase 2 dose (RP2D) by integrating the MTD, PK exposure, target engagement/PD, longitudinal safety/tolerability, and efficacy across evaluated dose levels — explicitly NOT defaulting to the MTD. Returns a recommended RP2D, a per-dose evaluation (selected / viable / too toxic / sub-therapeutic / insufficient data), a selection rationale, and an explicit statement on the MTD-versus-RP2D relationship, plus warnings when activity plateaus below the MTD (favoring a lower dose). Cites the FDA dose-optimization draft guidance (Jan 2023) and ICH E4. Deterministic over stated inputs; no LLM or network. An unanswered boolean is not_stated; what depends on it is not_assessed or null: ask for it. Report results and citations verbatim; do not recompute, re-rank or reinterpret. Relay a validation error; ask for the value.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -33365,7 +33365,7 @@
           "name": "activityPlateauObserved",
           "type": "boolean",
           "required": false,
-          "description": "Whether efficacy/activity appears to plateau across the upper dose range."
+          "description": "Whether efficacy/activity appears to plateau across the upper dose range. Omitted is not_stated: with several effective tolerable doses and no plateau-indicating mechanism or modality, no RP2D is selected."
         }
       ],
       "requiredInputs": [

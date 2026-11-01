@@ -19,7 +19,8 @@
 > | S5a COA/PRO | done | `s5a-coa-pro/` |
 > | S5a pediatric | done | `s5a-pediatric/` |
 > | S5a vaccine | done | `s5a-vaccine/` |
-> | S5a pharmacovigilance | done; dose optimization and RWE remain queued | `s5a-pharmacovigilance/` |
+> | S5a pharmacovigilance | done | `s5a-pharmacovigilance/` |
+> | S5a dose optimization | done; RWE remains queued | `s5a-dose-optimization/` |
 > | S6b | done; PMA withheld per P-55 R-7 | `s6b-generate-document-records/` |
 > | S5a remaining, S5b–S5d, S6, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
@@ -550,8 +551,8 @@ incompatible clinical prerequisites do not select Phase 3 endpoints; pediatric b
 does not assume source data. Lot planning discloses defaults, validates the supported
 reciprocal-margin approximation, reuses canonical normal quantiles and reports exact
 input margins/power. Runtime context and recognized aliases are validated. No source
-reader, app or service was added. Pharmacovigilance is completed below; dose optimization and
-RWE remain queued.
+reader, app or service was added. Pharmacovigilance and dose optimization are completed below; RWE
+remains queued.
 
 **S5a pharmacovigilance — What already exists (execution audit):** the six functions in
 `pharmacovigilance/pharmacovigilance-knowledge.ts` are already reached by
@@ -571,6 +572,26 @@ status or information sufficiency leaves that obligation, cadence or WHO-UMC cat
 assessed. An unstated DME status leaves 1-2 cases undetermined, an unstated modifier
 withholds a tier it could move, and an unstated EU authorisation or risk profile leaves
 QPPV, PSMF and RMP need null. No source reader, app or service was added.
+
+**S5a dose optimization — What already exists (execution audit):** the six Project Optimus
+worksheets in `dose-optimization/dose-optimization-knowledge.ts` are already reached by
+`doseOptimizationTools.ts` and the executor's shared stated-input wrapper (`runStatsTool`).
+Extend them and their result types; reuse `statedBoolean`, `booleanInputStates`,
+`statedNumber` and `ComputationRefusal`, and the per-dose `insufficient_data` verdict the
+engine declared and never assigned. The separate BOIN, dose-escalation, FIH and
+exposure-response engines are other tools and are not touched. Evidence:
+`s5a-dose-optimization/`.
+
+**Dose optimization execution result:** an unanswered Optimus pillar is `not_stated` and
+leaves the score and tier `not_assessed`; an omitted "dose selected by MTD alone" no longer
+earns a met pillar. An unstated statistician or late-onset fact leaves the escalation design
+`not_assessed` with no ranked alternatives; an unstated goal or tolerability role leaves the
+arm size and endpoint role unassessed. A dose without stated toxicity (or an MTD it does not
+exceed) or longitudinal tolerability is `insufficient_data`, and no RP2D is chosen without
+exposure, engagement or activity evidence. An unstated biopsy feasibility sizes no backfill
+cohort, and a one-point exposure-response curve is not called flat. A malformed value,
+including a target toxicity rate, is refused by field. No source reader, app or service was
+added.
 - **S5b (device and diagnostics):**
   - `biomarkerTools` and `ivdLifecycleTools`: `assess_iso17511_traceability`, `assess_scientific_validity`, `assess_shelf_life_stability`, `assess_accelerated_stability`;
   - `digitalHealthTools`, `medicalDeviceTools`, `assess_qms`, `assess_pathway_eligibility`.
