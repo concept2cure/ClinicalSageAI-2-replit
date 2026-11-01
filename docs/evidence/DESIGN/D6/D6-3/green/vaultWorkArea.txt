@@ -1,0 +1,12 @@
+# vaultWorkArea.test.tsx on the D6-3 change
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the Vault is one work area, the library first (D6 §C.3) > has the back link, one header with one primary, three starters and five views, Library first
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the Vault is one work area, the library first (D6 §C.3) > moves between views with the arrow keys, Home and End, one tab stop
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > AnA's hands reach the view they act on (D6 §C.6 3) > vault.search from the Seals & fixity view shows the Library with the query in the box
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > AnA's hands reach the view they act on (D6 §C.6 3) > vault.focus-document from the Uploads view opens that document on its record
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > "Add files" shows the Uploads view and opens the picker
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > a file dropped anywhere on the page is staged in the Uploads view
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > a viewer is offered no upload: no drop zone, no picker, no import ask
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > docks beside the list at 1280px and wider, each part a disclosure with the first open
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1280px a row opens it as a drawer; Escape closes it and focus returns to the row
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1024px the structure is a drawer opened from the list
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the seals and the fixity check keep their acts (D6 §C.4 steps 10–11; §C.6 6) > "Seal this Vault…" and "Check stored files" are quiet acts in their sections of the Seals & fixity view

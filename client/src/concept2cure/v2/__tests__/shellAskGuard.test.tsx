@@ -241,7 +241,8 @@ describe('an "Ask AnA" button on a work screen', () => {
      composer, not sent, with the screen it came from as a chip and a way back. */
   it('lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named', async () => {
     renderShellAt('vault');
-    const button = await screen.findByRole('button', { name: 'Search connected sources' });
+    // D6-3: the connected-repositories search is the Vault's third starter now, same prompt (D6 §C.4 steps 3–4).
+    const button = await screen.findByRole('button', { name: 'Search my connected repositories' });
     fireEvent.click(button);
 
     await waitFor(() => expect(window.location.pathname).toBe(locationForSurface('conversation-thread')));
@@ -260,7 +261,8 @@ describe('an "Ask AnA" button on a work screen', () => {
 
   it('"Back to" returns to the screen it was asked from', async () => {
     renderShellAt('vault');
-    fireEvent.click(await screen.findByRole('button', { name: 'Search connected sources' }));
+    // D6-3: the connected-repositories search is the Vault's third starter now (D6 §C.4 steps 3–4).
+    fireEvent.click(await screen.findByRole('button', { name: 'Search my connected repositories' }));
     await waitFor(() => expect(window.location.pathname).toBe(locationForSurface('conversation-thread')));
     fireEvent.click(await screen.findByRole('button', { name: /^Back to Vault/ }));
     await waitFor(() => expect(window.location.pathname).toBe(locationForSurface('vault')));

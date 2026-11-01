@@ -68,7 +68,7 @@ const cls = (name: string, baseline: number): Retired => ({
 /* D0 spec §4.6.3, re-measured. */
 const RETIRED: Retired[] = [
   cls('sp-head', 18),
-  cls('sp-eyebrow', 19),
+  cls('sp-eyebrow', 18), // D6-3: the Vault's eyebrow "Documents · project vault" is gone (D6 §C.4 step 2).
   cls('sp-title', 18),
   cls('sp-state', 23),
   cls('reg-head', 11),

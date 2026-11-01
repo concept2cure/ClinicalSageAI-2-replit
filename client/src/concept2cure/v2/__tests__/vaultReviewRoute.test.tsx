@@ -305,3 +305,28 @@ describe('a version in review with no route (legacy, §2.13)', () => {
     expect(calls.some((c) => c.url === '/api/regulatory/documents')).toBe(false);
   });
 });
+
+describe('the route form over the record drawer below 1280px (D6-3)', () => {
+  it('Escape closes the route form and leaves the record it was opened from', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(max-width: 1279px)', media: query, onchange: null,
+      addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {},
+      dispatchEvent: () => false,
+    }));
+    versions = [version()];
+    mockApi();
+    mount();
+    const row = await waitFor(() => {
+      const r = document.querySelector('.vd-rows .vd-row') as HTMLButtonElement | null;
+      if (!r) throw new Error('no rows yet');
+      return r;
+    });
+    fireEvent.click(row);
+    const record = await screen.findByRole('dialog', { name: /^Record:/ });
+    fireEvent.click(await within(record).findByRole('button', { name: /^Send for review:/ }));
+    await screen.findByTestId('vault-route-form');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByTestId('vault-route-form')).toBeNull());
+    expect(screen.getByRole('dialog', { name: /^Record:/ })).toBeTruthy();
+  });
+});

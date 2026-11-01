@@ -16,7 +16,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -199,11 +199,13 @@ describe('Vault — AnA operates the real surface', () => {
     // The surface renders ITS OWN search state — the breadcrumb enters search
     // mode and the list narrows to the match. One state, no second path.
     await screen.findByText(/Search "stability"/);
+    // D6-3: the Uploaded files lane is the Uploads view's (D6 §C.4 step 5); the narrowing is the Library's list.
+    const list = () => within(document.querySelector('.vd-rows') as HTMLElement);
     await waitFor(() =>
-      expect(screen.queryAllByText('specifications-drug-substance')).toHaveLength(0),
+      expect(list().queryAllByText('specifications-drug-substance')).toHaveLength(0),
     );
-    expect(await screen.findByText('stability-summary-24m')).toBeTruthy();
-    expect(screen.queryAllByText('specifications-drug-substance')).toHaveLength(0);
+    expect(await list().findByText('stability-summary-24m')).toBeTruthy();
+    expect(list().queryAllByText('specifications-drug-substance')).toHaveLength(0);
   });
 
   it('vault.search on an empty vault is refused, not reported as a search nobody can see', async () => {

@@ -56,6 +56,8 @@ function mockApi() {
 
 async function openRoom() {
   render(<Vault {...props()} />);
+  // D6-3: the data room is a section of the Uploads view (D6 §C.4 step 5).
+  fireEvent.click(await screen.findByRole('tab', { name: /^Uploads/ }));
   fireEvent.click(await screen.findByText('Show 3 sources'));
   return screen.getByTestId('vault-data-room');
 }

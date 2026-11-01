@@ -1,0 +1,17 @@
+ × client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > the route form over the record drawer below 1280px (D6-3) > Escape closes the route form and leaves the record it was opened from 3951ms
+   → Unable to find an accessible element with the role "dialog" and name `/^Record:/`
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > when the Vault cannot be read, files added are still staged on screen, not lost behind the views 5241ms
+   → Unable to find an element by: [data-testid="vault-upload-staging"]
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1280px, Place into filing opened from the record keeps the keyboard: Tab stays in it, Escape closes it alone 1552ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > the route form over the record drawer below 1280px (D6-3) > Escape closes the route form and leaves the record it was opened from
+TestingLibraryElementError: Unable to find an accessible element with the role "dialog" and name `/^Record:/`
+ ❯ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx:330:19
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > when the Vault cannot be read, files added are still staged on screen, not lost behind the views
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-upload-staging"]
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:215:34
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1280px, Place into filing opened from the record keeps the keyboard: Tab stays in it, Escape closes it alone
+AssertionError: expected false to be true // Object.is equality
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:290:52
+ Test Files  2 failed (2)
+      Tests  3 failed | 22 skipped (25)
