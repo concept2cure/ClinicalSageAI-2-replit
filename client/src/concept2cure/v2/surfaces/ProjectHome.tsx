@@ -1689,8 +1689,14 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const [metadataEpoch, setMetadataEpoch] = useState(0);
   const projectPath = pid ? `/api/c2c/projects/${pid}` : null;
-  const progState = useLiveData<ProgramRow>(projectPath, [projectPath, metadataEpoch], undefined,
+  const progRead = useLiveData<ProgramRow>(projectPath, [projectPath, metadataEpoch], undefined,
     { key: JSON.stringify([pid, projectSession.actor, projectSession.key, metadataEpoch]), current: projectSession.sameRevision });
+  /* A read retired because the session changed under it (a sign-in being
+     adopted: useLiveData's READ_CONTEXT_CHANGED) is not a project that failed
+     to load. The page waits for the new session's read, as while loading,
+     rather than saying the record could not be read and dropping the
+     project's composer. */
+  const progState = progRead.code === 'READ_CONTEXT_CHANGED' ? { ...progRead, error: undefined, loading: true } : progRead;
   const teamActorScope = `${teamActor?.organizationId ?? ''}:${teamActor?.id ?? ''}`;
   const { state: teamState, reload: reloadTeam, verifiedProjectId: sharingProjectId } = useProjectTeam(pid, teamActorScope);
   const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null, [pid, metadataEpoch]);
