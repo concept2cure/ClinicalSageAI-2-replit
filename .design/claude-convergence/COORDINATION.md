@@ -47,7 +47,7 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | Regulatory document AI architecture (`017CFk…`) | L1 (AI-gateway placement, zero retention), S6 or S2 (Vault chunking) | L1, S6 | D6 (Vault) layout through the coordinator |
 | Biotech FDA filing types build-out (`011Fyq…`) | F1, S4 or S3 (the Rule 2 audit slices) | F1 | through the coordinator |
 | R1 inventory and protocol (`01QoxbL…`) | R1, S3 | R1 | through the coordinator |
-| Codebase market readiness (`01Gx2fiw…`) | asked for its package and file list, 2026-11-01 | reading; RIM holds the filed-state loader | through the coordinator |
+| Codebase market readiness (`01Gx2fiw…`) | ledger package L1 (launch row D7), not the shell lane L1. MR-10 Stage 9 slice 1 (CAT2-07): `server/services/legacy-importer/**`, with its tests, design and evidence. `90f1c747` | done on push; holds no file. `prior-sequence-loader.ts` (RIM's) was not edited. Stage 9's next steps (the governed record, a migration, an entry point) wait on founder decisions and RIM's hold | none |
 | MDX 510(k) eSTAR demo (`01P6GW…`) | the Part 11 audit (`8b8c6bc15`, evidence); its 21 open fixes need file lists first | — | through the coordinator |
 | Reporting analytics (`011HLkY…`) | behaviour under an open S or F package; L11's layout (D7-D) is the coordinator's | — | through the coordinator |
 
