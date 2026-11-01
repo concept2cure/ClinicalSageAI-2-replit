@@ -1468,8 +1468,8 @@
 
   /* ── The card, expanded into the editor ── */
   .dcv-expanded {
-    border: 1px solid var(--accent-muted);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
     background: var(--bg-000);
     overflow: hidden;
     display: flex;
@@ -1497,18 +1497,20 @@
       animation: none;
     }
   }
+  /* The artifact panel's slim header (D0 §4.2.17): 48px, a hairline under it, no band. */
   .dcv-bar {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 12px;
+    min-height: 48px;
+    padding: 0 8px 0 16px;
     border-bottom: 1px solid var(--border);
-    background: var(--bg-050);
+    background: transparent;
     flex-shrink: 0;
     min-width: 0;
   }
   .dcv-bar-t {
-    font-size: 12.5px;
+    font-size: var(--fs-body);
     font-weight: 600;
     color: var(--text-100);
     min-width: 0;
@@ -1519,12 +1521,17 @@
   /* --text-300, not --text-400: 11.5px --text-400 on --bg-050 measures
      4.3:1, under the 4.5:1 floor. Same for the Esc hint below. */
   .dcv-bar-p {
-    font-size: 12px;
+    font-size: var(--fs-small);
     color: var(--text-300);
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  /* Icon-only ghost buttons only; a labelled control keeps its width (D4 §D4.K). */
+  .dcv-bar .btn.ed-ico {
+    width: 32px;
+    padding: 0;
   }
   .dcv-bar-hint {
     margin-left: auto;
@@ -1619,14 +1626,16 @@
     flex: 0 0 clamp(340px, 34%, 520px);
     border-right: 1px solid var(--border);
   }
+  /* The panel fills the pane edge to edge. No border-left: `.ct-conv` already
+     draws the one hairline between the conversation and the document. */
   .ct-canvas-pane {
     flex: 1 1 auto;
     min-width: 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    padding: 12px;
-    background: var(--bg-050);
+    padding: 0;
+    background: var(--bg-000);
   }
   .ct-canvas-pane[hidden] {
     display: none;
@@ -1635,6 +1644,15 @@
     flex: 1;
     height: auto;
     min-height: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  /* The document reads in the serif at the prose size. Type only: the reading
+     measure is set once, on `.ed-doc-inner`, by D4. */
+  .dcv-expanded .ed-full-sec-body {
+    font-family: var(--font-serif);
+    font-size: var(--fs-prose);
+    line-height: 1.7;
   }
   /* The card that opened the editor stays in the thread, marked, so the
      conversation still says which document is open beside it. */

@@ -18,14 +18,9 @@
 .adm-access .adm-warn { color: var(--warning); display: inline-flex; }
 .adm-access .adm-overdue { color: var(--error); font-weight: 600; }
 
-/* Page header */
-.adm-access .page-header {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 24px; padding: 28px 32px 20px; border-bottom: 1px solid var(--border);
-}
-.adm-access .page-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-400); margin-bottom: 4px; }
-.adm-access .page-title { font-family: var(--font-serif); font-size: 26px; font-weight: 500; color: var(--text-100); letter-spacing: -0.01em; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
-.adm-access .page-sub { font-size: 13px; color: var(--text-300); max-width: 640px; line-height: 1.5; }
+/* Page header: the canonical header (app-v2.css, D0 block). Admin's sections run
+   full-bleed, so its header keeps the inset and the rule that line it up with them. */
+.adm-access .page-header { padding: 28px 32px 20px; border-bottom: 1px solid var(--border); }
 .adm-access .page-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
 /* Buttons (scoped — do not touch ui-v2's global .btn) */
