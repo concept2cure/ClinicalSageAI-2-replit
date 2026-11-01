@@ -548,6 +548,8 @@ const FORM_DONE: Record<PdevFormKind, string> = {
   'budget-params': 'Feasibility parameters saved — the verdict is the budget engine’s.',
   'review-request': 'Review requested — the reviewer is on the record.',
   'review-disposition': 'Disposition signed.',
+  'review-comment': 'Comment recorded — the review is re-read from the record.',
+  'comment-resolve': 'Comment resolved — the review is re-read from the record.',
   'cover-page': 'Cover page saved.',
   'start-protocol': 'Protocol started — its sections are seeded and on the record.',
 };

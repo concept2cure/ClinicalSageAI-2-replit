@@ -25,6 +25,8 @@
  *   budget params    PUT   /api/protocol-budget/documents/:id/params
  *   reviewer         POST  /api/protocol-reviews/documents/:id/reviewers
  *   disposition      PATCH /api/protocol-reviews/assignments/:id/disposition
+ *   comment          POST  /api/protocol-reviews/documents/:id/comments
+ *   comment resolve  PATCH /api/protocol-reviews/comments/:id/resolve
  *   cover page       PATCH /api/protocol-development/documents/:id
  *   start protocol   POST  /api/protocol-development/documents
  *
@@ -314,6 +316,31 @@ export async function requestProtocolReview(
     dueDate: v.dueDate,
     reason,
   }), 'request the review');
+}
+
+/**
+ * Leave a review comment on the protocol. It belongs to the protocol, not to a
+ * reviewer, and is listed under Review & comments once the register is re-read.
+ */
+export async function addProtocolReviewComment(
+  documentId: number,
+  v: { comment: string; sectionRef?: string; severity?: string; reason: string },
+): Promise<Record<string, unknown>> {
+  const reason = requireReason(v.reason);
+  const comment = (v.comment ?? '').trim();
+  if (!comment) throw new Error('Write the comment. Nothing was written.');
+  return send('POST', `/api/protocol-reviews/documents/${documentId}/comments`, compact({
+    comment,
+    sectionRef: (v.sectionRef ?? '').trim(),
+    severity: v.severity,
+    reason,
+  }), 'leave the comment');
+}
+
+/** Mark a review comment resolved. The server records who did it and why. */
+export async function resolveProtocolReviewComment(commentId: number, rawReason: string): Promise<Record<string, unknown>> {
+  const reason = requireReason(rawReason);
+  return send('PATCH', `/api/protocol-reviews/comments/${commentId}/resolve`, { reason }, 'resolve the comment');
 }
 
 /** A member who can be assigned a review, and so can sign it. */

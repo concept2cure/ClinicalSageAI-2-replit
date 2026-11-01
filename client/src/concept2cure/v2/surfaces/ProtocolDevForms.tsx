@@ -18,6 +18,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import {
   addBudgetItem, addScheduleVisit, addSoaAssessment, assessProtocolDeviation, listReviewerCandidates, optionalNumber,
   removeScheduleVisit, removeSoaAssessment, renameScheduleVisit, requestProtocolReview,
+  addProtocolReviewComment, resolveProtocolReviewComment,
   setBudgetParams, startProtocolDocument, updateProtocolHeader, updateProtocolRisk,
   type ReviewerCandidate,
 } from './ProtocolDevWrites';
@@ -28,7 +29,7 @@ export type PdevFormKind =
   | 'risk-residual'
   | 'deviation-assess'
   | 'budget-item' | 'budget-params'
-  | 'review-request' | 'review-disposition'
+  | 'review-request' | 'review-disposition' | 'review-comment' | 'comment-resolve'
   | 'cover-page'
   | 'start-protocol';
 
@@ -57,6 +58,7 @@ const SOA_CATEGORY = ['lab', 'imaging', 'exam', 'vital_signs', 'pk', 'questionna
 const BUDGET_CATEGORY = ['personnel', 'procedure', 'lab', 'imaging', 'overhead', 'equipment', 'patient_stipend', 'other'];
 const REVIEW_ROLE = ['scientific', 'statistical', 'ethics', 'safety', 'regulatory', 'general'];
 const DISPOSITION = ['approve', 'approve_with_changes', 'reject', 'abstain'];
+const COMMENT_SEVERITY = ['blocking', 'major', 'minor', 'info'];
 const PROTOCOL_KIND = ['clinical', 'irb', 'iacuc', 'ibc'];
 
 /** Every drawer's static half. The dynamic half (defaults, the row's name) is
@@ -174,6 +176,23 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
     fields: [
       { key: 'disposition', label: 'Disposition', type: 'select', options: DISPOSITION, default: 'approve' },
     ],
+  },
+  'review-comment': {
+    eyebrow: 'Protocol · review', title: 'Leave a comment',
+    sub: 'A review comment on this protocol. A blocking comment stays open in the review until it is resolved.',
+    governed: true, submitLabel: 'Leave comment',
+    fields: [
+      { key: 'comment', label: 'Comment', type: 'textarea', required: true, placeholder: 'What should change, and why' },
+      { key: 'sectionRef', label: 'Section', type: 'text', placeholder: 'For example 9.2', half: true },
+      { key: 'severity', label: 'Severity', type: 'select', options: COMMENT_SEVERITY, default: 'minor', half: true },
+      REASON,
+    ],
+  },
+  'comment-resolve': {
+    eyebrow: 'Protocol · review', title: 'Resolve comment',
+    sub: 'Marks this comment resolved. Recorded as a governed action with your reason.',
+    governed: true, submitLabel: 'Resolve comment',
+    fields: [REASON],
   },
   'cover-page': {
     eyebrow: 'Protocol · cover page', title: 'Sponsor and principal investigator',
@@ -341,6 +360,12 @@ async function submitRegister(
       });
       return true;
     }
+    case 'review-comment':
+      await addProtocolReviewComment(documentId, { comment: v.comment, sectionRef: v.sectionRef, severity: v.severity, reason: v.reason });
+      return true;
+    case 'comment-resolve':
+      await resolveProtocolReviewComment(Number(target?.id), v.reason);
+      return true;
     case 'cover-page':
       await updateProtocolHeader(documentId, { sponsor: v.sponsor, principalInvestigator: v.principalInvestigator, reason: v.reason });
       return true;
