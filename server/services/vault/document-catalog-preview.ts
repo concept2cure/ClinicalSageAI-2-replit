@@ -18,7 +18,7 @@ export function isSourceFactPreviewEnabled(): boolean {
   return process.env.ANA_CATALOG_SOURCE_FACT_PREVIEW === '1';
 }
 
-const supportedMethods = new Set(['utf8', 'pdf-text', 'pdf-ocr', 'image-ocr', 'docx', 'xlsx', 'stored']);
+const supportedMethods = new Set(['utf8', 'pdf-text', 'pdf-layout', 'pdf-ocr', 'image-ocr', 'docx', 'xlsx', 'stored']);
 function readableSource(doc: CatalogDocumentRow | null, organizationId: number):
   | { ok: false; code: string; refusal: string }
   | { ok: true; document: CatalogDocumentRow; text: string; method: string } {

@@ -12,7 +12,9 @@
     "P-85",
     "P-86",
     "P-87",
-    "P-88"
+    "P-88",
+    "P-89",
+    "P-90"
   ],
   "alwaysAllowed": [
     "**/__tests__/**",
@@ -544,6 +546,15 @@
       ]
     }
   ],
-  "approvedAdditions": [],
+  "approvedAdditions": [
+    {
+      "kind": "integration",
+      "name": "docling-serve",
+      "package": "L1",
+      "decision": "P-90",
+      "where": "docker-compose.yml, service \"docling\" (profile ingestion)",
+      "scope": "RULE 2 gateway/connector scope: a self-hosted document reader on the deployment's own network; no document text leaves the deployment"
+    }
+  ],
   "completesRequired": true
 }

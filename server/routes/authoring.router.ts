@@ -159,7 +159,8 @@ import {
   EXPORT_FORMATS,
   type ExportFormat,
 } from '../services/authoring/authoring-export';
-import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
+import { SavedDraftSourceError, withSavedDraftSourceReservation, savedSourceExcerptsForSigning } from '../services/authoring/draft-source-references';
+import { unverifiedFiguresAtSigning, figureAcknowledgementDigest, figureAcknowledgementVerdict, type UnverifiedFigureAtSigning } from '../services/authoring/draft-figure-check';
 import { assertWorkflowImportRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
 import { admitAnaProjectScope, AnaProjectScopeError } from '../services/ana/project-scope-admission';
 import { savedSectionDraftTemplate, buildSectionDraftPrompt, draftRevisionFor, recordedFilingDraftContext } from '../services/authoring/authoring-draft-template';
@@ -4954,14 +4955,84 @@ async function approvalRefused(
 ): Promise<boolean> {
   if (await signingRefused(client, req, res, ids)) return true;
   const { openCommentCount, pendingEdits } = await freezeCensus(ids.docId, ids.tenantId, current.sections, client);
-  if (openCommentCount === 0 && pendingEdits === 0) return false;
-  if (req.body?.acknowledgeUnresolved !== true) {
-    res.status(409).json(notSettledRefusal(openCommentCount, pendingEdits, 'approve'));
+  if (openCommentCount > 0 || pendingEdits > 0) {
+    if (req.body?.acknowledgeUnresolved !== true) {
+      res.status(409).json(notSettledRefusal(openCommentCount, pendingEdits, 'approve'));
+      return true;
+    }
+    await createAuditTrail(req, ids.docId, null, 'APPROVAL_UNRESOLVED_ACKNOWLEDGED', null, null,
+      `Approved with ${openCommentCount} unresolved comment(s) and ${pendingEdits} undecided tracked change(s), acknowledged by ${getActorEmail(req)}.`,
+      { openCommentCount, pendingEdits, acknowledged: true }, client);
+  }
+  return figuresRefused(client, req, res, current, { docId: ids.docId, act: 'approve' });
+}
+
+/* ── P-89: AN UNVERIFIED FIGURE IS NOT SEALED UNNOTICED ──
+ *
+ * The founder, 2026-11-01 (docs/LAUNCH_DEFINITION_OF_DONE.md P-89). On Authoring
+ * save, every figure of a section that cites saved project sources is looked
+ * for in those sources, and one that is not there is marked `unverified`. That
+ * mark was advisory: an approval or a seal went through over it, and nothing
+ * re-checked the text after the save, so the approved document could state a
+ * number no cited source holds, with no record that anyone saw it.
+ *
+ * Now an approval (/e-sign and /sign as APPROVER) and a seal (/freeze) check the
+ * text being signed against the sources it cites, read again inside this
+ * transaction (savedSourceExcerptsForSigning). While a figure is unverified the
+ * act is refused (409 FIGURES_UNVERIFIED), naming each one, unless the signer
+ * sends every listed key back (`acknowledgedFigures`). The acknowledgement is
+ * then recorded on this transaction as a chained trail row with each figure,
+ * and the act's own chained row names its digest. A list from an earlier text
+ * does not stand for this one. Before re-authentication, so a refusal spends no
+ * second factor; the engine says whether a number is in its source, it never
+ * supplies one (RULE 2).
+ */
+const FIGURE_ACT = {
+  approve: { did: 'Approved', refused: 'Not approved', act: 'An approval', done: 'Nothing was signed.' },
+  freeze: { did: 'Sealed', refused: 'Not frozen', act: 'Freezing', done: 'Nothing was sealed.' },
+} as const;
+
+/** The 409 an approval or a seal answers while a figure is unverified, naming each. */
+function unverifiedFiguresRefusal(items: UnverifiedFigureAtSigning[], digest: string, act: keyof typeof FIGURE_ACT) {
+  const words = FIGURE_ACT[act];
+  const unavailable = items.filter((i) => i.reason === 'source_unavailable').length;
+  const n = items.length;
+  const message =
+    `${words.refused} — ${n} figure${n === 1 ? '' : 's'} in this document ${n === 1 ? 'is' : 'are'} not in the sources ` +
+    `${n === 1 ? 'its section cites' : 'their sections cite'}` +
+    (unavailable > 0 ? `, ${unavailable} of them because a cited source could no longer be read` : '') +
+    `. ${words.act} seals the text for filing. Correct ${n === 1 ? 'it' : 'them'}, or acknowledge each one and sign again. ${words.done}`;
+  return { success: false, error: { code: 'FIGURES_UNVERIFIED', message }, unverifiedFigures: { digest, items } };
+}
+
+/** Refuse an approval or a seal over unacknowledged unverified figures (P-89). Before the credential. */
+async function figuresRefused(
+  client: Queryable, req: Request, res: Response,
+  current: Awaited<ReturnType<typeof lockedSigningContent>>,
+  ids: { docId: string | string[] | undefined; act: keyof typeof FIGURE_ACT },
+): Promise<boolean> {
+  let groups: Awaited<ReturnType<typeof savedSourceExcerptsForSigning>>;
+  try {
+    groups = await savedSourceExcerptsForSigning(current.doc, client, current.organizationId, current.actor);
+  } catch (err) {
+    if (!(err instanceof SavedDraftSourceError)) throw err;
+    res.status(409).json({ success: false, error: { code: err.code, message: `${err.message} ${FIGURE_ACT[ids.act].done}` } });
     return true;
   }
-  await createAuditTrail(req, ids.docId, null, 'APPROVAL_UNRESOLVED_ACKNOWLEDGED', null, null,
-    `Approved with ${openCommentCount} unresolved comment(s) and ${pendingEdits} undecided tracked change(s), acknowledged by ${getActorEmail(req)}.`,
-    { openCommentCount, pendingEdits, acknowledged: true }, client);
+  const items = unverifiedFiguresAtSigning(current.sections.map((s: { id: unknown; code: unknown; title: unknown; content: string | null }) => ({
+    id: String(s.id), code: String(s.code ?? ''), title: String(s.title ?? ''), text: sectionReadableText(s.content ?? ''),
+  })), groups);
+  const verdict = figureAcknowledgementVerdict(items, req.body?.acknowledgedFigures);
+  if (verdict === 'clear') return false;
+  const digest = figureAcknowledgementDigest(items);
+  if (verdict === 'refused') {
+    res.status(409).json(unverifiedFiguresRefusal(items, digest, ids.act));
+    return true;
+  }
+  current.figuresAcknowledged = { digest, count: items.length };
+  await createAuditTrail(req, ids.docId, null, 'UNVERIFIED_FIGURES_ACKNOWLEDGED', null, null,
+    `${FIGURE_ACT[ids.act].did} with ${items.length} figure(s) not found in their cited sources, each acknowledged by ${getActorEmail(req)}.`,
+    { act: ids.act, digest, documentHash: sectionsDigest(current.sections), items }, client);
   return false;
 }
 
@@ -5117,7 +5188,9 @@ async function lockedSigningContent(client: Queryable, req: Request, docId: stri
     [docId, tenantId],
   );
   return { organizationId: tenantId, doc: document.rows[0], sections: sections.rows,
-    actor: { id: String(getActorId(req) ?? ''), email: getActorEmail(req) } };
+    actor: { id: String(getActorId(req) ?? ''), email: getActorEmail(req) },
+    /** Set by figuresRefused when the signer acknowledged unverified figures (P-89); the act's chained row names it. */
+    figuresAcknowledged: null as { digest: string; count: number } | null };
 }
 
 async function adoptionForSigning(client: Queryable, req: Request, current: Awaited<ReturnType<typeof lockedSigningContent>>, meaning: string) {
@@ -5209,6 +5282,7 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       if ((openCommentCount > 0 || pendingEdits > 0) && !acknowledged) {
         return res.status(409).json(notSettledRefusal(openCommentCount, pendingEdits));
       }
+      if (await figuresRefused(client, req, res, current, { docId, act: 'freeze' })) return; // P-89
 
       /* P-29.2 — the seal is the last point at which the two stores can still
          be made to agree, so the comparison happens here, on this transaction
@@ -5335,7 +5409,7 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         userAgent: req.headers['user-agent'] as string | undefined,
         // signatureId: the §11.70 link the audit-trail ledger joins on to show
         // this freeze as signed, with its meaning.
-        details: { contentHash, version: versionNumber, reason: reason ?? null, signatureId, meaning, signer: email },
+        details: { contentHash, version: versionNumber, reason: reason ?? null, signatureId, meaning, signer: email, ...(current.figuresAcknowledged ? { figuresAcknowledged: current.figuresAcknowledged } : {}) },
       });
 
       await client.query('COMMIT');
@@ -5592,7 +5666,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         // signatureId: §11.70's link from this audit row to the signature it
         // records — what the audit-trail ledger joins on to show the row as
         // signed, with the signer's meaning (#24).
-        details: { meaning, intent, documentHash: docHash, signer: email, signatureId, covers: covered, ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
+        details: { meaning, intent, documentHash: docHash, signer: email, signatureId, covers: covered, ...(current.figuresAcknowledged ? { figuresAcknowledged: current.figuresAcknowledged } : {}), ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
       });
 
       await client.query('COMMIT');
@@ -7575,6 +7649,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
          they cannot clear, narrow this to the sealing step — do not weaken the
          refusal. */
       if (await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
+      if (meaning === 'APPROVER' && await figuresRefused(client, req, res, current, { docId, act: 'approve' })) return; // P-89
 
       const signer = await reverifyAuthoringSigner(req, res);
       if (!signer) return;
@@ -7663,7 +7738,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         resourceId: String(docId ?? ''),
         ipAddress: (req.ip ?? undefined) as string | undefined,
         userAgent: req.headers['user-agent'] as string | undefined,
-        details: { signatureId, meaning, reason, contentHash, signer: signerEmail, ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
+        details: { signatureId, meaning, reason, contentHash, signer: signerEmail, ...(current.figuresAcknowledged ? { figuresAcknowledged: current.figuresAcknowledged } : {}), ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
       });
 
       await client.query('COMMIT');
