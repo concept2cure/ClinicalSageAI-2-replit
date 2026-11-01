@@ -1,0 +1,30 @@
+# Skeptic review (2026-11-01): a create with an objective on a database without a charter table.
+# The builder's README said it answers the route's 503 PENDING_STORE. Drizzle wraps the 42P01 in DrizzleQueryError
+# (code on .cause), so the route's 42P01 branch never saw it: a bare 500. Run on the builder's final code, before the fix:
+#   npx vitest run --maxWorkers=2 server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts
+
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records a stated objective as version 1 of the charter objectives section, in the creation, and its audit row names it 102ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records nothing when the objective is absent: no charter, no section, no placeholder 25ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records nothing when the objective is empty: no charter, no section, no placeholder 22ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records nothing when the objective is only whitespace: no charter, no section, no placeholder 21ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records nothing when the objective is null: no charter, no section, no placeholder 28ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective not text before anything is written, without echoing it 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective longer than the objective field allows before anything is written, without echoing it 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective citing a source address that is not http before anything is written, without echoing it 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective citing a source with no title before anything is written, without echoing it 13ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective sources sent with no objective before anything is written, without echoing it 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > rolls the whole creation back when the objective cannot be recorded: no program, no record, no charter 22ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > starts the charter for 'an EU MDR technical file at a Notifie…', a filing the charter did not classify before 38ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > starts the charter for 'a clinical study report under ICH', a filing the charter did not classify before 53ms
+ × server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > answers PENDING_STORE and rolls back when a charter table is not provisioned on this database 41ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 503 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > answers PENDING_STORE and rolls back when a charter table is not provisioned on this database
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 503 // Object.is equality
+    244|       await jdb.pglite.exec('ALTER TABLE s1_charter_sections_unprovisi…
+    245|     }
+    246|     expect(res.status, JSON.stringify(res.body)).toBe(503);
+    247|     expect(res.body).toMatchObject({ error: 'PENDING_STORE' });
+    248|     expect(await holdings()).toEqual(before);
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)

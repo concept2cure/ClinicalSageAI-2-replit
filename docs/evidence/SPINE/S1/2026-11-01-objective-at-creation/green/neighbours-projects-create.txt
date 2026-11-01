@@ -1,0 +1,884 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:17:28.305Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:17:31.038Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:17:31.039Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:17:31.039Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts > the digest computes readiness for a program the wizard created > an IND created with submissionTypeId us_ind is evaluated against US_IND
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts > the digest computes readiness for a program the wizard created > an IND created with submissionTypeId us_ind is evaluated against US_IND 1116ms
+ ✓ server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts > the digest computes readiness for a program the wizard created > a 510(k) created with submissionTypeId us_510k is evaluated against US_510K 32ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:17:38.215Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:17:38.865Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:17:38.866Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:17:38.866Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > returns the same client-aware card projection as GET
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > returns the same client-aware card projection as GET 110ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'mdr' keeps its stated class on the regional column with the anchored creation and audit record 38ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'ivdr' keeps its stated class on the regional column with the anchored creation and audit record 35ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > requires an explicit choice even when several workspaces include a marked default
+{
+  "timestamp": "2026-11-01T21:17:40.383Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "03277b04-e5c8-480a-ab0e-edf498a1afb3",
+    "orgId": 3,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 999 without falling back
+{
+  "timestamp": "2026-11-01T21:17:40.470Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "1da622ea-ecf9-413c-83e6-d746d8b03b00",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a created program resolves, strict, to its own projects row with intake's values 32ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > requires an explicit choice even when several workspaces include a marked default 19ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > places the actual saved anchor and audit in the explicitly selected client instead of the default 24ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection null without falling back 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 0 without falling back 12ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection -1 without falling back 9ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1.5 without falling back 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 4 without falling back 7ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1 without falling back
+{
+  "timestamp": "2026-11-01T21:17:40.490Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "2177ca31-3b03-4c20-b0d5-8c54f735dd30",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > accepts each explicit sponsor and never treats a header alone as the choice
+{
+  "timestamp": "2026-11-01T21:17:40.578Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "7dd929ab-1d67-4492-9e2b-61450b2fc1a2",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 999 without falling back 18ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1 without falling back 22ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 2147483648 without falling back 9ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 9007199254740991 without falling back 10ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving
+{
+  "timestamp": "2026-11-01T21:17:40.645Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "3d101621-ffc1-43da-816d-84668ad9e073",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving
+{
+  "timestamp": "2026-11-01T21:17:40.659Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "bf56e03c-f4ed-4432-af6d-7744f23224da",
+    "orgId": 3,
+    "reason": "CLIENT_WORKSPACE_MISMATCH",
+    "detail": "The supplied request claim contradicts the selected workspace."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind
+{
+  "timestamp": "2026-11-01T21:17:40.674Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "5aa5345b-df92-4613-9c02-e8ccdd8d2305",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > an organisation with no workspace: refused, nothing left behind
+{
+  "timestamp": "2026-11-01T21:17:40.692Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "4b52d05b-4acc-4771-a3c7-0915d38f3584",
+    "orgId": 4,
+    "reason": "NO_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > accepts each explicit sponsor and never treats a header alone as the choice 67ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > omitted legacy intake uses the sole active workspace even beside an archived one 25ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses out-of-range and malformed request claims before business SQL 19ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving 36ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind 16ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > a failure writing the project record rolls the program back with it
+{
+  "timestamp": "2026-11-01T21:17:40.711Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "p19: anchor write refused",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > rolls back program and anchor if the actual creation audit write fails
+{
+  "timestamp": "2026-11-01T21:17:40.754Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "audit refused",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports an uncertain commit honestly and discards its owned connection exactly once
+{
+  "timestamp": "2026-11-01T21:17:40.774Z",
+  "level": "error",
+  "message": "[c2c-projects] Project creation commit outcome unknown",
+  "context": {
+    "correlationId": "28f1bdb2-12bf-4d2f-a6d9-4455f48c80b7",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > discards an unacknowledged rollback and does not claim nothing was saved
+{
+  "timestamp": "2026-11-01T21:17:40.791Z",
+  "level": "error",
+  "message": "[c2c-projects] Project creation commit outcome unknown",
+  "context": {
+    "correlationId": "0c800207-1aea-460f-ae32-2a51f69f77d3",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > an organisation with no workspace: refused, nothing left behind 18ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > a failure writing the project record rolls the program back with it 19ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > preserves legacy default-marker ensure behavior and refuses contradictory explicit re-invocation 21ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > rolls back program and anchor if the actual creation audit write fails 22ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports an uncertain commit honestly and discards its owned connection exactly once 22ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports confirmed creation when its post-commit details cannot be read
+{
+  "timestamp": "2026-11-01T21:17:40.811Z",
+  "level": "error",
+  "message": "[c2c-projects] Project committed but details unavailable",
+  "context": {
+    "correlationId": "546088f2-5c4a-4059-beb1-4660eca03fe6",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > discards an unacknowledged rollback and does not claim nothing was saved 17ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports confirmed creation when its post-commit details cannot be read 17ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > every program the route created is anchored in its own organisation 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > supplies only active same-organization IDs and names with the current actor receipt 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > distinguishes an honestly empty active list from unavailable options 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses a current viewer regardless of its stale request role 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses unverified stores instead of returning a fabricated empty list 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses inactive actors while the canonical store prevents duplicate membership 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > rechecks the current creator after reading options and suppresses a revoked result 6ms
+stderr | server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:17:46.747Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:17:46.796Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:17:46.796Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:17:46.797Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts > POST /api/c2c/projects creates each exact US biotech identity with its own outline > US_TYPE_D_MEETING scaffolds its own lifecycle record and its own task plan
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts > POST /api/c2c/projects creates each exact US biotech identity with its own outline > US_TYPE_D_MEETING scaffolds its own lifecycle record and its own task plan 107ms
+ ✓ server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts > POST /api/c2c/projects creates each exact US biotech identity with its own outline > US_EXPANDED_ACCESS_INDIVIDUAL scaffolds its own lifecycle record and its own task plan 42ms
+ ✓ server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts > POST /api/c2c/projects creates each exact US biotech identity with its own outline > US_BLA_PAE_REPORT scaffolds its own lifecycle record and its own task plan 38ms
+ ✓ server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts > POST /api/c2c/projects creates each exact US biotech identity with its own outline > US_BLA_CBE30 scaffolds its own lifecycle record and its own task plan 40ms
+ ✓ server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts > POST /api/c2c/projects creates each exact US biotech identity with its own outline > US_TYPE_D_MEETING sent as its parent or neighbour (briefing) is refused and nothing is written 10ms
+ ✓ server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts > POST /api/c2c/projects creates each exact US biotech identity with its own outline > US_EXPANDED_ACCESS_INDIVIDUAL sent as its parent or neighbour (ind) is refused and nothing is written 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts > POST /api/c2c/projects creates each exact US biotech identity with its own outline > US_BLA_PAE_REPORT sent as its parent or neighbour (pader) is refused and nothing is written 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-us-biotech-identities.pglite.test.ts > POST /api/c2c/projects creates each exact US biotech identity with its own outline > US_BLA_CBE30 sent as its parent or neighbour (bla) is refused and nothing is written 5ms
+stderr | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+{
+  "timestamp": "2026-11-01T21:17:50.075Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+{
+  "timestamp": "2026-11-01T21:17:50.843Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:17:50.844Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+{
+  "timestamp": "2026-11-01T21:17:50.844Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses contradictory named filing 'cdx_pma' before writes 30ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses contradictory named filing 'US_CDX_510K' before writes 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses contradictory named filing 'US_PMA' before writes 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses contradictory named filing 'us_cdx_typo' before writes 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > persists the compatible 'cdx' identity for 'US_CDX_PMA' 10ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > persists the compatible 'cdx' identity for 'US_CDX_510K' 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > persists the compatible 'samd' identity for 'US_510K' 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > infers and persists CDx from pma / cdx_pma when no subtype was sent 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > infers and persists CDx from 510k / US_CDX_510K when no subtype was sent 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > infers and persists CDx from ivdr / cdx_ivdr_d when no subtype was sent 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > does not use a class-specific EU identity for an FDA application, even with an unconfirmed class 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_iii' refuses contradictory declared class 'I' 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_iia' refuses contradictory declared class 'IIb' 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_a' refuses contradictory declared class 'D' 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_cd' refuses contradictory declared class 'B' 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_i' retains compatible or unconfirmed class 'Is' 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_i' retains compatible or unconfirmed class 'Im' 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_i' retains compatible or unconfirmed class 'Ir' 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_cd' retains compatible or unconfirmed class 'C' 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_cd' retains compatible or unconfirmed class 'D' 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_iii' retains compatible or unconfirmed class null 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > mdr records euMdrClass without polluting the FDA class 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > ivdr records euIvdrClass without polluting the FDA class 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > no stated EU class persists neither a regional nor US class 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses invalid MDR class before a program insert 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses invalid class shape before a program insert 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses IVDR class on MDR before a program insert 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses two different regional classes before a program insert 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses FDA class on an EU filing before a program insert 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses FDA predicate on an EU filing before a program insert 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses FDA-specific flags on an EU filing before a program insert 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses IVD product on MDR before a program insert 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses conflicting selected registry type before a program insert 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses a different MDR document class before a program insert 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses an EU classification on an FDA project 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses a non-IVD product type for IVDR even when no class was stated 2ms
+stderr | server/routes/c2c/__tests__/projects-create.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts
+{
+  "timestamp": "2026-11-01T21:17:53.362Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create.test.ts
+{
+  "timestamp": "2026-11-01T21:17:53.418Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:17:53.419Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts
+{
+  "timestamp": "2026-11-01T21:17:53.419Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 403 without org context 44ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses missing membership before quota or any program mutation 12ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses membership in a different organization before quota or any program mutation 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses active viewer before quota or any program mutation 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls back if membership is revoked between preflight and the locked admission 16ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 when name is missing 6ms
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written
+{
+  "timestamp": "2026-11-01T21:17:55.370Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "audit_logs write failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01)
+{
+  "timestamp": "2026-11-01T21:17:55.387Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "e2ebbe5f-b83d-4dd2-80cc-a2214fbe1794",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+{
+  "timestamp": "2026-11-01T21:17:55.393Z",
+  "level": "error",
+  "message": "[c2c-projects] 42P01 names a relation that EXISTS — not a provisioning failure",
+  "context": {
+    "correlationId": "111293aa-be60-4284-9a7f-429ed9617e62",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "code": "42P01",
+    "route": "/api/c2c/projects",
+    "detail": "relation \"audit_logs\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+{
+  "timestamp": "2026-11-01T21:17:55.394Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "relation \"audit_logs\" does not exist",
+    "correlationId": null,
+    "code": "42P01"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent
+{
+  "timestamp": "2026-11-01T21:17:55.399Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "07ddd4e4-522e-404f-8035-69605824e243",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent
+{
+  "timestamp": "2026-11-01T21:17:55.408Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "6eef6bbd-5cbf-4ce2-a7dd-e520c2f51472",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "PROJECT_RECORD_UNAVAILABLE",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent
+{
+  "timestamp": "2026-11-01T21:17:55.409Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: the anchor column is not provisioned",
+  "context": {
+    "correlationId": "6eef6bbd-5cbf-4ce2-a7dd-e520c2f51472",
+    "orgId": 7,
+    "reason": "PENDING_ANCHOR_COLUMN",
+    "detail": "projects.regulatory_program_id is not present in this database (migrations/20260814_projects_regulatory_program_anchor.sql has not been applied). A program cannot be created without its PM-spine anchor."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen
+{
+  "timestamp": "2026-11-01T21:17:55.415Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "b679a086-c722-414b-9dde-3e51be349634",
+    "orgId": 7,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 on an invalid programType (never reaches business SQL) 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > inserts into regulatory_programs and returns the portfolio display contract 11ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > derives product_type from program_type when the client omits it 11ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > retries with a suffixed code on a unique-code collision (23505) 8ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > runs the insert and the scaffold in ONE transaction, and releases the client 14ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > a scaffold that finds no outline refuses the filing (422 FILING_NOT_OFFERED) and rolls the creation back 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > reports the scaffolded document and section count on success 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01) 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses the create when the org is at its licensed program quota 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen 7ms
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails
+{
+  "timestamp": "2026-11-01T21:17:55.444Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "submissions insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01)
+{
+  "timestamp": "2026-11-01T21:17:55.449Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "2200a628-711b-41a6-9472-fc673f866989",
+    "step": "creating the project",
+    "store": "submissions",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object
+{
+  "timestamp": "2026-11-01T21:17:55.456Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "9f4cc518-c4cd-4edc-9b51-8a88962a1f72",
+    "step": "creating the project",
+    "store": "submissions",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed
+{
+  "timestamp": "2026-11-01T21:17:55.462Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "0b501a52-72ab-4a27-b426-4d1c1ca6cb07",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed
+{
+  "timestamp": "2026-11-01T21:17:55.467Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "null value in column \"code\" violates not-null constraint",
+    "correlationId": "3b46779335ffb1ec4187935db4df7570",
+    "code": "23502"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure
+{
+  "timestamp": "2026-11-01T21:17:55.471Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "boom",
+    "correlationId": "3b46779335ffb1ec4187935db4df7570",
+    "code": "23502"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates the submissions row transactionally for a drug program (nda) 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > reuses only a spine already anchored to THIS program 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a device program (510k) 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a CER program 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01) 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object 8ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure 5ms
+stderr | server/routes/c2c/__tests__/projects-create-regional-devices.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-regional-devices.test.ts
+{
+  "timestamp": "2026-11-01T21:17:57.043Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-regional-devices.test.ts
+{
+  "timestamp": "2026-11-01T21:17:57.098Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:17:57.099Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-regional-devices.test.ts
+{
+  "timestamp": "2026-11-01T21:17:57.099Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > us_hde creates a governed working file without a medicinal submission 46ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > ca_mdl creates a governed working file without a medicinal submission 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > ca_ivd_licence creates a governed working file without a medicinal submission 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > jp_shonin creates a governed working file without a medicinal submission 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > jp_nintei creates a governed working file without a medicinal submission 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > jp_todokede creates a governed working file without a medicinal submission 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > jp_ivd_approval creates a governed working file without a medicinal submission 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > jp_cdx creates a governed working file without a medicinal submission 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > us_hde can identify its source without a redundant filing ID 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > ca_mdl can identify its source without a redundant filing ID 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > ca_ivd_licence can identify its source without a redundant filing ID 9ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > jp_shonin can identify its source without a redundant filing ID 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > jp_nintei can identify its source without a redundant filing ID 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > jp_todokede can identify its source without a redundant filing ID 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > jp_ivd_approval can identify its source without a redundant filing ID 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > jp_cdx can identify its source without a redundant filing ID 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > 'US' intake saves an authority that later raw document binding can resolve 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > 'CA' intake saves an authority that later raw document binding can resolve 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > 'JP' intake saves an authority that later raw document binding can resolve 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > 'jp_rcb' intake saves an authority that later raw document binding can resolve 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > program-only creation still refuses a wrong authority 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > refuses conflicting program before writing 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > refuses conflicting regional identity before writing 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > refuses unknown filing before writing 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > refuses medicinal identity before writing 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > refuses wrong product family before writing 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > refuses medicinal product before writing 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > refuses wrong authority before writing 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > refuses FDA classification before writing 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-regional-devices.test.ts > regional applications create only their exact authoring project > a missing exact pack rolls back instead of leaving an empty project 3ms
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+{
+  "timestamp": "2026-11-01T21:18:01.066Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+{
+  "timestamp": "2026-11-01T21:18:01.127Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:18:01.128Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+{
+  "timestamp": "2026-11-01T21:18:01.129Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an MHRA "IND" with 422 FILING_NOT_OFFERED and its reason, before any SQL 53ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a new Japanese NDA with 422 FILING_NOT_OFFERED and its reason, before any SQL 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency nothing maps (Swissmedic) with 422 FILING_NOT_OFFERED and its reason, before any SQL 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a drug application at a Notified Body with 422 FILING_NOT_OFFERED and its reason, before any SQL 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Health Canada (an NDS, sent as the wizard sends it) once the scaffold finds no outline, rolled back, nothing committed 9ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency with no outline (TGA) once the scaffold finds no outline, rolled back, nothing committed 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an EMA application with no EU outline (an NDA) once the scaffold finds no outline, rolled back, nothing committed 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > an EU MAA: created, "Author documents for this market", with the reason 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a continuing PMDA application (an approval number on file): created, author-only 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a US commercial IND: created, build and sequence 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU mdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU ivdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code us: scaffolded against FDA and created 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code US: scaffolded against FDA and created 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a Prior Approval Supplement at FDA: created author-only, its own outline, no submission spine 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a clinical study report at "ICH / Global": created author-only, scaffolded against ICH, no submission spine 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a class covers drugs and biologics alike, so the product class must be stated 3ms
+stderr | server/routes/c2c/__tests__/projects-create-stated-facts.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-stated-facts.test.ts
+{
+  "timestamp": "2026-11-01T21:18:04.696Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-stated-facts.test.ts
+{
+  "timestamp": "2026-11-01T21:18:04.751Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:18:04.752Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-stated-facts.test.ts
+{
+  "timestamp": "2026-11-01T21:18:04.752Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > refuses an IND whose product type nobody stated, naming the choice, before any SQL 45ms
+ ✓ server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > refuses a device class for an IND 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > records the stated class, and the spine carries the matching client type 11ms
+ ✓ server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > records no indication when none was stated 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the project record carries its registry context > writes the registry entry the filing type the person chose names 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the project record carries its registry context > with no registry choice sent, an unambiguous filing type and agency name the entry 4ms
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts
+{
+  "timestamp": "2026-11-01T21:18:07.682Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-authorization.test.ts
+{
+  "timestamp": "2026-11-01T21:18:07.778Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:18:07.779Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts
+{
+  "timestamp": "2026-11-01T21:18:07.779Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows the program lead
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows the program lead 42ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > DENIES an org member who is neither the lead nor a manager 8ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows an org manager who does not lead the program 6ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > denies when the program has no lead — unowned is not everyone-owned 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > 404s a program outside the caller org — never 403, which would confirm it exists 6ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > PROGRAM_AUTHZ_MODE=warn does not open a denied mutation — the gate has no soak mode 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > PROGRAM_AUTHZ_MODE=off does not open a denied mutation — the gate has no soak mode 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > DENIES a non-lead, non-manager org member 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > allows the lead 7ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > program metadata is readable by a non-lead org member 7ms
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > dossier is readable by a non-lead org member
+{
+  "timestamp": "2026-11-01T21:18:09.918Z",
+  "level": "error",
+  "message": "[c2c-projects] reading the dossier failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "Cannot read properties of undefined (reading 'startsWith')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > team roster is readable by a non-lead org member 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > pinned evidence is readable by a non-lead org member 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > activity is readable by a non-lead org member 10ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > dossier is readable by a non-lead org member 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > drafts is readable by a non-lead org member 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > the lead rule does not apply to reads (sharing admission is proven in the pglite gate suites) > a caller who is not a current member is refused, concealed as 404 3ms
+
+ Test Files  9 passed (9)
+      Tests  180 passed (180)
+   Start at  21:17:22
+   Duration  47.76s (transform 6.78s, setup 257ms, import 21.83s, tests 24.01s, environment 1ms)
+
