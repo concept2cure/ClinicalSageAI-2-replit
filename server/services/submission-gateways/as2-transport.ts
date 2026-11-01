@@ -926,7 +926,7 @@ export function classifyDelivery(
  */
 export async function classifyVerifiedAs2Delivery(attempt: DeliveryAttempt, messageId: string, proof: { agencyCertPem: string; expectedMic: string }): Promise<DeliveryOutcome> {
   const unverified: TwoXxVerdict = { kind: 'DELIVERED_UNCONFIRMED', reason: 'The agency MDN signature could not be verified against its pinned certificate.' };
-  let verdict = unverified;
+  let verdict: TwoXxVerdict = unverified;
   if (!attempt.ok || attempt.response.httpStatus < 200 || attempt.response.httpStatus >= 300) return classifyDelivery(attempt, messageId, () => verdict);
   try {
     const header = attempt.response.headers['content-type'];
