@@ -3755,3 +3755,98 @@
 .c2c-v2 .tb-proj-lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .c2c-v2 .tb-proj[data-empty="true"]{border-style:dashed;color:var(--text-300);font-weight:400;}
 .c2c-v2 .tb-proj[data-empty="true"] .ico{color:var(--text-300);}
+
+/* ════ Work-area page pattern (ONE_DESIGN_PLAN §2 "A work area"; D5 §WA.4.1) ════
+   Every work area's root carries data-work-area="<surface id>" beside its
+   container class. Built from the existing primitives (.ph, .seg, .tabs,
+   .pj-sec, .reg-kpis, .pj-more); this block only places them.
+
+   D0's foundations block has not landed, and plan §5 (P-80) says the design
+   packages do not wait for it: each "uses D0's components where they have
+   landed". So two kinds of rule below are written to survive D0's arrival:
+   • `var(--fs-small, 13px)` — D0-1 declares --fs-body/--fs-small (D0.md:425).
+     Until then the fallback IS the value D0 will set, so the sizes are right
+     today and the token takes over untouched. Without the fallback the whole
+     declaration is invalid and dropped, which is how this block first shipped.
+   • The three "bridge" rules at the foot, scoped to [data-work-area]: the
+     canonical primitives read `.on` / `[data-on]` for their selected state and
+     D0 §4.2.8/§4.2.9 add the ARIA attributes. The accessible markup is the
+     markup, so the state is read from aria-pressed / aria-selected here, inside
+     the work areas only. Nothing outside a work area moves. D0-2 deletes them.
+   The .sp-starters row rule is D1's (D1.md:447), carried here verbatim as
+   §WA.4.1 directs when D1 has not landed it — whichever lands second drops
+   its copy, so there is one definition. */
+.c2c-v2 .sp-starters[data-layout="row"]{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0;}
+.c2c-v2 [data-work-area] > .pj-back{margin:0 0 12px;}
+.c2c-v2 [data-work-area] > .ph{margin:0 0 16px;}
+.c2c-v2 [data-work-area] > .sp-starters[data-layout="row"]{justify-content:flex-start;margin:0 0 24px;}
+.c2c-v2 [data-work-area] > .seg{margin:0 0 16px;}
+.c2c-v2 [data-work-area] .tabs{margin:0 0 24px;}
+/* Sections are typographic, not boxed (the project page's treatment, D3 §4.12). */
+.c2c-v2 :is(.pj-main, [data-work-area]) .pj-sec{background:none;border:0;border-radius:0;padding:0;}
+.c2c-v2 :is(.pj-main, [data-work-area]) .pj-sec + .pj-sec{margin-top:32px;}
+.c2c-v2 [data-work-area] .pj-sec > .reg-tbl{margin:0;}
+/* A section's lead: the heading and its count sit together, the actions go
+   right. `.pj-sec-h` is `space-between` globally, which with three children
+   (heading, count, actions) strands the count in the middle of the row. */
+.c2c-v2 [data-work-area] .pj-sec-h{justify-content:flex-start;margin-bottom:12px;}
+.c2c-v2 [data-work-area] .pj-sec-h > .pj-sec-acts{margin-left:auto;}
+/* §WA.3 "Type": section heading 15/600, its count 13 (today 13.5 and 11). */
+.c2c-v2 [data-work-area] .pj-sec-h h2{font-size:var(--fs-section, 15px);line-height:1.4;}
+.c2c-v2 [data-work-area] .pj-sec-h .sec-sub{font-size:var(--fs-small, 13px);color:var(--text-300);}
+/* An empty register inside a section is one quiet line and its action. */
+.c2c-v2 [data-work-area] .pj-sec .c2c-empty-state:not(.tone-error){align-items:flex-start;text-align:left;padding:4px 0 0;gap:4px;}
+.c2c-v2 [data-work-area] .pj-sec .c2c-empty-state:not(.tone-error) .c2c-empty-ic{display:none;}
+.c2c-v2 [data-work-area] .pj-sec .c2c-empty-state:not(.tone-error) .c2c-empty-t{font-size:var(--fs-small, 13px);}
+/* The disclosure (D3's .pj-more, generalised). */
+.c2c-v2 [data-work-area] .pj-more{margin-top:16px;}
+.c2c-v2 :is(.pj-main, .pj-side, [data-work-area]) .pj-more > summary{cursor:pointer;padding:6px 0;font-size:var(--fs-small, 13px);font-weight:500;color:var(--text-200);}
+.c2c-v2 :is(.pj-main, .pj-side, [data-work-area]) .pj-more > summary:hover{color:var(--text-100);}
+.c2c-v2 :is(.pj-main, .pj-side, [data-work-area]) .pj-more[open] > summary{margin-bottom:6px;}
+.c2c-v2 [data-work-area] .pj-more > :not(summary){font-size:var(--fs-small, 13px);line-height:1.55;color:var(--text-300);}
+/* Docked inspector beside the main column (Vault's library, RBM's AnA). */
+.c2c-v2 [data-work-area] .wa-split{display:grid;grid-template-columns:minmax(0, 1fr) 360px;gap:24px;align-items:start;}
+@media (max-width: 1023px){.c2c-v2 [data-work-area] .wa-split{grid-template-columns:minmax(0, 1fr);}}
+/* The header's actions: ≤2 ghosts, then ≤1 primary, right of the title. */
+.c2c-v2 .ph-acts{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+.c2c-v2 .cm-lead{margin-bottom:16px;}
+/* A tab body that brought its own page padding drops it: the page provides the
+   gutters now. `.cm-body` is shared with twelve surfaces outside D5's packages
+   (Submission Center, PV, Mission Control …), so it is scoped here rather than
+   edited in journey-v2.css, where it would move all of them at once. */
+.c2c-v2 [data-work-area] .cm-body{padding:0;max-width:none;margin:0;}
+/* ── Bridges until D0-2 (see the note above) ── */
+/* D0 §4.2.1 sets these metrics on `.page-inner` for every screen; until it
+   lands they apply to the converged work areas only (today 1160 / 28-32-80). */
+.c2c-v2 [data-work-area].page-inner{max-width:1120px;padding:32px 40px 96px;}
+/* Figures are a quiet line, not a tile grid (D0 §4.2.7, carried here scoped to
+   the work areas because `.reg-kpi` tiles are still the look on Quality's SOP
+   register and Tasks analytics, which D0-2 converges in one pass). Markup is
+   unchanged: `.reg-kpi`, `.reg-kpi-v` and `.reg-kpi-l` are what the tests read,
+   and a figure that is a door is still the same <button>. */
+.c2c-v2 [data-work-area] .reg-kpis{display:flex;flex-wrap:wrap;gap:6px 28px;margin:0 0 24px;}
+.c2c-v2 [data-work-area] .reg-kpi{display:inline-flex;align-items:baseline;gap:8px;padding:0;border:0;border-radius:0;background:none;text-align:left;}
+.c2c-v2 [data-work-area] .reg-kpi-v{font-size:var(--fs-section, 15px);font-weight:600;}
+.c2c-v2 [data-work-area] .reg-kpi-l{margin:0;font-size:var(--fs-small, 13px);color:var(--text-300);}
+.c2c-v2 [data-work-area] button.reg-kpi:hover .reg-kpi-l{color:var(--text-100);text-decoration:underline;text-underline-offset:2px;}
+/* The title is the rail label in Lora 26 (D5 §WA.3 "Type"); D0 §4.2.2 sets it
+   for all nine screens, this sets it for the converged ones only. */
+.c2c-v2 [data-work-area] > .ph .ph-title{font-family:var(--font-serif, Georgia, serif);font-size:26px;font-weight:500;line-height:1.25;letter-spacing:-.01em;}
+.c2c-v2 [data-work-area] > .ph .ph-sub{font-size:var(--fs-body, 14px);max-width:68ch;}
+/* The tab row sits in the page column, not a full-bleed bar, and its selected
+   state is the one the markup declares. */
+.c2c-v2 [data-work-area] .tabs{padding:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+.c2c-v2 [data-work-area] .tab{font-size:var(--fs-body, 14px);height:36px;padding:0 10px;white-space:nowrap;flex:0 0 auto;}
+.c2c-v2 [data-work-area] .tab[aria-selected="true"]{color:var(--text-100);border-bottom-color:var(--text-100);}
+.c2c-v2 [data-work-area] .seg-b[aria-pressed="true"]{background:var(--bg-000);color:var(--text-100);box-shadow:var(--v2-shadow-xs);}
+.c2c-v2.dark [data-work-area] .seg-b[aria-pressed="true"]{background:var(--bg-200);box-shadow:none;}
+/* Phone: the page never scrolls sideways; a wide table scrolls inside its section. */
+@media (max-width: 640px){
+  .c2c-v2 [data-work-area] > .ph .ph-title{font-size:22px;}
+  .c2c-v2 [data-work-area] .pj-sec > .reg-tbl,
+  .c2c-v2 [data-work-area] .pj-sec > .pj-card-b > .reg-tbl{display:block;overflow-x:auto;}
+  .c2c-v2 [data-work-area] .pj-sec-h{flex-wrap:wrap;}
+  .c2c-v2 [data-work-area] .pj-sec-acts{justify-content:flex-start;width:100%;}
+  .c2c-v2 [data-work-area] > .sp-starters[data-layout="row"]{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+  .c2c-v2 [data-work-area] > .sp-starters[data-layout="row"] .sp-starter{flex:0 0 auto;max-width:80vw;}
+}
