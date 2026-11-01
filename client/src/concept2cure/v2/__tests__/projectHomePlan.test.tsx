@@ -133,20 +133,18 @@ afterEach(() => {
 });
 
 describe('a US IND’s Plan is what the filing needs, by phase', () => {
-  it('starts study and protocol design from the verified project before its filing requirements', async () => {
+  it('opens study and protocol design from the project\'s work-area doors, beside the steps, in one click', async () => {
     serve();
     const { onNav } = mount();
     const plan = await openPlan();
-    const heading = await within(plan).findByRole('heading', { name: 'Start work in this project' });
-    const filing = await within(plan).findByRole('heading', { name: 'What this IND needs' });
-    expect(heading.compareDocumentPosition(filing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    const choice = within(plan).getByRole('combobox', { name: 'Core work' });
-    expect(within(choice).getAllByRole('option', { name: 'Study & Protocol Design' })).toHaveLength(1);
-    // RBM is admitted by P-76; Biostatistics remains outside this release.
-    expect(Array.from((choice as HTMLSelectElement).options).map(option => option.value)).toEqual(['', 'protocol-dev', 'cmc', 'rbm']);
-    fireEvent.change(choice, { target: { value: 'protocol-dev' } });
-    expect(onNav).not.toHaveBeenCalled();
-    fireEvent.click(within(plan).getByRole('button', { name: 'Start selected work' }));
+    /* The work areas left Plan's select for direct doors in the About card (2026-10-31). */
+    expect(within(plan).queryByRole('combobox', { name: 'Core work' })).toBeNull();
+    const doors = await screen.findByRole('navigation', { name: 'This project’s work areas' });
+    const names = within(doors).getAllByRole('button').map((b) => b.textContent?.trim());
+    expect(names).toContain('Study & Protocol Design');
+    expect(names).toContain('CMC / Module 3');
+    expect(names).toContain('Risk-based monitoring');
+    fireEvent.click(within(doors).getByRole('button', { name: /^Study & Protocol Design/ }));
     expect(onNav).toHaveBeenCalledExactlyOnceWith('protocol-dev');
     expect((window as unknown as { C2C_PROJECT?: { id: string } }).C2C_PROJECT?.id).toBe(PID);
     expect(apiRequest.mock.calls.filter(([method]) => method !== 'GET')).toHaveLength(0);

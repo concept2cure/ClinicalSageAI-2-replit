@@ -66,7 +66,7 @@ describe("a project's quality records on its Review step", () => {
     expect(await valueOf('Open change controls')).toBe('2');
     expect(await valueOf('Nonconforming product awaiting disposition')).toBe('1');
     expect(await valueOf('Controlled documents authored here')).toBe('1 effective · 1 in review · 2 draft');
-    for (const path of Object.keys(READS)) expect(h.request).toHaveBeenCalledWith('GET', path);
+    for (const path of Object.keys(READS)) expect(h.request).toHaveBeenCalledWith('GET', path, undefined, undefined, expect.any(AbortSignal));
   });
 
   it('says a read failed, for that record only, and never shows it as 0', async () => {

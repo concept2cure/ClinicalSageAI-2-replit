@@ -34,7 +34,6 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { I } from '../icons';
 import { stashNavParamsForTarget } from '../navParams';
 import { useChatUpload, CHAT_UPLOAD_ACCEPT, type ChatAttachment } from '../../hooks/useChatUpload';
-import { ComingLater } from './ProjectComingLater';
 import { C2CToast, useToast } from '../toast';
 import { AgencyInboxList, letterSourceRef, submissionLabel, useAgencyInbox, type LogCommunicationBody, type LogResult } from './AgencyInbox';
 import type { MarketSubmission, ProgramMarkets } from './programSequence';
@@ -246,7 +245,6 @@ export function ProjectRespond({ pid, markets, onNav, onAsk }: {
           <SequenceStep markets={markets} choice={choice} onChoose={setChoice} onNav={onNav} />
         </ol>
       </section>
-      <ComingLater stage="respond" />
       <C2CToast msg={toast} />
     </div>
   );

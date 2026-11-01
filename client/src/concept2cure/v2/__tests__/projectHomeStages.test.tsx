@@ -123,16 +123,15 @@ describe('Project home — six steps follow the work', () => {
     }
   });
 
-  it('what Submit will hold is named as coming later, in words, with no button', async () => {
+  it('no step names a roadmap: the "Coming later" lines are gone (2026-10-31)', async () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(tab('Submit')).toBeTruthy());
-    fireEvent.click(tab('Submit')!);
-    const line = await screen.findByTestId('pj-coming-later');
-    expect(line.textContent).toBe(
-      'Coming later: Each approved market’s registration status and renewal date; renewals and post-approval ' +
-      'obligations tracked as they fall due; safety reports with their reporting clock.',
-    );
-    expect(within(line).queryByRole('button'), 'a coming-later line offers nothing to click').toBeNull();
+    for (const label of ['Plan', 'Evidence', 'Author', 'Review', 'Submit', 'Respond']) {
+      fireEvent.click(tab(label)!);
+      await waitFor(() => expect(activeLabel()).toBe(label));
+      expect(screen.queryByTestId('pj-coming-later'), `${label} has a coming-later line`).toBeNull();
+      expect(document.body.textContent, `${label} names something as coming later`).not.toMatch(/Coming later/);
+    }
   });
 });
 

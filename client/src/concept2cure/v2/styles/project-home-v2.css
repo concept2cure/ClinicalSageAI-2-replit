@@ -430,10 +430,8 @@
    survives a change of step. The column can be taller than the window, so it
    scrolls with the page instead of sticking. */
 .c2c-v2 aside.pj-step-side{position:static;}
-/* What a tab does not do in this release: one line of words, no button. */
-.c2c-v2 .pj-later{margin:12px 0 0;max-width:none;}
 /* A tab whose body is more than one section (Evidence: files and data room;
-   Submit: readiness, submissions and the coming-later line). Not `.pj-stage`:
+   Submit: readiness and submissions). Not `.pj-stage`:
    journey-v2.css owns that class for the Program journey's stage cells, and
    two global rules on one class merge (flex, padding and min-width leaked
    both ways). */
@@ -490,6 +488,17 @@
 .c2c-v2 .pj-mkt-note{margin:4px 0 0;font-size:11.5px;line-height:1.5;color:var(--text-300);}
 .c2c-v2 .pj-mkt-blockers{margin:4px 0 2px;padding-left:18px;font-size:11.5px;line-height:1.5;color:var(--text-200);}
 .c2c-v2 .pj-mkt-acts{display:flex;justify-content:flex-end;margin-top:6px;}
+/* What must close before dispatch, in words (MarketBlockers.tsx); the rules behind a disclosure. */
+.c2c-v2 .pj-mkt-todo{margin-top:8px;}
+.c2c-v2 .pj-mkt-todo-h{margin:0 0 6px;font-size:12.5px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .pj-mkt-todo-list{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;}
+.c2c-v2 .pj-mkt-todo-i{font-size:12.5px;line-height:1.5;color:var(--text-200);}
+.c2c-v2 .pj-mkt-todo-act{margin-left:8px;vertical-align:middle;}
+.c2c-v2 .pj-mkt-todo-t{overflow-wrap:anywhere;}
+.c2c-v2 .pj-mkt-rules{margin-top:10px;}
+.c2c-v2 .pj-mkt-rules>summary{cursor:pointer;font-size:12px;color:var(--text-300);}
+.c2c-v2 .pj-mkt-rules>summary:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:4px;}
+.c2c-v2 .pj-mkt-rules[open]>summary{margin-bottom:8px;}
 .c2c-v2 .pj-status{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin:0 0 16px;font-size:12px;color:var(--text-300);}
 .c2c-v2 .pj-status-item{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px;}
 .c2c-v2 .pj-status-item svg{width:13px;height:13px;}
@@ -497,6 +506,16 @@
 .c2c-v2 .pj-status-item[data-tone=ok]{color:var(--success);}
 .c2c-v2 .pj-status-item[data-tone=blocked]{color:var(--error);}
 .c2c-v2 .pj-status-item[data-tone=warn]{color:var(--warning);}
+/* The project's work areas, in the About card beside every step (ProjectCoreWork). */
+.c2c-v2 .pj-work-areas{display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+.c2c-v2 .pj-work-areas-k{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-400);}
+.c2c-v2 .pj-work-area{background:none;border:0;padding:0;cursor:pointer;}
+.c2c-v2 .pj-work-area:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:4px;}
+/* A market's verdict, as the button that opens it on Submit. */
+.c2c-v2 .pj-status-open{background:none;border:1px solid transparent;border-radius:var(--radius-md);padding:2px 6px;margin:-2px -6px;font:inherit;cursor:pointer;text-align:left;}
+.c2c-v2 .pj-status-open:hover{border-color:var(--border);background:var(--bg-100);}
+.c2c-v2 .pj-status-open:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+.c2c-v2 .pj-status-go svg{width:12px;height:12px;}
 .c2c-v2 .pj-mkt-verdict:focus-visible,.c2c-v2 .pj-status:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:4px;}
 /* Read by a screen reader, not shown: the market a verdict belongs to. */
 .c2c-v2 .pj-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}

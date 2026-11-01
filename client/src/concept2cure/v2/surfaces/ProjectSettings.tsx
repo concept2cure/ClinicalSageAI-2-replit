@@ -7,7 +7,7 @@ import { GOVERNED_REASON_MIN, GOVERNED_REASON_MAX } from '@shared/constants/gove
 import { GovernedConfirmDialog } from '../../_shared/components/GovernedConfirmDialog';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { captureShellProjectGuard, shellProgramId, useShellProject } from '../shellProject';
-import { projectSettingsHeaders, requestProjectSettings } from './projectSettingsRequest';
+import { projectSettingsHeaders, requestProjectArchive, requestProjectSettings } from './projectSettingsRequest';
 import '../styles/project-settings.css';
 
 interface Props { programId: string; onSaved: () => void }
@@ -141,17 +141,21 @@ function SettingsSession({ scope, isCurrent, onSaved }: Props & { scope: Project
   const patch = diff(s.saved, s.draft);
   const editable = s.saved?.canChange === true && !s.saving && !s.loading && !s.blocked;
   if (s.retired) return <p className="pj-settings-note" role="status">{RETIRED}</p>;
+  const archive = s.saved?.canChange === true
+    ? <ArchiveControl scope={scope} current={current} disabled={!editable} onArchived={onSaved} />
+    : null;
   return <div className="pj-settings">
     <button className="btn ghost" onClick={toggle} aria-expanded={s.open} aria-controls={`${prefix}-panel`} disabled={s.saving}>Project settings</button>
-    {s.open && <SettingsPanel state={s} prefix={prefix} editable={editable} patch={patch} onClose={close}
+    {s.open && <SettingsPanel state={s} prefix={prefix} editable={editable} patch={patch} onClose={close} archive={archive}
       onReload={() => void loadSettings(context)} onReview={() => { if (retained(context)) s.setReview(patch); }} />}
     <GovernedConfirmDialog open={!!s.review && !s.retired} action="Save project settings" target={settingsReviewTarget(s.review)} minReason={GOVERNED_REASON_MIN}
       submitError={s.note?.error ? s.note.text : null}
       onCancel={() => { if (!s.pending.current) s.setReview(null); }} onConfirm={({ reason }) => saveSettings(context, reason)} />
   </div>;
 }
-function SettingsPanel({ state: s, prefix, editable, patch, onClose, onReload, onReview }: {
-  state: State; prefix: string; editable: boolean; patch: ProjectSettingsPatch; onClose: () => void; onReload: () => void; onReview: () => void;
+function SettingsPanel({ state: s, prefix, editable, patch, archive, onClose, onReload, onReview }: {
+  state: State; prefix: string; editable: boolean; patch: ProjectSettingsPatch; archive: React.ReactNode;
+  onClose: () => void; onReload: () => void; onReview: () => void;
 }) {
   return <section className="pj-settings-panel" id={`${prefix}-panel`} aria-label="Project settings">
       <div className="pj-sec-h"><h2>Project settings</h2><button className="btn ghost small" onClick={onClose} disabled={s.saving}>Close settings</button></div>
@@ -162,7 +166,42 @@ function SettingsPanel({ state: s, prefix, editable, patch, onClose, onReload, o
         <button className="btn ghost" disabled={s.saving} onClick={onReload}>Reload saved settings</button>
         {s.saved?.canChange && <button className="btn primary" disabled={!editable || !isProjectSettingsPatch(patch)} onClick={onReview}>Review settings change</button>}
       </div>}
+      {!s.loading && s.saved && archive}
     </section>;
+}
+
+/* ── Archive (2026-10-31) ─────────────────────────────────────────────────────
+   A project could be created and worked, never closed from its own page: the
+   close-out route (POST /api/c2c/projects/:id/archive) had no caller. It is
+   reached here, by someone who may change the project, after the governed
+   confirmation every project change takes (a reason and a typed word). The
+   route keeps the record and writes the audit row; the list stops showing the
+   project and it takes no new market. */
+const ARCHIVE_WORDS = 'An archived project leaves the project list and takes no new market. Its documents and records are kept.';
+function ArchiveControl({ scope, current, disabled, onArchived }: {
+  scope: ProjectSettingsScope; current: () => boolean; disabled: boolean; onArchived: () => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [note, setNote] = useState<{ text: string; error: boolean } | null>(null);
+  const [archived, setArchived] = useState(false);
+  const confirm = async ({ reason }: { reason: string }) => {
+    if (!validReason(reason)) { setNote({ error: true, text: `Use a reason between ${GOVERNED_REASON_MIN} and ${GOVERNED_REASON_MAX} characters.` }); return; }
+    const answer = await requestProjectArchive(scope, current, reason.trim());
+    setConfirming(false);
+    if (answer.kind !== 'archived') { setNote({ error: true, text: answer.message }); return; }
+    setArchived(true);
+    setNote({ error: false, text: 'Project archived. The archive is recorded in the project’s audit trail.' });
+    onArchived();
+  };
+  return <div className="pj-settings-archive">
+    <h3>Archive this project</h3>
+    <p className="pj-settings-note">{ARCHIVE_WORDS}</p>
+    {!archived && <button className="btn ghost" disabled={disabled || confirming} onClick={() => { setNote(null); setConfirming(true); }}>Archive project</button>}
+    {note && <p className="pj-settings-note" role={note.error ? 'alert' : 'status'}>{note.text}</p>}
+    <GovernedConfirmDialog open={confirming} action="Archive project" target="Current project · archived, records kept"
+      minReason={GOVERNED_REASON_MIN} confirmWord="archive" submitError={note?.error ? note.text : null}
+      onCancel={() => setConfirming(false)} onConfirm={confirm} />
+  </div>;
 }
 function SettingsFields({ state: s, editable, prefix }: { state: State; editable: boolean; prefix: string }) {
   const draft = s.draft!;

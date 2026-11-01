@@ -20,7 +20,9 @@ import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
    role="tablist" over plain buttons carrying aria-selected, which is not valid
    on a button, so a screen reader was told of no open stage at all (design
    review 2026-10-08, a11y lens, WCAG 4.1.2). The stage bodies are not tab
-   panels: each stage renders below the conversations, so a nav is what it is. */
+   panels: each stage renders below the conversations, so a nav is what it is.
+   It is drawn as a row of tabs (app-v2.css .pj-lc), not a stepper: the open
+   step is the one being viewed, never where the project is (2026-10-31). */
 export function StageTracker({ stage, setStage, lifecycle = PJ_LIFECYCLE }: { stage: string; setStage: (s: string) => void; lifecycle?: typeof PJ_LIFECYCLE }) {
   return (
     <nav className="pj-lc" aria-label="Project lifecycle">

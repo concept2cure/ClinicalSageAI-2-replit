@@ -31,7 +31,6 @@ import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES, productTypeForFilingType } from '@shared/constants/domain/product-types';
 import { isUsInd, useProgramMarkets } from './programSequence';
 import { StageBand, StageTracker } from './ProjectStages';
-import { ComingLater } from './ProjectComingLater';
 import { STEP_DOORS } from '../projectDoors';
 import { openProgramAction } from '../programAction';
 import { FileDropZone } from '../FileDropZone';
@@ -50,6 +49,8 @@ import { biotechPlanEntry } from './ProjectBiotechPlan';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
 import { ProjectSettings } from './ProjectSettings';
+import { ProjectCoreWork } from './ProjectCoreWork';
+import { actionWords, enumWords } from './projectWords';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -163,13 +164,22 @@ const ACTIVITY_EVENT_LABEL: Record<string, string> = {
 /** Audited actions the feed names in words (P-44, 2026-10-22); any other reads as recorded. */
 const ACTIVITY_ACTION_LABEL: Record<string, string> = {
   SUBMISSION_APPLICATION_NUMBER_RECORDED: 'Market application number recorded',
+  /* A leaf is a document placed in a submission's sequence. */
+  LEAF_CREATED: 'Document placed in a sequence',
 };
 
-/** What the feed says a row was: the governed event by name, else the action as recorded. */
+/**
+ * What the feed says a row was: the governed event by name, else the action in
+ * words (projectWords.ts). It printed the stored names, "LEAF CREATED ·
+ * submission_leaf" (2026-10-31). The record's type is said only after a bare
+ * verb ("Update · Regulatory program"), where it is what the verb acted on.
+ */
 export function activityLabel(a: Pick<ActivityRow, 'action' | 'resource_type' | 'event' | 'event_agency'>): string {
   const named = (a.event ? ACTIVITY_EVENT_LABEL[a.event] : undefined) ?? (a.action ? ACTIVITY_ACTION_LABEL[a.action] : undefined);
   if (named) return a.event_agency ? `${named} · ${a.event_agency.toUpperCase()}` : named;
-  return `${String(a.action ?? '').replace(/_/g, ' ')}${a.resource_type ? ' · ' + a.resource_type : ''}`;
+  const action = actionWords(a.action) ?? 'Recorded action';
+  const resource = enumWords(a.resource_type);
+  return resource && !/\s/.test(action) ? `${action} · ${resource}` : action;
 }
 
 /** Format a real ISO timestamp for display (never fabricated — null passes through). */
@@ -889,7 +899,7 @@ function ProjectWorkPanel({ pid, title, onNav, targetId }: { pid: string | null;
                         <div className="pj-file-top">
                           <span className="pj-file-badge">{WORK_SOURCE_LABEL[w.source] ?? w.source}</span>
                           <span className={`rd-chip ${WORK_STATUS_TONE[w.status] ?? 'tone-idle'}`}>
-                            {String(w.status || 'open').replace(/_/g, ' ')}
+                            {enumWords(w.status || 'open')}
                           </span>
                           {w.blocking && <span className="sp-tone-warn" style={{ fontSize: 11 }}>blocking</span>}
                         </div>
@@ -1333,8 +1343,53 @@ function ProjectDocumentRow({ doc, onOpen }: { doc: BuiltDocument; onOpen: (doc:
   );
 }
 
-function ProjectDocumentsBody({ read, onRetry, onOpen }: {
-  read: ListRead; onRetry: () => void; onOpen: (doc: BuiltDocument) => void;
+/* ── The filing's documents and the project's quality documents ──────────────
+   GET /api/authoring/docs?programId= lists every authoring document carrying the
+   project, and a QMS controlled document (an SOP authored in this project) is
+   one: on 2026-10-31 a biotech IND's Author list led with four SOPs. The
+   authoring row does not say it is controlled; the QMS register does, by
+   `authoring_document_id` (GET /api/mdx/qms/documents?program_id=, the read
+   Review's Quality section counts). So the register's rows are listed under
+   their own heading, below the filing's. A register that cannot be read leaves
+   the list as one, and says why. */
+type QualityDocumentIds =
+  | { state: 'off' | 'reading' | 'failed' }
+  | { state: 'ready'; ids: ReadonlySet<string> };
+
+function useQualityDocumentIds(pid: string | null, enabled: boolean): QualityDocumentIds {
+  const url = pid && enabled ? QUALITY_READS(pid).documents : null;
+  const read = useLiveData<QmsListRead>(url, [url], isQmsList);
+  const { loading, error, data } = read;
+  return useMemo<QualityDocumentIds>(() => {
+    if (!url) return { state: 'off' };
+    if (loading) return { state: 'reading' };
+    if (error || !Array.isArray(data)) return { state: 'failed' };
+    return { state: 'ready', ids: new Set(data.map((row) => String(row.authoring_document_id ?? '').toLowerCase()).filter(Boolean)) };
+  }, [url, loading, error, data]);
+}
+
+/** The filing's documents, and the quality documents among the rows, by the register. */
+function splitQualityDocuments(rows: BuiltDocument[], quality: QualityDocumentIds): { filing: BuiltDocument[]; controlled: BuiltDocument[] } {
+  if (quality.state !== 'ready') return { filing: rows, controlled: [] };
+  const isControlled = (doc: BuiltDocument) => quality.ids.has(doc.id.toLowerCase());
+  return { filing: rows.filter((doc) => !isControlled(doc)), controlled: rows.filter(isControlled) };
+}
+
+function QualityDocumentList({ rows, onOpen }: { rows: BuiltDocument[]; onOpen: (doc: BuiltDocument) => void }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="pj-rv-group" data-testid="pj-quality-documents">
+      <h3 className="pj-rv-h">Quality documents <span className="pj-rv-n">{rows.length}</span></h3>
+      <p className="cdl-note">Controlled documents of this project’s quality system. They are not part of the filing.</p>
+      <ul className="cdl-list" aria-label="This project’s quality documents">
+        {rows.map((doc) => <ProjectDocumentRow key={doc.id} doc={doc} onOpen={onOpen} />)}
+      </ul>
+    </div>
+  );
+}
+
+function ProjectDocumentsBody({ read, quality, onRetry, onOpen }: {
+  read: ListRead; quality: QualityDocumentIds; onRetry: () => void; onOpen: (doc: BuiltDocument) => void;
 }) {
   const rows = rowsOf(read);
   if (read.state === 'error' && !rows) {
@@ -1347,10 +1402,11 @@ function ProjectDocumentsBody({ read, onRetry, onOpen }: {
       />
     );
   }
-  if (!rows) return <div role="status" aria-busy="true" className="cdl-note">Reading this project’s documents…</div>;
+  if (!rows || quality.state === 'reading') return <div role="status" aria-busy="true" className="cdl-note">Reading this project’s documents…</div>;
   if (rows.length === 0) {
     return <p className="cdl-empty" data-testid="pj-docs-empty">No documents in this project yet. Ask AnA in the box above to draft one.</p>;
   }
+  const { filing, controlled } = splitQualityDocuments(rows, quality);
   return (
     <>
       {read.state === 'error' && (
@@ -1359,17 +1415,30 @@ function ProjectDocumentsBody({ read, onRetry, onOpen }: {
           <button type="button" className="btn ghost" onClick={onRetry}>Retry</button>
         </div>
       )}
-      <ul className="cdl-list" aria-label="This project’s documents" data-testid="pj-documents">
-        {rows.map((doc) => <ProjectDocumentRow key={doc.id} doc={doc} onOpen={onOpen} />)}
-      </ul>
+      {filing.length > 0 ? (
+        <ul className="cdl-list" aria-label="This project’s documents" data-testid="pj-documents">
+          {filing.map((doc) => <ProjectDocumentRow key={doc.id} doc={doc} onOpen={onOpen} />)}
+        </ul>
+      ) : (
+        <p className="cdl-empty" data-testid="pj-docs-empty">No filing documents in this project yet. Ask AnA to draft one.</p>
+      )}
+      <QualityDocumentList rows={controlled} onOpen={onOpen} />
+      {quality.state === 'failed' && (
+        <p className="cdl-note" role="status" data-testid="pj-quality-documents-unread">
+          Quality documents may be listed with the filing’s: the project’s quality document register could not be read.
+        </p>
+      )}
     </>
   );
 }
 
-function ProjectDocuments({ read, onRetry, onOpen, onNav, available, cmcComposes }: {
-  read: ListRead; onRetry: () => void; onOpen: (doc: BuiltDocument) => void;
+function ProjectDocuments({ pid, read, onRetry, onOpen, onNav, available, cmcComposes }: {
+  pid: string | null; read: ListRead; onRetry: () => void; onOpen: (doc: BuiltDocument) => void;
   onNav: (id: string) => void; available: (id: string) => boolean; cmcComposes?: boolean;
 }) {
+  /* Quality's register is read where Quality is in this release; elsewhere no
+     controlled document is authored, and the list is the filing's. */
+  const quality = useQualityDocumentIds(pid, available('quality'));
   /* The editor's own view, with no document named: any pending target is
      dropped so an older one cannot ride along (editorTarget.ts). */
   const openAuthoring = () => {
@@ -1403,7 +1472,7 @@ function ProjectDocuments({ read, onRetry, onOpen, onNav, available, cmcComposes
           )}
         </span>
       </div>
-      <ProjectDocumentsBody read={read} onRetry={onRetry} onOpen={onOpen} />
+      <ProjectDocumentsBody read={read} quality={quality} onRetry={onRetry} onOpen={onOpen} />
     </section>
   );
 }
@@ -1439,7 +1508,7 @@ function AuthorWorkspace({
   const copyFor = filingCopyIn(docs);
   return (
     <>
-        <ProjectDocuments read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} cmcComposes={cmcComposes} />
+        <ProjectDocuments pid={pid} read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} cmcComposes={cmcComposes} />
 
         {/* Module completion, from the same dossier read as the card (F23). */}
         <ModuleCompletion read={dossier} copyFor={copyFor} onOpen={onOpenDoc} onAsk={onAsk} />
@@ -1508,6 +1577,56 @@ function ProjectReportsDoor({ onNav }: { onNav: (id: string) => void }) {
         {REPORTS_DOOR} {I.right}
       </button>
     </div>
+  );
+}
+
+/** A market's verdict in the header opens Submit at that market: the step, then
+ *  the market's verdict and the gates under it, scrolled to and focused so a
+ *  keyboard or screen-reader user lands where the blockers are read. */
+function openMarketOnSubmit(chooseStage: (stage: string) => void, submissionId: number): void {
+  chooseStage('submit');
+  requestAnimationFrame(() => {
+    const verdict = document.querySelector<HTMLElement>(`[data-testid="pj-markets"] [data-market="${submissionId}"] .pj-mkt-verdict`);
+    verdict?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    verdict?.focus({ preventScroll: true });
+  });
+}
+
+/** The line under the project's name. Stored values are said in words
+ *  (projectWords.ts): it read "active · priority: high · planning" (2026-10-31). */
+function ProjectTags({ tags: t }: { tags: {
+  clientType: string | null; submissionType: string | null; regionLabel: string | null; indication: string | null;
+  status: string | null; priority: string | null; phase: string | null;
+} }) {
+  return (
+    <div className="pj-tags">
+      {t.clientType && <span className="rd-chip tone-ai">{t.clientType}</span>}
+      {t.submissionType && <span className="rd-chip tone-idle">{t.submissionType}</span>}
+      {t.regionLabel && <span className="rd-chip tone-idle">{t.regionLabel}</span>}
+      {t.indication && <span className="rd-chip tone-idle">{t.indication}</span>}
+      {t.status && <span className={`rd-chip ${PROGRAM_STATUS_TONE[t.status] ?? 'tone-idle'}`}>{enumWords(t.status)}</span>}
+      {t.priority && <span className={`rd-chip ${PRIORITY_TONE[t.priority] ?? 'tone-idle'}`}>{enumWords(t.priority)} priority</span>}
+      {t.phase && <span className="rd-chip tone-idle">{enumWords(t.phase)}</span>}
+    </div>
+  );
+}
+
+/** In the About card, beside every step: the project's work areas (Study & protocol,
+ *  Biostatistics, CMC / Module 3, Risk-based monitoring, as its track has them),
+ *  then its reports. The work areas wait for the project's read, which says its track. */
+function ProjectHeaderDoors({ pid, prog, deviceFiling, cmcComposes, available, onNav }: {
+  pid: string | null; prog: ProgramRow | null; deviceFiling: boolean; cmcComposes: boolean;
+  available: (id: string) => boolean; onNav: (id: string) => void;
+}) {
+  const read = pid && prog?.id === pid ? prog : null;
+  return (
+    <>
+      {read && (
+        <ProjectCoreWork programId={pid} available={available} onNav={onNav}
+          track={{ deviceFiling, riskBasedMonitoring: read.riskBasedMonitoring === true, cmcComposes }} />
+      )}
+      <ProjectReportsDoor onNav={onNav} />
+    </>
   );
 }
 
@@ -1645,7 +1764,8 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
     const t = (prog?.program_type ?? '').toUpperCase();
     return t === 'IND' ? 'IND number' : t === 'NDA' ? 'NDA number' : t === 'BLA' ? 'BLA number' : t === 'MAA' ? 'MAA number' : 'Application number';
   })();
-  const status = sel?.status || prog?.status || null;
+  /* The read's status first: the selection's is what the list said when it was opened. */
+  const status = prog?.status || sel?.status || null;
   const priority = prog?.priority ?? null;
   const phase = prog?.phase ?? null;
   /* The device taxonomy, read from the row only. A device / IVD program shows
@@ -1859,15 +1979,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
           <h1 className="pj-title">{title ?? 'Project home'}</h1>
           {progState.loading && <div role="status" className="pj-desc" style={{ color: 'var(--text-400)' }}>Loading project…</div>}
           {desc && <div className="pj-desc">{desc}</div>}
-          <div className="pj-tags">
-            {clientType && <span className="rd-chip tone-ai">{clientType}</span>}
-            {submissionType && <span className="rd-chip tone-idle">{submissionType}</span>}
-            {region && <span className="rd-chip tone-idle">{regionLabel}</span>}
-            {indication && <span className="rd-chip tone-idle">{indication}</span>}
-            {status && <span className={`rd-chip ${PROGRAM_STATUS_TONE[status] ?? 'tone-idle'}`}>{status}</span>}
-            {priority && <span className={`rd-chip ${PRIORITY_TONE[priority] ?? 'tone-idle'}`}>priority: {priority}</span>}
-            {phase && <span className="rd-chip tone-idle">{phase}</span>}
-          </div>
+          <ProjectTags tags={{ clientType, submissionType, regionLabel, indication, status, priority, phase }} />
         </div>
         {pid && <ProjectSettings programId={pid} onSaved={() => setMetadataEpoch(value => value + 1)} />}
       </div>
@@ -1929,16 +2041,15 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                 monitoring={prog?.id === pid && prog.riskBasedMonitoring === true && !progState.loading && !progState.error}
                 onMonitoring={() => { const bearer = getAuthToken(); if (bearer && monitoringMounted.current && monitoringCurrent() && projectSession.sameRevision() && authService.captureSessionReadGuard(bearer).current()) onNav('rbm'); }} />
               <DataRoom key={pid} pid={pid} onNav={onNav} onAsk={ask} />
-              <ComingLater stage="evidence" device={deviceFiling} />
             </div>
           )}
 
-          {/* Submit — one row per market, each with its own server verdict
-              (F9), then what Lifecycle promised, named as coming later (F2). */}
+          {/* Submit — one row per market, each with its own server verdict (F9).
+              The steps carry no roadmap lines ("Coming later", removed 2026-10-31):
+              a client sees what works, not what is planned. */}
           {stage === 'submit' && pid && (
             <div className="pj-stagebody">
               <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} deviceFiling={deviceFiling} project={prog?.id === pid ? prog : null} canChange={prog?.canChange} documentClass={documentClass} regionalApplication={regionalApplication} usInd={usInd} />
-              <ComingLater stage="submit" device={deviceFiling} />
             </div>
           )}
 
@@ -1956,7 +2067,6 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                   F6, 2026-10-30; P-61 item 5). The verified integer project and
                   the program are both admitted by the route before any read. */}
               {deviceFiling && <ProjectClientReview programId={pid} projectId={sharingProjectId} />}
-              <ComingLater stage="review" device={deviceFiling} />
             </div>
           )}
 
@@ -1965,23 +2075,19 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
           {stage === 'respond' && pid && <ProjectRespond pid={pid} markets={markets} onNav={onNav} onAsk={ask} />}
 
           {/* Author — the project's documents, each opened by id, then module
-              completion, the person's work, records and the team; then what
-              this step will hold, in words (slice A.1). */}
+              completion, records and activity. */}
           {stage === 'author' && (
-            <>
-              <AuthorWorkspace
-                pid={pid}
-                dossier={dossier}
-                onNav={onNav}
-                onAsk={ask}
-                activityState={activityState}
-                docs={docsRead}
-                onRetryDocs={reloadDocs}
-                onOpenDoc={openDocument}
-                cmcComposes={cmcComposes}
-              />
-              <ComingLater stage="author" device={deviceFiling} />
-            </>
+            <AuthorWorkspace
+              pid={pid}
+              dossier={dossier}
+              onNav={onNav}
+              onAsk={ask}
+              activityState={activityState}
+              docs={docsRead}
+              onRetryDocs={reloadDocs}
+              onOpenDoc={openDocument}
+              cmcComposes={cmcComposes}
+            />
           )}
           </div>
 
@@ -2018,9 +2124,10 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                   )}
                 </section>
               )}
-              <ProjectReportsDoor onNav={onNav} />
+              <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav} />
               {pid && !progState.error && (
-                <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
+                <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }}
+                  onOpenMarket={(submissionId) => openMarketOnSubmit(chooseStage, submissionId)} />
               )}
             </section>
             {pid && <ProjectConversations pid={pid} onNav={onNav} />}

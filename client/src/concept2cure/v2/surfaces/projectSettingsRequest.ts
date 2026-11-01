@@ -6,7 +6,8 @@ import { mutationUnconfirmed } from '../mutationOutcome';
 export type ProjectSettingsAnswer =
   | { kind: 'confirmed'; envelope: ProjectSettingsEnvelope }
   | { kind: 'unavailable' | 'refused' | 'unconfirmed' | 'retired'; message: string; code?: string; status?: number };
-const retired = (): ProjectSettingsAnswer => ({ kind: 'retired', message: 'The project, workspace or signed-in account changed. Reopen project settings. A change already sent may have completed.' });
+const RETIRED_WORDS = 'The project, workspace or signed-in account changed. Reopen project settings. A change already sent may have completed.';
+const retired = (): ProjectSettingsAnswer => ({ kind: 'retired', message: RETIRED_WORDS });
 const unknown = (): ProjectSettingsAnswer => ({ kind: 'unconfirmed', message: 'The settings save could not be confirmed. Reload saved settings before another change; your request may have been saved.' });
 const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 function errorCode(body: unknown): string | undefined {
@@ -31,6 +32,40 @@ function failure(write: ProjectSettingsWrite | undefined, status?: number, body?
   return { kind: write ? 'refused' : 'unavailable', code, status, message: serverMessage(body) || (write
     ? 'The settings change was refused. Reload saved settings before making another change.'
     : 'Project settings could not be verified. Retry the settings read.') };
+}
+
+export type ProjectArchiveAnswer =
+  | { kind: 'archived' }
+  | { kind: 'refused' | 'unconfirmed' | 'retired'; message: string; status?: number };
+const archiveUnknown = (): ProjectArchiveAnswer => ({ kind: 'unconfirmed',
+  message: 'Whether the project was archived could not be confirmed. Reload the project before trying again; it may have been archived.' });
+function archiveFailure(status?: number, body?: unknown, codeHint?: string): ProjectArchiveAnswer {
+  const code = errorCode(body) ?? codeHint;
+  if (mutationUnconfirmed(status, code)) return archiveUnknown();
+  return { kind: 'refused', status, message: serverMessage(body) || 'The project was not archived.' };
+}
+
+/**
+ * Archive the project: the existing close-out route, POST /api/c2c/projects/:id/archive
+ * (server/routes/c2c/projects.ts), which checks the person may change the project and
+ * writes the chained audit row. The reason the person gave travels in the body. The
+ * answer is confirmed only when the route names this project; anything else that may
+ * have completed is said so, never reported as done or as refused.
+ */
+export async function requestProjectArchive(scope: ProjectSettingsScope, isCurrent: () => boolean, reason: string): Promise<ProjectArchiveAnswer> {
+  const headers = projectSettingsHeaders(scope, isCurrent);
+  if (!headers) return { kind: 'retired', message: RETIRED_WORDS };
+  try {
+    const res = await apiRequest('POST', `/api/c2c/projects/${encodeURIComponent(scope.programId)}/archive`, { reason }, headers);
+    const body: unknown = await res.json().catch(() => null);
+    if (!projectSettingsHeaders(scope, isCurrent)) return { kind: 'retired', message: RETIRED_WORDS };
+    if (!res.ok) return archiveFailure(res.status, body);
+    const named = object(body) && body.ok === true && String(body.projectId ?? '').toLowerCase() === scope.programId.toLowerCase();
+    return named ? { kind: 'archived' } : archiveUnknown();
+  } catch (error) {
+    if (!projectSettingsHeaders(scope, isCurrent)) return { kind: 'retired', message: RETIRED_WORDS };
+    return error instanceof ApiRequestError ? archiveFailure(error.status, error.payload, error.code) : archiveUnknown();
+  }
 }
 
 /** Retain the full scoped and audited envelope; the shared guard owns its wire. */

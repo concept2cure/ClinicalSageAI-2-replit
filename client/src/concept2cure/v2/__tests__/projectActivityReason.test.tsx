@@ -51,8 +51,12 @@ describe('the Project home feed names a governed act and its reason', () => {
     expect(screen.getAllByTestId('pj-act-reason')).toHaveLength(1);
   });
 
-  it('a row with no governed event reads as recorded', () => {
-    expect(activityLabel(ACTIVITY[1])).toBe('c2c.project.evidence.unpin · regulatory_program');
+  it('a row with no governed event reads as its action, in words', () => {
+    /* 2026-10-31: stored names ("LEAF CREATED · submission_leaf") are said in words. */
+    expect(activityLabel(ACTIVITY[1])).toBe('Project evidence unpin');
+    expect(activityLabel({ action: 'LEAF_CREATED', resource_type: 'submission_leaf', event: null, event_agency: null })).toBe('Document placed in a sequence');
+    expect(activityLabel({ action: 'UPDATE', resource_type: 'regulatory_program', event: null, event_agency: null })).toBe('Update · Regulatory program');
+    expect(activityLabel({ action: 'DOCUMENT_ARCHIVED', resource_type: 'vault_document', event: null, event_agency: null })).toBe('Document archived');
     expect(activityLabel({ ...ACTIVITY[0], event_agency: null })).toBe('Market added');
     // A market's own application number recorded (P-44) is named in words.
     expect(activityLabel({ action: 'SUBMISSION_APPLICATION_NUMBER_RECORDED', resource_type: 'submission', event: null, event_agency: null }))

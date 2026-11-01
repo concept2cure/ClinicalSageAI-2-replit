@@ -227,7 +227,8 @@ describe('ProjectHome — source searches are completed reads', () => {
     fireEvent.change(screen.getByLabelText('Search sources by title or text'), { target: { value: 'spirometry' } });
 
     await waitFor(() => expect(screen.queryByText('protocol.pdf')).toBeNull());
-    expect(screen.getByText('csr.pdf')).toBeTruthy();
+    expect(await screen.findByText('csr.pdf')).toBeTruthy();
+    expect((screen.getByLabelText('Search sources by title or text') as HTMLInputElement).value).toBe('spirometry');
     expect(document.body.textContent).toContain('decline in spirometry at week 52');
     expect(document.body.textContent).toMatch(/1 source match .spirometry. in their title or text/);
     expect(apiRequest.mock.calls.some(([, url]) => String(url).includes('/sources?q=spirometry'))).toBe(true);

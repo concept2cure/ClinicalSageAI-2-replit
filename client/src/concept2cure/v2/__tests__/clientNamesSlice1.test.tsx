@@ -15,7 +15,7 @@
  *     constant per job (client/src/concept2cure/v2/projectDoors.ts: STEP_DOORS, DEVICE_DOORS),
  *     compared with section 9's Door names table, rendered for each device pathway, and no
  *     longer written inline anywhere else (one job, one name);
- *   - PJ_LIFECYCLE's `later` and `laterDevice`, the steps' Coming later lines (sections 3, 5.4);
+ *   - PJ_LIFECYCLE's steps, which carry no Coming later line since 2026-10-31;
  *   - the IND catalogue's phase names, as Plan reads them (buildIndDocumentCatalogSource);
  *   - the subscription's own words: the account menu, the lock copy (one source for the rail,
  *     ⌘K, Subscription & features and the unlock panel), Subscription & features' heading,
@@ -420,48 +420,21 @@ describe('A.1 · doors: one job, one name (section 9, Door names)', () => {
 
 /* ── Coming later ─────────────────────────────────────────────────────────── */
 
-describe("A.1 · each step's Coming later line (sections 3 and 5.4)", () => {
-  const lines = PJ_LIFECYCLE.flatMap((step) => [
-    [`${step.id}.later`, step.later] as const,
-    [`${step.id}.laterDevice`, step.laterDevice] as const,
-  ]);
-
-  it('Plan, Evidence, Author, Review, Submit and Respond each have one', () => {
+/* Slice A.1 gave each step a "Coming later" line (sections 3 and 5.4), and this block held each to
+   client copy. The lines were removed on 2026-10-31: a client demo read them as the product
+   apologising for itself, and Evidence's named risk-based monitoring as still to come while it works.
+   What this block holds now is that none comes back. */
+describe("A.1 · no step carries a Coming later line (removed 2026-10-31)", () => {
+  it('Plan, Evidence, Author, Review, Submit and Respond carry no roadmap field', () => {
     expect(PJ_LIFECYCLE.map((step) => step.id)).toEqual(['plan', 'evidence', 'author', 'review', 'submit', 'respond']);
-    expect(PJ_LIFECYCLE.filter((step) => !step.later?.trim()).map((step) => `${step.id} has no Coming later line`)).toEqual([]);
+    const roadmap = PJ_LIFECYCLE.filter((step) => 'later' in step || 'laterDevice' in step).map((step) => step.id);
+    expect(roadmap).toEqual([]);
   });
 
-  it('no line uses a word from "Not in client copy"', () => {
+  it('each step still says what to do on it, in client copy', () => {
+    const lines = PJ_LIFECYCLE.flatMap((step) => [[`${step.id}.now`, step.now] as const, [`${step.id}.nowDevice`, step.nowDevice] as const]);
+    expect(PJ_LIFECYCLE.filter((step) => !step.now?.trim()).map((step) => step.id)).toEqual([]);
     expect(offending(lines)).toEqual([]);
-  });
-
-  it('no line names a folded feature as a thing still to come', () => {
-    expect(namesFolded(lines)).toEqual([]);
-  });
-
-  it("Submit's lines name only Submit's rows not yet shown", () => {
-    /* Each of these is live or homed elsewhere: IND annual reports are assembled and filed in IND
-       forms (section 5.4 Submit, ind-checklist); the variation classifier and regulatory
-       intelligence run as AnA (sections 5.4 lifecycle-mgmt, 5.6 global-ri); precedent is a Plan and
-       Respond row (precedent-intelligence); market access and pharmacovigilance are document-build
-       rows (section 5.5). */
-    const NOT_SUBMIT: ReadonlyArray<[string, RegExp]> = [
-      ['IND annual-report tracking', /annual[- ]report/i],
-      ['the variation classifier', /variation classifier/i],
-      ['precedent', /precedent/i],
-      ['market access', /market access/i],
-      ['pharmacovigilance', /pharmacovigilance/i],
-    ];
-    const submit = PJ_LIFECYCLE.find((step) => step.id === 'submit');
-    const wrong = [['later', submit?.later], ['laterDevice', submit?.laterDevice]].flatMap(([field, text]) =>
-      NOT_SUBMIT.filter(([, re]) => re.test(text ?? '')).map(([what]) => `submit.${field} names ${what}: "${text}"`));
-    expect(wrong).toEqual([]);
-  });
-
-  it("Respond's line names precedent responses and FDA's Pre-Sub feedback", () => {
-    const respond = PJ_LIFECYCLE.find((step) => step.id === 'respond')?.later ?? '';
-    expect(respond).toMatch(/precedent/i);
-    expect(respond).toMatch(/Pre-Sub/i);
   });
 });
 
@@ -517,7 +490,7 @@ async function accountMenu(platformAdmin: boolean) {
       <Rail activeId="projects" onNav={onNav} collapsed={false} setCollapsed={() => {}} segment="biotech" setSegment={() => {}} />
     </NavEntitlementsProvider>,
   );
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL, undefined, undefined, expect.any(AbortSignal)));
   await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
   fireEvent.click(screen.getByTitle('Ada Rowe'));
   return { onNav, items: screen.getAllByRole('menuitem').map((b) => norm(b.textContent ?? '')) };

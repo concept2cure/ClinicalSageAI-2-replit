@@ -10,7 +10,6 @@ vi.mock('../surfaces/PlanAssign', () => ({
   AssignmentLine: () => null, AssignAction: () => null,
 }));
 vi.mock('../surfaces/ProjectMdxWorkflow', () => ({ mdxProjectPlan: () => null, ProjectMdxWorkflow: () => null }));
-vi.mock('../surfaces/ProjectComingLater', () => ({ ComingLater: () => null }));
 
 import { ProjectPlan } from '../surfaces/ProjectPlan';
 

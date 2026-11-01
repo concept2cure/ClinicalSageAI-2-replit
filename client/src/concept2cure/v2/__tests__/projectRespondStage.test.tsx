@@ -55,14 +55,9 @@ describe('Respond answers the agency (F15)', () => {
     expect(screen.getByRole('heading', { name: /The agency's open communications/ })).toBeTruthy();
     expect(await screen.findByText(/No agency communications yet/)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Start a response sequence/ })).toBeTruthy();
-    // Each inbox letter holds its questions and signed responses (2026-10-18).
-    expect(screen.getByTestId('pj-coming-later').textContent).not.toMatch(/Question-by-question tracking/);
-    /* Slice A.1: agency meetings fold into Communication, whose Meetings and recorded commitments work
-       today; the line names what Respond will hold, precedent responses and FDA's Pre-Sub feedback. */
-    expect(screen.getByTestId('pj-coming-later').textContent).toBe(
-      'Coming later: Precedent responses, showing how the agency answered similar questions before; for a US ' +
-      'device filing, FDA’s written feedback on its Pre-Sub.',
-    );
+    // Respond names nothing as coming later: the roadmap lines left the steps on 2026-10-31.
+    expect(screen.queryByTestId('pj-coming-later')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Coming later|Question-by-question tracking/);
     // The editor with no letter is no longer offered.
     expect(screen.queryByRole('button', { name: /Response authoring/ })).toBeNull();
   });

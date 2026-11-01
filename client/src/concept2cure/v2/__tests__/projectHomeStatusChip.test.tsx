@@ -41,7 +41,9 @@ function mountWithStatus(status: string) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async () => ok({}));
   render(<ProjectHome {...props()} />);
-  return screen.getByText(status);
+  /* Said in words, not as stored (2026-10-31): "at_risk" reads "At risk". */
+  const words = status.replace(/_/g, ' ');
+  return screen.getByText(words.charAt(0).toUpperCase() + words.slice(1));
 }
 
 /** Priority comes only from the program read; liveGetOrNull hands the body
@@ -53,7 +55,7 @@ async function mountWithPriority(priority: string) {
     url === `/api/c2c/projects/${PID}` ? ok({ priority }) : ok({}),
   );
   render(<ProjectHome {...props()} />);
-  return screen.findByText(`priority: ${priority}`);
+  return screen.findByText(`${priority.charAt(0).toUpperCase()}${priority.slice(1)} priority`);
 }
 
 afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });

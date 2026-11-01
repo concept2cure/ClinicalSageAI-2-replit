@@ -47,11 +47,18 @@ describe('ProjectRecords', () => {
     render(<ProjectRecords pid={PID} />);
     await waitFor(() => expect(screen.getByText('IND 12345')).toBeTruthy());
     expect(apiRequest.mock.calls[0][1]).toBe(`/api/c2c/projects/${PID}/records`);
-    expect(sectionOf('submissions').textContent).toContain('ind · fda · draft');
+    /* Stored values are said by their labels (2026-10-31: it read "ind · fda · draft"). */
+    expect(sectionOf('submissions').textContent).toContain('IND · FDA (US) · Draft');
+    expect(sectionOf('submissions').textContent).not.toMatch(/\bind\b|\bfda\b/);
     expect(sectionOf('sources').textContent).toContain('CSR-001.pdf');
+    expect(sectionOf('sources').textContent).toContain('Client document');
     expect(sectionOf('authoringDocuments').textContent).toContain('Module 2.5 Clinical Overview');
+    expect(sectionOf('authoringDocuments').textContent).toContain('Draft');
     expect(sectionOf('studyDesigns').textContent).toContain('A study of Drug X');
+    expect(sectionOf('studyDesigns').textContent).toContain('Phase 3');
     expect(sectionOf('filingDocuments').textContent).toContain('IND filing');
+    expect(sectionOf('filingDocuments').textContent).not.toMatch(/\bind\b/);
+    expect(document.body.textContent).not.toMatch(/_/);
     expect(sectionOf('vaultDocuments').textContent).toMatch(/None in this project yet/);
   });
 

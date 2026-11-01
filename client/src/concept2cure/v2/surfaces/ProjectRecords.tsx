@@ -17,6 +17,7 @@
 import React from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { enumWords, filingTypeWords, regionWords, studyPhaseWords, submissionStatusWords } from './projectWords';
 
 type RecordRow = Record<string, unknown>;
 interface RecordSection {
@@ -37,13 +38,17 @@ const SECTION_CAP = 200;
 const text = (v: unknown): string | null => (v === null || v === undefined || v === '' ? null : String(v));
 const joined = (...parts: unknown[]): string => parts.map(text).filter(Boolean).join(' · ');
 
+/* Each detail says its stored values by their labels (projectWords.ts): it read
+   "ind · fda · planning" (2026-10-31). A title falls back to words, never to an
+   internal id. */
 const SECTIONS: ReadonlyArray<{ key: SectionKey; label: string; title: (r: RecordRow) => string; detail: (r: RecordRow) => string }> = [
-  { key: 'submissions', label: 'Submissions', title: (r) => text(r.title) ?? `Submission ${text(r.id)}`, detail: (r) => joined(r.application_type, r.primary_region, r.status) },
-  { key: 'sources', label: 'Data Room sources', title: (r) => text(r.title) ?? `Source ${text(r.id)}`, detail: (r) => joined(r.source_type) },
-  { key: 'authoringDocuments', label: 'Authoring documents', title: (r) => text(r.title) ?? 'Untitled document', detail: (r) => joined(r.status) },
+  { key: 'submissions', label: 'Submissions', title: (r) => text(r.title) ?? 'Untitled submission',
+    detail: (r) => joined(filingTypeWords(r.application_type), regionWords(r.primary_region), submissionStatusWords(r.status)) },
+  { key: 'sources', label: 'Data Room sources', title: (r) => text(r.title) ?? 'Untitled source', detail: (r) => joined(enumWords(r.source_type)) },
+  { key: 'authoringDocuments', label: 'Authoring documents', title: (r) => text(r.title) ?? 'Untitled document', detail: (r) => joined(enumWords(r.status)) },
   { key: 'vaultDocuments', label: 'Vault documents', title: (r) => text(r.document_title) ?? text(r.document_code) ?? 'Document', detail: (r) => joined(r.document_code, r.version != null ? `v${r.version}` : null) },
-  { key: 'studyDesigns', label: 'Study designs', title: (r) => text(r.title) ?? text(r.id) ?? 'Study design', detail: (r) => joined(r.study_phase, r.protocol_status) },
-  { key: 'filingDocuments', label: 'Filing documents', title: (r) => text(r.title) ?? text(r.id) ?? 'Filing document', detail: (r) => joined(r.doc_type) },
+  { key: 'studyDesigns', label: 'Study designs', title: (r) => text(r.title) ?? 'Untitled study design', detail: (r) => joined(studyPhaseWords(r.study_phase), enumWords(r.protocol_status)) },
+  { key: 'filingDocuments', label: 'Filing documents', title: (r) => text(r.title) ?? 'Untitled filing document', detail: (r) => joined(filingTypeWords(r.doc_type)) },
 ];
 
 function SectionBody({ section, title, detail }: {

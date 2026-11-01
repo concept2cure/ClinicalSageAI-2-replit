@@ -29,7 +29,9 @@
  * Submission Readiness's own detail, imported from DispatchReadiness.tsx (F10,
  * P-33: the one dispatch verdict per sequence, shown inside Submit). Submit no
  * longer has a door to a second readiness screen; that screen draws this same
- * list and detail.
+ * list and detail. On Submit a blocked market first says what must close, one
+ * plain sentence per thing with its act (MarketBlockers.tsx, 2026-10-31), and
+ * keeps that detail, rule ids and all, behind "Rule detail".
  *
  * "Add a market" opens the Submission Center's New submission form with the
  * open project named (FILING_SPINE.md F9; the form takes the project, F20).
@@ -48,7 +50,8 @@ import { MarketApplicationNumber } from './MarketApplicationNumber';
 import { STEP_DOORS } from '../projectDoors';
 import { getSurfaceMeta } from '../registryModel';
 import { mdxProjectPlan, PATHWAY_FEATURES, type MdxWorkflowProject } from './ProjectMdxWorkflow';
-import { MarketGateDetail } from './DispatchReadiness';
+import { MarketBlockers } from './MarketBlockers';
+import { enumWords } from './projectWords';
 import {
   awaitingOwnReleaseSignature,
   programTypeLabel,
@@ -206,7 +209,7 @@ const SUB_ROW_TONE: Record<string, string> = { ai: 'acc', ok: 'ok', idle: 'idle'
 export interface CenterTarget {
   submissionId?: number;
   sequenceId?: number;
-  ws: 'validation' | 'sequences' | 'portfolio' | 'builder' | 'dispatch';
+  ws: 'validation' | 'sequences' | 'portfolio' | 'builder' | 'dispatch' | 'shadow-review';
   /** Open New submission on arrival ("Add a market"). */
   newSubmission?: boolean;
   /** In the Builder: open the placement form at, or mark the leaf at, a section (F18). */
@@ -271,7 +274,7 @@ function MarketRow({ m, onRetry, onOpen, detail, number }: {
         <span className="pj-file-status" data-s={SUB_ROW_TONE[SUB_STATUS_TONE[s.status] ?? 'idle'] ?? 'idle'}>
           {SUB_STATUS_LABEL[s.status] ?? s.status}
         </span>
-        {s.lifecycleStage && <span className="pj-file-m" data-testid="pj-market-stage">{s.lifecycleStage} stage</span>}
+        {s.lifecycleStage && <span className="pj-file-m" data-testid="pj-market-stage">{enumWords(s.lifecycleStage)} stage</span>}
       </div>
       <div className="pj-file-n">{s.title}{s.productName ? ` · ${s.productName}` : ''}</div>
       {sequence && <div className="pj-file-m">{sequenceLine(sequence, m.read.state === 'verdict' ? m.read.assessment : null)}</div>}
@@ -514,7 +517,7 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
       {deviceFiling && <p className="pj-mkt-note">Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.</p>}
       <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
         startHint={deviceFiling ? ' Existing submissions appear here when recorded to this project.' : undefined}
-        detail={(m) => <MarketGateDetail m={m} onNav={onNav} center={center} />}
+        detail={(m) => <MarketBlockers m={m} onNav={onNav} center={center} />}
         number={(m) => <MarketApplicationNumber submissionId={m.submission.id} canChange={canChange}
           onChanged={() => markets.retryMarket(m.submission.id)} />} />
     </section>
@@ -551,14 +554,32 @@ function reviewWords(r: ReviewCountRead, retry: (fn: () => void) => () => void):
   return <span className="pj-status-item" data-tone="idle" data-testid="pj-status-reviews">{count} in review</span>;
 }
 
+/** One market's verdict in the header line. With `onOpen` it is a button that opens
+ *  the Submit step at that market's gates (2026-10-31: "Dispatch blocked · 4 blockers"
+ *  was words with nowhere to go). */
+function MarketStatusItem({ m, onOpen }: { m: ProgramMarket; onOpen?: (submissionId: number) => void }) {
+  const v = marketVerdict(m.read);
+  const name = marketName(m.submission);
+  const words = <><span aria-hidden="true">{v.icon}</span> <b>{name}</b> {v.text}</>;
+  if (!onOpen) return <span className="pj-status-item" data-tone={v.tone}>{words}</span>;
+  return (
+    <button type="button" className="pj-status-item pj-status-open" data-tone={v.tone} data-testid="pj-status-market"
+      onClick={() => onOpen(m.submission.id)}>
+      {words}<span className="pj-sr">. Open it on Submit</span> <span className="pj-status-go" aria-hidden="true">{I.right}</span>
+    </button>
+  );
+}
+
 /** The line under the project header: each market's verdict and the number
  *  of documents in review, from the same reads the Submit and Review tabs
  *  show. Nothing in it is computed beyond counting rows the server returned. */
-export function ProjectStatusLine({ markets, reviews, documentClass = null, regionalApplication = null }: {
+export function ProjectStatusLine({ markets, reviews, documentClass = null, regionalApplication = null, onOpenMarket }: {
   markets: ProgramMarkets; reviews: ReviewCountRead;
   /** A filing document class has no market to wait for: "No market yet" would promise one. */
   documentClass?: FilingDocumentClass | null;
   regionalApplication?: RegionalDeviceApplicationClass | null;
+  /** Opens the Submit step at this market's gates. Without it the verdict is words only. */
+  onOpenMarket?: (submissionId: number) => void;
 }) {
   const { list } = markets;
   const lineRef = React.useRef<HTMLDivElement>(null);
@@ -585,14 +606,7 @@ export function ProjectStatusLine({ markets, reviews, documentClass = null, regi
   } else if (markets.markets.length === 0) {
     marketItems = <span className="pj-status-item" data-tone="idle">{documentClass ? 'Authored here, not sequenced' : 'No market yet'}</span>;
   } else {
-    marketItems = markets.markets.map((m) => {
-      const v = marketVerdict(m.read);
-      return (
-        <span key={m.submission.id} className="pj-status-item" data-tone={v.tone}>
-          <span aria-hidden="true">{v.icon}</span> <b>{marketName(m.submission)}</b> {v.text}
-        </span>
-      );
-    });
+    marketItems = markets.markets.map((m) => <MarketStatusItem key={m.submission.id} m={m} onOpen={onOpenMarket} />);
   }
   return (
     <div className="pj-status" role="group" data-testid="pj-status-line" aria-label="Where this filing stands" ref={lineRef} tabIndex={-1}>

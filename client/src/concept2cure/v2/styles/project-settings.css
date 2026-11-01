@@ -3,6 +3,10 @@
 .c2c-v2 .pj-settings-panel{clear:both;padding:16px;margin-top:44px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);}
 .c2c-v2 .pj-settings-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
 .c2c-v2 .pj-settings-note{font-size:12px;line-height:1.5;overflow-wrap:anywhere;}
+/* Archive: its own block below the settings, a close-out rather than a field. */
+.c2c-v2 .pj-settings-archive{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+.c2c-v2 .pj-settings-archive h3{margin:0 0 4px;font-size:13px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .pj-settings-archive>button{margin-top:6px;}
 .c2c-v2 .pj:has(.pj-settings-panel)>.pj-top{flex-wrap:wrap;}
 .c2c-v2 .pj:has(.pj-settings-panel)>.pj-top>.pj-settings{flex-basis:100%;}
 @media(max-width:600px){.c2c-v2 .pj-top:has(.pj-settings){flex-wrap:wrap;}.c2c-v2 .pj-settings{flex-basis:100%;}.c2c-v2 .pj-settings>button{float:none;}.c2c-v2 .pj-settings-panel{margin-top:12px;}.c2c-v2 .pj-settings-panel .npw-fields{grid-template-columns:1fr;}}

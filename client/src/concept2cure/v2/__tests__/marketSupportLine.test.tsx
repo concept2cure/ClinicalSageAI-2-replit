@@ -83,8 +83,8 @@ describe('market rows state what the platform can carry (F19)', () => {
     expect(within(nda).getByTestId('market-support').textContent).toBe('Module 1 to the agency\'s headings. Transmit not proven: the ESG transmission is not signed as FDA requires.');
     await waitFor(() => expect(within(maa).getByTestId('market-support').getAttribute('data-state')).toBe('limited'));
     expect(within(maa).getByTestId('market-support').textContent).toContain('Module 1 without the agency\'s headings, no channel');
-    expect(apiRequest).toHaveBeenCalledWith('GET', marketSupportPath('nda', 'fda'));
-    expect(apiRequest).toHaveBeenCalledWith('GET', marketSupportPath('maa', 'eu'));
+    expect(apiRequest).toHaveBeenCalledWith('GET', marketSupportPath('nda', 'fda'), undefined, undefined, expect.any(AbortSignal));
+    expect(apiRequest).toHaveBeenCalledWith('GET', marketSupportPath('maa', 'eu'), undefined, undefined, expect.any(AbortSignal));
   });
 
   it('a failed read says it failed and offers a retry; it never reads as a market with nothing to say', async () => {
