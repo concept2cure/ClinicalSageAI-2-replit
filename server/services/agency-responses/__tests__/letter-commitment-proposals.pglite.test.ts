@@ -74,6 +74,7 @@ describe('readLetterCommitmentProposals', () => {
   it('says which are already recorded from this letter, and no other letter counts', async () => {
     const out = await readLetterCommitmentProposals(client, SCOPE);
     expect(out.proposals.map((p) => [p.ref, p.recordedCommitmentId])).toEqual([['4321-1', 1], ['4321-3', null]]);
+    expect(out.proposals.map((p) => p.recordBasis)).toEqual(['FDCA 505(o)(3) · 4321-1', 'FDCA 506B · 4321-3']);
   });
 
   it("reads no other project's letter", async () => {

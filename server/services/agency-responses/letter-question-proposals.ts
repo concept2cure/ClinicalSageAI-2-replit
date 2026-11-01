@@ -116,6 +116,8 @@ export async function readLetterQuestionProposals(
 
 export interface LetterCommitmentProposal extends LetterCommitment {
   sourceId: number;
+  /** The basis to record it under, carrying the agency's number (commitmentBasisOf). */
+  recordBasis: string;
   /** The commitment already recorded from this letter under the same number, or null. */
   recordedCommitmentId: number | null;
 }
@@ -148,7 +150,7 @@ export async function readLetterCommitmentProposals(
   for (const { sourceId, text } of texts) {
     for (const c of splitLetterCommitments(text)) {
       const match = recorded.find((r) => String(r.regulatory_basis ?? '').endsWith(` · ${c.ref}`));
-      proposals.push({ sourceId, ...c, recordedCommitmentId: match ? Number(match.id) : null });
+      proposals.push({ sourceId, ...c, recordBasis: commitmentBasisOf(c), recordedCommitmentId: match ? Number(match.id) : null });
     }
   }
   return { sources, proposals };
