@@ -20,7 +20,7 @@
     "none": "No dedicated rendering (discovery/utility)."
   },
   "totals": {
-    "tools": 792,
+    "tools": 791,
     "byCategory": {
       "Authoring & rendering": 28,
       "Biostatistics": 12,
@@ -31,7 +31,7 @@
       "Evidence & intelligence": 52,
       "Governance & data": 13,
       "Nonclinical (M4)": 13,
-      "Other": 525,
+      "Other": 524,
       "Platform control": 2,
       "Quality management": 17,
       "Submission / eCTD": 37
@@ -28894,56 +28894,6 @@
         "purpose",
         "productType",
         "questionsToDiscuss"
-      ],
-      "derived": true
-    },
-    {
-      "name": "plan_ind_module_authoring",
-      "category": {
-        "id": "other",
-        "label": "Other"
-      },
-      "description": "Plan an IND transcription scaffold (CTD Module 2.5 Clinical Overview or 2.7 Clinical Summary) from unverified caller/model-supplied structured facts. Returns the author_docx_native title + markdown content with supported template headers and required_strings for later transcription checks. The returned verification is plan-text self-consistency only: this tool does not author a file or independently verify an artifact, underlying study, source qualification, or provenance. The planning receipt is always non-sealable, even with provenance live and verification.ok true. Verify the actual governed artifact and its qualified source evidence separately before sealing. Supply facts in `facts`.",
-      "scope": "global",
-      "governed": true,
-      "renderer": "document-canvas",
-      "example": "",
-      "inputs": [
-        {
-          "name": "module",
-          "type": "string",
-          "required": true,
-          "description": "Supported CTD Module 2 template to plan: 2.5 (Clinical Overview) or 2.7 (Clinical Summary)."
-        },
-        {
-          "name": "product_name",
-          "type": "string",
-          "required": true,
-          "description": "Product / compound name for the title + running header."
-        },
-        {
-          "name": "indication",
-          "type": "string",
-          "required": true,
-          "description": "Proposed indication."
-        },
-        {
-          "name": "facts",
-          "type": "array",
-          "required": false,
-          "description": "Unverified caller/model-supplied facts/figures to transcribe verbatim. Each value becomes a required_strings entry for plan-text self-consistency; this does not qualify the underlying source."
-        },
-        {
-          "name": "provenance",
-          "type": "string",
-          "required": false,
-          "description": "Caller-declared provenance label; it does not establish source qualification or sealability. All planning receipts are non-sealable."
-        }
-      ],
-      "requiredInputs": [
-        "module",
-        "product_name",
-        "indication"
       ],
       "derived": true
     },
