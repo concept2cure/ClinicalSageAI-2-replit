@@ -1733,3 +1733,30 @@ The founder, 2026-11-01, on the RIM session's question, confirming all four poin
 The unsigned milestone work for meeting commitments (listing, adding, met and withdrawn) is S9 and needed no decision.
 
 Nothing else in the plan changes.
+
+### P-89 — An unverified figure blocks an approval or a seal unless the signer acknowledges each one
+
+The founder, 2026-11-01. The AI architecture session asked: "Two decisions are still open for you: should an
+unchecked figure block a signature unless the signer acknowledges it, and should the self-hosted Docling layout
+reader be enabled?" (`docs/design/AI_PLATFORM_BLUEPRINT_GAP_2026-10-25.md`, decisions 1 and 2). The founder answered:
+"Yes to all". This is the first of the two; P-90 is the second.
+
+- **What it covers.** An approval, meaning `/e-sign` or `/sign` as APPROVER, and a seal (`/freeze`) of an Authoring
+  document. Each is refused while the text being signed states a figure that its section's cited project sources do
+  not hold. It may go ahead only when the signer acknowledges every such figure, one by one.
+  - Review and authorship signatures are not approvals and are not asked.
+- **What "unverified" means.** It means what the existing figure check says (`draft-figure-check.ts`): a figure in a
+  section that cites saved project sources, and that those sources do not state.
+  - The check runs again at signing, inside the signing transaction, on the text being signed. The save's record goes
+    stale on the first edit, so it is not used.
+  - When a cited source no longer verifies, its section's figures are listed as unchecked.
+  - A figure in a section that cites no sources is never compared with anything, so the checker has no "unverified"
+    to report for it. Such figures are outside this decision. Widening the gate to cover them is a further founder
+    decision.
+- **The record.** The acknowledgement is written on the act's own transaction as a chained trail row,
+  `UNVERIFIED_FIGURES_ACKNOWLEDGED`, naming each figure. The act's chained row names its digest. An acknowledgement
+  of an earlier text does not cover a changed figure.
+- **RULE 2 holds.** The engine says whether a number is in its source. It never supplies one.
+
+Nothing new is built. The figure check, the signing routes and the signing dialog exist; the gate is added to them,
+under `Plan: L1` (row D5, Part 11 evidence).
