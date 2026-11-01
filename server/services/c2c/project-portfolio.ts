@@ -1,5 +1,11 @@
 /** The portfolio card shared by GET and the canonical creator's 201 response.
- * Client means the anchor's workspace, never the regulatory applicant sponsor. */
+ * Client means the anchor's workspace, never the regulatory applicant sponsor.
+ *
+ * No `blocker` (2026-10-31). It was projected as a literal NULL — nothing at
+ * list level assesses a blocker — and the Projects list gave it a column that
+ * read "—" on every row. A project's blockers are its dispatch gate, read per
+ * sequence on Project home and in Submission Center; computing that for every
+ * row of a list is not a list read, so the field and its column are gone. */
 import { pathwaySqlCase, workstreamSqlCase, WORKSTREAM_FILING_TYPES, type Workstream } from '../../../shared/constants/domain/product-types';
 import { REGULATORY_PATHWAYS, type RegulatoryPathway } from '../../../shared/constants/mdx';
 import { projectIntakeId } from '../../../shared/project-intake-workspace';
@@ -13,7 +19,6 @@ const PROJECT_CARD_SELECT = `SELECT p.id::text AS id,
   initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
   p.status AS status,
   COALESCE(u.name, u.email, '—') AS lead,
-  NULL::text AS blocker,
   COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
   to_char(p.target_submission_date, 'YYYY-MM-DD') AS due_date,
   'Updated ' || to_char(p.updated_at, 'Mon DD') AS activity,
