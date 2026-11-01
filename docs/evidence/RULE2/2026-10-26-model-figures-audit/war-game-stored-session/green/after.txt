@@ -1,0 +1,9 @@
+# start_war_game green: the same test after the change. The 38-file neighbourhood (619 tests) also passes.
+
+ ✓ server/services/ana/__tests__/war-game-scores-the-stored-interview.test.ts > start_war_game takes no answers from the call > without a session it refuses, scores nothing and records no WAR_GAME_RUN 9ms
+ ✓ server/services/ana/__tests__/war-game-scores-the-stored-interview.test.ts > start_war_game takes no answers from the call > with a session it scores the stored answers, whatever the call carries 33ms
+ ✓ server/services/ana/__tests__/war-game-scores-the-stored-interview.test.ts > start_war_game takes no answers from the call > records the stored interview it scored 2ms
+ ✓ server/services/ana/__tests__/war-game-scores-the-stored-interview.test.ts > start_war_game takes no answers from the call > refuses an abandoned interview, and one that cannot be read, without recording a run 1ms
+ ✓ server/services/ana/__tests__/war-game-scores-the-stored-interview.test.ts > the definition asks for the session, not the answers > takes session_id, has no answers field, and says it reads the stored interview 1ms
+ Test Files  1 passed (1)
+      Tests  5 passed (5)

@@ -1,0 +1,14 @@
+# start_war_game red: war-game-scores-the-stored-interview.test.ts on trunk ffdfed428. 5 of 5 fail.
+
+ × server/services/ana/__tests__/war-game-scores-the-stored-interview.test.ts > start_war_game takes no answers from the call > without a session it refuses, scores nothing and records no WAR_GAME_RUN 46ms
+   → expected { success: true, …(1) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/war-game-scores-the-stored-interview.test.ts > start_war_game takes no answers from the call > with a session it scores the stored answers, whatever the call carries 6ms
+   → expected "vi.fn()" to be called with arguments: [ { organizationId: 7, …(1) } ]
+ × server/services/ana/__tests__/war-game-scores-the-stored-interview.test.ts > start_war_game takes no answers from the call > records the stored interview it scored 5ms
+   → expected { category: 'csr', …(4) } to match object { …(2) }
+ × server/services/ana/__tests__/war-game-scores-the-stored-interview.test.ts > start_war_game takes no answers from the call > refuses an abandoned interview, and one that cannot be read, without recording a run 11ms
+   → expected { success: true, …(1) } to match object { session_status: 'abandoned' }
+ × server/services/ana/__tests__/war-game-scores-the-stored-interview.test.ts > the definition asks for the session, not the answers > takes session_id, has no answers field, and says it reads the stored interview 4ms
+   → expected [ 'war_game_category', …(2) ] to not include 'answers'
+ Test Files  1 failed (1)
+      Tests  5 failed (5)

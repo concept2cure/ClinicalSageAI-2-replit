@@ -8,9 +8,11 @@
  * (PRR, ROR, EBGM concepts), validated-signal prioritization, and
  * pharmacovigilance system design (QPPV / PSMF / safety database / RMP).
  *
- * NO LLM, NO network, NO database, NO imports from other services. Every
- * function is closed-form and reproducible: identical input always yields
- * identical output.
+ * NO LLM, NO network, NO database. Its only imports are the shared stated-input
+ * readers and their refusal. Every function is closed-form and reproducible:
+ * identical input always yields identical output. An omitted fact reads as
+ * not_stated, what it decides as not_assessed (or null), and a required fact is
+ * refused by name.
  *
  * Regulatory citations (verbatim, do not paraphrase into law):
  *   - ICH E2A (1994) — Clinical Safety Data Management: Definitions and
@@ -39,6 +41,9 @@
  * @module server/services/pharmacovigilance/pharmacovigilance-knowledge
  */
 
+import { ComputationRefusal, refuseUnlessStated } from '../ana-biostats/computation-engine';
+import { booleanInputStates } from '../immunogenicity/immunogenicity-reference';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 0. Shared Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,6 +63,25 @@ export interface ReportingClock {
 
 /** Three-tier yes/no/unknown used widely in PV decision logic. */
 export type Trilean = 'yes' | 'no' | 'unknown';
+
+const STAGES: readonly ProductStage[] = ['investigational', 'marketed', 'both'];
+const REGIONS: readonly PVRegion[] = ['fda', 'eu', 'both'];
+
+/** Refuse, naming each, a required fact not stated in a readable form. */
+function requireStated(fn: string, params: object, fields: Record<string, readonly string[] | 'boolean'>): void {
+  const values = params as Record<string, unknown>;
+  refuseUnlessStated(fn, Object.entries(fields).map(([field, allowed]) => {
+    const value = values[field];
+    return allowed === 'boolean'
+      ? { field, value, ok: typeof value === 'boolean', expected: 'true or false' }
+      : { field, value, ok: typeof value === 'string' && allowed.includes(value), expected: `one of ${allowed.join(', ')}` };
+  }), 'assessed');
+}
+
+/** True if a stated fact is true, false if all are stated false, null if an unstated one decides. */
+function anyTrue(states: readonly (boolean | 'not_stated')[]): boolean | null {
+  return states.includes(true) ? true : states.includes('not_stated') ? null : false;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 1. Seriousness Criteria (ICH E2A / E2D, GVP Annex I)
@@ -212,7 +236,8 @@ export interface ExpeditedReportingParams {
 
 export interface ExpeditedReportingObligationItem {
   region: 'fda' | 'eu';
-  reportable: boolean;
+  /** null when the fact that decides it was not stated. */
+  reportable: boolean | null;
   reportType: string;
   clock: ReportingClock | null;
   destination: string;
@@ -228,20 +253,37 @@ export interface ExpeditedReportingResult {
   relatedness: 'related' | 'not_related' | 'unknown';
   reasonableCausalRelationship: boolean;
   obligations: ExpeditedReportingObligationItem[];
-  fastestClockDays: number | null;
+  /** null when nothing is reportable; not_assessed when an unstated fact decides a clock. */
+  fastestClockDays: number | null | 'not_assessed';
+  /** not_stated when seriousnessCriteria was omitted, or empty for a serious case. */
+  fatalOrLifeThreatening: boolean | 'not_stated';
+  inputStates: Record<string, boolean | 'not_stated'>;
   rationale: string[];
   warnings: string[];
   citations: string[];
 }
 
-/** True if the case carries a death or life-threatening seriousness flag. */
-function hasFatalOrLifeThreatening(
-  criteria: SeriousnessCriterion[] | undefined,
-): boolean {
-  if (!criteria) return false;
-  return criteria.some(
-    (c: SeriousnessCriterion) => c === 'death' || c === 'life_threatening',
-  );
+/**
+ * True if the case carries a death or life-threatening seriousness flag;
+ * not_stated when no criteria were stated, or none for a serious case (before
+ * 2026-11-01 both read as false: the 15-day clock).
+ */
+function hasFatalOrLifeThreatening(criteria: unknown, serious: boolean): boolean | 'not_stated' {
+  if (criteria === undefined || criteria === null) return 'not_stated';
+  const known: string[] = SERIOUSNESS_CRITERIA.map((c: SeriousnessCriterionInfo) => c.criterion);
+  if (!Array.isArray(criteria) || !criteria.every((c: unknown) => typeof c === 'string' && known.includes(c))) {
+    const message = `seriousnessCriteria must be a list from ${known.join(', ')}. Leave it out if it is not known.`;
+    throw new ComputationRefusal('invalid_input', message, 'seriousnessCriteria');
+  }
+  // A serious case meets at least one criterion, so an empty list for one names none of them.
+  if (serious && criteria.length === 0) return 'not_stated';
+  return criteria.some((c: string) => c === 'death' || c === 'life_threatening');
+}
+
+/** The 7-day or 15-day SUSAR value, or notStated when the criteria that choose it were not stated. */
+function bySusarClock<T>(fatalOrLT: boolean | 'not_stated', sevenDay: T, fifteenDay: T, notStated: T): T {
+  if (fatalOrLT === 'not_stated') return notStated;
+  return fatalOrLT ? sevenDay : fifteenDay;
 }
 
 /**
@@ -267,6 +309,13 @@ export function classifyExpeditedReporting(
   const warnings: string[] = [];
   const citations: string[] = [];
 
+  requireStated('classifyExpeditedReporting', params, {
+    stage: STAGES, serious: 'boolean', expectedness: ['expected', 'unexpected', 'unknown'],
+    relatedness: ['related', 'not_related', 'unknown'], region: REGIONS,
+  });
+  const inputStates = booleanInputStates(params, ['fromInterventionalStudy', 'occurredInEU']);
+  // Stage "both" does not say which rules apply (SUSAR or postmarketing); the source of the case does.
+  if (params.stage === 'both') requireStated('classifyExpeditedReporting', params, { fromInterventionalStudy: 'boolean' });
   const reasonableCausal = params.relatedness === 'related';
   const isUnexpected = params.expectedness === 'unexpected';
   const isDevelopment =
@@ -323,7 +372,7 @@ export function classifyExpeditedReporting(
     rationale.push('Case does not meet any ICH E2A seriousness criterion.');
   }
 
-  const fatalOrLT = hasFatalOrLifeThreatening(params.seriousnessCriteria);
+  const fatalOrLT = hasFatalOrLifeThreatening(params.seriousnessCriteria, params.serious);
   const obligations: ExpeditedReportingObligationItem[] = [];
 
   // ── FDA obligation ────────────────────────────────────────────────────────
@@ -331,21 +380,28 @@ export function classifyExpeditedReporting(
     if (isDevelopment) {
       // 21 CFR 312.32 IND Safety Reporting.
       if (params.serious && treatAsUnexpected && treatAsCausal) {
-        const clockDays = fatalOrLT ? 7 : 15;
+        const startEvent =
+          'Day 0 = sponsor first becomes aware that the case qualifies (initial receipt of minimum criteria).';
         obligations.push({
           region: 'fda',
           reportable: true,
-          reportType: fatalOrLT
-            ? 'IND Safety Report — fatal/life-threatening suspected unexpected serious adverse reaction (7-day)'
-            : 'IND Safety Report — suspected unexpected serious adverse reaction (15-day)',
-          clock: {
-            calendarDays: clockDays,
-            startEvent:
-              'Day 0 = sponsor first becomes aware that the case qualifies (initial receipt of minimum criteria).',
-            description: fatalOrLT
-              ? 'Notify FDA and all participating investigators within 7 calendar days; submit a complete report within 15 calendar days.'
-              : 'Notify FDA and all participating investigators within 15 calendar days.',
-          },
+          reportType: bySusarClock(
+            fatalOrLT,
+            'IND Safety Report — fatal/life-threatening suspected unexpected serious adverse reaction (7-day)',
+            'IND Safety Report — suspected unexpected serious adverse reaction (15-day)',
+            'IND Safety Report — suspected unexpected serious adverse reaction; 7-day or 15-day clock not assessed (seriousnessCriteria not stated)',
+          ),
+          clock: bySusarClock<ReportingClock | null>(
+            fatalOrLT,
+            {
+              calendarDays: 7,
+              startEvent,
+              description:
+                'Notify FDA and all participating investigators within 7 calendar days; submit a complete report within 15 calendar days.',
+            },
+            { calendarDays: 15, startEvent, description: 'Notify FDA and all participating investigators within 15 calendar days.' },
+            null,
+          ),
           destination:
             'FDA (CDER/CBER) via FDA Safety Reporting Portal / E2B(R3) gateway; and all participating investigators.',
           citation: '21 CFR 312.32(c)(1) — IND safety reports.',
@@ -414,21 +470,27 @@ export function classifyExpeditedReporting(
     if (isDevelopment) {
       // EU Clinical Trial Regulation (EU) No 536/2014 SUSAR reporting.
       if (params.serious && treatAsUnexpected && treatAsCausal) {
-        const clockDays = fatalOrLT ? 7 : 15;
+        const startEvent = 'Day 0 = the date the sponsor first has knowledge of the minimum criteria for reporting.';
         obligations.push({
           region: 'eu',
           reportable: true,
-          reportType: fatalOrLT
-            ? 'SUSAR — fatal/life-threatening (7-day, EU CT Regulation 536/2014)'
-            : 'SUSAR — other serious (15-day, EU CT Regulation 536/2014)',
-          clock: {
-            calendarDays: clockDays,
-            startEvent:
-              'Day 0 = the date the sponsor first has knowledge of the minimum criteria for reporting.',
-            description: fatalOrLT
-              ? 'Report to EudraVigilance (EVCTM) within 7 calendar days; relevant follow-up within an additional 8 days.'
-              : 'Report to EudraVigilance (EVCTM) within 15 calendar days.',
-          },
+          reportType: bySusarClock(
+            fatalOrLT,
+            'SUSAR — fatal/life-threatening (7-day, EU CT Regulation 536/2014)',
+            'SUSAR — other serious (15-day, EU CT Regulation 536/2014)',
+            'SUSAR (EU CT Regulation 536/2014); 7-day or 15-day clock not assessed (seriousnessCriteria not stated)',
+          ),
+          clock: bySusarClock<ReportingClock | null>(
+            fatalOrLT,
+            {
+              calendarDays: 7,
+              startEvent,
+              description:
+                'Report to EudraVigilance (EVCTM) within 7 calendar days; relevant follow-up within an additional 8 days.',
+            },
+            { calendarDays: 15, startEvent, description: 'Report to EudraVigilance (EVCTM) within 15 calendar days.' },
+            null,
+          ),
           destination:
             'EudraVigilance Clinical Trial Module (EVCTM) via E2B(R3); concerned Member States as required.',
           citation:
@@ -471,6 +533,16 @@ export function classifyExpeditedReporting(
               'cases are 15-day; expectedness still drives signal/aggregate analysis.',
           ],
         });
+      } else if (inputStates.occurredInEU === 'not_stated') {
+        obligations.push({
+          region: 'eu',
+          reportable: null,
+          reportType: 'Non-serious ICSR — not assessed: occurredInEU not stated (EEA origin => 90-day EudraVigilance report).',
+          clock: null,
+          destination: 'Not assessed.',
+          citation: 'GVP Module VI (Rev 2) VI.C.4.',
+          notes: ['Only NON-serious cases that occurred in the EEA carry the 90-day individual clock.'],
+        });
       } else {
         obligations.push({
           region: 'eu',
@@ -507,15 +579,20 @@ export function classifyExpeditedReporting(
       }
     }
   }
+  // A reportable or undetermined obligation with no clock is decided by an unstated fact.
+  const clockAssessed = !obligations.some((o) => o.reportable !== false && o.clock === null);
 
-  if (fatalOrLT && isSUSAR) {
+  const expeditedDevelopment = isDevelopment && params.serious && treatAsUnexpected && treatAsCausal;
+  if (expeditedDevelopment && fatalOrLT === 'not_stated') {
+    rationale.push('No seriousness criterion was stated => the 7-day or 15-day development clock is not assessed.');
+  } else if (expeditedDevelopment && fatalOrLT === true) {
     rationale.push(
       'A death or life-threatening seriousness flag is present => the SHORTER ' +
         '7-calendar-day clock applies (with completion of the report by Day 15).',
     );
   } else if (params.serious) {
     rationale.push(
-      'No death/life-threatening flag => the standard 15-calendar-day clock applies to expedited cases.',
+      'No 7-day development clock applies => expedited cases here take the standard 15-calendar-day clock.',
     );
   }
 
@@ -534,7 +611,9 @@ export function classifyExpeditedReporting(
     relatedness: params.relatedness,
     reasonableCausalRelationship: reasonableCausal,
     obligations,
-    fastestClockDays,
+    fastestClockDays: clockAssessed ? fastestClockDays : 'not_assessed',
+    fatalOrLifeThreatening: fatalOrLT,
+    inputStates,
     rationale,
     warnings,
     citations,
@@ -759,8 +838,10 @@ export interface CausalityResult {
   naranjoScore: number;
   naranjoCategory: NaranjoCategory;
   naranjoBreakdown: NaranjoBreakdownItem[];
-  whoUmcCategory: WHOUMCCategory;
+  /** not_assessed when informationSufficient was not stated. */
+  whoUmcCategory: WHOUMCCategory | 'not_assessed';
   whoUmcCriteria: string[];
+  inputStates: Record<string, boolean | 'not_stated'>;
   dechallenge: 'positive' | 'negative' | 'not_done' | 'unknown';
   rechallenge: 'positive' | 'negative' | 'not_done' | 'unknown';
   agreement: string;
@@ -858,10 +939,14 @@ export function assessCausality(params: CausalityParams): CausalityResult {
   const temporal = params.temporalPlausible || 'unknown';
   const altExpl = params.alternativeExplanation || 'unknown';
   const pharmKnown = params.pharmacologicallyKnown || 'unknown';
-  const infoSufficient = params.informationSufficient !== false;
+  // Every category but "unassessable" presumes sufficiency (an omitted one read as true before 2026-11-01).
+  const inputStates = booleanInputStates(params, ['informationSufficient']);
 
-  let whoUmc: WHOUMCCategory;
-  if (!infoSufficient) {
+  let whoUmc: WHOUMCCategory | 'not_assessed';
+  if (inputStates.informationSufficient === 'not_stated') {
+    whoUmc = 'not_assessed';
+    rationale.push('informationSufficient was not stated => no WHO-UMC category is assigned.');
+  } else if (inputStates.informationSufficient === false) {
     whoUmc = 'unassessable';
     rationale.push(
       'Information insufficient/contradictory and not verifiable => WHO-UMC "unassessable/unclassifiable".',
@@ -910,16 +995,16 @@ export function assessCausality(params: CausalityParams): CausalityResult {
     );
   }
 
-  const whoInfo =
-    WHO_UMC_CRITERIA.find((c: WHOUMCCategoryInfo) => c.category === whoUmc) ||
-    WHO_UMC_CRITERIA[2];
+  const whoInfo = WHO_UMC_CRITERIA.find((c: WHOUMCCategoryInfo) => c.category === whoUmc);
 
   // ── Agreement note ──────────────────────────────────────────────────────────
   const naranjoStrong =
     naranjoCategory === 'definite' || naranjoCategory === 'probable';
   const whoStrong = whoUmc === 'certain' || whoUmc === 'probable';
   let agreement: string;
-  if (naranjoStrong === whoStrong) {
+  if (whoUmc === 'not_assessed') {
+    agreement = 'WHO-UMC was not assessed, so its agreement with Naranjo is not assessed.';
+  } else if (naranjoStrong === whoStrong) {
     agreement =
       'WHO-UMC and Naranjo are CONCORDANT on the strength of the causal association.';
   } else {
@@ -948,7 +1033,8 @@ export function assessCausality(params: CausalityParams): CausalityResult {
     naranjoCategory,
     naranjoBreakdown: breakdown,
     whoUmcCategory: whoUmc,
-    whoUmcCriteria: [...whoInfo.criteria],
+    whoUmcCriteria: whoInfo ? [...whoInfo.criteria] : [],
+    inputStates,
     dechallenge,
     rechallenge,
     agreement,
@@ -1132,6 +1218,7 @@ export interface PlannedAggregateReport {
 }
 
 export interface AggregateReportPlanResult {
+  inputStates: Record<string, boolean | 'not_stated'>;
   reports: PlannedAggregateReport[];
   rationale: string[];
   warnings: string[];
@@ -1150,10 +1237,13 @@ export function planAggregateReport(
   const rationale: string[] = [];
   const warnings: string[] = [];
 
+  requireStated('planAggregateReport', params, { stage: STAGES, region: REGIONS });
+  const inputStates = booleanInputStates(params, ['marketed', 'inDevelopment', 'onEURDList', 'withinFirstThreeYearsUS']);
+  // The stated stage selects reports and a flag stated true adds one; an unstated flag selects nothing.
   const inDev =
-    params.inDevelopment === true || params.stage === 'investigational' || params.stage === 'both';
+    inputStates.inDevelopment === true || params.stage === 'investigational' || params.stage === 'both';
   const marketed =
-    params.marketed === true || params.stage === 'marketed' || params.stage === 'both';
+    inputStates.marketed === true || params.stage === 'marketed' || params.stage === 'both';
 
   // ── DSUR (development) ─────────────────────────────────────────────────────
   if (inDev) {
@@ -1180,7 +1270,11 @@ export function planAggregateReport(
     const info = getAggregateReportInfo('PBRER');
     let cadence: string;
     const yrs = params.yearsSinceAuthorization;
-    if (params.onEURDList) {
+    if (inputStates.onEURDList === 'not_stated') {
+      cadence =
+        'Not assessed: onEURDList not stated. On the EURD list, its DLP and frequency apply; otherwise ' +
+        '6-monthly for the first 2 years, annually for years 3-4, then every 3 years.';
+    } else if (inputStates.onEURDList) {
       cadence =
         'Per the EU Reference Dates (EURD) list — the EURD DLP and frequency override the default schedule.';
     } else if (typeof yrs === 'number') {
@@ -1215,18 +1309,23 @@ export function planAggregateReport(
   // ── US PADER (marketed) ────────────────────────────────────────────────────
   if (marketed && (params.region === 'fda' || params.region === 'both')) {
     const info = getAggregateReportInfo('PADER');
-    const quarterly = params.withinFirstThreeYearsUS !== false;
+    // Before 2026-11-01 an omitted withinFirstThreeYearsUS read as quarterly.
+    const quarterly = inputStates.withinFirstThreeYearsUS;
     reports.push({
       type: 'PADER',
       fullName: info.fullName,
       applicableRegion: 'fda',
-      cadence: quarterly
-        ? 'Quarterly for the first 3 years after US approval, then annually.'
-        : 'Annually (beyond the first 3 years after US approval).',
+      cadence: quarterly === 'not_stated'
+        ? 'Not assessed: withinFirstThreeYearsUS not stated. Quarterly for the first 3 years after US approval, then annually.'
+        : quarterly
+          ? 'Quarterly for the first 3 years after US approval, then annually.'
+          : 'Annually (beyond the first 3 years after US approval).',
       dataLockPoint: info.dataLockPoint,
-      submissionDeadline: quarterly
-        ? 'Within 30 calendar days of the close of each quarter.'
-        : 'Within 60 calendar days of the anniversary of US approval.',
+      submissionDeadline: quarterly === 'not_stated'
+        ? 'Not assessed: within 30 calendar days of each quarter close while quarterly; within 60 calendar days of the US approval anniversary once annual.'
+        : quarterly
+          ? 'Within 30 calendar days of the close of each quarter.'
+          : 'Within 60 calendar days of the anniversary of US approval.',
       contentModules: info.modules,
       citation: info.citation,
     });
@@ -1257,7 +1356,7 @@ export function planAggregateReport(
     'GVP Module VII (Periodic safety update report); Commission Implementing Regulation (EU) No 520/2012; EURD list.',
   ];
 
-  return { reports, rationale, warnings, citations };
+  return { inputStates, reports, rationale, warnings, citations };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1294,7 +1393,8 @@ export interface DisproportionalityMeasure {
   upper95: number;
   chiSquaredYates?: number;
   signalThreshold: string;
-  exceedsThreshold: boolean;
+  /** null (not assessed) when only an unstated DME status decides the case-count criterion. */
+  exceedsThreshold: boolean | null;
   citation: string;
 }
 
@@ -1302,7 +1402,9 @@ export interface SignalDetectionResult {
   table: { a: number; b: number; c: number; d: number };
   totalReports: number;
   measures: DisproportionalityMeasure[];
-  signalOfDisproportionateReporting: boolean;
+  /** null (not assessed) when an unstated DME status decides it. */
+  signalOfDisproportionateReporting: boolean | null;
+  inputStates: Record<string, boolean | 'not_stated'>;
   rationale: string[];
   warnings: string[];
   citations: string[];
@@ -1335,6 +1437,11 @@ function safeLn(x: number): number {
 export function detectSafetySignal(
   params: DisproportionalityParams,
 ): SignalDetectionResult {
+  // An unstated cell is refused, never computed as 0.
+  refuseUnlessStated('detectSafetySignal', (['a', 'b', 'c', 'd'] as const).map((field) => ({
+    field, value: params[field], ok: Number.isInteger(params[field]) && params[field] >= 0,
+    expected: 'a whole number of reports, 0 or more',
+  })), 'computed');
   const a = params.a;
   const b = params.b;
   const c = params.c;
@@ -1343,7 +1450,14 @@ export function detectSafetySignal(
   const warnings: string[] = [];
   const methods = params.methods && params.methods.length > 0 ? params.methods : ['PRR', 'ROR', 'EBGM'];
   const total = a + b + c + d;
-  const dme = params.designatedMedicalEvent === true;
+  const inputStates = booleanInputStates(params, ['designatedMedicalEvent']);
+  const dme = inputStates.designatedMedicalEvent;
+  // Case count: a >= 3, or a >= 1 for a DME. With 1-2 cases an unstated DME status decides it.
+  const caseCount: boolean | null =
+    a >= 3 || (a >= 1 && dme === true) ? true : a >= 1 && dme === 'not_stated' ? null : false;
+  const verdict = (x: boolean | null): string =>
+    x === null ? 'not assessed (DME status not stated)' : x ? 'SIGNAL' : 'no signal';
+  let undetermined = false;
 
   if (a < 3) {
     warnings.push(
@@ -1392,24 +1506,27 @@ export function detectSafetySignal(
     const denom = (a + b) * (c + d) * (a + c) * (b + d);
     const chi2 =
       denom > 0 && num > 0 ? (n * num * num) / denom : 0;
-    const exceeds = prr >= 2 && chi2 >= 4 && a >= (dme ? 1 : 3);
-    if (exceeds) anySignal = true;
+    const exceeds = prr >= 2 && chi2 >= 4 ? caseCount : false;
+    if (exceeds === true) anySignal = true;
+    if (exceeds === null) undetermined = true;
     measures.push({
       method: 'PRR',
       pointEstimate: round3(prr),
       lower95: round3(lower),
       upper95: round3(upper),
       chiSquaredYates: round3(chi2),
-      signalThreshold: dme
+      signalThreshold: dme === true
         ? 'PRR >= 2 AND chi-squared(Yates) >= 4 AND a >= 1 (DME — lowered count threshold)'
-        : 'PRR >= 2 AND chi-squared(Yates) >= 4 AND a >= 3 (Evans 2001 / MHRA criterion)',
+        : dme === 'not_stated'
+          ? 'PRR >= 2 AND chi-squared(Yates) >= 4 AND a >= 3, or a >= 1 for a DME (DME status not stated)'
+          : 'PRR >= 2 AND chi-squared(Yates) >= 4 AND a >= 3 (Evans 2001 / MHRA criterion)',
       exceedsThreshold: exceeds,
       citation:
         'Evans SJW, Waller PC, Davis S. Pharmacoepidemiol Drug Saf. 2001;10(6):483-486 (PRR signalling criteria).',
     });
     rationale.push(
       `PRR = ${round3(prr)} (95% CI ${round3(lower)}-${round3(upper)}), ` +
-        `chi-squared(Yates) = ${round3(chi2)} => ${exceeds ? 'SIGNAL' : 'no signal'} on the PRR criterion.`,
+        `chi-squared(Yates) = ${round3(chi2)} => ${verdict(exceeds)} on the PRR criterion.`,
     );
   }
 
@@ -1420,23 +1537,26 @@ export function detectSafetySignal(
     const lnRor = safeLn(ror);
     const lower = Math.exp(lnRor - 1.96 * seLn);
     const upper = Math.exp(lnRor + 1.96 * seLn);
-    const exceeds = lower > 1 && a >= (dme ? 1 : 3);
-    if (exceeds) anySignal = true;
+    const exceeds = lower > 1 ? caseCount : false;
+    if (exceeds === true) anySignal = true;
+    if (exceeds === null) undetermined = true;
     measures.push({
       method: 'ROR',
       pointEstimate: round3(ror),
       lower95: round3(lower),
       upper95: round3(upper),
-      signalThreshold: dme
+      signalThreshold: dme === true
         ? 'Lower bound of 95% CI > 1 AND a >= 1 (DME)'
-        : 'Lower bound of 95% CI > 1 AND a >= 3 (van Puijenbroek 2002)',
+        : dme === 'not_stated'
+          ? 'Lower bound of 95% CI > 1 AND a >= 3, or a >= 1 for a DME (DME status not stated)'
+          : 'Lower bound of 95% CI > 1 AND a >= 3 (van Puijenbroek 2002)',
       exceedsThreshold: exceeds,
       citation:
         'van Puijenbroek EP, et al. Pharmacoepidemiol Drug Saf. 2002;11(1):3-10 (ROR signalling); Rothman KJ, et al. 2004.',
     });
     rationale.push(
       `ROR = ${round3(ror)} (95% CI ${round3(lower)}-${round3(upper)}) => ` +
-        `${exceeds ? 'SIGNAL' : 'no signal'} on the ROR criterion (lower bound ${lower > 1 ? '>' : '<='} 1).`,
+        `${verdict(exceeds)} on the ROR criterion (lower bound ${lower > 1 ? '>' : '<='} 1).`,
     );
   }
 
@@ -1453,8 +1573,9 @@ export function detectSafetySignal(
     const lowerFactor = a > 0 ? Math.exp(-1.96 / Math.sqrt(a)) : 0;
     const eb05 = ebgm * lowerFactor;
     const eb95 = a > 0 ? ebgm * Math.exp(1.96 / Math.sqrt(a)) : ebgm;
-    const exceeds = eb05 >= 2 && a >= (dme ? 1 : 3);
-    if (exceeds) anySignal = true;
+    const exceeds = eb05 >= 2 ? caseCount : false;
+    if (exceeds === true) anySignal = true;
+    if (exceeds === null) undetermined = true;
     measures.push({
       method: 'EBGM',
       pointEstimate: round3(ebgm),
@@ -1468,7 +1589,7 @@ export function detectSafetySignal(
     });
     rationale.push(
       `EBGM ~ ${round3(ebgm)} (EB05 ~ ${round3(eb05)}), expected count = ${round3(expected)} => ` +
-        `${exceeds ? 'SIGNAL' : 'no signal'} on the EB05 >= 2 criterion (approximation).`,
+        `${verdict(exceeds)} on the EB05 >= 2 criterion (approximation).`,
     );
   }
 
@@ -1478,6 +1599,11 @@ export function detectSafetySignal(
         'a Signal of Disproportionate Reporting (SDR) is flagged. An SDR is a ' +
         'statistical signal requiring qualitative validation (GVP Module IX); it is ' +
         'NOT, by itself, a confirmed causal association.',
+    );
+  } else if (undetermined) {
+    rationale.push(
+      'Whether a Signal of Disproportionate Reporting is flagged is not assessed: with 1-2 cases the ' +
+        'count criterion is met only for a Designated Medical Event, and DME status was not stated.',
     );
   } else {
     rationale.push(
@@ -1499,7 +1625,8 @@ export function detectSafetySignal(
     table: { a, b, c, d },
     totalReports: total,
     measures,
-    signalOfDisproportionateReporting: anySignal,
+    signalOfDisproportionateReporting: anySignal ? true : undetermined ? null : false,
+    inputStates,
     rationale,
     warnings,
     citations,
@@ -1542,8 +1669,12 @@ export interface SignalPriorityParams {
 export type SignalPriorityTier = 'high' | 'medium' | 'low';
 
 export interface SignalPriorityResult {
-  priorityTier: SignalPriorityTier;
-  priorityScore: number;
+  inputStates: Record<string, boolean | 'not_stated'>;
+  /** not_assessed when an unstated modifier could move the score across a tier boundary. */
+  priorityTier: SignalPriorityTier | 'not_assessed';
+  /** null when a modifier was not stated; scoreRange then counts it as 0 or 2. */
+  priorityScore: number | null;
+  scoreRange: { min: number; max: number };
   maxScore: number;
   actionTimeline: string;
   recommendedActions: string[];
@@ -1562,6 +1693,12 @@ export interface SignalPriorityResult {
 export function assessSignalPriority(
   params: SignalPriorityParams,
 ): SignalPriorityResult {
+  requireStated('assessSignalPriority', params, {
+    strengthOfEvidence: ['strong', 'moderate', 'weak'], seriousness: ['serious_fatal', 'serious_non_fatal', 'non_serious'],
+    novelty: ['new', 'known_change', 'known'], publicHealthImpact: ['high', 'medium', 'low'],
+    preventability: ['preventable', 'partially', 'not_preventable'],
+  });
+  const inputStates = booleanInputStates(params, ['vulnerablePopulation', 'designatedMedicalEvent']);
   const subScores: { factor: string; value: string; points: number }[] = [];
   const rationale: string[] = [];
   const warnings: string[] = [];
@@ -1624,7 +1761,7 @@ export function assessSignalPriority(
   });
 
   let vulnPts = 0;
-  if (params.vulnerablePopulation) {
+  if (inputStates.vulnerablePopulation === true) {
     vulnPts = 2;
     subScores.push({
       factor: 'Vulnerable population affected',
@@ -1637,7 +1774,7 @@ export function assessSignalPriority(
   }
 
   let dmePts = 0;
-  if (params.designatedMedicalEvent) {
+  if (inputStates.designatedMedicalEvent === true) {
     dmePts = 2;
     subScores.push({
       factor: 'Designated/important medical event',
@@ -1650,18 +1787,23 @@ export function assessSignalPriority(
     );
   }
 
-  const priorityScore =
+  // An unstated modifier is worth 0 or 2: the tier stands only if it is the same either way.
+  const statedScore =
     strengthPts + seriousPts + noveltyPts + phPts + preventPts + vulnPts + dmePts;
+  const unstatedPts = 2 * Object.values(inputStates).filter((s) => s === 'not_stated').length;
+  const scoreRange = { min: statedScore, max: statedScore + unstatedPts };
+  const priorityScore = unstatedPts === 0 ? statedScore : null;
   // Max = 3+4+3+3+3 + 2 + 2 = 20.
   const maxScore = 20;
 
-  let priorityTier: SignalPriorityTier;
   let actionTimeline: string;
   const recommendedActions: string[] = [];
 
   const fatal = params.seriousness === 'serious_fatal';
-  if (priorityScore >= 14 || fatal) {
-    priorityTier = 'high';
+  const tierFor = (score: number): SignalPriorityTier => (score >= 14 || fatal ? 'high' : score >= 9 ? 'medium' : 'low');
+  const priorityTier: SignalPriorityTier | 'not_assessed' =
+    tierFor(scoreRange.min) === tierFor(scoreRange.max) ? tierFor(scoreRange.min) : 'not_assessed';
+  if (priorityTier === 'high') {
     actionTimeline =
       'Emerging safety issue — escalate immediately. For an EU emerging safety ' +
       'issue, notify the competent authorities within 3 working days; otherwise ' +
@@ -1675,8 +1817,7 @@ export function assessSignalPriority(
     if (fatal) {
       rationale.push('A fatal seriousness flag forces the HIGH priority tier regardless of total score.');
     }
-  } else if (priorityScore >= 9) {
-    priorityTier = 'medium';
+  } else if (priorityTier === 'medium') {
     actionTimeline =
       'Routine prioritised assessment — complete the signal evaluation within the ' +
       'standard cycle (target within 90 days; report status in the next PBRER signal section).';
@@ -1685,8 +1826,7 @@ export function assessSignalPriority(
       'Gather cumulative case review, exposure data, and literature',
       'Document the outcome in the PBRER overview of signals (E2C(R2) Section 15)',
     );
-  } else {
-    priorityTier = 'low';
+  } else if (priorityTier === 'low') {
     actionTimeline =
       'Lower priority — continue routine monitoring; reassess at the next periodic ' +
       'signal-detection run and in the next aggregate report.';
@@ -1695,11 +1835,17 @@ export function assessSignalPriority(
       'Re-evaluate at the next scheduled signal-detection run',
       'Record the rationale for not prioritising (signal-management tracking system)',
     );
+  } else {
+    actionTimeline =
+      'Not assessed: vulnerablePopulation or designatedMedicalEvent was not stated, and it moves the tier.';
+    recommendedActions.push('State whether a vulnerable population is affected and whether the reaction is a DME.');
   }
 
   rationale.push(
-    `Priority score = ${priorityScore} / ${maxScore} => "${priorityTier}" tier ` +
-      '(>=14 or fatal: high; 9-13: medium; <9: low).',
+    (priorityScore === null
+      ? `Priority score = ${scoreRange.min}-${scoreRange.max} / ${maxScore} (an unstated modifier is 0 or 2) => `
+      : `Priority score = ${priorityScore} / ${maxScore} => `) +
+      `"${priorityTier}" tier (>=14 or fatal: high; 9-13: medium; <9: low).`,
   );
 
   if (params.strengthOfEvidence === 'weak' && priorityTier === 'high') {
@@ -1717,8 +1863,10 @@ export function assessSignalPriority(
   ];
 
   return {
+    inputStates,
     priorityTier,
     priorityScore,
+    scoreRange,
     maxScore,
     actionTimeline,
     recommendedActions,
@@ -1752,16 +1900,20 @@ export interface PVSystemParams {
 
 export interface PVSystemComponent {
   component: string;
-  required: boolean;
+  /** null when an unstated fact decides it. */
+  required: boolean | null;
   description: string;
   citation: string;
 }
 
 export interface PVSystemDesignResult {
   components: PVSystemComponent[];
-  qppvRequired: boolean;
-  psmfRequired: boolean;
-  rmpRequired: boolean;
+  inputStates: Record<string, boolean | 'not_stated'>;
+  /** null (not assessed) for EU scope when euMarketingAuthorization was not stated. */
+  qppvRequired: boolean | null;
+  psmfRequired: boolean | null;
+  /** null when no stated fact requires an RMP and an unstated one could. */
+  rmpRequired: boolean | null;
   pharmacovigilancePlan: string[];
   safetyDatabaseRequirements: string[];
   rationale: string[];
@@ -1779,13 +1931,16 @@ export function designPVSystem(params: PVSystemParams): PVSystemDesignResult {
   const rationale: string[] = [];
   const warnings: string[] = [];
 
+  requireStated('designPVSystem', params, { region: REGIONS, stage: STAGES });
+  const inputStates = booleanInputStates(params, ['newActiveSubstance', 'hasImportantRisks', 'euMarketingAuthorization']);
   const isEU = params.region === 'eu' || params.region === 'both';
   const isFDA = params.region === 'fda' || params.region === 'both';
-  const qppvRequired = isEU && params.euMarketingAuthorization !== false;
+  // Before 2026-11-01 an unstated EU authorisation read as held and unstated risks as absent.
+  const euMA = inputStates.euMarketingAuthorization;
+  const qppvRequired = !isEU ? false : euMA === 'not_stated' ? null : euMA;
   const psmfRequired = qppvRequired;
-  const rmpRequired =
-    (isEU && (params.newActiveSubstance === true || params.hasImportantRisks === true)) ||
-    params.newActiveSubstance === true;
+  const additionalPv = anyTrue([inputStates.newActiveSubstance, inputStates.hasImportantRisks]);
+  const rmpRequired = isEU ? additionalPv : anyTrue([inputStates.newActiveSubstance]);
 
   // ── QPPV ───────────────────────────────────────────────────────────────────
   components.push({
@@ -1899,7 +2054,7 @@ export function designPVSystem(params: PVSystemParams): PVSystemDesignResult {
     'Safety specification: summarise important identified risks, important potential risks, and missing information (ICH E2E).',
     'Routine pharmacovigilance: ICSR collection/processing, signal detection, aggregate reporting.',
   ];
-  if (params.newActiveSubstance || params.hasImportantRisks) {
+  if (additionalPv === true) {
     pharmacovigilancePlan.push(
       'Additional pharmacovigilance activities: PASS (post-authorisation safety study), enhanced/targeted follow-up forms, registries, drug-utilisation studies — proportionate to the identified concerns.',
       'Milestones for evaluation and submission of safety results, tied to the RMP.',
@@ -1907,6 +2062,10 @@ export function designPVSystem(params: PVSystemParams): PVSystemDesignResult {
     rationale.push(
       'A new active substance and/or important risks => an RMP with additional ' +
         'pharmacovigilance activities (PASS, registries) and milestones is warranted (ICH E2E / GVP V).',
+    );
+  } else if (additionalPv === null) {
+    pharmacovigilancePlan.push(
+      'Additional pharmacovigilance activities: not assessed — newActiveSubstance and hasImportantRisks decide them and are not both stated.',
     );
   } else {
     pharmacovigilancePlan.push(
@@ -1933,6 +2092,12 @@ export function designPVSystem(params: PVSystemParams): PVSystemDesignResult {
         'reporting (21 CFR 314.80/600.80), the PADER, and REMS where mandated.',
     );
   }
+  if (qppvRequired === null) {
+    warnings.push('euMarketingAuthorization was not stated => whether a QPPV and PSMF are mandated now is not assessed.');
+  }
+  if (rmpRequired === null) {
+    warnings.push('newActiveSubstance or hasImportantRisks was not stated => whether an RMP is required is not assessed.');
+  }
   if (isEU && params.euMarketingAuthorization === false) {
     warnings.push(
       'No EU marketing authorisation indicated => QPPV/PSMF may not yet be legally ' +
@@ -1957,6 +2122,7 @@ export function designPVSystem(params: PVSystemParams): PVSystemDesignResult {
   ];
 
   return {
+    inputStates,
     components,
     qppvRequired,
     psmfRequired,

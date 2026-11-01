@@ -20817,14 +20817,28 @@ registerToolHandler('list_intelligence_flows', async (_input, ctx) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 registerToolHandler('start_war_game', async (input, ctx) => {
+  /* Rule 2 (2026-11-01, a finding of session 019ZvHmh): this scored
+     `input.answers`, which the model composes, and recorded the score as
+     WAR_GAME_RUN as if it described the project's interview. The answers now
+     come from the stored interview session, as answer_intelligence_question
+     loads them; answers in the call are not used. */
+  const sessionId = intelligenceSessionId(input);
+  if (!sessionId) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      missing: ['session_id'],
+      message: 'session_id is required: the War Game scores the stored interview, never answers given in the call.',
+    });
+  }
   try {
+    const { loadInterviewSession } = await import('../cmc/interview-sessions.js');
+    const session = await loadInterviewSession({ organizationId: ctx?.organizationId, sessionId });
+    if (session.status === 'abandoned') {
+      return JSON.stringify({ error: `Interview session ${sessionId} was abandoned; it is not war-gamed.`, session_id: sessionId, session_status: session.status });
+    }
     const { runWarGame } = await import('./intelligence-questions/war-game/engine.js');
     const category = String(input.war_game_category || '') as import('./intelligence-questions/war-game/types.js').WarGameCategory;
-    const report = runWarGame(
-      category,
-      String(input.source_flow_id || ''),
-      (input.answers || {}) as Record<string, Record<string, unknown>>,
-    );
+    const report = runWarGame(category, session.flowId, session.state.answers);
     /* Audit log the adversarial audit run — records who ran which War Game and
        the resulting readiness posture (score/assessment). Fire-and-forget. */
     try {
@@ -20834,10 +20848,11 @@ registerToolHandler('start_war_game', async (input, ctx) => {
         userId:     ctx?.userId ?? null,
         action:     'WAR_GAME_RUN',
         resource:   'war_game_report',
-        resourceId: String((report as any)?.id || input.source_flow_id || category),
+        resourceId: String((report as any)?.id || session.flowId || category),
         details: {
           category,
-          sourceFlowId:      String(input.source_flow_id || ''),
+          sessionId,
+          sourceFlowId:      session.flowId,
           overallScore:      (report as any)?.overallScore,
           overallAssessment: (report as any)?.overallAssessment,
           findingCount:      Array.isArray((report as any)?.findings) ? (report as any).findings.length : undefined,
@@ -20846,11 +20861,15 @@ registerToolHandler('start_war_game', async (input, ctx) => {
     } catch { /* never block the tool response on audit failure */ }
     return JSON.stringify({
       success: true,
+      session_id: sessionId,
+      session_status: session.status,
+      ...(input.answers !== undefined ? { answersInCallIgnored: true } : {}),
       war_game_report: report,
     });
   } catch (err: any) {
     return JSON.stringify({
       error: err?.message || 'Failed to run war game simulation',
+      session_id: sessionId,
     });
   }
 });

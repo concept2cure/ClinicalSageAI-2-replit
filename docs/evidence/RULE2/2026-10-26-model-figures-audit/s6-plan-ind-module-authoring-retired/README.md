@@ -30,7 +30,7 @@ It was offered in four places:
 | The 2.5 replacement | `draft_clinical_overview_m2_5`: definition `legacy-import-tool-defs.ts`, handler `AnaToolExecutor.ts`, record source `module2-csr-inputs.ts` | Composes 2.5.1–2.5.7 from the program's completed CSRs. With none, it gives the 2.5 outline (`ctd-component-outline.ts`) read from the ICH M2–M5 record |
 | The 2.7 replacement | `draft_clinical_summary_m2_7`: definition `bla-biologics-tool-defs.ts`, handler `AnaToolExecutor.ts` | Composes 2.7.1–2.7.4 from the same records, and says so when there are none |
 | The 2.7 outline without a CSR | `get_document_template` (`template_id: clinical_summary`), `server/services/ana/document-template-tool.ts` | Serves the record's 2.7 outline to its depth, a superset of the planner's first level |
-| The test that proves the replacements reachable | `server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts` (both handlers) and this slice's red test | — |
+| The tests that prove the replacements reachable | `nonclinical-clinpharm-tools.test.ts` (the 2.7 handler: supplied figures not used, `needs_data`, composed from records); `new-tool-handlers.test.ts` and `ana-tools-read-the-ctd-record.test.ts` (the 2.5 outline with no data); `module2-csr-inputs.pglite.test.ts` (the loader both read); this slice's red test, which since the review also pins the 2.5 handler ignoring supplied figures | — |
 
 **History search:** `git log --all --diff-filter=D -- '*ind-module*'` returned nothing before this change. No other file
 imported `ind-module-authoring.ts`: `git grep` after the change finds only comments and the retirement test.
@@ -39,8 +39,10 @@ imported `ind-module-authoring.ts`: `git grep` after the change finds only comme
 - The 2.5 headings are the 2.5 tool's outline.
 - The 2.7 headings are `get_document_template`'s `clinical_summary` outline. The red test's last case holds this.
 
-**Not carried, and why:** the former section ids, the unplaced-fact report and the `required_strings` all described
-facts the model supplied.
+**Not carried, and why:** the former section ids and the unplaced-fact report described facts the model supplied. Its
+`required_strings` were the record's section headings plus each fact's value. The headings are the outlines above,
+and a draft's heading coverage is `medical_writing_review`'s job, which the 2.7 skill already names. The values
+were the model's.
 
 ## The change
 
@@ -83,3 +85,25 @@ program's completed CSRs. With no completed CSR it gives the 2.5 outline, and th
 - **Gates:** typecheck 0; ESLint ratchet unchanged; `ci:unreferenced-modules` OK.
 - **`ci:step-presentation`** reports 20 risk-based-monitoring tools with no `present` block. Trunk reports the same 20
   with this change stashed, and the gate is not in pre-push. They are S8's, and the coordinator has been told.
+
+## The adversarial review (2026-11-01), and the fixes
+
+A read-only critic checked the plan and the landed commit `8684f0bcb`. All 18 edits and 5 pin edits were verbatim
+against the base, and the result was byte-identical to the commit. It found four things, fixed in the follow-up commit:
+
+- **An untrue test citation.** The red test's header said `nonclinical-clinpharm-tools.test.ts` "holds both handlers".
+  It tests only the 2.7 handler. The header and the table above now name each handler's tests by path.
+- **An untrue claim about what carries over.** The header, this README and the `8684f0bcb` message said the
+  `required_strings` "all described facts the model supplied". Half of them were the record's own section headings,
+  which do carry over, as the paragraph above now says. The pushed commit message cannot be changed, so this README
+  corrects it.
+- **An ambiguous comment.** The biotech-spine comment read as if every later phase offers the 2.5/2.7 tools. It now
+  names `clinical_late`, whose deliverables are the pivotal CSRs.
+- **A gap.** Nothing tested that the 2.5 handler ignores CSRs supplied in the call, and the IND intake now routes to
+  it. The red test gains that case: with no project open, the handler answers `needs_project` with
+  `ignoredSuppliedFigures` and does not echo the figure.
+
+Refuted as a defect: the `Completes: server/services/ana/module2-csr-inputs.ts` trailer names a file the change does
+not touch. It is valid, since it names the capability the change converges onto, and the commit also names
+`AnaToolExecutor.ts`.
+

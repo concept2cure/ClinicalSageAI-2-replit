@@ -1,7 +1,8 @@
 # S5a queued clinical families — read-only inventory
 
-> Subsequent execution: pediatric and vaccine are completed in `../s5a-pediatric/`
-> and `../s5a-vaccine/`. Dose optimization, RWE and pharmacovigilance remain queued.
+> Subsequent execution: pediatric, vaccine and pharmacovigilance are completed in
+> `../s5a-pediatric/`, `../s5a-vaccine/` and `../s5a-pharmacovigilance/`. Dose
+> optimization and RWE remain queued.
 > The inventory below records the initial read-only findings before those fixes.
 
 Audited 2026-10-26 for the Rule 2 model-figures workstream. This increment fixes
