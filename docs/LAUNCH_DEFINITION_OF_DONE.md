@@ -1760,6 +1760,7 @@ reader be enabled?" (`docs/design/AI_PLATFORM_BLUEPRINT_GAP_2026-10-25.md`, deci
 
 Nothing new is built. The figure check, the signing routes and the signing dialog exist; the gate is added to them,
 under `Plan: L1` (row D5, Part 11 evidence).
+Evidence: `docs/evidence/D5-SIGNATURE-FIGURE-GATE/2026-11-01/`.
 
 ### P-90 — The self-hosted Docling layout reader is admitted
 
