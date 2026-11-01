@@ -4,7 +4,8 @@
   "decisions": [
     "P-78",
     "P-79",
-    "P-80"
+    "P-80",
+    "P-81"
   ],
   "alwaysAllowed": [
     "**/__tests__/**",
@@ -288,7 +289,7 @@
     },
     {
       "id": "S4",
-      "title": "Spine 4: AnA the writer: narrates evidence with citations, takes direction, pushes back when the data do not support a claim (P-79)",
+      "title": "Spine 4: AnA the writer and the project's memory: narrates with citations, takes direction, asks the right questions, pushes back, remembers the project and the person (P-79, P-81)",
       "status": "open",
       "dependsOn": [],
       "paths": [
@@ -299,7 +300,17 @@
         "client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
         "client/src/concept2cure/v2/editor/Ana*.tsx",
         "client/src/concept2cure/v2/editor/ana*.ts",
-        "client/src/concept2cure/v2/editor/citation*.ts"
+        "client/src/concept2cure/v2/editor/citation*.ts",
+        "server/services/memory/**",
+        "server/services/memory-*.ts",
+        "server/services/client-intelligence-memory.ts",
+        "server/services/intelligence/**",
+        "server/services/ana-ri/**",
+        "server/routes/mdx-ana-memory.ts",
+        "server/services/ana-context-router.ts",
+        "server/services/lumen-context-builder.ts",
+        "server/services/ana-wisdom-engine.ts",
+        "server/services/ana-capability-registry.ts"
       ]
     },
     {
@@ -376,6 +387,64 @@
         "server/routes/mdx-rbm*.ts",
         "client/src/concept2cure/v2/surfaces/Rbm*.tsx",
         "client/src/concept2cure/v2/surfaces/rbm*.ts*",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    {
+      "id": "S9",
+      "title": "Spine 9: team on licensed seats, each person's due work, extract commitments, the project's goals and schedule (P-81)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "server/services/tasking/**",
+        "server/routes/c2c/tasks.ts",
+        "server/services/seat-licensing.ts",
+        "server/services/licensing/**",
+        "server/routes/c2c/project-sharing.ts",
+        "server/services/project-sharing-access.ts",
+        "shared/project-sharing.ts",
+        "server/services/ha-interactions/**",
+        "server/routes/commitment-fulfil-route.ts",
+        "server/routes/c2c/agency-responses.ts",
+        "server/services/ana-capability-registry.ts",
+        "server/services/ai-governance/risk-tiers.ts",
+        "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "server/services/ana/deadline-radar.ts",
+        "server/routes/protocol-milestones.ts",
+        "server/routes/project-schedule-of-events.ts",
+        "client/src/concept2cure/v2/surfaces/Task*.tsx",
+        "client/src/concept2cure/v2/surfaces/task*.ts*",
+        "client/src/concept2cure/v2/surfaces/Commitment*.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectTeam*.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx",
+        "client/src/concept2cure/v2/surfaces/PlanAssign.tsx",
+        "client/src/concept2cure/v2/TaskTray.tsx",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    {
+      "id": "S10",
+      "title": "Spine 10: the agency's communications back into the project: letters, questions to Respond, commitments to tasks (P-81)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/AgencyInbox.tsx",
+        "client/src/concept2cure/v2/surfaces/CommunicationCenter*.tsx",
+        "client/src/concept2cure/v2/surfaces/Company*Correspondence*.tsx",
+        "client/src/concept2cure/v2/surfaces/HaqManager.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectRespond.tsx",
+        "server/routes/regulatory-correspondence*.ts",
+        "server/services/company-documents/**",
+        "server/routes/c2c/agency-responses.ts",
+        "server/routes/c2c/communication-center.ts",
+        "server/services/ha-interactions/**",
+        "server/services/submission-gateways/**",
         "migrations/**",
         "db/migrations/**",
         "scripts/db/migration-set.mjs",

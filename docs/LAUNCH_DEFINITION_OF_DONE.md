@@ -1535,3 +1535,43 @@ What this decides:
   from Claude's.
 - **The UI work starts now.** The design packages D1–D7 open without waiting for D0. The UI is what has not yet
   brought the code to life.
+
+### P-81 — The significance of a project: AnA grows with it, its team works in it, and it runs to the agency and back
+
+Founder, 2026-11-01:
+
+> "Anna must retain complete knowledge and understanding of every project she works on for any customer and grow with
+> that project. She needs to grow in understanding more about the human that's using her, and remember things and
+> have friendly conversation and ask all the right questions. She needs to be an expert at asking questions to get to
+> the right answers, to get information that may be missing that she needs. She needs to be a critical thinker." "It's
+> her job to bring their science to life, to reality, and to get approved and to be used. We are a major bridge from
+> concept to the idea to cure." "In a project, you might have multiple team members, which would require other
+> licenses to work in a project at any given time, simultaneously or collaboratively. And those team members need to
+> be able to see tasking in the project too. Okay, what's due? What is required of me by this date?" "When we dump
+> information into the project documents, extracting all the commitments is a major part of it … Extract commitments,
+> I think, needs to be even a feature." "Over the life of a project, you need to be able to map it out and schedule it
+> and have goals and be able to see visually how you're doing against those goals." "A project needs to go all the way
+> through to document assembly and publishing electronically, and then submission to a government agency with
+> communications that then come back from the agency in the form of sometimes letters or more. And then that needs to
+> come into a communications, messaging, submission center, all of that in that flow."
+
+What this decides:
+
+- **AnA's character.** AnA holds every project it works on and grows with it. It remembers the person it works with.
+  It is friendly. It asks the questions that find what is missing, and it thinks critically, including pushing back
+  (P-79). The memory and project-intelligence code that exists is finished for this. Package S4 widens to it.
+- **The team.** A project is worked by its team at once, each person on a licensed seat. Each person sees the
+  project's tasks: what is due, and what is required of them by when.
+- **Extract commitments is a feature.** It finishes the `/extract-commitments` capability that is registered with no
+  handler (`server/services/ana-capability-registry.ts`). AnA proposes each commitment found in an agency document.
+  A person confirms it; the risk tier is high and it requires review (`server/services/ai-governance/risk-tiers.ts`).
+  The commitment lands in the existing regulatory commitments store with its source location, owner and due date. It
+  then shows in the project's tasks as what is due.
+- **The plan.** Over its life a project is mapped, scheduled and given goals. Progress against those goals is
+  visible.
+- **The flow runs to the agency and back.** Document assembly, electronic publishing, submission, then the agency's
+  letters coming back into Communication and Submission Center, and their commitments into tasks.
+
+Packages: S4 widens to AnA's memory and questioning. S9 (team, tasks, commitments and schedule) and S10 (the
+agency's communications back into the project) join the ledger. `docs/design/ONE_DESIGN_PLAN.md` §1b says by path
+what already exists for each. Nothing new is built (P-80).
