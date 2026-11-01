@@ -166,7 +166,7 @@ Each primitive has one definition, in `client/src/concept2cure/v2/styles/app-v2.
 | Chip: `.rd-chip` with `tone-ok`, `tone-warn` or `tone-err`. A chip that prints a raw value maps it to a label first. | `.status-pill`, `.sp-tag`, `.reg-pill`, `.ml-chip`, `.pg-badge`, `.rc-chip` | `app-v2.css` |
 | Drawer: `.de` (with `data-docked` for an inspector) | `.tb-detail`, the `.tt-panel` chrome, `.pdev-sheet`, `.py-sheet`, `.de-sheet`, `.ana-sheet`, `.adm-drawer`, `.risk-drawer`, RBM's AnA side panel, the editor's comments and history columns | `journey-v2.css` |
 | Toast: `C2CToast` (`.de-toast`) | `.cl-toast` | `journey-v2.css` |
-| Composer chrome: `.landing-composer`, `.pj-composer`, `.ct-composer`, with the send button `.landing-send` / `.pj-comp-send` / `.ct-comp-send` | Owners' composers join this list rather than keep their own chrome: `.rbm-ana-composer` (D7-C) and `.rc-input` (D7-D). `.ec-composer` has no owner yet. | `app-v2.css` |
+| Composer chrome: `.landing-composer`, `.pj-composer`, `.ct-composer`, with the send button `.landing-send` / `.pj-comp-send` / `.ct-comp-send` | Owners' composers join this list rather than keep their own chrome: `.rbm-ana-composer` (D7-C). `.ec-composer` has no owner yet. Only a field that talks to AnA is a composer: a search field, such as Reporting's "Find a report", is `.c2c-input` with a `btn ghost` beside it. | `app-v2.css` |
 | Guidance lives in AnA and the composer | `StageBand`'s "What to do now" and "Next step" (`.pj-stageband*`). `CmConnectBar` ("This work flows into") and `.cm-connect*` have gone. | — |
 | Composer suggestion: `.sp-starter` (keep) | — | `journey-v2.css` |
 | Page container: `.page-inner` (1120px; 16px side gutter at 640px and under) | — | `app-v2.css` |

@@ -42,7 +42,7 @@ search for any mirror of the preview pages (`design-system/_sync` holds none).
   table, with each token named.
 - `:153–179` a **canonical class list**: D0.md §4.7's table (canonical, then retired), with the defining sheet, as
   things stand. `.cm-subtab` and `CmConnectBar`/`.cm-connect*` are already gone (`f9c6f5706`). The composer row
-  follows BUILD_ORDER §5.2 item 20: `.rbm-ana-composer` comes from D7-C and `.rc-input` from D7-D. The rows D0 §4.2
+  follows BUILD_ORDER §5.2 item 20 as amended in `87c6a1470`: `.rbm-ana-composer` comes from D7-C, and Reporting's find field is a search field (`.c2c-input`), not a composer. The rows D0 §4.2
   defines with no alias are added: page container, section heading, fields, table, empty state, answer lead and
   centered dialog. The list leaves the owner files and packages in D0.md §4.7 and says so.
 - `:181–191` *The one menu*: `MenuButton`, `useMenu` and `MenuItem` are named as the one menu. The section also says
@@ -174,8 +174,10 @@ The README's prose values, by line:
 The reviewer re-read the change against `D0.md` §3, §4.5 and §4.7, `BUILD_ORDER.md` §2.1 and §5.2 items 6 and 20, and
 `DownloadMenu.tsx`, and re-ran every check above at `f5c46642a`. Every changed file is in D0's ledger paths
 (`design-system/**`) or under `docs/evidence/**`. No server, style sheet, TSX, script or migration file was touched.
-The composer row's `.rc-input` follows the lead's decision in `BUILD_ORDER.md` §5.2 item 20, not `D0.md` §4.7's
-`.rc-composer`. The README's menu values for D4 match `D4.md`'s `.dlm-*` block.
+The composer row follows the lead's decision in `BUILD_ORDER.md` §5.2 item 20, not `D0.md` §4.7. As first built it
+listed `.rc-input` for D7-D. The lead superseded that for D7-D in `87c6a1470`: "Find a report" answers through a
+fixed router, not AnA, so it is `.c2c-input`, and neither `.rc-composer` nor `.rc-input` joins the composer list. The
+row now says so. The README's menu values for D4 match `D4.md`'s `.dlm-*` block.
 
 Fixed in review:
 - **README `:39`.** It said no stylesheet sets `text-transform: uppercase`. That is untrue: the sentence-case guard
@@ -186,6 +188,9 @@ Fixed in review:
   `.btn`, `components-badges.html`'s `tone-ai`) computed to 9.75px, and the code in the 13px notes to 10.6px.
   `_base.css` now keeps the text's size for code in a `.label`, a `.lbl` or a `.note`. The rule sits below the
   "specimen layout only" marker, because it is not an app rule.
+- **Landing.** The D0-5 files were staged when the coordinating session committed `87c6a1470` ("Coordination: L11
+  goes to the Reporting session"), and that commit took them from the shared index. Their content there is this
+  review's. The follow-up commit carries the composer row's correction and names the D0-5 outcome.
 - **Evidence.** The light-and-dark claim now excludes `type-body.html`. The gate files are renamed for what they
   show. The verifier's red run on HEAD's previews is added.
 
