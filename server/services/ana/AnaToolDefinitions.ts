@@ -1645,10 +1645,11 @@ const LIST_INTELLIGENCE_FLOWS: AnaTool = {
 const START_WAR_GAME: AnaTool = {
   name: 'start_war_game',
   description:
-    'Simulate an FDA auditor review of collected intelligence data. Pressure-tests the document ' +
-    'against regulatory requirements and produces an advisory report with findings and remediation ' +
-    'recommendations. Use this after completing an intelligence questioning flow to war-game the ' +
-    'document before submission.',
+    'Simulate an FDA auditor review of a stored interview. Pressure-tests the answers the person gave ' +
+    'in an intelligence questioning flow against regulatory requirements and produces an advisory ' +
+    'report with findings and remediation recommendations. Pass the interview\'s session_id: the ' +
+    'answers are read from the stored session, never given in the call. Use this after completing ' +
+    'an intelligence questioning flow to war-game the document before submission.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1657,16 +1658,12 @@ const START_WAR_GAME: AnaTool = {
         enum: ['protocol', 'ind', 'csr', '510k', 'cer', 'sop', 'nda', 'bla', 'pma', 'cmc', 'risk_management', 'safety_narrative', 'labeling', 'briefing_book', 'stability'],
         description: 'The type of document to war-game.',
       },
-      source_flow_id: {
+      session_id: {
         type: 'string',
-        description: 'The flow ID of the completed intelligence questionnaire to audit.',
-      },
-      answers: {
-        type: 'object',
-        description: 'The collected answers from the intelligence flow.',
+        description: 'The stored interview session to war-game (start_intelligence_flow returned it). Its answers are the ones scored.',
       },
     },
-    required: ['war_game_category', 'source_flow_id', 'answers'],
+    required: ['war_game_category', 'session_id'],
   },
 };
 
