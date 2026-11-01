@@ -48,6 +48,7 @@ import { filingAgreesWithEditing } from '../c2c/filing-section-target.js';
 import { SavedDraftSourceError, reserveSavedDraftSourceReferences, withSavedDraftSourceReservation } from './draft-source-references';
 import { assertWorkflowImportRelease, WorkflowImportGovernanceError } from './workflow-import-governance';
 import { savedImportSource } from './import-source-references';
+import { readFiledSectionRevisions } from './revision-ledger';
 import type { AuthoringPool, AuthoringActor } from './authoring-documents';
 import { ingestVaultDocument, type VaultIngestResult } from '../vault/vault-ingest.service';
 import { placeVaultDocument, type VaultFilingRecord } from '../vault/vault-placement.service';
@@ -320,6 +321,9 @@ async function recordFiling(
        the one these bytes were rendered from. It cannot throw the export: an
        absent store or an unbound document answers "nothing to compare". */
     const agreement = await filingAgreesWithEditing(client, { authoringDocId: docId, tenantId });
+    // Which revision of each section this rendition is (LX-10): read in the
+    // same lock as the sections, so it is the revision these bytes came from.
+    const sectionRevisions = await readFiledSectionRevisions(client, tenantId, currentSections.rows);
     const filingDiverged = agreement.diverged.map((d) => ({ key: d.key, filed: d.filed, section: d.section.code }));
     const details = {
       format: args.format,
@@ -335,6 +339,7 @@ async function recordFiling(
       documentStatus: doc.status,
       sourceVersion: doc.version,
       sourceSectionsSha256: sectionsDigest(sections),
+      sectionRevisions,
       ...(filingDiverged.length > 0 ? { filingDiverged } : {}),
       // The exact original dependency survives the new bytes' identity. This
       // receipt is how withdrawal finds a source-derived Vault rendition.

@@ -217,3 +217,46 @@ describe('a filePath is read only inside the caller’s own tenant prefix (IAM-0
     expect(res.text).not.toContain(`org-${ORG_A}`);
   });
 });
+
+describe('no position the extractor never measured (2026-11-01, F1)', () => {
+  // The extractor reads a document's TEXT; it never sees a page's layout. Every
+  // element still came back with a bounding box — x 72, y = reading order × 20,
+  // 468 × 14 — and every table cell with x = column × 100, y = row × 20. Those
+  // coordinates were made up, and a caller drawing them would draw a layout the
+  // document does not have. A position nobody measured is null; the page,
+  // which the text does carry, stays.
+  const ROOT = path.resolve('generated_documents');
+  const ORG = 990201;
+  const NAME = `bbox-${nodeCrypto.randomBytes(4).toString('hex')}.txt`;
+  const REL = `generated_documents/org-${ORG}/${NAME}`;
+  const TEXT = 'CLINICAL STUDY REPORT\n\n1. Introduction\nThe study met its primary endpoint.\n\n| Arm | N | Responders |\n| Placebo | 100 | 12 |\n| Active | 102 | 41 |\n\nSponsor Name: Example Biotech\n';
+
+  beforeAll(async () => {
+    await fs.mkdir(path.join(ROOT, `org-${ORG}`), { recursive: true });
+    await fs.writeFile(path.join(ROOT, `org-${ORG}`, NAME), TEXT);
+  });
+  afterAll(async () => {
+    await fs.rm(path.join(ROOT, `org-${ORG}`), { recursive: true, force: true });
+  });
+
+  it('elements, tables, cells and form fields carry a page and no invented box', async () => {
+    const res = await request(app(ORG)).post('/api/document-understanding/analyze').send({ filePath: REL });
+    expect(res.status).toBe(200);
+    const doc = res.body.data;
+    expect(doc.elements.length).toBeGreaterThan(0);
+    for (const el of doc.elements) {
+      expect(el.bbox).toBeNull();
+      expect(typeof el.page).toBe('number');
+    }
+    expect(doc.tables.length).toBeGreaterThan(0);
+    for (const t of doc.tables) {
+      expect(t.bbox).toBeNull();
+      for (const c of t.cells) expect(c.bbox).toBeNull();
+    }
+    expect(doc.formFields.length).toBeGreaterThan(0);
+    for (const f of doc.formFields) {
+      expect(f.bbox).toBeNull();
+      expect(f.labelBbox).toBeNull();
+    }
+  });
+});

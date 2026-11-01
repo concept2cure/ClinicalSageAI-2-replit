@@ -1,0 +1,4 @@
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > no position the extractor never measured (2026-11-01, F1) > elements, tables, cells and form fields carry a page and no invented box 10ms
+   → expected { x: 72, y: +0, width: 468, …(2) } to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 27 passed (28)
