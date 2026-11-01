@@ -234,3 +234,71 @@ This is the same change as Rule 2 audit slice S2. Its evidence, with "What alrea
 
 **What a person sees:** a 2.4 or 2.6 request returns the record's ICH M4S outline and says no nonclinical study is recorded against the project. Studies typed in the conversation are refused and named as not used.
 
+## i. 3b Slice 3 (a): the readiness digest does not judge a document as an application
+
+**Plan:** F1 (a repair of shipped behaviour). **Completes:** `server/services/report-os/orchestrator.ts`. Slice 3's other
+two halves are RIM's, by the coordinator's routing on 2026-11-01, because RIM holds their files:
+- (b) both creators refuse a project that is not an application (`submission-service.ts`, inside RIM's F1 slice 2);
+- (c) the four eCTD doors refuse a filing class, with the client's handling of that 422, as one change
+  (`ectd-compile.ts`, `EctdCompile.tsx`, `EctdModuleReadiness.tsx`, `EctdFiledState.tsx`).
+
+RIM has their exact edits and red cases.
+
+**The defect.** The digest's one not-computed branch for a project was "no registry context". A filing document class
+project records its registry id, for example `ICH_CSR` or `US_NDA_SUPP`. So `evaluateReadiness` judged a clinical study
+report as an application:
+- a `submission_readiness` row whose blocker read "17 regulatory gaps detected (Clinical Study Report)";
+- the critical gaps as blockers;
+- a `regional_package_manifest` row;
+- `summary.regulatory` with a readiness score, which the portfolio showed as the member's readiness.
+
+### What already exists (Rule 3)
+
+- **`server/services/report-os/orchestrator.ts`.** `readinessNotComputed` and its no-registry branch. This slice adds
+  one branch beside it, in the same words.
+- **`shared/regulatory/filing-document-classes.ts`.** `filingDocumentClassForFiling` and `filingTypeInSentence`, the one
+  class vocabulary. It is read, not restated.
+- **`server/services/c2c/dossier-read.ts`.** A class document is one dossier row whose figure is the approved or
+  locked share of its counted sections. That is what the new sentence points to.
+- **`server/services/report-os/__tests__/orchestrator-readiness.test.ts`.** The pin for "one readiness verdict". It
+  is extended here; no new test file.
+- **The first half of Slice 3**, `5ab138ed3` (`document-class-not-an-application.pglite.test.ts`), refused
+  `POST /api/submissions` in a class project.
+- **Searches run:**
+  - `git grep` for `readinessNotComputed`, `filingDocumentClassForFiling`, `filingTypeInSentence`,
+    `a document rather than an application` and `approved or locked share`;
+  - every caller of `computeInitialRun`: `compute-run.ts`, `canvas/render-report.ts` and `portfolio/fetch.ts`.
+- **History:** `git log --all --diff-filter=D -S readinessNotComputed` and `-S 'a document rather than an application'`
+  find nothing.
+
+### The change
+
+When the project's registry id resolves to a filing document class, `submission_readiness` is not computed. The
+digest says why: "Submission readiness not computed: a clinical study report is a document rather than an
+application; its completion is the approved or locked share of its governed outline, on its project's dossier." No
+package manifest or regulatory summary is produced.
+
+An application (`US_IND`) is evaluated against its registry entry as before.
+
+**What a person sees:** a CSR, supplement or meeting-package project's readiness digest, and its portfolio row, say
+that readiness is not computed and why. Before, they showed an application-shaped score and gaps.
+
+**Not covered** (filed):
+- A report request whose `explicitRegistryId` names an application, for example `US_IND` on a class project, is
+  still scored as that application, because the branch keys on the resolved registry id, not on the project's
+  `program_type`.
+- An explicit `ICH_CSR` request on an IND project now reads "not computed". The sentence is worded without "this
+  project is", so it stays true there.
+
+### Proof
+
+- `3b-s3-class-not-an-application-red.txt`: on trunk `a2bad27e1` the two class cases fail. The digest's blocker reads
+  "17 regulatory gaps detected (Clinical Study Report)" and "(NDA/BLA …)". The 8 existing cases and the IND control
+  pass.
+- After the change: 11 of 11.
+- **The neighbourhood:** every test that reaches `computeInitialRun`, the portfolio or the canvas report (29 files),
+  plus `server/services/report-os/`. That is 83 files and 1,060 tests:
+  - 73 files pass.
+  - 10 files fail the same 60 cases on trunk without this change, all for one environmental reason: "Reporting PDF
+    fonts are unavailable on this deployment" (the run, bundle and pack PDF exports and the two pglite PDF reports).
+- **Gates:** typecheck 0; ESLint ratchet unchanged; `ci:one-design-plan` with `Plan: F1`.

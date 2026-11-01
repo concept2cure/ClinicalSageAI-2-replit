@@ -57,8 +57,8 @@ for the founder to say which holds. Slices 3 and 4 are valid under both.
 |---|---|---|
 | Increments 1, 2a–2d, 3a | done before 10-26 | — |
 | 3b Slices 1 and 2 (the 2.5/2.7 composers read the open project's CSRs; 2.4/2.6 refuse model-written studies) | done | — |
-| 3b Slice 3: a class project never becomes an application | partial (`5ab138ed3`); the server half remains | F1 (a repair of shipped behaviour) |
-| 3b Slice 4: the "not offered" reason names where the QOS, 3.2.S and 3.2.P are written (`reasonByFiling`) | open; P-55 row 5 states this outcome | S5 (filing offers) |
+| 3b Slice 3: a class project never becomes an application | the readiness digest done (F1); creation and the eCTD doors with RIM, which holds their files | F1 |
+| 3b Slice 4: the "not offered" reason names where the QOS, 3.2.S and 3.2.P are written (`reasonByFiling`) | open; P-55 row 5 states this outcome | F1 (S5's globs are root-anchored and do not match `server/services/regulatory/`) |
 | 3b Slices 5–7: the author-only 2.5/2.4/2.7/2.6 class packs | open; **wait on the founder (P-55 vs P-83)** | — |
 | 3b Slice 8 | follows 5 | — |
 | Module 1 for each region (US, EU, Japan, Canada, Australia) | open; regional depth is uneven (plan §1a step 7) | S5 |
