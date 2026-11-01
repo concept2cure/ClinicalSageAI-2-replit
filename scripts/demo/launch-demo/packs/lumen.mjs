@@ -10,7 +10,9 @@
  *   Projects   LMN-201, LMN-801, LMN-301, LMN-401 (one per program)
  *   LMN-201    program overview and the SYNTHETIC LMN-201-like CSR source in
  *              the Vault, the RePreve study design in Biostatistics, CMC
- *              specifications, stability and batches, and tasks
+ *              specifications, stability and batches, tasks, and a FICTIONAL
+ *              FDA approval letter in the data room and the agency inbox, whose
+ *              postmarketing requirements and commitment the inbox extracts
  *   Others     program overview and tasks
  *
  * Same rules as the other packs: through the product's own API as the
@@ -20,8 +22,8 @@
 import fs from 'node:fs';
 import { makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
 import { makeTally } from './biotech-shared.mjs';
-import { CLIENT, CSR_SOURCE_FILE, FOOTER, LMN201_CMC, LMN201_DESIGN, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
-import { ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
+import { APPROVAL_LETTER, CLIENT, CSR_SOURCE_FILE, FOOTER, LMN201_CMC, LMN201_DESIGN, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
+import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
 
 const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : []);
 const inDays = (n) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
@@ -150,6 +152,9 @@ export async function seed(ctx) {
   await ensureStudyDesign(c, lmn201, null, LMN201_DESIGN);
   await ensureCmc(c, lmn201, LMN201_CMC, 'LMN-201');
   await ensurePlanDocuments(c, lmn201, ['Cover Letter', 'Form FDA 1571', "Investigator's Brochure", 'Introductory Statement and General Investigational Plan'], 'LMN-201');
+  // The inbox's "extract commitments" (P-81, P-84) on a fictional approval letter.
+  run.record('approvalLetter', await ensureAgencyLetter(c, lmn201, APPROVAL_LETTER, 'LMN-201'));
+  run.note('The LMN-201 approval letter (BLA 761901) is FICTIONAL: not issued by FDA, LMN-201 is not approved, and no Lumen Bioscience authorization is represented. It is addressed to the demonstration\'s fictional sponsor.');
 
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
   run.record('summary', { created: sum(tally.tally.created), found: sum(tally.tally.found) });
@@ -159,7 +164,7 @@ export async function seed(ctx) {
 /** Nothing this pack creates has a delete route the seed may use; say so rather than reach for SQL. */
 export async function purge({ run }) {
   await run.step('Purge: Lumen demo records', async () => {
-    run.note('The Lumen projects, Vault documents, study design and CMC records have no delete or archive route the seed uses; archive the projects from Project settings. Nothing was removed.');
+    run.note('The Lumen projects, Vault documents, data-room letter, agency communication, study design and CMC records have no delete or archive route the seed uses; archive the projects from Project settings. Nothing was removed.');
     return 'nothing removed — see notes';
   });
 }

@@ -1,0 +1,82 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "email": "jm.smith@concept2cure.pro",
+  "startedAt": "2026-11-01T16:04:05.054Z",
+  "steps": [
+    {
+      "name": "sign in (one dev-login)",
+      "note": "jm.smith@concept2cure.pro"
+    },
+    {
+      "name": "Projects: the LMN-201 project is listed",
+      "screenshot": "screenshots/01-projects-lmn201.png"
+    },
+    {
+      "name": "Project home: LMN-201 is open",
+      "url": "/concept2cure/project-home?program=94223e96-6cd8-4f3e-80c3-85745b1434b5",
+      "screenshot": "screenshots/02-project-home.png"
+    },
+    {
+      "name": "Communication: the approval letter is in the agency inbox",
+      "url": "/concept2cure/communication-center?program=94223e96-6cd8-4f3e-80c3-85745b1434b5",
+      "screenshot": "screenshots/03-agency-inbox.png"
+    },
+    {
+      "name": "Questions & responses: the letter imposes 4 commitments",
+      "note": "The letter imposes 4 commitments, found in its text without AI. Check each against the letter, then record it with a reason. It is then tracked with its due date.",
+      "items": [
+        "4710-1 Postmarketing requirement, FDCA 505(o)(3), due Jun 30, 2030. Conduct a randomized, double-blind, placebo-controlled trial to evaluate the long-term safety of LMN-201, including serious hypersensitivity reactions, in adults treated for the prevention of recurrent C. difficile infe… Recorded",
+        "4710-2 Postmarketing requirement, FDCA 505(o)(3), due Mar 31, 2030. Conduct an observational study in a US claims database to assess the incidence of serious gastrointestinal adverse events in patients treated with LMN-201, compared with patients treated with standard of care alone. Recorded",
+        "4710-3 Postmarketing requirement, PREA (FDCA 505B), due Jun 30, 2030. Conduct a pharmacokinetic, safety and efficacy study of LMN-201 in pediatric patients 2 to less than 18 years of age for the prevention of recurrent C. difficile infection. Record",
+        "4710-4 Postmarketing commitment, FDCA 506B, due Dec 31, 2027. Develop and validate a cell-based toxin B neutralisation potency assay for LMN-201 drug substance release and stability testing, and submit the validation report. Record"
+      ],
+      "screenshot": "screenshots/04-commitments-proposed.png"
+    },
+    {
+      "name": "Record 4710-3: the form is filled from the letter",
+      "form": {
+        "type": "pmr",
+        "words": "Conduct a pharmacokinetic, safety and efficacy study of LMN-201 in pediatric patients 2 to less than 18 years of age for the prevention of recurrent C. difficile infection.",
+        "dueDate": "2030-06-30",
+        "basis": "PREA (FDCA 505B) · 4710-3",
+        "reason": ""
+      },
+      "screenshot": "screenshots/05-record-form-filled.png"
+    },
+    {
+      "name": "Record 4710-3: a reason is given",
+      "reason": "Recording 4710-3 from the fictional demo approval letter (BLA 761901) for tracking.",
+      "screenshot": "screenshots/06-record-form-reason.png"
+    },
+    {
+      "name": "4710-3 is marked Recorded on the letter",
+      "commitmentId": 3,
+      "status": 201,
+      "screenshot": "screenshots/07-recorded.png"
+    },
+    {
+      "name": "Meetings & commitments, as the page stands after recording: 4710-3 is listed",
+      "listedWithoutReread": true,
+      "finding": null,
+      "screenshot": "screenshots/08a-register-before-reread.png"
+    },
+    {
+      "name": "Meetings & commitments, after the page is read again: 4710-3 is listed, due 2030-06-30",
+      "listed": "PMR Conduct a pharmacokinetic, safety and efficacy study of LMN-201 in pediatric patients 2 to less than 18 years of age for the prevention of recurrent C. difficile infection. PREA (FDCA 505B) · 4710-3 · due 2030-06-30 Open Record fulfilment",
+      "screenshot": "screenshots/08b-register-after-reread.png"
+    },
+    {
+      "name": "390 wide: the letter's commitments",
+      "horizontalOverflowPx": 0,
+      "screenshot": "screenshots/09-mobile-390-commitments.png"
+    },
+    {
+      "name": "C2C-101: the information request's 3 numbered questions are proposed",
+      "screenshot": "screenshots/10-biotech-ir-questions.png"
+    }
+  ],
+  "apiErrors": [],
+  "consoleErrors": [],
+  "outcome": "passed",
+  "finishedAt": "2026-11-01T16:04:27.032Z"
+}

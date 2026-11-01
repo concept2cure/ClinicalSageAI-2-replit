@@ -130,3 +130,62 @@ export const BIOTECH_STUDY_DESIGN = {
     powerAssumptions: { eventRate: 0.08, effectSize: 0.47 },
   },
 };
+
+/**
+ * A FICTIONAL FDA information request on the C2C-101 IND, filed in the
+ * program's data room and logged in its agency inbox, so the inbox proposes
+ * its numbered questions (G3, shared/agency/letter-questions.ts). Not issued
+ * by FDA; no real person is named. Fixed text, so its checksum is the same on
+ * every run; ASCII only, as its file name becomes the source's title.
+ */
+export const BIOTECH_IR_LETTER = {
+  fileName: '[Demo] FDA information request (fictional) - IND C2C-101.txt',
+  communication: {
+    sourceType: 'uploaded_official_correspondence',
+    communicationType: 'FDA information request (fictional demo), IND C2C-101',
+    sourceChannel: 'Demo seed: fictional letter',
+    letterClass: 'information_request',
+    urgency: 'high',
+    responseRequired: true,
+  },
+  expect: { commitments: [], questions: 3 },
+  text: `DEMONSTRATION ONLY: FICTIONAL LETTER. NOT ISSUED BY FDA.
+
+Food and Drug Administration
+Silver Spring MD 20993
+
+IND C2C-101 (fictional)
+INFORMATION REQUEST
+
+Concept2Cure Therapeutics (fictional demonstration sponsor)
+Attention: Regulatory Affairs
+
+Dear Regulatory Affairs:
+
+Please refer to your Investigational New Drug Application (IND) for C2C-101, a
+humanized IgG1 anti-IL-23p19 monoclonal antibody, 100 mg/mL solution in a prefilled
+syringe.
+
+We are reviewing your submission and have the following requests for information:
+
+1. Provide the batch analysis data for each drug substance lot used in the 26-week
+   cynomolgus toxicology study, including host cell protein and SEC monomer results.
+
+2. Justify the proposed potency acceptance criterion for drug product release.
+   Specifically:
+   a. state the assay's intermediate precision, and
+   b. describe how the criterion relates to the lots used in the toxicology study.
+
+3. Submit the 6-month stability results for drug product lot C2C101-DP-2501 at 5 C
+   and 25 C/60% RH, with the shelf-life trending.
+
+Please submit your response as an amendment to this IND.
+
+If you have any questions, call the Regulatory Project Manager for this application.
+
+Sincerely,
+{See appended electronic signature page}
+
+DEMONSTRATION ONLY: FICTIONAL LETTER. NOT ISSUED BY FDA.
+`,
+};

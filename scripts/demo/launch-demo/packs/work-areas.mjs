@@ -1,6 +1,6 @@
 /**
  * launch-demo/packs/work-areas.mjs — the work areas a demo project is shown in:
- * Tasks, CMC / Module 3 and Biostatistics.
+ * Tasks, CMC / Module 3, Biostatistics, Plan and Communication's agency inbox.
  *
  * 2026-10-31: a client demo opened each of these on a seeded project and found
  * them empty — "No tasks on the board yet", a Module 3 with no specification,
@@ -17,7 +17,10 @@ import { must } from '../lib.mjs';
 const DAY = 86_400_000;
 const isoIn = (days) => new Date(Date.now() + days * DAY).toISOString();
 const dateIn = (days) => isoIn(days).slice(0, 10);
-const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : Array.isArray(j?.rows) ? j.rows : Array.isArray(j?.data?.rows) ? j.data.rows : []);
+// `documents` is the authoring list's key (GET /api/authoring/docs). Unread, the
+// Plan step found no started deliverable and started each again on every run
+// (2026-11-01: three copies of each on LMN-201).
+const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : Array.isArray(j?.rows) ? j.rows : Array.isArray(j?.data?.rows) ? j.data.rows : Array.isArray(j?.documents) ? j.documents : []);
 
 /* ───────────────────────── Tasks ───────────────────────── */
 
@@ -287,6 +290,92 @@ export async function ensurePlanDocuments({ api, run, tally }, program, delivera
     }
     return `${created} started, ${deliverables.length - created} already started`;
   });
+}
+
+/* ───────────────────────── Communication: an agency letter ───────────────────────── */
+
+/**
+ * File an agency letter in the project's data room and log it in the
+ * project's agency inbox, linked to that file: the two writes Respond's "Add
+ * the agency's letter" makes (ProjectRespond.tsx). The letter goes up through
+ * the data room's own upload (POST /api/chat/upload, useChatUpload.ts), which
+ * reads its text as it records the source; the communication is the inbox's
+ * audited write (POST .../agency-communications), linked as `cre_source:<id>`,
+ * which the server checks is this project's source (refuseForeignLetterSources).
+ *
+ * The source is found again by its title (the file name) and the
+ * communication by that link, so a second run writes nothing. Then the
+ * inbox's own reads (question-proposals, commitment-proposals) must find in
+ * the letter what `letter.expect` says, or the step fails: a letter whose
+ * text the data room did not read, or that yields other commitments, is not
+ * the demonstration it is seeded for.
+ *
+ *   letter: { fileName, text, communication: { sourceType, communicationType,
+ *             sourceChannel, letterClass, urgency, responseRequired },
+ *             expect: { commitments: [ref…], questions: n } }
+ */
+export async function ensureAgencyLetter({ api, run, tally }, program, letter, label) {
+  const out = { title: letter.fileName, sourceId: null, eventId: null };
+  await run.step(`Communication: data-room source "${letter.fileName}" on ${label}`, async () => {
+    const listed = must(await api('GET', `/api/c2c/projects/${encodeURIComponent(program.id)}/sources?limit=200`), 200, 'read the data room');
+    const hit = (listed.sources ?? []).find((s) => s.title === letter.fileName);
+    if (hit) { out.sourceId = Number(hit.id); tally.found('data-room-source'); return `found ${out.sourceId}`; }
+    const form = new FormData();
+    form.append('file', new Blob([Buffer.from(letter.text, 'utf8')], { type: 'text/plain' }), letter.fileName);
+    form.append('projectId', program.id);
+    const up = must(await api('POST', '/api/chat/upload', form), 200, `upload ${letter.fileName} into the data room`);
+    if (!Number.isSafeInteger(Number(up.sourceId)) || Number(up.sourceId) <= 0) {
+      throw new Error(`the upload recorded no data-room source: ${JSON.stringify(up).slice(0, 300)}`);
+    }
+    if (up.dataRoom?.readable !== true) {
+      throw new Error(`the data room recorded source ${up.sourceId} but did not read its text: ${JSON.stringify(up.dataRoom ?? null).slice(0, 300)}`);
+    }
+    out.sourceId = Number(up.sourceId);
+    tally.created('data-room-source');
+    return `uploaded ${out.sourceId} (text read: ${up.dataRoom.processing?.status ?? 'processed'})`;
+  });
+
+  const commsPath = `/api/concept2cure/projects/${encodeURIComponent(program.id)}/agency-communications`;
+  const ref = `cre_source:${out.sourceId}`;
+  await run.step(`Communication: agency inbox entry for "${letter.communication.communicationType}" on ${label}`, async () => {
+    const comms = rowsOf(must(await api('GET', commsPath), 200, 'read the agency inbox'));
+    const hit = comms.find((c) => (c.linkedArtifactIds ?? []).includes(ref));
+    if (hit) { out.eventId = hit.id; tally.found('agency-communication'); return `found ${hit.id}`; }
+    const c = letter.communication;
+    const j = must(await api('POST', commsPath, {
+      sourceType: c.sourceType,
+      communicationType: c.communicationType,
+      sourceChannel: c.sourceChannel,
+      linkedSectionCodes: [],
+      linkedArtifactIds: [ref],
+      urgency: c.urgency,
+      responseRequired: c.responseRequired,
+      extractedIssues: [],
+      letterClass: c.letterClass,
+      visibilityTier: 'shared_client_c2c',
+    }), [200, 201], `log ${c.communicationType} in the agency inbox`);
+    out.eventId = j.data?.id ?? null;
+    if (!out.eventId) throw new Error(`the inbox logged no communication id: ${JSON.stringify(j).slice(0, 300)}`);
+    tally.created('agency-communication');
+    return `logged ${out.eventId}`;
+  });
+
+  await run.step(`Communication: the inbox reads "${letter.fileName}"`, async () => {
+    const base = `${commsPath}/${encodeURIComponent(out.eventId)}`;
+    const q = must(await api('GET', `${base}/question-proposals`), 200, 'read the letter\'s questions');
+    const k = must(await api('GET', `${base}/commitment-proposals`), 200, 'read the letter\'s commitments');
+    const unread = [...(q.data?.sources ?? []), ...(k.data?.sources ?? [])].filter((s) => s.state !== 'read');
+    if (unread.length) throw new Error(`the inbox could not read the letter: ${JSON.stringify(unread)}`);
+    const questions = q.data?.proposals ?? [];
+    const refs = (k.data?.proposals ?? []).map((p) => p.ref);
+    if (questions.length !== letter.expect.questions || refs.join(',') !== letter.expect.commitments.join(',')) {
+      throw new Error(`the inbox found ${questions.length} questions and commitments [${refs.join(', ')}]; expected ${letter.expect.questions} and [${letter.expect.commitments.join(', ')}]`);
+    }
+    const recorded = (k.data?.proposals ?? []).filter((p) => p.recordedCommitmentId !== null).length;
+    out.proposals = { questions: questions.length, commitments: refs, commitmentsRecorded: recorded };
+    return `${questions.length} questions, ${refs.length} commitments proposed${refs.length ? ` (${recorded} recorded)` : ''}`;
+  });
+  return out;
 }
 
 export { dateIn };

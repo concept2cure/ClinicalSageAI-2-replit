@@ -3,7 +3,7 @@
   "prefix": "[Demo · Biotech]",
   "outcome": "seeded_unqualified",
   "browserQualification": "not_executed",
-  "startedAt": "2026-10-31T23:16:49.494Z",
+  "startedAt": "2026-11-01T05:17:06.495Z",
   "records": {
     "target": {
       "baseUrl": "http://127.0.0.1:5000",
@@ -25,7 +25,8 @@
     },
     "tally": {
       "created": {
-        "plan-document": 5
+        "data-room-source": 1,
+        "agency-communication": 1
       },
       "found": {
         "program": 1,
@@ -58,7 +59,8 @@
         "cmc-spec": 5,
         "cmc-stability": 2,
         "cmc-batch": 3,
-        "task": 6
+        "task": 6,
+        "plan-document": 5
       }
     },
     "identities": {
@@ -176,7 +178,7 @@
       }
     ],
     "vault.readModel": {
-      "documentCount": 7,
+      "documentCount": 8,
       "unfiledCount": 0,
       "standard": "biotech",
       "dataRoom": {
@@ -923,22 +925,32 @@
         "note": "Only an effective controlled document can be acknowledged."
       }
     },
+    "informationRequest": {
+      "title": "[Demo] FDA information request (fictional) - IND C2C-101.txt",
+      "sourceId": 158,
+      "eventId": "ace_1793510248567_33ddc992",
+      "proposals": {
+        "questions": 3,
+        "commitments": [],
+        "commitmentsRecorded": 0
+      }
+    },
     "audit": {
       "window": 500,
       "entriesBefore": 500,
       "entriesAfter": 500,
-      "entriesWrittenThisRun": 64,
+      "entriesWrittenThisRun": 2,
       "eventsThisRun": [
-        "Authoring Section Create",
+        "[Demo] FDA information request (fictional) - IND C2C-101.txt",
         "C2c Work Persist"
       ],
       "unchainedThisRun": 0,
       "chain": {
         "store": "audit_logs",
         "legacyRows": 0,
-        "sequencedRows": 751,
+        "sequencedRows": 811,
         "ok": true,
-        "rowsChecked": 751,
+        "rowsChecked": 811,
         "head": {
           "verified": false,
           "status": "not_configured",
@@ -950,8 +962,8 @@
       }
     },
     "summary": {
-      "created": 5,
-      "found": 191
+      "created": 2,
+      "found": 196
     }
   },
   "notes": [
@@ -966,5 +978,5 @@
     "QMS deviation not created: /api/mdx/qms exposes documents, changes (with a \"deviation\" link TYPE by reference), nonconforming products, suppliers, internal audits, management reviews and training — there is no deviation entity to write (server/routes/mdx-qms.ts). SOP-003 Deviation Management describes the process; the register itself is not a launch QMS capability.",
     "QMS personal acknowledgement: Only an effective controlled document can be acknowledged."
   ],
-  "finishedAt": "2026-10-31T23:17:21.564Z"
+  "finishedAt": "2026-11-01T05:17:29.572Z"
 }

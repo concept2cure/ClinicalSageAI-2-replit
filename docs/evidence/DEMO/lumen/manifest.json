@@ -3,7 +3,7 @@
   "prefix": "[Demo · Lumen]",
   "outcome": "seeded_unqualified",
   "browserQualification": "not_executed",
-  "startedAt": "2026-10-31T23:17:51.188Z",
+  "startedAt": "2026-11-01T16:06:52.325Z",
   "records": {
     "target": {
       "baseUrl": "http://127.0.0.1:5000",
@@ -24,9 +24,7 @@
       }
     },
     "tally": {
-      "created": {
-        "plan-document": 4
-      },
+      "created": {},
       "found": {
         "client-workspace": 1,
         "program": 4,
@@ -35,7 +33,10 @@
         "study-design": 1,
         "cmc-spec": 5,
         "cmc-stability": 2,
-        "cmc-batch": 3
+        "cmc-batch": 3,
+        "plan-document": 4,
+        "data-room-source": 1,
+        "agency-communication": 1
       }
     },
     "client": {
@@ -65,13 +66,29 @@
         "id": "049c6723-12cd-471d-b00d-8135b1636d02"
       }
     },
+    "approvalLetter": {
+      "title": "[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt",
+      "sourceId": 157,
+      "eventId": "ace_1793510204507_ca0d5511",
+      "proposals": {
+        "questions": 0,
+        "commitments": [
+          "4710-1",
+          "4710-2",
+          "4710-3",
+          "4710-4"
+        ],
+        "commitmentsRecorded": 3
+      }
+    },
     "summary": {
-      "created": 4,
-      "found": 31
+      "created": 0,
+      "found": 37
     }
   },
   "notes": [
-    "Lumen Bioscience demonstration built from public information (data/seeds/lumen-demo). Not affiliated with Lumen Bioscience, Inc.; every specification, stability result, batch, planning assumption and task is illustrative."
+    "Lumen Bioscience demonstration built from public information (data/seeds/lumen-demo). Not affiliated with Lumen Bioscience, Inc.; every specification, stability result, batch, planning assumption and task is illustrative.",
+    "The LMN-201 approval letter (BLA 761901) is FICTIONAL: not issued by FDA, LMN-201 is not approved, and no Lumen Bioscience authorization is represented. It is addressed to the demonstration's fictional sponsor."
   ],
-  "finishedAt": "2026-10-31T23:18:00.462Z"
+  "finishedAt": "2026-11-01T16:07:01.018Z"
 }

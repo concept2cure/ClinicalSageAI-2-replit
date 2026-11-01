@@ -172,3 +172,115 @@ export const TASKS = {
     { title: 'Field proof-of-concept study outline', moduleType: 'Clinical', priority: 'medium', status: 'pending', dueInDays: 60, description: 'Planned 2026 field study, informed by the travelers\' diarrhea etiology study (NCT06363890).' },
   ],
 };
+
+/**
+ * A FICTIONAL FDA approval letter for LMN-201, filed in the LMN-201 data room
+ * and logged in its agency inbox, so the inbox's "extract commitments"
+ * (shared/agency/letter-commitments.ts, P-81, P-84) has a letter to read.
+ * LMN-201 is not an approved product: no FDA action, no Lumen Bioscience
+ * authorization and no real person is represented, and the letter says so at
+ * its head and foot. It is addressed to the demonstration's own fictional
+ * sponsor. The layout is FDA's, as the parser's test sets it out
+ * (shared/agency/__tests__/letter-commitments.test.ts): two PMRs under 505(o)
+ * with their schedules, a deferred PREA study, and a 506B PMC. Its dates are
+ * fixed, so the bytes, and the data room's checksum of them, are the same on
+ * every run. ASCII only: the upload's file name becomes the source's title.
+ */
+export const APPROVAL_LETTER = {
+  fileName: '[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt',
+  communication: {
+    sourceType: 'uploaded_official_correspondence',
+    communicationType: 'FDA approval letter (fictional demo), BLA 761901',
+    sourceChannel: 'Demo seed: fictional letter',
+    letterClass: 'approval_letter',
+    urgency: 'medium',
+    responseRequired: false,
+  },
+  /** What the inbox must find in it, or the step fails. */
+  expect: { commitments: ['4710-1', '4710-2', '4710-3', '4710-4'], questions: 0 },
+  text: `DEMONSTRATION ONLY: FICTIONAL LETTER. NOT ISSUED BY FDA.
+LMN-201 IS NOT AN APPROVED PRODUCT. NO LUMEN BIOSCIENCE AUTHORIZATION IS REPRESENTED.
+
+Food and Drug Administration
+Silver Spring MD 20993
+
+BLA 761901
+BLA APPROVAL
+
+Concept2Cure Therapeutics (fictional demonstration sponsor)
+Attention: Regulatory Affairs
+
+Dear Regulatory Affairs:
+
+Please refer to your biologics license application (BLA) submitted under section 351(a)
+of the Public Health Service Act for LMN-201 (illustrative), an orally administered
+antibody cocktail.
+
+We have completed our review of this application. It is approved for the prevention of
+recurrent Clostridioides difficile infection in adults. We remind you of your
+postmarketing obligations, described below.
+
+POSTMARKETING REQUIREMENTS UNDER 505(o)
+
+Section 505(o)(3) of the FDCA authorizes FDA to require holders of approved drug and
+biological product applications to conduct postmarketing studies and clinical trials
+for certain purposes, if FDA makes certain findings required by the statute. We have
+determined that you are required to conduct the following:
+
+4710-1    Conduct a randomized, double-blind, placebo-controlled trial to evaluate the
+          long-term safety of LMN-201, including serious hypersensitivity reactions, in
+          adults treated for the prevention of recurrent C. difficile infection.
+
+The timetable you submitted states that you will conduct this trial according to the
+following schedule:
+
+          Draft Protocol Submission:    06/2027
+          Final Protocol Submission:    09/2027
+          Trial Completion:             12/2029
+          Final Report Submission:      06/2030
+
+4710-2    Conduct an observational study in a US claims database to assess the incidence
+          of serious gastrointestinal adverse events in patients treated with LMN-201,
+          compared with patients treated with standard of care alone.
+
+          Final Protocol Submission:    03/2027
+          Study Completion:             09/2029
+          Final Report Submission:      03/2030
+
+PEDIATRIC RESEARCH EQUITY ACT REQUIREMENTS
+
+We are deferring submission of your pediatric study for ages 2 to less than 18 years
+for this application because this product is ready for approval for use in adults and
+the pediatric study has not been completed. Your deferred pediatric study required
+under section 505B(a) of the FDCA is a required postmarketing study, listed below.
+
+4710-3    Conduct a pharmacokinetic, safety and efficacy study of LMN-201 in pediatric
+          patients 2 to less than 18 years of age for the prevention of recurrent
+          C. difficile infection.
+
+          Final Protocol Submission:    March 2027
+          Study Completion:             December 2029
+          Final Report Submission:      June 30, 2030
+
+POSTMARKETING COMMITMENTS SUBJECT TO REPORTING REQUIREMENTS UNDER SECTION 506B
+
+We remind you of your postmarketing commitment:
+
+4710-4    Develop and validate a cell-based toxin B neutralisation potency assay for
+          LMN-201 drug substance release and stability testing, and submit the
+          validation report.
+
+          Final Report Submission:      12/2027
+
+Submit clinical protocols to your IND for this product. Submit nonclinical and
+chemistry, manufacturing, and controls protocols and all postmarketing final reports
+to this BLA.
+
+If you have any questions, call the Regulatory Project Manager for this application.
+
+Sincerely,
+{See appended electronic signature page}
+
+DEMONSTRATION ONLY: FICTIONAL LETTER. NOT ISSUED BY FDA.
+`,
+};
