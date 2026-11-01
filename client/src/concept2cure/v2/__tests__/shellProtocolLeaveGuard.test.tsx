@@ -105,7 +105,8 @@ describe('shell destinations preserve status-only protocol changes', () => {
     else if (target === 'project') fireEvent.click(screen.getByRole('button', { name: /Open project\s*BX-410/ }));
     else if (target === 'help') fireEvent.click(screen.getByRole('button', { name: 'Get help' }));
     else {
-      fireEvent.click(screen.getByTitle('Ada Rowe'));
+      // The account button's title names the organisation too (D1-1, D1.md §D1.A step 2).
+      fireEvent.click(screen.getByTitle('Ada Rowe · Sponsor'));
       fireEvent.click(screen.getByRole(target === 'account' ? 'menuitem' : 'menuitemradio', { name: target === 'account' ? 'Usage & limits' : /Medical Device & IVD/ }));
     }
     expect(callbacks.onNav).not.toHaveBeenCalled(); expect(callbacks.setSegment).not.toHaveBeenCalled();

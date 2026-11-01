@@ -1514,25 +1514,24 @@
    (docs/design/ONE_ANA_ONE_CANVAS.md, slices 9 and 2A). */
 .c2c-v2.shell{display:grid;grid-template-columns:var(--rail) 1fr;grid-template-rows:100vh;height:100vh;overflow:hidden;background:var(--bg-000);}
 /* ── Phone-width rail (<=640px) ──
-   At 430px the 264px expanded rail crushed the content column to nothing —
-   the whole app behind an open rail was unusable. The grid now always
-   reserves only the collapsed strip (--rail is narrowed, so every shell
-   variant below inherits it), and the EXPANDED rail paints OVER the content
-   as a fixed drawer above the .rail-scrim, which tap-closes it; Escape does
-   the same via the shell-level listener. Desktop is untouched — none of this
-   applies above 640px, and the scrim renders display:none there. */
-@media (max-width: 640px) {
-  .c2c-v2.shell { --rail: var(--rail-collapsed); }
-  .c2c-v2.shell:not([data-collapsed="true"]) .rail {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: min(300px, 84vw);
-    z-index: 61;
-    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.25);
-  }
-  .c2c-v2.shell:not([data-collapsed="true"]) .rail-scrim { display: block; }
+   Claude's phone layout: no strip beside the content (D1.md §D1.A step 7). At
+   430px the 264px expanded rail had crushed the content column to nothing, and
+   the 56px strip that replaced it took 14% of a 390px screen. Both rail
+   variables are 0 here, so every grid that reads them (this sheet's, and the
+   editor's in authoring-v2.css) reserves nothing; the collapsed rail is not
+   drawn. The top bar's "Open the sidebar" (.tb-rail, Shell.tsx TopBar) opens
+   the EXPANDED rail as a fixed drawer over the .rail-scrim, which tap-closes
+   it; Escape does the same via the shell-level listener, and choosing an item
+   closes it (Shell.tsx Rail). None of this applies above 640px, and the scrim
+   and the button render display:none there. D1-2 folds .tb-rail into the top
+   bar's own rules. */
+.c2c-v2 .topbar .tb-rail{display:none;}
+@media (max-width:640px){
+  .c2c-v2.shell{--rail:0px;--rail-collapsed:0px;}
+  .c2c-v2.shell[data-collapsed="true"] .rail{display:none;}
+  .c2c-v2.shell:not([data-collapsed="true"]) .rail{position:fixed;top:0;bottom:0;left:0;width:min(300px,84vw);z-index:61;box-shadow:var(--v2-shadow-lg);}
+  .c2c-v2.shell:not([data-collapsed="true"]) .rail-scrim{display:block;}
+  .c2c-v2 .topbar .tb-rail{display:flex;}
 }
 .c2c-v2 .rail-scrim {
   display: none;
@@ -1553,19 +1552,20 @@
    and closed it; the client type and the Apps catalog are in that menu. The
    list scrolls and clips inside .rail-scroll instead. */
 .c2c-v2 .rail{grid-column:1;grid-row:1;height:100vh;display:flex;flex-direction:column;background:var(--bg-100);border-right:1px solid var(--border);min-width:0;}
-.c2c-v2 .rail-top{display:flex;align-items:center;justify-content:space-between;height:var(--topbar);padding:0 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.c2c-v2 .rail-logo{display:flex;align-items:center;gap:9px;min-width:0;}
+.c2c-v2 .rail-top{display:flex;align-items:center;justify-content:space-between;height:var(--topbar);padding:0 8px 0 10px;border-bottom:0;flex-shrink:0;}
+.c2c-v2 .rail-logo{display:flex;align-items:center;gap:8px;min-width:0;padding:4px 6px;border-radius:var(--radius-lg);transition:background-color var(--dur) var(--ease);}
+.c2c-v2 .rail-logo:hover{background:var(--bg-200);}
 .c2c-v2 .rail-logo img{width:24px;height:24px;flex-shrink:0;border-radius:var(--radius-md);}
-.c2c-v2 .rail-logo-text{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.c2c-v2 .rail-logo-text span{color:var(--accent-100);font-weight:500;}
+.c2c-v2 .rail-logo-text{font-size:var(--fs-section,15px);font-weight:600;letter-spacing:-.01em;color:var(--text-100);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2 .rail-logo-text span{color:var(--text-300);font-weight:500;}
 .c2c-v2.shell[data-collapsed="true"] .rail-logo-text{display:none;}
 /* Collapsed, the brand mark has the top to itself and the toggle sits in the
    foot (Shell.tsx Rail) — side by side they left the mark 5px wide (finding 135). */
 .c2c-v2.shell[data-collapsed="true"] .rail-top{justify-content:center;padding:0;}
 .c2c-v2 .rail-foot .rail-collapse{margin:0 auto 6px;}
-.c2c-v2 .rail-collapse{width:26px;height:26px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-300);flex-shrink:0;font-size:16px;}
+.c2c-v2 .rail-collapse{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:var(--text-300);flex-shrink:0;font-size:16px;}
 .c2c-v2 .rail-collapse:hover{background:var(--bg-200);color:var(--text-100);}
-.c2c-v2 .rail-scroll{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;padding:6px 0 12px;}
+.c2c-v2 .rail-scroll{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;padding:2px 0 12px;}
 .c2c-v2 .rc-move{color:var(--success);font-weight:600;}
 .c2c-v2 .rc-move-tag{font-size:10px;color:var(--text-400);font-weight:400;}
 .c2c-v2 .riskmx-dot[data-moved]{box-shadow:0 0 0 2px var(--success-muted);}
@@ -1578,25 +1578,32 @@
 .c2c-v2 .rail-nav{display:flex;flex-direction:column;gap:1px;padding:0 8px;}
 /* The work areas, under their own heading below the places (registryModel.ts
    RAIL_CORE). Collapsed, the heading gives way to a rule between the groups. */
-.c2c-v2 .rail-group{margin-top:14px;}
-.c2c-v2 .rail-group-h{padding:0 8px 4px;font-size:var(--fs-caption);font-weight:600;color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2 .rail-group{margin-top:20px;}
+.c2c-v2 .rail-group-h{padding:0 8px 6px;font-size:var(--fs-caption,12px);font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .c2c-v2.shell[data-collapsed="true"] .rail-group{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
 .c2c-v2.shell[data-collapsed="true"] .rail-group-h{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
-.c2c-v2 .nav-item{display:flex;align-items:center;gap:10px;min-height:30px;padding:5px 8px;border-radius:var(--radius-md);color:var(--text-200);font-size:13px;transition:background var(--dur) var(--ease);white-space:nowrap;overflow:hidden;width:100%;position:relative;}
-.c2c-v2 .nav-item .ico{width:16px;height:16px;font-size:16px;flex-shrink:0;color:var(--text-400);display:flex;align-items:center;justify-content:center;}
+.c2c-v2 .nav-item{display:flex;align-items:center;gap:10px;min-height:32px;padding:6px 8px;border-radius:var(--radius-lg);color:var(--text-200);font-size:var(--fs-body,14px);transition:background-color var(--dur) var(--ease),color var(--dur) var(--ease);white-space:nowrap;overflow:hidden;width:100%;position:relative;}
+.c2c-v2 .nav-item .ico{width:16px;height:16px;font-size:16px;flex-shrink:0;color:var(--text-300);display:flex;align-items:center;justify-content:center;}
 .c2c-v2 .nav-item .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;}
-.c2c-v2 .nav-item:hover{background:var(--bg-200);color:var(--text-100);}
+.c2c-v2 .nav-item:hover{background:color-mix(in srgb,var(--bg-200) 60%,transparent);color:var(--text-100);}
 .c2c-v2 .nav-item:hover .ico{color:var(--text-200);}
 /* Where the user is: the open surface's entry (aria-current="page"). This read
    [aria-current="true"], which only the client-category buttons carried, so the
    category was the one thing ever highlighted and the open surface never was
-   (launch sweep finding 130). */
-.c2c-v2 .nav-item[aria-current="page"]{background:var(--bg-300,var(--bg-200));color:var(--text-100);font-weight:500;}
+   (launch sweep finding 130). Claude's active row is a soft neutral fill, with
+   no marker bar and no orange (D1.md §D1.A step 6). */
+.c2c-v2 .nav-item[aria-current="page"]{background:var(--bg-200);color:var(--text-100);font-weight:500;}
 .c2c-v2 .nav-item[aria-current="page"] .ico{color:var(--text-100);}
-.c2c-v2 .rail-actions{margin-top:1px;}
+/* New conversation and Search, above the places (Shell.tsx Rail). */
+.c2c-v2 .rail-actions{margin:0 0 12px;}
+/* New conversation: Claude's orange "+", the sidebar's one orange. Ranked with
+   .nav-item so the row's hover (.nav-item:hover .ico) does not recolour it. */
+.c2c-v2 .nav-item.rail-new .ico{width:22px;height:22px;border-radius:50%;background:var(--accent-strong);color:var(--accent-on-strong);}
+.c2c-v2 .rail-new .ico svg{width:14px;height:14px;}
+.c2c-v2 .rail-new .lbl{color:var(--text-100);font-weight:500;}
 .c2c-v2 .rail-recents{margin-top:14px;}
-.c2c-v2 .rail-recent{min-height:28px;padding:4px 8px;font-size:13px;color:var(--text-200);}
-.c2c-v2 .rail-recents-note{padding:4px 8px;font-size:12px;color:var(--text-300);}
+.c2c-v2 .rail-recent{min-height:30px;padding:5px 8px;font-size:var(--fs-small,13px);color:var(--text-200);}
+.c2c-v2 .rail-recents-note{padding:4px 8px;font-size:var(--fs-small,13px);color:var(--text-300);}
 /* The client type is no longer a rail entry (it is the account menu's
    "Client type", a checked menu item), so no rail rule draws a chosen one. */
 .c2c-v2.shell[data-collapsed="true"] .nav-item .lbl{display:none;}
@@ -1637,14 +1644,27 @@
 .c2c-v2 .nav-unlock-status{margin-top:2px;font-size:11.5px;font-weight:500;color:var(--text-400);}
 .c2c-v2 .nav-unlock-body{margin:12px 0 0;font-size:13px;line-height:1.55;color:var(--text-300);}
 .c2c-v2 .nav-unlock-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
-.c2c-v2 .rail-foot{flex-shrink:0;border-top:1px solid var(--border);padding:8px;}
-.c2c-v2 .rail-account{display:flex;align-items:center;gap:9px;width:100%;padding:6px 8px;border-radius:var(--radius-md);}
+/* The account, with organisation access beside it (Shell.tsx Rail). No rule
+   above it: the foot sits on the rail's own fill. */
+.c2c-v2 .rail-foot{display:flex;align-items:center;gap:4px;flex-shrink:0;padding:8px;border-top:0;}
+.c2c-v2 .rail-account{display:flex;align-items:center;flex:1;min-width:0;gap:10px;width:100%;padding:6px 8px;border-radius:var(--radius-lg);}
 .c2c-v2 .rail-account:hover{background:var(--bg-200);}
-.c2c-v2 .avatar{width:26px;height:26px;border-radius:50%;background:var(--accent-strong);color:var(--accent-on-strong);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+/* The avatar's shape. Its two users are both in Shell.tsx (the account button
+   and the account menu's head), and its fill is theirs, below. */
+.c2c-v2 .avatar{border-radius:50%;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+/* An ink avatar, not a second orange. `.rail` ranks it above the account menu
+   block's own `.acct-head .avatar` (later in this sheet, and in coverage-v2.css,
+   imported after it); the menu opens inside the rail's foot. */
+.c2c-v2 .rail :is(.rail-account, .acct-head) .avatar{width:28px;height:28px;background:var(--text-100);color:var(--bg-000);font-size:var(--fs-caption,12px);}
+/* The menu head's second line: the organisation and the role, in words. */
+.c2c-v2 .rail .acct-head .rl{font-size:var(--fs-small,13px);color:var(--text-300);}
 .c2c-v2 .rail-account .who{min-width:0;flex:1;}
-.c2c-v2 .rail-account .nm{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.c2c-v2 .rail-account .rl{font-size:10px;color:var(--text-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2 .rail-account .nm{font-size:var(--fs-small,13px);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2 .rail-account .rl{font-size:var(--fs-caption,12px);color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .c2c-v2.shell[data-collapsed="true"] .rail-account .who, .c2c-v2.shell[data-collapsed="true"] .rail-account .chev{display:none;}
+/* Collapsed, the foot stacks: the expand toggle, organisation access, the avatar. */
+.c2c-v2.shell[data-collapsed="true"] .rail-foot{flex-direction:column;}
+.c2c-v2.shell[data-collapsed="true"] .rail-account{justify-content:center;padding:6px;}
 
 /* ── Main + topbar ── */
 .c2c-v2 .main{grid-column:2;grid-row:1;height:100vh;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg-000);}
@@ -1701,7 +1721,6 @@
    none, so it takes the fill and the text colour only. */
 .c2c-v2 .tb-btn.on{background:var(--accent-000);color:var(--accent-200);}
 .c2c-v2 .tb-btn.on:hover{background:var(--accent-000);color:var(--accent-200);}
-.c2c-v2 .rail-logo[data-on="true"]{background:var(--bg-200);}
 /* A label, not a control (finding 131): no hover. It gives way before the
    crumbs do, down to the mark alone. */
 .c2c-v2 .tb-org{display:flex;align-items:center;gap:7px;height:30px;padding:0 8px 0 6px;min-width:28px;flex:0 100000 auto;}

@@ -1,0 +1,383 @@
+// @vitest-environment jsdom
+/**
+ * The quiet chrome: the sidebar (D1-1; .design/claude-convergence/D1.md §D1.A and §D1.I).
+ *
+ * WHY THIS EXISTS
+ * Claude's sidebar opens with "New conversation" (its one orange, a round "+") and
+ * Search, then the places, then Recents, with the account at the bottom: the
+ * person's name and their organisation. Ours opened with the places, put Search
+ * as a seventh place, showed the raw role value ("admin") under the name, drew a
+ * grey fill on the brand beside Home's own active row, an orange ".RI" and an
+ * orange avatar, and kept a 56px icon strip beside the content at phone width.
+ * "What AnA remembers" was reachable only from a conversation's header.
+ *
+ * WHAT IS PINNED
+ *   - the first two `.rail-nav` buttons are "New conversation" and "Search";
+ *     New conversation opens Home behind the leave guard;
+ *   - the account button's second line is the organisation (the role, as words,
+ *     when none is known), and its title names both;
+ *   - the account menu: "What AnA remembers" right after Account opens the
+ *     drawer, Escape closes it and focus returns to the account button; the
+ *     admin entries stay gated exactly as before (isOrgAdmin, platformAdmin);
+ *   - Organizations and invitations sits in the sidebar foot, after the account,
+ *     and no longer in the top bar;
+ *   - at phone width, choosing an item closes the drawer; the top bar's
+ *     "Open the sidebar" button opens it;
+ *   - in the sidebar's rules: the round "+" is the one orange, group labels are
+ *     12px sentence case, nothing under 12px, no brand fill, the avatar in ink;
+ *     at ≤640px no strip is reserved and the collapsed rail is not drawn.
+ *
+ * The top bar's own quiet checks (no `.tb-cmdk`, `.tb-org`, `.tb-proj`,
+ * `.tb-task`, no "Get help", the `.crumb-proj` button) are D1-2's (§D1.B), and join
+ * this file with that step.
+ *
+ * Red at b854c54c2b (before D1-1): docs/evidence/DESIGN/D1/D1-1/red/.
+ */
+import React from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+
+const apiRequest = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
+const viewer = vi.hoisted(() => ({ roles: ['admin'] as string[] }));
+vi.mock('@/services/portal/authService', () => ({
+  useAuth: () => ({ user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: viewer.roles }, logout: vi.fn() }),
+}));
+const tenant = vi.hoisted(() => ({
+  current: { currentOrganization: { name: 'Concept2Cure Therapeutics' } } as { currentOrganization: { name: string } | null },
+}));
+vi.mock('@/contexts/TenantContext', () => ({
+  useTenant: () => tenant.current,
+}));
+
+import { NavEntitlementsProvider } from '../navEntitlements';
+import { Rail, TopBar } from '../Shell';
+
+const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
+const NAV = { organizationId: 7, tier: 'enterprise', industryMode: 'biotech', masterAdmin: false, resolved: true, surfaces: [] };
+
+beforeEach(() => {
+  viewer.roles = ['admin'];
+  tenant.current = { currentOrganization: { name: 'Concept2Cure Therapeutics' } };
+  apiRequest.mockReset();
+  apiRequest.mockImplementation(async (_m: string, url: string) => {
+    if (url === '/api/module-subscriptions/navigation') return ok(NAV);
+    if (url.startsWith('/api/chat/threads')) return ok({ threads: [] });
+    return ok({ data: [] });
+  });
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+function mountRail(props: { collapsed?: boolean; onSearch?: () => void; activeId?: string } = {}) {
+  const onNav = vi.fn();
+  const setCollapsed = vi.fn();
+  render(
+    <NavEntitlementsProvider>
+      <Rail activeId={props.activeId ?? 'home'} onNav={onNav} collapsed={props.collapsed ?? false} setCollapsed={setCollapsed}
+        segment="biopharma" setSegment={() => {}} onSearch={props.onSearch} />
+    </NavEntitlementsProvider>,
+  );
+  const rail = screen.getByRole('navigation', { name: 'Primary' });
+  return { onNav, setCollapsed, rail };
+}
+
+/** A viewport `(max-width: 640px)` either matches or not, as the shell asks it. */
+function viewport(phone: boolean) {
+  vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
+    matches: phone && /max-width:\s*640px/.test(query), media: query, onchange: null,
+    addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+  })));
+}
+
+describe('the top of the sidebar: New conversation, then Search (§D1.A step 1)', () => {
+  it('the first two .rail-nav buttons are "New conversation" and "Search"', () => {
+    const { rail } = mountRail({ onSearch: () => {} });
+    const first = Array.from(rail.querySelectorAll('.rail-nav button')).slice(0, 2);
+    expect(first.map((b) => b.textContent?.trim())).toEqual(['New conversation', 'Search']);
+    // An action beside Search, not a place: it sits above the list of places, not in it.
+    expect(rail.querySelector('.rail-scroll .rail-new')).toBeNull();
+    expect(first[0].classList.contains('rail-new')).toBe(true);
+  });
+
+  it('New conversation opens Home, where a question starts a new conversation', () => {
+    const { rail, onNav } = mountRail({ onSearch: () => {} });
+    fireEvent.click(within(rail).getByRole('button', { name: 'New conversation' }));
+    expect(onNav).toHaveBeenCalledWith('home');
+  });
+
+  it('Search still opens the command palette', () => {
+    const onSearch = vi.fn();
+    const { rail } = mountRail({ onSearch });
+    fireEvent.click(within(rail).getByRole('button', { name: 'Search' }));
+    expect(onSearch).toHaveBeenCalledOnce();
+  });
+});
+
+describe('the account (§D1.A steps 2–3)', () => {
+  it('names the organisation under the person, and in the button’s title', () => {
+    const { rail } = mountRail();
+    const button = rail.querySelector('.rail-account') as HTMLElement;
+    expect(button.querySelector('.rl')?.textContent).toBe('Concept2Cure Therapeutics');
+    expect(button.getAttribute('title')).toBe('Ada Rowe · Concept2Cure Therapeutics');
+  });
+
+  it('with no organisation known, says the role in words, never the raw value', () => {
+    tenant.current = { currentOrganization: null };
+    viewer.roles = ['org_admin'];
+    const { rail } = mountRail();
+    const button = rail.querySelector('.rail-account') as HTMLElement;
+    expect(button.querySelector('.rl')?.textContent).toBe('Org admin');
+    expect(button.getAttribute('title')).toBe('Ada Rowe');
+  });
+
+  it('the menu head names the organisation and the role on one line', () => {
+    const { rail } = mountRail();
+    fireEvent.click(rail.querySelector('.rail-account') as HTMLElement);
+    const head = screen.getByRole('menu').querySelector('.acct-head') as HTMLElement;
+    expect(head.querySelector('.nm')?.textContent).toBe('Ada Rowe');
+    expect(head.querySelector('.rl')?.textContent).toBe('Concept2Cure Therapeutics · Admin');
+  });
+
+  it('"What AnA remembers" follows Account, opens the drawer, and Escape returns focus to the account button', async () => {
+    const { rail } = mountRail();
+    const button = rail.querySelector('.rail-account') as HTMLButtonElement;
+    fireEvent.click(button);
+    const items = within(screen.getByRole('menu')).getAllByRole('menuitem').map((i) => i.textContent?.trim());
+    expect(items.slice(0, 2)).toEqual(['Account', 'What AnA remembers']);
+    fireEvent.click(within(screen.getByRole('menu')).getByRole('menuitem', { name: 'What AnA remembers' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+    const drawer = await screen.findByRole('dialog', { name: 'What AnA remembers' });
+    expect(drawer).toBeTruthy();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'What AnA remembers' })).toBeNull());
+    expect(document.activeElement).toBe(button);
+  });
+
+  it('keeps the admin entries gated exactly as before', async () => {
+    viewer.roles = ['member'];
+    const { rail } = mountRail();
+    fireEvent.click(rail.querySelector('.rail-account') as HTMLElement);
+    const member = within(screen.getByRole('menu')).getAllByRole('menuitem').map((i) => i.textContent?.trim());
+    expect(member).toContain('What AnA remembers');
+    for (const gated of ['Admin', 'Subscription & features', 'Access requests', 'Platform licensing', 'Codebase coverage']) {
+      expect(member, gated).not.toContain(gated);
+    }
+    cleanup();
+    viewer.roles = ['admin'];
+    const again = mountRail();
+    await waitFor(() => expect(apiRequest).toHaveBeenCalled());
+    fireEvent.click(again.rail.querySelector('.rail-account') as HTMLElement);
+    const admin = within(screen.getByRole('menu')).getAllByRole('menuitem').map((i) => i.textContent?.trim());
+    expect(admin.slice(0, 3)).toEqual(['Account', 'What AnA remembers', 'Admin']);
+    expect(admin).toContain('Subscription & features');
+    expect(admin).toContain('Access requests');
+    // Platform licensing follows the server's guard, not the org role (accountMenuMasterLicensing.test.tsx).
+    expect(admin).not.toContain('Platform licensing');
+  });
+
+  it('Organizations and invitations sits in the sidebar foot, after the account', () => {
+    const { rail } = mountRail();
+    const foot = rail.querySelector('.rail-foot') as HTMLElement;
+    const buttons = Array.from(foot.querySelectorAll(':scope > button'));
+    const account = buttons.findIndex((b) => b.classList.contains('rail-account'));
+    const orgs = buttons.findIndex((b) => b.getAttribute('aria-label') === 'Organizations and invitations');
+    expect(account).toBeGreaterThanOrEqual(0);
+    expect(orgs).toBe(account + 1);
+  });
+
+  it('collapsed, the foot stacks the expand toggle, organisation access, then the avatar', () => {
+    const { rail } = mountRail({ collapsed: true });
+    const foot = rail.querySelector('.rail-foot') as HTMLElement;
+    const order = Array.from(foot.querySelectorAll(':scope > button')).map((b) =>
+      b.classList.contains('rail-collapse') ? 'toggle' : b.classList.contains('rail-account') ? 'account' : b.getAttribute('aria-label'));
+    expect(order).toEqual(['toggle', 'Organizations and invitations', 'account']);
+  });
+});
+
+describe('the top bar no longer carries organisation access, and opens the sidebar at phone width', () => {
+  const bar = (onOpenRail?: () => void) =>
+    render(<TopBar surface={{ id: 'vault', label: 'Vault' }} onPalette={() => {}} segment="biopharma" onSegment={() => {}}
+      onNav={() => {}} {...(onOpenRail ? { onOpenRail } : {})} />);
+
+  it('"Open the sidebar" is the bar’s first control and opens it', () => {
+    const onOpenRail = vi.fn();
+    bar(onOpenRail);
+    const topbar = document.querySelector('.topbar') as HTMLElement;
+    const first = topbar.firstElementChild as HTMLElement;
+    expect(first.getAttribute('aria-label')).toBe('Open the sidebar');
+    expect(first.classList.contains('tb-rail')).toBe(true);
+    fireEvent.click(first);
+    expect(onOpenRail).toHaveBeenCalledOnce();
+  });
+
+  it('draws no sidebar button that would do nothing', () => {
+    bar();
+    expect(screen.queryByRole('button', { name: 'Open the sidebar' })).toBeNull();
+  });
+
+  it('has no Organizations and invitations button of its own', () => {
+    bar(() => {});
+    expect(within(document.querySelector('.topbar') as HTMLElement).queryByRole('button', { name: 'Organizations and invitations' })).toBeNull();
+  });
+});
+
+describe('at phone width, choosing an item closes the drawer (§D1.A step 7)', () => {
+  it('a place, New conversation and Search each close it', () => {
+    viewport(true);
+    const onSearch = vi.fn();
+    const { rail, onNav, setCollapsed } = mountRail({ onSearch, activeId: 'projects' });
+    fireEvent.click(within(rail.querySelector('.rail-scroll') as HTMLElement).getByRole('button', { name: 'Vault' }));
+    expect(onNav).toHaveBeenCalledWith('vault');
+    expect(setCollapsed).toHaveBeenLastCalledWith(true);
+    setCollapsed.mockClear();
+    fireEvent.click(within(rail).getByRole('button', { name: 'New conversation' }));
+    expect(setCollapsed).toHaveBeenLastCalledWith(true);
+    setCollapsed.mockClear();
+    fireEvent.click(within(rail).getByRole('button', { name: 'Search' }));
+    expect(onSearch).toHaveBeenCalledOnce();
+    expect(setCollapsed).toHaveBeenLastCalledWith(true);
+  });
+
+  it('the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in it)', async () => {
+    viewport(true);
+    const { rail, setCollapsed } = mountRail({ activeId: 'projects' });
+    // Vault with no project open lands on Projects and says why (Rail.open).
+    fireEvent.click(within(rail.querySelector('.rail-scroll') as HTMLElement).getByRole('button', { name: 'Vault' }));
+    expect(setCollapsed).toHaveBeenLastCalledWith(true);
+    const notice = await screen.findByText('Open a project to see its Vault. Choose one in Projects.');
+    // At ≤640px the collapsed rail is display:none, so a notice inside it would not be drawn.
+    expect(rail.contains(notice)).toBe(false);
+  });
+
+  it('wider than that, the sidebar stays as it is', () => {
+    viewport(false);
+    const { rail, onNav, setCollapsed } = mountRail({ activeId: 'projects' });
+    fireEvent.click(within(rail.querySelector('.rail-scroll') as HTMLElement).getByRole('button', { name: 'Vault' }));
+    expect(onNav).toHaveBeenCalledWith('vault');
+    expect(setCollapsed).not.toHaveBeenCalled();
+  });
+});
+
+/* ── The sidebar's rules (app-v2.css) ─────────────────────────────────────── */
+
+const CSS = readFileSync(resolve(__dirname, '../styles/app-v2.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+interface CssRule { selector: string; body: string; media: string | null }
+
+/** Every rule with its selector, body and enclosing @media (one level, as this sheet nests). */
+function rules(css: string): CssRule[] {
+  const out: CssRule[] = [];
+  let i = 0;
+  const walk = (end: number, media: string | null) => {
+    let start = i;
+    while (i < end) {
+      const ch = css[i];
+      if (ch === '{') {
+        const prelude = css.slice(start, i).trim();
+        let depth = 1;
+        let j = i + 1;
+        while (j < css.length && depth > 0) {
+          if (css[j] === '{') depth++;
+          else if (css[j] === '}') depth--;
+          j++;
+        }
+        if (prelude.startsWith('@media')) {
+          const save = j;
+          i += 1;
+          walk(save - 1, prelude);
+          i = save;
+        } else if (!prelude.startsWith('@')) {
+          out.push({ selector: prelude.replace(/\s+/g, ' '), body: css.slice(i + 1, j - 1), media });
+          i = j;
+        } else {
+          i = j;
+        }
+        start = i;
+        continue;
+      }
+      if (ch === '}' || ch === ';') start = i + 1;
+      i++;
+    }
+  };
+  walk(css.length, null);
+  return out;
+}
+
+const ALL = rules(CSS);
+/** The sidebar's own rules: the rail's classes, the rows, the account button. The account menu's
+ *  `.acct-*` block is the menu's; the two rules this step ranks above it are checked by name below. */
+const SIDEBAR = /\.(rail(?:-[a-z]+)?|nav-item|nav-lic|avatar)(?![\w-])/;
+const sidebar = ALL.filter((r) => SIDEBAR.test(r.selector) && !/\.acct-/.test(r.selector));
+const unconditional = (sel: string) => ALL.filter((r) => r.media === null && r.selector === sel);
+const phone = ALL.filter((r) => r.media !== null && /max-width:\s*640px/.test(r.media));
+
+describe('the sidebar’s rules (app-v2.css, §D1.A step 6)', () => {
+  it('finds the sidebar’s rules', () => {
+    expect(sidebar.length).toBeGreaterThan(20);
+  });
+
+  it('the round "+" of New conversation is the sidebar’s one orange', () => {
+    const plus = sidebar.filter((r) => /\.rail-new/.test(r.selector) && /background\s*:\s*var\(--accent-strong\)/.test(r.body));
+    expect(plus.map((r) => r.selector)).toEqual(['.c2c-v2 .nav-item.rail-new .ico']);
+    const orange = sidebar
+      .filter((r) => r.selector !== '.c2c-v2 .nav-item.rail-new .ico')
+      .filter((r) => /var\(--accent-(strong|100|200|000|main)/.test(r.body))
+      .map((r) => r.selector);
+    expect(orange).toEqual([]);
+  });
+
+  it('no brand fill beside Home’s own row, and the ".RI" in ink', () => {
+    expect(CSS).not.toMatch(/\.rail-logo\[data-on/);
+    expect(unconditional('.c2c-v2 .rail-logo-text span')[0]?.body).toMatch(/color:var\(--text-300\)/);
+  });
+
+  it('group labels are 12px sentence case in --text-300', () => {
+    const h = unconditional('.c2c-v2 .rail-group-h')[0]?.body ?? '';
+    expect(h).toMatch(/text-transform:none/);
+    expect(h).toMatch(/font-size:var\(--fs-caption,\s*12px\)/);
+    expect(h).toMatch(/color:var\(--text-300\)/);
+  });
+
+  it('rows are 14px, recents 13px, and nothing in the sidebar is under 12px', () => {
+    expect(unconditional('.c2c-v2 .nav-item')[0]?.body).toMatch(/font-size:var\(--fs-body,\s*14px\)/);
+    expect(unconditional('.c2c-v2 .rail-recent')[0]?.body).toMatch(/font-size:var\(--fs-small,\s*13px\)/);
+    const small = sidebar.flatMap((r) =>
+      Array.from(r.body.matchAll(/font-size\s*:\s*([\d.]+)px/g)).filter((m) => Number(m[1]) < 12).map((m) => `${r.selector} ${m[0]}`));
+    expect(small).toEqual([]);
+  });
+
+  it('the avatar is ink, in the sidebar and the account menu’s head, ranked above the menu block’s own rule', () => {
+    const ink = unconditional('.c2c-v2 .rail :is(.rail-account, .acct-head) .avatar')[0]?.body ?? '';
+    expect(ink).toMatch(/background:var\(--text-100\)/);
+    expect(ink).toMatch(/color:var\(--bg-000\)/);
+    // The global rule keeps the shape only; no fill of its own.
+    expect(unconditional('.c2c-v2 .avatar')[0]?.body).not.toMatch(/background/);
+  });
+
+  it('the account’s second line is 12px --text-300; the menu head’s line 13px', () => {
+    expect(unconditional('.c2c-v2 .rail-account .rl')[0]?.body).toMatch(/font-size:var\(--fs-caption,\s*12px\);color:var\(--text-300\)/);
+    expect(unconditional('.c2c-v2 .rail .acct-head .rl')[0]?.body).toMatch(/font-size:var\(--fs-small,\s*13px\)/);
+  });
+
+  it('at ≤640px no strip is reserved, the collapsed rail is not drawn, and the expanded one is the drawer', () => {
+    const sel = (s: string) => phone.find((r) => r.selector === s)?.body ?? '';
+    // Both variables are 0, so every grid that reads them (here and the editor's) reserves nothing.
+    expect(sel('.c2c-v2.shell')).toMatch(/--rail:0px/);
+    expect(sel('.c2c-v2.shell')).toMatch(/--rail-collapsed:0px/);
+    expect(sel('.c2c-v2.shell[data-collapsed="true"] .rail')).toMatch(/display:none/);
+    expect(sel('.c2c-v2.shell:not([data-collapsed="true"]) .rail')).toMatch(/position:fixed/);
+    expect(sel('.c2c-v2.shell:not([data-collapsed="true"]) .rail')).toMatch(/box-shadow:var\(--v2-shadow-lg\)/);
+    expect(sel('.c2c-v2.shell:not([data-collapsed="true"]) .rail-scrim')).toMatch(/display:block/);
+    // The top bar's button shows only there.
+    expect(unconditional('.c2c-v2 .topbar .tb-rail')[0]?.body).toMatch(/display:none/);
+    expect(sel('.c2c-v2 .topbar .tb-rail')).toMatch(/display:(inline-)?flex/);
+  });
+});

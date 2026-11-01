@@ -193,3 +193,17 @@ describe('choosing a client type from the account menu', () => {
     expect(document.activeElement).toBe(button);
   });
 });
+
+/* D1-1 (.design/claude-convergence/D1.md §D1.A step 5, §D1.B step 2): at phone width
+   the collapsed sidebar is not drawn, so the top bar's "Open the sidebar" is the way
+   to it. The shell passes the one handler that expands it. */
+describe('the top bar opens the sidebar', () => {
+  it('"Open the sidebar" expands a collapsed sidebar', async () => {
+    await mountShell('vault');
+    const shell = document.querySelector('.c2c-v2.shell') as HTMLElement;
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: 'Collapse' }));
+    expect(shell.getAttribute('data-collapsed')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Open the sidebar' }));
+    expect(shell.getAttribute('data-collapsed')).toBe('false');
+  });
+});

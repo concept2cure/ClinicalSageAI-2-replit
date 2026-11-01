@@ -176,8 +176,14 @@ describe('rail: where you are vs what you chose (findings 130, 135)', () => {
 
   it('draws the current page, and no rule draws a client category on the rail', () => {
     const css = readFileSync(path.resolve(__dirname, '../styles/app-v2.css'), 'utf8');
-    expect(css).toMatch(/\.nav-item\[aria-current="page"\]\{background:var\(--accent-000\)/);
-    expect(css).toMatch(/\.nav-item\[aria-current="page"\]::before\{/);
+    /* Claude's active row is a soft neutral fill, with no marker bar and no orange
+       (D1.md §D1.A step 8; ONE_DESIGN_PLAN §2, "the active item takes a soft fill").
+       This pinned `--accent-000` and a `::before` bar, which the sheet stopped drawing
+       in 4a5cc0d224; it was red until D1-1. */
+    expect(css).toMatch(/\.nav-item\[aria-current="page"\]\{background:var\(--bg-200\)/);
+    const active = css.match(/\.nav-item\[aria-current="page"\]\{([^}]*)\}/)?.[1] ?? '';
+    expect(active).not.toMatch(/--accent-000/);
+    expect(css).not.toMatch(/\.nav-item\[aria-current="page"\]::before/);
     // The rule that drew a category as the current page is gone, and so is
     // the one that drew it as pressed: the rail lists no category.
     expect(css).not.toMatch(/\.nav-item\[aria-current="true"\]/);

@@ -24,7 +24,7 @@ import { hasKeys, useLiveData } from './dataConnect';
 import { isOrgAdminRole } from './orgAdmin';
 import { canAdministerBilling } from '@shared/constants/permissions';
 import { TaskTray } from './TaskTray';
-import { readShellProject, useShellProject, type ShellProject } from './shellProject';
+import { readShellProject, shellProgramName, useShellProject, type ShellProject } from './shellProject';
 import { destinationFor } from './routing';
 import { OPEN_PROGRAM_SURFACE } from './programAction';
 import { isMdxProjectFeature } from '@shared/constants/mdx-project-features';
@@ -53,6 +53,7 @@ import {
 import { NavUnlockPanel } from './NavUnlockPanel';
 import { AccountPanel } from './AccountPanel';
 import { OrganizationAccess } from './OrganizationAccess';
+import { WhatAnaRemembers } from './WhatAnaRemembers';
 import { applySurfaceAction } from './surfaceActions';
 import { surfaceLeaveRefusal } from './navParams';
 import { ceremonyOpen } from './ceremony';
@@ -132,6 +133,21 @@ export function railTargetOf(activeId: string): string {
 }
 
 
+/** A role value as words: "admin" → "Admin", "org_admin" → "Org admin" (D1.md §D1.A step 2). */
+function roleWords(role: string): string {
+  const words = role.replace(/_/g, ' ').trim();
+  return words ? words[0].toUpperCase() + words.slice(1) : '';
+}
+
+/** Phone width, where the expanded sidebar is a drawer over the page (app-v2.css, the phone block). */
+function phoneWidth(): boolean {
+  try {
+    return window.matchMedia('(max-width: 640px)').matches;
+  } catch {
+    return false;
+  }
+}
+
 export function Rail({
   activeId,
   onNav,
@@ -152,6 +168,9 @@ export function Rail({
 }) {
   const { user, logout } = useAuth();
   const { canLeave, notify, leaveNotice } = useShellLeaveGuard();
+  /* The organisation's name, or none (P-25): the account's second line, as
+     Claude's sidebar shows the organisation under the person (D1.md §D1.A step 2). */
+  const org: string | null = useTenant()?.currentOrganization?.name?.trim() || null;
   const [acct, setAcct] = React.useState(false);
   const acctBtnRef = React.useRef<HTMLButtonElement>(null);
   const acctMenuId = React.useId();
@@ -165,6 +184,15 @@ export function Rail({
      AccountPanel.tsx). A dialog over the shell, not a routed surface, so it has
      no registry or launch-scope row: it is part of the account menu. */
   const [accountOpen, setAccountOpen] = React.useState(false);
+  /* What AnA remembers (WhatAnaRemembers.tsx), from anywhere: it was reached
+     only from a conversation's header. The same drawer, the same props as
+     ConversationThread.tsx gives it (D1.md §D1.A step 3). */
+  const [remembersOpen, setRemembersOpen] = React.useState(false);
+  /* At phone width the expanded sidebar is a drawer over the page, so choosing
+     an item in it also closes it (D1.md §D1.A step 7). Wider, it stays. */
+  const closeOnPhone = () => {
+    if (phoneWidth()) setCollapsed(true);
+  };
   /* Live licence verdicts for this organization. Until the server answers —
      and permanently if it cannot — `verdictFor` returns null for everything and
      the rail renders exactly as it did before: a lock badge is a claim about a
@@ -199,6 +227,7 @@ export function Rail({
      its read has landed. */
   const open = (s: RailEntry, target: string) => {
     if (!canLeave()) return;
+    closeOnPhone();
     const res = s.applies ? resolveSurfaceAction(s.applies.actionId, s.applies.params) : null;
     /* It opens the entry's own screen, so the address is the same as any
        other way there (/tasks, not the action's nav-target alias). */
@@ -267,17 +296,20 @@ export function Rail({
       {I.panelLeft}
     </button>
   );
-  return (
+  const rail = (
     <nav className="rail" aria-label="Primary">
       <div className="rail-top">
         <button
           type="button"
           className="rail-logo"
           /* Home, where the one conversation starts (ONE_ANA_ONE_CANVAS.md §5). */
-          onClick={() => { if (canLeave()) onNav('home'); }}
+          onClick={() => {
+            if (!canLeave()) return;
+            closeOnPhone();
+            onNav('home');
+          }}
           title="Home"
           aria-label="Home"
-          data-on={activeId === 'home' || undefined}
         >
           <img src={brandMark} alt="" />
           <div className="rail-logo-text">
@@ -286,41 +318,71 @@ export function Rail({
         </button>
         {!collapsed && collapseToggle}
       </div>
+      {/* Claude's sidebar opens with its primary action and Search, above the
+          places (D1.md §D1.A step 1). New conversation is an action, not a place
+          (no RAIL_CORE entry): it opens Home's composer, where a question starts
+          a new conversation (C2C_CONVO = { id: 'new', seed }). Search opens the
+          command palette (⌘K). */}
+      <div className="rail-nav rail-actions">
+        <button type="button" className="nav-item rail-new" title="New conversation" onClick={() => {
+          if (!canLeave()) return;
+          closeOnPhone();
+          onNav('home');
+          requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>('.landing-input')?.focus());
+        }}>
+          <span className="ico" aria-hidden="true">{I.plus}</span>
+          <span className="lbl">New conversation</span>
+        </button>
+        {onSearch && (
+          <button type="button" className="nav-item" title="Search (⌘K)" onClick={() => {
+            closeOnPhone();
+            onSearch();
+          }}>
+            <span className="ico">{I.search}</span>
+            <span className="lbl">Search</span>
+          </button>
+        )}
+      </div>
       {/* The places, then the work areas under their heading
           (registryModel.ts RAIL_CORE). One list, the same for every client
           type; the client type is in the account menu below. Collapsed, the
           heading is a rule, so the two groups still read as two. */}
       <div className="rail-scroll">
-        {/* Claude's sidebar: the places, then Search (the command palette,
-            ⌘K), then Recents. Home is where a conversation starts. */}
+        {/* Claude's sidebar: the places, then the work areas, then Recents.
+            Home is where a conversation starts. */}
         <div className="rail-nav">{places.map(navItem)}</div>
-        {onSearch && (
-          <div className="rail-nav rail-actions">
-            <button type="button" className="nav-item" title="Search (⌘K)" onClick={onSearch}>
-              <span className="ico">{I.search}</span>
-              <span className="lbl">Search</span>
-            </button>
-          </div>
-        )}
         {workAreas.length > 0 && (
           <div className="rail-nav rail-group" role="group" aria-labelledby={workAreasId}>
             <div className="rail-group-h" id={workAreasId}>{RAIL_WORK_AREAS_LABEL}</div>
             {workAreas.map(navItem)}
           </div>
         )}
-        {!collapsed && <RailRecents onOpen={(id) => {
-          if (!canLeave()) return;
-          window.C2C_CONVO = { id };
-          onNav('conversation-thread');
-        }} />}
+        {!collapsed && <RailRecents
+          onOpen={(id) => {
+            if (!canLeave()) return;
+            closeOnPhone();
+            window.C2C_CONVO = { id };
+            onNav('conversation-thread');
+          }}
+          onOpenProject={(p) => {
+            if (!canLeave()) return;
+            closeOnPhone();
+            openPaletteProject(p, onNav);
+          }}
+        />}
       </div>
+      {/* The account at the bottom, with the organisation's access beside it
+          (OrganizationAccess.tsx, moved from the top bar: D1.md §D1.A step 2).
+          Collapsed, the foot stacks the expand toggle, organisation access, then
+          the avatar, in that order for the eye and for Tab alike. */}
       <div className="rail-foot">
         {collapsed && collapseToggle}
+        {collapsed && <OrganizationAccess />}
         <button
           ref={acctBtnRef}
           type="button"
           className="rail-account"
-          title={name}
+          title={[name, org].filter(Boolean).join(' · ')}
           aria-haspopup="menu"
           aria-expanded={acct}
           aria-controls={acct ? acctMenuId : undefined}
@@ -330,16 +392,18 @@ export function Rail({
           <div className="avatar">{initials}</div>
           <div className="who">
             <div className="nm">{name}</div>
-            <div className="rl">{role}</div>
+            <div className="rl">{org ?? roleWords(role)}</div>
           </div>
           <span className="chev">{I.down}</span>
         </button>
+        {!collapsed && <OrganizationAccess />}
         {acct && (
           <AccountMenu
             id={acctMenuId}
             name={name}
             initials={initials}
             role={role}
+            org={org}
             isOrgAdmin={isOrgAdmin}
             billingAdmin={canAdministerBilling(user)}
             platformAdmin={platformAdmin}
@@ -348,11 +412,16 @@ export function Rail({
             onGo={(id) => {
               if (!canLeave()) return;
               setAcct(false);
+              closeOnPhone();
               onNav(id);
             }}
             onAccount={() => {
               setAcct(false);
               setAccountOpen(true);
+            }}
+            onRemembers={() => {
+              setAcct(false);
+              setRemembersOpen(true);
             }}
             onSegment={(id) => {
               if (!canLeave()) return;
@@ -375,6 +444,17 @@ export function Rail({
           }}
         />
       )}
+      {remembersOpen && (
+        <WhatAnaRemembers
+          projectRef={readShellProject()?.id ?? null}
+          projectName={shellProgramName()}
+          onClose={() => {
+            setRemembersOpen(false);
+            // The menu item that opened it is gone; focus returns to the menu's button.
+            acctBtnRef.current?.focus();
+          }}
+        />
+      )}
       {lockedFor && (
         <NavUnlockPanel
           verdict={lockedFor}
@@ -383,12 +463,15 @@ export function Rail({
           onNav={onNav}
         />
       )}
-      {leaveNotice}
     </nav>
   );
+  /* The rail's notices sit beside it, not in it: at phone width choosing an item
+     closes the drawer, and the collapsed rail is not drawn there (app-v2.css), so a
+     notice inside it ("Open a project to see its Vault…") would never be seen. */
+  return <>{rail}{leaveNotice}</>;
 }
 
-type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' | 'account' } | { sep: true } | { clientType: true };
+type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' | 'account' | 'remembers' } | { sep: true } | { clientType: true };
 
 /**
  * The account menu: settings, the client type, help and sign-out
@@ -414,12 +497,30 @@ type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' |
 /** How many of the person's own conversations the sidebar lists. */
 const RAIL_RECENTS = 15;
 
+/** How many recent projects the sidebar lists, above the conversations. */
+const RAIL_RECENT_PROJECTS = 3;
+/** The project list Home and the palette read (PALETTE_PROJECTS_URL's route), newest-updated first. */
+const RAIL_PROJECTS_URL = `/api/c2c/projects?limit=${RAIL_RECENT_PROJECTS}`;
+const isRows = (v: unknown): v is unknown[] => Array.isArray(v);
+
+/** One project row as the palette reads it (paletteProjects.ts PaletteProject), or null. */
+function railProjectOf(row: unknown): PaletteProject | null {
+  const r = (row ?? {}) as Record<string, unknown>;
+  const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
+  const id = text(r.id);
+  const title = text(r.title);
+  return id && title ? { id, title, code: text(r.code), ws: text(r.ws), status: text(r.status) } : null;
+}
+
 /**
- * Recents, as in Claude's sidebar: the person's own AnA conversations, newest
- * first (GET /api/chat/threads, the same read Home used to list). A reply
- * without `threads` is a failed read and says so; it is never shown as none.
+ * Recents, as in Claude's sidebar: up to three recent projects, then the
+ * person's own AnA conversations, newest first (GET /api/chat/threads, the same
+ * read Home used to list), under one heading. A reply without `threads` is a
+ * failed read and says so; it is never shown as none. The projects come from
+ * the list route Home and the palette read; a failed project read shows no
+ * project rows and never blocks the conversations (D1.md §D1.A step 4).
  */
-function RailRecents({ onOpen }: { onOpen: (id: string) => void }) {
+function RailRecents({ onOpen, onOpenProject }: { onOpen: (id: string) => void; onOpenProject: (p: PaletteProject) => void }) {
   const headId = React.useId();
   const read = useLiveData<{ threads: Array<{ id: string; title?: string | null }> }>(
     `/api/chat/threads?limit=${RAIL_RECENTS}`,
@@ -427,9 +528,20 @@ function RailRecents({ onOpen }: { onOpen: (id: string) => void }) {
     hasKeys<{ threads: Array<{ id: string; title?: string | null }> }>('threads'),
   );
   const threads = read.data?.threads ?? [];
+  const projectsRead = useLiveData<unknown[]>(RAIL_PROJECTS_URL, [], isRows);
+  const projects = projectsRead.error || !Array.isArray(projectsRead.data)
+    ? []
+    : projectsRead.data.map(railProjectOf).filter((p): p is PaletteProject => p !== null).slice(0, RAIL_RECENT_PROJECTS);
   return (
     <div className="rail-nav rail-group rail-recents" role="group" aria-labelledby={headId} data-testid="rail-recents">
       <div className="rail-group-h" id={headId}>Recents</div>
+      {projects.map((p) => (
+        <button key={`p-${p.id}`} type="button" className="nav-item rail-recent" title={[p.code, p.title].filter(Boolean).join(' — ')}
+          onClick={() => onOpenProject(p)}>
+          <span className="ico" aria-hidden="true">{I.folder}</span>
+          <span className="lbl">{p.title.slice(0, 120)}</span>
+        </button>
+      ))}
       {read.loading ? (
         <div className="rail-recents-note" role="status">Loading…</div>
       ) : read.error ? (
@@ -453,6 +565,7 @@ function AccountMenu({
   name,
   initials,
   role,
+  org,
   isOrgAdmin,
   billingAdmin,
   platformAdmin,
@@ -460,6 +573,7 @@ function AccountMenu({
   onClose,
   onGo,
   onAccount,
+  onRemembers,
   onSegment,
   onLogout,
 }: {
@@ -467,6 +581,8 @@ function AccountMenu({
   name: string;
   initials: string;
   role: string;
+  /** The organisation's name, or null when none is known. */
+  org: string | null;
   isOrgAdmin: boolean;
   /** The session carries the billing-administration permission, derived from
    *  the invoice route's own role list (shared/constants/permissions.ts). */
@@ -477,6 +593,8 @@ function AccountMenu({
   onGo: (id: string) => void;
   /** Open the person's own account panel (P-25). */
   onAccount: () => void;
+  /** Open "What AnA remembers" (WhatAnaRemembers.tsx). */
+  onRemembers: () => void;
   onSegment: (id: string) => void;
   onLogout: () => void;
 }) {
@@ -484,6 +602,9 @@ function AccountMenu({
   const items: AccountItem[] = [
     // Each person's own account, first, as in Claude's account menu (P-25).
     { label: 'Account', ic: 'user', action: 'account' },
+    // AnA's notes about working with this person and the open project, read-only,
+    // from anywhere: it was reachable only from a conversation's header.
+    { label: 'What AnA remembers', ic: 'history', action: 'remembers' },
     // Admin is reached from the bottom-left account menu — the same place and
     // gesture as Claude's admin/settings. Gated to org admins; admin-console
     // itself renders a non-leaky denied state, but we hide the entry entirely
@@ -572,7 +693,7 @@ function AccountMenu({
           <div className="avatar">{initials}</div>
           <div className="who">
             <div className="nm">{name}</div>
-            <div className="rl">{role}</div>
+            <div className="rl">{[org, roleWords(role)].filter(Boolean).join(' · ')}</div>
           </div>
         </div>
         {items.map((it, i) => {
@@ -616,6 +737,7 @@ function AccountMenu({
               onClick={() => {
                 if (it.action === 'logout') onLogout();
                 else if (it.action === 'account') onAccount();
+                else if (it.action === 'remembers') onRemembers();
                 else if (it.to) onGo(it.to);
               }}
             >
@@ -683,6 +805,7 @@ export function TopBar({
   onPalette,
   onNav,
   onAsk,
+  onOpenRail,
 }: {
   surface: ShellSurfaceRef;
   onPalette: () => void;
@@ -693,11 +816,17 @@ export function TopBar({
   onSegment: (id: string) => void;
   onNav?: (id: string) => void;
   onAsk?: (text: string) => void;
+  /** Opens the sidebar. At ≤640px the collapsed sidebar is not drawn, and the
+   *  `.tb-rail` button (shown there only, app-v2.css) is the way to it
+   *  (D1.md §D1.A step 5, §D1.B step 2). */
+  onOpenRail?: () => void;
 }) {
   const tenant = useTenant();
   const { go, leaveNotice } = useShellLeaveGuard(onNav);
   // The organisation's name, or none: an unknown organisation is not labelled
-  // "Organization" (P-25, 2026-10-08).
+  // "Organization" (P-25, 2026-10-08). The label only: choosing a membership and
+  // answering invitations is OrganizationAccess, in the sidebar's foot beside the
+  // account (D1.md §D1.A step 2).
   const orgName: string | null = tenant?.currentOrganization?.name?.trim() || null;
   const orgMark = (orgName ?? '')
     .split(/\s+/)
@@ -722,6 +851,7 @@ export function TopBar({
   const projectCrumb = tier?.id === PROJECTS_CRUMB.id ? projectName : '';
   return (
     <header className="topbar">
+      {onOpenRail && <button type="button" className="tb-btn tb-rail" aria-label="Open the sidebar" onClick={onOpenRail}>{I.panelLeft}</button>}
       <div className="crumbs">
         <span className="crumb-root">Concept2Cure.RI</span>
         <span className="sep crumb-root-sep" aria-hidden="true">›</span>
@@ -744,15 +874,12 @@ export function TopBar({
       </div>
       <div className="tb-spacer" />
       <ProjectChip here={surface.id} onNav={go} />
-      {/* Current session label. Membership selection and recipient consent
-          use the guarded organization-access control alongside it. */}
       {orgName && (
         <div className="tb-org" title={orgName}>
           <span className="tb-org-mark" aria-hidden="true">{orgMark}</span>
           <span className="tb-org-name">{orgName}</span>
         </div>
       )}
-      <OrganizationAccess />
       <button type="button" className="tb-cmdk" onClick={onPalette} aria-label="Search, jump, or run a command" title="Search, jump, or run a command (⌘K)">
         <span className="ico">{I.search}</span>
         <span className="lbl">Search, jump, or run a command</span>

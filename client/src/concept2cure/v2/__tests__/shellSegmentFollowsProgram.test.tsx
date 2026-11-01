@@ -117,7 +117,8 @@ describe("the account menu's Client type is the one place the type is chosen", (
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
     });
-    fireEvent.click(screen.getByTitle('Ada Rowe'));
+    // The account button's title names the organisation too (D1-1, D1.md §D1.A step 2).
+    fireEvent.click(screen.getByTitle('Ada Rowe · Concept2Cure Diagnostics'));
     return { setSegment, group: within(screen.getByRole('menu')).getByRole('group', { name: 'Client type' }) };
   }
 

@@ -55,6 +55,8 @@ import { __resetSurfaceActionBus } from '../surfaceActions';
 import { TaskBoard } from '../surfaces/TaskBoard';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
+/* The account button's title names the person and the organisation (D1-1, D1.md §D1.A step 2). */
+const ACCOUNT = 'Ada Rowe · Concept2Cure Therapeutics';
 
 /* Two tasks on the board: the signed-in person's (assignee 7) and a
    colleague's (assignee 9). */
@@ -164,7 +166,7 @@ describe('the rail lists the places, then the work areas', () => {
       fireEvent.click(button);
     }
     expect(onNav.mock.calls.map(call => call[0])).toEqual(['tasks', 'communication-center']);
-    fireEvent.click(within(rail).getByTitle('Ada Rowe'));
+    fireEvent.click(within(rail).getByTitle(ACCOUNT));
     const menu = screen.getByRole('menu');
     expect(within(menu).queryByRole('menuitem', { name: /^Admin/ })).toBeNull();
     expect(within(menu).queryByRole('menuitem', { name: /Access requests/ })).toBeNull();
@@ -344,7 +346,7 @@ describe('the governed artifacts across projects, once the Artifacts center, are
 describe('the account menu holds Subscription & features and the client type', () => {
   async function openMenu(segment = 'biopharma') {
     const m = await mountRail(segment);
-    const button = screen.getByTitle('Ada Rowe');
+    const button = screen.getByTitle(ACCOUNT);
     fireEvent.click(button);
     return { ...m, button, menu: screen.getByRole('menu') };
   }
@@ -408,7 +410,7 @@ describe('the account menu holds Subscription & features and the client type', (
 describe('the account menu works from the keyboard (WAI-ARIA menu pattern)', () => {
   async function openMenu() {
     await mountRail('biopharma');
-    const button = screen.getByTitle('Ada Rowe');
+    const button = screen.getByTitle(ACCOUNT);
     fireEvent.click(button);
     const menu = screen.getByRole('menu');
     const items = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemradio"]'));
@@ -482,7 +484,7 @@ describe('the collapsed rail does not clip its account menu', () => {
 
   it('the menu opens from the collapsed rail with every item present', async () => {
     await mountRail('biopharma', true);
-    fireEvent.click(screen.getByTitle('Ada Rowe'));
+    fireEvent.click(screen.getByTitle(ACCOUNT));
     const menu = screen.getByRole('menu');
     expect(within(menu).getByRole('menuitem', { name: 'Subscription & features' })).toBeTruthy();
     expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(CLIENT_CATEGORIES.length);
