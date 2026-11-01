@@ -71,12 +71,20 @@
   height: 100%;
   margin: 0;
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--fs-body); line-height: 1.5;
   color: var(--text-100);
   background: var(--bg-000);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+/* Small text (ONE_DESIGN_PLAN §2, D0). `.small` left the design system's
+   `.meta, small` rule, where it leaked uppercase into every `btn small`;
+   `className="mono small"` and the like still mean small, quiet text. */
+.c2c-v2 .small:not(.btn) { font-size: var(--fs-caption); color: var(--text-300); }
+/* Plain links: orange is sparing (plan §2). Unclassed anchors only; the
+   owner-specific link buttons migrate with their owners. */
+.c2c-v2 a:not([class]) { color: inherit; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 2px; transition: text-decoration-color var(--dur) var(--ease); }
+.c2c-v2 a:not([class]):hover { text-decoration-color: currentColor; }
 .c2c-v2 *, .c2c-v2 *::before, .c2c-v2 *::after { box-sizing: border-box; }
 /* The reset yields to any class. As `.c2c-v2 button` (a class and an element)
    it outranked every one-class rule, and a button styled by one class rendered
