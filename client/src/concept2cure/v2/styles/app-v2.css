@@ -344,15 +344,15 @@
   display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 20px; padding: 0; overflow-x: auto; scrollbar-width: none;
   border-bottom: 1px solid var(--border);
 }
-.c2c-v2 :is(.tab, .reg-tab, .cm-subtab, .sc-ws, .cc-tab) {
+.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab) {
   display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; margin-bottom: -1px;
   border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none;
   font-size: var(--fs-body); font-weight: 500; color: var(--text-300); white-space: nowrap;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.c2c-v2 :is(.tab, .reg-tab, .cm-subtab, .sc-ws, .cc-tab) svg { width: 16px; height: 16px; }
-.c2c-v2 :is(.tab, .reg-tab, .cm-subtab, .sc-ws, .cc-tab):hover { color: var(--text-100); }
-.c2c-v2 :is(.tab, .reg-tab, .cm-subtab, .sc-ws, .cc-tab):is(.on, [data-on], [aria-selected="true"], [aria-current="page"]) {
+.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab) svg { width: 16px; height: 16px; }
+.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab):hover { color: var(--text-100); }
+.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab):is(.on, [data-on], [aria-selected="true"], [aria-current="page"]) {
   color: var(--text-100); border-bottom-color: var(--text-100);
 }
 .c2c-v2 .tab-body { padding: 20px 0 0; }
@@ -425,12 +425,6 @@
 
 /* The retired banners, until their owners remove the markup: neutral now, so no
    screen shows them in their loud form. */
-/* .cm-connect (journey-v2.css): one quiet line, no band, no pills. Removed in D0-6 after D5 deletes CmConnectBar.
-   It sits full-bleed in `.cm`, outside `.cm-body`, so it keeps the 30px inset that lines it up with the body. */
-.c2c-v2 .cm-connect { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 8px 30px; background: none; border: 0; }
-.c2c-v2 .cm-connect-l { font-size: var(--fs-small); font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-300); }
-.c2c-v2 .cm-connect button { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font-size: var(--fs-small); color: var(--text-300); }
-.c2c-v2 .cm-connect button:hover { color: var(--text-100); text-decoration: underline; text-underline-offset: 2px; }
 /* .pj-stageband (below, with its parts): the project page's plain version becomes the only one. */
 .c2c-v2 .pj-stageband { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; flex-wrap: wrap; gap: 6px; padding: 0 0 14px; margin: 0 0 18px; background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; }
 .c2c-v2 .pj-stageband-next-k { display: inline-flex; align-items: center; gap: 5px; justify-content: flex-start; font-size: var(--fs-small); font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text-300); }
