@@ -170,7 +170,7 @@ describe('Project home — the start box sits beside every step', () => {
     }
   });
 
-  it('the steps come first; the start box and the conversations sit beside the step and stay on every step', async () => {
+  it('the start box comes first, above the steps; the conversations sit beside them; both stay on every step', async () => {
     render(<ProjectHome {...props()} />);
     const region = await screen.findByRole('region', { name: /Start a conversation in/ });
     await screen.findByText(THREAD.title);
@@ -178,9 +178,10 @@ describe('Project home — the start box sits beside every step', () => {
     // The open stage is told to a screen reader, not only drawn (WCAG 4.1.2).
     expect(within(tablist).getAllByRole('button').filter((b) => b.getAttribute('aria-current') === 'step')).toHaveLength(1);
     expect(tablist.querySelector('[aria-selected]')).toBeNull();
-    /* CLIENT_JOURNEY pass 4 (decision 5): the steps first, then the open step, AnA beside it. */
-    expect(tablist.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING, 'steps before the start box').toBeTruthy();
-    expect(region.closest('aside'), 'start box in the side column').toBeTruthy();
+    /* Claude's project page (founder, 2026-11-01; RULE 4), superseding CLIENT_JOURNEY pass 4 decision 5:
+       the conversation with AnA first in the main column, then the steps. */
+    expect(region.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING, 'start box before the steps').toBeTruthy();
+    expect(region.closest('.pj-main'), 'start box in the main column').toBeTruthy();
     const threads = screen.getByTestId('pj-threads');
     expect(threads.closest('aside'), 'conversations in the side column').toBeTruthy();
 

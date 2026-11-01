@@ -1325,7 +1325,7 @@ function ProjectDocumentRow({ doc, onOpen }: { doc: BuiltDocument; onOpen: (doc:
         </span>
       </div>
       <div className="cdl-row-actions">
-        <button type="button" className="btn primary" onClick={() => onOpen(doc)} aria-label={`Open ${doc.title}`}>
+        <button type="button" className="btn ghost" onClick={() => onOpen(doc)} aria-label={`Open ${doc.title}`}>
           {I.penLine} Open
         </button>
       </div>
@@ -1502,10 +1502,9 @@ function ProjectReportsDoor({ onNav }: { onNav: (id: string) => void }) {
   const programId = shellProgramId(useShellProject());
   if (!programId || !available('insights')) return null;
   return (
-    <div style={{ marginTop: 12 }}>
+    <div className="pj-about-row">
       {/* The name is a sentence, so it wraps at phone width rather than overflow. */}
-      <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px', height: 'auto', minHeight: 28, whiteSpace: 'normal', textAlign: 'left' }}
-        onClick={() => onNav('insights')}>
+      <button type="button" className="pj-about-link" onClick={() => onNav('insights')}>
         {REPORTS_DOOR} {I.right}
       </button>
     </div>
@@ -1853,12 +1852,6 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
     <div className="page-inner pj">
       <button className="pj-back" onClick={() => onNav('projects')}>{I.left} All projects</button>
 
-      {title && (
-        <div className="pj-crumb">
-          <span className="pj-crumb-i" data-cur><span className="pj-crumb-k">Project</span>{title}</span>
-        </div>
-      )}
-
       <div className="pj-top">
         <div className="pj-top-l">
           {/* The surface's own name when there is no project name to show —
@@ -1875,56 +1868,9 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             {priority && <span className={`rd-chip ${PRIORITY_TONE[priority] ?? 'tone-idle'}`}>priority: {priority}</span>}
             {phase && <span className="rd-chip tone-idle">{phase}</span>}
           </div>
-          {prog && (
-            <section className="pj-facts" aria-label="Project identity">
-              <dl className="pj-fact"><dt>Client</dt><dd>{clientName ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
-              <dl className="pj-fact"><dt>Product</dt><dd>{prog.product_name ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
-              <dl className="pj-fact"><dt>Indication</dt><dd>{indication ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
-              {deviceProgram ? (
-                <>
-                  <dl className="pj-fact"><dt>Device class</dt><dd>{prog.device_class ? `Class ${prog.device_class}` : <span className="pj-fact-none">not recorded</span>}</dd></dl>
-                  <dl className="pj-fact"><dt>Regulatory path</dt><dd>{prog.regulatory_path ? (REGULATORY_PATH_LABEL[prog.regulatory_path] ?? prog.regulatory_path) : <span className="pj-fact-none">not recorded</span>}</dd></dl>
-                  <dl className="pj-fact"><dt>Product code</dt><dd>{prog.product_code ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
-                  <dl className="pj-fact"><dt>Regulation</dt><dd>{prog.regulation_number ? `21 CFR ${prog.regulation_number}` : <span className="pj-fact-none">not recorded</span>}</dd></dl>
-                  <dl className="pj-fact"><dt>Review panel</dt><dd>{prog.review_panel ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
-                  <dl className="pj-fact"><dt>Predicate</dt><dd>{predicateKs.length ? predicateKs.join(', ') : <span className="pj-fact-none">not recorded</span>}</dd></dl>
-                  <dl className="pj-fact"><dt>Device flags</dt><dd>{
-                    deviceFlags == null
-                      ? <span className="pj-fact-none">not recorded</span>
-                      : deviceFlags.length === 0
-                        ? <span className="pj-fact-none">none declared</span>
-                        : deviceFlags.map((f) => DEVICE_FLAG_LABEL[f] ?? f).join(' · ')
-                  }</dd></dl>
-                </>
-              ) : (
-                <dl className="pj-fact"><dt>{applicationNumberLabel}</dt><dd>{applicationNumber ?? <span className="pj-fact-none">not assigned</span>}</dd></dl>
-              )}
-            </section>
-          )}
-          <ProjectReportsDoor onNav={onNav} />
         </div>
         {pid && <ProjectSettings programId={pid} onSaved={() => setMetadataEpoch(value => value + 1)} />}
       </div>
-
-      {/* Where the filing stands (FILING_SPINE.md F9): each market's verdict
-          and the documents in review, from the reads the tabs show. */}
-      {pid && !progState.error && (
-        <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
-      )}
-
-
-      {/* A lifecycle belongs to a project. With none selected the tabs
-          switched nothing — the body below is "No project selected" whichever
-          is open — and AnA's set-stage already refuses in this state, so the
-          human's controls do not offer what hers cannot. */}
-      {!noProject && (
-        <>
-          <StageTracker stage={stage} setStage={chooseStage} lifecycle={lifecycle} />
-          {/* A filing that builds no sequence: NotSequencedState says what its Submit is. */}
-          <StageBand stage={stage} lifecycle={lifecycle} onStage={chooseStage} sequenced={!documentClass && !regionalApplication}
-            planListed={usInd || !!biotechPlanEntry(prog, pid) || (deviceFiling && prog?.id === pid && !!mdxProjectPlan(prog))} />
-        </>
-      )}
 
       {noProject ? (
         <EmptyState
@@ -1943,6 +1889,16 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
       ) : (
         <div className="pj-grid">
           <div className="pj-main">
+          {/* Claude's project page (founder, 2026-11-01): the conversation with
+              AnA first, then the work. The composer sits outside the step
+              switch, so a half-typed message survives a change of step. */}
+          {pid && <StartConversation productName={productName} onNav={onNav} />}
+          {/* A lifecycle belongs to a project; with none selected nothing here
+              renders (the empty state above stands instead). */}
+          <StageTracker stage={stage} setStage={chooseStage} lifecycle={lifecycle} />
+          {/* A filing that builds no sequence: NotSequencedState says what its Submit is. */}
+          <StageBand stage={stage} lifecycle={lifecycle} onStage={chooseStage} sequenced={!documentClass && !regionalApplication}
+            planListed={usInd || !!biotechPlanEntry(prog, pid) || (deviceFiling && prog?.id === pid && !!mdxProjectPlan(prog))} />
           {/* Plan — what the filing needs, who does it and by when, then the
               team and the project's tasks, moved from Author (pass 3). */}
           {stage === 'plan' && pid && (
@@ -2032,8 +1988,41 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
           {/* Beside every step (CLIENT_JOURNEY pass 4, decision 5): AnA's start box and the conversations held on
               this project. The steps come first; this column is outside the step switch, so a half-typed message
               survives a change of step (FILING_SPINE.md §2). Author adds its readiness and skills cards. */}
-          <aside className="pj-side pj-step-side" aria-label="AnA and this project’s conversations">
-            {pid && <StartConversation productName={productName} onNav={onNav} />}
+          <aside className="pj-side pj-step-side" aria-label="About this project, and its conversations">
+            {/* Like Claude's project knowledge: what the project is, where its
+                filing stands, and its conversations, beside the work. */}
+            <section className="pj-about" aria-label="About this project">
+              {prog && (
+                <section className="pj-facts" aria-label="Project identity">
+                  <dl className="pj-fact"><dt>Client</dt><dd>{clientName ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Product</dt><dd>{prog.product_name ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Indication</dt><dd>{indication ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  {deviceProgram ? (
+                    <>
+                      <dl className="pj-fact"><dt>Device class</dt><dd>{prog.device_class ? `Class ${prog.device_class}` : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                      <dl className="pj-fact"><dt>Regulatory path</dt><dd>{prog.regulatory_path ? (REGULATORY_PATH_LABEL[prog.regulatory_path] ?? prog.regulatory_path) : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                      <dl className="pj-fact"><dt>Product code</dt><dd>{prog.product_code ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                      <dl className="pj-fact"><dt>Regulation</dt><dd>{prog.regulation_number ? `21 CFR ${prog.regulation_number}` : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                      <dl className="pj-fact"><dt>Review panel</dt><dd>{prog.review_panel ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                      <dl className="pj-fact"><dt>Predicate</dt><dd>{predicateKs.length ? predicateKs.join(', ') : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                      <dl className="pj-fact"><dt>Device flags</dt><dd>{
+                        deviceFlags == null
+                          ? <span className="pj-fact-none">not recorded</span>
+                          : deviceFlags.length === 0
+                            ? <span className="pj-fact-none">none declared</span>
+                            : deviceFlags.map((f) => DEVICE_FLAG_LABEL[f] ?? f).join(' · ')
+                      }</dd></dl>
+                    </>
+                  ) : (
+                    <dl className="pj-fact"><dt>{applicationNumberLabel}</dt><dd>{applicationNumber ?? <span className="pj-fact-none">not assigned</span>}</dd></dl>
+                  )}
+                </section>
+              )}
+              <ProjectReportsDoor onNav={onNav} />
+              {pid && !progState.error && (
+                <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
+              )}
+            </section>
             {pid && <ProjectConversations pid={pid} onNav={onNav} />}
             {stage === 'author' && <ProjectSide pid={pid} dossier={dossier} copyFor={filingCopyIn(docsRead)} onOpenDoc={openDocument} onAsk={onAsk} />}
           </aside>

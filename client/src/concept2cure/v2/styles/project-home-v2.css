@@ -540,3 +540,11 @@
 .c2c-v2 .filing-reference-facts > div { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(0, 3fr); gap: 12px; margin-bottom: 4px; }
 .c2c-v2 .filing-reference-facts dt { font-weight: 600; }
 .c2c-v2 .filing-reference-facts dd { margin: 0; overflow-wrap: anywhere; }
+
+/* What the project is and where its filing stands, beside the work, as Claude
+   keeps a project's knowledge (founder, 2026-11-01; RULE 4). */
+.c2c-v2 .pj-about{display:flex;flex-direction:column;gap:12px;padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:var(--bg-000);}
+.c2c-v2 .pj-about-row{display:flex;}
+.c2c-v2 .pj-about-link{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--accent-200);text-align:left;white-space:normal;}
+.c2c-v2 .pj-about-link:hover{text-decoration:underline;}
+.c2c-v2 .pj-about-link svg{width:12px;height:12px;}
