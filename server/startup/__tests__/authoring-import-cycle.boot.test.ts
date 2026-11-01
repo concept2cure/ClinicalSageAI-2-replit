@@ -36,7 +36,7 @@ function probeEnvironment(): Record<string, string> {
     APP_DATABASE_URL: 'postgresql://isolated_probe:dummy@127.0.0.1:1/unused?sslmode=disable',
     AI_GATEWAY_DETERMINISTIC: 'true', AI_GATEWAY_ACCEPT_DETERMINISTIC: 'true',
     AI_SENSITIVE_DATA_POLICY_MODE: 'enforce',
-    AI_PROVIDER_PLACEMENT_APPROVALS: JSON.stringify({ 'private-deployment': { region: 'us', zeroRetentionApproved: true, approvedDataClasses: [], approvedIntendedUses: [] } }),
+    AI_PROVIDER_PLACEMENT_APPROVALS: JSON.stringify({ 'private-deployment': { region: 'us', zeroRetentionApproved: false, approvedDataClasses: [], approvedIntendedUses: [] } }),
     CONCEPT2CURE_SIGNER_MODE: 'hmac', CONCEPT2CURE_SIGNER_ACCEPT_HMAC: 'true',
     STORAGE_PROVIDER: 'local', STORAGE_ACCEPT_LOCAL_DISK: 'true',
     // This deliberate refusal comes from validateEnvironment in the composition

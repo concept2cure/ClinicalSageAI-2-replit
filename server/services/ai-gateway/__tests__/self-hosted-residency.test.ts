@@ -46,6 +46,9 @@ import type { ProviderName } from '../types';
 const PII_TEXT = 'Please contact the site coordinator at jane.doe@example.com about the monitoring visit.';
 const PHI_TEXT = 'Patient MRN: 44819023 was admitted on 2026-03-02 for observation.';
 
+/** A test fixture, not an agreement: no provider has a signed zero-retention agreement today (D6). */
+const AGREEMENT = { reference: 'TEST-ZDR-ADDENDUM-0001', effectiveFrom: '2026-01-01' };
+
 /** ADR-0014 §1.5 (amended): the in-VPC lane, approved for PII and PHI, embedding only. */
 const LOCAL_EMBEDDING_APPROVAL = {
   region: 'on_prem',
@@ -86,6 +89,7 @@ beforeEach(() => {
   for (const key of [
     'AI_PII_ENFORCEMENT',
     'OPENAI_ZERO_RETENTION',
+    'AI_BEDROCK_ZERO_RETENTION',
     'AI_BEDROCK_REGION',
     'AI_BEDROCK_RESIDENCY',
     'AWS_REGION',
@@ -153,7 +157,7 @@ describe('a provider that is not self-hosted is still held to the tenant residen
   it('the tenant floor: an EU-resident tenant elected OpenAI (global only) and is still refused, any data class', async () => {
     process.env.OPENAI_ZERO_RETENTION = 'true';
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
-      openai: { region: 'global', zeroRetentionApproved: true, approvedDataClasses: ['pii', 'phi'], approvedIntendedUses: ['embedding'] },
+      openai: { region: 'global', zeroRetentionApproved: true, zeroRetentionAgreement: AGREEMENT, approvedDataClasses: ['pii', 'phi'], approvedIntendedUses: ['embedding'] },
     });
     resetPlacementRegistry();
     tenant({ residency: 'eu', allowedProviders: ['openai'] });
@@ -166,8 +170,11 @@ describe('a provider that is not self-hosted is still held to the tenant residen
   describe('the sensitive gate: Bedrock in Frankfurt for an EU-resident tenant', () => {
     function useFrankfurtBedrock(approvalRegion: string) {
       process.env.AI_BEDROCK_REGION = 'eu-central-1';
+      // Bedrock claims zero retention only when recorded (D6, 2026-10-25), and
+      // production requires it of a sensitive dispatch.
+      process.env.AI_BEDROCK_ZERO_RETENTION = 'true';
       process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
-        bedrock: { region: approvalRegion, zeroRetentionApproved: true, approvedDataClasses: ['pii', 'phi'], approvedIntendedUses: ['chat'] },
+        bedrock: { region: approvalRegion, zeroRetentionApproved: true, zeroRetentionAgreement: AGREEMENT, approvedDataClasses: ['pii', 'phi'], approvedIntendedUses: ['chat'] },
       });
       resetPlacementRegistry();
       expect(resolvePlacement('bedrock')).toMatchObject({ substrate: 'frontier_private', regions: ['eu'] });
@@ -215,7 +222,7 @@ describe('a provider that is not self-hosted is still held to the tenant residen
       process.env.AI_AZURE_RESIDENCY = 'us,eu';
       process.env.AI_AZURE_ZERO_RETENTION = 'true';
       process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
-        azure: { region: approvalRegion, zeroRetentionApproved: true, approvedDataClasses: ['pii', 'phi'], approvedIntendedUses: ['chat'] },
+        azure: { region: approvalRegion, zeroRetentionApproved: true, zeroRetentionAgreement: AGREEMENT, approvedDataClasses: ['pii', 'phi'], approvedIntendedUses: ['chat'] },
       });
       resetPlacementRegistry();
       expect(resolvePlacement('azure')).toMatchObject({ substrate: 'frontier_private', regions: ['us', 'eu'] });

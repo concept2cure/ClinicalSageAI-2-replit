@@ -147,10 +147,13 @@ variables {
   smtp_pass                       = "test-smtp-pass-0123456789"
   smtp_from                       = "noreply@example.com"
   platform_owner_emails           = ["owner@example.com"]
-  ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
-  # The approvals above: Anthropic for drafting, and the in-VPC embedding lane
-  # for PII and PHI with zero retention, embedding only, the value ADR-0014 §1.5
-  # (amended 2026-10-01) records for `local`, which boot_contract now requires.
+  ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
+  # The approvals above: Anthropic for drafting with no zero retention and no
+  # sensitive data classes (no zero-retention agreement is signed, D6; until
+  # 2026-10-25 this suite deployed with Anthropic approved for PII on the
+  # boolean alone), and the in-VPC embedding lane for PII and PHI with zero
+  # retention, embedding only, the value ADR-0014 §1.5 (amended 2026-10-01)
+  # records for `local`, which boot_contract now requires.
   # A commit id's shape, not bge-m3's real commit (the stack leaves it unset
   # until one is recorded; warns_while_the_embedding_model_is_unpinned below).
   embedding_model_revision = "0123456789abcdef0123456789abcdef01234567"
@@ -1106,7 +1109,7 @@ run "refuses_phi_approval_without_zero_retention" {
 run "refuses_an_unknown_data_class" {
   command = plan
   variables {
-    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"secret\"],\"approvedIntendedUses\":[\"drafting\"]}}"
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[\"secret\"],\"approvedIntendedUses\":[\"drafting\"]}}"
   }
   expect_failures = [var.ai_provider_placement_approvals]
 }
@@ -1122,7 +1125,7 @@ run "refuses_a_non_boolean_zero_retention_flag" {
 run "refuses_a_non_string_intended_use" {
   command = plan
   variables {
-    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[],\"approvedIntendedUses\":[7]}}"
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[7]}}"
   }
   expect_failures = [var.ai_provider_placement_approvals]
 }
@@ -1130,7 +1133,7 @@ run "refuses_a_non_string_intended_use" {
 run "refuses_a_missing_region" {
   command = plan
   variables {
-    ai_provider_placement_approvals = "{\"anthropic\":{\"zeroRetentionApproved\":true,\"approvedDataClasses\":[],\"approvedIntendedUses\":[]}}"
+    ai_provider_placement_approvals = "{\"anthropic\":{\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[]}}"
   }
   expect_failures = [var.ai_provider_placement_approvals]
 }
@@ -1143,6 +1146,64 @@ run "accepts_the_fail_closed_interim_approvals" {
   command = plan
   variables {
     ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
+  }
+}
+
+# D6 (2026-10-25): a zero-retention approval names the agreement it rests on,
+# and the placement registry must agree with it. Until then one boolean was the
+# whole claim, and this suite deployed Anthropic approved for PII on it alone.
+# The agreement references below are test fixtures: no agreement is signed.
+run "refuses_a_zero_retention_approval_that_names_no_agreement" {
+  command = plan
+  variables {
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
+  }
+  expect_failures = [var.ai_provider_placement_approvals]
+}
+
+# The registry half alone: a well-formed agreement, and still refused, because
+# this stack sets no ANTHROPIC_ZERO_RETENTION and the app's boot refuses an
+# approval its registry contradicts.
+run "refuses_a_zero_retention_approval_this_stack_sets_no_flag_for" {
+  command = plan
+  variables {
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"zeroRetentionAgreement\":{\"reference\":\"TEST-ZDR-ADDENDUM-0001\",\"effectiveFrom\":\"2026-01-01\"},\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
+  }
+  expect_failures = [var.ai_provider_placement_approvals]
+}
+
+# The agreement's shape alone, on the self-hosted lane, which the registry rule
+# admits: a blank reference, a date that is not one, and one in another format.
+run "refuses_an_agreement_with_a_blank_reference" {
+  command = plan
+  variables {
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"zeroRetentionAgreement\":{\"reference\":\" \",\"effectiveFrom\":\"2026-01-01\"},\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
+  }
+  expect_failures = [var.ai_provider_placement_approvals]
+}
+
+run "refuses_an_agreement_date_that_is_not_a_date" {
+  command = plan
+  variables {
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"zeroRetentionAgreement\":{\"reference\":\"TEST-ZDR-ADDENDUM-0001\",\"effectiveFrom\":\"2026-02-30\"},\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
+  }
+  expect_failures = [var.ai_provider_placement_approvals]
+}
+
+run "refuses_an_agreement_date_in_another_format" {
+  command = plan
+  variables {
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"zeroRetentionAgreement\":{\"reference\":\"TEST-ZDR-ADDENDUM-0001\",\"effectiveFrom\":\"01/01/2026\"},\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
+  }
+  expect_failures = [var.ai_provider_placement_approvals]
+}
+
+# A well-formed agreement passes the shape rule: the check refuses what is
+# missing or malformed, not every agreement.
+run "accepts_a_well_formed_agreement" {
+  command = plan
+  variables {
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"zeroRetentionAgreement\":{\"reference\":\"TEST-ZDR-ADDENDUM-0001\",\"effectiveFrom\":\"2026-01-01\"},\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
   }
 }
 
@@ -1233,7 +1294,7 @@ run "refuses_placement_approvals_that_omit_the_drafting_provider" {
   command = plan
 
   variables {
-    ai_provider_placement_approvals = "{\"openai\":{\"region\":\"us\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
+    ai_provider_placement_approvals = "{\"openai\":{\"region\":\"us\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[\"drafting\"]}}"
   }
 
   expect_failures = [terraform_data.boot_contract]
@@ -1711,7 +1772,7 @@ run "refuses_placement_approvals_without_the_embedding_lane" {
   command = plan
 
   variables {
-    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[\"drafting\"]}}"
   }
 
   expect_failures = [terraform_data.boot_contract]
@@ -1721,7 +1782,7 @@ run "refuses_a_local_approval_that_does_not_name_embedding" {
   command = plan
 
   variables {
-    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"chat\"]}}"
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"chat\"]}}"
   }
 
   expect_failures = [terraform_data.boot_contract]
