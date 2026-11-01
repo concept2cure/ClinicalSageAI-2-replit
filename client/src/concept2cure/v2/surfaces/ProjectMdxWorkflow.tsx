@@ -30,6 +30,10 @@ function filingToken(value: string | null | undefined): string | null {
    filing aliases to `mdr`, so its name is read from the recorded filing (CER_LABEL). */
 const FILING_LABELS: Record<string, string> = { '510k': '510(k)', de_novo: 'De Novo', pma: 'PMA', mdr: 'EU MDR technical documentation', ivdr: 'EU IVDR technical documentation' };
 const CER_LABEL = 'EU MDR CER';
+/** The filing Plan's list is named by: a CER by its recorded filing, every other route by its pathway. */
+function filingLabelFor(programType: string | null | undefined, primary: string | null): string | undefined {
+  return String(programType ?? '').trim().toLowerCase() === 'cer' ? CER_LABEL : FILING_LABELS[primary ?? ''];
+}
 /** Each primary pathway's own feature, and the names of its strategy and assembly doors (section 9: a device
  *  door's name depends on the pathway the project files). A De Novo or an unrecorded route has none. */
 export const PATHWAY_FEATURES: Record<string, { surface: string; doors: { strategy: string; assembly: string } }> = {
@@ -54,7 +58,7 @@ export function mdxProjectPlan(project: MdxWorkflowProject, otherFilings: string
     : product === 'cdx' ? 'companion_diagnostic' : diagnostic ? 'ivd_diagnostics' : 'medical_device';
   const primary = filingToken(project.program_type) ?? filingToken(project.regulatory_path);
   const pathways = [...new Set([primary, ...otherFilings.map(filingToken)].filter((v): v is string => v !== null))];
-  const filingLabel = String(project.program_type ?? '').trim().toLowerCase() === 'cer' ? CER_LABEL : FILING_LABELS[primary ?? ''];
+  const filingLabel = filingLabelFor(project.program_type, primary);
   const clinicalSummary = CLINICAL_SUMMARIES[primary ?? ''];
   return {
     primary,
