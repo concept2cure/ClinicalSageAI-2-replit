@@ -1,5 +1,11 @@
 # CLAUDE.md — Concept2Cure Design System (source of truth)
 
+> **Superseded in authority by `docs/design/ONE_DESIGN_PLAN.md` (founder decision P-78, 2026-10-31; `CLAUDE.md`
+> RULE 5).** Concept2Cure looks and works like Claude (claude.ai). Where this folder, its kits or its phase table
+> differ from the plan's §2, the plan wins. The tokens here stay canonical. The "Claude-clone look" rejection recorded
+> in `colors_and_type.css` is reversed for layout, patterns and character. Its typeface decision stands: Anthropic's
+> fonts are proprietary, so the system sans and Lora remain. Build only under an open package of the plan.
+
 > This file is read automatically by Claude Code on every session. Its job is to route every UI task to **this design system** as the single source of truth — and to keep Claude Code from falling back on the legacy UI in the `concept2cure-v2` codebase.
 
 ---

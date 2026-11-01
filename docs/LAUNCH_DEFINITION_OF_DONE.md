@@ -1416,3 +1416,19 @@ entry opens `biostatistics`, which loads the open project's own study design and
 links to the calculators. The workbench declares the CLSI engines it calls
 (`/api/diagnostics-performance`), and AnA's `assess_defensibility` is in scope.
 Evidence `docs/evidence/DEMO-RECOVERY/2026-10-31-work-areas/`.
+
+### P-78 — One design, one plan: Concept2Cure is Claude for life sciences
+
+Founder, 2026-10-31: "This platform should look like Anthropic built this. It should match how Claude is designed
+entirely, from projects to the canvas to the editor to the details. This is basically Claude for life sciences." And:
+"everyone must work from the same design and goals and never breach your plans. Never build anything outside of the
+plans and to bring the code base beneath the UI fully to life inside this new UI framework."
+
+The plan is `docs/design/ONE_DESIGN_PLAN.md`, with its ledger `docs/design/one-design-plan.json`. It sets the goal,
+the binding design (§2: Claude's patterns for the sidebar, home, projects, the project, the conversation, the
+canvas, the editor and the work areas, plus the retired patterns), the work packages and their order, and the rules
+of engagement. It binds every developer and every agent from any tool: `CLAUDE.md` RULE 5, `AGENTS.md` and the
+Copilot instructions. `npm run ci:one-design-plan` in `.husky/pre-push` enforces it with no bypass. Every pushed
+commit names an open package, stays inside it, and adds no unapproved screen, mount or table. The plan changes only
+by founder decision. The selftest shows each refusal. The design system's own "Claude-clone look" rejection is
+reversed for layout and character. Its typeface decision stands for licensing reasons.

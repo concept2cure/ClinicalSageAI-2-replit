@@ -60,6 +60,40 @@ always allowed; that is how forbidden branches get cleaned up.
 
 ---
 
+## RULE 5 — ONE DESIGN, ONE PLAN. ABSOLUTE, FOR EVERYONE.
+
+It sits beside RULE 0 because it is equally absolute. The founder, 2026-10-31 (P-78):
+
+> "This platform should look like Anthropic built this. It should match how Claude is designed entirely, from
+> projects to the canvas to the editor to the details. This is basically Claude for life sciences." "Everyone must
+> work from the same design and goals and never breach your plans. Never build anything outside of the plans and
+> to bring the code base beneath the UI fully to life inside this new UI framework."
+
+**The plan is `docs/design/ONE_DESIGN_PLAN.md`, and its ledger is `docs/design/one-design-plan.json`.** It binds every
+developer, Claude Code session, Codex, Copilot or Cursor agent, subagent, workflow, cron job and automation, from any
+tool.
+
+- **The design is Claude's.** Concept2Cure looks and works like Claude (claude.ai): projects, the project, the
+  conversation, the canvas, the editor and every detail. The plan's §2 is binding, including its list of retired
+  patterns.
+- **The codebase lives in that UI.** Every capability beneath the UI is reached in it, or retired by a founder
+  decision. None is duplicated (RULE 3) and none is left unreachable.
+- **Nothing is built outside the plan.** Every commit names an open package with a `Plan: <ID>` trailer, stays inside
+  that package's files, and adds no screen, API mount or table the ledger does not approve.
+- **The plan changes only by founder decision.** That means a `Plan: PLAN` commit with a `Founder-Decision: P-<n>`
+  trailer, recorded in `docs/LAUNCH_DEFINITION_OF_DONE.md`. No session amends the plan to make room for its own work.
+- **There is no bypass.** No environment variable or flag skips it. If the plan is wrong, ask the founder.
+
+**Enforced by** `npm run ci:one-design-plan` in `.husky/pre-push`. Its failure cases are exercised by
+`npm run ci:one-design-plan:selftest`. That selftest proves it refuses:
+- an untrailered commit;
+- an unknown or queued package;
+- a file outside the package;
+- an unapproved screen, mount or table, read from real git history;
+- a plan change without a founder decision.
+
+---
+
 ## RULE 1 — every migration re-runs on every deploy. Removing schema is not a DROP.
 
 `applyMigrationFiles` (`scripts/db/migration-set.mjs:1899`) reads and **executes

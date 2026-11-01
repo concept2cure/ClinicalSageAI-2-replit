@@ -1,0 +1,151 @@
+{
+  "$comment": "The one plan's ledger (docs/design/ONE_DESIGN_PLAN.md, founder decision P-78, 2026-10-31). Read by scripts/ci/check-one-design-plan.mjs in .husky/pre-push. Changes only under 'Plan: PLAN' with a 'Founder-Decision: P-<n>' trailer.",
+  "decision": "P-78",
+  "alwaysAllowed": [
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.test.mjs",
+    "**/*.spec.ts",
+    "tests/**",
+    "docs/evidence/**",
+    ".design/**"
+  ],
+  "planFiles": [
+    "docs/design/ONE_DESIGN_PLAN.md",
+    "docs/design/one-design-plan.json",
+    "scripts/ci/check-one-design-plan.mjs",
+    "scripts/ci/check-one-design-plan.selftest.mjs",
+    "CLAUDE.md",
+    "AGENTS.md",
+    ".github/copilot-instructions.md",
+    ".github/COPILOT_INSTRUCTIONS.md",
+    "design-system/CLAUDE.md"
+  ],
+  "packages": [
+    {
+      "id": "D0", "title": "Foundations: canonical header, card, buttons, segmented control, empty state, inspector, artifact panel, composer", "status": "open", "dependsOn": [],
+      "paths": [
+        "design-system/**",
+        "client/index.html",
+        "client/src/index.css",
+        "client/src/concept2cure/v2/styles/**",
+        "client/src/concept2cure/v2/ui/**",
+        "client/src/concept2cure/v2/AnswerLead.tsx",
+        "client/src/concept2cure/v2/C2CForm.tsx",
+        "client/src/concept2cure/v2/icons.tsx",
+        "client/src/concept2cure/v2/dataConnect.tsx",
+        "client/src/concept2cure/v2/useDialog.tsx",
+        "client/src/concept2cure/v2/Toast*.tsx"
+      ]
+    },
+    {
+      "id": "D1", "title": "Shell, Home and the conversation", "status": "queued", "dependsOn": ["D0"],
+      "paths": [
+        "client/src/concept2cure/v2/Shell.tsx",
+        "client/src/concept2cure/v2/V2App.tsx",
+        "client/src/concept2cure/v2/TaskTray.tsx",
+        "client/src/concept2cure/v2/OpenWork.tsx",
+        "client/src/concept2cure/v2/Notification*.tsx",
+        "client/src/concept2cure/v2/palette*.ts",
+        "client/src/concept2cure/v2/Ana*.tsx",
+        "client/src/concept2cure/v2/ana*.ts",
+        "client/src/concept2cure/v2/surfaces/Home*.tsx",
+        "client/src/concept2cure/v2/surfaces/Conversation*.tsx",
+        "client/src/concept2cure/v2/surfaces/AnaCommand.tsx",
+        "client/src/concept2cure/v2/surfaces/AnaVerbs.tsx",
+        "client/src/concept2cure/v2/surfaces/AnaDocContext.tsx",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    {
+      "id": "D2", "title": "Projects: grid of cards, search, quiet filters, New project", "status": "queued", "dependsOn": ["D0"],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectPortfolioFilters.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectClientFilter.tsx",
+        "client/src/concept2cure/v2/surfaces/projectIntakeRequest.ts",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    {
+      "id": "D3", "title": "The project page: composer, Project knowledge, quiet stages, work-area doors", "status": "queued", "dependsOn": ["D0"],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Project*.tsx",
+        "client/src/concept2cure/v2/surfaces/project*.ts",
+        "client/src/concept2cure/v2/surfaces/MarketBlockers.tsx",
+        "client/src/concept2cure/v2/fixtures/project-home-data.*",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    {
+      "id": "D4", "title": "The canvas and the editor: artifact panel beside the conversation, quiet editor with an inspector (one editor)", "status": "queued", "dependsOn": ["D0"],
+      "paths": [
+        "client/src/concept2cure/v2/editor/**",
+        "client/src/concept2cure/v2/surfaces/Authoring*.tsx",
+        "client/src/concept2cure/v2/surfaces/authoring*.ts",
+        "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "client/src/concept2cure/v2/surfaces/DocJourney.tsx",
+        "client/src/concept2cure/v2/surfaces/Review*.tsx",
+        "client/src/concept2cure/v2/authoringHandoff.ts",
+        "client/src/concept2cure/v2/AuthoringHandoffNotice.tsx",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    {
+      "id": "D5", "title": "Work areas I: CMC / Module 3 and Biostatistics", "status": "queued", "dependsOn": ["D0"],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Cmc*.tsx",
+        "client/src/concept2cure/v2/surfaces/cmc*.ts",
+        "client/src/concept2cure/v2/surfaces/cmc*.tsx",
+        "client/src/concept2cure/v2/surfaces/Biostat*.tsx",
+        "client/src/concept2cure/v2/surfaces/biostat*.ts",
+        "client/src/concept2cure/v2/surfaces/biostat*.tsx",
+        "client/src/concept2cure/v2/surfaces/adaptiveMonitoring*.tsx",
+        "client/src/concept2cure/v2/engineResultHtml.ts",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    {
+      "id": "D6", "title": "Work areas II: Tasks, Communication, Vault", "status": "queued", "dependsOn": ["D0"],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Task*.tsx",
+        "client/src/concept2cure/v2/surfaces/task*.ts",
+        "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx",
+        "client/src/concept2cure/v2/fixtures/task-board-data.ts",
+        "client/src/concept2cure/v2/surfaces/Communication*.tsx",
+        "client/src/concept2cure/v2/surfaces/HaMeetings.tsx",
+        "client/src/concept2cure/v2/surfaces/Agency*.tsx",
+        "client/src/concept2cure/v2/surfaces/agency*.ts",
+        "client/src/concept2cure/v2/surfaces/Vault*.tsx",
+        "client/src/concept2cure/v2/surfaces/vault*.ts",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    {
+      "id": "D7", "title": "Work areas III: Submission Center, Quality, Risk-based monitoring, Reporting & analytics", "status": "queued", "dependsOn": ["D0"],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Submission*.tsx",
+        "client/src/concept2cure/v2/surfaces/submission*.ts",
+        "client/src/concept2cure/v2/surfaces/Ectd*.tsx",
+        "client/src/concept2cure/v2/surfaces/Sequence*.tsx",
+        "client/src/concept2cure/v2/surfaces/Dispatch*.tsx",
+        "client/src/concept2cure/v2/surfaces/Quality*.tsx",
+        "client/src/concept2cure/v2/surfaces/Rbm*.tsx",
+        "client/src/concept2cure/v2/surfaces/rbm*.ts",
+        "client/src/concept2cure/v2/surfaces/rbm*.tsx",
+        "client/src/concept2cure/v2/surfaces/Insights*.tsx",
+        "client/src/concept2cure/v2/surfaces/insights*.ts",
+        "client/src/concept2cure/v2/surfaces/insights*.tsx",
+        "client/src/concept2cure/v2/surfaces/Compliance*.tsx",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    { "id": "R1", "title": "Reach: every server capability with no UI caller reached in its package's screen, or retired by founder decision", "status": "open", "dependsOn": [], "paths": ["**"] },
+    { "id": "F1", "title": "Repairs: defects in shipped behaviour; no new screen, mount or table", "status": "open", "dependsOn": [], "paths": ["**"] },
+    { "id": "L1", "title": "Launch rows D1–D10 (docs/LAUNCH_DEFINITION_OF_DONE.md)", "status": "open", "dependsOn": [], "paths": ["**"] },
+    { "id": "DATA", "title": "Demo data", "status": "open", "dependsOn": [], "paths": ["scripts/demo/**", "data/seeds/**", "docs/evidence/DEMO/**", "package.json"] },
+    { "id": "PLAN", "title": "The plan and its gate (founder decision only)", "status": "open", "dependsOn": [], "paths": ["**"] }
+  ],
+  "approvedAdditions": []
+}

@@ -501,7 +501,8 @@
 
    Lora + JetBrains Mono load from Google Fonts in
    client/index.html. Styrene B / Tiempos / Copernicus (Klim,
-   commercial) were REJECTED — licensing + Claude-clone look —
+   commercial) were REJECTED — licensing (the "Claude-clone look"
+   reason is reversed: docs/design/ONE_DESIGN_PLAN.md, P-78) —
    and their @font-face declarations removed with this decision.
    Poppins was removed from chrome at the same time (it reflows
    the kit's dense layouts). See the ui-v2 install runbook

@@ -1,5 +1,26 @@
 # 🤖 CODESPACE & COPILOT AGENT RULES
 
+## RULE 5 — one design, one plan, absolute (see `CLAUDE.md`)
+
+The founder decided on 2026-10-31 (P-78) that Concept2Cure is **Claude for life sciences**. It looks and works like
+Claude (claude.ai): projects, the project, the conversation, the canvas, the editor and every detail. Every
+capability beneath the UI is brought to life inside that UI.
+
+**The plan is `docs/design/ONE_DESIGN_PLAN.md`, and its ledger is `docs/design/one-design-plan.json`.** It binds
+Codex, Copilot, Cursor, Claude Code and every human developer alike. Nobody builds anything outside it.
+
+- **Name the package.** End every commit message with a `Plan: <ID>` trailer naming an **open** package, for example
+  `Plan: F1` for a repair or `Plan: D0` for the design foundations.
+- **Stay inside it.** Change only files inside that package's `paths`. Tests, `docs/evidence/**` and `.design/**` are
+  always allowed.
+- **Add nothing unapproved.** Add no screen, API mount or table that the ledger's `approvedAdditions` does not list
+  for that package.
+- **Leave the plan to the founder.** Never change the plan, its ledger, its gate or this rule. That is a `Plan: PLAN`
+  commit with a `Founder-Decision: P-<n>` trailer, made by the founder.
+
+`npm run ci:one-design-plan` in `.husky/pre-push` refuses anything else. There is no bypass.
+
+
 ## ⚠️ CRITICAL: SINGLE BRANCH DEVELOPMENT ONLY
 
 **ALL development work MUST happen on this branch:**
