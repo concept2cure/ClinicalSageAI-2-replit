@@ -76,7 +76,7 @@ import {
    create failure could not be looked up in the logs — the reference the UI
    invited the user to quote pointed at nothing. */
 import { serverError } from '../../lib/api-response.js';
-import { requireGovernedReason } from '../governed-reason.js';
+import { optionalGovernedReason, requireGovernedReason } from '../governed-reason.js';
 import { addProjectMarket, AddMarketRefusal } from '../../services/c2c/add-project-market.js';
 import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
 import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
@@ -1965,6 +1965,8 @@ async function transitionProgram(
     /** A refusal that needs the project's records, read under the row lock. */
     guard?: (client: PoolClient, programId: string, orgId: number) => Promise<{ status: number; body: Record<string, unknown> } | null>;
     details: (row: { status: string }) => Record<string, unknown>;
+    /** The reason for change a person stated (21 CFR 11.10(e)), validated by closeOut. */
+    reason: string | null;
   },
 ): Promise<void> {
   const userId = resolveUserId(req);
@@ -2004,7 +2006,7 @@ async function transitionProgram(
     await writeProgramAudit(client, {
       orgId, userId, programId: String(req.params.id),
       action: opts.action,
-      details: opts.details(row),
+      details: withReason(opts.details(row), opts.reason),
     });
 
     await client.query('COMMIT');
@@ -2023,6 +2025,20 @@ async function transitionProgram(
   } finally {
     client.release();
   }
+}
+
+const withReason = (details: Record<string, unknown>, reason: string | null) => (reason ? { ...details, reason } : details);
+
+/**
+ * A close-out with its reason for change (21 CFR 11.10(e)): an archive must say
+ * why, and an unarchive or a delete records a reason when one is stated. A
+ * missing or short required reason is refused before anything is read.
+ */
+async function closeOut(req: Request, res: Response, mode: 'required' | 'optional',
+  opts: Omit<Parameters<typeof transitionProgram>[2], 'reason'>): Promise<void> {
+  const stated = mode === 'required' ? requireGovernedReason(req.body?.reason) : optionalGovernedReason(req.body?.reason);
+  if (!stated.ok) { res.status(400).json({ error: 'REASON_REQUIRED', message: stated.error }); return; }
+  await transitionProgram(req, res, { ...opts, reason: stated.reason });
 }
 
 /** The market a POST /:id/markets body names, its strings trimmed; unknown client types dropped. */
@@ -2085,7 +2101,10 @@ router.post('/:id/markets', async (req: Request, res: Response) => {
 });
 
 router.post('/:id/archive', async (req: Request, res: Response) => {
-  await transitionProgram(req, res, {
+  // Required: Project settings' governed confirmation sends one, and its dialog
+  // tells the person the reason is captured verbatim in the audit log. Until
+  // 2026-11-01 the route read no reason at all.
+  await closeOut(req, res, 'required', {
     action: 'c2c.project.archive',
     set: `status = 'archived'`,
     precondition: (row) =>
@@ -2097,7 +2116,7 @@ router.post('/:id/archive', async (req: Request, res: Response) => {
 });
 
 router.post('/:id/unarchive', async (req: Request, res: Response) => {
-  await transitionProgram(req, res, {
+  await closeOut(req, res, 'optional', {
     action: 'c2c.project.unarchive',
     // Restores to 'active' rather than to whatever it was before: the prior
     // status is not recorded on the row, and reconstructing it from the audit
@@ -2112,7 +2131,7 @@ router.post('/:id/unarchive', async (req: Request, res: Response) => {
 });
 
 router.delete('/:id', async (req: Request, res: Response) => {
-  await transitionProgram(req, res, {
+  await closeOut(req, res, 'optional', {
     action: 'c2c.project.delete',
     set: `deleted_at = now()`,
     precondition: (row) => (row.deleted_at ? 'This program is already deleted.' : null),

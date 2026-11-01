@@ -69,6 +69,8 @@ function programState(status: string, deletedAt: string | null = null, lead: num
     .mockResolvedValueOnce({ rows: [{ lead_user_id: lead }] });                       // FOR SHARE re-read
 }
 
+const REASON = 'The program closed after the NDA was approved.';
+
 const sqlCalls = () => query.mock.calls.map((c) => String(c[0]));
 
 beforeEach(() => {
@@ -84,7 +86,7 @@ beforeEach(() => {
 describe('POST /:id/archive', () => {
   it('archives an active program and audits it in the same transaction', async () => {
     programState('active');
-    const res = await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`);
+    const res = await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`).send({ reason: REASON });
     expect(res.status).toBe(200);
 
     const sql = sqlCalls();
@@ -99,13 +101,13 @@ describe('POST /:id/archive', () => {
 
   it('takes a row lock, so concurrent close-outs cannot both claim the change', async () => {
     programState('active');
-    await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`);
+    await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`).send({ reason: REASON });
     expect(sqlCalls().some((s) => s.includes('FOR UPDATE'))).toBe(true);
   });
 
   it('scopes the pre-read to the caller org', async () => {
     programState('active');
-    await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`);
+    await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`).send({ reason: REASON });
     const read = query.mock.calls.find((c) => String(c[0]).includes('FOR UPDATE'))!;
     expect(String(read[0])).toContain('organization_id = $2');
     expect(read[1]).toEqual([ID, ORG]);
@@ -113,7 +115,7 @@ describe('POST /:id/archive', () => {
 
   it('DENIES a non-lead, non-manager and writes nothing', async () => {
     programState('active');
-    const res = await request(appAs(OTHER, 'member')).post(`/api/c2c/projects/${ID}/archive`);
+    const res = await request(appAs(OTHER, 'member')).post(`/api/c2c/projects/${ID}/archive`).send({ reason: REASON });
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('PROJECT_WRITE_ACCESS_DENIED');
     const sql = sqlCalls();
@@ -126,28 +128,46 @@ describe('POST /:id/archive', () => {
 
   it('allows an org manager who does not lead the program', async () => {
     programState('active', null, LEAD);
-    const res = await request(appAs(OTHER, 'admin')).post(`/api/c2c/projects/${ID}/archive`);
+    const res = await request(appAs(OTHER, 'admin')).post(`/api/c2c/projects/${ID}/archive`).send({ reason: REASON });
     expect(res.status).toBe(200);
   });
 
   it('refuses to archive twice', async () => {
     programState('archived');
-    const res = await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`);
+    const res = await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`).send({ reason: REASON });
     expect(res.status).toBe(400);
     expect(sqlCalls()).toContain('ROLLBACK');
   });
 
   it('refuses to archive a deleted program', async () => {
     programState('active', '2026-08-01T00:00:00Z');
-    const res = await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`);
+    const res = await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`).send({ reason: REASON });
     expect(res.status).toBe(400);
   });
 
   it('404s a program outside the caller org, without revealing it exists', async () => {
     clearSeats(); // the program is not in ORG, so the current-access gate answers 404 first
-    const res = await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`);
+    const res = await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`).send({ reason: REASON });
     expect(res.status).toBe(404);
     expect(sqlCalls().some((q) => q.includes('BEGIN'))).toBe(false);
+  });
+});
+
+describe('POST /:id/archive asks why (21 CFR 11.10(e))', () => {
+  it('refuses an archive with no reason, before anything is read or written', async () => {
+    programState('active');
+    const res = await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('REASON_REQUIRED');
+    expect(sqlCalls().some((s) => s.includes("status = 'archived'") || s === 'BEGIN')).toBe(false);
+  });
+
+  it('records the stated reason in the audit row it writes in the same transaction', async () => {
+    programState('active');
+    const res = await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`).send({ reason: REASON });
+    expect(res.status).toBe(200);
+    const auditCall = query.mock.calls.find((c) => String(c[0]).includes('INSERT INTO audit_logs'));
+    expect(JSON.stringify(auditCall?.[1] ?? [])).toContain(REASON);
   });
 });
 
