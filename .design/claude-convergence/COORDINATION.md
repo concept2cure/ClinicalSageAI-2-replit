@@ -32,7 +32,7 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | `server/services/ectd/prior-sequence-loader.ts`, `server/services/submission-gateways/index.ts`, the filed-state route in `server/routes/ectd-compile.ts`, `client/src/concept2cure/v2/surfaces/EctdFiledState.tsx` (copy only) | RIM (`011e42…`) | F1 slice 1: what the agency holds is what was sent (no migration) |
 | `server/services/submission-service/submission-service.ts`, `filed-dispatch.ts`, `server/services/submission-gateways/fda-esg-receipts.ts`; copy only in `SubmissionSeqWorkspaces.tsx`, `SubmissionCenter.tsx`, `As2ReceiptUpload.tsx` | RIM | F1 slice 2 (after slice 1): a test-environment send is not a filing |
 | S10's G3 files: `shared/agency/**`, `server/services/agency-responses/**` | RIM | S10 (after slices 1 and 2): the letter splitter keeps its verbatim contract (no footers, control characters, signature blocks or duplicate numbers in a question) |
-| `server/services/ana/AnaToolExecutor.ts` (the `generate_document` handler), `server/services/ana/intelligence-questions/engine.ts` | filing types (`011Fyq…`) | Rule 2 S6b, under S4 |
+| In `server/services/ana/AnaToolExecutor.ts`, only the handlers being changed: `generate_document` (landed), `plan_ind_module_authoring` and its import (S6, deleting them), `start_war_game` (S4: load the stored session, never score model-supplied answers), and the pharmacovigilance, dose-optimisation and RWE handlers if S5a touches them; `server/services/ana/intelligence-questions/engine.ts` | filing types (`011Fyq…`) | Rule 2 S4, S6 and S5a. `intelligence-questions/flows/**` is released (2026-11-01). |
 | `server/services/ana/ana-launch-scope.inventory.json`, `tool-authorization.register.json`, `evidence-literature-tool-defs.ts`, `skills/library/{submissions,medical-writing}.ts`, `ind-module-authoring.ts` (deleted, replacement named) | filing types | Rule 2 S6 (S4): `plan_ind_module_authoring` converges onto the Module 2.5 and 2.7 drafting tools |
 | `server/services/{pharmacovigilance,dose-optimization,rwe}/*-knowledge.ts` and their `ana/*Tools.ts` | filing types | Rule 2 S5a (F1): an unstated fact is unknown, never a default |
 | `surfaces/Insights.tsx`, `InsightsCatalogPanel.tsx`, `InsightsRunsPanel.tsx`, `InsightsSchedulesPanel.tsx`, `InsightsBundlesPanel.tsx`, `ComplianceReports.tsx` and their tests, `styles/insights-v2.css` | Reporting analytics (`011HLkY…`) | L11, D7-D (Reporting & analytics' layout), from 2026-11-01. The find field is `.c2c-input`, not a composer (BUILD_ORDER §5.2 item 20). |
@@ -81,3 +81,12 @@ S10 (the agency's communications back into the project) is held by RIM since 202
    `.design/claude-convergence/` and uses D0's primitives once they land.
 4. Add none of the retired patterns (plan §2).
 5. If the plan is wrong, ask the founder. No session amends it.
+6. Push well. The pre-push hook takes minutes and trunk moves faster, so a ref race is normal:
+   - **batch**: push once per slice, not once per commit;
+   - **retry at once** after a ref-race rejection: fetch, merge (never rebase), push again; `tsc --incremental` makes
+     the second run much faster;
+   - **push from a quiet tree**: the ESLint ratchet and the typecheck read the working tree, so an unfinished edit
+     fails the push even when every commit is sound;
+   - **commit only your paths**: `git commit -m … -- <paths>`. A bare `git commit` takes whatever another process
+     has staged in the shared index (it happened once on 2026-11-01, `87c6a1470`);
+   - check the push's own exit status; a pipe through `tail` hides a failure.
