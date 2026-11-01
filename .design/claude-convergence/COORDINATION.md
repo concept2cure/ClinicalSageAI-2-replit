@@ -10,11 +10,25 @@ change a file that another package's spec also names.
 
 ## Locked now
 
+The build order is `.design/claude-convergence/BUILD_ORDER.md`: Wave 0 now; Wave 1a when D0-4 is pushed and the D0
+rows below are deleted; Wave 1b in eleven lanes after D5-0 (its §3).
+
 | Files | Held by | For | Until |
 |---|---|---|---|
-| `design-system/**` (except `design-system/CLAUDE.md`, a plan file) | the coordinating session | D0, foundations: D0-1 to D0-5 | its message, and this row deleted |
+| `design-system/**` (except `design-system/CLAUDE.md`, a plan file) | the coordinating session | D0, foundations: D0-1 to D0-5 (the styles gate is D0-4, BUILD_ORDER §0) | its message, and this row deleted |
 | `client/src/concept2cure/v2/styles/**`, all of it (D0-3 sweeps every sheet for sentence case) | the coordinating session | D0 | same |
 | `client/src/concept2cure/v2/AnswerLead.tsx`, `icons.tsx`, `C2CForm.tsx`, `dataConnect.tsx` | the coordinating session | D0 | same |
+
+### Holds on other files (one session per file, plan §4.6)
+
+| Files | Held by | For |
+|---|---|---|
+| `scripts/db/migration-set.mjs` | RIM (`011e42…`) | F1 slice 1: an additive column for `ectd_compilations` (RULE 1) |
+| `server/services/ectd/prior-sequence-loader.ts`, `server/services/submission-service/submission-service.ts`, `fda-esg-receipts.ts` | RIM | F1 slices 1 and 2: what the agency holds, and test-environment sends |
+| `server/services/ana/AnaToolExecutor.ts` (the `generate_document` handler), `server/services/ana/intelligence-questions/engine.ts` | filing types (`011Fyq…`) | Rule 2 S6b, under S4 |
+| `server/routes/c2c/projects.ts`, `server/services/c2c/charter-objectives.ts`, `server/routes/charters.ts`, `client/src/concept2cure/v2/surfaces/projectSettingsRequest.ts` | the coordinating session | Wave 0: S1, the objective at creation, and its hook |
+| `server/services/c2c/project-portfolio.ts` | the coordinating session | Wave 0: S11, the portfolio projection |
+| `server/routes/mdx-qms.ts`, `server/routes/project-schedule-of-events.ts`, `server/db/requestDb*.ts`, `server/middleware/establishRequestTenantScope.ts` | the coordinating session | Wave 0: F1, the request-DB context failure |
 
 ## Who works where
 
