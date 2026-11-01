@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-31T22:59:39.267Z",
+  "generatedAt": "2026-11-01T08:29:46.465Z",
   "git": {
-    "sha": "f0624a82bdb1d3ec8d57530541d22e10bae6e057",
+    "sha": "df6d18838b050f9f431ba1e6536a0fbbb957362b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2398,7 +2398,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 341885
+        "bytes": 342184
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2422,7 +2422,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 181097
+        "bytes": 181257
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2457,12 +2457,12 @@
         "bytes": 153919
       },
       {
-        "file": "server/routes/report-os.ts",
-        "bytes": 153033
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "bytes": 153420
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 152639
+        "file": "server/routes/report-os.ts",
+        "bytes": 153033
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2505,6 +2505,10 @@
         "bytes": 131370
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "bytes": 131143
+      },
+      {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "bytes": 131118
       },
@@ -2521,10 +2525,6 @@
         "bytes": 124254
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "bytes": 123708
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "bytes": 122848
       },
@@ -2533,12 +2533,12 @@
         "bytes": 122533
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "bytes": 121510
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "bytes": 122398
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "bytes": 121283
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "bytes": 121510
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2561,24 +2561,24 @@
         "bytes": 116456
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "bytes": 115653
+      },
+      {
         "file": "server/routes/auth.ts",
         "bytes": 114430
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "bytes": 114395
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 114271
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "bytes": 113178
-      },
-      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 110107
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 109710
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
@@ -2616,7 +2616,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6697
+        "lines": 6700
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2684,7 +2684,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3159
+        "lines": 3161
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2700,7 +2700,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 3021
+        "lines": 3033
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2744,7 +2744,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2404
+        "lines": 2401
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2757,6 +2757,10 @@
       {
         "file": "server/routes/c2c/reviews.ts",
         "lines": 2372
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 2344
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2787,10 +2791,6 @@
         "lines": 2253
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 2223
-      },
-      {
         "file": "server/services/ana/run-control.ts",
         "lines": 2222
       },
@@ -2815,6 +2815,10 @@
         "lines": 2164
       },
       {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2159
+      },
+      {
         "file": "server/routes/submissions.ts",
         "lines": 2159
       },
@@ -2823,8 +2827,8 @@
         "lines": 2155
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 2140
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2152
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
@@ -2853,10 +2857,6 @@
       {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 2064
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2056
       },
       {
         "file": "client/src/concept2cure/v2/editor/suggestions.ts",
@@ -2987,6 +2987,10 @@
         "lines": 1772
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "lines": 1767
+      },
+      {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
         "lines": 1756
       },
@@ -3017,10 +3021,6 @@
       {
         "file": "server/services/grdhe/grdheService.ts",
         "lines": 1663
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
-        "lines": 1660
       },
       {
         "file": "server/services/module3-extensions.ts",
