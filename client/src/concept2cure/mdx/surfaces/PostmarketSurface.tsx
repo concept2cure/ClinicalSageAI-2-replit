@@ -213,10 +213,13 @@ export function PostmarketSurface({
               {I.sparkles} Triage queue
             </button>
           )}
-          {urgentMdr && urgentLabel && (
+          {/* Drawn only when it opens something: the host passes no handler
+              here, and a primary button that does nothing is a dead end
+              (MDX journey M1, 2026-11-01). */}
+          {onOpenEditor && urgentMdr && urgentLabel && (
             <button
               className="btn primary small"
-              onClick={() => onOpenEditor?.(urgentMdr.id)}
+              onClick={() => onOpenEditor(urgentMdr.id)}
               title={urgentMdr.title}
               type="button"
             >
