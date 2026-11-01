@@ -58,6 +58,12 @@ beforeAll(async () => {
       metadata jsonb, tenant_id integer, exported_at timestamptz DEFAULT now());
     CREATE TABLE test_filing_audit (id uuid DEFAULT gen_random_uuid(), tenant_id integer,
       operation text, entry jsonb);
+    -- The revision ledger the filing now reads each section's head from (LX-10,
+    -- 2026-11-01): db/migrations/20260725_authoring_document_loop_tables.sql's
+    -- doc_revisions with 20260817_doc_revisions_immutable_ledger.sql's columns.
+    CREATE TABLE doc_revisions (id uuid PRIMARY KEY, section_id uuid NOT NULL, content text,
+      created_by text, tenant_id integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
+      content_sha256 text, prev_chain_sha256 text, chain_sha256 text, origin text, inputs jsonb);
     /* The governed filing store, so the P-29.2 agreement check has something to
        compare against. Without these three pieces filingAgreesWithEditing
        answers "the governed document store is not provisioned here" and records

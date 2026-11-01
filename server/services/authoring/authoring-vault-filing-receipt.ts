@@ -3,10 +3,13 @@
 import { isCanonicalId } from '../../../shared/regulatory/canonical-document';
 import { hashPayload, type PoolClient } from '../audit/chain';
 import { verifySequencedRow, type SequencedRowInput } from '../audit/chain-row';
+import type { FiledSectionRevision } from './revision-ledger';
 
 export type VaultFilingDerivation =
   | { status: 'recorded'; vaultDocumentId: string; programId: string; artifactSha256: string;
-      source: { store: 'authoring_documents'; nativeId: string; version: string | null; sectionsSha256: string | null };
+      source: { store: 'authoring_documents'; nativeId: string; version: string | null; sectionsSha256: string | null;
+        /** Each filed section's revision head (LX-10); absent on a receipt recorded before 2026-11-01. */
+        sectionRevisions?: FiledSectionRevision[] };
       receipt: { id: string; exportCorrelationId: string | null; occurredAt: string; chain: 'linked'; seal: 'valid' | 'no-key' } }
   | { status: 'not-recorded' }
   | { status: 'unverified'; reason: 'context_invalid' | 'candidate_ambiguous' | 'receipt_malformed' |
@@ -64,9 +67,31 @@ function sourceSnapshot(payload: Record<string, unknown>) {
   if (version != null && (typeof version !== 'string' || !version.trim())) return null;
   if (digest != null && (typeof digest !== 'string' || !SHA256.test(digest))) return null;
   if (exportId != null && (typeof exportId !== 'string' || !isCanonicalId(exportId))) return null;
+  const revisions = optionalRevisions(payload);
+  if (revisions === null) return null;
   return { version: version as string | null | undefined ?? null,
     sectionsSha256: digest as string | null | undefined ?? null,
-    exportId: exportId as string | null | undefined ?? null };
+    exportId: exportId as string | null | undefined ?? null,
+    ...revisions };
+}
+
+/** `{ sectionRevisions }` when the receipt records them, `{}` when it predates them, null when malformed. */
+function optionalRevisions(payload: Record<string, unknown>): { sectionRevisions?: FiledSectionRevision[] } | null {
+  if (payload.sectionRevisions === undefined) return {};
+  const revisions = filedRevisions(payload.sectionRevisions);
+  return revisions ? { sectionRevisions: revisions } : null;
+}
+
+/** The receipt's section revision heads (LX-10), or null when any entry is not one. */
+function filedRevisions(value: unknown): FiledSectionRevision[] | null {
+  if (!Array.isArray(value)) return null;
+  const nullableText = (v: unknown) => v === null || typeof v === 'string';
+  const ok = value.every((r) => r && typeof r === 'object' && typeof r.sectionId === 'string' &&
+    nullableText(r.code) && nullableText(r.revisionId) && nullableText(r.origin) &&
+    (r.chainSha256 === null || (typeof r.chainSha256 === 'string' && SHA256.test(r.chainSha256))) &&
+    Array.isArray(r.machineContributors) && r.machineContributors.every((c: unknown) => typeof c === 'string') &&
+    typeof r.matchesFiledText === 'boolean');
+  return ok ? (value as FiledSectionRevision[]) : null;
 }
 
 async function projectReceipt(q: PoolClient, row: Record<string, unknown>, context: FilingContext): Promise<VaultFilingDerivation> {
@@ -84,7 +109,8 @@ async function projectReceipt(q: PoolClient, row: Record<string, unknown>, conte
   return { status: 'recorded', vaultDocumentId: context.vaultDocumentId.toLowerCase(),
     programId: context.programId.toLowerCase(), artifactSha256: context.artifactSha256.toLowerCase(),
     source: { store: 'authoring_documents', nativeId: header.sourceId.toLowerCase(),
-      version: snapshot.version, sectionsSha256: snapshot.sectionsSha256 },
+      version: snapshot.version, sectionsSha256: snapshot.sectionsSha256,
+      ...(snapshot.sectionRevisions ? { sectionRevisions: snapshot.sectionRevisions } : {}) },
     receipt: { id: header.id, exportCorrelationId: snapshot.exportId, occurredAt: header.occurredAt, chain: 'linked', seal: verdict.seal } };
 }
 
