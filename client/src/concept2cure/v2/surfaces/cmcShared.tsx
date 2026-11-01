@@ -15,6 +15,7 @@
  * for one component, which is the shape the move exists to remove.
  */
 
+import React from 'react';
 import { serverMessage } from '@/lib/queryClient';
 
 /* ── Project in context ─────────────────────────────────────────────────── */
@@ -138,4 +139,48 @@ export function cmcWriteThrew(subject: string, e: unknown): string {
   return known
     ? `Couldn’t save the ${subject} — ${(e as { message: string }).message}`
     : `Couldn’t save the ${subject}. Check your connection and try again. Nothing was persisted.`;
+}
+
+/* ── The one view lead, and the one figure ─────────────────────────────── */
+
+interface CmHeadProps {
+  title: string;
+  meta: string;
+  actions?: React.ReactNode;
+}
+
+/* The view's lead, not a page header (D5 §A.4.4). The page has exactly one
+   <h1>, written once by `CmcModule`; each tab opens with an <h2> and one grey
+   line. What left this component:
+   • the "CMC — Module 3 operating system" kicker — an uppercase eyebrow over
+     every one of nine screens, saying what the rail's active item and the
+     page title already say (ONE_DESIGN_PLAN §2);
+   • the orange "Ask AnA" button — AnA's entry on a work area is the starter
+     row below the header (§WA.3 "Actions"), not a button per screen;
+   • the three suggestion tiles — the same prompts, now page-level and the
+     same on every tab, so their position does not move as you switch tabs.
+   `actions` stays: it is where a tab's own act lives, and in a tabbed work
+   area the active tab's lead row is where the ONE primary may sit. */
+export function CmHead({ title, meta, actions }: CmHeadProps) {
+  return (
+    <div className="pj-sec-h cm-lead">
+      <h2>{title}</h2>
+      <span className="sec-sub">{meta}</span>
+      {actions && <div className="pj-sec-acts">{actions}</div>}
+    </div>
+  );
+}
+
+/* A figure first; `onClick` makes it a door as well. The interactive variant
+   is a real <button> carrying the SAME class and children — the .c2c-v2 button
+   reset (app-v2.css) zeroes the chrome and .reg-kpi supplies the identical
+   shape — so a door reads the same as a plain figure, reads as a control to a
+   screen reader, and gains the focus ring. A figure with nothing behind it
+   stays a <div>: a clickable dead end is noise, not an affordance.
+   These were stat tiles until D0 §4.2.7; the markup is unchanged and the
+   stylesheet makes them a quiet line. */
+export function Kpi({ l, v, s, tone, onClick, title }: { l: string; v: React.ReactNode; s?: string; tone?: string; onClick?: () => void; title?: string }) {
+  const body = <><div className="reg-kpi-v">{v}</div><div className="reg-kpi-l">{l}{s ? ' — ' + s : ''}</div></>;
+  if (onClick) return <button type="button" className="reg-kpi" data-tone={tone} title={title} onClick={onClick}>{body}</button>;
+  return <div className="reg-kpi" data-tone={tone}>{body}</div>;
 }
