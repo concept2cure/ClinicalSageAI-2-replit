@@ -573,13 +573,6 @@ function Kpi({ l, v, s, tone, onClick, title }: { l: string; v: React.ReactNode;
 
 /* ═══════════ Overview -- LIVE portfolio + governed section approvals ═══════════ */
 
-/** The overview's subtitle in words: "1 submission — preparedness index not yet computed"
- *  (it read "1 submissions — RPI — average" in a client demo, 2026-10-31). */
-export function overviewMeta(submissions: number | null, avgRpi: number | null): string {
-  const count = submissions == null ? 'Submissions unreadable' : `${submissions} ${submissions === 1 ? 'submission' : 'submissions'}`;
-  return `${count} — ${avgRpi == null ? 'preparedness index not yet computed' : `preparedness index ${avgRpi} on average`}`;
-}
-
 export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   /* Live board -- GET /api/cmc/module3-board[?projectId]. useLiveData unwraps the
      { success, data } envelope, so `board.data` is the display payload directly:
