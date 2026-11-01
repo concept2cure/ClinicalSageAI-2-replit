@@ -50,9 +50,10 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); authService.endSession(null); clearAuthToken(); localStorage.clear(); sessionStorage.clear(); });
 
-function mount(fire = vi.fn()) {
+function mount(fire = vi.fn(), onCommitmentRecorded = vi.fn()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(<QueryClientProvider client={client}><AgencyResponses projectId="42" letter={letter} fire={fire} onNav={vi.fn()} /></QueryClientProvider>);
+  render(<QueryClientProvider client={client}><AgencyResponses projectId="42" letter={letter} fire={fire} onNav={vi.fn()}
+    onCommitmentRecorded={onCommitmentRecorded} /></QueryClientProvider>);
   return fire;
 }
 
@@ -85,5 +86,17 @@ describe('the commitments a letter imposes, proposed (extract commitments)', () 
     expect(body).toMatchObject({ commitmentType: 'pmr', dueDate: '2029-06-30', regulatoryBasis: 'FDCA 505(o)(3) · 4321-1',
       reason: 'Recording the approval letter of 2026-10-12' });
     await waitFor(() => expect(String(fire.mock.calls[0]?.[0])).toMatch(/^Commitment 4321-1 recorded from the letter/));
+  });
+
+  it("tells the host its commitments register must re-read, once the record is confirmed", async () => {
+    const onCommitmentRecorded = vi.fn();
+    mount(vi.fn(), onCommitmentRecorded);
+    fireEvent.click(await screen.findByRole('button', { name: 'Record commitment 4321-1 from the letter' }));
+    const form = screen.getByRole('dialog', { name: 'Record a commitment' });
+    expect(onCommitmentRecorded).not.toHaveBeenCalled();
+    const inputs = Array.from(form.querySelectorAll('input[type="text"]')) as HTMLInputElement[];
+    fireEvent.change(inputs[1], { target: { value: 'Recording the approval letter of 2026-10-12' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Record commitment' }));
+    await waitFor(() => expect(onCommitmentRecorded).toHaveBeenCalledTimes(1));
   });
 });

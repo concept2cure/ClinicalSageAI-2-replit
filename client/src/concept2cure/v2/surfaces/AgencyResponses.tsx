@@ -365,6 +365,8 @@ interface AgencyResponsesProps {
   projectId: string; letter: CommRow; fire: (m: string, tone?: 'ok' | 'error') => void;
   /** A question another screen linked to (CMC's "Open on its letter"). */
   focusQuestionId?: number | null; onNav?: (id: string) => void;
+  /** A commitment was recorded here (from the letter or a question): the host's register re-reads. */
+  onCommitmentRecorded?: () => void;
 }
 /** Retire all retained questions and action forms before a different visit renders. */
 export function AgencyResponses(props: AgencyResponsesProps) {
@@ -384,6 +386,7 @@ function ScopedAgencyResponses({
   fire: hostFire,
   focusQuestionId = null,
   onNav,
+  onCommitmentRecorded,
   readOwner,
 }: AgencyResponsesProps & { readOwner: DataReadOwner }) {
   const base = `/api/concept2cure/projects/${encodeURIComponent(projectId)}/agency-communications/${encodeURIComponent(letter.id)}`;
@@ -461,6 +464,7 @@ function ScopedAgencyResponses({
       fire(`Commitment recorded from ${committing.questionRef}. It is listed under Meetings & commitments.`);
       setCommitting(null);
       reload();
+      onCommitmentRecorded?.();
     } catch (e) {
       fire(`Commitment not recorded: ${said(e)}. Nothing was stored.`, 'error');
     } finally {
@@ -486,6 +490,7 @@ function ScopedAgencyResponses({
       fire(`Commitment ${ref} recorded from the letter. It is listed under Meetings & commitments with its due date.`);
       setFromLetter(null);
       reload();
+      onCommitmentRecorded?.();
     } catch (e) {
       fire(`Commitment not recorded: ${said(e)}. Nothing was stored.`, 'error');
     } finally {

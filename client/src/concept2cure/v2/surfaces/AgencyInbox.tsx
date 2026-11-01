@@ -316,6 +316,8 @@ export interface InboxResponses {
   projectId: string;
   fire: (m: string, tone?: 'ok' | 'error') => void;
   onNav?: (id: string) => void;
+  /** A commitment was recorded from a letter or one of its questions: the host's register re-reads. */
+  onCommitmentRecorded?: () => void;
 }
 
 /** A request, from another screen, to open one letter (and one of its questions). */
@@ -440,6 +442,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, projectId, responses
               letter={c}
               fire={responses.fire}
               onNav={responses.onNav}
+              onCommitmentRecorded={responses.onCommitmentRecorded}
               focusQuestionId={targeted ? opening?.questionId ?? null : null}
             />
           </div>
