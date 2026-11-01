@@ -186,7 +186,13 @@ export function run({ cwd, range }) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   if (args.includes('--selftest')) {
-    await import('./check-one-design-plan.selftest.mjs');
+    // A child process: the selftest imports this module, so importing it from here would wait on itself.
+    const selftest = fileURLToPath(new URL('./check-one-design-plan.selftest.mjs', import.meta.url));
+    try {
+      execFileSync(process.execPath, [selftest], { stdio: 'inherit' });
+    } catch {
+      process.exit(1);
+    }
   } else {
     const i = args.indexOf('--range');
     const range = i >= 0 ? args[i + 1] : 'origin/concept2cure-v2..HEAD';
