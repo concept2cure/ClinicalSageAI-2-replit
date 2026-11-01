@@ -819,7 +819,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
       {/* eSTAR filing journey — register → assess → produce-gate → track,
           scoped to THIS programme — without programId the readiness verdict
           is computed over every device in the organisation. eSTAR covers 510(k)/De Novo too. */}
-      <EstarFilingPanel programId={program?.id ?? null} />
+      <EstarFilingPanel programId={program?.id ?? null} defaultVariant={officialEstarVariantFor(program)} />
     </>
   );
 
