@@ -1687,3 +1687,49 @@ the founder changes the plan. The founder chose "Approve both":
 
 Nothing new is built: these files exist, and the packages only gain the paths to finish them. Nothing else in the
 plan changes.
+
+### P-86 — A sequence that was never filed may be retired, by signature
+
+The founder, 2026-11-01, answering the RIM session's question, put to the founder by the coordinating session. RIM
+recommended yes, and the founder chose "Yes".
+
+The problem it answers: a dispatched eCTD sequence whose test-environment send found a content defect could be
+neither changed nor replaced, because its number stayed taken.
+
+Such a sequence may be retired by a signed, audited act, which frees its number, only while:
+- no production send is bound to it; and
+- it is not filed.
+
+The act reuses the filed-elsewhere baseline's existing removal of drafts. It goes under launch row D7 (`Plan: L1`).
+Nothing new is built beyond that act.
+
+### P-87 — The unreached IND diff and manifest routes are retired (R1)
+
+The founder, 2026-11-01, on the RIM session's question. These have no caller in any screen, in AnA or in any test:
+- `GET /sequence/:currentId/diff` and `/diff/pdf`;
+- `GET /sequence/:seqId/manifest` and `/manifest/pdf`;
+- the manifest embedded in `POST /sequence/:seqId/dispatch-gate`.
+
+They read the mutable `submission_leaves` table. They are retired with their two services,
+`ind-sequence-diff.ts` and `ind-package-manifest.ts`. Their outcome is delivered today by:
+- "On file at the agency" (`client/src/concept2cure/v2/surfaces/EctdFiledState.tsx`);
+- the compile's lifecycle view (`EctdCompile.tsx`).
+
+The deletion commit names the `git log --all --diff-filter=D` search and those replacements by path (the working
+agreement). This was checked with the R1 inventory first. CLAUDE.md RULE 3 cites these routes as an example of "reach,
+don't rebuild". This decision closes that example by retirement, because their outcome is now reached through the
+filed-state and compile views.
+
+### P-88 — The commitments re-cut, confirmed under RULES 5 and 6
+
+The founder, 2026-11-01, on the RIM session's question, confirming all four points:
+1. A fulfilment signed in error is corrected by set-once correction columns on the successor `regulatory_commitments`
+   row. No new table.
+2. No purge role or `SECURITY DEFINER` function is added. The DELETE gap stays owed (P-41).
+3. A milestone's "missed" is derived from its dates and never stored.
+4. The signed PMR, PMC and REMS milestone acts and the correction go under launch rows D2 and D5 (`Plan: L1`), not
+   under new S9 paths.
+
+The unsigned milestone work for meeting commitments (listing, adding, met and withdrawn) is S9 and needed no decision.
+
+Nothing else in the plan changes.

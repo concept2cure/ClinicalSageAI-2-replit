@@ -77,8 +77,7 @@
   .pde-sec{display:flex;flex-direction:column;gap:0;max-width:920px;}
   .pde-sec-head{display:flex;align-items:flex-start;justify-content:space-between;
     gap:16px;margin-bottom:12px;}
-  .pde-sec-eyebrow{font-size:10.5px;font-weight:600;text-transform:uppercase;
-    letter-spacing:.06em;color:var(--accent-200);}
+  .pde-sec-eyebrow{font-size:var(--fs-caption);font-weight:600;color:var(--text-300);}
   .pde-sec-title{font-size:17px;font-weight:600;color:var(--text-100);margin:3px 0 0;line-height:1.3;}
   .pde-sec-meta{display:flex;align-items:center;gap:9px;flex-shrink:0;}
   .pde-sec-canvas{border:1px solid var(--border);border-radius:var(--radius-lg);

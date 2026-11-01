@@ -1,0 +1,20 @@
+# Green 1: the projection with the four facts and blank -> NULL (working tree, base 32922d0e6)
+# npx vitest run --config vitest.config.ts --maxWorkers=2 server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts server/services/c2c/__tests__/project-portfolio-vocabulary.test.ts
+# exit 0
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/c2c/__tests__/project-portfolio-vocabulary.test.ts > the portfolio card > projects no blocker, in the list and in the creator’s 201 2ms
+ ✓ server/services/c2c/__tests__/project-portfolio-vocabulary.test.ts > the portfolio card > filters by a drug or biologic pathway, and refuses one outside the vocabulary 2ms
+ ✓ server/services/c2c/__tests__/project-portfolio-vocabulary.test.ts > the portfolio card > classifies an IND, an NDA and a De Novo in SQL as the filter names them 4639ms
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads a stated description, indication, agency and filing type as stored, in the list 24ms
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads the same four facts in the creator’s 201 projection 9ms
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > answers null for an absent or blank description or indication, never a default 33ms
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > is additive: every key the card carried before is still there, with its value 15ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  20:57:52
+   Duration  10.67s (transform 420ms, setup 128ms, import 1.36s, tests 8.42s, environment 0ms)
+

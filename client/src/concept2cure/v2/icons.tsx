@@ -2,7 +2,8 @@
  * Kit icon vocabulary → lucide-react.
  *
  * The design kit ships Icons.jsx as `window.I` — a map of lucide-style glyphs
- * rendered at 1em / strokeWidth 1.75. On port every `window.I` lookup becomes
+ * rendered at 1em / strokeWidth 1.75 (1.5 here since D0, ONE_DESIGN_PLAN §2's
+ * thin stroke). On port every `window.I` lookup becomes
  * this map (lucide is the repo's only sanctioned icon library — see
  * design-system CI gate). Elements, not components, so the kit JSX pattern
  * `{I[name]}` transfers unchanged.
@@ -128,9 +129,9 @@ import {
   Archive,
 } from 'lucide-react';
 
-/** Kit rendering contract: 1em glyphs, 1.75 stroke, decorative by default. */
+/** Kit rendering contract: 1em glyphs, 1.5 stroke, decorative by default. */
 function el(Icon: LucideIcon): React.ReactElement {
-  return <Icon size="1em" strokeWidth={1.75} aria-hidden="true" focusable="false" />;
+  return <Icon size="1em" strokeWidth={1.5} aria-hidden="true" focusable="false" />;
 }
 
 export const I: Record<string, React.ReactElement> = {

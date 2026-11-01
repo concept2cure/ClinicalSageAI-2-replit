@@ -44,6 +44,7 @@
 import type { Request } from 'express';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../shared/schema';
+import { requestDbClientReleased } from './requestDbLease';
 
 type Schema = typeof schema;
 export type RequestDb = NodePgDatabase<Schema>;
@@ -53,13 +54,43 @@ interface RequestWithCachedDb extends Request {
 }
 
 export class MissingRequestDbContextError extends Error {
-  readonly code = 'REQUEST_DB_CONTEXT_REQUIRED';
+  readonly code: 'REQUEST_DB_CONTEXT_REQUIRED' | 'REQUEST_ENDED' = 'REQUEST_DB_CONTEXT_REQUIRED';
   readonly statusCode = 500;
 
-  constructor() {
-    super('Request-scoped database context is required');
+  constructor(message = 'Request-scoped database context is required') {
+    super(message);
     this.name = 'MissingRequestDbContextError';
   }
+}
+
+/**
+ * The request had its client, and the lease released it because the request
+ * ended: its caller went away (a page navigating, a fetch aborted) while
+ * authentication or the handler was still running (db/requestDbLease.ts,
+ * 11feb8d93). Nobody is waiting for the answer. It is still a missing request
+ * context, so every caller that fails closed on one fails closed on this.
+ *
+ * It has its own code because REQUEST_DB_CONTEXT_REQUIRED names a different
+ * thing: a route reached with no scope installer in front of it, a defect. Until
+ * 2026-11-01 both were that code, so every cancelled read showed in the server log
+ * as a mount defect, and the 2026-10-26 launch walk reported Quality's reads as
+ * failing (docs/evidence/F1/2026-11-01-request-db-context/).
+ */
+export class RequestEndedError extends MissingRequestDbContextError {
+  override readonly code = 'REQUEST_ENDED' as const;
+
+  constructor() {
+    super('The request ended before its database work ran');
+    this.name = 'RequestEndedError';
+  }
+}
+
+/** The request's bound client, or the typed refusal: ended, or never installed. */
+function boundClient(req: Request): { query: unknown } {
+  const client = (req as Request & { dbClient?: { query?: unknown } }).dbClient;
+  if (client && typeof client.query === 'function') return client as { query: unknown };
+  if (requestDbClientReleased(req)) throw new RequestEndedError();
+  throw new MissingRequestDbContextError();
 }
 
 /**
@@ -77,11 +108,7 @@ export interface RequestSqlClient {
 }
 
 export function requestPgClient(req: Request): RequestSqlClient {
-  const client = (req as Request & { dbClient?: { query?: unknown } }).dbClient;
-  if (!client || typeof client.query !== 'function') {
-    throw new MissingRequestDbContextError();
-  }
-  return client as unknown as RequestSqlClient;
+  return boundClient(req) as unknown as RequestSqlClient;
 }
 
 /**
@@ -127,10 +154,7 @@ export function requestDb(req: Request): RequestDb {
   const cached = (req as RequestWithCachedDb).__requestDb;
   if (cached) return cached;
 
-  const client = (req as Request & { dbClient?: { query?: unknown } }).dbClient;
-  if (!client || typeof client.query !== 'function') {
-    throw new MissingRequestDbContextError();
-  }
+  const client = boundClient(req);
   // Drizzle's node-postgres driver only needs `.query()` on the client.
   // The lazy wrapper installed by requireTenantContext satisfies that;
   // we cast to `any` here so we don't have to pull pg types into the

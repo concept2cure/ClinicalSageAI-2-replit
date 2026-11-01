@@ -1233,6 +1233,15 @@ interface ProjPortfolioEntry {
   activity: string | null;
   client_workspace_id?: number | null;
   client_name?: string | null;
+  /** What the project says it is, for the card's one line (S11, 2026-11-01):
+   *  each a regulatory_programs column, null when nothing (or only whitespace)
+   *  is stated. Optional for a payload from before the projection carried them. */
+  description?: string | null;
+  indication?: string | null;
+  /** primary_agency as stored, e.g. 'FDA'. */
+  agency?: string | null;
+  /** The filing type as stored, e.g. 'ind' or '510k'. */
+  program_type?: string | null;
 }
 
 /**
