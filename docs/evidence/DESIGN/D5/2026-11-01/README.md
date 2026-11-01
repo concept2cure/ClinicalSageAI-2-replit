@@ -50,6 +50,7 @@ classes); the tests that pin CMC (`client/src/concept2cure/v2/__tests__/cmc*`).
 | 1. `[data-work-area]` inside the page metrics | `page-inner cm`, `max-width: 1120px`, `padding: 32px 40px 96px` |
 | 2. one `h1.ph-title`, Lora 26 (22 at 390), the rail label | 1, `Lora … / 26px` (390: `22px`), "CMC / Module 3" |
 | 5. no retired text in the work area | `retiredText: []` ("What to do now", "flows into", "Linked to", "come from", "later release", "comes later", "NEXT STEP") |
+| 3. no uppercase inside the work area | one left: the `AnswerLead` eyebrow (D5-2). Before D0-2 landed it was eight — the eyebrow, Portfolio's five column headers, "RPI" and "IR overdue"; D0-2's sentence-case header rules took the rest. |
 | 6. ≤3 starters, each sending its prompt | "What do I do on Overview?", "Run the ICH compliance check and show every gap", "Generate the drug-substance control strategy" |
 | 7. at 390 the page does not scroll sideways | `sidewaysOverflow: 0` at both widths; the tab row scrolls inside itself |
 | A.6 2. the halves | `segs: ["Module 3 *", "Study records"]`; Study records shows Substance & product … Change control |
@@ -61,9 +62,10 @@ classes); the tests that pin CMC (`client/src/concept2cure/v2/__tests__/cmc*`).
 - `answerLeads: 1` and `orangeFills: ["Advance the next section"]` — Overview's `AnswerLead`. D5-2 step 8
   decomposes it (question → the tab's first starter, headline → the lead's meta, action → a Section
   approvals ghost).
-- `uppercase`: the `AnswerLead` eyebrow, Portfolio's table headers, and "RPI" / "IR overdue" — D5-2 step 8
-  renames the two abbreviations and makes the section typographic.
-- Substance & product is 3,803px tall at 1440 with its registers empty (§A.6 item 5 wants under 1,600) —
+- `uppercase`: the `AnswerLead` eyebrow — it goes with the lead in D5-2 step 8, which also renames
+  Portfolio's "RPI" → "Preparedness" and "IR overdue" → "Questions overdue" (abbreviations defined nowhere
+  on screen).
+- Substance & product is 3,588px tall at 1440 with its registers empty (§A.6 item 5 wants under 1,600) —
   D5-2 step 9, the one `RegisterCard` change.
 
 ## Verified by making the check fail
@@ -107,3 +109,11 @@ Two defects the rewrite found in the test itself, both fixed:
   on `public`, and a non-superuser applier cannot give a function to a role that may not create in the
   schema. Both are outside D5's paths and are reported, not fixed here.
 - The dev account's password was reset in the local database to run the screen.
+
+## After the merge
+
+D0-1 (the type-scale tokens) and D0-2 (one definition of each primitive) landed upstream while this was
+being built. The merge commit deletes every bridge rule D5-0 carried for them, so each primitive has one
+definition; `foundationsOneDefinition` and `ci:undefined-css-classes` pass, and the numbers above were
+re-measured against the merged tree. `foundationsSentenceCase` is still red at 288 declarations — D0-3's
+open sweep — and this branch lowers `journey-v2.css`'s share of it from 18 to 16.
