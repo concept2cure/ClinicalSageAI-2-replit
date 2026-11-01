@@ -1575,3 +1575,49 @@ What this decides:
 Packages: S4 widens to AnA's memory and questioning. S9 (team, tasks, commitments and schedule) and S10 (the
 agency's communications back into the project) join the ledger. `docs/design/ONE_DESIGN_PLAN.md` §1b says by path
 what already exists for each. Nothing new is built (P-80).
+
+### P-82 — The project is the program: a filing run as a program manager runs it
+
+Founder, 2026-11-01:
+
+> "Study what a professional project manager or program manager would do if assigned the build of a major regulatory
+> filing for a phase three successful study after billions of dollars. How would they define that? How would they
+> design the project? How would they assign tasks to what niche industry specialists? … How is the project broken
+> into miniature projects based off of area of assignment … the full IND pyramid. How are those projects managed?
+> We need to be that. A global project perspective." And: "The study objective is always in, starts with the study
+> protocol, but it's always in all the publicly available information relative to the study … all that needs to be
+> cataloged and categorized inside the project … The user interface is really the last mile."
+
+The study is `docs/design/THE_PROGRAM_2026-11-01.md`. What this decides:
+
+- **A project runs as a program.** It has:
+  - a charter: the objective, target label, pathway and region order, gating agency interactions, scope and
+    governance;
+  - a work breakdown: the CTD modules crossed with the functions that write them;
+  - workstreams, each with a lead, tasks, documents and a status;
+  - an integrated schedule, built backwards from the target submission date, with its critical path and gates;
+  - a RACI per deliverable;
+  - a content plan per leaf;
+  - risk, issue, decision and action logs;
+  - the agency's review cycle.
+
+  A global schedule and a portfolio sit across projects.
+- **It is finished from what exists** (RULE 6):
+  - the submission pyramid engine, already one work breakdown per application type, with roles, dependencies,
+    critical path and CTD bindings (`services/regulatory/SubmissionPyramidEngine.ts`, `pyramids/`);
+  - the project charter (`migrations/0012_project_charter_timeline.sql`, `server/routes/charters.ts`);
+  - the project hierarchy;
+  - tasking;
+  - the team and seats;
+  - the timelines;
+  - Submission Center's leaves.
+
+  The pyramid's progress becomes per project, its tasks get owners and back-scheduled due dates, and the result is
+  shown in the project's Plan step.
+- **Workstreams are sections of the one project**, so the filing keeps one data room, lineage, team and dossier. The
+  project hierarchy stays for the portfolio. This is a session recommendation the founder may overrule.
+- **The objective is catalogued with its source.** AnA reads it from the protocol and from the public record (trial
+  registries, the sponsor's releases and publications) with the abilities it already has. A person confirms it.
+
+Package S11 (the program plan) joins the ledger. The study's §9 gives the order.
+

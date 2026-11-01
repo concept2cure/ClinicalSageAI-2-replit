@@ -5,7 +5,8 @@
     "P-78",
     "P-79",
     "P-80",
-    "P-81"
+    "P-81",
+    "P-82"
   ],
   "alwaysAllowed": [
     "**/__tests__/**",
@@ -26,7 +27,8 @@
     "AGENTS.md",
     ".github/copilot-instructions.md",
     ".github/COPILOT_INSTRUCTIONS.md",
-    "design-system/CLAUDE.md"
+    "design-system/CLAUDE.md",
+    "docs/design/THE_PROGRAM_2026-11-01.md"
   ],
   "packages": [
     {
@@ -445,6 +447,36 @@
         "server/routes/c2c/communication-center.ts",
         "server/services/ha-interactions/**",
         "server/services/submission-gateways/**",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    {
+      "id": "S11",
+      "title": "Spine 11: the program plan: the project's pyramid with per-project progress, owners, back-scheduled due dates, critical path, content plan, Plan step, portfolio (P-82)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "services/regulatory/**",
+        "server/routes/pyramid.routes.ts",
+        "server/routes/charters.ts",
+        "shared/schema/project-charter.ts",
+        "server/routes/project-hierarchy.ts",
+        "server/services/ind-lifecycle/**",
+        "server/services/market-specs/**",
+        "server/services/c2c/project-portfolio.ts",
+        "server/services/tasking/**",
+        "server/routes/c2c/tasks.ts",
+        "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx",
+        "client/src/concept2cure/v2/surfaces/Pyramid*.tsx",
+        "client/src/concept2cure/v2/surfaces/PlanAssign.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectSectionTracking.tsx",
+        "client/src/concept2cure/v2/fixtures/pyramid-data.ts",
+        "client/src/concept2cure/v2/styles/pyramid-v2.css",
+        "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "client/src/concept2cure/v2/surfaces/Insights*.tsx",
         "migrations/**",
         "db/migrations/**",
         "scripts/db/migration-set.mjs",

@@ -118,6 +118,26 @@ A project is the whole regulatory life of a product, worked in one place:
 | Assembly, publishing and submission | The editor's assembly: `editor/AuthoringAssemblyBuild.tsx`, `assemblyBuild*.ts`. eCTD: S5. | See S5. |
 | The agency's communications come back | `surfaces/AgencyInbox.tsx`, `CommunicationCenter.tsx`, `HaqManager.tsx`, `ProjectRespond.tsx`. Correspondence: `server/routes/regulatory-correspondence.ts`, `server/services/company-documents/`. Agency responses: `server/routes/c2c/agency-responses.ts`. Design: `docs/design/CORRESPONDENCE_CONVERGENCE_2026-10-29.md`. | Each letter lands in the project. Its questions go to Respond, and its commitments go to tasks (S10, S9). |
 
+## 1c. The project is the program (founder decision P-82, 2026-11-01)
+
+A major filing is run as a program. The study of how a program manager does it, and of how a project becomes that
+from what exists, is `docs/design/THE_PROGRAM_2026-11-01.md`. It binds with this plan. In short:
+- the charter (the objective, target label, pathways, region order, agency interactions, scope, governance);
+- the work breakdown (the CTD modules crossed with the functions);
+- workstreams as sections of the one project;
+- the integrated schedule backwards from the target date, with its critical path;
+- a RACI and a content plan per leaf;
+- the logs;
+- the review cycle;
+- a global schedule and portfolio.
+
+It is finished from:
+- the submission pyramid engine (`services/regulatory/SubmissionPyramidEngine.ts`);
+- the charter (`project_charters`);
+- tasking, the team, the timelines and Submission Center's leaves.
+
+It is shown in the project's Plan step. Package S11.
+
 ## 2. The design (binding)
 
 The colour, type and spacing tokens already exist in `design-system/colors_and_type.css`, and they are Claude's
@@ -240,6 +260,7 @@ whether work may be committed under it:
 | S8 | **Risk-based monitoring.** It runs over the project's study data. | — | open |
 | S9 | **Team, tasks, commitments and schedule** (P-81). The team on licensed seats. Each person's due work. Extract commitments. The project's goals and schedule, and progress against them. | — | open |
 | S10 | **The agency's communications back into the project** (P-81). Each letter lands in the project, its questions go to Respond, and its commitments go to tasks. | — | open |
+| S11 | **The program plan** (P-82). The project's pyramid gets per-project progress, owners and back-scheduled due dates. It joins the content plan, has its critical path, and appears in the Plan step. The portfolio and the global schedule. | — | open |
 
 Each spine package (S1–S8) starts with its "What already exists" section (RULE 3), built from §1a and extended by its
 own searches, filed under `docs/evidence/SPINE/<ID>/`. Its UI work is done on the §2 design. When a screen is in a
