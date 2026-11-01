@@ -17,7 +17,11 @@
  *     one transaction. There is no partially indexed document: an embedding
  *     or write failure leaves the prior state and the caller records the
  *     failure in the catalog's chunking ledger (chunk_status/chunk_error), so
- *     "not retrievable" is always a stated fact, never a silent gap.
+ *     "not retrievable" is always a stated fact, never a silent gap. Each
+ *     chunk is stored with the section it starts in (section_title,
+ *     section_hierarchy) and whether it is a table (chunk_type), from the
+ *     headings in the extracted text (document-section-structure.ts), or NULL
+ *     where the text carries none.
  *
  * Fails closed on oversized documents (beyond MAX_CHUNKS) instead of indexing
  * a truncated prefix that would present partial retrieval as coverage.
@@ -29,6 +33,7 @@ import { getTenantScope, runWithTenantScope, type TenantScope } from '../../db/t
 import { createScopedLogger } from '../../utils/logger.js';
 import { FeatureToggleService } from '../featureToggleService.js';
 import { pageForOffset, type PageSpan } from '../ocr/page-offsets.js';
+import { sectionsForChunks } from './document-section-structure.js';
 
 const logger = createScopedLogger('document-chunking');
 
@@ -280,6 +285,11 @@ export async function chunkAndEmbedDocument(args: {
   const { vectors } = embedding;
   const embeddingError = embedding.error;
 
+  // The section each chunk starts in, and whether it is a table. Before
+  // 2026-10-25 the INSERT named none of these columns, so every passage
+  // reached the RAG reader with sectionTitle NULL whatever its document said.
+  const sections = sectionsForChunks(args.text, chunks);
+
   // vault.documents carries no organization_id; a document belongs to a tenant
   // through its program (regulatory_programs.organization_id), which is also
   // what the table's RLS policies resolve. Every statement below reaches the
@@ -310,11 +320,14 @@ export async function chunkAndEmbedDocument(args: {
       // Without a vector, the embedding columns are left out: the chunk is
       // found by text, and a database without pgvector accepts the row.
       const vec = vectors?.[i] ?? null;
+      const section = sections[i];
       const inserted = await client.query(
         `INSERT INTO vault.document_chunks
-           (document_id, chunk_index, chunk_text, char_start, char_end,
-            page_number, ${vec ? 'embedding, ' : ''}embedding_model, token_count, vectorized_at)
-         SELECT d.id, $2, $3, $4, $5, $6, ${vec ? '$10::vector, ' : ''}$7, $8, ${vec ? 'NOW()' : 'NULL'}
+           (document_id, chunk_index, chunk_text, char_start, char_end, page_number,
+            chunk_type, section_title, section_hierarchy,
+            ${vec ? 'embedding, ' : ''}embedding_model, token_count, vectorized_at)
+         SELECT d.id, $2, $3, $4, $5, $6, $10, $11, $12::text[],
+                ${vec ? '$13::vector, ' : ''}$7, $8, ${vec ? 'NOW()' : 'NULL'}
            FROM vault.documents d
            JOIN regulatory_programs p ON p.id = d.program_id
           WHERE d.id = $1 AND p.organization_id = $9`,
@@ -328,6 +341,9 @@ export async function chunkAndEmbedDocument(args: {
           vec ? CHUNK_EMBEDDING_MODEL : null,
           Math.ceil(c.text.length / 4),
           args.organizationId,
+          section.chunkType,
+          section.sectionTitle,
+          section.sectionHierarchy,
           ...(vec ? [vec] : []),
         ],
       );

@@ -66,6 +66,8 @@ beforeAll(async () => {
       document_id uuid NOT NULL REFERENCES vault.documents(id), chunk_index integer NOT NULL,
       chunk_text text NOT NULL, char_start integer NOT NULL, char_end integer NOT NULL,
       page_number integer, embedding_model text, token_count integer NOT NULL, vectorized_at timestamptz,
+      -- The writer stores each chunk's section (migrations/20260905b's types).
+      chunk_type text NOT NULL DEFAULT 'TEXT', section_title text, section_hierarchy text[],
       UNIQUE (document_id, chunk_index)
     );
   `);

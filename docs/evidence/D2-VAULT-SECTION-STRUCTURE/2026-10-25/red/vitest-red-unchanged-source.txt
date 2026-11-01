@@ -1,0 +1,148 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > writes section_title, section_hierarchy and chunk_type, by where each chunk starts 59ms
+   → chunk 1 at 3553: expected { title: null, path: null } to deeply equal { …(2) }
+ × server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > the chunk that quotes the statistic is a TABLE filed under its caption and its section 40ms
+   → expected { chunkIndex: 3, …(7) } to match object { chunkType: 'TABLE', …(2) }
+(5 matching properties omitted from actual)
+ × server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > keeps the page number beside the section 31ms
+   → expected { chunkIndex: 7, …(7) } to match object { pageNumber: 2, …(1) }
+(6 matching properties omitted from actual)
+ ✓ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > a document with no detectable heading stores NULL sections and the TEXT default 11ms
+ × server/services/__tests__/rag-vault-section-citation.pglite.integration.test.ts > a Vault passage is cited by its section and its page > the passage quoting the statistic carries its section title, and the locator keeps the page 98ms
+   → expected { …(17) } to match object { …(3) }
+(17 matching properties omitted from actual)
+ ✓ server/services/__tests__/rag-vault-section-citation.pglite.integration.test.ts > a Vault passage is cited by its section and its page > a passage before the first heading has no section, and its locator is the page alone 39ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/document-section-structure.test.ts [ server/services/vault/__tests__/document-section-structure.test.ts ]
+Error: Cannot find module '../document-section-structure' imported from /home/user/ClinicalSageAI-2-replit/server/services/vault/__tests__/document-section-structure.test.ts
+ ❯ server/services/vault/__tests__/document-section-structure.test.ts:12:1
+     10|  */
+     11| import { describe, it, expect } from 'vitest';
+     12| import {
+       | ^
+     13|   chunkTypeOf,
+     14|   detectDocumentHeadings,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/rag-vault-section-citation.pglite.integration.test.ts > a Vault passage is cited by its section and its page > the passage quoting the statistic carries its section title, and the locator keeps the page
+AssertionError: expected { …(17) } to match object { …(3) }
+(17 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "locator": "p.2 · 11.4.1 Primary Efficacy Endpoint",
++   "locator": "p.2",
+    "pageNumber": 2,
+-   "sectionTitle": "11.4.1 Primary Efficacy Endpoint",
++   "sectionTitle": null,
+  }
+
+ ❯ server/services/__tests__/rag-vault-section-citation.pglite.integration.test.ts:106:21
+    104|     const quoting = hits.find(d => d.content.includes('102 of 212 subj…
+    105|     expect(quoting).toBeDefined();
+    106|     expect(quoting).toMatchObject({ sectionTitle: SECTION, pageNumber:…
+       |                     ^
+    107|   });
+    108|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > writes section_title, section_hierarchy and chunk_type, by where each chunk starts
+AssertionError: chunk 1 at 3553: expected { title: null, path: null } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+-   "path": [
+-     "11 EFFICACY EVALUATION",
+-     "11.4 Efficacy Results and Tabulations of Individual Patient Data",
+-     "11.4.1 Primary Efficacy Endpoint",
+-   ],
+-   "title": "11.4.1 Primary Efficacy Endpoint",
++   "path": null,
++   "title": null,
+  }
+
+ ❯ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts:158:76
+    156|       } else if (c.charStart >= primary && c.charStart < caption) {
+    157|         seen.primary++;
+    158|         expect({ title: c.sectionTitle, path: c.sectionHierarchy }, wh…
+       |                                                                            ^
+    159|       } else if (c.charStart >= caption && c.charStart < secondary) {
+    160|         seen.table++;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > the chunk that quotes the statistic is a TABLE filed under its caption and its section
+AssertionError: expected { chunkIndex: 3, …(7) } to match object { chunkType: 'TABLE', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "chunkType": "TABLE",
+-   "sectionHierarchy": [
+-     "11 EFFICACY EVALUATION",
+-     "11.4 Efficacy Results and Tabulations of Individual Patient Data",
+-     "11.4.1 Primary Efficacy Endpoint",
+-     "Table 11-3 Proportion of Responders at Week 24 (Full Analysis Set)",
+-   ],
+-   "sectionTitle": "Table 11-3 Proportion of Responders at Week 24 (Full Analysis Set)",
++   "chunkType": "TEXT",
++   "sectionHierarchy": null,
++   "sectionTitle": null,
+  }
+
+ ❯ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts:188:17
+    186|     expect(quoting.length).toBeGreaterThan(0);
+    187|     for (const c of quoting) {
+    188|       expect(c).toMatchObject({ chunkType: 'TABLE', sectionTitle: CAPT…
+       |                 ^
+    189|     }
+    190|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > keeps the page number beside the section
+AssertionError: expected { chunkIndex: 7, …(7) } to match object { pageNumber: 2, …(1) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "pageNumber": 2,
+-   "sectionTitle": "11.4.2 Secondary Efficacy Endpoints",
++   "sectionTitle": null,
+  }
+
+ ❯ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts:199:18
+    197|     ]);
+    198|     const last = (await storedChunks()).at(-1)!;
+    199|     expect(last).toMatchObject({ pageNumber: 2, sectionTitle: NEXT[2] …
+       |                  ^
+    200|   });
+    201|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  4 failed | 2 passed (6)
+   Start at  21:34:19
+   Duration  10.48s (transform 1.57s, setup 136ms, import 2.82s, tests 6.84s, environment 0ms)
+
