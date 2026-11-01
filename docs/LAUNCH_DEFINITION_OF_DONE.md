@@ -1651,3 +1651,23 @@ This amends P-82 item 1. What it decides:
 
 Package S12 joins the ledger.
 
+### P-84 — Two package paths, approved by the founder
+
+The founder, 2026-11-01, answering the session's question. A session had added a path to S1 itself, and the gate was
+right to refuse the same move for S10: under RULE 5 only the founder changes the plan. The founder chose "Approve
+both":
+
+- **S1** (the project's objective) names `server/services/c2c/charter-objectives.ts`. This is where the charter's
+  objectives section is read and recorded (fef3d80f84). This decision ratifies the ledger change in `e2d63319a7`,
+  which had cited P-80.
+- **S10** (the agency's communications back into the project) names:
+  - `server/services/agency-responses/**`, the letter's data-room read;
+  - `shared/agency/**`, the deterministic letter splitters;
+  - `client/src/concept2cure/v2/surfaces/AgencyResponses*.tsx` and `LetterQuestion*.tsx`, the agency questions and
+    proposals screens.
+
+  Extract commitments (P-81) is finished on these: the existing G3 path that proposes a letter's questions also
+  proposes the commitments the letter imposes, and a person records each one.
+
+Nothing else in the plan changes.
+
