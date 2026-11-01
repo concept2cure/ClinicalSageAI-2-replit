@@ -1760,3 +1760,28 @@ reader be enabled?" (`docs/design/AI_PLATFORM_BLUEPRINT_GAP_2026-10-25.md`, deci
 
 Nothing new is built. The figure check, the signing routes and the signing dialog exist; the gate is added to them,
 under `Plan: L1` (row D5, Part 11 evidence).
+
+### P-90 — The self-hosted Docling layout reader is admitted
+
+The founder, 2026-11-01, in the same answer as P-89. The AI architecture session asked "… and should the
+self-hosted Docling layout reader be enabled?", and the founder answered: "Yes to all". This is the second of the
+two.
+
+- **What is admitted.** The Docling layout reader (docling-serve), run by the deployment on its own infrastructure.
+  - It is reached only through the existing client (`server/integrations/docling/`), behind the existing flag
+    `oss.ingestion.docling_primary`.
+  - It gives table-cell structure that the current text extractors do not.
+- **Where it sits under RULE 2.** It is inside RULE 2's gateway and connector scope, as a self-hosted document
+  reader on the deployment's own network. It is not a model and drafts nothing. No document text leaves the
+  deployment through it.
+- **The one addition.** The reader's service definition: the `docling` service in `docker-compose.yml`, profile
+  `ingestion`. It is listed in `docs/design/one-design-plan.json` `approvedAdditions` under L1.
+  - Everything else exists, and is reached (RULE 6): the client, the flag, the one text extractor and Vault's two
+    ingestion reads.
+- **What is not admitted.**
+  - **Hosted parsing.** A hosted parsing service (LlamaParse or similar) would send dossier text to a third party.
+    It stays rejected.
+  - **A second way out.** The reader adds no second path for document text to leave the deployment. When it is off
+    or unreachable, ingestion uses the existing extractors and says so.
+  - **Hosted production.** Running the reader in the hosted Terraform stack is D1's to decide.
+- **Default.** The flag stays off until a deployment turns it on, after showing its reader running.
