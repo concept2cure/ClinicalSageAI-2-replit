@@ -117,3 +117,82 @@ being built. The merge commit deletes every bridge rule D5-0 carried for them, s
 definition; `foundationsOneDefinition` and `ci:undefined-css-classes` pass, and the numbers above were
 re-measured against the merged tree. `foundationsSentenceCase` is still red at 288 declarations — D0-3's
 open sweep — and this branch lowers `journey-v2.css`'s share of it from 18 to 16.
+
+---
+
+# D5-2 — the CMC tab bodies
+
+`d5-2/` holds the screenshots and `probe-tabs.mjs`, taken after the step.
+**Steps landed:** §A.4 steps 8 (Overview), 9 (`RegisterCard`), 13 (Module 3 build),
+14 (Quality by design), and `CmcRegisterLinks`.
+**Not yet:** steps 10 (Stability's tiles and its Q1E note), 11 (Batch's four), 12 (Approvals &
+audit's four), 15 (`CmcPlaceIntoSubmission`), 16 (the raw-state label map).
+
+## Measured, in the running app at 1440
+
+| | Before D5 | After D5-1 | After D5-2 |
+|---|---|---|---|
+| Overview — orange fills | 2 | 1 | **0** |
+| Overview — uppercase runs | 8 | 1 | **0** |
+| Overview — `.al-lead` banners | 1 | 1 | **0** |
+| Overview — page height | — | 1,479px | **1,055px** |
+| Module 3 build — orange fills | 2 | 2 | **1** ("Compile Module 3", in the tab's lead row) |
+| Quality by design — orange fills | 2 | 2 | **1** ("Generate control strategy", same place) |
+| Substance & product — height | 3,600px | 3,588px | **2,551px** |
+| Study records tabs — orange fills | — | 0 | **0** |
+
+That is §A.6 item 4 met on all four tabs this step touched. Item 5 (Substance & product under
+1,600px) is measured here against a project that HAS records in several registers, so it is not the
+spec's empty-register comparison; the 1,037px that came off is the fifteen card frames and their
+dashed empties.
+
+## Capability kept (§A.5, the rows this step moved)
+
+| Removed or demoted | Where its outcome lives now |
+|---|---|
+| Overview's `AnswerLead` question | The page's first starter, same words (`CMC_FIRST_ASK.overview`) |
+| its headline | The view's grey line (`overviewMeta`), with every arm it had — failed read, in flight, none recorded, the average, and the weakest submission |
+| its action / alt | The two ghosts in Section approvals, same handlers (`openOverdueLetters` when a letter is overdue, else "Advance the next section"; "Open the Module 3 build board") |
+| its body | Already shown: the failed read is the error `EmptyState`, the overdue count and everything it leaves out is the figure's own sub-text (including the §sections, which were a parenthesis in the body), the earlier file is its own line, and `anaContext` publishes the rest |
+| its `reassure` / `secondary` | Deleted — AnA's voice, and the page describing itself |
+| "RPI", "IR overdue" | "Preparedness", "Questions overdue" (same values) |
+| Fifteen boxed register cards | The same title, count, scope, "+ Add", table, row actions and history, as sections |
+| Module 3 build's five tiles | One grey line: "N sections in CTD §3.2 · N of N approved · N ready to compile · N stale · N blocked", stale and blocked in `--error` when non-zero |
+| Quality by design's six tiles | One grey line: "N CQAs derived (ICH Q8) · N controlled by a method · N CPPs derived (ICH Q11) · from N specifications and N methods · N gaps" |
+| Both files' own `Head` and `Kpi` | One `CmHead` and one `Kpi` in `cmcShared`, used by all nine tabs |
+| `CmcRegisterLinks`' boxed panel | The same rows, retry and receipt, as a section; still renders nothing when nothing is pending |
+
+## Defects this step found, not just made
+
+1. **Every empty state in the app had a chip's background.** `EmptyState` renders
+   `c2c-empty-state tone-idle`; `.tone-idle` is the chip tone vocabulary, same specificity and
+   declared later, so it won straight through D0 §4.2.12's `background: none`. 579 renders. Undone
+   in CSS; the real fix is the component not borrowing a chip's class, which is outside this
+   package's files.
+2. **`lowSub` named a single submission as what was holding itself back.** With one ranked
+   submission the lowest IS the average. The retired banner carried the same flaw; it is named now
+   only when there is more than one and it is actually below the average.
+3. **The scope note doubled its separator** — `SCOPE_NOTE` text already opens with "·".
+4. **A group label outranked by its own sections.** Making a register's title an `h2` put
+   "Drug substance — §3.2.S" (13px) above "Drug substance" (15px). It reads as the divider it is.
+
+## Verified by making the check fail
+
+Six test files follow their screens. The four cases that read the deleted banner's body are
+re-pointed at where the fact is shown now, and one got stronger in the move: "a failed read says so
+more than once" (an assertion about echoes) became "says so once, and nothing contradicts the —"
+(the rule). Shown red on the exact mistake it guards — `questionsComplete` treating an unread
+earlier file as an empty one:
+
+```
+-    && fig.overdueLettersWithoutQuestions === 0 && earlierOpen === 0;
++    && fig.overdueLettersWithoutQuestions === 0 && (earlierOpen ?? 0) === 0;
+
+× CmOverview — no all-clear over an earlier CMC file that was not read
+  > withholds it, and says why, when the earlier file could not be read
+  → expected 'ok' not to be 'ok'
+Tests  1 failed | 17 passed (18)
+```
+
+All 20 CMC client test files pass (265 cases), plus the eight other files that mount these
+components.

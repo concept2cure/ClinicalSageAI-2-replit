@@ -2319,6 +2319,15 @@
 /* `dim` and `err` are emitted by fifteen call sites (`rd-chip tone-` + tone) and had no rule: a
    "no sources" or "failed" chip rendered as unstyled text. */
 .c2c-v2 .tone-dim{background:var(--bg-100);color:var(--text-400);}
+/* The tone vocabulary above is a CHIP's. `EmptyState` renders
+   `c2c-empty-state tone-idle` (dataConnect.tsx:711), so `.tone-idle` — same
+   specificity as `.c2c-empty-state`, declared later — won, and every one of
+   the 579 empty states in the app drew a chip's tinted panel behind it,
+   through D0 §4.2.12's `background: none`. Found rendering CMC's registers as
+   sections, where the panel is the whole width of the page. The honest fix is
+   for the component to stop borrowing a chip's class; until it does (it is
+   outside this package's files), the collision is undone here. */
+.c2c-v2 .c2c-empty-state.tone-idle{background:none;}
 .c2c-v2 .tone-err{background:var(--error-muted);color:var(--error);}
 
 /* ── Labeling / IFU workbench ── */
@@ -3905,6 +3914,14 @@
    is space-between, which with three children strands the count in the middle. */
 .c2c-v2 [data-work-area] .pj-sec-h{justify-content:flex-start;margin-bottom:12px;}
 .c2c-v2 [data-work-area] .pj-sec-h > .pj-sec-acts{margin-left:auto;}
+/* A section's figures are its grey line, not a row of tiles (§WA.4.2 rule 7).
+   `.sec-sub` inside `.pj-sec-h` is D0's; this is the standalone line a view
+   puts under its lead. A figure that MEANS something keeps its status colour,
+   always with the word beside it, never colour alone (§WA.3 "Colour"). */
+.c2c-v2 [data-work-area] p.sec-sub{margin:0 0 12px;font-size:var(--fs-small);color:var(--text-300);}
+.c2c-v2 [data-work-area] .sec-sub [data-tone="ok"]{color:var(--success);}
+.c2c-v2 [data-work-area] .sec-sub [data-tone="warn"]{color:var(--warning);}
+.c2c-v2 [data-work-area] .sec-sub [data-tone="err"]{color:var(--error);}
 /* An empty register inside a section is one quiet line and its action, left
    aligned and without the icon D0 §4.2.12 keeps for a whole-surface empty. */
 .c2c-v2 [data-work-area] .pj-sec .c2c-empty-state:not(.tone-error){align-items:flex-start;text-align:left;padding:4px 0 0;gap:4px;}
