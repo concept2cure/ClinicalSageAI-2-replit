@@ -1,0 +1,338 @@
+# HEAD 9bf83a8f0fc2e381894967e236776ca099d51df3, the three source files (server/db/requestDb.ts, server/db/requestDbLease.ts, server/lib/api-response.ts) at their HEAD text; tests as changed
+# npx vitest run --config vitest.config.ts --maxWorkers=2 server/routes/__tests__/request-db-context-ended-request.test.ts server/db/__tests__/requestDb.test.ts server/lib/__tests__/api-response-500-containment.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > answers a missing-relation error without naming the relation 3ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > rejects the other driver-error shapes, not just the one that was reported 1ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > still gives the operator everything needed to find the real error 3ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > sends a code the client will not display and a sentence it will 1ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > omits the reference rather than inventing one when no request id was set 0ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > is falsifiable: the pre-fix behaviour would fail these assertions 0ms
+ × server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > notes it, logs no failure and writes nothing to the ended response 5ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "doc-list failed",
+      Object {
+        "code": "REQUEST_ENDED",
+        "correlationId": "req-1",
+        "err": "The request ended before its database work ran",
+        "programId": "p-1",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > still logs it as a failure when the handler had already sent its own response 1ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > still logs a request with no database context as a failure, with a 500 1ms
+stdout | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-01T21:57:57.902Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:57:57.906Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-01T21:57:57.906Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/request-db-context-ended-request.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/request-db-context-ended-request.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-01T21:57:58.255Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-01T21:58:04.637Z",
+  "level": "info",
+  "message": "[startup:auth-boundary] Default-deny auth boundary mounted on /api",
+  "context": {
+    "modeAtBoot": "warn"
+  }
+}
+
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-list (/api/mdx/qms/documents), boundary warn 46ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > change-list (/api/mdx/qms/changes), boundary warn 11ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-review-due (/api/mdx/qms/documents/review-due), boundary warn 22ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > training-compliance (/api/mdx/qms/training/compliance), boundary warn 7ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unread-count (/api/mdx/notifications/unread-count), boundary warn 7ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/unified-work), boundary warn 9ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-list (/api/mdx/qms/documents), boundary enforce 5ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > change-list (/api/mdx/qms/changes), boundary enforce 6ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-review-due (/api/mdx/qms/documents/review-due), boundary enforce 7ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > training-compliance (/api/mdx/qms/training/compliance), boundary enforce 6ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unread-count (/api/mdx/notifications/unread-count), boundary enforce 7ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/unified-work), boundary enforce 6ms
+ × server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing read 1, in the /api boundary (authenticateToken) 68ms
+   → a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+ × server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing read 2, in the global /api gate (authMiddleware), after the client was bound 65ms
+   → a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+ × server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > change-list (/api/mdx/qms/changes): the client left at standing read 2, in the global /api gate 57ms
+   → a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+ × server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-review-due (/api/mdx/qms/documents/review-due): the client left at standing read 1, in the /api boundary 58ms
+   → a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+ × server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > training-compliance (/api/mdx/qms/training/compliance): the client left at standing read 1, in the /api boundary 56ms
+   → a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+ × server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > unread-count (/api/mdx/notifications/unread-count): the client left at standing read 1, in the /api boundary 54ms
+   → a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+ × server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > loading unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/unified-work): the client left at standing read 3, in the mount's own authenticateToken 55ms
+   → a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a route with no scope installer still names the defect > REQUEST_DB_CONTEXT_REQUIRED, logged as a failure 3ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > returns a Drizzle wrapper bound to req.dbClient when one is set 59ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > fails closed with a typed error when dbClient is missing 1ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > fails closed when dbClient does not implement query 0ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > caches the wrapper on the request to avoid rebuilding per call 19ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestPgClient (raw-SQL sibling for tables without a Drizzle schema) > hands back the request-scoped client itself 0ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestPgClient (raw-SQL sibling for tables without a Drizzle schema) > fails closed with the same typed error when context is missing 0ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestConnectable transaction ownership > keeps a healthy borrowed connection pinned but propagates uncertain completion to its actual owner 2ms
+ × server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > is refused as REQUEST_ENDED by requestPgClient, requestDb and requestConnectable, still failing closed as a missing context 8ms
+   → expected MissingRequestDbContextError: Request-sco… { …(2) } to match object { name: 'RequestEndedError', …(1) }
+(1 matching property omitted from actual)
+ ✓ server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > leaves REQUEST_DB_CONTEXT_REQUIRED to a request that never had a client 1ms
+ × server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > serves a client retained past the response, and refuses it once its holder lets go 2ms
+   → expected error to match asymmetric matcher
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > is refused as REQUEST_ENDED by requestPgClient, requestDb and requestConnectable, still failing closed as a missing context
+AssertionError: expected MissingRequestDbContextError: Request-sco… { …(2) } to match object { name: 'RequestEndedError', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "REQUEST_ENDED",
+-   "name": "RequestEndedError",
++ MissingRequestDbContextError {
++   "code": "REQUEST_DB_CONTEXT_REQUIRED",
++   "name": "MissingRequestDbContextError",
+  }
+
+ ❯ server/db/__tests__/requestDb.test.ts:100:22
+     98|       try { await ask(); } catch (error) { caught = error; }
+     99|       expect(caught, 'every caller that fails closed on a missing cont…
+    100|       expect(caught).toMatchObject({ name: 'RequestEndedError', code: …
+       |                      ^
+    101|     }
+    102|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > serves a client retained past the response, and refuses it once its holder lets go
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "REQUEST_ENDED",
++ MissingRequestDbContextError {
++   "message": "Request-scoped database context is required",
++   "code": "REQUEST_DB_CONTEXT_REQUIRED",
++   "statusCode": 500,
++   "name": "MissingRequestDbContextError",
+  }
+
+ ❯ server/db/__tests__/requestDb.test.ts:122:40
+    120|     expect(requestPgClient(req)).toBe(client);
+    121|     await letGo();
+    122|     expect(() => requestPgClient(req)).toThrow(expect.objectContaining…
+       |                                        ^
+    123|   });
+    124| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > notes it, logs no failure and writes nothing to the ended response
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "doc-list failed",
+      Object {
+        "code": "REQUEST_ENDED",
+        "correlationId": "req-1",
+        "err": "The request ended before its database work ran",
+        "programId": "p-1",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/lib/__tests__/api-response-500-containment.test.ts:134:27
+    132|     const log = { error: vi.fn(), info: vi.fn() };
+    133|     serverError(res, log, 'doc-list', ended(), { programId: 'p-1' });
+    134|     expect(log.error).not.toHaveBeenCalled();
+       |                           ^
+    135|     expect(log.info).toHaveBeenCalledWith('doc-list stopped: the reque…
+    136|       { programId: 'p-1', correlationId: 'req-1', code: 'REQUEST_ENDED…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing read 1, in the /api boundary (authenticateToken)
+ FAIL  server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing read 2, in the global /api gate (authMiddleware), after the client was bound
+AssertionError: a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "error [mdx-qms] doc-list failed {\"err\":\"Request-scoped database context is required\",\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\"}",
++ ]
+
+ ❯ server/routes/__tests__/request-db-context-ended-request.test.ts:271:7
+    269|         .map((l) => `${l.level} ${l.message} ${JSON.stringify({ err: l…
+    270|       'a cancelled request was reported as a route with no request dat…
+    271|     ).toEqual([]);
+       |       ^
+    272|     expect(codeOf(line), `${line.level} ${line.message} ${JSON.stringi…
+    273|     expect(line.level, 'a cancelled request was logged as a server fai…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > change-list (/api/mdx/qms/changes): the client left at standing read 2, in the global /api gate
+AssertionError: a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "error [mdx-qms] change-list failed {\"err\":\"Request-scoped database context is required\",\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\"}",
++ ]
+
+ ❯ server/routes/__tests__/request-db-context-ended-request.test.ts:271:7
+    269|         .map((l) => `${l.level} ${l.message} ${JSON.stringify({ err: l…
+    270|       'a cancelled request was reported as a route with no request dat…
+    271|     ).toEqual([]);
+       |       ^
+    272|     expect(codeOf(line), `${line.level} ${line.message} ${JSON.stringi…
+    273|     expect(line.level, 'a cancelled request was logged as a server fai…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-review-due (/api/mdx/qms/documents/review-due): the client left at standing read 1, in the /api boundary
+AssertionError: a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "error [mdx-qms] doc-review-due failed {\"err\":\"Request-scoped database context is required\",\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\"}",
++ ]
+
+ ❯ server/routes/__tests__/request-db-context-ended-request.test.ts:271:7
+    269|         .map((l) => `${l.level} ${l.message} ${JSON.stringify({ err: l…
+    270|       'a cancelled request was reported as a route with no request dat…
+    271|     ).toEqual([]);
+       |       ^
+    272|     expect(codeOf(line), `${line.level} ${line.message} ${JSON.stringi…
+    273|     expect(line.level, 'a cancelled request was logged as a server fai…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > training-compliance (/api/mdx/qms/training/compliance): the client left at standing read 1, in the /api boundary
+AssertionError: a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "error [mdx-qms-training] training-compliance failed {\"err\":\"Request-scoped database context is required\",\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\"}",
++ ]
+
+ ❯ server/routes/__tests__/request-db-context-ended-request.test.ts:271:7
+    269|         .map((l) => `${l.level} ${l.message} ${JSON.stringify({ err: l…
+    270|       'a cancelled request was reported as a route with no request dat…
+    271|     ).toEqual([]);
+       |       ^
+    272|     expect(codeOf(line), `${line.level} ${line.message} ${JSON.stringi…
+    273|     expect(line.level, 'a cancelled request was logged as a server fai…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > unread-count (/api/mdx/notifications/unread-count): the client left at standing read 1, in the /api boundary
+AssertionError: a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "error [mdx-notifications] unread-count failed {\"err\":\"Request-scoped database context is required\",\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\"}",
++ ]
+
+ ❯ server/routes/__tests__/request-db-context-ended-request.test.ts:271:7
+    269|         .map((l) => `${l.level} ${l.message} ${JSON.stringify({ err: l…
+    270|       'a cancelled request was reported as a route with no request dat…
+    271|     ).toEqual([]);
+       |       ^
+    272|     expect(codeOf(line), `${line.level} ${line.message} ${JSON.stringi…
+    273|     expect(line.level, 'a cancelled request was logged as a server fai…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > loading unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/unified-work): the client left at standing read 3, in the mount's own authenticateToken
+AssertionError: a cancelled request was reported as a route with no request database context: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "error [project-schedule-of-events] loading unified work failed {\"err\":\"Request-scoped database context is required\",\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\"}",
++ ]
+
+ ❯ server/routes/__tests__/request-db-context-ended-request.test.ts:271:7
+    269|         .map((l) => `${l.level} ${l.message} ${JSON.stringify({ err: l…
+    270|       'a cancelled request was reported as a route with no request dat…
+    271|     ).toEqual([]);
+       |       ^
+    272|     expect(codeOf(line), `${line.level} ${line.message} ${JSON.stringi…
+    273|     expect(line.level, 'a cancelled request was logged as a server fai…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  10 failed | 29 passed (39)
+   Start at  21:57:54
+   Duration  11.77s (transform 6.37s, setup 169ms, import 1.18s, tests 9.65s, environment 0ms)
+
+exit=1
