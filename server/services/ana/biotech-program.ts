@@ -150,8 +150,9 @@ export const BIOTECH_PROGRAM_SPINE: Record<BiotechProgramPhase, PhaseSpine> = {
       'assess_nonclinical_program',
       // draft_nonclinical_overview_m2_4 returns the M4S outline until nonclinical
       // studies are recorded against a project (Rule 2 audit S2, 2026-10-26).
-      // Module 2.5 and 2.7 are composed from completed CSRs, from clinical_late
-      // on (Rule 2 audit S6, 2026-11-01).
+      // Module 2.5 and 2.7 are composed from completed CSRs: clinical_late,
+      // whose deliverables are the pivotal CSRs, offers them (Rule 2 audit S6,
+      // 2026-11-01).
       'build_pre_ind_package',
       'assess_ind_readiness',
     ],
