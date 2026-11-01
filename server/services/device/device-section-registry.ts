@@ -121,6 +121,19 @@ const OUTLINE_INTRO: Record<DeviceSubmissionType, string> = {
     'This is an EU IVDR performance evaluation project. The outline below is the performance evaluation report (PER); it is not the full IVDR technical documentation.',
 };
 
+/**
+ * Where each type's sections are written (Rule 2 audit S6b, 2026-11-01). The
+ * block said "Use the generate_document tool to draft any section", which no
+ * longer writes a 510(k), CER or PER from text in the call.
+ */
+const SECTION_TOOL: Record<DeviceSubmissionType, string> = {
+  '510K': "Write each section into the project's eSTAR with write_kit_section, where a person reviews it; the 510(k) Summary is compose_510k_summary.",
+  DE_NOVO: "Write each section into the project's submission kit with write_kit_section, where a person reviews it.",
+  PMA: "Write each PMA module into the project's kit with write_kit_section, where a person reviews it.",
+  CER: "Write each CER section into the device's CER workspace with write_kit_section (cer-main, cer-pmcf), where a person reviews it.",
+  IVDR: 'Start the performance evaluation report with create_per_document, then work through its sections.',
+};
+
 function sectionStatusLabel(s: DeviceSection): string {
   if (s.appliesWhen) return s.appliesWhen;
   return s.required ? 'required' : 'optional';
@@ -138,7 +151,7 @@ export function renderDeviceContextBlock(type: string, ctx: { activeProject?: st
     .map((s) => `- ${s.code} ${s.title} (${sectionStatusLabel(s)}) — ${s.guidance}`)
     .join('\n');
   const requiredCount = sections.filter((s) => s.required).length;
-  return `\n\n## ${type} Submission Context\n${OUTLINE_INTRO[type]}\n${ctx.activeProject ? `Project: ${ctx.activeProject}` : ''}\n\nRequired sections (${requiredCount} required, ${sections.length} total):\n${sectionList}\n\nUse the generate_document tool to draft any section. Guide the user through the submission systematically.\n`;
+  return `\n\n## ${type} Submission Context\n${OUTLINE_INTRO[type]}\n${ctx.activeProject ? `Project: ${ctx.activeProject}` : ''}\n\nRequired sections (${requiredCount} required, ${sections.length} total):\n${sectionList}\n\n${SECTION_TOOL[type]} Guide the user through the submission systematically.\n`;
 }
 
 export function getDeviceSectionByCode(code: string): DeviceSection | undefined {
