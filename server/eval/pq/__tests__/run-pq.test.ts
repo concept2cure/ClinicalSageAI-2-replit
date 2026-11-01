@@ -13,6 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runPq, type RunPqOptions } from '../run-pq';
+import { buildExtractionPrompt, buildGenerationPrompt, type GoldDocTask } from '../../doc-quality/doc-quality-metrics';
 import goldBank from '../../doc-quality/gold-tasks.json';
 import protocolJson from '../pq-protocol.json';
 import { APPROVED_MODELS } from '../../../services/ai-governance/approved-models';
@@ -56,11 +57,21 @@ const extractionTasks = allTasks.filter((t) => t.taskType === 'extraction' && t.
  * generation assertions while quietly measuring a model that cannot extract.
  */
 function coveringDraft(prompt: string): string {
-  const gen = generationTasks.find((t) => t.input && prompt.includes(t.input));
-  if (gen) return (gen.requiredSections ?? []).map((s) => `## ${s}\nContent drawn from the source material.`).join('\n\n');
-  const ext = extractionTasks.find((t) => t.input && prompt.includes(t.input));
+  const ext = extractionTaskOf(prompt);
   if (ext) return JSON.stringify(ext.expectedFields);
+  const gen = generationTasks.find((t) => prompt === buildGenerationPrompt(t as unknown as GoldDocTask));
+  if (gen) return (gen.requiredSections ?? []).map((s) => `## ${s}\nContent drawn from the source material.`).join('\n\n');
   return '';
+}
+
+/**
+ * The extraction task a prompt asks, by the exact prompt run-pq builds. Since
+ * 2026-11-01 one real source passage can serve both a drafting task and an
+ * extraction task (module-2-clinical, module-3-quality), so a prompt is told
+ * apart by what it asks, never by the passage it contains.
+ */
+function extractionTaskOf(prompt: string): Task | undefined {
+  return extractionTasks.find((t) => prompt === buildExtractionPrompt(t as unknown as GoldDocTask));
 }
 
 function stub(served: string | ((i: number) => string | undefined), content: (prompt: string) => string = coveringDraft) {
@@ -215,7 +226,7 @@ describe('run-pq live path', () => {
     // model that answers with an empty object must score zero on them.
     const r = await runPq({
       modelId: MODEL_ID,
-      gateway: stub(PINNED, (p) => (extractionTasks.some((t) => t.input && p.includes(t.input)) ? '{}' : coveringDraft(p))).gateway,
+      gateway: stub(PINNED, (p) => (extractionTaskOf(p) ? '{}' : coveringDraft(p))).gateway,
     });
     for (const e of r.extraction) expect(e.f1, e.taskId).toBe(0);
     expect(r.verdict).toBe('FAIL');
@@ -242,7 +253,7 @@ describe('run-pq live path', () => {
     // failure while the first is a harness problem.
     const r = await runPq({
       modelId: MODEL_ID,
-      gateway: stub(PINNED, (p) => (extractionTasks.some((t) => t.input && p.includes(t.input)) ? 'I cannot help with that.' : coveringDraft(p))).gateway,
+      gateway: stub(PINNED, (p) => (extractionTaskOf(p) ? 'I cannot help with that.' : coveringDraft(p))).gateway,
     });
     expect(r.extraction.every((e) => e.f1 === null && e.error)).toBe(true);
     expect(r.verdict).not.toBe('PASS');
@@ -253,7 +264,7 @@ describe('run-pq live path', () => {
     const r = await runPq({
       modelId: MODEL_ID,
       gateway: stub(PINNED, (p) => {
-        const t = extractionTasks.find((x) => x.input && p.includes(x.input));
+        const t = extractionTaskOf(p);
         return t ? `Here are the fields:\n\n\u0060\u0060\u0060json\n${JSON.stringify(t.expectedFields)}\n\u0060\u0060\u0060\n` : coveringDraft(p);
       }).gateway,
     });
