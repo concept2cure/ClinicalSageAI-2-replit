@@ -1,0 +1,1401 @@
+# Red: the new and rewritten Projects tests against the surface at HEAD f5c46642a, before D2-1's change (2026-11-01)
+# DEBUG_PRINT_LIMIT=0 npx vitest run --maxWorkers=1 <the seven files below>
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > uses server totals beyond the page and keeps readiness and search page bounded 734ms
+   → Unable to find an accessible element with the role "combobox" and name "Client type"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Projects":
+  ...
+
+  --------------------------------------------------
+  button:
+
+  Name "Ask AnA":
+  ...
+
+  Name "New project":
+  ...
+
+  Name "Grid":
+  ...
+
+  Name "List":
+  ...
+
+  Name "All workstreams 60":
+  ...
+
+  Name "MDX 58":
+  ...
+
+  Name "Biotech 0":
+  ...
+
+  Name "Pharma 2":
+  ...
+
+  Name "All pathways 60":
+  ...
+
+  Name "PMA 20":
+  ...
+
+  Name "IDE 20":
+  ...
+
+  Name "Other 20":
+  ...
+
+  Name "Project IDE IDE MDX Planning Dossier readiness 40% Active Ada —":
+  ...
+
+  Name "Project Other Other MDX Planning Dossier readiness Not recorded Active Ada —":
+  ...
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  searchbox:
+
+  Name "Search projects by title or code":
+  ...
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Client":
+  ...
+
+  --------------------------------------------------
+  option:
+
+  Name "All clients":
+  ...
+
+  Name "Alpha":
+  ...
+
+  Name "Beta":
+  ...
+
+  --------------------------------------------------
+  group:
+
+  Name "Workstream filters":
+  ...
+
+  Name "Pathway filters":
+  ...
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+...
+ × client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > requests workstream and pathway on the server, retaining the Client filter 5058ms
+   → Unable to find role="option" and name "Medical device & IVD (58)"
+
+Ignored nodes: comments, script, style
+...
+
+Ignored nodes: comments, script, style
+...
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > applies the same pathway through the existing surface action and rejects unknown keys 53ms
+ × client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > keeps a failed filtered read distinct from an empty portfolio and allows clearing 285ms
+   → Unable to find an accessible element with the role "combobox" and name "Pathway"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Projects":
+  ...
+
+  --------------------------------------------------
+  button:
+
+  Name "Ask AnA":
+  ...
+
+  Name "New project":
+  ...
+
+  Name "Grid":
+  ...
+
+  Name "List":
+  ...
+
+  Name "All workstreams 60":
+  ...
+
+  Name "MDX 58":
+  ...
+
+  Name "Biotech 0":
+  ...
+
+  Name "Pharma 2":
+  ...
+
+  Name "All pathways 60":
+  ...
+
+  Name "PMA 20":
+  ...
+
+  Name "IDE 20":
+  ...
+
+  Name "Other 20":
+  ...
+
+  Name "Project IDE IDE · Planning · Lead Ada Dossier readiness 40%— MDXactive":
+  ...
+
+  Name "Project Other Other · Planning · Lead Ada Dossier readiness Not recorded— MDXactive":
+  ...
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  searchbox:
+
+  Name "Search projects by title or code":
+  ...
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Client":
+  ...
+
+  --------------------------------------------------
+  option:
+
+  Name "All clients":
+  ...
+
+  Name "Alpha":
+  ...
+
+  Name "Beta":
+  ...
+
+  --------------------------------------------------
+  group:
+
+  Name "Workstream filters":
+  ...
+
+  Name "Pathway filters":
+  ...
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+...
+ × client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > does not call an empty pathway result a new organization 202ms
+   → Unable to find an accessible element with the role "combobox" and name "Pathway"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Projects":
+  ...
+
+  --------------------------------------------------
+  button:
+
+  Name "Ask AnA":
+  ...
+
+  Name "New project":
+  ...
+
+  Name "Grid":
+  ...
+
+  Name "List":
+  ...
+
+  Name "All workstreams 60":
+  ...
+
+  Name "MDX 58":
+  ...
+
+  Name "Biotech 0":
+  ...
+
+  Name "Pharma 2":
+  ...
+
+  Name "All pathways 60":
+  ...
+
+  Name "PMA 20":
+  ...
+
+  Name "IDE 20":
+  ...
+
+  Name "Other 20":
+  ...
+
+  Name "Project IDE IDE · Planning · Lead Ada Dossier readiness 40%— MDXactive":
+  ...
+
+  Name "Project Other Other · Planning · Lead Ada Dossier readiness Not recorded— MDXactive":
+  ...
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  searchbox:
+
+  Name "Search projects by title or code":
+  ...
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Client":
+  ...
+
+  --------------------------------------------------
+  option:
+
+  Name "All clients":
+  ...
+
+  Name "Alpha":
+  ...
+
+  Name "Beta":
+  ...
+
+  --------------------------------------------------
+  group:
+
+  Name "Workstream filters":
+  ...
+
+  Name "Pathway filters":
+  ...
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+...
+ × client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > keeps a selected page status clearable when a server filter returns different statuses 5015ms
+   → Unable to find role="option" and name "Blocked"
+
+Ignored nodes: comments, script, style
+...
+
+Ignored nodes: comments, script, style
+...
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > WS_LABEL names each workstream code as a client type > is exported, in sentence case, with the rail’s device name 8ms
+   → expected undefined to deeply equal { MDX: 'Medical device & IVD', …(3) }
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > reads the stated description first 89ms
+   → expected 'DESCRIBED · Planning · Lead Rae Okafo…' to be 'Phase 2 programme for BX-204 in moder…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the filing in words when no description is stated 35ms
+   → expected 'FILING · Planning · Lead Rae Okafor ·…' to be 'IND · FDA · Moderate-to-severe plaque…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the stage and lead for a payload without the four fields 37ms
+   → expected 'OLDER · Planning · Lead Rae Okafor · …' to be 'Planning · Lead Rae Okafor' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > never fills a value the record does not hold 22ms
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > ends with the code and when it was updated, and the target date only when one is set 26ms
+   → expected 'Dossier readiness Not recorded—' to be 'OLDER · Updated Oct 31' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > carries no readiness bar, no chip and no readiness line 43ms
+   → expected <span class="rd-chip tone-ok"></span> to be null
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > has no eyebrow, no sub-line and no Ask AnA button, and one New project 27ms
+   → expected <div class="ph-eyebrow"></div> to be null
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > states the count the search covers in its placeholder, and none while loading 5033ms
+   → expected 'Search projects' to be 'Search 5 projects' // Object.is equality
+
+Ignored nodes: comments, script, style
+...
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the list view holds what the cards dropped, as text > names the client type in words and puts the portfolio figures after the table 21ms
+   → expected <div class="pj-summary">…(3)</div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program recorded blocked with no blocker says no cause is recorded (the NM-512 case) 102ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > reads no blocker from a list row, and a blocked status still says no cause is recorded 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > an active program makes no blocker claim either way 39ms
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program 492ms
+   → expected 'ProjectWorkstreamStage / readinessSta…' to contain 'Client type'
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects list — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses 203ms
+   → expected 'ProjectWorkstreamStage / readinessSta…' to contain 'Dossier readiness'
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > no card draws a bar or states a readiness figure 31ms
+   → expected <div class="ph-bar-track" …(1)>…(1)</div> to be null
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > the list view states each figure as text, with no bar 158ms
+   → expected <div class="ph-bar-track" …(1)>…(1)</div> to be null
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > an unavailable figure says so, and why, never "Not recorded" 111ms
+   → expected 'Dossier readiness unavailable' to be 'unavailable' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > the portfolio mean says how many programs it covers when some have no recorded measurement 26ms
+   → expected <div class="pj-summary">…(3)</div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > no card claims "No open blockers" when no blocker was looked for 96ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > shows no "Blocked" figure, since nothing writes that status 387ms
+ × client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > counts the programs whose target filing date is within the next 60 days 48ms
+   → the figures are the list view’s footing (D2-1): expected <div class="pj-summary">…(3)</div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > says one active project in the singular, and several in the plural 218ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > offers no status filter that can only show an empty list 27ms
+ × client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — summary over a successful empty read > states no mean readiness over zero programs 94ms
+   → the figures are the list view’s footing (D2-1): expected <div class="pj-summary">…(3)</div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a mixed portfolio still has a mean > averages readiness over every program shown 327ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > keeps failed dossier measurements unavailable in the mean 87ms
+ × client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > says "Not recorded" on its list row, never "0% ready" 84ms
+   → expected 'ProjectWorkstreamStage / readinessSta…' to contain 'Dossier readiness'
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > averages only the programs that were measured 78ms
+ × client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage at all over a FAILED portfolio read 94ms
+   → the figures are the list view’s footing (D2-1): expected <div class="pj-summary">…(3)</div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage while the read is still in flight 284ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > does render the real figures once the read succeeds 162ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on title and hides the rest 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on the program code 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > does NOT match the lead field, which can hold an email address 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > names the query in the empty state instead of blaming the filters 37ms
+ × client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > says the list is the first page, and the count is a floor 113ms
+   → expected 'Search projects' to be 'Search the first 2 projects' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > a complete read says nothing extra 36ms
+   → expected 'Search projects' to be 'Search 2 projects' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 26 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > WS_LABEL names each workstream code as a client type > is exported, in sentence case, with the rail’s device name
+AssertionError: expected undefined to deeply equal { MDX: 'Medical device & IVD', …(3) }
+
+- Expected:
+{
+  "Biotech": "Biotech",
+  "CRO": "CRO",
+  "MDX": "Medical device & IVD",
+  "Pharma": "Pharma",
+}
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx:84:59
+     82| describe('WS_LABEL names each workstream code as a client type', () =>…
+     83|   it('is exported, in sentence case, with the rail’s device name', () …
+     84|     expect((filters as Record<string, unknown>).WS_LABEL).toEqual({
+       |                                                           ^
+     85|       MDX: 'Medical device & IVD', Biotech: 'Biotech', Pharma: 'Pharma…
+     86|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > reads the stated description first
+AssertionError: expected 'DESCRIBED · Planning · Lead Rae Okafo…' to be 'Phase 2 programme for BX-204 in moder…' // Object.is equality
+
+Expected: "Phase 2 programme for BX-204 in moderate-to-severe plaque psoriasis."
+Received: "DESCRIBED · Planning · Lead Rae Okafor · Updated Oct 31"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx:94:39
+     92|     render(<Projects {...props()} />);
+     93|     await waitFor(() => expect(card('Project described')).toBeTruthy()…
+     94|     expect(line('Project described')).toBe('Phase 2 programme for BX-2…
+       |                                       ^
+     95|   });
+     96|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the filing in words when no description is stated
+AssertionError: expected 'FILING · Planning · Lead Rae Okafor ·…' to be 'IND · FDA · Moderate-to-severe plaque…' // Object.is equality
+
+Expected: "IND · FDA · Moderate-to-severe plaque psoriasis in adults"
+Received: "FILING · Planning · Lead Rae Okafor · Updated Oct 31"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx:100:36
+     98|     render(<Projects {...props()} />);
+     99|     await waitFor(() => expect(card('Project filing')).toBeTruthy());
+    100|     expect(line('Project filing')).toBe('IND · FDA · Moderate-to-sever…
+       |                                    ^
+    101|     expect(line('Project partial')).toBe('510(k)');
+    102|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the stage and lead for a payload without the four fields
+AssertionError: expected 'OLDER · Planning · Lead Rae Okafor · …' to be 'Planning · Lead Rae Okafor' // Object.is equality
+
+Expected: "Planning · Lead Rae Okafor"
+Received: "OLDER · Planning · Lead Rae Okafor · Updated Oct 31"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx:107:35
+    105|     render(<Projects {...props()} />);
+    106|     await waitFor(() => expect(card('Project older')).toBeTruthy());
+    107|     expect(line('Project older')).toBe('Planning · Lead Rae Okafor');
+       |                                   ^
+    108|   });
+    109|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > ends with the code and when it was updated, and the target date only when one is set
+AssertionError: expected 'Dossier readiness Not recorded—' to be 'OLDER · Updated Oct 31' // Object.is equality
+
+Expected: "OLDER · Updated Oct 31"
+Received: "Dossier readiness Not recorded—"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx:121:35
+    119|     render(<Projects {...props()} />);
+    120|     await waitFor(() => expect(card('Project dated')).toBeTruthy());
+    121|     expect(foot('Project older')).toBe('OLDER · Updated Oct 31');
+       |                                   ^
+    122|     expect(foot('Project dated')).toBe('DATED · Updated Oct 31Due Feb …
+    123|     expect(foot('Project older')).not.toMatch(/Due/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > carries no readiness bar, no chip and no readiness line
+AssertionError: expected <span class="rd-chip tone-ok"></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="rd-chip tone-ok"
+>
+  Biotech
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx:131:43
+    129|     for (const c of Array.from(document.querySelectorAll('.pj-cards > …
+    130|       expect(c.querySelector('.ph-bar-track')).toBeNull();
+    131|       expect(c.querySelector('.rd-chip')).toBeNull();
+       |                                           ^
+    132|       expect(c.textContent).not.toMatch(/readiness/i);
+    133|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > has no eyebrow, no sub-line and no Ask AnA button, and one New project
+AssertionError: expected <div class="ph-eyebrow"></div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="ph-eyebrow"
+>
+  Workspace
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx:141:61
+    139|     render(<Projects {...props()} />);
+    140|     await waitFor(() => expect(card('Project described')).toBeTruthy()…
+    141|     expect(document.querySelector('.pj-index .ph-eyebrow')).toBeNull();
+       |                                                             ^
+    142|     expect(screen.queryByRole('button', { name: /Ask AnA/ })).toBeNull…
+    143|     expect(document.querySelectorAll('.pj-index .btn.primary')).toHave…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > states the count the search covers in its placeholder, and none while loading
+AssertionError: expected 'Search projects' to be 'Search 5 projects' // Object.is equality
+
+Ignored nodes: comments, script, style
+...
+
+Expected: "Search 5 projects"
+Received: "Search projects"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx:158:52
+    156|     expect(search.placeholder).toBe('Search projects');
+    157|     release(null);
+    158|     await waitFor(() => expect(search.placeholder).toBe(`Search ${ROWS…
+       |                                                    ^
+    159|   });
+    160| });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the list view holds what the cards dropped, as text > names the client type in words and puts the portfolio figures after the table
+AssertionError: expected <div class="pj-summary">…(3)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="pj-summary"
+>
+  <span
+    class="pj-summary-i"
+  >
+    <strong>
+      5
+    </strong>
+     
+    active projects
+  </span>
+  <span
+    class="pj-summary-i"
+  >
+    <strong>
+      Not recorded
+    </strong>
+     
+    average readiness
+  </span>
+  <span
+    class="pj-summary-i"
+    data-tone="warn"
+  >
+    <strong>
+      0
+    </strong>
+     
+    filing within 60 days
+  </span>
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx:166:51
+    164|     render(<Projects {...props()} />);
+    165|     await waitFor(() => expect(card('Project described')).toBeTruthy()…
+    166|     expect(document.querySelector('.pj-summary')).toBeNull();
+       |                                                   ^
+    167|     fireEvent.click(screen.getByRole('button', { name: 'List' }));
+    168|     await waitFor(() => expect(document.querySelector('.ctable')).toBe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program
+AssertionError: expected 'ProjectWorkstreamStage / readinessSta…' to contain 'Client type'
+
+Expected: "Client type"
+Received: "ProjectWorkstreamStage / readinessStatusLeadDue"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx:117:18
+    115|     const head = document.querySelector('.ct-head')?.textContent ?? '';
+    116|     // D2-1: the workstream column names the client type (WS_LABEL), n…
+    117|     expect(head).toContain('Client type');
+       |                  ^
+    118|     expect(head).toContain('Status');
+    119|     expect(head).not.toMatch(/Blocker|\bWS\b/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects list — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses
+AssertionError: expected 'ProjectWorkstreamStage / readinessSta…' to contain 'Dossier readiness'
+
+Expected: "Dossier readiness"
+Received: "ProjectWorkstreamStage / readinessStatusLeadDue"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx:132:61
+    130|     fireEvent.click(screen.getByRole('button', { name: 'List' }));
+    131|     await waitFor(() => expect(listRow('Program hlv')).toBeTruthy());
+    132|     expect(document.querySelector('.ct-head')?.textContent).toContain(…
+       |                                                             ^
+    133|     expect(listRow('Program hlv').textContent).toContain('0%');
+    134|     expect(listRow('Program bx256').textContent).toContain('Not record…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > no card draws a bar or states a readiness figure
+AssertionError: expected <div class="ph-bar-track" …(1)>…(1)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="ph-bar-track"
+  style="margin: 12px 0px 6px;"
+>
+  <div
+    class="ph-bar-fill"
+    data-tone="ok"
+    style="width: 0%;"
+  />
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx:159:42
+    157|     await waitFor(() => expect(screen.getByText('Program zero')).toBeT…
+    158|     for (const id of ['zero', 'half', 'none', 'down']) {
+    159|       expect(bar(card(`Program ${id}`))).toBeNull();
+       |                                          ^
+    160|       expect(card(`Program ${id}`).textContent).not.toMatch(/readiness…
+    161|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > the list view states each figure as text, with no bar
+AssertionError: expected <div class="ph-bar-track" …(1)>…(1)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="ph-bar-track"
+  style="margin-top: 5px;"
+>
+  <div
+    class="ph-bar-fill"
+    data-tone="ok"
+    style="width: 0%;"
+  />
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx:171:94
+    169|     fireEvent.click(screen.getByRole('button', { name: 'List' }));
+    170|     await waitFor(() => expect(listRow('Program zero')).toBeTruthy());
+    171|     for (const id of ['zero', 'half', 'none', 'down']) expect(bar(list…
+       |                                                                                              ^
+    172|     expect(listRow('Program zero').textContent).toContain('0%');
+    173|     expect(listRow('Program half').textContent).toContain('50%');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > an unavailable figure says so, and why, never "Not recorded"
+AssertionError: expected 'Dossier readiness unavailable' to be 'unavailable' // Object.is equality
+
+Expected: "unavailable"
+Received: "Dossier readiness unavailable"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx:185:70
+    183|     expect(r.textContent).toContain('unavailable');
+    184|     expect(r.textContent).not.toContain('Not recorded');
+    185|     expect(r.querySelector(`[title="${READ_FAILED}"]`)?.textContent).t…
+       |                                                                      ^
+    186|   });
+    187|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > the portfolio mean says how many programs it covers when some have no recorded measurement
+AssertionError: expected <div class="pj-summary">…(3)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="pj-summary"
+>
+  <span
+    class="pj-summary-i"
+  >
+    <strong>
+      4
+    </strong>
+     
+    active projects
+  </span>
+  <span
+    class="pj-summary-i"
+  >
+    <strong>
+      25%
+    </strong>
+     
+    average readiness
+    , 2 of 4 measured
+  </span>
+  <span
+    class="pj-summary-i"
+    data-tone="warn"
+  >
+    <strong>
+      0
+    </strong>
+     
+    filing within 60 days
+  </span>
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx:192:51
+    190|     await waitFor(() => expect(screen.getByText('Program zero')).toBeT…
+    191|     // D2-1: the portfolio figures are the list's footing, not the gri…
+    192|     expect(document.querySelector('.pj-summary')).toBeNull();
+       |                                                   ^
+    193|     fireEvent.click(screen.getByRole('button', { name: 'List' }));
+    194|     // (0 + 50) / 2, over the two measured of four.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage at all over a FAILED portfolio read
+AssertionError: the figures are the list view’s footing (D2-1): expected <div class="pj-summary">…(3)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="pj-summary"
+>
+  <span
+    class="pj-summary-i"
+  >
+    <strong>
+      —
+    </strong>
+     
+    active projects
+  </span>
+  <span
+    class="pj-summary-i"
+  >
+    <strong>
+      —
+    </strong>
+     
+    average readiness
+  </span>
+  <span
+    class="pj-summary-i"
+    data-tone="warn"
+  >
+    <strong>
+      —
+    </strong>
+     
+    filing within 60 days
+  </span>
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx:80:101
+     78|
+     79|     await waitFor(() => expect(screen.getByText(/Couldn.t load the pro…
+     80|     expect(document.querySelector('.pj-summary'), 'the figures are the…
+       |                                                                                                     ^
+     81|     fireEvent.click(screen.getByRole('button', { name: 'List' }));
+     82|     expect(document.querySelector('.pj-summary')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > counts the programs whose target filing date is within the next 60 days
+AssertionError: the figures are the list view’s footing (D2-1): expected <div class="pj-summary">…(3)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="pj-summary"
+>
+  <span
+    class="pj-summary-i"
+  >
+    <strong>
+      4
+    </strong>
+     
+    active projects
+  </span>
+  <span
+    class="pj-summary-i"
+  >
+    <strong>
+      30%
+    </strong>
+     
+    average readiness
+  </span>
+  <span
+    class="pj-summary-i"
+    data-tone="warn"
+  >
+    <strong>
+      1
+    </strong>
+     
+    filing within 60 days
+  </span>
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx:88:101
+     86|     render(<Projects {...props()} />);
+     87|     await waitFor(() => expect(screen.getByText('Program soon')).toBeT…
+     88|     expect(document.querySelector('.pj-summary'), 'the figures are the…
+       |                                                                                                     ^
+     89|     showList();
+     90|     // 30 days: yes. 120 days, 5 days ago, and no date: no.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > uses server totals beyond the page and keeps readiness and search page bounded
+TestingLibraryElementError: Unable to find an accessible element with the role "combobox" and name "Client type"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Projects":
+  ...
+
+  --------------------------------------------------
+  button:
+
+  Name "Ask AnA":
+  ...
+
+  Name "New project":
+  ...
+
+  Name "Grid":
+  ...
+
+  Name "List":
+  ...
+
+  Name "All workstreams 60":
+  ...
+
+  Name "MDX 58":
+  ...
+
+  Name "Biotech 0":
+  ...
+
+  Name "Pharma 2":
+  ...
+
+  Name "All pathways 60":
+  ...
+
+  Name "PMA 20":
+  ...
+
+  Name "IDE 20":
+  ...
+
+  Name "Other 20":
+  ...
+
+  Name "Project IDE IDE MDX Planning Dossier readiness 40% Active Ada —":
+  ...
+
+  Name "Project Other Other MDX Planning Dossier readiness Not recorded Active Ada —":
+  ...
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  searchbox:
+
+  Name "Search projects by title or code":
+  ...
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Client":
+  ...
+
+  --------------------------------------------------
+  option:
+
+  Name "All clients":
+  ...
+
+  Name "Alpha":
+  ...
+
+  Name "Beta":
+  ...
+
+  --------------------------------------------------
+  group:
+
+  Name "Workstream filters":
+  ...
+
+  Name "Pathway filters":
+  ...
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ select client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx:33:41
+     31|    selects (their counts in the option text), and the portfolio figure…
+     32|    list view's footing (.design/claude-convergence/D2.md §1.4 items 2,…
+     33| const select = (name: string) => screen.getByRole('combobox', { name }…
+       |                                         ^
+     34| const choose = (name: string, value: string) => fireEvent.change(selec…
+     35| const optionText = (name: string) => Array.from(select(name).options).…
+ ❯ optionText client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx:35:49
+ ❯ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx:57:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > requests workstream and pathway on the server, retaining the Client filter
+TestingLibraryElementError: Unable to find role="option" and name "Medical device & IVD (58)"
+
+Ignored nodes: comments, script, style
+...
+
+Ignored nodes: comments, script, style
+...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx:69:18
+     67|     render(<Projects {...props()} />);
+     68|     fireEvent.change(await screen.findByRole('combobox', { name: 'Clie…
+     69|     await screen.findByRole('option', { name: 'Medical device & IVD (5…
+       |                  ^
+     70|     choose('Client type', 'MDX');
+     71|     await waitFor(() => expect(apiRequest.mock.lastCall?.slice(0, 2)).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > keeps a failed filtered read distinct from an empty portfolio and allows clearing
+TestingLibraryElementError: Unable to find an accessible element with the role "combobox" and name "Pathway"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Projects":
+  ...
+
+  --------------------------------------------------
+  button:
+
+  Name "Ask AnA":
+  ...
+
+  Name "New project":
+  ...
+
+  Name "Grid":
+  ...
+
+  Name "List":
+  ...
+
+  Name "All workstreams 60":
+  ...
+
+  Name "MDX 58":
+  ...
+
+  Name "Biotech 0":
+  ...
+
+  Name "Pharma 2":
+  ...
+
+  Name "All pathways 60":
+  ...
+
+  Name "PMA 20":
+  ...
+
+  Name "IDE 20":
+  ...
+
+  Name "Other 20":
+  ...
+
+  Name "Project IDE IDE · Planning · Lead Ada Dossier readiness 40%— MDXactive":
+  ...
+
+  Name "Project Other Other · Planning · Lead Ada Dossier readiness Not recorded— MDXactive":
+  ...
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  searchbox:
+
+  Name "Search projects by title or code":
+  ...
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Client":
+  ...
+
+  --------------------------------------------------
+  option:
+
+  Name "All clients":
+  ...
+
+  Name "Alpha":
+  ...
+
+  Name "Beta":
+  ...
+
+  --------------------------------------------------
+  group:
+
+  Name "Workstream filters":
+  ...
+
+  Name "Pathway filters":
+  ...
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ select client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx:33:41
+     31|    selects (their counts in the option text), and the portfolio figure…
+     32|    list view's footing (.design/claude-convergence/D2.md §1.4 items 2,…
+     33| const select = (name: string) => screen.getByRole('combobox', { name }…
+       |                                         ^
+     34| const choose = (name: string, value: string) => fireEvent.change(selec…
+     35| const optionText = (name: string) => Array.from(select(name).options).…
+ ❯ choose client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx:34:66
+ ❯ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx:99:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > does not call an empty pathway result a new organization
+TestingLibraryElementError: Unable to find an accessible element with the role "combobox" and name "Pathway"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Projects":
+  ...
+
+  --------------------------------------------------
+  button:
+
+  Name "Ask AnA":
+  ...
+
+  Name "New project":
+  ...
+
+  Name "Grid":
+  ...
+
+  Name "List":
+  ...
+
+  Name "All workstreams 60":
+  ...
+
+  Name "MDX 58":
+  ...
+
+  Name "Biotech 0":
+  ...
+
+  Name "Pharma 2":
+  ...
+
+  Name "All pathways 60":
+  ...
+
+  Name "PMA 20":
+  ...
+
+  Name "IDE 20":
+  ...
+
+  Name "Other 20":
+  ...
+
+  Name "Project IDE IDE · Planning · Lead Ada Dossier readiness 40%— MDXactive":
+  ...
+
+  Name "Project Other Other · Planning · Lead Ada Dossier readiness Not recorded— MDXactive":
+  ...
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  ...
+
+  --------------------------------------------------
+  searchbox:
+
+  Name "Search projects by title or code":
+  ...
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Client":
+  ...
+
+  --------------------------------------------------
+  option:
+
+  Name "All clients":
+  ...
+
+  Name "Alpha":
+  ...
+
+  Name "Beta":
+  ...
+
+  --------------------------------------------------
+  group:
+
+  Name "Workstream filters":
+  ...
+
+  Name "Pathway filters":
+  ...
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ select client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx:33:41
+     31|    selects (their counts in the option text), and the portfolio figure…
+     32|    list view's footing (.design/claude-convergence/D2.md §1.4 items 2,…
+     33| const select = (name: string) => screen.getByRole('combobox', { name }…
+       |                                         ^
+     34| const choose = (name: string, value: string) => fireEvent.change(selec…
+     35| const optionText = (name: string) => Array.from(select(name).options).…
+ ❯ choose client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx:34:66
+ ❯ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx:111:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > keeps a selected page status clearable when a server filter returns different statuses
+TestingLibraryElementError: Unable to find role="option" and name "Blocked"
+
+Ignored nodes: comments, script, style
+...
+
+Ignored nodes: comments, script, style
+...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx:122:18
+    120|     }));
+    121|     render(<Projects {...props()} />);
+    122|     await screen.findByRole('option', { name: 'Blocked' });
+       |                  ^
+    123|     choose('Status', 'blocked');
+    124|     choose('Pathway', 'pma');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — summary over a successful empty read > states no mean readiness over zero programs
+AssertionError: the figures are the list view’s footing (D2-1): expected <div class="pj-summary">…(3)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="pj-summary"
+>
+  <span
+    class="pj-summary-i"
+  >
+    <strong>
+      0
+    </strong>
+     
+    active projects
+  </span>
+  <span
+    class="pj-summary-i"
+  >
+    <strong>
+      Not recorded
+    </strong>
+     
+    average readiness
+  </span>
+  <span
+    class="pj-summary-i"
+    data-tone="warn"
+  >
+    <strong>
+      0
+    </strong>
+     
+    filing within 60 days
+  </span>
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx:63:101
+     61|     render(<Projects {...props()} />);
+     62|     expect(await screen.findByText('No projects yet')).toBeTruthy();
+     63|     expect(document.querySelector('.pj-summary'), 'the figures are the…
+       |                                                                                                     ^
+     64|     showList();
+     65|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > says "Not recorded" on its list row, never "0% ready"
+AssertionError: expected 'ProjectWorkstreamStage / readinessSta…' to contain 'Dossier readiness'
+
+Expected: "Dossier readiness"
+Received: "ProjectWorkstreamStage / readinessStatusLeadDue"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx:115:61
+    113|     // (named so since QA 2026-10-08, projectsCardStatusReadiness.test…
+    114|     showList();
+    115|     expect(document.querySelector('.ct-head')?.textContent).toContain(…
+       |                                                             ^
+    116|     expect(listRow('Program u1').textContent).toContain('Not recorded'…
+    117|     expect(screen.queryByText('0% ready')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > says the list is the first page, and the count is a floor
+AssertionError: expected 'Search projects' to be 'Search the first 2 projects' // Object.is equality
+
+Expected: "Search the first 2 projects"
+Received: "Search projects"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx:63:89
+     61|     expect(note.textContent).toMatch(/cover these only/);
+     62|     // The search covers the loaded page only, and says so.
+     63|     expect((screen.getByLabelText(/Search projects/i) as HTMLInputElem…
+       |                                                                                         ^
+     64|     fireEvent.click(screen.getByRole('button', { name: 'List' }));
+     65|     expect(document.querySelector('.pj-summary')?.textContent).toConta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/26]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > a complete read says nothing extra
+AssertionError: expected 'Search projects' to be 'Search 2 projects' // Object.is equality
+
+Expected: "Search 2 projects"
+Received: "Search projects"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx:75:89
+     73|     await screen.findAllByText('Program 1');
+     74|     expect(screen.queryByText(/Showing the first/)).toBeNull();
+     75|     expect((screen.getByLabelText(/Search projects/i) as HTMLInputElem…
+       |                                                                                         ^
+     76|     fireEvent.click(screen.getByRole('button', { name: 'List' }));
+     77|     expect(document.querySelector('.pj-summary')?.textContent).toConta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/26]⎯
+
+
+ Test Files  7 failed (7)
+      Tests  26 failed | 18 passed (44)
+   Start at  22:17:25
+   Duration  30.09s (transform 1.48s, setup 815ms, import 3.54s, tests 20.20s, environment 4.25s)
+

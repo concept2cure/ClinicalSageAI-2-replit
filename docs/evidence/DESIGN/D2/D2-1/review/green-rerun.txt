@@ -1,0 +1,47 @@
+# Skeptic's green re-run, working tree on HEAD 1d789b516 (2026-11-01), after the review fix (one 'settled').
+# DEBUG_PRINT_LIMIT=0 npx vitest run --maxWorkers=1 v2/__tests__/projects*.test.tsx <every other test file that imports
+#   surfaces/Projects, ProjectPortfolioFilters or ProjectClientFilter (17 files)>
+#
+# Result: 27 files, 306 passed, 1 failed. All 10 projects*.test.tsx files pass (58 tests).
+# The one failure is anaDrivesScreens.test.tsx > 'Vault — AnA operates the real surface', which exercises Vault.tsx.
+# Vault.tsx and eight Vault*.tsx are being edited, uncommitted, by another lane (L8, D6-3) in this same tree; D2-1
+# does not touch them. With HEAD's Vault*.tsx served through a load hook (vitest.head-vault.config.ts.txt) and
+# D2-1's working-tree Projects files, anaDrivesScreens.test.tsx passes 13 of 13 (the second block below).
+
+## Per file: count, result, file
+      1 × client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx
+     12 ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx
+     14 ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx
+      9 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx
+      4 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx
+     12 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx
+     10 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx
+      6 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx
+      2 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx
+      4 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx
+      2 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx
+     17 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx
+      7 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx
+      7 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx
+     26 ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx
+      9 ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx
+      2 ✓ client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx
+     10 ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx
+      9 ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx
+      6 ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx
+      7 ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx
+      5 ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx
+      6 ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx
+      6 ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx
+      5 ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx
+      2 ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx
+     27 ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+     80 ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 26 passed (27)
+      Tests  1 failed | 306 passed (307)
+
+## anaDrivesScreens.test.tsx with HEAD's Vault*.tsx (another lane's edits set aside) and D2-1's Projects files
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
