@@ -49,12 +49,20 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | RIM system build-out (`011e42…`) | S5 behaviour, F1 repairs, S10, S9, D7 layout (Submission Center) | F1 slices 1–2, repairs A–C, then P-86, P-87, S10, S9 with P-88 | L9 (D7-A1, D7-A2) |
 | Regulatory document AI architecture (`017CFk…`) | L1 (AI-gateway placement, zero retention), S6 or S2 (Vault chunking) | L1, S6 | D6 (Vault) layout through the coordinator |
 | Biotech FDA filing types build-out (`011Fyq…`) | F1, S4 or S3 (the Rule 2 audit slices) | F1 | through the coordinator |
-| R1 inventory and protocol (`01QoxbL…`) | R1, S3 | R1 | through the coordinator |
+| R1 inventory and protocol (`01QoxbL…`) | ended (not reachable, 2026-11-01); R1 passes to the coordinator | — | — |
 | Codebase market readiness (`01Gx2fiw…`) | asked for its package and file list, 2026-11-01 | reading; RIM holds the filed-state loader | through the coordinator |
 | MDX 510(k) eSTAR demo (`01P6GW…`) | the Part 11 audit (`8b8c6bc15`, evidence); its 21 open fixes need file lists first | — | through the coordinator |
 | Reporting analytics (`011HLkY…`) | D7 (L11), F1 | L11, D7-D | Insights and Compliance reports |
 
 S10 (the agency's communications back into the project) is held by RIM since 2026-11-01; its earlier holder (`011Dpx…`) has ended.
+
+## Known caveats
+
+- **R1's inventory can report a false "no caller"** (`docs/evidence/DESIGN/R1/2026-11-01-inventory/inventory.json`):
+  it does not resolve a path constant in a template URL (`${REVIEWS_PATH}/${id}/sign`). Found case: `POST
+  /api/audit/reviews/:id/sign` is listed `caller: null` but `ComplianceReviewRecords.tsx:212` calls it. Before retiring
+  any `caller: null` route, search the client for its path segments and record the search. The coordinator is
+  fixing the analyser under R1.
 
 ## What every session does
 
