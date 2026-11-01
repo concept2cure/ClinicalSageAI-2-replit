@@ -52,6 +52,10 @@ interface NotificationRow {
   metadata?: Record<string,unknown> | null;
 }
 
+/** The triage ask: one source for the tray's "Triage my day with AnA", Home's first
+ *  starter and the task board (D1 §D1.C step 5, §D1.G step 2). */
+export const TRIAGE_ASK = 'Triage everything assigned to me across all projects and tell me what to do first';
+
 type TaskTrayProps = { onNav?: (id: string) => void; onAsk?: (text: string) => void };
 
 function useTaskTrayOwnership(scope: TaskActorScope | null, onNav: TaskTrayProps['onNav']) {
@@ -240,16 +244,17 @@ function TrayPanel({
         <div className="tt-head">
           <b>Your work</b>
           <span className="tt-head-meta">
-            {work ? `${work.total} assigned · ${work.overdue} overdue` : workLoading ? 'loading…' : ''}
+            {work ? `${work.total} assigned · ${work.overdue ? `${work.overdue} overdue` : 'none overdue'}` : workLoading ? 'loading…' : ''}
           </span>
-          <button className="tt-close" onClick={onClose} aria-label="Close">{I.close}</button>
+          {/* `tt-close` stays as the hook of the 760px rule that makes it a 44px square. */}
+          <button type="button" className="btn tt-close" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
 
         {navigationError && <div className="tt-empty" role="alert">{navigationError}</div>}
 
         {onAsk && (
-          <button className="tt-triage" onClick={() => { onAsk('Triage everything assigned to me across all projects and tell me what to do first'); }}>
-            {I.sparkles} Triage my day with AnA
+          <button type="button" className="btn ghost tt-triage" onClick={() => { onAsk(TRIAGE_ASK); }}>
+            <span className="tt-spark" aria-hidden="true">✻</span>Triage my day with AnA
           </button>
         )}
 
@@ -259,7 +264,7 @@ function TrayPanel({
             go={go} openTask={openTask} />
 
           <div className="tt-group">
-            <div className="tt-group-head">Messages &amp; alerts <button type="button" className="btn ghost small" onClick={openPreferences}>Notification preferences</button></div>
+            <div className="tt-group-head">Messages &amp; alerts <button type="button" className="btn small" onClick={openPreferences}>Notification preferences</button></div>
             {notifsLoading ? (
               <div className="tt-empty">Loading…</div>
             ) : notifsError ? (
@@ -268,17 +273,23 @@ function TrayPanel({
               </div>
             ) : !notifs.length ? (
               <div className="tt-empty">No unread messages or alerts.</div>
-            ) : notifs.map(n => (
-              <div key={n.id} className="tt-item tt-notif" data-sev={n.severity}>
-                <span className={`tt-dot tt-dot-${n.severity === 'critical' ? 'err' : n.severity === 'warning' ? 'warn' : 'ok'}`} aria-hidden />
-                <span className="tt-item-body">
-                  <span className="tt-item-title">{n.title}</span>
-                  {n.body && <span className="tt-item-sub">{n.body}</span>}
-                  <NotificationOpenButton notice={n} navigate={openNotification} beforeOpen={beforeNotificationOpen}/>
-                </span>
-                <button className="tt-read" onClick={() => markRead(n.id)} aria-label={`Mark "${n.title}" read`} title="Mark read">{I.check}</button>
-              </div>
-            ))}
+            ) : notifs.map(n => {
+              /* A dot only where it means something: a warning or a critical notice.
+                 Any other keeps the dot's place, hidden, so the titles stay aligned. */
+              const tone = n.severity === 'critical' ? 'err' : n.severity === 'warning' ? 'warn' : null;
+              return (
+                <div key={n.id} className="tt-item tt-notif" data-sev={n.severity}>
+                  <span className={tone ? `tt-dot tt-dot-${tone}` : 'tt-dot'} data-quiet={tone ? undefined : ''} aria-hidden />
+                  <span className="tt-item-body">
+                    <span className="tt-item-title">{n.title}</span>
+                    {n.body && <span className="tt-item-sub">{n.body}</span>}
+                    <NotificationOpenButton notice={n} navigate={openNotification} beforeOpen={beforeNotificationOpen}/>
+                  </span>
+                  {/* `tt-read` stays as the hook of the 760px rule that makes it a 44px square. */}
+                  <button type="button" className="btn small tt-read" onClick={() => markRead(n.id)} aria-label={`Mark "${n.title}" read`} title="Mark read">{I.check}</button>
+                </div>
+              );
+            })}
           </div>
         </div>
 

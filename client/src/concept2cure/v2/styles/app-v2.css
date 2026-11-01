@@ -1037,36 +1037,42 @@
   .c2c-v2 .tb-detail,.c2c-v2 .tb-detail.tb-create,
   .c2c-v2 .cl-bd,.c2c-v2 .cl-modal,.c2c-v2 .cl-toast{animation:none;}
 }
-.c2c-v2 .tt-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
-.c2c-v2 .tt-head b{font-size:14px;font-weight:600;}
-.c2c-v2 .tt-head-meta{font-size:11px;color:var(--text-400);}
-.c2c-v2 .tt-close{margin-left:auto;width:26px;height:26px;border-radius:var(--radius-md);color:var(--text-400);display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;}
-.c2c-v2 .tt-close:hover{background:var(--bg-100);color:var(--text-100);}
-.c2c-v2 .tt-triage{display:flex;align-items:center;gap:7px;margin:12px 14px;padding:10px 12px;border-radius:9px;background:color-mix(in srgb, var(--accent-100) 8%, transparent);border:1px solid var(--accent-100);color:var(--text-100);font-size:12.5px;font-weight:600;cursor:pointer;transition:background var(--dur);}
-.c2c-v2 .tt-triage:hover{background:color-mix(in srgb, var(--accent-100) 14%, transparent);}
-.c2c-v2 .tt-triage svg{color:var(--accent-100);}
+/* Your work (D1 §D1.G): a 16px title, one quiet line of counts, then plain lists.
+   Colour only where something is late or blocked; the ✻ is the panel's one
+   orange. The head, the scroll and the rows also draw the Notification
+   preferences and Organizations drawers (their own `.tt-head`) and Home's "Your
+   open items" (OpenWorkGroups). */
+.c2c-v2 .tt-head{display:flex;align-items:center;gap:10px;padding:16px 16px 12px 20px;border-bottom:1px solid var(--border);}
+.c2c-v2 .tt-head b{font-size:16px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .tt-head-meta{flex:1;font-size:var(--fs-small,13px);color:var(--text-300);}
+/* The text "Close" of the Notification preferences and Organizations drawers. The
+   tray's own close is a D0 `.btn`. `:where()` adds no rank, so the 760px rule
+   below still makes either close a 44px square. */
+.c2c-v2 .tt-close:where(:not(.btn)){margin-left:auto;width:26px;height:26px;border-radius:var(--radius-md);color:var(--text-400);display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;}
+.c2c-v2 .tt-close:where(:not(.btn)):hover{background:var(--bg-100);color:var(--text-100);}
+/* Triage: a `.btn.ghost` row led by the ✻, not a tinted box. */
+.c2c-v2 .tt-triage{justify-content:flex-start;width:calc(100% - 24px);margin:12px 12px 4px;height:36px;}
+.c2c-v2 .tt-spark{color:var(--accent-100);font-size:15px;}
 .c2c-v2 .tt-scroll{flex:1;overflow-y:auto;padding:0 14px 14px;}
 .c2c-v2 .tt-group{margin-bottom:16px;}
-.c2c-v2 .tt-group-head{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);padding:6px 2px;}
-.c2c-v2 .tt-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;border-radius:9px;background:none;border:0;cursor:pointer;transition:background var(--dur);}
-.c2c-v2 .tt-item:hover{background:var(--bg-050);}
+.c2c-v2 .tt-group-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 6px;font-size:var(--fs-small,13px);font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-300);}
+.c2c-v2 .tt-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;border-radius:var(--radius-lg);background:none;border:0;cursor:pointer;transition:background-color var(--dur) var(--ease);}
+.c2c-v2 .tt-item:hover{background:var(--bg-100);}
 .c2c-v2 .tt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .c2c-v2 .tt-dot-err{background:var(--error);}
 .c2c-v2 .tt-dot-warn{background:var(--warning);}
-.c2c-v2 .tt-dot-ok{background:var(--success);}
+/* Nothing to flag: the dot keeps its place, unseen. The row's words say when it is due. */
+.c2c-v2 .tt-dot[data-quiet]{visibility:hidden;}
 .c2c-v2 .tt-item-body{flex:1;min-width:0;display:flex;flex-direction:column;}
-.c2c-v2 .tt-item-title{font-size:12.5px;font-weight:500;color:var(--text-100);line-height:1.35;}
-.c2c-v2 .tt-item-sub{font-size:11px;color:var(--text-400);margin-top:1px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.c2c-v2 .tt-item-title{font-size:var(--fs-body,14px);font-weight:500;color:var(--text-100);line-height:1.35;}
+.c2c-v2 .tt-item-sub{font-size:var(--fs-small,13px);color:var(--text-300);margin-top:1px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .c2c-v2 .tt-go{color:var(--text-400);display:inline-flex;flex-shrink:0;}
-.c2c-v2 .tt-item:hover .tt-go{color:var(--accent-100);}
+.c2c-v2 .tt-item:hover .tt-go, .c2c-v2 .tt-foot:hover{color:var(--text-100);}
 .c2c-v2 .tt-notif{cursor:default;}
-.c2c-v2 .tt-read{width:24px;height:24px;border-radius:var(--radius-md);color:var(--text-400);display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;flex-shrink:0;}
-.c2c-v2 .tt-read:hover{background:var(--bg-100);color:var(--success);}
-.c2c-v2 .tt-empty{font-size:11.5px;color:var(--text-400);padding:8px 10px;}
-.c2c-v2 .tt-more{display:block;width:100%;text-align:center;font-size:11.5px;color:var(--text-300);padding:7px;background:none;border:0;cursor:pointer;border-radius:var(--radius-lg);}
+.c2c-v2 .tt-empty{font-size:var(--fs-small,13px);color:var(--text-300);padding:8px 10px;}
+.c2c-v2 .tt-more{display:block;width:100%;text-align:center;font-size:var(--fs-small,13px);color:var(--text-300);padding:7px;background:none;border:0;cursor:pointer;border-radius:var(--radius-lg);}
 .c2c-v2 .tt-more:hover{background:var(--bg-050);color:var(--text-100);}
-.c2c-v2 .tt-foot{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-300);font-weight:500;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer;}
-.c2c-v2 .tt-foot:hover{color:var(--accent-100);}
+.c2c-v2 .tt-foot{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-top:1px solid var(--border);font-size:var(--fs-small,13px);color:var(--text-300);font-weight:500;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer;}
 /* The tray at a phone's width: every control in it a 44px target (RR5 phone
    acceptance, 2026-10-30). Measured at 390px: Close 26px, each notice's Mark
    read 24px, Notification preferences and each notice's open button 32px,
