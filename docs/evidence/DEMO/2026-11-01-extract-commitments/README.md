@@ -144,3 +144,20 @@ Line numbers are at HEAD. For the agency files that is ff7fc490b7, their last co
    this change. Its fixture copies only `lib.mjs`, `seed.mjs` and `packs/biotech.mjs` (lines 31–32), and
    `biotech.mjs` imports seven other pack modules (`Cannot find module …/biotech-work-content.mjs`). This change
    adds no import that HEAD's `biotech.mjs` did not already have.
+
+## Resolved (2026-11-01, same day)
+
+Every defect above is fixed on `concept2cure-v2`, each with a test that fails on the old code:
+
+| # | Defect | Fixed in |
+|---|---|---|
+| 1 | Meetings & commitments did not list a commitment recorded from a letter until re-read | `7f0a09a359`: `onCommitmentRecorded` from `AgencyResponses` through the inbox to Communication's register version |
+| 2 | At 390 wide each commitment's text was 0px wide | `3819decf71` (D0): `.cc-q-proposal` wraps, the text keeps a 16ch minimum. Re-shot: `screenshots/09-mobile-390-commitments.png` |
+| 3 | Received date as a raw ISO instant; visibility tier "shared client c2c" | `85591ed4d8`: "received Oct 12, 2026"; "Your team and Concept2Cure" |
+| 4 | Commitment rows "due 2030-06-30", and no word of the letter they came from | `85591ed4d8`: "due Jun 30, 2030 · recorded from Approval letter" |
+| 5 | A letter that asks nothing told to record its questions by hand | `85591ed4d8`: it says it needs no response; the hint is on letters that owe one |
+| 6 | The half-width basis field cut off "PREA (FDCA 505B) · 471…" | `85591ed4d8`: basis on a full row in both forms |
+| 7 | A link opened in a fresh tab: the top bar said "Open project" | `cc17ddb1d4`: the top bar's chip names the project on whichever screen the link opened |
+| 8 | `demo-recovery.test.mjs` failed 35/35 | `93f375639b`: the fixture supplies the pack's work areas; 35/35 pass |
+
+The re-shoot (`walk.cjs --narrow-only`) records nothing; `walk-narrow.json` is its output.

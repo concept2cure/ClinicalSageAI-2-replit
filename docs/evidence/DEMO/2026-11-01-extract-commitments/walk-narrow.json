@@ -2,7 +2,7 @@
   "mode": "narrow-only",
   "base": "http://127.0.0.1:5000",
   "email": "jm.smith@concept2cure.pro",
-  "startedAt": "2026-11-01T16:06:25.804Z",
+  "startedAt": "2026-11-01T16:21:41.924Z",
   "steps": [
     {
       "name": "sign in (one dev-login)",
@@ -27,12 +27,12 @@
       "name": "390 wide: the letter's commitments",
       "horizontalOverflowPx": 0,
       "textColumnsPx": [
-        0,
-        0,
-        0,
-        0
+        158,
+        158,
+        158,
+        145
       ],
-      "finding": "At 390 wide each commitment's words get a 0px column and wrap a character or two per line.",
+      "finding": null,
       "screenshot": "screenshots/09-mobile-390-commitments.png"
     },
     {
@@ -43,5 +43,5 @@
   "apiErrors": [],
   "consoleErrors": [],
   "outcome": "passed",
-  "finishedAt": "2026-11-01T16:06:42.605Z"
+  "finishedAt": "2026-11-01T16:21:58.966Z"
 }
