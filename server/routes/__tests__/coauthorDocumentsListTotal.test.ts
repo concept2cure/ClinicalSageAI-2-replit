@@ -145,3 +145,22 @@ describe('GET /api/coauthor/documents search and paging', () => {
     expect(second.body.total).toBe(OWN_ROWS + NAMED_ROWS);
   });
 });
+
+/* 2026-10-31: a database built from the deploy migration set has no
+   coauthor_documents (only the drizzle baseline creates it), and the list
+   answered a bare 500 that the Builder's picker showed as "Couldn't load the
+   Co-Author documents". A store that is not there is said to be not there. */
+describe('GET /api/coauthor/documents when the filing-copy store is absent', () => {
+  it('answers 503 with a sentence, never a bare 500', async () => {
+    await h.pglite.exec('ALTER TABLE coauthor_documents RENAME TO coauthor_documents_absent_for_test');
+    try {
+      const res = await request(app).get('/api/coauthor/documents');
+      expect(res.status).toBe(503);
+      expect(res.body.error).toBe('FILING_COPY_STORE_UNAVAILABLE');
+      expect(res.body.message).toMatch(/not available on this deployment/);
+      expect(JSON.stringify(res.body)).not.toMatch(/coauthor_documents|relation/);
+    } finally {
+      await h.pglite.exec('ALTER TABLE coauthor_documents_absent_for_test RENAME TO coauthor_documents');
+    }
+  });
+});
