@@ -10,9 +10,9 @@ change a file that another package's spec also names.
 
 ## Locked now
 
-The build order is `.design/claude-convergence/BUILD_ORDER.md`. D0-1 to D0-4 are committed (D0-4 is `1dee898e9`), so
+The build order is `.design/claude-convergence/BUILD_ORDER.md`. D0-1 to D0-4 are pushed (D0-4 is `1dee898e9`, on origin at `29eb219f9`), so
 the `styles/**` lock is released: each sheet now has one holder at a time, below. D5-0 and D5-1 landed from the CMC
-session (`943b78cb7`, `94f24dba0`). Wave 1a (D0-5, D4-1, D2-1) is running, and so is Wave 1b's L1; the other lanes follow (its §3).
+session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a6f0ee`), F1 (`95dbf007c`). Wave 1a (D0-5, D4-1, D2-1) is running, and so is Wave 1b's L1; the other lanes follow (its §3).
 
 | Files | Held by | For | Until |
 |---|---|---|---|
@@ -27,6 +27,7 @@ session (`943b78cb7`, `94f24dba0`). Wave 1a (D0-5, D4-1, D2-1) is running, and s
 
 | Files | Held by | For |
 |---|---|---|
+| `client/src/concept2cure/mdx/MdxSurfaceHost.tsx`, `mdx/surfaces/{Engineering,Udi,Postmarket}Surface.tsx`, `mdx/components/DocumentsPanel.tsx`, `mdx/surfaces/DeviceFilings.tsx`; the title line only in `v2/surfaces/ProjectMdxWorkflow.tsx` (D3's glob: coordinator, please confirm); the device-cer note in `shared/constants/ui-surface-registry.ts` and the device-engineering note in `ui-surface-registry.ui-v2.ts` | MDX journey (`01P6GW…`) | F1 slice 1: the device screens keep their promises (`MDX_JOURNEY_2026-11-01.md` M1, M2, M4, M10, M11). Behaviour and copy, no layout |
 | `server/services/ectd/prior-sequence-loader.ts`, `server/services/submission-gateways/index.ts`, the filed-state route in `server/routes/ectd-compile.ts`, `client/src/concept2cure/v2/surfaces/EctdFiledState.tsx` (copy only) | RIM (`011e42…`) | F1 slice 1: what the agency holds is what was sent (no migration) |
 | `server/services/submission-service/submission-service.ts`, `filed-dispatch.ts`, `server/services/submission-gateways/fda-esg-receipts.ts`; copy only in `SubmissionSeqWorkspaces.tsx`, `SubmissionCenter.tsx`, `As2ReceiptUpload.tsx` | RIM | F1 slice 2 (after slice 1): a test-environment send is not a filing |
 | S10's G3 files: `shared/agency/**`, `server/services/agency-responses/**` | RIM | S10 (after slices 1 and 2): the letter splitter keeps its verbatim contract (no footers, control characters, signature blocks or duplicate numbers in a question) |
@@ -36,19 +37,20 @@ session (`943b78cb7`, `94f24dba0`). Wave 1a (D0-5, D4-1, D2-1) is running, and s
 | `server/services/ectd/assess-dispatch-readiness.ts` (the sequence read answers only for a live sequence) | RIM | F1 repair B, after slice 2 |
 | `server/routes/ind-lifecycle/shared.ts` (`fail()` maps through `SUBMISSION_ERROR_STATUS`) and its contract test | RIM | F1 repair C, after slice 2 |
 | `server/routes/authoring.router.ts` (the approval, freeze and sign gate), `server/services/authoring/draft-figure-check.ts`, `draft-source-references.ts`, `client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx` (behaviour only: the 409 asked in the existing C2CForm step) | AI architecture (`017CFk…`) | L1: an unverified figure blocks an approval or a seal until the signer acknowledges it (founder decision, numbered P-89 when recorded). Before L2 reaches D4-3, which moves the bar's mount. |
-| `server/routes/c2c/projects.ts`, `server/services/c2c/charter-objectives.ts`, `server/routes/charters.ts`, `client/src/concept2cure/v2/surfaces/projectSettingsRequest.ts` | the coordinating session | Wave 0: S1, the objective at creation, and its hook |
-| `server/routes/mdx-qms.ts`, `server/routes/project-schedule-of-events.ts`, `server/db/requestDb*.ts`, `server/middleware/establishRequestTenantScope.ts` | the coordinating session | Wave 0: F1, the request-DB context failure |
 
 ## Who works where
 
 | Session | Packages | Now | Layout work |
 |---|---|---|---|
-| UI and workflow redesign (`01JbQU…`) | D0, then the D1–D7 build order | D0-5, D4-1, D2-1; Wave 0 S1 and F1 | L1–L4, L7, L8, L10, L11 |
+| UI and workflow redesign (`01JbQU…`) | D0, then the D1–D7 build order | D0-5, D4-1, D2-1, L1 | L1–L4, L7, L8, L10, L11 |
 | CMC Module UI and data integration (`01GJidg5…`) | S7 behaviour, D5 layout | D5-2, then L6 (D5-3, D5-4) | D5-0 and D5-1 landed |
 | RIM system build-out (`011e42…`) | S5 behaviour, F1 repairs, S10, S9, D7 layout (Submission Center) | F1 slices 1–2, repairs A–C, then P-86, P-87, S10, S9 with P-88 | L9 (D7-A1, D7-A2) |
 | Regulatory document AI architecture (`017CFk…`) | L1 (AI-gateway placement, zero retention), S6 or S2 (Vault chunking) | L1, S6 | D6 (Vault) layout through the coordinator |
 | Biotech FDA filing types build-out (`011Fyq…`) | F1, S4 or S3 (the Rule 2 audit slices) | F1 | through the coordinator |
 | R1 inventory and protocol (`01QoxbL…`) | R1, S3 | R1 | through the coordinator |
+| Codebase market readiness (`01Gx2fiw…`) | asked for its package and file list, 2026-11-01 | reading; RIM holds the filed-state loader | through the coordinator |
+| MDX client journey (`01P6GW…`), the device and diagnostics client's path, owned by the founder's direction of 2026-11-01 | F1 (repairs on the device screens and routes); R1 with `01QoxbL…` for unreached device capability; L1 for the journey walked in the running app. Study and order of work: `.design/client-journey/MDX_JOURNEY_2026-11-01.md` | slice 1, the device screens keep their promises (M1, M2, M4, M10, M11). **The Part 11 audit's open fixes are not taken here: handed on** with their plans, `docs/evidence/D5/2026-10-18-part11-audit-three-dimensions/` | none: the device screens are in no D package (the study's founder question 1) |
+| Reporting analytics (`011HLkY…`) | behaviour under an open S or F package; L11's layout (D7-D) is the coordinator's | — | through the coordinator |
 
 S10 (the agency's communications back into the project) is held by RIM since 2026-11-01; its earlier holder (`011Dpx…`) has ended.
 

@@ -314,13 +314,27 @@ describe('CmOverview — a signature is over content, not a section number', () 
 /* Review of 2026-10-19: the reassurance is withheld while anything the figure
    leaves out could be open, and the earlier CMC file's open count is not
    established until its read succeeds. A failed read is not "nothing open". */
-describe('CmOverview — no reassurance over an earlier CMC file that was not read', () => {
+/* 2026-11-01 (D5 §A.4.8): the sentence these cases read — "You're building
+   steadily", the `AnswerLead`'s `reassure` — is deleted with the banner. It
+   was AnA's voice on the page, and §WA.4.2 rule 4 sends it back to her reply.
+   The RULE the cases exist for is unchanged and is now carried by the one
+   all-clear left on this screen: the green tone on the overdue figure, which
+   `questionsComplete` already gates on `earlierOpen === 0` — and
+   `earlierNotClosed` returns NULL, never 0, when that read did not happen, so
+   an unread file cannot pass for an empty one. Asserting the tone rather than
+   a sentence also makes the two negative cases real again: against the
+   deleted sentence they would have passed no matter what the page showed. */
+describe('CmOverview — no all-clear over an earlier CMC file that was not read', () => {
   const clearBoard = () => board({ sections: [section('3.2.S.1', 'approved', 100), section('3.2.P.5', 'review', 100)] });
+  /** The overdue figure's tone: 'ok' is the screen's all-clear. */
+  const overdueTone = () =>
+    document.querySelector('[data-testid="cmc-overview"] .reg-kpi, .reg-kpis .reg-kpi')?.getAttribute('data-tone') ?? null;
 
-  it('reassures when both reads are measured and nothing is open', async () => {
+  it('shows the all-clear when both reads are measured and nothing is open', async () => {
     wire(clearBoard());
     renderOverview();
-    expect(await screen.findByText(/You're building steadily/)).toBeTruthy();
+    await screen.findByText('3.2.P.5', { selector: 'td' });
+    expect(overdueTone()).toBe('ok');
   });
 
   it('withholds it, and says why, when the earlier file could not be read', async () => {
@@ -329,8 +343,8 @@ describe('CmOverview — no reassurance over an earlier CMC file that was not re
     renderOverview();
     expect(await screen.findByText(/The earlier CMC question file could not be read; whether it holds open questions is not known\./)).toBeTruthy();
     await screen.findByText('3.2.P.5', { selector: 'td' });
-    expect(screen.queryByText(/building steadily/)).toBeNull();
-    expect(document.querySelector('.al-lead.al-good')).toBeNull();
+    expect(overdueTone()).not.toBe('ok');
+    expect(document.querySelector('.al-lead')).toBeNull();
   });
 
   it('withholds it while the earlier file holds questions not closed there', async () => {
@@ -338,7 +352,8 @@ describe('CmOverview — no reassurance over an earlier CMC file that was not re
     wire(clearBoard());
     renderOverview();
     expect(await screen.findByText(/holds 2 questions not\s+closed there/)).toBeTruthy();
-    expect(screen.queryByText(/building steadily/)).toBeNull();
+    await screen.findByText('3.2.P.5', { selector: 'td' });
+    expect(overdueTone()).not.toBe('ok');
   });
 });
 
@@ -416,14 +431,21 @@ describe('CmOverview — the build-state card reads the export gate, never a per
 
 /* UI walk, 2026-10-31: one submission read "1 submissions — RPI — average"
    under the title and "Is your CMC package ready across all 1 submissions"
-   above the lead. */
+   above the lead.
+   2026-11-01 (D5 §A.4.8): this line is now the view's ONLY lead — the banner
+   above it is gone and its headline folded into here — and "RPI" is written
+   out, the abbreviation being defined nowhere on screen (§WA.4.2 rule 10). */
 describe('CmOverview — counts its submissions in words', () => {
   it('says one submission in the singular, with its preparedness index', async () => {
     wire(board());
     renderOverview();
-    expect(await screen.findByText('1 submission — RPI 82 average')).toBeTruthy();
-    expect(screen.getByText('Is your CMC package ready for its submission')).toBeTruthy();
+    expect(await screen.findByText('1 submission — preparedness 82 average')).toBeTruthy();
+    /* The second site of this count — the banner's "Is your CMC package ready
+       across all 1 submissions" eyebrow — is gone with the banner, and the
+       question it asked is now a fixed starter on the page, which does not
+       count anything. One site, so it can no longer disagree with itself. */
     expect(screen.queryByText(/1 submissions/)).toBeNull();
+    expect(screen.queryByText(/Is your CMC package ready/)).toBeNull();
   });
 
   it('says no preparedness index is computed, rather than "RPI — average"', async () => {
@@ -439,7 +461,12 @@ describe('CmOverview — counts its submissions in words', () => {
       { sub: 'MAA 0001', product: 'Compound A', region: 'EMA', type: 'MAA', rpi: 84, ir: null, source: 'spine' },
     ], kpis: { submissions: 2, rpiAverage: 82, sectionsApproved: 0, sectionsTotal: 0, readyPercent: 0 } }));
     renderOverview();
-    expect(await screen.findByText('2 submissions — RPI 82 average')).toBeTruthy();
-    expect(screen.getByText('Is your CMC package ready across all 2 submissions')).toBeTruthy();
+    /* Two submissions and one of them below the average, so the weakest is
+       named — the fact the retired banner carried as "what's holding the
+       portfolio back". With ONE ranked submission it is not named: the lowest
+       is the average, and the banner said a single filing was held back by
+       itself. */
+    expect(await screen.findByText('2 submissions — preparedness 82 average, lowest BLA 761234 at 80')).toBeTruthy();
+    expect(screen.queryByText(/\b2 submission\b(?! )/)).toBeNull();
   });
 });
