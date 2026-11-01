@@ -23,8 +23,8 @@ rows below are deleted; Wave 1b in eleven lanes after D5-0 (its §3).
 
 | Files | Held by | For |
 |---|---|---|
-| `scripts/db/migration-set.mjs` | RIM (`011e42…`) | F1 slice 1: an additive column for `ectd_compilations` (RULE 1) |
-| `server/services/ectd/prior-sequence-loader.ts`, `server/services/submission-service/submission-service.ts`, `server/services/submission-gateways/sent-package-archive.ts`, `fda-esg-receipts.ts` | RIM | F1 slices 1 and 2: what the agency holds, and test-environment sends |
+| `server/services/ectd/prior-sequence-loader.ts`, `server/services/submission-gateways/index.ts`, the filed-state route in `server/routes/ectd-compile.ts`, `client/src/concept2cure/v2/surfaces/EctdFiledState.tsx` (copy only) | RIM (`011e42…`) | F1 slice 1: what the agency holds is what was sent (no migration) |
+| `server/services/submission-service/submission-service.ts`, `fda-esg-receipts.ts` | RIM | F1 slice 2: a test-environment send is not a filing |
 | `server/services/ana/AnaToolExecutor.ts` (the `generate_document` handler), `server/services/ana/intelligence-questions/engine.ts` | filing types (`011Fyq…`) | Rule 2 S6b, under S4 |
 | `server/services/ana/ana-launch-scope.inventory.json`, `tool-authorization.register.json`, `evidence-literature-tool-defs.ts`, `skills/library/{submissions,medical-writing}.ts`, `ind-module-authoring.ts` (deleted, replacement named) | filing types | Rule 2 S6 (S4): `plan_ind_module_authoring` converges onto the Module 2.5 and 2.7 drafting tools |
 | `server/services/{pharmacovigilance,dose-optimization,rwe}/*-knowledge.ts` and their `ana/*Tools.ts` | filing types | Rule 2 S5a (F1): an unstated fact is unknown, never a default |
