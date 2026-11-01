@@ -105,7 +105,7 @@ export type PdevSignatureFacet =
   | { state: 'none' }
   | { state: 'unavailable' };
 export interface PdevReview {
-  id: string; reviewer: string; role: string; status: string; comments: ReviewComment[];
+  id: string; reviewer: string; role: string; status: string;
   /** The disposition's signature, from the signature row. */
   signature: PdevSignatureFacet;
 }
@@ -150,6 +150,8 @@ export interface PdevDoc {
   amendments: PdevAmendment[];
   deviations: PdevDeviation[];
   reviews: PdevReview[];
+  /** The protocol's review comments, once each (they are keyed by document, not reviewer). */
+  reviewComments: ReviewComment[];
   consent: ConsentElement[];
   completenessFindings: SevText[];
   /** Who finalized it, from the signature row; `none` on a finalized protocol

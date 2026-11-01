@@ -56,15 +56,21 @@ function milestoneUrgency(targetDate: unknown, actualDate: unknown, now: number)
   return 'normal';
 }
 
-/** Review assignments with their comments. Extracted for the lint budget. */
-function mapReviews(
-  rows: Record<string, unknown>[],
-  comments: Record<string, unknown>[],
-  signatureOf: (target: string) => PdevSignatureFacet,
-): unknown[] {
-  const mapped = comments.map((c) => ({
+/** The protocol's review comments. They belong to the protocol, not to a
+ *  reviewer: `protocol_review_comments` is keyed by document. They were copied
+ *  onto every assignment, so the pane, which flattens the assignments, showed
+ *  each comment once per reviewer and none at all before a review was asked. */
+function mapReviewComments(comments: Record<string, unknown>[]): unknown[] {
+  return comments.map((c) => ({
     id: str(c.id), sec: str(c.section_ref), sev: str(c.severity), text: str(c.comment), resolved: bool(c.resolved),
   }));
+}
+
+/** Review assignments. Extracted for the lint budget. */
+function mapReviews(
+  rows: Record<string, unknown>[],
+  signatureOf: (target: string) => PdevSignatureFacet,
+): unknown[] {
   return rows.map((rv) => ({
     id: str(rv.id), reviewer: str(rv.reviewer_name), role: str(rv.role), status: str(rv.status),
     // Who may sign the disposition: that user, or (null) anyone taking
@@ -73,7 +79,6 @@ function mapReviews(
     disposition: str(rv.disposition), dueDate: rv.due_date ? String(rv.due_date).slice(0, 10) : '',
     // Who signed it, from the signature row, not the assignment's label.
     signature: signatureOf(dispositionTarget(str(rv.id))),
-    comments: mapped,
   }));
 }
 
@@ -483,7 +488,7 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
   const paramsByDoc = groupBy(budgetParams.rows, (r) => r.protocol_document_id);
   const changesByAmend = groupBy(amendChanges.rows, (r) => r.amendment_id);
   const capaByDev = groupBy(capa.rows, (r) => r.deviation_id);
-  const commentsByAssignment = groupBy(reviewComments.rows, (r) => r.protocol_document_id);
+  const commentsByDoc = groupBy(reviewComments.rows, (r) => r.protocol_document_id);
 
   const g = (m: Map<string, Record<string, unknown>[]>, id: number) => m.get(str(id)) ?? [];
 
@@ -578,7 +583,8 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
       budget: mapBudget(params, budgetRows, budgetSummary),
       amendments: mapAmendments(g(byDoc.amendments, id), changesByAmend),
       deviations: mapDeviations(g(byDoc.deviations, id), capaByDev),
-      reviews: mapReviews(g(byDoc.reviewAssignments, id), g(commentsByAssignment, id), signatureOf),
+      reviews: mapReviews(g(byDoc.reviewAssignments, id), signatureOf),
+      reviewComments: mapReviewComments(g(commentsByDoc, id)),
       /* Who finalized it, from the signature row; `none` on a finalized
          protocol is a finalization with no signature on record. */
       finalization: signatureOf(finalizationTarget(id)),

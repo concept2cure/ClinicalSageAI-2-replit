@@ -41,7 +41,7 @@ const DOC = {
   content: {}, objectives: [], eligibility: { inclusion: [], exclusion: [] },
   soa: { visits: [], rows: [] }, risks: [], milestones: [],
   budget: { total: 0, categories: [], spent: 0 }, amendments: [], deviations: [],
-  reviews: [], consent: [], completenessFindings: [],
+  reviews: [], reviewComments: [], consent: [], completenessFindings: [],
 };
 
 /* The protocol names ITS design; the tab resolves that one by id. It used to

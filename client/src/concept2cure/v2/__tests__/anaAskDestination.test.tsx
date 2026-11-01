@@ -204,7 +204,7 @@ describe('protocol-dev — "Ask AnA" reaches the rail', () => {
     content: {}, objectives: [], eligibility: { inclusion: [], exclusion: [] },
     soa: { visits: [], rows: [] }, risks: [], milestones: [],
     budget: { total: 0, categories: [], spent: 0 }, amendments: [], deviations: [],
-    reviews: [], consent: [], completenessFindings: [],
+    reviews: [], reviewComments: [], consent: [], completenessFindings: [],
   };
 
   beforeEach(() => {

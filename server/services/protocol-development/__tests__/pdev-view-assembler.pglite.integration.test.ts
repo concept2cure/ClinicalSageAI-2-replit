@@ -146,7 +146,9 @@ describe('assembleOrgPdevDocs', () => {
     // No account named: the disposition can only be recorded under responsibility.
     expect(doc.reviews[0].reviewerUserId).toBeNull();
     // Review comment severity carried through so blocking-open counts can be real.
-    expect(doc.reviews[0].comments[0]).toMatchObject({ sec: '9', sev: 'blocking', text: 'Clarify the SAP', resolved: false });
+    expect(doc.reviewComments).toHaveLength(1);
+    expect(doc.reviewComments[0]).toMatchObject({ sec: '9', sev: 'blocking', text: 'Clarify the SAP', resolved: false });
+    expect(doc.reviews[0]).not.toHaveProperty('comments');
     expect(doc.milestones[0].urgency).toBe('overdue');              // target in the past, no actual date
 
     // Completeness: one required section is not_started → a critical finding, <100%.

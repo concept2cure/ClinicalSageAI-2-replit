@@ -32,7 +32,7 @@ const docOf = (id: string, shortTitle: string, title: string) => ({
   content: {}, objectives: [], eligibility: { inclusion: [], exclusion: [] },
   soa: { visits: [], assessments: [], cells: {}, issues: [] }, risks: [], milestones: [],
   budget: { params: null, items: [], summary: null }, amendments: [], deviations: [],
-  reviews: [], consent: [], completenessFindings: [], studyDesign: null,
+  reviews: [], reviewComments: [], consent: [], completenessFindings: [], studyDesign: null,
 });
 const NEWEST = docOf('52', 'Y-301', 'A Phase III Study of Y');
 const OLDER = docOf('41', 'X-201', 'A Phase II Study of X');

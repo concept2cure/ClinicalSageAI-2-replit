@@ -25,7 +25,7 @@ const DOC = {
   objectives: [], eligibility: { inclusion: [], exclusion: [] },
   soa: { visits: [], assessments: [], cells: {}, issues: [] }, risks: [], milestones: [],
   budget: { params: null, items: [], summary: null }, amendments: [], deviations: [],
-  reviews: [], consent: [], completenessFindings: [], studyDesign: null,
+  reviews: [], reviewComments: [], consent: [], completenessFindings: [], studyDesign: null,
 };
 const SECOND = { ...DOC, id: '42', title: 'Second protocol', shortTitle: 'BX-410-202', openSection: '201',
   sections: [{ ...DOC.sections[0], id: '201' }], content: { 201: [{ p: 'The second protocol synopsis.' }] } };

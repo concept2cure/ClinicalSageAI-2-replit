@@ -155,7 +155,7 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
 
 export function ReviewsTab({ doc, onEdit }: ReviewPaneProps) {
   const reviews = asRows(doc.reviews);
-  const allComments = reviews.flatMap((r) => asRows(r.comments));
+  const allComments = asRows(doc.reviewComments);
   const blocking = allComments.filter((c) => c.sev === 'blocking' && !c.resolved).length;
   const actions: PaneAction[] | undefined = onEdit
     ? [{ label: 'Request a review', icon: 'plus', onAct: () => onEdit('review-request'), variant: 'outline' }]

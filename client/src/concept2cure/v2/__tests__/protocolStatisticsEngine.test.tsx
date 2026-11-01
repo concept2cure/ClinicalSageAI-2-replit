@@ -55,7 +55,7 @@ const DOC = {
   content: {}, objectives: [], eligibility: { inclusion: [], exclusion: [] },
   soa: { visits: [], rows: [] }, risks: [], milestones: [],
   budget: { total: 0, categories: [], spent: 0 }, amendments: [], deviations: [],
-  reviews: [], consent: [], completenessFindings: [],
+  reviews: [], reviewComments: [], consent: [], completenessFindings: [],
   studyDesign: {
     studyId: 'STUDY-1', resolved: true, title: 'BX-204 pivotal in T2D', phase: '3', indication: 'type 2 diabetes',
     status: 'draft', linkedAt: '', riskLevel: 'medium', canAdvance: false, blocksApproval: false,
