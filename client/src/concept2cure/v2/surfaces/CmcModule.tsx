@@ -2,6 +2,8 @@ import { serverMessage } from '@/lib/queryClient';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
+import { useShellProject } from '../shellProject';
+import { getSurfaceMeta } from '../registryModel';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentState, mayReassure } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -45,8 +47,11 @@ import {
   CmDrugSubstances,
   CmDrugProducts,
 } from './cmcRegisters';
-import { CmModule3Build } from './CmcModule3Build';
-import { CmQuality } from './CmcQuality';
+/* Each of these two tabs carries its own ask list. They are imported, not
+   restated here, so the page's starter row offers the same words the tab
+   has always offered and there is one copy of each prompt (RULE 3). */
+import { CmModule3Build, SUGGEST as BUILD_SUGGEST } from './CmcModule3Build';
+import { CmQuality, SUGGEST as QUALITY_SUGGEST } from './CmcQuality';
 import {
   stabilityForm,
   stabilityBody,
@@ -76,7 +81,6 @@ import { useNavEntitlements } from '../navEntitlements';
 import { CmcRegisterLinks, reportCmcLinkage } from './CmcRegisterLinks';
 /* The project steps' band, over this work area's destinations: one idiom
    for "what is open, what to do on it, what comes next" across the product. */
-import { StageBand } from './ProjectStages';
 import { CmcVariationAssessment } from './CmcVariationAssessment';
 import { RecordHistoryPanel } from './cmcRecordHistory';
 /* Agency questions on Module 3 are the letter's record (2026-10-19, P-38 /
@@ -152,11 +156,30 @@ import '../styles/project-home-v2.css';
  * state — the same rule the project steps keep, for the same reason: a
  * sentence that reads as a measurement is one nobody measured.
  *
- * The shape is a superset of `LifecycleStage`'s required fields, so
- * `StageBand` renders these destinations with no second band
- * (surfaces/ProjectStages.tsx).
+ * It used to be a superset of `LifecycleStage` so `StageBand` could render
+ * these nine as a project-style band. That band is retired (D5 §A.4.3,
+ * ONE_DESIGN_PLAN §2 "Retired patterns"), so the shape is now only what the
+ * two tab rows and the AnA context read.
  */
-interface CmcNavItem { id: string; label: string; icon: string; blurb: string; now: string; }
+interface CmcNavItem {
+  id: string;
+  label: string;
+  icon: string;
+  blurb: string;
+  /**
+   * What to do on this destination. It is no longer PRINTED (D5 §A.4.3 retires
+   * the "What to do now / Next step" box, ONE_DESIGN_PLAN §2 "Retired
+   * patterns"): it reaches AnA as `facts.whatToDoHere`, so the first starter
+   * — "What do I do on <tab>?" — answers with the same sentence the box showed.
+   */
+  now: string;
+  /**
+   * Which half of the work area the destination belongs to (D5 §A.3): what is
+   * captured while the study runs, and what is composed for the IND from it.
+   * The founder named the two halves; they are modes, not nested tabs.
+   */
+  half: 'module3' | 'records';
+}
 interface CmcPortfolio {
   sub: string; product: string; region: string; type: string;
   rpi: number | null; ir: number | null;
@@ -229,53 +252,62 @@ interface CmcBoardData {
    describes what the screen HOLDS. A client who opened CMC could not tell
    which destination the work in front of them belonged to, nor what to do
    once there — the founder's recorded complaint about the catalog, inside one
-   work area. The order is the order the work is done, so the band's "Next"
-   reads as the path through Module 3. */
+   work area.
+
+   The order is the two halves the founder named (ONE_DESIGN_PLAN §1a, D5 §A.3):
+   Module 3 — what is composed for the IND — first, then Study records — what is
+   captured while the study runs and composed from. Within each half the order is
+   still the order the work is done. Every `id` is unchanged: the `cmc.open-tab`
+   surface action, `__cmSetTab('build')`, `__cmSetTab('pathway')` and the tests
+   address destinations by id, never by position. */
 const CMC_NAV: CmcNavItem[] = [
   {
-    id: 'overview', label: 'Overview', icon: 'beaker',
+    id: 'overview', label: 'Overview', icon: 'beaker', half: 'module3',
     blurb: 'How far Module 3 has got, and what is blocking it',
     now: 'Start here. See how far Module 3 has got, what the export gate still refuses, and which agency questions on Module 3 are open — then open the destination that holds the work.',
   },
   {
-    id: 'materials', label: 'Substance & product', icon: 'atom',
+    id: 'quality', label: 'Quality by design', icon: 'sigma', half: 'module3',
+    blurb: 'The control strategy and the ICH check over these records',
+    now: 'Derive this project’s critical attributes and process parameters from the study records, generate its control strategy, and run the ICH check to see which requirements are not yet met.',
+  },
+  {
+    id: 'build', label: 'Module 3 build', icon: 'layers', half: 'module3',
+    blurb: 'Compile §3.2, resolve what contradicts, approve and export',
+    now: 'Compile §3.2 from the study records, resolve every contradiction the sweep finds, approve each section under signature, then check the export gate before placing the module into a submission sequence.',
+  },
+  {
+    /* Label 2026-11-01 (D5 §A.4.1): "Project records" → "Approvals & audit".
+       The blurb already said what it holds, and "Project records" collided with
+       the project page's own Knowledge "Records" (D3). The id stays `pathway`. */
+    id: 'pathway', label: 'Approvals & audit', icon: 'scroll', half: 'module3',
+    blurb: 'Who did what, and the agency’s questions about it',
+    now: 'Read what was done and by whom: each section’s audit chain, the approval gates it passed, and the agency questions asked about Module 3.',
+  },
+  {
+    id: 'materials', label: 'Substance & product', icon: 'atom', half: 'records',
     blurb: 'CTD §3.2.S and §3.2.P — the active substance and the finished product',
     now: 'Record the substance and the product: how each is manufactured, the materials and reference standards it is made with, the impurities found in it, and the container it is packaged in.',
   },
   {
-    id: 'specs', label: 'Specifications', icon: 'clipboardList',
+    id: 'specs', label: 'Specifications', icon: 'clipboardList', half: 'records',
     blurb: 'Release and shelf-life limits, and the methods behind them',
     now: 'Record each attribute’s release and shelf-life limits with the analytical method that measures it, then approve the specification under your signature. A limit whose method is not validated cannot be approved.',
   },
   {
-    id: 'stability', label: 'Stability', icon: 'barChart',
+    id: 'stability', label: 'Stability', icon: 'barChart', half: 'records',
     blurb: 'ICH Q1A(R2) studies and the shelf life they support',
     now: 'Register each study with its storage condition and batches, enter the results as the timepoints are read, then close the study out with the shelf life those results support.',
   },
   {
-    id: 'batch', label: 'Batch records', icon: 'grid',
+    id: 'batch', label: 'Batch records', icon: 'grid', half: 'records',
     blurb: 'Manufacture, yield, deviations and disposition',
     now: 'Log each batch as it is manufactured, with its yield and any deviation, then release it under your signature once its testing is complete.',
   },
   {
-    id: 'change', label: 'Change control', icon: 'gitBranch',
+    id: 'change', label: 'Change control', icon: 'gitBranch', half: 'records',
     blurb: 'Changes to the substance, product or process, and what they affect',
     now: 'Record each change with its justification and disposition, and see which Module 3 sections read the evidence it touches, so those sections are rebuilt before the next approval.',
-  },
-  {
-    id: 'quality', label: 'Quality by design', icon: 'sigma',
-    blurb: 'The control strategy and the ICH check over these records',
-    now: 'Derive this project’s critical attributes and process parameters from the records above, generate its control strategy, and run the ICH check to see which requirements are not yet met.',
-  },
-  {
-    id: 'build', label: 'Module 3 build', icon: 'layers',
-    blurb: 'Compile §3.2, resolve what contradicts, approve and export',
-    now: 'Compile §3.2 from these records, resolve every contradiction the sweep finds, approve each section under signature, then check the export gate before placing the module into a submission sequence.',
-  },
-  {
-    id: 'pathway', label: 'Project records', icon: 'scroll',
-    blurb: 'Who did what, and the agency’s questions about it',
-    now: 'Read what was done and by whom: each section’s audit chain, the approval gates it passed, and the agency questions asked about Module 3.',
   },
 ];
 
@@ -287,6 +319,12 @@ const CMC_SUGGEST: Record<string, string[]> = {
   batch: ['Summarize deviations across the last 10 batches', 'Show batches still pending release', 'Trend yield across drug-product batches'],
   change: ['Record this change and its justification', 'Which Module 3 evidence does this change affect?', 'Review my open changes and their recorded dispositions'],
   pathway: ['Summarise every governed action taken on this Module 3', 'Which contradictions were resolved, and how?', 'Draft an audit-trail summary for an inspector'],
+  /* Quality by design and Module 3 build kept their asks inside their own
+     files, so they were the two tabs with nothing in this map: AnA's
+     `availableActions` and (now) the page's starter row had no words for
+     them. They are the same lists, by reference. */
+  quality: QUALITY_SUGGEST,
+  build: BUILD_SUGGEST,
 };
 
 
@@ -502,19 +540,18 @@ function cmcCollab(label: string) { cmcCtx(label); try { if ((window as any).C2C
 
 /* ── Shared subcomponents ── */
 
-function CmConnectBar({ nav }: { nav?: (id: string) => void }) {
-  return (
-    <div className="cm-connect">
-      <span className="cm-connect-l">This work flows into</span>
-      <button onClick={() => cmcNav(nav, 'dossier')}>{I.folder} Module 3 dossier</button>
-      <button onClick={() => cmcNav(nav, 'document-authoring')}>{I.penLine} Document editor</button>
-      <button onClick={() => cmcNav(nav, 'vault')}>{I.vault} Vault</button>
-      <button onClick={() => cmcNav(nav, 'projects')}>{I.folder} Project</button>
-      <button onClick={() => cmcTask('CMC — Module 3')}>{I.checkSquare} Tasking</button>
-      <button onClick={() => cmcCollab('CMC — Module 3')}>{I.messageSquare} Collaborate</button>
-    </div>
-  );
-}
+/* `CmConnectBar` — the "THIS WORK FLOWS INTO" row of six destination chips —
+   is deleted here (D5 §A.4.3). A row that describes the app to itself is a
+   retired pattern (ONE_DESIGN_PLAN §2), and every one of its six doors is
+   still reachable, closer to the work:
+     Module 3 dossier  → the Module 3 build tab, and the header's
+                         "Place into submission"
+     Document editor   → the project's Author step, and ⌘K
+     Vault             → the rail
+     Project           → the `.pj-back` link at the top of this page
+     Tasking           → the topbar Task button, and each register's CmPush
+     Collaborate       → the topbar, and each register's CmPush
+   `cmcNav`, `cmcTask` and `cmcCollab` stay: CmPush below still uses them. */
 
 /* "Open in", not "Push to": these buttons navigate with context — they write
    nothing. The data itself flows without them: every register save
@@ -524,12 +561,11 @@ function CmConnectBar({ nav }: { nav?: (id: string) => void }) {
    relabel removes. */
 function CmPush({ label, nav, bar }: { label: string; nav?: (id: string) => void; bar?: boolean }) {
   return (
-    <span className={bar ? 'cm-push cm-pushbar' : 'cm-push'}>
-      <span className="lbl">Open in</span>
-      <button onClick={() => { cmcCtx(label); cmcNav(nav, 'dossier'); }} title="Open the Module 3 dossier with this in context">{I.gitBranch} Module 3 doc</button>
-      <button onClick={() => { cmcCtx(label); cmcNav(nav, 'vault'); }} title="Open the Vault — compiled §3.2 artifacts are filed there automatically">{I.vault} Vault</button>
-      <button onClick={() => cmcTask(label)} title="Create a task">{I.checkSquare} Task</button>
-      <button onClick={() => cmcCollab(label)} title="Collaborate">{I.messageSquare} Discuss</button>
+    <span className={bar ? 'pj-sec-acts cm-push cm-pushbar' : 'pj-sec-acts cm-push'}>
+      <button type="button" className="btn ghost small" onClick={() => { cmcCtx(label); cmcNav(nav, 'dossier'); }} title="Open the Module 3 dossier with this in context">{I.gitBranch} Module 3 doc</button>
+      <button type="button" className="btn ghost small" onClick={() => { cmcCtx(label); cmcNav(nav, 'vault'); }} title="Open the Vault — compiled §3.2 artifacts are filed there automatically">{I.vault} Vault</button>
+      <button type="button" className="btn ghost small" onClick={() => cmcTask(label)} title="Create a task">{I.checkSquare} Task</button>
+      <button type="button" className="btn ghost small" onClick={() => cmcCollab(label)} title="Collaborate">{I.messageSquare} Discuss</button>
     </span>
   );
 }
@@ -537,8 +573,6 @@ function CmPush({ label, nav, bar }: { label: string; nav?: (id: string) => void
 interface CmHeadProps {
   title: string;
   meta: string;
-  ask?: (text: string) => void;
-  suggest?: string[];
   actions?: React.ReactNode;
 }
 /** The overview's line under its title: "1 submission — RPI 82 average", or that no index is computed yet. */
@@ -547,15 +581,116 @@ function overviewMeta(submissions: number | null, avgRpi: number | null): string
   return `${count} — ${avgRpi == null ? 'no preparedness index computed yet' : `RPI ${avgRpi} average`}`;
 }
 
-function CmHead({ title, meta, ask, suggest, actions }: CmHeadProps) {
+/* The view's lead, not a page header (D5 §A.4.4). The page has exactly one
+   <h1>, written once by `CmcModule`; each tab opens with an <h2> and one grey
+   line. What left this component:
+   • the "CMC — Module 3 operating system" kicker — an uppercase eyebrow over
+     every one of nine screens, saying what the rail's active item and the
+     page title already say (ONE_DESIGN_PLAN §2);
+   • the orange "Ask AnA" button — AnA's entry on a work area is the starter
+     row below the header (§WA.3 "Actions"), not a button per screen;
+   • the three suggestion tiles — the same prompts, now page-level and the
+     same on every tab, so their position does not move as you switch tabs.
+   `actions` stays: it is where a tab's own act lives, and in a tabbed work
+   area the active tab's lead row is where the ONE primary may sit. */
+function CmHead({ title, meta, actions }: CmHeadProps) {
+  return (
+    <div className="pj-sec-h cm-lead">
+      <h2>{title}</h2>
+      <span className="sec-sub">{meta}</span>
+      {actions && <div className="pj-sec-acts">{actions}</div>}
+    </div>
+  );
+}
+
+/* The page's one ask row (§WA.4.2 rule 4): at most three starters, the first
+   of which is always "What do I do on <this tab>?" — the question the retired
+   "What to do now / NEXT STEP" box used to answer in print. It is answered
+   from `anaContext.facts.whatToDoHere`, which carries that tab's exact
+   `now` sentence, so nothing the box said is lost.
+   The other two are the tab's own first two existing suggestions. */
+function cmStarters(tab: string, label: string): Array<{ label: string; prompt: string }> {
+  const first = {
+    label: `What do I do on ${label}?`,
+    prompt: `What do I do on the ${label} tab of CMC / Module 3, and what is open on it for this project?`,
+  };
+  return [first, ...(CMC_SUGGEST[tab] ?? []).slice(0, 2).map((t) => ({ label: t, prompt: t }))];
+}
+
+/* The page's back link (§WA.4.2 rule 2). It says which project this work area
+   is in — the job CMC's uppercase eyebrow and its "Project" destination chip
+   used to share between them — and it is the way back. Nothing renders when no
+   project is open: CMC's Portfolio and its org-scoped registers are readable
+   without one, and a dead link would be worse than no link. */
+function CmBack({ nav }: { nav?: (id: string) => void }) {
+  const project = useShellProject();
+  if (!project) return null;
+  return (
+    <button type="button" className="pj-back" onClick={() => nav?.('project-home')}>
+      {I.left} {project.title ?? 'Project'}
+    </button>
+  );
+}
+
+/** Which half of the work area a tab belongs to; `module3` for an unknown id. */
+function halfOf(tab: string): 'module3' | 'records' {
+  return CMC_NAV.find((n) => n.id === tab)?.half ?? 'module3';
+}
+
+/* The two halves the founder named, then the active half's views (D5 §A.3).
+   The half is DERIVED from the open tab, never stored: one piece of state means
+   the AnA action `cmc.open-tab`, `__cmSetTab` and these two rows cannot
+   disagree about which half is showing. The ids are untouched, so every caller
+   that addresses a destination by id still reaches it.
+
+   The half button remembers where you were in that half (§A.6 item 2). It is a
+   ref, not state: it changes nothing on screen by itself, and the rendered half
+   is still read off `tab` alone. Without it, glancing at Module 3 from
+   Stability and coming back drops you on Substance & product — the first tab
+   of the half — and you lose your place for having looked. */
+function CmHalves({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
+  const half = halfOf(tab);
+  const inHalf = CMC_NAV.filter((n) => n.half === half);
+  const lastIn = useRef<Record<string, string>>({});
+  lastIn.current[half] = tab;
+  const openHalf = (want: 'module3' | 'records') => {
+    const first = CMC_NAV.find((n) => n.half === want)?.id;
+    onTab(lastIn.current[want] ?? first ?? 'overview');
+  };
   return (
     <>
-      <div className="cm-head">
-        <div><div className="cm-kicker">CMC — Module 3 operating system</div><h1 className="cm-title">{title}</h1><div className="cm-meta">{meta}</div></div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>{actions}{ask && <button className="reg-cta" onClick={() => ask((suggest && suggest[0]) || 'Help me with Module 3')}>{I.sparkles} Ask AnA</button>}</div>
+      <div className="seg" role="group" aria-label="CMC / Module 3">
+        <button type="button" className="seg-b" aria-pressed={half === 'module3'} onClick={() => openHalf('module3')}>Module 3</button>
+        <button type="button" className="seg-b" aria-pressed={half === 'records'} onClick={() => openHalf('records')}>Study records</button>
       </div>
-      {suggest && <div className="sp-starters" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>{suggest.map((s, i) => (<button key={i} className="sp-starter" onClick={() => ask && ask(s)}><span className="sk">{I.sparkles}</span><span>{s}</span></button>))}</div>}
+      <div className="tabs" role="tablist" aria-label={half === 'module3' ? 'Module 3' : 'Study records'}>
+        {inHalf.map((n) => (
+          <button
+            key={n.id}
+            type="button"
+            role="tab"
+            className="tab"
+            aria-selected={tab === n.id}
+            title={n.blurb}
+            onClick={() => onTab(n.id)}
+          >
+            {n.label}
+          </button>
+        ))}
+      </div>
     </>
+  );
+}
+
+function CmStarters({ tab, label, ask }: { tab: string; label: string; ask: (text: string) => void }) {
+  return (
+    <div className="sp-starters" data-layout="row" aria-label="Ask AnA">
+      {cmStarters(tab, label).map((s) => (
+        <button key={s.label} type="button" className="sp-starter" onClick={() => ask(s.prompt)}>
+          <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{s.label}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -842,7 +977,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   );
   return (
     <div className="cm-body">
-      <CmHead title="Module 3 overview" meta={overviewMeta(portfolioUnreadable ? null : port.length, avgRpi)} ask={ask} suggest={CMC_SUGGEST.overview} />
+      <CmHead title="Module 3 overview" meta={overviewMeta(portfolioUnreadable ? null : port.length, avgRpi)} />
       {board.loading ? (
         <EmptyState icon={I.beaker} title="Loading the Module 3 board…" busy testId="cmc-board-loading" />
       ) : board.error ? (
@@ -864,7 +999,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
               letters' own overdue verdict, P-39 item 1): '—' with no program
               open or when the read failed, never 0 for "not read"; a positive
               count is a button; what it did not count is said with it. */}
-          <div className="cm-kpis" style={{ gridTemplateColumns: 'minmax(150px, 320px)' }}>
+          <div className="reg-kpis">
             <Kpi
               l="Module 3 questions overdue on this project"
               v={irUnknown ? '—' : irOverdue}
@@ -1111,7 +1246,10 @@ function specSavedToast(json: unknown, attr: string): string {
   return 'Specification saved · ' + attr + (withdrawn ? ' · approval withdrawn: approve it again before it is filed.' : '');
 }
 
-function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+/* `ask` stays in the props type — `CMC_SURF` hands every tab the same pair —
+   but this tab no longer reads it: the orange "Ask AnA" button went with
+   `CmHead`'s kicker and the starters are the page's (D5 §A.4.4). */
+function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   /* REAL slice: the specifications workbench is bound to the governed
      quality_specifications table (server/api/cmc/specificationRoutes.ts,
      mounted at /api/cmc/specifications). Reads GET /:projectId, creates via
@@ -1233,7 +1371,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
   const noMethodCount = rows.filter((r) => r.noMethod).length;
   return (
     <div className="cm-body">
-      <CmHead title="Specifications" meta="Release and shelf-life limits — drug substance and drug product" ask={ask} suggest={CMC_SUGGEST.specs}
+      <CmHead title="Specifications" meta="Release and shelf-life limits — drug substance and drug product"
         actions={<button className="nda-open" onClick={() => setEdit('new')} disabled={!projectId} title={!projectId ? 'Open a project to record specifications' : ''}>{I.plus} New specification</button>} />
       <CmCorrNotice prefixes={['3.2.S.4', '3.2.P.5']} noun="these specifications" nav={nav} />
       {noMethodCount > 0 && <div className="pj-con" style={{ marginBottom: 14 }}><span className="ico">{I.alertTriangle}</span><div><div className="pj-con-t">{noMethodCount} specification without a validated method</div><div className="pj-con-d">A specification cannot be approved until its analytical method is validated (ICH Q2). Add the method, or ask AnA to draft the validation justification.</div></div></div>}
@@ -1558,7 +1696,10 @@ function byTimePoint(a: StabilityResult, b: StabilityResult): number {
   return String(a.timePoint).localeCompare(String(b.timePoint));
 }
 
-function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+/* `ask` stays in the props type — `CMC_SURF` hands every tab the same pair —
+   but this tab no longer reads it: the orange "Ask AnA" button went with
+   `CmHead`'s kicker and the starters are the page's (D5 §A.4.4). */
+function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   const projectId = cmcProjectUuid();
   /* With a project open the register reads that project's studies (and any
      not yet filed to a project), as Specifications and Batch records do
@@ -1849,12 +1990,10 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
       <CmHead
         title="Stability program"
         meta="ICH Q1A(R2) / Q1E — long-term, intermediate, accelerated and stress studies"
-        ask={ask}
-        suggest={CMC_SUGGEST.stability}
         actions={<button className="nda-open" onClick={() => setRegistering(true)}>{I.plus} Register study</button>}
       />
       <CmCorrNotice prefixes={['3.2.S.7', '3.2.P.8']} noun="the stability program" nav={nav} />
-      <div className="cm-kpis">
+      <div className="reg-kpis">
         {/* Two tiles, not six. "Studies", "Long-term" and "Accelerated" were
             classification counts nobody acts on — the register below is sorted
             and filterable and answers them better. "Results recorded" is a
@@ -2315,7 +2454,10 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
 
 /* ═══════════ Batch records -- release eligibility ═══════════ */
 
-function CmBatch({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+/* `ask` stays in the props type — `CMC_SURF` hands every tab the same pair —
+   but this tab no longer reads it: the orange "Ask AnA" button went with
+   `CmHead`'s kicker and the starters are the page's (D5 §A.4.4). */
+function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   /* REAL slice: bound to the governed cmc_batch_records table
      (server/api/cmc/batchRecordRoutes.ts, mounted at /api/cmc/batch-records).
      Reads GET /:projectId, logs a batch via POST /, and releases ONLY through
@@ -2399,9 +2541,9 @@ function CmBatch({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
   };
   return (
     <div className="cm-body">
-      <CmHead title="Batch records" meta="Manufacture, yield, deviations and disposition" ask={ask} suggest={CMC_SUGGEST.batch}
+      <CmHead title="Batch records" meta="Manufacture, yield, deviations and disposition"
         actions={<button className="nda-open" onClick={() => setForm(true)} disabled={!projectId} title={!projectId ? 'Open a project to log batch records' : ''}>{I.plus} Log batch</button>} />
-      <div className="cm-kpis">
+      <div className="reg-kpis">
         <Kpi l="Batches" v={rows.length} />
         <Kpi l="Pending release" v={pending} tone={pending ? 'warn' : 'ok'} />
         <Kpi l="Open deviations" v={devs} tone={devs ? 'warn' : 'ok'} />
@@ -2709,11 +2851,14 @@ function CmProcessCapability({ projectId }: { projectId?: string }) {
 
 /* Postapproval filing assessment is deferred; the launch app records changes
    against the US IND's Module 3 without manufacturing a marketing category. */
-export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+export /* `ask` stays in the props type — `CMC_SURF` hands every tab the same pair —
+   but this tab no longer reads it: the orange "Ask AnA" button went with
+   `CmHead`'s kicker and the starters are the page's (D5 §A.4.4). */
+function CmChange({ nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   const { launchScopeEnforced } = useNavEntitlements();
   return (
     <div className="cm-body">
-      <CmHead title="Change control" meta="Record the change, its basis and its Module 3 impact" ask={ask} suggest={CMC_SUGGEST.change} />
+      <CmHead title="Change control" meta="Record the change, its basis and its Module 3 impact" />
       {launchScopeEnforced === false ? (
         <CmcVariationAssessment nav={nav} followup={(sections) => sections.length ? <CmCorrNotice prefixes={sections} noun="the sections this change affects" nav={nav} /> : null} />
       ) : (
@@ -2741,14 +2886,15 @@ export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id:
  * Nothing was removed: all four registers below are the same components bound to
  * the same endpoints.
  */
-function CmMaterials({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+/* `ask` stays in the props type — `CMC_SURF` hands every tab the same pair —
+   but this tab no longer reads it: the orange "Ask AnA" button went with
+   `CmHead`'s kicker and the starters are the page's (D5 §A.4.4). */
+function CmMaterials({ nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   return (
     <div className="cm-body">
       <CmHead
         title="Substance & product"
         meta="CTD §3.2.S / §3.2.P — the active substance and the finished product, their manufacture and control"
-        ask={ask}
-        suggest={CMC_SUGGEST.materials}
       />
       <div className="cm-sub-head">Drug substance — §3.2.S</div>
       <CmDrugSubstances />
@@ -2814,7 +2960,10 @@ interface ProvenanceRow {
   sectionKey: string;
 }
 
-export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+export /* `ask` stays in the props type — `CMC_SURF` hands every tab the same pair —
+   but this tab no longer reads it: the orange "Ask AnA" button went with
+   `CmHead`'s kicker and the starters are the page's (D5 §A.4.4). */
+function CmPathway({ nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   const projectId = cmcProjectId();
   const sections = useLiveRows<{ sectionKey: string; sectionPath: string; approvalState: string; stale: boolean; updatedAt: string }>(
     projectId ? '/api/cmc/module3-os/sections/' + encodeURIComponent(projectId) : null,
@@ -2865,7 +3014,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
 
   return (
     <div className="cm-body">
-      <CmHead title="Project records" meta="Agency questions on Module 3, approval gates and the audit chain" ask={ask} suggest={CMC_SUGGEST.pathway} />
+      <CmHead title="Approvals & audit" meta="Agency questions on Module 3, approval gates and the audit chain" />
       <CmcModule3QuestionIndex nav={nav} />
       <CmcEarlierQuestionFile nav={nav} />
       {!projectId ? (
@@ -2882,7 +3031,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
         </div>
       ) : (
         <>
-          <div className="cm-kpis">
+          <div className="reg-kpis">
             <Kpi l="Governed events" v={events.length} />
             <Kpi l="Sections tracked" v={sections.rows.length} />
             <Kpi l="Contradictions resolved" v={resolved.length} tone={resolved.length ? 'ok' : undefined} />
@@ -3107,6 +3256,11 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
       facts: {
         tab,
         tabLabel,
+        /* The sentence the retired "What to do now" band printed on every tab
+           (D5 §A.4.3 / §A.5). It is the answer to the page's first starter,
+           "What do I do on <tab>?", so the guidance did not go away — it
+           stopped being a box above the work. */
+        whatToDoHere: CMC_NAV.find((n) => n.id === tab)?.now,
         /* Spread only once measured, so a fact is never a guess. */
         ...(r
           ? {
@@ -3138,20 +3292,27 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
   usePublishSurfaceContext('cmc', anaContext);
 
   const Surf = CMC_SURF[tab] || CmOverview;
+  /* One calm column (D5 §WA.3): the project, the title, one sentence, the ask
+     row, the two halves, the active half's tabs, then the work. Nothing above
+     the title. What used to be above it — a sticky nine-tab bar, the
+     "What to do now / NEXT STEP" band and the "THIS WORK FLOWS INTO" chip row,
+     three bands that filled the first screen at 1440 and pushed the title
+     below the fold at 390 — is gone; D5 §A.5 records where each outcome
+     went. `CmcRegisterLinks` stays above the bodies because a pending Module 3
+     link must survive a tab switch, and it renders nothing when none is
+     pending. */
   return (
     <CmcQuestionsContextProvider value={questionsRead}>
-      <div className="cm">
-        <div className="cm-sub">
-          {CMC_NAV.map((n) => (<button key={n.id} className="cm-subtab" data-on={tab === n.id || undefined} onClick={() => setTab(n.id)} title={n.blurb}>{I[n.icon] || I.grid}{n.label}</button>))}
-        </div>
-        {/* `sequenced` suppresses the project lifecycle's Submit sentence when a
-            program has no sequence. No destination here is that step, so the
-            flag cannot apply; it is passed because the band is the project's
-            and keeps the project's signature. */}
-        <div style={{ margin: '12px 24px 0' }}>
-          <StageBand stage={tab} lifecycle={CMC_NAV} onStage={setTab} sequenced />
-        </div>
-        <CmConnectBar nav={onNav} />
+      <div className="page-inner cm" data-work-area="cmc">
+        <CmBack nav={onNav} />
+        <header className="ph">
+          <div>
+            <h1 className="ph-title">{getSurfaceMeta('cmc').label}</h1>
+            <p className="ph-sub">Module 3 for this filing, and the quality records kept while the study runs.</p>
+          </div>
+        </header>
+        <CmStarters tab={tab} label={tabLabel} ask={ask} />
+        <CmHalves tab={tab} onTab={setTab} />
         <CmcRegisterLinks onRecovered={() => setTab('build')} />
         <Surf ask={ask} nav={onNav} />
       </div>

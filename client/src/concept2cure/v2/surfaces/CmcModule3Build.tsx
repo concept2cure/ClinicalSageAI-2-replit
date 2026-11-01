@@ -797,7 +797,7 @@ function SectionProvenance({
 
 /* ── Local chrome ────────────────────────────────────────────────────────── */
 
-const SUGGEST = [
+export const SUGGEST = [
   'Which §3.2 sections are blocking my export and why?',
   'Draft the narrative for the section with the lowest completeness',
   'What still stands between this Module 3 and its IND sequence?',

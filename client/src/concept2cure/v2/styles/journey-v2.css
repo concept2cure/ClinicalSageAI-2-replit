@@ -332,10 +332,29 @@
 /* ════════════════════════════════════════════════════════════════════
    CMC · Module 3 operating system — full sub-application. Namespace: cm-*
    ════════════════════════════════════════════════════════════════════ */
-.c2c-v2 .cm{height:100%;overflow-y:auto;padding:0;}
-.c2c-v2 .cm-sub{position:sticky;top:0;z-index:5;display:flex;gap:2px;padding:10px 30px 0;background:var(--bg-000);border-bottom:1px solid var(--border);overflow-x:auto;}
+/* `.cm`, `.cm-sub` and `.cm-subtab` deleted 2026-11-01 (D5 §A.4.7); `.cm-head`,
+   `.cm-kicker` and `.cm-title` deleted the same day by D0-2, which aliases all
+   three onto the canonical page header (app-v2.css §4.2.2) — this merge keeps
+   both deletions.
+     `.cm` made the work area its own full-height scroll box, which is why CMC
+   sat in none of the app's page metrics; the page (`.page` > `.page-inner`)
+   scrolls now, and `.cm` survives only as a test hook on that container.
+   `.cm-sub` was the sticky nine-tab bar ABOVE the title, the first of the three
+   bands D5 retires; its nine destinations are the two halves' `.tabs` rows, by
+   the same ids. `.cm-subtab`'s selected state was the one orange CMC could not
+   justify.
+     `.cm-body` stays: twelve surfaces outside D5's packages use it. D5 zeroes
+   its padding inside `[data-work-area]` only (app-v2.css), where the page
+   supplies the gutters. */
 .c2c-v2 .cm-body{padding:24px 30px 72px;max-width:1120px;margin:0 auto;}
-.c2c-v2 .cm-meta{font-size:12.5px;color:var(--text-400);}
+/* Quiet, and at the body ramp's secondary size (D0-1's --fs-small). Was 12.5px
+   --text-400: smaller than anything D0 §4.1 admits. `.cm-head .cm-meta` is
+   aliased to `.ph-sub` by D0-2; this is the standalone note. */
+.c2c-v2 .cm-meta{font-size:var(--fs-small);color:var(--text-300);}
+/* A tab's view lead (CmHead): a `.pj-sec-h` sitting directly under the tab row,
+   so it carries a little more air before its body than a section inside one
+   (D5 §A.4.7). CMC's own class, in CMC's sheet. */
+.c2c-v2 .cm-lead{margin-bottom:16px;}
 /* auto-fit, not a fixed four: a board with five or six measures must not wrap
    a lone tile onto a row of its own. */
 .c2c-v2 .cm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
@@ -369,12 +388,16 @@
 .c2c-v2 .cm-gen-b{flex:1;min-width:0;}
 .c2c-v2 .cm-gen-t{font-size:12.5px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .cm-gen-s{font-size:11px;color:var(--text-400);margin-top:1px;}
-.c2c-v2 .cm-connect button svg{width:13px;height:13px;}
-.c2c-v2 .cm-push{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;}
-.c2c-v2 .cm-push>.lbl{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);margin-right:3px;}
-.c2c-v2 .cm-push button{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;color:var(--accent-200);border:1px solid var(--accent-muted);background:var(--accent-000);border-radius:99px;padding:4px 9px;transition:background var(--dur), border-color var(--dur), color var(--dur);}
-.c2c-v2 .cm-push button:hover{background:var(--accent-strong);color:var(--accent-on-strong);border-color:var(--accent-strong);}
-.c2c-v2 .cm-push button svg{width:12px;height:12px;}
+/* `.cm-connect*` deleted 2026-11-01 with `CmConnectBar` (D5 §A.4.3): the
+   "THIS WORK FLOWS INTO" band. D0-2 had already quietened them in app-v2.css
+   and noted there that D0-6 removes those rules "after D5 deletes
+   CmConnectBar" — which this does; the neutralising rules are left for D0-6 to
+   take, so the sequence it wrote stays true.
+     `.cm-push`'s own flex, its uppercase "Open in" label and its four
+   accent-filled pills go too: CmPush's buttons are `.btn ghost small` in a
+   `.pj-sec-acts` row now, and these rules would have re-tinted them orange.
+   `.cm-pushbar` below STAYS — fifteen other surfaces use it on its own as a
+   divider row, and it is still the right rule at the foot of a section. */
 .c2c-v2 .cm-pushbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
 
 /* ── CMC suite: data entry, Module 3 build, provenance ── */
@@ -390,12 +413,17 @@
 .c2c-v2 .cm-projbar-sm{height:5px;width:64px;display:inline-block;vertical-align:middle;margin-right:7px;}
 .c2c-v2 .cm-list{margin:4px 0 0;padding-left:18px;}
 .c2c-v2 .cm-list li{margin-bottom:3px;}
-.c2c-v2 .cm-sub-head{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);margin:18px 0 8px;}
+/* Was 11px uppercase with letter-spacing (ONE_DESIGN_PLAN §2 retires the
+   uppercase label). Its text — "Drug substance — §3.2.S" — was always
+   sentence case; only this rule shouted it. */
+.c2c-v2 .cm-sub-head{font-size:13px;font-weight:600;color:var(--text-200);margin:24px 0 8px;}
 /* A results table nested inside an expanded register row. */
 .c2c-v2 .cm-subtable{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-md);margin:8px 0;}
 .c2c-v2 .cm-subtable th{background:transparent;}
-.c2c-v2 .cm-linkish{font-size:12.5px;color:var(--accent-200);font-weight:500;text-decoration:underline;text-underline-offset:2px;}
-.c2c-v2 .cm-linkish:hover{color:var(--accent-100);}
+/* Not an accent link: orange is reserved for the one primary, the starters'
+   glyph and focus (D5 §WA.3 "Colour"). */
+.c2c-v2 .cm-linkish{font-size:var(--fs-small, 13px);color:var(--text-200);font-weight:500;text-decoration:underline;text-decoration-color:var(--border-strong);text-underline-offset:2px;}
+.c2c-v2 .cm-linkish:hover{color:var(--text-100);text-decoration-color:var(--text-100);}
 /* The per-section provenance chain in the Module 3 build drawer. */
 .c2c-v2 .cm-prov{list-style:none;margin:0;padding:0;}
 .c2c-v2 .cm-prov li{padding:10px 0;border-bottom:1px solid var(--border);}
