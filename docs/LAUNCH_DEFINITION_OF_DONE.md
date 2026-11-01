@@ -1786,3 +1786,6 @@ two.
     or unreachable, ingestion uses the existing extractors and says so.
   - **Hosted production.** Running the reader in the hosted Terraform stack is D1's to decide.
 - **Default.** The flag stays off until a deployment turns it on, after showing its reader running.
+
+The work, under `Plan: L1` (row D2): the client speaks the reader's real interface, and Vault ingestion reaches it.
+Evidence: `docs/evidence/D2-LAYOUT-READER/2026-11-01/`.
