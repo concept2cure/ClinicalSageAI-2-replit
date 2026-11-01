@@ -12,14 +12,15 @@ change a file that another package's spec also names.
 
 The build order is `.design/claude-convergence/BUILD_ORDER.md`. D0-1 to D0-4 are committed (D0-4 is `1dee898e9`), so
 the `styles/**` lock is released: each sheet now has one holder at a time, below. D5-0 and D5-1 landed from the CMC
-session (`943b78cb7`, `94f24dba0`). Wave 1a (D0-5, D4-1, D2-1) is running; Wave 1b's lanes follow (its §3).
+session (`943b78cb7`, `94f24dba0`). Wave 1a (D0-5, D4-1, D2-1) is running, and so is Wave 1b's L1; the other lanes follow (its §3).
 
 | Files | Held by | For | Until |
 |---|---|---|---|
 | `design-system/**` (except `design-system/CLAUDE.md`, a plan file) | the coordinating session | D0-5, the design-system docs | its commit |
 | `styles/authoring-v2.css`, `styles/rich-section-editor.css` | the coordinating session | L2, D4-1 (CSS only) | its commit |
 | `styles/project-home-v2.css` (the `.pj-index` block, lines 11–51), `styles/surfaces-v2.css` 146–148, `Projects.tsx`, `ProjectPortfolioFilters.tsx`, `ProjectClientFilter.tsx` | the coordinating session | L3, D2-1 | its commit |
-| `styles/app-v2.css` | **one holder at a time**: ask the coordinating session for a turn, keep the change a small CSS-only commit, and say when you release it | BUILD_ORDER §2.1 | — |
+| `styles/app-v2.css` | **one holder at a time**. Now: the coordinating session, L1 (D1-4, D1-1, D1-2, D1-3, in turn). Ask for a turn, keep the change a small CSS-only commit, and say when you release it | BUILD_ORDER §2.1 | each step's commit |
+| `Shell.tsx`, `V2App.tsx`, `TaskTray.tsx`, `OpenWork.tsx`, `NotificationOpenButton.tsx`, `surfaces/surfaceViews.ts` | the coordinating session | L1, the shell (D1-4, D1-1, D1-2, D1-3) | the lane's last commit |
 | `client/src/concept2cure/v2/AnswerLead.tsx`, `icons.tsx`, `C2CForm.tsx`, `dataConnect.tsx` | the coordinating session | D0 (use them; change them only through D0) | D0 closes |
 
 ### Holds on other files (one session per file, plan §4.6)
