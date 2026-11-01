@@ -1,0 +1,272 @@
+# npx vitest run --config vitest.config.ts --maxWorkers=2 client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts
+# at HEAD d914c26184 on concept2cure-v2, 2026-11-01T19:51Z, test file uncommitted (written first)
+# exit code: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > reads the v2 stylesheets and resolves nesting and :is() lists 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .btn is defined in exactly one stylesheet, app-v2.css 3ms
+ × client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card is defined in exactly one stylesheet, app-v2.css 11ms
+   → .pj-card is declared at:
+  app-v2.css:1185  .c2c-v2 .pj-card
+  journey-v2.css:94  .c2c-v2 .pj-card
+  project-home-v2.css:37  .c2c-v2 .pj-card
+  project-home-v2.css:38  .c2c-v2 .pj-card:hover: expected [ Array(3) ] to deeply equal [ 'app-v2.css' ]
+ × client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card-h is defined in exactly one stylesheet, app-v2.css 2ms
+   → .pj-card-h is declared at:
+  app-v2.css:1186  .c2c-v2 .pj-card-h
+  journey-v2.css:95  .c2c-v2 .pj-card-h: expected [ 'app-v2.css', 'journey-v2.css' ] to deeply equal [ 'app-v2.css' ]
+ × client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .rd-chip is defined in exactly one stylesheet, app-v2.css 2ms
+   → .rd-chip is declared at:
+  app-v2.css:2194  .c2c-v2 .rd-chip
+  coverage-v2.css:204  .c2c-v2 .rd-chip
+  misc-surfaces-v2.css:55  .c2c-v2 .rd-chip: expected [ 'app-v2.css', …(2) ] to deeply equal [ 'app-v2.css' ]
+ × client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-lead is defined in exactly one stylesheet, app-v2.css 2ms
+   → .al-lead is declared at:
+  app-v2.css:3576  .c2c-v2 .al-lead
+  coverage-v2.css:245  .c2c-v2 .al-lead: expected [ 'app-v2.css', 'coverage-v2.css' ] to deeply equal [ 'app-v2.css' ]
+ × client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-k is defined in exactly one stylesheet, app-v2.css 1ms
+   → .al-k is declared at:
+  app-v2.css:3579  .c2c-v2 .al-k
+  coverage-v2.css:248  .c2c-v2 .al-k: expected [ 'app-v2.css', 'coverage-v2.css' ] to deeply equal [ 'app-v2.css' ]
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .ph-title is defined in exactly one stylesheet, app-v2.css 1ms
+ × client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .seg is defined in exactly one stylesheet, app-v2.css 2ms
+   → .seg is declared at:
+  surfaces-v2.css:149  .c2c-v2 .seg: expected [ 'surfaces-v2.css' ] to deeply equal [ 'app-v2.css' ]
+ × client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .tab is defined in exactly one stylesheet, app-v2.css 1ms
+   → .tab is declared at:
+  surfaces-v2.css:202  .c2c-v2 .tab: expected [ 'surfaces-v2.css' ] to deeply equal [ 'app-v2.css' ]
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .reg-tbl th is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-input is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-empty-state is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de is defined in exactly one stylesheet, journey-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de-toast is defined in exactly one stylesheet, journey-v2.css 1ms
+ × client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-seclbl is defined in exactly one stylesheet, app-v2.css 1ms
+   → .pj-seclbl is declared at:
+  journey-v2.css:110  .c2c-v2 .pj-seclbl
+  misc-surfaces-v2.css:27  .c2c-v2 .pj-seclbl: expected [ 'journey-v2.css', …(1) ] to deeply equal [ 'app-v2.css' ]
+ × client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > retired alias .btn.sm is defined at most once, in app-v2.css 2ms
+   → .btn.sm is declared at:
+  coverage-v2.css:820  .c2c-v2 .btn.sm
+  surfaces-v2.css:250  .c2c-v2 .btn.sm: expected [ Array(2) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card is defined in exactly one stylesheet, app-v2.css
+AssertionError: .pj-card is declared at:
+  app-v2.css:1185  .c2c-v2 .pj-card
+  journey-v2.css:94  .c2c-v2 .pj-card
+  project-home-v2.css:37  .c2c-v2 .pj-card
+  project-home-v2.css:38  .c2c-v2 .pj-card:hover: expected [ Array(3) ] to deeply equal [ 'app-v2.css' ]
+
+- Expected
++ Received
+
+  [
+    "app-v2.css",
++   "journey-v2.css",
++   "project-home-v2.css",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts:252:85
+    250|   it.each(Object.entries(CANONICAL))('%s is defined in exactly one sty…
+    251|     const { sites, files } = definitions(sel);
+    252|     expect(files, `${sel} is declared at:\n  ${sites.join('\n  ') || '…
+       |                                                                                     ^
+    253|   });
+    254|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card-h is defined in exactly one stylesheet, app-v2.css
+AssertionError: .pj-card-h is declared at:
+  app-v2.css:1186  .c2c-v2 .pj-card-h
+  journey-v2.css:95  .c2c-v2 .pj-card-h: expected [ 'app-v2.css', 'journey-v2.css' ] to deeply equal [ 'app-v2.css' ]
+
+- Expected
++ Received
+
+  [
+    "app-v2.css",
++   "journey-v2.css",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts:252:85
+    250|   it.each(Object.entries(CANONICAL))('%s is defined in exactly one sty…
+    251|     const { sites, files } = definitions(sel);
+    252|     expect(files, `${sel} is declared at:\n  ${sites.join('\n  ') || '…
+       |                                                                                     ^
+    253|   });
+    254|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .rd-chip is defined in exactly one stylesheet, app-v2.css
+AssertionError: .rd-chip is declared at:
+  app-v2.css:2194  .c2c-v2 .rd-chip
+  coverage-v2.css:204  .c2c-v2 .rd-chip
+  misc-surfaces-v2.css:55  .c2c-v2 .rd-chip: expected [ 'app-v2.css', …(2) ] to deeply equal [ 'app-v2.css' ]
+
+- Expected
++ Received
+
+  [
+    "app-v2.css",
++   "coverage-v2.css",
++   "misc-surfaces-v2.css",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts:252:85
+    250|   it.each(Object.entries(CANONICAL))('%s is defined in exactly one sty…
+    251|     const { sites, files } = definitions(sel);
+    252|     expect(files, `${sel} is declared at:\n  ${sites.join('\n  ') || '…
+       |                                                                                     ^
+    253|   });
+    254|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-lead is defined in exactly one stylesheet, app-v2.css
+AssertionError: .al-lead is declared at:
+  app-v2.css:3576  .c2c-v2 .al-lead
+  coverage-v2.css:245  .c2c-v2 .al-lead: expected [ 'app-v2.css', 'coverage-v2.css' ] to deeply equal [ 'app-v2.css' ]
+
+- Expected
++ Received
+
+  [
+    "app-v2.css",
++   "coverage-v2.css",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts:252:85
+    250|   it.each(Object.entries(CANONICAL))('%s is defined in exactly one sty…
+    251|     const { sites, files } = definitions(sel);
+    252|     expect(files, `${sel} is declared at:\n  ${sites.join('\n  ') || '…
+       |                                                                                     ^
+    253|   });
+    254|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-k is defined in exactly one stylesheet, app-v2.css
+AssertionError: .al-k is declared at:
+  app-v2.css:3579  .c2c-v2 .al-k
+  coverage-v2.css:248  .c2c-v2 .al-k: expected [ 'app-v2.css', 'coverage-v2.css' ] to deeply equal [ 'app-v2.css' ]
+
+- Expected
++ Received
+
+  [
+    "app-v2.css",
++   "coverage-v2.css",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts:252:85
+    250|   it.each(Object.entries(CANONICAL))('%s is defined in exactly one sty…
+    251|     const { sites, files } = definitions(sel);
+    252|     expect(files, `${sel} is declared at:\n  ${sites.join('\n  ') || '…
+       |                                                                                     ^
+    253|   });
+    254|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .seg is defined in exactly one stylesheet, app-v2.css
+AssertionError: .seg is declared at:
+  surfaces-v2.css:149  .c2c-v2 .seg: expected [ 'surfaces-v2.css' ] to deeply equal [ 'app-v2.css' ]
+
+- Expected
++ Received
+
+  [
+-   "app-v2.css",
++   "surfaces-v2.css",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts:252:85
+    250|   it.each(Object.entries(CANONICAL))('%s is defined in exactly one sty…
+    251|     const { sites, files } = definitions(sel);
+    252|     expect(files, `${sel} is declared at:\n  ${sites.join('\n  ') || '…
+       |                                                                                     ^
+    253|   });
+    254|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .tab is defined in exactly one stylesheet, app-v2.css
+AssertionError: .tab is declared at:
+  surfaces-v2.css:202  .c2c-v2 .tab: expected [ 'surfaces-v2.css' ] to deeply equal [ 'app-v2.css' ]
+
+- Expected
++ Received
+
+  [
+-   "app-v2.css",
++   "surfaces-v2.css",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts:252:85
+    250|   it.each(Object.entries(CANONICAL))('%s is defined in exactly one sty…
+    251|     const { sites, files } = definitions(sel);
+    252|     expect(files, `${sel} is declared at:\n  ${sites.join('\n  ') || '…
+       |                                                                                     ^
+    253|   });
+    254|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-seclbl is defined in exactly one stylesheet, app-v2.css
+AssertionError: .pj-seclbl is declared at:
+  journey-v2.css:110  .c2c-v2 .pj-seclbl
+  misc-surfaces-v2.css:27  .c2c-v2 .pj-seclbl: expected [ 'journey-v2.css', …(1) ] to deeply equal [ 'app-v2.css' ]
+
+- Expected
++ Received
+
+  [
+-   "app-v2.css",
++   "journey-v2.css",
++   "misc-surfaces-v2.css",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts:252:85
+    250|   it.each(Object.entries(CANONICAL))('%s is defined in exactly one sty…
+    251|     const { sites, files } = definitions(sel);
+    252|     expect(files, `${sel} is declared at:\n  ${sites.join('\n  ') || '…
+       |                                                                                     ^
+    253|   });
+    254|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > retired alias .btn.sm is defined at most once, in app-v2.css
+AssertionError: .btn.sm is declared at:
+  coverage-v2.css:820  .c2c-v2 .btn.sm
+  surfaces-v2.css:250  .c2c-v2 .btn.sm: expected [ Array(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "coverage-v2.css",
++   "surfaces-v2.css",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts:257:97
+    255|   it.each(Object.entries(RETIRED_ALIASES))('retired alias %s is define…
+    256|     const { sites, files } = definitions(sel);
+    257|     expect(files.filter((f) => f !== owner), `${sel} is declared at:\n…
+       |                                                                                                 ^
+    258|   });
+    259| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 8 passed (17)
+   Start at  19:51:27
+   Duration  704ms (transform 107ms, setup 109ms, import 201ms, tests 41ms, environment 0ms)
