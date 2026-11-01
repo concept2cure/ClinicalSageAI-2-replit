@@ -234,11 +234,13 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     id: 'biostatistics',
     label: 'Biostatistics',
     // Founder, 2026-10-31 (P-77): "My cmc, biostatistics, tasking, projects is
-    // all gone" — the screens existed and the rail had no entry. The founder's
-    // model already named Biostatistics a work area to join the rail once in the
-    // catalog (P-36's rail decision). Surfaces only, as for risk-based
-    // monitoring (P-76): professional-tier and explicit grants keep deciding who
-    // holds it, and no module is granted to a new organisation.
+    // all gone" — the screens existed and nothing reached them. They are in the
+    // catalog and reached from the project's "Start work in this project"
+    // (ProjectCoreWork.tsx) and ⌘K, not from a rail entry: RULE 4 refuses a new
+    // rail entry, and the founder's product spine (P-79, 2026-11-01) puts
+    // biostatistics inside the project's evidence. Surfaces only, as for
+    // risk-based monitoring (P-76): professional-tier and explicit grants keep
+    // deciding who holds it, and no module is granted to a new organisation.
     surfaces: ['biostatistics', 'biostat-workbench'],
     modules: [],
   },

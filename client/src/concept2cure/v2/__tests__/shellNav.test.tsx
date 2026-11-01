@@ -124,8 +124,8 @@ function destinations(scroll: HTMLElement, onNav: ReturnType<typeof vi.fn>): str
 
 // Submission Center is back on the rail: the founder looked for it there in a client demo (2026-10-31).
 const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'Submission Center'];
-// Biostatistics joined the work areas when it joined the catalog (P-77, 2026-10-31).
-const WORK_AREAS = ['CMC / Module 3', 'Risk-based monitoring', 'Biostatistics', 'Quality', 'Reporting & analytics'];
+// Biostatistics is reached from the project (ProjectCoreWork), not the rail: RULE 4, P-79 (2026-11-01).
+const WORK_AREAS = ['CMC / Module 3', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
 
 describe('the rail lists the places, then the work areas', () => {
   it('exactly the places, then the work areas, in order', async () => {
@@ -195,9 +195,11 @@ describe('the rail lists the places, then the work areas', () => {
     fireEvent.click(within(scroll).getByRole('button', { name: 'Vault' }));
     expect(onNav).toHaveBeenCalledWith('vault');
     expect(await screen.findByText('Open a project to see its Vault. Choose one in Projects.')).toBeTruthy();
-    // Tasks too, whose rail target ('tasks') is not its navigation id ('tasking').
+    // Tasks is not a project screen (shared/navigation: scope 'global', c5170db97f, 2026-10-31): it
+    // opens everyone's board with no project open, and follows the project once one is.
     fireEvent.click(within(scroll).getByRole('button', { name: 'Tasks' }));
-    expect(await screen.findByText('Open a project to see its Tasks. Choose one in Projects.')).toBeTruthy();
+    expect(onNav).toHaveBeenCalledWith('tasks');
+    expect(screen.queryByText('Open a project to see its Tasks. Choose one in Projects.')).toBeNull();
     cleanup();
     publishShellProject({ id: '11111111-2222-4333-8444-000000000001', title: 'SYN-201 IND' });
     try {
