@@ -653,7 +653,7 @@ export function strategyMarkdown(s: ControlStrategy): string {
 
 /* ── Local chrome ────────────────────────────────────────────────────────── */
 
-const SUGGEST = [
+export const SUGGEST = [
   'Which CQAs have no validated method controlling them?',
   'What would a reviewer challenge in this control strategy?',
   'Turn the ICH findings into a remediation plan with owners',
