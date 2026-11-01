@@ -40,7 +40,7 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | `server/services/ana/intelligence-questions/flows/**` (not `engine.ts`), `server/services/ana/intelligence-questions/programme-facts.ts` | session `019ZvHmh…` (relayed by the founder) | S4, "asks the right questions": the founder's 2026-10-12 positions-with-Other directive, by extending the existing flows (designation, paediatric plan, comparability already appear in them). Starts with a "What already exists" README; no new file under `server/` (RULE 6); `shared/regulatory/*-positions.ts` is outside S4's paths. |
 | `server/services/ectd/assess-dispatch-readiness.ts` (the sequence read answers only for a live sequence) | RIM | F1 repair B, after slice 2 |
 | `server/routes/ind-lifecycle/shared.ts` (`fail()` maps through `SUBMISSION_ERROR_STATUS`) and its contract test | RIM | F1 repair C, after slice 2 |
-| `server/routes/authoring.router.ts` (the approval, freeze and sign gate), `server/services/authoring/draft-figure-check.ts`, `draft-source-references.ts`, `client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx` (behaviour only: the 409 asked in the existing C2CForm step) | AI architecture (`017CFk…`) | L1: an unverified figure blocks an approval or a seal until the signer acknowledges it (founder decision, numbered P-89 when recorded). Before L2 reaches D4-3, which moves the bar's mount. |
+| `server/routes/authoring.router.ts` (the approval, freeze and sign gate), `server/services/authoring/draft-figure-check.ts`, `draft-source-references.ts`, `client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx` (behaviour only: the 409 asked in the existing C2CForm step) | AI architecture (`017CFk…`) | L1: an unverified figure blocks an approval or a seal until the signer acknowledges it (P-89, landed `ae3681cb9`; released when its flag-off evidence lands). Before L2 reaches D4-3, which moves the bar's mount. |
 
 ## Who works where
 
@@ -90,4 +90,6 @@ S10 (the agency's communications back into the project) is held by RIM since 202
      fails the push even when every commit is sound;
    - **commit only your paths**: `git commit -m … -- <paths>`. A bare `git commit` takes whatever another process
      has staged in the shared index (it happened once on 2026-11-01, `87c6a1470`);
-   - check the push's own exit status; a pipe through `tail` hides a failure.
+   - check the push's own exit status; a pipe through `tail` hides a failure;
+   - **after two lost ref races**, ask the coordinating session for a push window: it asks every other session to
+     hold its pushes for 15 minutes and says when the window closes (the first, 22:50, landed P-89 and P-90 at 22:52).
