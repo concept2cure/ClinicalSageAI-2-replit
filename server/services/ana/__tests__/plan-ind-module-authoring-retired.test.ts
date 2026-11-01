@@ -18,17 +18,23 @@
  *     (module2-csr-inputs.ts) and, with none, returns the 2.5 outline the
  *     template library serves (ctd-component-outline.ts);
  *   - draft_clinical_summary_m2_7 (bla-biologics-tool-defs.ts) composes
- *     2.7.1–2.7.4 from the same records and says so when there are none;
- *   - nonclinical-clinpharm-tools.test.ts holds both handlers to that.
+ *     2.7.1–2.7.4 from the same records and says so when there are none.
+ * Their tests: nonclinical-clinpharm-tools.test.ts (the M2.7 handler: supplied
+ * figures not used, needs_data, composed from the records);
+ * new-tool-handlers.test.ts and ana-tools-read-the-ctd-record.test.ts (the
+ * M2.5 outline with no data);
+ * module2-csr-inputs.pglite.test.ts (the CSR loader both read).
  *
  * What the planner held that those tools lack is carried over. Its sections
  * were the record's headings directly below 2.5 and 2.7 (D2 cleanup C4a). The
  * 2.5 headings are the M2.5 tool's outline (ana-tools-read-the-ctd-record.test.ts).
  * The 2.7 headings, which the M2.7 tool does not return without a CSR, are
  * get_document_template's clinical_summary outline, read from the same record
- * to its depth; the last case holds that. Nothing else carries over: the former
- * section ids, the unplaced-fact report and the required_strings all described
- * facts the model supplied.
+ * to its depth; the last case holds that. Its required_strings were those
+ * headings plus each fact's value: the headings are the outlines above, and a
+ * draft's heading coverage is checked by medical_writing_review; the values
+ * were the model's. Nothing else carries over: the former section ids and the
+ * unplaced-fact report described facts the model supplied.
  *
  * History: git log --all --diff-filter=D -- '*ind-module*' was empty before
  * this change.
@@ -145,3 +151,21 @@ describe('what it held that the record tools lack is carried over', () => {
     expect(headings).toEqual(children('2.7').map((c) => `${c} ${ichHeadingTitle(c)}`));
   });
 });
+
+// S6 review (2026-11-01): the IND intake now routes to the 2.5 handler, and
+// nothing tested that it ignores figures a call supplies. With no project
+// open it asks for one and uses none of them.
+describe('the 2.5 replacement uses no figure a call supplies', () => {
+  it('draft_clinical_overview_m2_5 with csrs in the call and no project open: needs_project, figures named as not used', async () => {
+    const out = JSON.parse(String(await getToolHandler('draft_clinical_overview_m2_5')!(
+      {
+        product_name: 'BX-115', indication: 'AML',
+        csrs: [{ studyId: 'X-301', protocolNumber: 'X-301', phase: '3', studyDesign: 'randomized', primaryEndpoint: 'ORR', primaryResult: 'ORR 42.3%', sampleSize: 312 }],
+      },
+      { organizationId: 7, userId: 3 } as never,
+    )));
+    expect(out).toMatchObject({ ok: false, status: 'needs_project', ignoredSuppliedFigures: true });
+    expect(JSON.stringify(out)).not.toContain('42.3%');
+  });
+});
+

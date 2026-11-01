@@ -50,7 +50,7 @@ export interface EngineeringSurfaceProps extends EngineeringPanelsContextProps {
   program: Program | null;
   onAskAna: (text: string, opts?: { tool?: string }) => void;
   /** Open a document in the editor — host wires this to the v2 editor route. */
-  onOpenEditor?: (docId: string) => void;
+  onOpenEditor?: (docId: string, doc: KitDocument) => void;
 }
 
 interface Blocker {
@@ -399,7 +399,7 @@ export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsCo
           ) : (
             <DocumentsPanel
               title="Documents in flight"
-              subtitle="Tap any row to open in the editor · sparkle to ask AnA to draft the next section"
+              subtitle="A design document opens in the editor, a software item in Software · sparkle to ask AnA to draft the next section"
               docs={docs as unknown as KitDocument[]}
               onOpenEditor={onOpenEditor}
               onAskAna={(text) => onAskAna(text)}

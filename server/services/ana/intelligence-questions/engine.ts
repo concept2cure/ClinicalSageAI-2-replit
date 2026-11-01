@@ -657,7 +657,7 @@ export function buildSuggestedActions(
   actions.push({
     label: 'Run FDA War Game',
     actionType: 'start_war_game',
-    description: 'Pressure-test this document against FDA auditor scrutiny',
+    description: "Pressure-test this interview against FDA auditor scrutiny (start_war_game with the interview's session_id)",
   });
 
   return actions;
