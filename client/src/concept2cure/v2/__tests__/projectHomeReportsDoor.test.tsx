@@ -98,11 +98,12 @@ const headerReady = () => waitFor(() => expect(document.querySelectorAll('.pj-lc
 const overviewUrls = () => apiRequest.mock.calls.map((c) => String(c[1])).filter((u) => u.startsWith('/api/insights-canvas/overview'));
 
 describe("Project home: a door to this project's reports", () => {
-  it('the project header offers it, named for the job and the place', async () => {
+  it('the project offers it beside its facts, named for the job and the place', async () => {
     const onNav = renderProject();
     await headerReady();
     const door = await screen.findByRole('button', { name: DOOR });
-    expect(door.closest('.pj-top'), 'the door is on the project header').not.toBeNull();
+    // Claude's project page (2026-11-01): it sits with what the project is, beside the work.
+    expect(door.closest('[aria-label="About this project"]'), 'the door is with the project\u2019s facts').not.toBeNull();
     fireEvent.click(door);
     expect(onNav).toHaveBeenCalledWith('insights');
     // The shell's one program channel still names this project for the next surface.
