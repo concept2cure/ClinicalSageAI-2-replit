@@ -214,7 +214,7 @@
     },
     {
       "id": "S1",
-      "title": "Spine 1: the project and its objective (P-79, P-80): completes ana_client_objectives for the project",
+      "title": "Spine 1: the project and its objective (P-79, P-80): the charter's objectives section is the objective of record; AnA's project intelligence reads it",
       "status": "open",
       "dependsOn": [],
       "paths": [
@@ -229,7 +229,13 @@
         "scripts/db/migration-set.mjs",
         "shared/schema/**",
         "server/routes/client-intelligence.ts",
-        "server/services/ana-context-router.ts"
+        "server/services/ana-context-router.ts",
+        "server/routes/charters.ts",
+        "shared/schema/project-charter.ts",
+        "server/services/client-intelligence-memory.ts",
+        "server/services/lumen-context/intelligence-prefix.ts",
+        "server/routes/c2c/projects.ts",
+        "client/src/concept2cure/v2/surfaces/ProjectHome.tsx"
       ]
     },
     {

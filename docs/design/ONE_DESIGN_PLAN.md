@@ -92,6 +92,23 @@ Read at HEAD on 2026-11-01. "Unverified" marks what the search found but did not
 | CMC | Services and API: `server/services/cmc/` (60 files), `server/api/cmc/`, `shared/schema/cmc-os.ts`. Composition boundary: `server/services/cmc/composition-scope.ts` (P-28). Screens: `surfaces/CmcModule.tsx`, `CmcModule3Build.tsx`, `CmcPlaceIntoSubmission.tsx`. Professional-tier licensing: `db/migrations/20260824_cmc_professional_tier.sql`. | The study-conduct data capture is not presented as its own half of the work area. Licensing is a founder question. |
 | Risk-based monitoring | Services: `server/services/rbm/`. Routes: `server/routes/mdx-rbm*.ts`. Screens: `surfaces/Rbm*.tsx`, `RbmIngest.tsx`. Decision P-76. Design: `docs/design/RBM_NAVIGATION_PROJECT_SETUP_2026-10-30.md`. | It is not on the one work-area pattern (D7). |
 
+**S1: where the project's objective lives** (decided 2026-11-01 under P-80 and P-82, after RULE 3 found three
+existing stores):
+
+| Store | What it is | Role |
+|---|---|---|
+| `project_charters` and its `objectives` section in `charter_sections` (`shared/schema/project-charter.ts`, `server/routes/charters.ts`) | The program charter. Each section is versioned and content-hashed (21 CFR 11.70(b)), with its status transitions logged. | **The objective of record.** It is immutable with a whole history, as the founder asked, and it is P-82's charter. |
+| `project_intelligence_profiles` (`server/services/client-intelligence-memory.ts`) | AnA's understanding of the project: strategy, indication, population, primary endpoints, decisions, open questions. Read on every turn (`server/services/lumen-context/intelligence-prefix.ts`). | **AnA's catalogue.** It gains the charter's objective in the same per-turn project block. |
+| `ana_client_objectives` (`server/routes/client-intelligence.ts`) | The organisation's goals tracker. Project-admitted since `edcbf4f3da`. | Stays the company-goals tracker. |
+
+To finish:
+1. The charter route reads a project's charter, and records a new version of its objectives section, with the
+   source of each objective: the protocol section, the trial registry entry or the sponsor's release.
+2. The project page's "About this project" card shows the objective and its source.
+3. New project asks for the objective.
+4. AnA proposes the objective from the protocol and the public record, and a person confirms it. Unverified: that
+   `charter_sections` is on every applier.
+
 **Open for the founder** (P-79 does not decide these):
 1. Is CMC licensed separately?
 2. Does the CMC composition boundary widen beyond small-molecule Module 3 for a US IND?
