@@ -208,11 +208,13 @@ Read at HEAD on 2026-11-01. "Not reached" means the server has it and no v2 scre
 
 ## 7. The decision: the project is the program
 
-1. **Workstreams are sections of the one project, not separate projects.** A filing has one data room, one lineage,
-   one team and one dossier. Splitting it into child projects would split all four. So each workstream is a view
-   inside the project: its lead, its tasks, its documents and its status. The project hierarchy that exists stays
-   for the portfolio, for example a molecule's IND project beside its NDA project. *This is the session's
-   recommendation. The founder may overrule it.*
+1. **Writing workstreams are sections of the filing project. Work projects are projects of their own** (amended by
+   P-83, §7a).
+   - The workstreams that write the dossier stay views inside the filing project: Module 1, the Module 2 summaries,
+     the clinical documents of Module 5, labeling and publishing. Each has its lead, tasks, documents and status.
+   - The work that is not document-building, but produces what documents are built from, is its own project under
+     the same product program: CMC, a study's biostatistics, its risk-based monitoring, data management, clinical
+     pharmacology and nonclinical. Its deliverables are mapped downstream (§7a).
 2. **The work breakdown is the project's pyramid.** The project instantiates the pyramid for its application type.
    Progress is kept per project. Each task gets an owner from the team and a due date, scheduled backwards from the
    project's target submission date along the pyramid's dependencies. The critical path is the pyramid's own
@@ -232,6 +234,82 @@ Read at HEAD on 2026-11-01. "Not reached" means the server has it and no v2 scre
    - the public record: trial registries, the sponsor's releases and publications.
 
    It is recorded with where it came from, and a person confirms it.
+
+## 7a. Work projects and their downstream deliverables (founder decision P-83, 2026-11-01)
+
+> The founder: "There's a couple non-document build projects that then are producing documents downstream. There might
+> be a CMC project. There might be a biostatistics project. There might be a risk-based monitoring project. And all
+> those projects have deliverables downstream. And that needs to be thought about and mapped."
+
+**The shape.** A product program (the molecule, biologic or device) is the parent. Under it sit two kinds of project:
+- **Work projects** produce evidence and data: CMC, each study's biostatistics, its risk-based monitoring and its data
+  management, clinical pharmacology, nonclinical.
+- **Filing projects** build documents and file them: the IND and its amendments, the NDA or BLA, the MAA, the J-NDA,
+  the NDS.
+
+A work project often feeds several filings. One drug substance's CMC supports the IND, the NDA and the MAA. The
+existing hierarchy holds this shape: the project rollup service's Program → Project → Study → Sub-project, and the
+project hierarchy route.
+
+**The map.** Each work project lists its deliverables. For each deliverable it records:
+- what the deliverable is;
+- its version: a data-room item with its lineage;
+- its owner and due date;
+- the downstream documents and sections it feeds, in which filing projects.
+
+A downstream section records the deliverable version it was written from. When a new version lands (a new stability
+data cut, a re-run TLF, a revised SAP), the sections that used the old one are flagged for review. That is change
+propagation, and it already exists (`server/services/ana/changePropagationTools.ts`). The integrated schedule's
+critical path crosses projects. For example: the stability data cut, then 3.2.P.8, then the NDA's submission date.
+
+| Work project | Deliverable | Feeds (downstream document · CTD place) |
+|---|---|---|
+| **CMC** | Batch analyses, certificates of analysis | 3.2.S.4.4 and 3.2.P.5.4 batch analyses. The IB's drug-product description. The EU IMPD. Clinical supply release in the TMF. |
+| | Specifications, analytical methods and their validation | 3.2.S.4.1–4.3 and 3.2.P.5.1–5.3. The 2.3 quality overall summary. |
+| | Stability studies and their data cuts | 3.2.S.7 and 3.2.P.8. The label's storage and shelf life (Module 1). The IND annual report's CMC update. |
+| | Process development and validation | 3.2.S.2 and 3.2.P.3. Readiness for the pre-approval inspection. |
+| | Changes during development | IND information amendments. Comparability in 3.2. Post-approval supplements and variations. |
+| **Biostatistics** | Study design and sample size | The protocol's statistics section. Briefing packages (end of phase 2, pre-NDA). |
+| | The SAP and its amendments | The SAP filed with the CSR (16.1.9). The protocol. |
+| | Randomisation | CSR 16.1.7. |
+| | Analysis datasets (ADaM), define.xml, the reviewer's guide | Module 5 study datasets. |
+| | Tables, listings and figures | CSR sections 11, 12 and 14, and listings 16.2. The 2.7.3 and 2.7.4 tables. The label's clinical studies and adverse reactions sections. |
+| | Integrated analyses (ISS, ISE) | 5.3.5.3. 2.7.3, 2.7.4 and 2.5. |
+| | Interim analyses and DMC reports | The DMC charter in the TMF. The CSR. Protocol amendments. |
+| **Risk-based monitoring** | Risk assessment, key risk indicators, quality tolerance limits | The monitoring and quality risk management plans in the TMF. The CSR's data quality assurance section (9.6) and its report of tolerance-limit deviations. |
+| | Central monitoring signals and actions | Protocol deviations: CSR 10.2 and listing 16.2.2. Site audits and inspection readiness. |
+| | Site risk | Site-level data for the agency's inspections (Module 5). |
+| **Data management** | Locked database, SDTM, define.xml, the reviewer's guide | Module 5 study datasets. CRFs (16.3). Coding versions named in the CSR. |
+| **Safety and pharmacovigilance** | SAE narratives, integrated safety, aggregate reports | CSR 14.3.3 and 16.2.7. The ISS. The DSUR. The RMP or REMS (Module 1). The label's warnings and adverse reactions. |
+| **Clinical pharmacology** | PK, PK/PD and population PK reports | 5.3.3 and 5.3.4. 2.7.2. The label's clinical pharmacology and dosing. |
+| **Nonclinical** | Study reports | Module 4. 2.4 and 2.6. The IB's nonclinical sections. |
+| **Clinical operations** | The TMF, site lists, investigators, financial disclosure | CSR 16.1.4. Module 1 (1572s, financial disclosure). Site data for inspections. |
+
+**What already carries a deliverable downstream**, by path:
+- CMC's registers compose Module 3 (`surfaces/CmcModule3Build.tsx`, `CmcPlaceIntoSubmission.tsx`,
+  `CmcSectionEvidence.tsx`, `server/services/cmc/`).
+- Biostatistics writes governed statistical documents (`server/services/ana-biostats/document-generator.ts`,
+  `workflow-integrator.ts`).
+- Risk-based monitoring builds its risk review (`server/services/rbm/risk-report.ts`).
+- The editor builds a CSR from the study's frozen tables (`editor/StudyDataBuild.tsx`).
+- The pyramid's IND has "feeds into" dependencies (`crossSubmissionDeps` in `pyramids/ind-pyramid.ts`).
+- The project rollup (`server/services/project-rollup-service.ts`) and hierarchy (`server/routes/project-hierarchy.ts`)
+  hold the parent and child shape.
+- Change propagation flags what a change touches.
+
+What is missing:
+- the deliverable list of a work project;
+- its "feeds" links to the downstream sections;
+- the flag on a downstream section when a new version lands;
+- the program's map across its projects.
+
+**In the UI (no new screen).**
+- A program is a project like any other; its project page shows its projects and the map.
+- A work project opens on its work area: CMC, Biostatistics or Risk-based monitoring, bound to it, through its
+  doors (`ProjectCoreWork.tsx`). Its project page shows a quiet "Feeds" list: each deliverable, its version and
+  where it goes.
+- A filing project's documents show, in the editor's inspector, the upstream deliverables each section was written
+  from, and flag a newer one.
 
 ## 8. The UI: Claude's shape, the program's substance
 
@@ -253,6 +331,9 @@ Nothing here is a new screen (RULE 4, RULE 6). Each item lands in an existing pl
   the plan).
 
 ## 9. Package S11 and the build order
+
+**S12, work projects and their deliverables** (P-83): finish the hierarchy, the rollup and change propagation into
+the map in §7a. Its order follows S11's.
 
 **S11, the program plan:** bind the pyramid to the project; give it per-project progress; let it assign and
 back-schedule; join it to the content plan; show it in the Plan step.

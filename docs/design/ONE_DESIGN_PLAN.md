@@ -155,6 +155,9 @@ It is finished from:
 
 It is shown in the project's Plan step. Package S11.
 
+Work projects (CMC, biostatistics, risk-based monitoring and others) are projects of their own under the product
+program. Their deliverables are mapped to the downstream documents they feed (P-83, the study's §7a). Package S12.
+
 ## 2. The design (binding)
 
 The colour, type and spacing tokens already exist in `design-system/colors_and_type.css`, and they are Claude's
@@ -278,6 +281,7 @@ whether work may be committed under it:
 | S9 | **Team, tasks, commitments and schedule** (P-81). The team on licensed seats. Each person's due work. Extract commitments. The project's goals and schedule, and progress against them. | — | open |
 | S10 | **The agency's communications back into the project** (P-81). Each letter lands in the project, its questions go to Respond, and its commitments go to tasks. | — | open |
 | S11 | **The program plan** (P-82). The project's pyramid gets per-project progress, owners and back-scheduled due dates. It joins the content plan, has its critical path, and appears in the Plan step. The portfolio and the global schedule. | — | open |
+| S12 | **Work projects and their downstream deliverables** (P-83). CMC, biostatistics, RBM and the other work projects under the product program. Each deliverable is versioned with lineage and mapped to the downstream sections it feeds. A new version flags the sections that used the old one. | — | open |
 
 Each spine package (S1–S8) starts with its "What already exists" section (RULE 3), built from §1a and extended by its
 own searches, filed under `docs/evidence/SPINE/<ID>/`. Its UI work is done on the §2 design. When a screen is in a

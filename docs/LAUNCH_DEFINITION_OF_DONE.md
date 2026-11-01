@@ -1621,3 +1621,33 @@ The study is `docs/design/THE_PROGRAM_2026-11-01.md`. What this decides:
 
 Package S11 (the program plan) joins the ledger. The study's §9 gives the order.
 
+### P-83 — Work projects and their downstream deliverables
+
+Founder, 2026-11-01: "There's a couple non-document build projects that then are producing documents downstream. There
+might be a CMC project. There might be a biostatistics project. There might be a risk-based monitoring project. And
+all those projects have deliverables downstream. And that needs to be thought about and mapped."
+
+This amends P-82 item 1. What it decides:
+- **Two kinds of project under one product program.**
+  - Work projects produce evidence and data: CMC, a study's biostatistics, risk-based monitoring and data
+    management, clinical pharmacology, nonclinical.
+  - Filing projects build and file documents.
+
+  One work project can feed several filings. The writing workstreams stay sections of the filing project.
+- **Every deliverable is mapped downstream.** Each work project's deliverable has a version with lineage, an owner,
+  a due date, and the downstream documents and CTD sections it feeds. A section records the version it was written
+  from. A new version flags the sections that used the old one.
+- **The map is in `docs/design/THE_PROGRAM_2026-11-01.md` §7a.** It covers CMC, biostatistics, risk-based
+  monitoring, data management, safety, clinical pharmacology, nonclinical and clinical operations, each to its
+  documents and CTD places.
+- **It is finished from what exists** (RULE 6):
+  - the project hierarchy and the rollup service (Program → Project → Study → Sub-project);
+  - CMC's Module 3 composition;
+  - Biostatistics' governed documents;
+  - the RBM risk review;
+  - the editor's build from the study's data;
+  - the pyramid's "feeds into" dependencies;
+  - change propagation.
+
+Package S12 joins the ledger.
+
