@@ -130,6 +130,53 @@ interface Rule {
   selectors: string[];
 }
 
+/** The open string's quote after `ch`: opened by a quote, closed by the same quote unless escaped. */
+function nextQuote(quote: string | null, ch: string, prev: string | undefined): string | null {
+  if (!quote) return ch;
+  return ch === quote && prev !== '\\' ? null : quote;
+}
+
+/**
+ * Every rule that carries at least one declaration, with its selectors fully
+ * expanded: CSS nesting resolved against the parent (implicit descendant, or
+ * `&`), `@media` / `@supports` / `@container` / `@layer` seen through, and
+ * `:is()` / `:where()` lists flattened. `@keyframes` and `@font-face` are skipped.
+ */
+interface ParseState {
+  stack: Frame[];
+  all: Frame[];
+  line: number;
+}
+
+function pushFrame(st: ParseState, kind: Frame['kind'], selectors: string[] = []): void {
+  const f: Frame = { kind, selectors, line: st.line, declares: false };
+  st.stack.push(f);
+  if (kind === 'rule') st.all.push(f);
+}
+
+/** A `{` opens a rule, a seen-through conditional group, or a block whose contents are skipped. */
+function openBlock(st: ParseState, prelude: string): void {
+  if (st.stack.some((f) => f.kind === 'skip')) return pushFrame(st, 'skip');
+  const parent = [...st.stack].reverse().find((f) => f.kind === 'rule');
+  if (prelude.startsWith('@')) {
+    if (!/^@(media|supports|container|layer)\b/i.test(prelude)) return pushFrame(st, 'skip');
+    /* A conditional group inside a rule: its bare declarations belong to that rule. */
+    return parent ? pushFrame(st, 'rule', parent.selectors) : pushFrame(st, 'at');
+  }
+  const own = splitTopLevel(prelude);
+  const selectors = parent
+    ? parent.selectors.flatMap((p) => own.map((s) => (s.includes('&') ? s.split('&').join(p) : `${p} ${s}`)))
+    : own;
+  pushFrame(st, 'rule', selectors);
+}
+
+/** A `;` or `}` ends a statement: a declaration marks its rule as declaring; `}` also closes the block. */
+function endStatement(st: ParseState, ch: string, statement: string): void {
+  const t = st.stack[st.stack.length - 1];
+  if (t && t.kind === 'rule' && statement.includes(':')) t.declares = true;
+  if (ch === '}') st.stack.pop();
+}
+
 /**
  * Every rule that carries at least one declaration, with its selectors fully
  * expanded: CSS nesting resolved against the parent (implicit descendant, or
@@ -138,73 +185,29 @@ interface Rule {
  */
 function declaringRules(raw: string): Rule[] {
   const css = stripComments(raw);
-  const stack: Frame[] = [];
-  const all: Frame[] = [];
+  const st: ParseState = { stack: [], all: [], line: 1 };
   let buf = '';
   let parens = 0;
   let quote: string | null = null;
-  let line = 1;
-  const top = () => stack[stack.length - 1];
-  const nearestRule = () => [...stack].reverse().find((f) => f.kind === 'rule');
   for (let i = 0; i < css.length; i++) {
     const ch = css[i];
-    if (ch === '\n') line++;
-    if (quote) {
-      buf += ch;
-      if (ch === quote && css[i - 1] !== '\\') quote = null;
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      quote = ch;
+    if (ch === '\n') st.line++;
+    if (quote || ch === '"' || ch === "'") {
+      /* Inside a string, or opening one: nothing in it is structure. */
+      quote = nextQuote(quote, ch, css[i - 1]);
       buf += ch;
       continue;
     }
-    if (ch === '(') parens++;
-    else if (ch === ')') parens--;
-    if (parens > 0) {
+    parens += ch === '(' ? 1 : ch === ')' ? -1 : 0;
+    if (parens > 0 || (ch !== '{' && ch !== ';' && ch !== '}')) {
       buf += ch;
       continue;
     }
-    if (ch === '{') {
-      const prelude = buf.trim();
-      buf = '';
-      if (stack.some((f) => f.kind === 'skip')) {
-        stack.push({ kind: 'skip', selectors: [], line, declares: false });
-        continue;
-      }
-      const parent = nearestRule();
-      if (prelude.startsWith('@')) {
-        if (!/^@(media|supports|container|layer)\b/i.test(prelude)) {
-          stack.push({ kind: 'skip', selectors: [], line, declares: false });
-        } else if (parent) {
-          /* A conditional group inside a rule: its bare declarations belong to that rule. */
-          const f: Frame = { kind: 'rule', selectors: parent.selectors, line, declares: false };
-          stack.push(f);
-          all.push(f);
-        } else {
-          stack.push({ kind: 'at', selectors: [], line, declares: false });
-        }
-        continue;
-      }
-      const own = splitTopLevel(prelude);
-      const selectors = parent
-        ? parent.selectors.flatMap((p) => own.map((s) => (s.includes('&') ? s.split('&').join(p) : `${p} ${s}`)))
-        : own;
-      const f: Frame = { kind: 'rule', selectors, line, declares: false };
-      stack.push(f);
-      all.push(f);
-      continue;
-    }
-    if (ch === ';' || ch === '}') {
-      const t = top();
-      if (t && t.kind === 'rule' && buf.includes(':')) t.declares = true;
-      buf = '';
-      if (ch === '}') stack.pop();
-      continue;
-    }
-    buf += ch;
+    if (ch === '{') openBlock(st, buf.trim());
+    else endStatement(st, ch, buf);
+    buf = '';
   }
-  return all
+  return st.all
     .filter((f) => f.declares)
     .map((f) => ({ line: f.line, selectors: f.selectors.flatMap(expandIs).map(normalise) }));
 }
