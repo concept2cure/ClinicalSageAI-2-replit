@@ -283,8 +283,18 @@ function nonRegionalProductTypeForIntake(
   return { productType };
 }
 
-/** A word that is itself a program code: "BX-204", "BX204", "HLV-333", "QA-SS-101". */
-const CODE_WORD = /^(?:[A-Za-z0-9]{1,4}-){0,2}[A-Za-z]{1,4}-?\d{2,4}$/;
+/**
+ * A word that is itself a program code: "BX-204", "BX204", "HLV-333",
+ * "QA-SS-101", "C2C-101", "BX-204A". The segment before the number is letters
+ * (one to four, hyphen optional) or, hyphenated, a letter-led alphanumeric
+ * holding a digit. It was letters only, so "C2C-101" was no code and the C2C-101
+ * project was saved as "CAMA", the initials of "[Demo · Biotech] C2C-101 anti-IL…"
+ * (2026-10-31). "COVID-19" is still no code: five letters, no digit among them.
+ */
+const CODE_WORD = /^(?:[A-Za-z0-9]{1,4}-){0,2}(?:[A-Za-z]{1,4}-?|(?=[A-Za-z0-9]{0,5}\d)[A-Za-z][A-Za-z0-9]{1,5}-)\d{2,4}[A-Za-z]?$/;
+
+/** Initials come from words: a bare number or a lone letter ("510", "k" of 510(k)) is not one. */
+const isNameWord = (w: string) => w.length > 1 && /[A-Za-z]/.test(w);
 
 /**
  * The program code, before the route's org-uniqueness suffix.
@@ -296,9 +306,14 @@ const CODE_WORD = /^(?:[A-Za-z0-9]{1,4}-){0,2}[A-Za-z]{1,4}-?\d{2,4}$/;
  * take the initials of its words, so a one-word product gave a one-letter code
  * ("Helvanta-QA3" → "H", "QA-SS-101" → "Q") and the code written in the
  * project name was never looked at (QA 2026-10-08, j1).
+ *
+ * A bracketed label ("[Demo · MDX]") names where a project came from, not the
+ * product, and is not read (2026-10-31: "[Demo · MDX] NeuroPanel-Dx 510(k)"
+ * was coded "DMN5", from Demo, MDX, NeuroPanel and 510). Only new projects
+ * take a code from here; an existing project's code is never re-derived.
  */
 export function baseCodeFrom(productName: string, name: string): string {
-  const clean = (s: string) => (s || '').replace(/[^A-Za-z0-9\- ]/g, ' ').replace(/\s+/g, ' ').trim();
+  const clean = (s: string) => (s || '').replace(/\[[^\]]*\]/g, ' ').replace(/[^A-Za-z0-9\- ]/g, ' ').replace(/\s+/g, ' ').trim();
   const product = clean(productName);
   const project = clean(name);
   if (/^[A-Za-z]{1,4}[- ]?\d{2,4}$/.test(product)) {
@@ -308,7 +323,7 @@ export function baseCodeFrom(productName: string, name: string): string {
     const word = src.split(' ').find((w) => CODE_WORD.test(w));
     if (word) return word.toUpperCase();
   }
-  const words = (product || project).split(' ').map((w) => w.replace(/[^A-Za-z0-9]/g, '')).filter(Boolean);
+  const words = (product || project).split(' ').map((w) => w.replace(/[^A-Za-z0-9]/g, '')).filter(isNameWord);
   const letters = words.length > 1 ? words.map((w) => w[0]).join('') : (words[0] ?? '');
   return letters.slice(0, 4).toUpperCase() || 'PRJ';
 }
