@@ -1,0 +1,43 @@
+# Review rerun of red 1: the new test against HEAD's project-portfolio.ts (blob f8ab188c2), from a scratch copy; the working file was not touched
+# npx vitest run --config vitest.config.ts --maxWorkers=2 --dir <scratch>/head   (tail -40)
+# exit 1
++   "status": "active",
++   "title": "Vorelinib IND",
++   "ws": "Biotech",
+  }
+
+ ❯ ../../..<scratch>/head/server/x/__tests__/card-facts.pglite.test.ts:105:36
+    103|
+    104|   it('reads the same four facts in the creator’s 201 projection', asyn…
+    105|     expect(await createdCard(IND)).toMatchObject({
+       |                                    ^
+    106|       description: DESCRIPTION,
+    107|       indication: INDICATION,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  ../../..<scratch>/head/server/x/__tests__/card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > answers null for an absent or blank description or indication, never a default
+AssertionError: expected { …(13) } to have property "description" with value null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ ../../..<scratch>/head/server/x/__tests__/card-facts.pglite.test.ts:117:20
+    115|     const device = cards.find(row => row.id === K510)!;
+    116|     const maa = cards.find(row => row.id === MAA)!;
+    117|     expect(device).toHaveProperty('description', null);
+       |                    ^
+    118|     expect(device).toHaveProperty('indication', null);
+    119|     expect(device).toMatchObject({ agency: 'FDA', program_type: '510k'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  21:25:08
+   Duration  4.42s (transform 408ms, setup 118ms, import 768ms, tests 3.13s, environment 0ms)
+

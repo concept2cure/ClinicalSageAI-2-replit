@@ -87,7 +87,7 @@ const RETIRED: Retired[] = [
   cls('reg-card', 15),
   cls('reg-tabs', 11),
   cls('reg-tab', 13),
-  cls('cm-subtab', 1),
+  cls('cm-subtab', 0),
   cls('sc-ws', 1),
   cls('cc-tab', 1),
   cls('pj-seg', 2),
@@ -95,7 +95,7 @@ const RETIRED: Retired[] = [
   cls('cl-toast', 1),
   cls('tb-detail', 4),
   cls('rbm-modal', 3),
-  cls('cm-connect', 1),
+  cls('cm-connect', 0),
   cls('pj-stageband', 2),
   /* The phrases' CSS is `.pj-stageband*` and `.cm-connect*`, ratcheted above. */
   { name: 'What to do now', baseline: 1, kind: 'text', css: null },

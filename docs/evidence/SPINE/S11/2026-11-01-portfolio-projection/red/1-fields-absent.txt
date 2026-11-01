@@ -1,0 +1,118 @@
+# Red 1: the projection before this change (git HEAD of server/services/c2c/project-portfolio.ts, 609ef94c7)
+# npx vitest run --config vitest.config.ts --maxWorkers=2 server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts
+# exit 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads a stated description, indication, agency and filing type as stored, in the list 31ms
+   → expected { …(13) } to match object { …(4) }
+(13 matching properties omitted from actual)
+ × server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads the same four facts in the creator’s 201 projection 5ms
+   → expected { …(13) } to match object { …(4) }
+(13 matching properties omitted from actual)
+ × server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > answers null for an absent or blank description or indication, never a default 7ms
+   → expected { …(13) } to have property "description" with value null
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > is additive: every key the card carried before is still there, with its value 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads a stated description, indication, agency and filing type as stored, in the list
+AssertionError: expected { …(13) } to match object { …(4) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "agency": "FDA",
+-   "description": "Oral JAK1 inhibitor, first-in-human through phase 2 under one IND.",
+-   "indication": "Moderate-to-severe plaque psoriasis in adults",
+-   "program_type": "ind",
++   "activity": "Updated Nov 01",
++   "client_name": "Northwind Bio",
++   "client_workspace_id": 3,
++   "code": "NW-001",
++   "due": "Mar 15, 2027",
++   "due_date": "2027-03-15",
++   "id": "11111111-1111-4111-8111-111111111111",
++   "lead": "Robin RA",
++   "pathway": "ind",
++   "stage": "Authoring",
++   "status": "active",
++   "title": "Vorelinib IND",
++   "ws": "Biotech",
+  }
+
+ ❯ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts:96:18
+     94|   it('reads a stated description, indication, agency and filing type a…
+     95|     const card = (await listCards()).find(row => row.id === IND);
+     96|     expect(card).toMatchObject({
+       |                  ^
+     97|       description: DESCRIPTION,
+     98|       indication: INDICATION,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads the same four facts in the creator’s 201 projection
+AssertionError: expected { …(13) } to match object { …(4) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "agency": "FDA",
+-   "description": "Oral JAK1 inhibitor, first-in-human through phase 2 under one IND.",
+-   "indication": "Moderate-to-severe plaque psoriasis in adults",
+-   "program_type": "ind",
++   "activity": "Updated Nov 01",
++   "client_name": "Northwind Bio",
++   "client_workspace_id": 3,
++   "code": "NW-001",
++   "due": "Mar 15, 2027",
++   "due_date": "2027-03-15",
++   "id": "11111111-1111-4111-8111-111111111111",
++   "lead": "Robin RA",
++   "pathway": "ind",
++   "stage": "Authoring",
++   "status": "active",
++   "title": "Vorelinib IND",
++   "ws": "Biotech",
+  }
+
+ ❯ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts:105:36
+    103|
+    104|   it('reads the same four facts in the creator’s 201 projection', asyn…
+    105|     expect(await createdCard(IND)).toMatchObject({
+       |                                    ^
+    106|       description: DESCRIPTION,
+    107|       indication: INDICATION,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > answers null for an absent or blank description or indication, never a default
+AssertionError: expected { …(13) } to have property "description" with value null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts:117:20
+    115|     const device = cards.find(row => row.id === K510)!;
+    116|     const maa = cards.find(row => row.id === MAA)!;
+    117|     expect(device).toHaveProperty('description', null);
+       |                    ^
+    118|     expect(device).toHaveProperty('indication', null);
+    119|     expect(device).toMatchObject({ agency: 'FDA', program_type: '510k'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  20:51:52
+   Duration  5.49s (transform 351ms, setup 93ms, import 786ms, tests 4.30s, environment 0ms)
+

@@ -17,17 +17,37 @@
  * can see where it was taken from. A person records it, with a reason. AnA
  * reads the current version on every turn (objectivesContextBlock).
  *
+ * Completed 2026-11-01 (S1, "New project asks for the objective";
+ * docs/evidence/SPINE/S1/2026-11-01-objective-at-creation/):
+ * - POST /api/c2c/projects records a stated objective as version 1, on the
+ *   creation's own transaction, through recordObjectiveAtCreation: the same
+ *   write the PUT below makes, never a second path.
+ * - The charter's classification covers every filing the creator accepts. It
+ *   knew nine application types and seven agency spellings, so a CTA in the
+ *   EU, a CSR under ICH, an EU MDR file or a Japanese certification filing
+ *   could never record an objective, and was told to complete details it had.
+ * - The read says who recorded each version, whether the section is locked,
+ *   and whether this reader may record the next version (canChange), which the
+ *   project page's objective block renders (D3 §4.3).
+ * - A recorded version whose stored text cannot be read fails the read
+ *   (409 OBJECTIVES_UNREADABLE). It was read as "no objective".
+ *
  * @module server/services/c2c/charter-objectives
  */
 import { createHash } from 'crypto';
 import { and, desc, eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import type { PgDatabase } from 'drizzle-orm/pg-core';
+import type { PoolClient } from 'pg';
 import { z } from 'zod';
 import type { Request, Response } from 'express';
 import { charterAuditEvents, charterSections, projectCharters } from '@shared/schema/project-charter';
 import { requestDb, requestPgClient } from '../../db/requestDb';
 import auditService from '../auditService';
 import { ProjectAdmissionRefusal, requireProjectAdmission } from '../../routes/c2c/project-access';
+import { documentAgencyFor } from '../regulatory/market-support';
+import { actorLabel, resolveActorNames } from '../tenant/actor-names';
+import { PROGRAM_TO_DOC_TYPE } from './document-class';
 import { createScopedLogger } from '../../utils/logger.js';
 
 const log = createScopedLogger('charter-objectives');
@@ -63,6 +83,8 @@ export interface CurrentObjectives {
   status: string;
   updatedAt: string;
   updatedBy: number | null;
+  /** The section is read-only: no new version can be recorded. */
+  locked: boolean;
 }
 export interface ObjectivesHistoryEntry {
   version: number | null;
@@ -98,23 +120,60 @@ const SUBMISSION_TYPE: Record<string, string> = {
   ind: 'IND', nda: 'NDA', bla: 'BLA', '510k': '510K', pma: 'PMA', maa: 'MAA',
   de_novo: 'DE_NOVO', denovo: 'DE_NOVO', eua: 'EUA', ivdr: 'IVDR',
 };
+// Keyed by agencyKey(): 'Health Canada' and 'health-canada' are HEALTH_CANADA.
+// ICH, MFDS and the Japanese registered certification body were added
+// 2026-11-01 (S1): the creator files with them (filing-catalog.ts AGENCY_LABEL,
+// document-class.ts AGENCY_TO_CODE) and the charter could not name them.
 const REGION: Record<string, string> = {
   FDA: 'FDA', EMA: 'EMA', PMDA: 'PMDA', MHRA: 'MHRA', HC: 'HealthCanada', HEALTHCANADA: 'HealthCanada',
   HEALTH_CANADA: 'HealthCanada', TGA: 'TGA', NMPA: 'NMPA',
+  ICH: 'ICH', ICH_GLOBAL: 'ICH', MFDS: 'MFDS', REGISTERED_CERTIFICATION_BODY: 'JP_RCB', JP_RCB: 'JP_RCB',
 };
+const agencyKey = (agency: string) => agency.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
+/**
+ * The filing the charter records. The charter's own name when it has one;
+ * otherwise, for any filing the product files (a program type with a governed
+ * document class, PROGRAM_TO_DOC_TYPE: the creator rolls back any other), the
+ * program's own type as it records it. 'biologic', 'device' and 'ivd' name no
+ * filing, so they stay unclassified rather than guessed.
+ */
+function charterSubmissionType(programType: string): string | undefined {
+  const key = programType.trim().toLowerCase();
+  if (!key) return undefined;
+  return SUBMISSION_TYPE[key] ?? (Object.prototype.hasOwnProperty.call(PROGRAM_TO_DOC_TYPE, key) ? key.toUpperCase() : undefined);
+}
+
+/** The agency the charter records: the market read the way creation reads it ('us' is FDA, a Notified Body files under EMA). */
+function charterRegion(programType: string, primaryAgency: string): string | undefined {
+  const named = primaryAgency.trim();
+  if (!named) return undefined;
+  const agency = documentAgencyFor({ applicationType: programType.trim().toLowerCase(), market: named }) ?? named;
+  return REGION[agencyKey(agency)] ?? REGION[agencyKey(named)];
+}
 
 /** The charter classification a program implies, or a refusal naming what it lacks. */
 export function charterClassification(p: ProgramClassificationInput): { submissionType: string; regulatoryRegion: string; productName: string } {
-  const submissionType = SUBMISSION_TYPE[String(p.programType ?? '').trim().toLowerCase()];
-  const regulatoryRegion = REGION[String(p.primaryAgency ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_')];
-  const productName = String(p.productName ?? '').trim();
-  const missing = [!submissionType && 'an application type the charter knows', !regulatoryRegion && 'a primary agency the charter knows', !productName && 'a product name']
-    .filter(Boolean);
+  const missing = charterClassificationGaps(p);
   if (missing.length) {
     throw new CharterObjectivesRefusal(409, 'CHARTER_CLASSIFICATION_MISSING',
       `This project's charter cannot be started: the project records no ${missing.join(', no ')}. Complete the project's details first.`);
   }
-  return { submissionType: submissionType!, regulatoryRegion: regulatoryRegion!, productName };
+  return {
+    submissionType: charterSubmissionType(String(p.programType ?? ''))!,
+    regulatoryRegion: charterRegion(String(p.programType ?? ''), String(p.primaryAgency ?? ''))!,
+    productName: String(p.productName ?? '').trim(),
+  };
+}
+
+/** What a program lacks for its charter to be started, in words; empty when it can be. */
+function charterClassificationGaps(p: ProgramClassificationInput): string[] {
+  const programType = String(p.programType ?? '');
+  return [
+    !charterSubmissionType(programType) && 'application type the charter knows',
+    !charterRegion(programType, String(p.primaryAgency ?? '')) && 'primary agency the charter knows',
+    !String(p.productName ?? '').trim() && 'product name',
+  ].filter((gap): gap is string => Boolean(gap));
 }
 
 /** Sorted keys, no whitespace: the same content always hashes the same. */
@@ -194,6 +253,13 @@ export async function readProjectObjectives(db: Db, scope: { orgId: number; proj
   const section = await objectivesSection(db, charter.id);
   if (!section) return { charterId: charter.id, current: null, history: [] };
   const content = parseContent(section.content);
+  // A recorded version that cannot be read is a failed read, never "none": the
+  // page would offer to state an objective that is recorded, and AnA would not
+  // know one exists (its prefix reports the recall unavailable instead).
+  if (!content) {
+    throw new CharterObjectivesRefusal(409, 'OBJECTIVES_UNREADABLE',
+      "This project's objective is recorded, but its current version could not be read. Nothing was read or changed.");
+  }
   const events = await db.select({
     eventType: charterAuditEvents.eventType, occurredAt: charterAuditEvents.occurredAt,
     actorUserId: charterAuditEvents.actorUserId, reason: charterAuditEvents.reason, afterValue: charterAuditEvents.afterValue,
@@ -203,10 +269,10 @@ export async function readProjectObjectives(db: Db, scope: { orgId: number; proj
     .orderBy(desc(charterAuditEvents.occurredAt), desc(charterAuditEvents.id)).limit(50);
   return {
     charterId: charter.id,
-    current: content ? {
+    current: {
       content, version: section.version, contentHash: section.contentHash ?? '', status: section.status ?? 'draft',
-      updatedAt: new Date(section.updatedAt).toISOString(), updatedBy: section.updatedBy ?? null,
-    } : null,
+      updatedAt: new Date(section.updatedAt).toISOString(), updatedBy: section.updatedBy ?? null, locked: section.readOnly === true,
+    },
     history: events.map((e) => {
       const after = (e.afterValue ?? {}) as { version?: number; content?: string };
       return {
@@ -229,76 +295,129 @@ export interface RecordObjectivesInput {
   now?: () => Date;
 }
 
+export interface RecordedObjectives {
+  charterId: number;
+  sectionId: number;
+  version: number;
+  contentHash: string;
+  unchanged: boolean;
+}
+
 /**
  * Record a new version of the project's objective. The charter is started from
  * the program's own classification when the project has none. The section, its
  * version and hash chain, and the append-only audit row (before, after and the
  * reason) are one transaction. The same content again records nothing.
  */
-export async function recordProjectObjectives(db: Db, input: RecordObjectivesInput) {
-  const content: ObjectivesContent = {
-    objective: input.body.objective, successCriteria: input.body.successCriteria?.trim() || null, sources: input.body.sources,
-  };
-  const text = canonical(content);
-  const contentHash = sha256(text);
+export async function recordProjectObjectives(db: Db, input: RecordObjectivesInput): Promise<RecordedObjectives> {
+  return db.transaction(async (tx) => recordOnTransaction(tx as unknown as Db, input));
+}
+
+/** A New project request's own words for its objective: the stated objective and its sources. */
+export interface ObjectiveAtCreationInput {
+  objective?: unknown;
+  objectiveSources?: unknown;
+}
+/** The reason version 1 carries when the objective is stated at creation (21 CFR 11.10(e) asks each version why). */
+export const OBJECTIVE_AT_CREATION_REASON = 'Stated when the project was created.';
+
+/**
+ * The objective a New project request states, checked by the same schema every
+ * later version is, before anything is written. None stated (absent, null,
+ * empty or blank) is `{ stated: null }`: nothing is recorded, not a placeholder.
+ * Anything malformed is a refusal, so what was typed is never silently dropped.
+ * The refusal names no stated text (it may be sponsor-confidential).
+ */
+export function objectiveStatedAtCreation(body: ObjectiveAtCreationInput): { stated: ObjectivesBody | null } | { refusal: string } {
+  const { objective, objectiveSources } = body;
+  const blank = objective === undefined || objective === null || (typeof objective === 'string' && objective.trim() === '');
+  const noSources = objectiveSources === undefined || objectiveSources === null || (Array.isArray(objectiveSources) && objectiveSources.length === 0);
+  if (blank) {
+    return noSources ? { stated: null } : { refusal: 'Sources were sent with no objective. State the objective, or send no sources.' };
+  }
+  if (typeof objective !== 'string') return { refusal: 'The objective must be text.' };
+  const parsed = objectivesBodySchema.safeParse({ objective, sources: objectiveSources ?? [], reason: OBJECTIVE_AT_CREATION_REASON });
+  if (!parsed.success) {
+    return { refusal: 'The objective must be at most 4,000 characters, with at most 20 sources. Each source needs a kind and a title; an address, if given, must be http or https.' };
+  }
+  return { stated: parsed.data };
+}
+
+/**
+ * Record the objective stated at creation as version 1, on the creation's own
+ * transaction: `client` holds the creation's BEGIN, and this neither begins nor
+ * commits. It is the PUT's write (recordOnTransaction), not a second one. A
+ * refusal or failure throws, and the caller rolls the whole creation back.
+ */
+export async function recordObjectiveAtCreation(client: PoolClient, input: RecordObjectivesInput): Promise<RecordedObjectives> {
+  return recordOnTransaction(drizzle(client as never) as unknown as Db, input);
+}
+
+/** A version's canonical text and its hash: the same content always hashes the same. */
+function versionContent(body: ObjectivesBody): { text: string; contentHash: string } {
+  const text = canonical({ objective: body.objective, successCriteria: body.successCriteria?.trim() || null, sources: body.sources });
+  return { text, contentHash: sha256(text) };
+}
+
+/** The write itself, on a transaction the caller owns. */
+async function recordOnTransaction(tx: Db, input: RecordObjectivesInput): Promise<RecordedObjectives> {
+  const { text, contentHash } = versionContent(input.body);
   const now = input.now ?? (() => new Date());
-  return db.transaction(async (tx) => {
-    const audit = async (e: { charterId: number; entityType: 'charter' | 'section'; entityId: number;
-      eventType: 'created' | 'updated'; beforeValue: unknown; afterValue: unknown }) => {
-      const occurredAt = now();
-      await tx.insert(charterAuditEvents).values({
-        organizationId: input.orgId, charterId: e.charterId, entityType: e.entityType, entityId: e.entityId, eventType: e.eventType,
-        actorUserId: input.userId, actorRole: null, occurredAt, beforeValue: e.beforeValue as never, afterValue: e.afterValue as never,
-        ipAddress: input.ipAddress ?? null, userAgent: input.userAgent ?? null, reason: input.body.reason, signatureMeaning: null,
-        eventHash: computeCharterAuditEventHash({ charterId: e.charterId, entityType: e.entityType, entityId: e.entityId,
-          eventType: e.eventType, actorUserId: input.userId, occurredAt: occurredAt.toISOString(), afterValue: e.afterValue }),
-      });
-    };
+  const audit = async (e: { charterId: number; entityType: 'charter' | 'section'; entityId: number;
+    eventType: 'created' | 'updated'; beforeValue: unknown; afterValue: unknown }) => {
+    const occurredAt = now();
+    await tx.insert(charterAuditEvents).values({
+      organizationId: input.orgId, charterId: e.charterId, entityType: e.entityType, entityId: e.entityId, eventType: e.eventType,
+      actorUserId: input.userId, actorRole: null, occurredAt, beforeValue: e.beforeValue as never, afterValue: e.afterValue as never,
+      ipAddress: input.ipAddress ?? null, userAgent: input.userAgent ?? null, reason: input.body.reason, signatureMeaning: null,
+      eventHash: computeCharterAuditEventHash({ charterId: e.charterId, entityType: e.entityType, entityId: e.entityId,
+        eventType: e.eventType, actorUserId: input.userId, occurredAt: occurredAt.toISOString(), afterValue: e.afterValue }),
+    });
+  };
 
-    let charter = await projectCharter(tx as Db, input.orgId, input.projectId);
-    if (!charter) {
-      const cls = charterClassification(input.program);
-      const snapshot = { customInstructions: null, indication: null, productName: cls.productName,
-        regulatoryRegion: cls.regulatoryRegion, submissionType: cls.submissionType, version: 1 };
-      const [created] = await tx.insert(projectCharters).values({
-        organizationId: input.orgId, projectId: input.projectId, submissionType: cls.submissionType,
-        regulatoryRegion: cls.regulatoryRegion, productName: cls.productName, approvalStatus: 'draft',
-        contentHash: sha256(JSON.stringify(snapshot)), version: 1, createdBy: input.userId, updatedBy: input.userId,
-      }).returning({ id: projectCharters.id });
-      if (!created) throw new Error('Charter INSERT returned no row');
-      charter = created;
-      await audit({ charterId: charter.id, entityType: 'charter', entityId: charter.id, eventType: 'created', beforeValue: null,
-        afterValue: { ...snapshot, startedBy: 'objectives' } });
-    }
+  let charter = await projectCharter(tx as Db, input.orgId, input.projectId);
+  if (!charter) {
+    const cls = charterClassification(input.program);
+    const snapshot = { customInstructions: null, indication: null, productName: cls.productName,
+      regulatoryRegion: cls.regulatoryRegion, submissionType: cls.submissionType, version: 1 };
+    const [created] = await tx.insert(projectCharters).values({
+      organizationId: input.orgId, projectId: input.projectId, submissionType: cls.submissionType,
+      regulatoryRegion: cls.regulatoryRegion, productName: cls.productName, approvalStatus: 'draft',
+      contentHash: sha256(JSON.stringify(snapshot)), version: 1, createdBy: input.userId, updatedBy: input.userId,
+    }).returning({ id: projectCharters.id });
+    if (!created) throw new Error('Charter INSERT returned no row');
+    charter = created;
+    await audit({ charterId: charter.id, entityType: 'charter', entityId: charter.id, eventType: 'created', beforeValue: null,
+      afterValue: { ...snapshot, startedBy: 'objectives' } });
+  }
 
-    const section = await objectivesSection(tx as Db, charter.id, true);
-    if (section?.readOnly) {
-      throw new CharterObjectivesRefusal(409, 'OBJECTIVES_LOCKED', "This project's objective is locked. Nothing was changed.");
-    }
-    if (section && section.contentHash === contentHash) {
-      return { charterId: charter.id, sectionId: section.id, version: section.version, contentHash, unchanged: true };
-    }
-    const version = section ? section.version + 1 : 1;
-    const after = { version, contentHash, previousVersionHash: section?.contentHash ?? null, content: text };
-    let sectionId: number;
-    if (section) {
-      await tx.update(charterSections).set({
-        content: text, version, contentHash, previousVersionHash: section.contentHash, status: 'draft',
-        updatedBy: input.userId, updatedAt: now(),
-      }).where(eq(charterSections.id, section.id));
-      sectionId = section.id;
-    } else {
-      const [row] = await tx.insert(charterSections).values({
-        charterId: charter.id, sectionKey: OBJECTIVES_SECTION_KEY, sectionLabel: 'Objectives', content: text, version,
-        contentHash, previousVersionHash: null, status: 'draft', sortOrder: 0, createdBy: input.userId, updatedBy: input.userId,
-      }).returning({ id: charterSections.id });
-      if (!row) throw new Error('Section INSERT returned no row');
-      sectionId = row.id;
-    }
-    await audit({ charterId: charter.id, entityType: 'section', entityId: sectionId, eventType: section ? 'updated' : 'created',
-      beforeValue: section ? { version: section.version, contentHash: section.contentHash, content: section.content } : null, afterValue: after });
-    return { charterId: charter.id, sectionId, version, contentHash, unchanged: false };
-  });
+  const section = await objectivesSection(tx as Db, charter.id, true);
+  if (section?.readOnly) {
+    throw new CharterObjectivesRefusal(409, 'OBJECTIVES_LOCKED', "This project's objective is locked. Nothing was changed.");
+  }
+  if (section && section.contentHash === contentHash) {
+    return { charterId: charter.id, sectionId: section.id, version: section.version, contentHash, unchanged: true };
+  }
+  const version = section ? section.version + 1 : 1;
+  const after = { version, contentHash, previousVersionHash: section?.contentHash ?? null, content: text };
+  let sectionId: number;
+  if (section) {
+    await tx.update(charterSections).set({
+      content: text, version, contentHash, previousVersionHash: section.contentHash, status: 'draft',
+      updatedBy: input.userId, updatedAt: now(),
+    }).where(eq(charterSections.id, section.id));
+    sectionId = section.id;
+  } else {
+    const [row] = await tx.insert(charterSections).values({
+      charterId: charter.id, sectionKey: OBJECTIVES_SECTION_KEY, sectionLabel: 'Objectives', content: text, version,
+      contentHash, previousVersionHash: null, status: 'draft', sortOrder: 0, createdBy: input.userId, updatedBy: input.userId,
+    }).returning({ id: charterSections.id });
+    if (!row) throw new Error('Section INSERT returned no row');
+    sectionId = row.id;
+  }
+  await audit({ charterId: charter.id, entityType: 'section', entityId: sectionId, eventType: section ? 'updated' : 'created',
+    beforeValue: section ? { version: section.version, contentHash: section.contentHash, content: section.content } : null, afterValue: after });
+  return { charterId: charter.id, sectionId, version, contentHash, unchanged: false };
 }
 
 /** The objective as AnA reads it on a turn: the current version and where it came from. */
@@ -327,8 +446,15 @@ export function objectivesContextBlock(record: ObjectivesRecord): string | null 
 const UUID_REF = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type Tenant = { orgId: number; userId: number };
+type ObjectivesScope = Tenant & { projectId: number; ref: string };
 
-async function admittedObjectivesProject(req: Request, res: Response, tenant: Tenant, forWrite: boolean) {
+/** The admission the PUT applies: pinned to the program for a UUID reference. */
+async function admitObjectives(req: Request, scope: { projectId: number; ref: string }, forWrite: boolean) {
+  await requireProjectAdmission(req, String(scope.projectId), forWrite,
+    UUID_REF.test(scope.ref) ? { executor: requestPgClient(req), programId: scope.ref.toLowerCase() } : undefined);
+}
+
+async function admittedObjectivesProject(req: Request, res: Response, tenant: Tenant, forWrite: boolean): Promise<ObjectivesScope | null> {
   const ref = String(req.params.ref ?? '').trim();
   const { strictProjectRowForRef } = await import('./program-project-anchor');
   const projectId = await strictProjectRowForRef(requestDb(req), { ref, orgId: tenant.orgId, context: 'charter-objectives' });
@@ -336,9 +462,46 @@ async function admittedObjectivesProject(req: Request, res: Response, tenant: Te
     res.status(404).json({ success: false, error: 'PROJECT_NOT_FOUND', message: 'Project not found.' });
     return null;
   }
-  await requireProjectAdmission(req, String(projectId), forWrite,
-    UUID_REF.test(ref) ? { executor: requestPgClient(req), programId: ref.toLowerCase() } : undefined);
+  await admitObjectives(req, { projectId, ref }, forWrite);
   return { ...tenant, projectId, ref };
+}
+
+/**
+ * Whether this reader may record the next version: the PUT's own admission, in
+ * write mode, so the page never offers a change the PUT would refuse. Any
+ * refusal (role, sharing, archive, or access that cannot be verified) is "no";
+ * any other failure fails the read.
+ */
+async function mayRecordObjectives(req: Request, scope: ObjectivesScope): Promise<boolean> {
+  try {
+    await admitObjectives(req, scope, true);
+    return true;
+  } catch (err) {
+    if (err instanceof ProjectAdmissionRefusal) return false;
+    throw err;
+  }
+}
+
+/** The record as one person reads it: who recorded each version and whether they may record the next. */
+export interface ObjectivesRead extends Omit<ObjectivesRecord, 'current' | 'history'> {
+  current: (CurrentObjectives & { recordedBy: string | null }) | null;
+  history: Array<ObjectivesHistoryEntry & { recordedBy: string | null }>;
+  canChange: boolean;
+}
+
+/**
+ * Names come from the canonical resolver (public.actor_name, tenant-scoped): a
+ * member, or an actor in this tenant's audit trail, by name; anyone else as
+ * `user <id>`, never "Unknown". A locked section takes no new version.
+ */
+async function objectivesRead(record: ObjectivesRecord, mayChange: boolean): Promise<ObjectivesRead> {
+  const names = await resolveActorNames([record.current?.updatedBy, ...record.history.map((e) => e.actorUserId)]);
+  return {
+    charterId: record.charterId,
+    current: record.current ? { ...record.current, recordedBy: actorLabel(names, record.current.updatedBy) } : null,
+    history: record.history.map((e) => ({ ...e, recordedBy: actorLabel(names, e.actorUserId) })),
+    canChange: mayChange && !record.current?.locked,
+  };
 }
 
 function objectivesRefusal(res: Response, err: unknown, doing: string) {
@@ -355,7 +518,7 @@ export async function sendProjectObjectives(req: Request, res: Response, tenant:
     const scope = await admittedObjectivesProject(req, res, tenant, false);
     if (!scope) return;
     const record = await readProjectObjectives(requestDb(req) as never, { orgId: scope.orgId, projectId: scope.projectId });
-    return res.json({ success: true, data: record });
+    return res.json({ success: true, data: await objectivesRead(record, await mayRecordObjectives(req, scope)) });
   } catch (err) {
     return objectivesRefusal(res, err, 'reading the objective');
   }
@@ -394,8 +557,17 @@ export async function changeProjectObjectives(req: Request, res: Response, tenan
       });
       if (!recorded.persisted) log.error('charter.objectives.recorded audit_logs row was not persisted; the in-transaction charter audit row stands', { sectionId: result.sectionId });
     }
-    const record = await readProjectObjectives(requestDb(req) as never, { orgId: scope.orgId, projectId: scope.projectId });
-    return res.json({ success: true, data: record, meta: { version: result.version, unchanged: result.unchanged } });
+    const meta = { version: result.version, unchanged: result.unchanged };
+    try {
+      const record = await readProjectObjectives(requestDb(req) as never, { orgId: scope.orgId, projectId: scope.projectId });
+      // Admitted in write mode above: the writer may record the next version unless it is locked.
+      return res.json({ success: true, data: await objectivesRead(record, true), meta });
+    } catch (readErr) {
+      // The version is committed; saying "nothing was changed" now would be false.
+      log.error('Objective recorded but not read back', { sectionId: result.sectionId, err: readErr instanceof Error ? readErr.message : String(readErr) });
+      return res.status(503).json({ success: false, error: 'OBJECTIVES_RECORDED_READ_UNAVAILABLE', meta,
+        message: `Version ${result.version} of the objective is recorded, but it could not be read back. Reload the objective before changing it again.` });
+    }
   } catch (err) {
     return objectivesRefusal(res, err, 'recording the objective');
   }

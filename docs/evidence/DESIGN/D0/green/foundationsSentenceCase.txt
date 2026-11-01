@@ -1,0 +1,18 @@
+# npx vitest run --config vitest.config.ts --maxWorkers=2 client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts
+# at HEAD abada619a8 on concept2cure-v2 with the D0-3 sentence-case sweep in the working tree (before commit, re-run by the verifier), 2026-11-01T21:09Z
+# the sweep (spec §4.3) rewrote 289 blocks in 25 sheets; the one rule kept is allowlisted with its reason: .c2c-v2 .rd-chip::first-letter (spec §4.2.10)
+# with that allowlist entry removed, the same test fails on exactly that one rule: v2/styles/app-v2.css:368  .c2c-v2 .rd-chip::first-letter
+# exit code: 0
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > reads the stylesheets it guards 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > every allowlist entry carries a written reason 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > no `text-transform: uppercase` in v2/styles/*.css or design-system/colors_and_type.css 19ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  21:09:34
+   Duration  412ms (transform 93ms, setup 99ms, import 17ms, tests 31ms, environment 0ms)
+

@@ -24,7 +24,21 @@ export interface AnswerLeadProps {
   action?: AnswerLeadAction;
   secondary?: React.ReactNode;
   tone?: 'calm' | 'urgent' | 'good';
+  /**
+   * 'quiet' (the default) is a plain block in the page's own type. 'verdict'
+   * keeps the serif answer, for the one screen where the answer is the screen
+   * (ONE_DESIGN_PLAN §2; the caller is decided by D7).
+   */
+  emphasis?: 'quiet' | 'verdict';
   children?: React.ReactNode;
+}
+
+/**
+ * The question line's icon. Urgent and good keep theirs, so colour is never
+ * the only signal; the calm tone has none (the spark marks the AnA action).
+ */
+function eyebrowIcon(tone: AnswerLeadProps['tone']): React.ReactNode {
+  return tone === 'urgent' ? I.clock : tone === 'good' ? I.check : null;
 }
 
 export function AnswerLead({
@@ -35,13 +49,14 @@ export function AnswerLead({
   action,
   secondary,
   tone = 'calm',
+  emphasis = 'quiet',
   children,
 }: AnswerLeadProps) {
   return (
-    <div className={`al-lead al-${tone}`}>
+    <div className={`al-lead al-${tone}`} data-emphasis={emphasis}>
       {eyebrow && (
         <div className="al-k">
-          {tone === 'urgent' ? I.clock : tone === 'good' ? I.check : I.sparkles} {eyebrow}
+          {eyebrowIcon(tone)} {eyebrow}
         </div>
       )}
       {headline && <div className="al-h">{headline}</div>}
@@ -55,12 +70,12 @@ export function AnswerLead({
       {(action || secondary) && (
         <div className="al-act">
           {action && (
-            <button type="button" className="al-btn" onClick={action.onClick}>
+            <button type="button" className="btn ghost al-btn" onClick={action.onClick}>
               {action.icon ?? I.sparkles} {action.label}
             </button>
           )}
           {action?.alt && (
-            <button type="button" className="al-btn2" onClick={action.alt.onClick}>
+            <button type="button" className="btn al-btn2" onClick={action.alt.onClick}>
               {action.alt.label}
             </button>
           )}

@@ -111,12 +111,10 @@
     gap: 4px 6px;
   }
   .ed-basis-chip {
-    font-size: 10px;
+    font-size: var(--fs-caption);
     font-weight: 600;
     padding: 2px 7px;
     border-radius: 999px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
     white-space: nowrap;
   }
   .ed-basis-chip[data-tone='ok'] {
@@ -136,9 +134,7 @@
     color: var(--error);
   }
   .ed-basis-l {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: var(--fs-caption);
     color: var(--text-400);
     font-weight: 600;
   }
@@ -158,9 +154,7 @@
     margin-bottom: 10px;
   }
   .ed-vol-l {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: var(--fs-caption);
     color: var(--text-400);
     font-weight: 600;
     padding: 6px 8px;
@@ -562,9 +556,7 @@
     padding: 2px 0;
   }
   .ed-prov-r .k {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: var(--fs-caption);
     opacity: 0.55;
   }
   .ed-prov-r .v {
@@ -647,10 +639,8 @@
   }
   .ana-next-label {
     color: var(--text-400);
-    font-size: 10.5px;
+    font-size: var(--fs-caption);
     font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
   }
   .ana-next-action {
     display: inline-flex;
@@ -1031,12 +1021,10 @@
   }
   .esign-field label {
     display: block;
-    font-size: 11px;
+    font-size: var(--fs-caption);
     font-weight: 600;
     color: var(--text-300);
     margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
   }
   .esign-field input,
   .esign-field select {
@@ -1095,18 +1083,14 @@
     left: 22px;
     background: var(--accent-strong);
     color: var(--accent-on-strong);
-    font-size: 10px;
+    font-size: var(--fs-caption);
     font-weight: 600;
     padding: 4px 11px;
     border-radius: 999px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
   .tier-name {
     font-size: 13px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
     color: var(--text-400);
   }
   .tier-price {
@@ -1334,10 +1318,8 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    font-size: 10.5px;
+    font-size: var(--fs-caption);
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
     color: var(--text-400);
   }
   .dcv-kind svg {
@@ -1919,10 +1901,8 @@
   }
   .dlm-sec {
     padding: 6px 8px 2px;
-    font-size: 11.5px;
+    font-size: var(--fs-caption);
     font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
     color: var(--text-300);
   }
   .dlm-reason {
