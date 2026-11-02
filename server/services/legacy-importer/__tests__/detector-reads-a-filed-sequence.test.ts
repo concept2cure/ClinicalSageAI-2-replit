@@ -105,3 +105,36 @@ describe('detectArchive on a sequence the reader refuses part of', () => {
     expect(out.findings).toContainEqual(expect.objectContaining({ severity: 'error', code: 'leaf_checksum_mismatch', filePath: 'm2/2-5/clinical-overview.pdf' }));
   });
 });
+
+describe('detectArchive on what the reader cannot read (review round, 2026-11-02)', () => {
+  it('stores a file whose leaf the reader refused as skipped, not as a filename suggestion, and the error names it', async () => {
+    const file = path.join(work, 'refused-heading.zip');
+    await fs.writeFile(file, await zipBufferOf(handSequenceFiles({
+      ich: [{ headings: ['m3-quality', 'appendix-stuff'], href: 'm3/protocol.pdf', id: 'odd' }],
+    })));
+    const out = await detectArchive(file);
+    expect(out.files.find((f) => f.relativePath === 'm3/protocol.pdf')).toMatchObject({ reviewStatus: 'skipped', mappingSource: 'fallback' });
+    expect(out.findings).toContainEqual(expect.objectContaining({ severity: 'error', code: 'leaf_heading_unmapped', filePath: 'm3/protocol.pdf' }));
+    expect(out.findings.find((f) => f.code === 'extra_files_not_in_backbone')).toBeUndefined();
+  });
+
+  it('names each regional backbone no sequence was read for, and why', async () => {
+    const file = path.join(work, 'unread.zip');
+    const read = handSequenceFiles({ root: '0000/', m1: [{ headings: ['m1-2-cover-letters'], href: '1-2/cover.pdf', id: 'c' }] });
+    const noIndex = { '0001/m1/us/us-regional.xml': '<fda-regional/>' };
+    const wrongFolder = { 'archive-copy/index.xml': '<ectd/>', 'archive-copy/m1/us/us-regional.xml': '<fda-regional/>' };
+    await fs.writeFile(file, await zipBufferOf({ ...read, ...noIndex, ...wrongFolder }));
+    const missing = (await detectArchive(file)).findings.filter((f) => f.code === 'ich_backbone_missing');
+    expect(missing.map((f) => [f.filePath, /no index\.xml/.test(f.message), /not read as a sequence/.test(f.message)])).toEqual([
+      ['0001/m1/us/us-regional.xml', true, false],
+      ['archive-copy/m1/us/us-regional.xml', false, true],
+    ]);
+  });
+
+  it('stores a Health Canada regional backbone as structure, not as a Module 1 document', async () => {
+    const file = path.join(work, 'hc.zip');
+    await fs.writeFile(file, await zipBufferOf({ 'm1/ca/ca-regional.xml': '<ca-regional/>', 'm1/ca/10-cover/cover.pdf': 'c' }));
+    const out = await detectArchive(file);
+    expect(out.files.find((f) => f.relativePath === 'm1/ca/ca-regional.xml')).toMatchObject({ mappingSource: 'structure_path', reviewStatus: 'skipped' });
+  });
+});
