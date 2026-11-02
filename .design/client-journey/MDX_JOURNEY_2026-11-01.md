@@ -153,9 +153,15 @@ on, not raced.
 2. **The 510(k) outline is the eSTAR's** (F1): M5 (the seeded template's codes) now. M6(b) and (c) next. M6(a) needs an IVD
    510(k) outline version: a new rule-pack row, seeded by migration (RULE 1), checked against the vendored IVD
    eSTAR v7.1 sections. It is data, not a table, but it is new content, so it is put to the founder before it is built.
+   - **2026-11-02, the step M5 unblocked: the eSTAR exits ask whether the filing holds the document's text** (F1,
+     P-29.3). `/build`, the official eSTAR's section attachments, and the filing-readiness and assembly verdicts now
+     ask `governedDeviceFilingAgreement`. The filing-exit gate also learned the two device section loaders it could
+     not see. Evidence: `docs/evidence/MDX-JOURNEY/2026-11-02-slice-3-estar-exits-ask-the-filing/`.
 3. **Each pathway's door opens its own filing** (F1 and R1): M3 (the IVDR door reaches the existing MDR/IVDR
    technical-file assembler, after its placeholder identity is fixed) and M7 (De Novo). This is done with the R1
-   lane (`01QoxbL`) because it reaches an endpoint no client calls.
+   lane (`01QoxbL`) because it reaches an endpoint no client calls. M3 also takes the technical file's own
+   agreement check. It is baselined as a DEFECT in `scripts/ci/filing-exit-agreement-baseline.json`, and it needs
+   `FILING_DIVERGED: 409` in `server/routes/submissions.ts`.
 4. **Dead ends** (F1): M8 (Labeling create, through the existing labeling route) and M9 (Respond's device wording,
    in `ProjectRespond.tsx`, which is under D3 and S10. RIM holds S10, so this goes through the coordinator).
 5. **The journey walked in the running app** (L1 and RULE 4: "a screen is not done until it was opened in the

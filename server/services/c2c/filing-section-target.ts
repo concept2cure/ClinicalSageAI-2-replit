@@ -239,3 +239,133 @@ export async function filingAgreesWithEditing(
   }
   return { documentId, diverged };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The same question, asked from the filing's side (P-29.3)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * How a refusal names a diverged node: the section the author opens, and the
+ * node it is filed at when the two differ — `2.5.1 (filed at 2.5)`. For an
+ * exact-code node they are the same and it is said once.
+ *
+ * The authoring router's `filingDivergedRefusal` names its nodes by this same
+ * rule inline; that file is held by another lane today, and converges onto this
+ * when it is released (`.design/claude-convergence/COORDINATION.md`).
+ */
+/** A diverged node as a refusal names it: its key, and the code of the section the author opens. */
+export interface DivergedNode { key: string; section: { code: string } }
+
+export function divergedSectionLabel(d: DivergedNode): string {
+  return d.section.code === d.key ? d.key : `${d.section.code} (filed at ${d.key})`;
+}
+
+/**
+ * The one sentence a device or IVD exit says when a filed copy is not the text
+ * its document holds: what is wrong, why the exit cannot proceed, and the
+ * remedy, which the author can take on the surface they already use (the
+ * editor's Re-file saved text, `editor/AuthoringRefileSavedText.tsx`). Each
+ * exit prefixes what it did not do.
+ */
+export function filedCopyDivergedSentence(
+  diverged: ReadonlyArray<DivergedNode>,
+): string {
+  const named = Array.from(new Set(diverged.map(divergedSectionLabel)));
+  const one = named.length === 1;
+  return (
+    `${one ? 'The filed copy of section' : 'The filed copies of sections'} ${named.join(', ')} ` +
+    `${one ? 'is' : 'are'} not the document's text. The submission is built from the filed copy, so it would ` +
+    `carry text the document does not. Open ${one ? 'that section' : 'those sections'} and choose Re-file saved ` +
+    'text, which restores the saved text to its filing.'
+  );
+}
+
+/** One node of a filing that an editing document bound to it disagrees with. */
+export interface BoundFilingDivergence extends FilingDivergence {
+  /** The bound editing document (authoring_documents.id) whose section it is. */
+  authoringDocId: string;
+}
+
+export interface FilingAgreementForFiling {
+  /** The filing compared (c2c_documents.id), or null when there was none. */
+  documentId: string | null;
+  /** The editing documents bound to that filing, each of which was compared. */
+  bound: string[];
+  /** Every node any bound document disagrees with, in document then section order. */
+  diverged: BoundFilingDivergence[];
+  /** The `different` subset: a filed copy holding other text. This is what refuses. */
+  rewritten: BoundFilingDivergence[];
+  /** Node keys of the `empty` subset: authored, never filed. Reported, never refused. */
+  unfiled: string[];
+  /** Why nothing was compared, when nothing was. Absent when a comparison ran. */
+  reason?: string;
+}
+
+/**
+ * Does filing `documentId` hold the text of every editing document bound to it?
+ *
+ * `filingAgreesWithEditing` asks it from a document the author has open. A
+ * device or IVD exit starts from the other end: it reads the filing
+ * (`c2c_document_sections`) to build an eSTAR, a draft package or a readiness
+ * verdict, and before P-29.3 it asked nothing at all. So this finds the editing
+ * documents bound to that filing and asks the one question of each — it is not
+ * a second definition of agreement, which the zero-duplication rule forbids.
+ *
+ * The binding is not unique (`authoring_documents.c2c_document_id` carries an
+ * index, not a constraint; `checkFilingWritable` reads it the same way), so
+ * every bound document is compared, and two editing copies that file different
+ * text at one node both appear: that is a conflict a submission cannot carry.
+ *
+ * NOTHING BOUND IS NOT APPLICABLE, never a refusal: a filing nobody edits
+ * through the editor has no editing text to disagree with, and a device program
+ * whose sections predate the one editor still files. The probe is the one
+ * `filingAgreesWithEditing` makes, for the same reason: in PostgreSQL a failed
+ * statement aborts the caller's whole transaction, so absence is detected with
+ * a SELECT that cannot fail.
+ *
+ * WRITES NOTHING. Takes the caller's executor. A failed read throws: "the check
+ * could not run" is never "the filing agrees".
+ */
+export async function filingAgreesWithBoundDocuments(
+  client: FilingQuery,
+  args: { documentId: string; tenantId: number },
+): Promise<FilingAgreementForFiling> {
+  const { documentId, tenantId } = args;
+  const none = (reason: string): FilingAgreementForFiling =>
+    ({ documentId, bound: [], diverged: [], rewritten: [], unfiled: [], reason });
+
+  const capable = await client.query(
+    `SELECT (to_regclass('public.authoring_documents') IS NOT NULL
+             AND EXISTS (SELECT 1 FROM information_schema.columns
+                          WHERE table_schema = 'public'
+                            AND table_name = 'authoring_documents'
+                            AND column_name = 'c2c_document_id')) AS ok`,
+  );
+  if (!capable.rows[0]?.ok) {
+    return none('The editing store is not provisioned here, so no document can be bound to this filing.');
+  }
+
+  const boundRows: { rows: Array<{ id: string }> } = await client.query(
+    `SELECT d.id::text AS id FROM authoring_documents d
+      WHERE d.c2c_document_id = $1 AND d.tenant_id = $2
+      ORDER BY d.created_at, d.id`,
+    [documentId, tenantId],
+  );
+  const bound = boundRows.rows.map((r) => String(r.id));
+  if (bound.length === 0) {
+    return none('No document in the editor is bound to this filing, so there is no editing text to compare.');
+  }
+
+  const diverged: BoundFilingDivergence[] = [];
+  for (const authoringDocId of bound) {
+    const agreement = await filingAgreesWithEditing(client, { authoringDocId, tenantId });
+    for (const d of agreement.diverged) diverged.push({ ...d, authoringDocId });
+  }
+  return {
+    documentId,
+    bound,
+    diverged,
+    rewritten: diverged.filter((d) => d.filed === 'different'),
+    unfiled: Array.from(new Set(diverged.filter((d) => d.filed === 'empty').map((d) => d.key))),
+  };
+}
