@@ -135,8 +135,8 @@ Each is a repair of shipped behaviour (F1): no screen, mount or table.
 | M8 | Labeling's empty state ("Create a device IFU…") has no create action, and no client code creates a labeling document. | `v2/surfaces/Labeling.tsx:482,545` | search |
 | M9 | Respond tells a device project its markets are on Submit, which refuses device markets. | `ProjectRespond.tsx:209` vs `ProjectMarkets.tsx:517` | search |
 | M10 | Plan titles a technical documentation project "EU MDR CER" or "EU IVDR PER". | `ProjectMdxWorkflow.tsx:28` | search |
-| M11 | Registry notes are stale: device-cer says "Dashboard only today", and `CerSurface.tsx:13` still describes sample mode, which was removed. | `shared/constants/ui-surface-registry.ts:540`; `ui-surface-registry.ui-v2.ts:443` | search |
-| M12 | `device-clinical-studies` lists every study in the organization, not the project's. | `ClinicalStudiesSurface.tsx` | search |
+| M11 | **Fixed 2026-11-02** (`docs/evidence/MDX-JOURNEY/2026-11-02-m11-device-screens-describe-themselves/`). Registry notes were stale: device-cer says "Dashboard only today", and `CerSurface.tsx:13` still describes sample mode, which was removed. | `shared/constants/ui-surface-registry.ts:540`; `ui-surface-registry.ui-v2.ts:443` | search |
+| M12 | ~~`device-clinical-studies` lists every study in the organization, not the project's.~~ **Corrected 2026-11-02: not a defect.** With a project open the list is the project's (`programForContext` → `useClinicalStudies(program.id)` → `?program_id=`, filtered by the server); with none it is the documented portfolio. `docs/evidence/MDX-JOURNEY/2026-11-02-m11-device-screens-describe-themselves/` | `ClinicalStudiesSurface.tsx:116-117`, `server/routes/mdx-clinical-studies.ts:119-122` | read |
 | M13 | The AnA k510 transmit is in launch scope, while the HTTP package transmit is refused 403 in production. | `ana-launch-scope.inventory.json`; `ui-surface-registry.ts:418-422` | search |
 
 ## The order of work
