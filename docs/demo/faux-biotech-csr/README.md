@@ -1,14 +1,65 @@
-# Faux Biotech CSR demonstration — synthetic revision 2
+# Faux Biotech demonstration — one project flow, CSR selected, synthetic revision 2
 
 **Current data: revision 2. Hosted provisioning and ingestion: NOT PERFORMED.**
 This package is entirely fictional. It is not clinical evidence, a completed CSR,
 a regulatory submission, or proof of a working hosted demonstration.
 
+## Project map: one system configured by document type
+
+Founder clarification, 2026-11-02: **CSR is a document type selected in Project
+Management. It is not a separate module, application, workspace or editor.** IND,
+BLA and CTD likewise configure the shared project/document/filing flow rather than
+creating separate applications. The selected definition determines the choices,
+questions, evidence requirements and document-building behavior that follow.
+
+Existing references, not another architecture plan:
+- `shared/regulatory/project-map.ts`: document-type-derived milestones and capability metadata, now with this clarification.
+- `.design/client-journey/INFORMATION_ARCHITECTURE.md`: existing capability placement and shared UI owners.
+- `docs/design/ONE_DESIGN_PLAN.md`: the project, Data Room, evidence, AnA, one editor and governed lifecycle.
+
+| Shared step | What the person does | What varies with the selected definition |
+|---|---|---|
+| Project Management | Define the project, goal, hypothesis, trial/protocol, team and history; select the intended document/filing type. | Applicable project facts and requirements. For this demonstration, select CSR for FBT-201. |
+| Accompanying choices and questions | Answer contextual prompts, confirm information found in supplied records, and resolve missing facts. Reuse known answers. | For example, relevant study/protocol version, report scope, source data cut, analysis plan and review responsibilities; not an identical questionnaire for every type. |
+| Project uploads and Data Room | Upload through the existing project. Catalog originals, versions, classifications, processing status, provenance and relationships in its existing Data Room. | Applicable dataset/document organization, supported mappings and validation findings. Uploading does not itself establish conformance or approval. |
+| Evidence and readiness | Use the existing applicable engines and source-review controls on that project's authorized records. | Required analyses, tables, checks and evidence gaps; actual run/source/version references remain attached. |
+| Canvas and the one editor, with AnA | Open the same document-building environment. Draft directly, use existing drafting controls, or direct AnA; edit and save the same document. | Outline, templates, sections, evidence context and applicable tools. No separate CSR generator, document store or editor. |
+| Shared review and delivery | Use linked tasks, messages, comments, versions, review and authorized signatures; export or file where appropriate. | Required reviewers, checks and delivery format. A CSR project need not pretend to be a complete agency submission. |
+
+This is the required journey and acceptance map, **not a claim that each UI
+connection is already working**. Existing backend organization/client identifiers
+continue to serve access and scoping. They must not be described as new customer
+workspaces or exposed as a second document-type-specific product journey.
+
+## Applying the map to the example
+
+**Faux Biotech Therapeutics** is the fictional client/organization name, not an
+application module. **FBT-201** is the project in the existing Project Management
+module, with **CSR** as its selected document type and the study facts and history
+recorded there. The synthetic files belong in that project's Data Room and feed
+its existing canvas, editor and AnA. No separate "Biotech workspace" or "CSR
+workspace" is part of this demonstration.
+
+Use the existing authorized organization/membership and project-creation paths.
+Where existing APIs require a client identifier, resolve it through their existing
+scope controls without inventing another user-facing setup module. FBT-102
+(nonclinical/IND planning) and FBT-202 (Phase 3 planning) remain optional proposed
+project examples; neither is required to build FBT-201's report. These are still
+proposed names, not confirmed application records.
+
+Retain actual returned file IDs/hashes, complete applicable source review, and
+use the existing preview/freeze and drafting controls inside the shared authoring
+flow. Preserve unknown exposure, lab-range classification, vital signs, source
+approval and provider/model readiness as unresolved. A saved JSON file does not
+create a Vault document, clinical table, CSR build, review task, signature or
+filing. No NCT number or agency identifier is invented.
+
 ## Current files
 
 - `FBT201_CSR_SOURCE_SYNTHETIC_v2.json.gz` retains the complete structured source
   in GitHub. Decompress it and upload the resulting `.json` through the existing
-  Vault UI. Do not upload the gzip file as if it were supported clinical-source JSON.
+  project/Data Room/Vault ingestion path. Do not upload the gzip file as if it
+  were supported clinical-source JSON.
 - `ADSL_160_SUBJECT_QC_INDEX.csv` is the corrected 160-row index; placebo identities
   are the original **FBT201-P001–P080**, not the earlier erroneous B-series IDs.
 - `TLF_PRIMARY_EFFICACY.csv` and `ANALYSIS_SUMMARY.json` carry revision-2 completion
@@ -39,40 +90,33 @@ Earlier dated reconciliation notes and the original 76/77 completion totals are
 cross-record consistency. The earlier QC index's placebo IDs were incorrect.
 Do not mix the revision-2 source with an original completion table or draft.
 
-## Existing application path, not another demo system
-
-Use the existing organization and client-workspace workflow to provision
-**Faux Biotech Therapeutics (fictional demonstration)** and the Clinical Development /
-CSR Demonstration workspace. The proposed projects remain FBT-102 (nonclinical/IND
-planning), FBT-201 (Phase 2 CSR), and FBT-202 (Phase 3 planning). Only FBT-201 has
-synthetic outcome data. These names are proposals, not created application IDs.
-
-In that same authenticated tenant, upload the JSON and original source documents,
-retain actual returned IDs/hashes, complete authorized source review, select the
-existing CSR component template, preview/freeze its study data, and then draft in
-the existing editor. Preserve unknown exposure, lab-range classification, vital
-signs, source approval and provider/model readiness as unresolved where applicable.
-A saved JSON file does not create a Vault document, clinical table, CSR build,
-review task, signature or filing. No NCT number or agency identifier is invented.
-
 ## Verification scope
 
-`node --test tests/ops/csr-demo-source-consistency.test.mjs` executes the actual
-source file's cross-record refinement functions. **21 passed; the original
-validator failed four of these cases.** It does not execute Zod's field parsers.
+The previous revision-2 evidence records that
+`node --test tests/ops/csr-demo-source-consistency.test.mjs` executed the actual
+source file's cross-record refinement functions: **21 passed; the original
+validator failed four of these cases.** It did not execute Zod's field parsers.
 The extended native-schema suite is
-`shared/__tests__/csr-source-input.test.ts`; it has not run in this executor.
+`shared/__tests__/csr-source-input.test.ts`; its execution is not established here.
 Native schema acceptance, PGlite, full TypeScript/build and hosted/browser acceptance
 remain open. Evidence: `docs/evidence/D2-CSR/2026-11-02-faux-source-reconciliation/`.
+This project-map clarification is documentation, not an additional test run or
+product behavior change.
 
-The new consistency gate applies only to explicitly end-of-treatment disposition.
+The consistency gate applies only to explicitly end-of-treatment disposition.
 A subject can stop treatment and still complete study follow-up; end-of-study and
 unspecified disposition are not reinterpreted as treatment completion.
 
 ## Live acceptance remains unexecuted
 
-Verify the actual demo identity and tenant, create/reopen the projects, ingest and
-reopen source records, preview and freeze tables, draft/save/reopen the CSR, open
-its reviewer task and exact document, complete review through actual authorized
-controls, and verify each advertised navigation destination. Do not represent
+Start in **Project Management**, select **CSR**, follow the applicable choices and
+questions, and reopen the saved project. Upload/catalog sources in its **Data Room**;
+preview the available evidence and open the **same canvas and editor with AnA**.
+Draft, edit, save and reopen the report. Open its reviewer task and exact document,
+and complete review through actual authorized controls. Verify shared Tasking,
+Communication and other advertised destinations without abandoning the project's
+identity or evidence context.
+
+Requiring a separate CSR application, disconnected editor or repeated manual
+transfer of the same project facts is a gap against this map. Do not represent
 proposed CSV tasks or example narrative as executed reviews or real signatures.
