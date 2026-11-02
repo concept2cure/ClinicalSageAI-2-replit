@@ -1,0 +1,65 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Public Health Service
+Food and Drug Administration
+Silver Spring MD 20993
+IND 152233
+CLINICAL HOLD
+Novagen Biosciences, LLC
+Attention: Peter Lee, MD
+Vice President, Clinical Development
+2000 Research Parkway
+Durham, NC 27709
+Dear Dr. Lee:
+Please refer to your Investigational New Drug Application (IND) dated August 28, 2026, received
+August 28, 2026, submitted under section 505(i) of the Federal Food, Drug, and Cosmetic Act (FDCA)
+for NVG-220 Injection.
+We also refer to our telephone conversation on September 26, 2026, in which we informed you that
+Protocol NVG-220-101, entitled "A Phase 1, First-in-Human, Single and Multiple Ascending Dose Study
+of NVG-220 in Healthy Adult Subjects," is on clinical hold.
+We have completed our review of your application, as amended, and have concluded that you may not
+proceed with your proposed clinical investigation. Your IND is on clinical hold under 21 CFR
+312.42(b)(1)(iv) because the IND does not contain sufficient information required under 21 CFR
+312.23 to assess the risks to human subjects of the proposed studies. The specific deficiencies
+and the information needed to resolve them are as follows:
+CLINICAL HOLD DEFICIENCIES
+1. The proposed starting dose of 3 mg/kg is not adequately supported. The no-observed-adverse-
+effect level (NOAEL) in the 28-day repeat-dose toxicology study in cynomolgus monkeys was not
+identified because adverse findings in the liver occurred at all dose levels.
+Reference ID: 5512345
+
+-- 1 of 2 --
+
+IND 152233
+Page 2
+To resolve this deficiency, provide a revised starting dose based on the minimum anticipated
+biological effect level (MABEL), with the supporting pharmacology data and calculations.
+2. Your protocol does not include adequate stopping rules for hepatotoxicity. Revise the protocol
+to include individual and cohort stopping rules based on ALT, AST, and total bilirubin elevations,
+consistent with the FDA guidance for industry Drug-Induced Liver Injury: Premarketing Clinical
+Evaluation (July 2009).
+3. The sentinel dosing plan is inadequate for a first-in-human study of a novel immunomodulator.
+Revise the protocol so that, in each cohort, one subject receives NVG-220 and one subject receives
+placebo, with a minimum observation period of 48 hours before the remaining subjects are dosed.
+NON-HOLD COMMENTS
+The following comments are not clinical hold issues; however, we recommend that you address
+them in your complete response:
+1. Include a schedule of assessments for anti-drug antibodies (ADA) in the protocol.
+2. Provide the Investigator's Brochure updated with the 28-day toxicology study results.
+Please identify your response to the clinical hold issues as a "CLINICAL HOLD COMPLETE RESPONSE."
+To facilitate a timely review, also clearly label the cover letter and envelope. Following receipt
+of your complete response, we will notify you within 30 days whether you may proceed with the
+proposed clinical investigation. You may not initiate the clinical study until we notify you that
+the study may proceed.
+If you have any questions, call Susan Park, Senior Regulatory Health Project Manager, at
+(240) 402-5678.
+Sincerely,
+{See appended electronic signature page}
+Rachel Adams, MD
+Director
+Division of Rheumatology and Transplant Medicine
+Office of Immunology and Inflammation
+Office of New Drugs
+Center for Drug Evaluation and Research
+Reference ID: 5512345
+
+-- 2 of 2 --

@@ -1,0 +1,633 @@
+# F1 server part: red, before the change (tree = HEAD 609ef94c7 + the new and changed tests only; no source file changed)
+# 2026-11-01T21:31:43Z
+#
+# Expected red: every case of filed-state-what-was-sent.pglite.test.ts (8), every case of
+# transmit-records-what-was-sent.test.ts (5), and in tests/db/ectd-filed-state-view.dbtest.ts the changed
+# 'lists every sequence' assertion (basis) and the two new F1 cases.
+# Green before by design (pins, not new behaviour): fda-esg-receipts.pglite.test.ts (the receipt already
+# merges metadata; the pin keeps leafManifest/dispatchBinding on the row), named-prior-sequence-is-the-filed-state
+# (its DDL gains the table the new fold reads), transmit-guard-refusal-releases-claim (its fixture bundle gains
+# the leaf manifest packageEctdSubmission always sets, so the new refusal does not preempt the cases it pins).
+
+## 1. unit and PGlite
+$ npx vitest run server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > refuses a signature consumed by verified receipt settlement before taking another claim 7ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > rechecks the canonical spent ledger after acquiring the sequence lock, before claiming or sending 4ms
+stderr | server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError)
+{
+  "timestamp": "2026-11-01T21:30:49.179Z",
+  "level": "warn",
+  "message": "[fda-esg] FDA ESG REST transport selected; refused because its contract is unverified",
+  "context": {
+    "environment": "staging",
+    "endpoint": "https://esg-nextgen.example.invalid",
+    "submitterId": "sub",
+    "transportVariable": "FDA_ESG_STAGING_TRANSPORT"
+  }
+}
+
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 282ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError) 7ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the requiredAgencyMetadata refusal raised by the gateway 5ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError) 7ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when the SFTP credentials are set but the ssh2-sftp-client module is absent (MDN close) 14ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NOT_DELIVERED (FDA refuses our client certificate at the TLS handshake): row rejected, claim released 45ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — DELIVERED_UNCONFIRMED (HTTP 502 after the whole bundle): in transit, the claim stays transmitting 36ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — HTTP 502 from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting 5625ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — a reset from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting 5499ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError keeps the claim at transmitting 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError keeps the claim at transmitting 2ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 17ms
+   → expected [ 'draft-only.pdf', 'general.pdf' ] to deeply equal [ 'general.pdf' ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 5ms
+   → expected [] to deeply equal [ 'csr.pdf', 'general.pdf' ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 6ms
+   → expected { leaves: [], basis: undefined } to deeply equal { leaves: [ 'resend.pdf' ], …(1) }
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 5ms
+   → expected [ …(2) ] to deeply equal [ …(2) ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 4ms
+   → expected { leaves: [ 'mine.pdf' ], …(1) } to deeply equal { leaves: [ 'mine.pdf' ], …(1) }
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 5ms
+   → promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 4ms
+   → expected [ [ '0001', 'replace' ] ] to deeply equal [ [ '0000', 'new' ], …(1) ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 4ms
+   → expected [ [ 'general.pdf', '0000', 'a' ] ] to deeply equal [ [ 'general.pdf', '0001', 'b' ] ]
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:31:04.366Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim 161ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records a verified receipt while keeping a newer signature claim explicitly unreconciled 88ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > never guesses a legacy sequence binding by its number 69ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > uses a tied authenticated refusal only for rejected transport state, never center acknowledgement 82ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > reconciles a retained synchronous agency rejection without authorizing its signature again 140ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses a positive receipt that conflicts with a retained rejected transmittal 69ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > cannot resolve a newer attempt with the same signature using re-encoded original receipt bytes 103ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong message without changing receipt, sequence or audit 57ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong MIC without changing receipt, sequence or audit 53ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong tenant without changing receipt, sequence or audit 19ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong viewer without changing receipt, sequence or audit 52ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > rolls back receipt and sequence changes together if the canonical audit fails 56ms
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > stamps the leaf manifest of the package it hands the gateway, and its binding 13ms
+   → expected undefined to deeply equal [ { ctdSection: '2.2', …(7) } ]
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply what was sent: a bound transmit’s are overwritten 5ms
+   → expected [ { ctdSection: '2.5', …(3) } ] to deeply equal [ { ctdSection: '2.2', …(7) } ]
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > and an unbound transmit’s are removed, so nothing reads it as a sequence’s send 2ms
+   → expected { applicationId: 'IND123456', …(6) } to not have property "leafManifest"
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent 2ms
+   → expected the transmit to reject
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > the FDA ESG transmittal row, written before any connection, carries both 3ms
+   → expected undefined to deeply equal [ { ctdSection: '2.2', …(7) } ]
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence is the filed state through it > folds every filed sequence up to the named one, each leaf pointing at the sequence that holds it 8ms
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence is the filed state through it > never reads another organisation’s filings of the same application number 2ms
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses a sequence that was compiled but never sent 2ms
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses a sent sequence whose only compile on record is a rehearsal 1ms
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses a sequence with no compile at all 1ms
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses when the application number is missing, without reading 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf)
+AssertionError: expected [ 'draft-only.pdf', 'general.pdf' ] to deeply equal [ 'general.pdf' ]
+
+- Expected
++ Received
+
+  [
++   "draft-only.pdf",
+    "general.pdf",
+  ]
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:114:33
+    112|     await transmittal({ attemptId: attempt(1), sequenceId: id }, [leaf…
+    113|     const state = await filedState(1);
+    114|     expect(names(state.leaves)).toEqual(['general.pdf']);
+       |                                 ^
+    115|     expect(state.sequences).toEqual([{ sequenceNumber: '0000', dispatc…
+    116|     expect(names((await priorFor(1, '0001')).leaves)).toEqual(['genera…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it
+AssertionError: expected [] to deeply equal [ 'csr.pdf', 'general.pdf' ]
+
+- Expected
++ Received
+
+- [
+-   "csr.pdf",
+-   "general.pdf",
+- ]
++ []
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:124:33
+    122|     await transmittal({ attemptId: attempt(2), sequenceId: id }, [leaf…
+    123|     const state = await filedState(2);
+    124|     expect(names(state.leaves)).toEqual(['csr.pdf', 'general.pdf']);
+       |                                 ^
+    125|     expect(state.throughSequence).toBe('0000');
+    126|     expect(state.sequences).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read
+AssertionError: expected { leaves: [], basis: undefined } to deeply equal { leaves: [ 'resend.pdf' ], …(1) }
+
+- Expected
++ Received
+
+  {
+-   "basis": "transmit",
+-   "leaves": [
+-     "resend.pdf",
+-   ],
++   "basis": undefined,
++   "leaves": [],
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:139:104
+    137|     await transmittal({ attemptId: attempt(31), sequenceId: id }, [lea…
+    138|     await transmittal({ attemptId: attempt(32), sequenceId: id }, [lea…
+    139|     await expect(filedState(3).then((s) => ({ leaves: names(s.leaves),…
+       |                                                                                                        ^
+    140|       .resolves.toEqual({ leaves: ['resend.pdf'], basis: 'transmit' });
+    141|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "basis": "compiles",
+      "dispatchStatus": "acknowledged",
+      "filed": true,
+      "sequenceNumber": "0000",
+    },
+    {
+-     "basis": "compiles",
+      "dispatchStatus": "sent",
+      "filed": true,
+      "sequenceNumber": "0001",
+    },
+  ]
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:153:29
+    151|     const state = await filedState(4);
+    152|     expect(names(state.leaves)).toEqual(['legacy.pdf', 'older.pdf']);
+    153|     expect(state.sequences).toEqual([
+       |                             ^
+    154|       { sequenceNumber: '0000', dispatchStatus: 'acknowledged', filed:…
+    155|       { sequenceNumber: '0001', dispatchStatus: 'sent', filed: true, b…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read
+AssertionError: expected { leaves: [ 'mine.pdf' ], …(1) } to deeply equal { leaves: [ 'mine.pdf' ], …(1) }
+
+- Expected
++ Received
+
+  {
+-   "basis": "compiles",
++   "basis": undefined,
+    "leaves": [
+      "mine.pdf",
+    ],
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:164:79
+    162|     await transmittal({ attemptId: attempt(6), sequenceId: id }, [leaf…
+    163|     const state = await filedState(6);
+    164|     expect({ leaves: names(state.leaves), basis: state.sequences[0]?.b…
+       |                                                                               ^
+    165|   });
+    166| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence
+AssertionError: promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "leaves": [
++     {
++       "backbone": "index.xml",
++       "ctdSection": "3.2.S.1",
++       "fileName": "compiled.pdf",
++       "history": [
++         {
++           "fileName": "compiled.pdf",
++           "md5": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++           "operation": "new",
++           "sequenceNumber": "0000",
++         },
++       ],
++       "href": "m3/compiled.pdf",
++       "leafId": "leaf-compiled-pdf",
++       "md5": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++       "operation": "new",
++       "sequenceNumber": "0000",
++     },
++   ],
++   "sequences": [
++     {
++       "dispatchStatus": "sent",
++       "filed": true,
++       "sequenceNumber": "0000",
++     },
++     {
++       "dispatchStatus": null,
++       "filed": false,
++       "sequenceNumber": "0001",
++     },
++   ],
++   "throughSequence": "0000",
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:176:31
+    174|     await transmittal({ attemptId: attempt(5), sequenceId: id }, [leaf…
+    175|     const sentence = /Sequence 0000 is bound to more than one transmit…
+    176|     await expect(filedState(5)).rejects.toThrow(sentence);
+       |                               ^
+    177|     await expect(priorFor(5, '0001')).rejects.toThrow(sentence);
+    178|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles
+AssertionError: expected [ [ '0001', 'replace' ] ] to deeply equal [ [ '0000', 'new' ], …(1) ]
+
+- Expected
++ Received
+
+  [
+    [
+-     "0000",
+-     "new",
+-   ],
+-   [
+      "0001",
+      "replace",
+    ],
+  ]
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:192:81
+    190|     const state = await filedState(7);
+    191|     expect(state.leaves.map((l) => [l.fileName, l.sequenceNumber, l.md…
+    192|     expect(state.leaves[0].history.map((a) => [a.sequenceNumber, a.ope…
+       |                                                                                 ^
+    193|     expect(state.sequences.map((s) => s.basis)).toEqual(['transmit', '…
+    194|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal
+AssertionError: expected [ [ 'general.pdf', '0000', 'a' ] ] to deeply equal [ [ 'general.pdf', '0001', 'b' ] ]
+
+- Expected
++ Received
+
+  [
+    [
+      "general.pdf",
+-     "0001",
+-     "b",
++     "0000",
++     "a",
+    ],
+  ]
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:202:79
+    200|     await transmittal({ attemptId: attempt(8), sequenceId: id }, gener…
+    201|     const state = await filedState(8);
+    202|     expect(state.leaves.map((l) => [l.fileName, l.sequenceNumber, l.md…
+       |                                                                               ^
+    203|     expect(state.leaves[0].history.map((a) => [a.sequenceNumber, a.ope…
+    204|     expect(state.sequences.map((s) => s.basis)).toEqual(['compiles', '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > stamps the leaf manifest of the package it hands the gateway, and its binding
+AssertionError: expected undefined to deeply equal [ { ctdSection: '2.2', …(7) } ]
+
+- Expected:
+[
+  {
+    "backbone": "index.xml",
+    "ctdSection": "2.2",
+    "fileName": "intro.pdf",
+    "href": "m2/22-intro/intro.pdf",
+    "leafId": "leaf-intro",
+    "md5": "11111111111111111111111111111111",
+    "operation": "new",
+    "title": "Introduction",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:99:35
+     97|     const metadata = (wire.mock.calls[0][0] as GatewayTransmitRequest)…
+     98|     // The stored shape every compile row uses (sequence-manifest.ts),…
+     99|     expect(metadata.leafManifest).toEqual(buildLeafManifest(LEAF_MANIF…
+       |                                   ^
+    100|     expect(metadata.dispatchBinding).toEqual(binding());
+    101|     expect(metadata.sentPackage).toMatchObject({ sha256: bundle.sha256…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply what was sent: a bound transmit’s are overwritten
+AssertionError: expected [ { ctdSection: '2.5', …(3) } ] to deeply equal [ { ctdSection: '2.2', …(7) } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "backbone": "index.xml",
+-     "ctdSection": "2.2",
+-     "fileName": "intro.pdf",
+-     "href": "m2/22-intro/intro.pdf",
+-     "leafId": "leaf-intro",
+-     "md5": "11111111111111111111111111111111",
+-     "operation": "new",
+-     "title": "Introduction",
++     "ctdSection": "2.5",
++     "fileName": "forged.pdf",
++     "href": "m2/forged.pdf",
++     "md5": "ffffffffffffffffffffffffffffffff",
+    },
+  ]
+
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:113:35
+    111|     }));
+    112|     const metadata = (wire.mock.calls[0][0] as GatewayTransmitRequest)…
+    113|     expect(metadata.leafManifest).toEqual(buildLeafManifest(LEAF_MANIF…
+       |                                   ^
+    114|     expect(metadata.dispatchBinding).toEqual(binding());
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > and an unbound transmit’s are removed, so nothing reads it as a sequence’s send
+AssertionError: expected { applicationId: 'IND123456', …(6) } to not have property "leafManifest"
+
+- Expected:
+undefined
+
++ Received:
+[
+  {
+    "ctdSection": "2.5",
+    "fileName": "forged.pdf",
+    "href": "m2/forged.pdf",
+    "md5": "ffffffffffffffffffffffffffffffff",
+  },
+]
+
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:125:24
+    123|     }));
+    124|     const stored = JSON.parse(JSON.stringify((wire.mock.calls[0][0] as…
+    125|     expect(stored).not.toHaveProperty('leafManifest');
+       |                        ^
+    126|     expect(stored).not.toHaveProperty('dispatchBinding');
+    127|     expect(stored).toMatchObject({ applicationId: 'IND123456', sequenc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent
+Error: expected the transmit to reject
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:90:65
+     88|   } as GatewayTransmitRequest;
+     89| }
+     90| const failureOf = (p: Promise<unknown>) => p.then(() => { throw new Er…
+       |                                                                 ^
+     91| const ok = { transmittalId: 41, transmissionId: 'm-1', status: 'submit…
+     92|
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:132:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > the FDA ESG transmittal row, written before any connection, carries both
+AssertionError: expected undefined to deeply equal [ { ctdSection: '2.2', …(7) } ]
+
+- Expected:
+[
+  {
+    "backbone": "index.xml",
+    "ctdSection": "2.2",
+    "fileName": "intro.pdf",
+    "href": "m2/22-intro/intro.pdf",
+    "leafId": "leaf-intro",
+    "md5": "11111111111111111111111111111111",
+    "operation": "new",
+    "title": "Introduction",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:147:35
+    145|     expect(insert, 'the gateway wrote its transmittal row').toBeDefine…
+    146|     const metadata = JSON.parse(String(insert!.params[10]));
+    147|     expect(metadata.leafManifest).toEqual(buildLeafManifest(LEAF_MANIF…
+       |                                   ^
+    148|     expect(metadata.dispatchBinding).toEqual(binding());
+    149|     expect(metadata.sentPackage).toMatchObject({ sha256: bundle.sha256…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  2 failed | 3 passed (5)
+      Tests  13 failed | 31 passed (44)
+   Start at  21:30:45
+   Duration  25.22s (transform 2.50s, setup 126ms, import 4.53s, tests 19.84s, environment 0ms)
+
+
+## 2. real PostgreSQL 16, runtime role app_service, RLS on
+$ AUDIT_HMAC_KEY=... CI=true NODE_ENV=test RLS_ENFORCE=on DATABASE_URL=postgresql://postgres@127.0.0.1:55432/c2c_test TEST_DATABASE_URL=... APP_DATABASE_URL=postgresql://app_service:...@127.0.0.1:55432/c2c_test npx vitest run --config vitest.db.config.ts tests/db/ectd-filed-state-view.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-01T21:31:24.005Z","pid":26184,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-01T21:31:24.007Z","pid":26184,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-01T21:31:24.007Z","pid":26184,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent 2977ms
+ × tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold 23ms
+   → expected [ …(4) ] to deeply equal [ …(4) ]
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission 22ms
+ × tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a leaf only an earlier preview of the sent sequence carried is not on file 12ms
+   → expected [ [ 'general.pdf', '0000' ], …(1) ] to deeply equal [ [ 'general.pdf', '0000' ], …(1) ]
+ × tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a sequence sent with no compile on record is filed, read from what its transmit recorded 11ms
+   → expected { …(6) } to match object { submissionId: 545, …(1) }
+(4 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold
+AssertionError: expected [ …(4) ] to deeply equal [ …(4) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "basis": "compiles",
+      "dispatchStatus": "acknowledged",
+      "filed": true,
+      "sequenceNumber": "0000",
+    },
+    {
+-     "basis": "compiles",
+      "dispatchStatus": "sent",
+      "filed": true,
+      "sequenceNumber": "0001",
+    },
+    {
+-     "basis": null,
+      "dispatchStatus": null,
+      "filed": false,
+      "sequenceNumber": "0002",
+    },
+    {
+-     "basis": null,
+      "dispatchStatus": "sent",
+      "filed": false,
+      "sequenceNumber": "0003",
+    },
+  ]
+
+ ❯ tests/db/ectd-filed-state-view.dbtest.ts:165:32
+    163|   it('lists every sequence and says which it did not fold', async () =…
+    164|     const res = await view(mine);
+    165|     expect(res.body.sequences).toEqual([
+       |                                ^
+    166|       // Sent before the transmit guard kept what each send carried: r…
+    167|       { sequenceNumber: '0000', dispatchStatus: 'acknowledged', filed:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a leaf only an earlier preview of the sent sequence carried is not on file
+AssertionError: expected [ [ 'general.pdf', '0000' ], …(1) ] to deeply equal [ [ 'general.pdf', '0000' ], …(1) ]
+
+- Expected
++ Received
+
+@@ -2,9 +2,9 @@
+    [
+      "general.pdf",
+      "0000",
+    ],
+    [
+-     "csr.pdf",
+-     "0001",
++     "draft-only.pdf",
++     "0000",
+    ],
+  ]
+
+ ❯ tests/db/ectd-filed-state-view.dbtest.ts:189:8
+    187|     expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(20…
+    188|     expect(res.body.leaves.map((l: { fileName: string; sequenceNumber:…
+    189|       .toEqual([['general.pdf', '0000'], ['csr.pdf', '0001']]);
+       |        ^
+    190|   });
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a sequence sent with no compile on record is filed, read from what its transmit recorded
+AssertionError: expected { …(6) } to match object { submissionId: 545, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "submissionId": 545,
+-   "throughSequence": "0001",
++   "throughSequence": "0000",
+  }
+
+ ❯ tests/db/ectd-filed-state-view.dbtest.ts:194:22
+    192|   it('a sequence sent with no compile on record is filed, read from wh…
+    193|     const res = await view(sent);
+    194|     expect(res.body).toMatchObject({ submissionId: sentSubmissionId, t…
+       |                      ^
+    195|     expect(res.body.sequences).toEqual([
+    196|       { sequenceNumber: '0000', dispatchStatus: 'sent', filed: true, b…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  21:31:22
+   Duration  3.61s (transform 1.91s, setup 74ms, import 156ms, tests 3.12s, environment 0ms)
+
+
+## 3. addendum (2026-11-01T21:55:47Z): the refusal case reworded to fail on an expect, re-run against HEAD code
+# The first red of 'a sequence transmit with no leaf manifest is refused' failed through the test's own
+# failureOf helper ('Error: expected the transmit to reject'), not an expect. Mutation 6 showed the same, so the
+# case now asserts the refusal with expect(...).toBeInstanceOf(ValidationError). The reworded file was copied into
+# a clean export of HEAD 609ef94c7 (git archive HEAD, node_modules symlinked) and run there:
+$ (in the HEAD export) npx vitest run server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts -t "no leaf manifest is refused"
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/f1-impl1/head-export
+
+ ↓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > stamps the leaf manifest of the package it hands the gateway, and its binding
+ ↓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply what was sent: a bound transmit’s are overwritten
+ ↓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > and an unbound transmit’s are removed, so nothing reads it as a sequence’s send
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent 14ms
+   → the transmit was refused: expected null to be an instance of ValidationError
+ ↓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > the FDA ESG transmittal row, written before any connection, carries both
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent
+AssertionError: the transmit was refused: expected null to be an instance of ValidationError
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:133:45
+    131|     const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockRes…
+    132|     const err = await getGateway('fda', 'esg').transmit(request({ disp…
+    133|     expect(err, 'the transmit was refused').toBeInstanceOf(ValidationE…
+       |                                             ^
+    134|     expect((err as Error).message).toMatch(/nothing records what it wo…
+    135|     expect(refusedBeforeWire(err)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  21:55:33
+   Duration  2.41s (transform 1.55s, setup 94ms, import 1.88s, tests 23ms, environment 0ms)
+

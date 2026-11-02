@@ -1,0 +1,74 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Public Health Service
+Food and Drug Administration
+Silver Spring MD 20993
+IND 145678
+INFORMATION REQUEST
+Acme Therapeutics, Inc.
+Attention: Jane Smith, PhD
+Senior Director, Regulatory Affairs
+100 Main Street, Suite 400
+Cambridge, MA 02139
+Dear Dr. Smith:
+Please refer to your Investigational New Drug Application (IND) submitted under section 505(i)
+of the Federal Food, Drug, and Cosmetic Act (FDCA) for EXM-101 (examplinib) Tablets.
+We also refer to your amendment dated September 12, 2026 (Serial No. 0007), containing
+Chemistry, Manufacturing, and Controls (CMC) information.
+We are reviewing the CMC section of your submission and have the following comments and
+information requests. We request a written response by November 20, 2026, in order to continue
+our evaluation of your IND.
+Drug Substance
+1. Provide the batch analysis data for all drug substance lots used in nonclinical toxicology
+studies and the lot proposed for the clinical study. Include the results for residual solvents
+and elemental impurities in accordance with ICH Q3C(R8) and ICH Q3D(R2).
+2. Your proposed acceptance criterion for the unspecified impurities (NMT 0.20%) is not
+acceptable. Revise the acceptance criterion to NMT 0.10% in accordance with ICH Q3A(R2), or
+provide justification.
+3. Provide a summary of the potential mutagenic impurities assessment per ICH M7(R2) for the
+starting materials, intermediates, and reagents used in the synthesis. For each impurity
+Reference ID: 5498765
+
+-- 1 of 3 --
+
+IND 145678
+Page 2
+classified as Class 1, 2, or 3, provide the proposed control strategy (Option 1, 2, 3, or 4).
+Drug Product
+4. Provide the composition of the drug product, including the grade and function of each
+excipient. Identify any excipients that are novel or of human or animal origin.
+5. The proposed dissolution acceptance criterion of Q = 75% at 45 minutes is not adequately
+justified. Provide the dissolution profiles of the clinical batches and the method development
+report, including data demonstrating the discriminating ability of the method.
+6. Provide the stability protocol for the clinical batches. The protocol should include the
+following:
+a. the storage conditions and time points;
+b. the tests and acceptance criteria; and
+c. the container closure system.
+7. Confirm that the drug product will be manufactured in accordance with current good
+manufacturing practice (CGMP) for Phase 1 investigational drugs.
+Please submit your response to this information request as an amendment to this IND. If you
+have any questions, contact Robert Jones, Regulatory Project Manager, at (301) 796-1234.
+Sincerely,
+{See appended electronic signature page}
+Michael Brown, PhD
+Branch Chief, Branch II
+Division of New Drug Products I
+Office of New Drug Products
+Office of Pharmaceutical Quality
+Center for Drug Evaluation and Research
+Reference ID: 5498765
+
+-- 2 of 3 --
+
+--------------------------------------------------------------------------------------------
+This is a representation of an electronic record that was signed
+electronically. Following this are manifestations of any and all
+electronic signatures for this electronic record.
+--------------------------------------------------------------------------------------------
+/s/
+------------------------------------------------------------
+MICHAEL BROWN
+10/30/2026 03:21:15 PM
+Reference ID: 5498765
+
+-- 3 of 3 --
