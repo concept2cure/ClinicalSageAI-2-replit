@@ -11,6 +11,7 @@ import type { ReportBlock, ReportSection, RenderedReport } from './types';
 import type { InsightAtomRef } from '../providers/types';
 import { labelCurrencyMatrixOf, renderLabelCurrencyMatrix } from './label-currency-matrix';
 import { lifecycleCalendarOf, renderLifecycleCalendar } from './lifecycle-calendar';
+import { readinessSentence } from '../../../../shared/regulatory/readiness-statement';
 
 /**
  * Inputs to {@link renderReport}. Mirrors the shape produced by the
@@ -457,25 +458,45 @@ function marketSection(module1: Record<string, unknown> | null): ReportSection {
   };
 }
 
+/** Critical gaps in the run's own gap list, or null when the run stored none
+ *  (older runs): absent is not zero (shared/regulatory/readiness-statement). */
+function criticalGapCountOf(regulatory: Record<string, unknown>): number | null {
+  if (!Array.isArray(regulatory.gaps)) return null;
+  return regulatory.gaps.filter((gap) => asRecord(gap)?.severity === 'critical').length;
+}
+
 /**
  * The run's one readiness statement: the evaluated readiness when
  * evaluateReadiness ran, otherwise that it was not computed and why — the same
- * answer the portfolio board and the canvas opener give for the program.
+ * answer the portfolio board and the canvas give for the program.
+ *
+ * It is spoken through shared/regulatory/readiness-statement, the one place
+ * "ready" is decided, so it reads as the canvas does. The evaluator's level
+ * (`not_ready` … `ready`) is not printed. It is a bucket of the score shown
+ * beside it, in a second vocabulary beside that module's ("nearly ready" for
+ * 85% with nothing open, where the module says "is 85% ready"). The digest
+ * printed it raw, "not_ready", seen in the running app on 2026-11-02. Today's
+ * evaluator returns `not_ready` whenever a critical gap is open
+ * (readinessEvaluator.ts:178), but this renderer reads a stored summary, so it
+ * decides from the stored gaps, not from the stored level: a summary whose
+ * level disagrees with its gaps still cannot be called ready. The critical-gap
+ * count is the fact that decides, so it is the second tile.
  */
 function readinessBlocks(input: RenderInput): ReportBlock[] {
   const regulatory = asRecord(input.summary.regulatory);
   const score = regulatory?.readinessScore;
   const provenance = input.providers.find((p) => p.provider === 'submission_readiness')?.atoms ?? [];
   if (regulatory && typeof score === 'number') {
-    const level = typeof regulatory.readinessLevel === 'string' ? regulatory.readinessLevel : null;
     const against = typeof regulatory.applicationDisplayName === 'string' ? regulatory.applicationDisplayName : null;
+    const critical = criticalGapCountOf(regulatory);
+    const label = typeof input.summary.scopeLabel === 'string' && input.summary.scopeLabel.trim() ? input.summary.scopeLabel.trim() : `This ${input.scopeType}`;
     return [
       {
         kind: 'summary',
-        text: `Submission readiness ${score}%${level ? ` (${level.replace(/_/g, ' ')})` : ''}${against ? `, evaluated against ${against}` : ''}.`,
+        text: `${readinessSentence(label, { readiness: score, criticalBlockerCount: critical })}${against ? ` Evaluated against ${against}.` : ''}`,
       },
       { kind: 'metric', label: 'Submission readiness', value: score, unit: '%', ...(provenance.length ? { provenance } : {}) },
-      ...(level ? [{ kind: 'metric' as const, label: 'Readiness level', value: level }] : []),
+      ...(critical != null ? [{ kind: 'metric' as const, label: 'Critical gaps', value: critical }] : []),
     ];
   }
   const why = input.providers.find((p) => p.provider === 'submission_readiness' && p.status === 'missing')?.blocker;

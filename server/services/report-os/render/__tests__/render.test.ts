@@ -198,14 +198,17 @@ describe('renderReport', () => {
   it('adds readiness metrics when regulatory summary present', () => {
     const report = renderReport(
       baseInput({
-        summary: { regulatory: { readinessScore: 62, readinessLevel: 'in_progress' } },
+        summary: { regulatory: { readinessScore: 62, readinessLevel: 'in_progress', gaps: [{ title: 'Module 3', severity: 'critical', message: 'Missing.' }] } },
       }),
     );
     const exec = sectionById(report.sections, 'executive-summary');
     const score = exec?.blocks.find(b => b.kind === 'metric' && b.label === 'Submission readiness');
-    const level = exec?.blocks.find(b => b.kind === 'metric' && b.label === 'Readiness level');
+    const gaps = exec?.blocks.find(b => b.kind === 'metric' && b.label === 'Critical gaps');
     expect(score).toMatchObject({ value: 62, unit: '%' });
-    expect(level).toMatchObject({ value: 'in_progress' });
+    expect(gaps).toMatchObject({ value: 1 });
+    // The evaluator's level is a bucket of the score, never printed raw
+    // ("not_ready", seen in the running app 2026-11-02; render-one-readiness).
+    expect(exec?.blocks.find(b => b.kind === 'metric' && b.label === 'Readiness level')).toBeUndefined();
   });
 
   it('prepends a downgrade note when truthfulness.downgradedFrom is set', () => {
