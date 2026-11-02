@@ -1,0 +1,13 @@
+# F8 mutation: reading raw HTML instead of the visible text fails the two markup controls
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > refuses the build's own placeholder, though the section's figure is correctly mapped 4ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > refuses a short placeholder ("[N]") and one split by markup 1ms
+ × server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > accepts a section with no placeholder, a numeric citation, or brackets inside markup only (contro
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > the build and placement rule (csr-placeholders.ts) and the review's rule agree on plain text 1ms
+ × server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > the review reads the visible text: brackets inside markup are not a placeholder, and the placeholder it names is the text's 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > accepts a section with no placeholder, a numeric citation, or brackets inside markup only (con
+AssertionError: expected [Function] to not throw an error but 'CsrScientificReviewError: A saved sec…' was thrown
+ FAIL  server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > the review reads the visible text: brackets inside markup are not a placeholder, and the placeholder it names is the text's
+AssertionError: expected '[x]' to be null
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
