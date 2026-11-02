@@ -1915,3 +1915,17 @@ design (item 4).
 - **What is decided.** They are FDA's responses, not open questions. The letter splitter does not offer them, and the
   letter shows a note saying they were not offered as questions.
 - **Owner.** RIM, in S10.
+
+### P-99 — An unrecorded sent sequence is re-derived from its bytes, or restored by a signed statement
+
+The founder, 2026-11-02, answering "RIM's slice 1 found that a sequence could be marked sent or acknowledged with no
+record of what was transmitted. The next sequence of such a submission is now refused, and the screen names the gap.
+How should a sequence like that be put back on record?": **"Re-derive, else signed statement."** Raised by RIM's F1
+slice 1 (`090f62af1`, its evidence README, "Owed, not built here").
+
+- **What is decided.** Where the exact sent bytes were kept (sends since `3cab286e1`, 2026-10-29), the transmit record
+  is re-derived from them deterministically, with its derivation recorded. For an older send, the record is restored by
+  a signed statement of what the sequence carried, with re-authentication and the agency's acknowledgement kept in
+  Vault and linked to the act. Neither path invents a leaf the bytes or the statement do not name.
+- **What is not decided.** A re-filing is not required. Nothing restores a sequence silently.
+- **Owner.** RIM, under F1, after slice 2.
