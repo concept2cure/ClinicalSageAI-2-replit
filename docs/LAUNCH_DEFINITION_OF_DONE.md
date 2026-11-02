@@ -1824,3 +1824,57 @@ decision". The question and the shape it proposes are in
 
 The work, under `Plan: L1` (row D2, the launch catalog's Reporting & analytics): the register moves onto its own
 tables. Evidence: `docs/evidence/reviews/2026-10-11-reporting-coverage/` (C-3).
+
+### P-92 — A held FDA send can be settled by a signed act, either way
+
+The founder, 2026-11-02, answering the coordinating session's question "An FDA ESG submission is stuck 'held': it was
+sent, but no signed MDN (delivery receipt) came back. Today nothing can settle it, because the rollback was removed on
+10-17 as it contradicted what FDA held. May a signed act, with re-authentication and the agency's document kept in
+Vault, settle it?": **"Allow both."** The question was raised by the D7-record session (`015weq…`,
+`docs/evidence/W5/2026-11-01/README.md`, "For the founder" 1, item A5).
+
+- **What is decided.** A held send may be settled by one of two signed acts, each with re-authentication and the
+  agency's document retained in Vault and linked to the act:
+  - **recorded as received**, on Ack2 or Ack3 evidence from FDA;
+  - **released as not received**, only on FDA's written confirmation of non-receipt. The act states the
+    duplicate-filing risk to the signer before they sign.
+- **What is not decided.** No settlement without the agency document; no settlement by an unsigned action; the
+  removed rollback route stays removed.
+- **Owner.** RIM (`011e42…`), under F1, in the files it holds (`submission-service.ts`, `fda-esg-receipts.ts`).
+
+### P-93 — FDA sequences over 1 GiB are out of scope for launch
+
+The founder, 2026-11-02, answering "FDA sequences larger than 1 GiB: the only code path is an SFTP transmit, and
+nothing in the repository documents FDA accepting SFTP. Are they in scope for launch?": **"Out of scope."** Raised by
+the D7-record session (`docs/evidence/W5/2026-11-01/README.md`, "For the founder" 2).
+
+- **What is decided.** A sequence over the size the documented channel takes is refused **before signing**, with a
+  plain message, from `sequenceTransmitReadiness`. The undocumented SFTP transmit (`transmitViaSftp`,
+  `ssh2-sftp-client`) is retired: removed, its reachable replacement being that refusal, named by path in the
+  removing commit (working agreement).
+- **Owner.** RIM, under F1.
+
+### P-94 — An onboarding upload is approved before it can be filed
+
+The founder, 2026-11-02, answering "A PDF uploaded during onboarding (`ctd_onboarding_documents`) has no approval
+state, so it can be filed without anyone approving it. Must an onboarding upload be approved before it can be
+filed?": **"Yes, approve first."** Raised by the D7-record session ("For the founder" 4).
+
+- **What is decided.** An uploaded leaf goes through the same approval as an authored one before it can be placed in
+  a sequence. Readiness and transmit both refuse an unapproved upload, as they do an unapproved authored leaf.
+- **Owner.** RIM for readiness and transmit (F1); the approval itself uses the existing approval act, nothing new.
+
+### P-95 — Review is mandatory before a regulated document is approved
+
+The founder, 2026-11-02, answering "A Concept2Cure document can be approved with no reviewer assigned, by design, and
+no screen assigns reviewers today. Should review be mandatory before approval?": **"Mandatory for regulated docs."**
+Raised by the D7-record session ("For the founder" 5; `artifact-approval-act.ts`).
+
+- **What is decided.** A regulated document cannot be approved until at least one assigned reviewer has completed
+  review. The existing reviewer-assignment route is reached from the one editor's Review panel (D4, the inspector),
+  not from a new screen.
+- **Owner.** The server refusal under F1 (the D7-record session, which found it, with the file list cleared by the
+  coordinator); the reach under D4 (the coordinator's editor lane).
+- **Still to settle, not by a session:** which document types count as regulated is read from the document-type
+  catalog's existing classification; where the catalog does not say, the document is treated as regulated (fail
+  closed).
