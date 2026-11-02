@@ -1,0 +1,20 @@
+# Item 2: server/services/ana/__tests__/device-tools-admit-program.test.ts on trunk 2732409d0, unchanged by this slice. The deleted-project case passes for both device tools.
+
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_udi_record': the project a record is filed under must be the caller organization's > is a confirm-class write (the premise of the role check) 3ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_udi_record': the project a record is filed under must be the caller organization's > refuses another organization's project, and writes no row 16ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_udi_record': the project a record is filed under must be the caller organization's > refuses a project that does not exist, and writes no row 2ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_udi_record': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project, and writes no row 1ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_udi_record': the project a record is filed under must be the caller organization's > says so when ownership cannot be checked, and writes no row 2ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_udi_record': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking 4ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_udi_record': the project a record is filed under must be the caller organization's > with no program_id, files an organization-level record without asking, as before 1ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_udi_record': the project a record is filed under must be the caller organization's > refuses a viewer, as the HTTP write refuses one, and writes no row 1ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_labeling_document': the project a record is filed under must be the caller organization's > is a confirm-class write (the premise of the role check) 1ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_labeling_document': the project a record is filed under must be the caller organization's > refuses another organization's project, and writes no row 1ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_labeling_document': the project a record is filed under must be the caller organization's > refuses a project that does not exist, and writes no row 1ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_labeling_document': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project, and writes no row 1ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_labeling_document': the project a record is filed under must be the caller organization's > says so when ownership cannot be checked, and writes no row 1ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_labeling_document': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking 1ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_labeling_document': the project a record is filed under must be the caller organization's > with no program_id, files an organization-level record without asking, as before 1ms
+ ✓ server/services/ana/__tests__/device-tools-admit-program.test.ts > 'create_labeling_document': the project a record is filed under must be the caller organization's > refuses a viewer, as the HTTP write refuses one, and writes no row 1ms
+ Test Files  1 passed (1)
+      Tests  16 passed (16)

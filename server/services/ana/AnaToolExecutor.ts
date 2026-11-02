@@ -17247,6 +17247,9 @@ registerToolHandler('advise_device_readiness', async (input: Record<string, unkn
         availableArtifacts: a.availableArtifacts,
         environment: a.environment,
         requireTemplate: a.requireTemplate,
+        // P-29.3: the filing's verdict on its filed copy, which the loader sets and
+        // assemble_device_submission already passes whole (MDX handoff, 2026-11-02).
+        filedCopyDiverged: a.filedCopyDiverged,
       });
     if (p.mode === 'project') {
       const loaded = await loadOpenProjectDeviceInput(p, ctx, 'advise_device_readiness');
