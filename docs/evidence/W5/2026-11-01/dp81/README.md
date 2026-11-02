@@ -71,3 +71,49 @@ its transmitted receipt was verified.
 - **MR-10 acceptance (b)** names `classifyAs2Delivery`, which no longer exists. Its intent, that an
   unsigned MDN is never RECEIVED, is pinned by "none calls an unsigned, tied, accepting 2xx MDN
   RECEIVED" in `as2-cms.test.ts`.
+
+## For P-96: the records that need the correction (for RIM)
+
+P-96 (founder, 2026-11-02, "mark it in the product") gives every acknowledgement that was recorded as
+FDA's before this fix, and that nothing verified, an audit-trailed correction and a visible note on its
+submission. RIM owns the change. These are the record shapes, read from the code at `8d5bbef3bc^`
+(before) and HEAD (after).
+
+**1. Transmittals whose download was served as `'agency'` before `8d5bbef3bc` and is not now.** All
+are in `submission_transmittals` with `region = 'fda'` and `gateway = 'esg'`.
+
+| Shape | How it arose | Served before | Served now |
+|---|---|---|---|
+| `metadata->'as2Receipt'->>'bodyBase64'` non-empty and `metadata->'as2Receipt'->>'verified'` not `'true'` (false or absent) | Transmit since `e1f3fd425` (2026-10-17) kept every answer on the pinned URL: a proxy page, an unsigned MDN, an MDN for another message or MIC. The row is usually `in_transit` | `'agency'`, the answer's bytes, named `agency-acknowledgement-<id>.txt` | the platform record |
+| `mdn_raw` non-empty and no `metadata->'as2Receipt'` | Before `e1f3fd425`, the syntax-only judge wrote `mdn_raw` for received, refused and unconfirmed answers (any status, including `received` and `rejected`); after it, only a failed `as2Receipt` write | `'agency'`, `mdn_raw` as UTF-8, `application/octet-stream` | the platform record |
+
+**Not affected.**
+- A row whose `as2Receipt.verified` is `true`. That covers a receipt verified at transmit, and a signed
+  MDN uploaded through `As2ReceiptUpload` (`ingestFdaAs2Receipt` writes `verified: true` and the same
+  bytes to `mdn_raw`).
+- A row with neither field; it was always the platform record.
+
+**2. What was handed out, recorded per download.** Each download wrote one `audit_logs` row before
+delivery (`sendAuditedDownload` in `server/services/export/governedExportConsequence.ts`, called from
+`GET /api/mdx/gateways/transmittals/:id/ack` in `server/routes/mdx-submission-gateway.ts`). The row has:
+- `action = 'EXPORT_GENERATED'`;
+- `resource_type = 'submission_transmittal_ack'`;
+- `resource_id = <transmittal id>`;
+- `details` holding `provenance: 'agency'`, `filename: 'agency-acknowledgement-<id>.txt'`,
+  `transmissionId` and `sha256` of the bytes sent.
+
+Those rows are the record of each file a sponsor may hold. Under P-96 they are corrected by a new audit
+row that references them, not edited in place (append-only audit trail).
+
+**3. AnA's answers.** `get_submission_ack` (`server/services/ana/AnaToolExecutor.ts`) returned
+`provenance` and the first 4,000 characters as `ackText`. It stores nothing of its own. What AnA said is
+in the conversation history. It is not a separate record to correct, but the submission's note is what
+a person reading that conversation later would see.
+
+**Counting.** On a database, these three counts give the affected set:
+- shape 1a: `SELECT … FROM submission_transmittals WHERE region='fda' AND gateway='esg' AND metadata ? 'as2Receipt' AND COALESCE(metadata->'as2Receipt'->>'verified','false') <> 'true'`;
+- shape 1b: `… AND NOT (metadata ? 'as2Receipt') AND mdn_raw IS NOT NULL AND mdn_raw <> ''`;
+- shape 2: their `audit_logs` rows, joined on `resource_id`.
+
+FDA ESG was never UAT-qualified (`FDA_ESG_NOT_PROVEN`), so on a production database the expected count
+is staging and test rows only.
