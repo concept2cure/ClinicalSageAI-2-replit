@@ -451,7 +451,7 @@ are closed here. The trailers are `Plan: F1` and `Completes: server/services/rbm
 | `server/services/rbm/rbm-actuator.ts` | `GeneratePlanRefusal` names the four reasons. `RBM_PLAN_REFUSAL` holds one sentence for each, kept beside `derivePlanFromAssessment`. `generatePlanFromAssessment` refuses `overall_risk_unrecorded` when the approved assessment records no overall risk, before the open-draft check and before any write. The `'medium'` fallback and its `OPEN DEFECT` comment are gone. |
 | `server/routes/mdx-rbm.ts` | The `!result.generated` branch answers 409 with `RBM_PLAN_REFUSAL[reason]`. It no longer turns an unlisted reason into "No risk assessment exists". A refusal with no reason is thrown, giving a 500, never a wrong sentence. |
 | `server/services/ana/AnaToolExecutor.ts` (only `generate_rbm_plan`) | The copied `RBM_PLAN_REFUSAL` is deleted. The handler imports the actuator's map, and its unrecorded-risk error is the actuator's sentence plus "Nothing was saved." |
-| `server/services/rbm/__tests__/rbm-actuator.test.ts` | Two cases. (1) An approved RACT with no overall risk is refused `overall_risk_unrecorded` with no write; the script supplies every row a write would read back, so the old code generates. (2) Every reason has its own non-empty sentence. |
+| `server/services/rbm/__tests__/rbm-actuator.test.ts`, now `rbm-actuator-plan.test.ts` | Two cases. (1) An approved RACT with no overall risk is refused `overall_risk_unrecorded` with no write; the script supplies every row a write would read back, so the old code generates. (2) Every reason has its own non-empty sentence. |
 | `server/services/ana/__tests__/tool-record-scope.test.ts` | The real-tool case was stale, not a defect. Since `b602ecad9` (2026-10-30), RBM admission (`rbmToolAdmissionRefusal`) runs before the program check and needs an identified member, so `get_rbm_attention` with no user is refused `RBM_ACTOR_REQUIRED` first. The case now uses a non-RBM read (`list_cmc_registers`) to prove the registry's program check reaches real tools. A new case pins the RBM order, for our program and another tenant's. |
 
 The client caller (`RbmSurfacesB.tsx:519`) shows the server's message in its error state. The new
@@ -468,6 +468,13 @@ sentence reaches the person who pressed Generate, with no client change.
   `tool-record-scope.test.ts` and the seven RBM route suites. All 17 files pass, 323 tests.
 - ESLint warnings are unchanged against each file's HEAD text: `rbm-actuator.ts` 10, `mdx-rbm.ts` 7,
   `AnaToolExecutor.ts` 94. There are no errors.
+
+**The split.** The two cases took `rbm-actuator.test.ts` to 503 counted lines. That is over the
+500-line `max-lines` limit, and the pre-push warning ratchet refused it. The file's two plan blocks,
+`generatePlanFromAssessment` and `derivePlanFromAssessment`, moved unchanged into
+`rbm-actuator-plan.test.ts` in the same folder, with the same scripted mock. The two files hold 57 tests,
+the same as before the split. The parent file is back to its one warning (`max-lines-per-function`,
+line 34), and the new file has none.
 
 **Still open (task #45, item 3, from "Outside these files"):**
 - the route's own factor INSERT beside `addCtqFactor`;
