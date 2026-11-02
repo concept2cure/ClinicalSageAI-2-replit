@@ -51,7 +51,7 @@ describe('the reporting library', () => {
     await renderCanvas();
     expect(screen.getByRole('tab', { name: 'Reports' }).getAttribute('aria-selected')).toBe('true');
     // The landing pane's packs are still what the artifact pane shows.
-    expect(document.querySelector('.rc-empty')).not.toBeNull();
+    expect(document.querySelector('.rc-packs')).not.toBeNull();
     // And nothing has been read from the library's routes yet.
     expect(calls('GET', '/api/insights/subscriptions')).toHaveLength(0);
   });

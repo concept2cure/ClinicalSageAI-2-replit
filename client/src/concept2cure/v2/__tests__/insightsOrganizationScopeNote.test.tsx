@@ -118,7 +118,7 @@ const ready = () => waitFor(() => expect(document.querySelector('[data-testid="r
 async function openPack() {
   renderCanvas();
   await ready();
-  // "Where to start": the segment's first pack, offered for the open project.
+  // The header's primary: the segment's first pack, offered for the open project.
   const opener = await waitFor(() => {
     const button = document.querySelector<HTMLElement>('[data-work-area="insights"] .ph-acts .btn.primary');
     expect(button?.textContent).toMatch(/Build the Portfolio oversight pack/);
