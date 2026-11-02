@@ -10,8 +10,8 @@
  *   Generator    sections · MEDDEV structure check · governed /api/cerv2/export
  *
  * Layout follows ui_kits/mdx_phase2/CerWorkbench.jsx; every tab
- * renders honest loading/empty/error states, with kit fixtures reachable only
- * through the explicit sample-mode guard. Shared per-program fetches (sections,
+ * renders honest loading, empty and error states, and none renders fixture
+ * data. Shared per-program fetches (sections,
  * program extras, device profile) live here so switching tabs never re-fetches
  * them; tab-specific feeds load lazily when their tab first opens.
  */
