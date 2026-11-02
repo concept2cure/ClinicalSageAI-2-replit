@@ -33,7 +33,10 @@ import {
   resolveDesign,
   useBridgeDesigns,
   useDesignAssessment,
+  verdictTone,
+  verdictWord,
 } from './biostatBridge';
+import { statusWords } from '../editor/CanvasDocumentList';
 
 /* ═══════════════════════════════════════════════════════════════════
    Biostatistics — a document-producing statistical workbench.
@@ -433,21 +436,6 @@ type DocState =
   | { kind: 'failed'; message: string };
 
 /**
- * The answer lead over the document: what the engine drafted, for which study.
- *
- * A worked example is always called one — edited or not — and its two actions
- * say they copy an example (2026-10-31: an edited oncology example became "your
- * design", and its actions read as the project's own document). Neither action
- * files anything: "Save as a working document" replaced "File it to the
- * dossier", which filed nothing; filing is "Place into filing" in the editor.
- */
-/** An engine verdict token as a word: "not_adequate" → "Not adequate". */
-function verdictWord(verdict: string): string {
-  const opened = String(verdict || '').replace(/_/g, ' ').trim();
-  return opened ? opened.charAt(0).toUpperCase() + opened.slice(1) : '—';
-}
-
-/**
  * The page's one ask row (§WA.4.2 rule 4): three starters, the first of which
  * is the question the retired banner opened with — and it branches the same
  * way the banner did, because asking "is my sample size defensible?" over a
@@ -798,8 +786,6 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const groups = DOC_REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   /* 'insufficient_information' is the engine's third state — a dimension it had
      nothing to judge against. It is a caution, never a pass and never a fail. */
-  const vTone = (v: string) => v === 'adequate' ? 'ok' : (v === 'marginal' || v === 'insufficient_information') ? 'warn' : 'err';
-
   /* WHAT ANA SEES HERE. Every number published below is one the engine returned
      for the design on screen; while it is still computing, or when it refused,
      no n/power/verdict is published because none is on screen. The govDocs read
@@ -1049,7 +1035,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                     {/* The engine's verdict token ("not_adequate") read as a
                         word; the figures beside it are the engine's own, which
                         is why the retired banner's copy of them is no loss. */}
-                    <span className={'rd-chip tone-' + vTone(ready.judgment.overallVerdict)}>{verdictWord(ready.judgment.overallVerdict)}</span>
+                    <span className={'rd-chip tone-' + verdictTone(ready.judgment.overallVerdict)}>{verdictWord(ready.judgment.overallVerdict)}</span>
                   </div>
                   {/* The method and the sizing identity the engine used, in its
                       own words. The required event count for a time-to-event
@@ -1095,7 +1081,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                   judgment, with the version and status it stamped on the
                   document — not a literal written here, and not `connected()`. */}
               <span className="bs-doc-meta">
-                Deterministic engine{doc.kind === 'ready' && doc.engineVersion ? ', version ' + doc.engineVersion : ''}{doc.kind === 'ready' && doc.status ? ' · ' + doc.status : ''}
+                Deterministic engine{doc.kind === 'ready' && doc.engineVersion ? ', version ' + doc.engineVersion : ''}{doc.kind === 'ready' && doc.status ? ' · ' + statusWords(doc.status).toLowerCase() : ''}
                 {isExample ? ' · worked example, not your study' : placement ? <> · <FilingPlacementNote placement={placement} /></> : null}
               </span>
             </div>
@@ -1160,71 +1146,79 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       {/* The design assessment and the statistical review are wide tables —
           assumptions, dimensions, a risk table with findings and actions. They
           were rendered inside the 300px left column, one word per line
-          (2026-10-31 audit). They get the page's full width, under the document. */}
+          (2026-10-31 audit). They get the page's full width, under the document.
+          The panel is its own `.pj-sec` now (D5 §B.4 step 6), so it needs no
+          wrapper to place it: it is a section of this page like any other. */}
       {selectedStudyId && (
-        <div className="bs-assess">
-          <DesignBridgePanel
-            state={bridge}
-            onNav={onNav}
-            fireToast={fireToast}
-            onApplied={() => { bridge.reload(); setDesignReload((k) => k + 1); }}
-            onTasksRaised={() => bridge.reload()}
-          />
-        </div>
+        <DesignBridgePanel
+          state={bridge}
+          onNav={onNav}
+          fireToast={fireToast}
+          onApplied={() => { bridge.reload(); setDesignReload((k) => k + 1); }}
+          onTasksRaised={() => bridge.reload()}
+        />
       )}
 
-      <div className="pj-card" style={{ marginTop: 14 }}>
-        {/* The list is org-scoped (every persisted statistical_summary artifact for the
-            tenant), so the sub-label reads "org-scoped" — not "this project", which would
-            misrepresent an organization/portfolio-wide list as a single project's. */}
-        <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s">{(govDocs.rows.length > 0 ? govDocs.rows.length + ' persisted · ' : '') + (program ? 'this project' : 'org-scoped')}</span></div>
-        <div className="pj-card-b" style={{ padding: 8 }}>
-          {govDocs.loading ? (
-            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading governed documents…</div>
-          ) : govDocs.error ? (
-            <EmptyState
-              tone="error"
-              icon={I.alertTriangle}
-              title="Couldn't load governed statistical documents"
-              hint="The document store didn't respond. These are the statistical documents AnA Biostats has generated and persisted for this organization — sign in and retry, or check that the AnA Biostats service is reachable."
-            />
-          ) : govDocs.empty ? (
-            <EmptyState
-              icon={I.fileText}
-              title="No governed statistical documents yet"
-              hint="Statistical documents persisted for this project appear here, with their real status."
-            />
-          ) : (
-            <div className="sp-list">
-              {govDocs.rows.map((p) => {
-                const def = p.doc ? docById(p.doc) : undefined;
-                return (
-                  /* `doc` is null whenever statisticalDocumentType was not
-                     recorded on the artifact — a condition this type declares as
-                     normal. The row was still a <button> in that case, so
-                     clicking a perfectly ordinary persisted document did
-                     nothing at all. It now says so: a row we cannot open is
-                     rendered as a row, disabled, with the reason in its title,
-                     rather than as a control that silently declines. */
-                  <button
-                    key={p.id}
-                    className="sp-row"
-                    style={{ width: '100%', textAlign: 'left' }}
-                    disabled={!def}
-                    title={def ? `Open the ${def.label} generator` : 'This document has no recorded statistical type, so there is no generator to open for it.'}
-                    onClick={() => { if (p.doc && def) setDocType(p.doc); }}
-                  >
-                    <span className="sp-tag" style={{ fontFamily: 'var(--font-mono)' }}>{p.id}</span>
-                    <span className="sp-row-b"><span className="sp-row-t">{p.study}</span><span className="sp-row-s">{p.endpoint ? p.endpoint + ' — ' : ''}{def?.label || 'Statistical document'}</span></span>
-                    <span className={'rd-chip tone-' + (p.status === 'approved' ? 'ok' : 'warn')}>{p.status}</span>
-                    {!def && <span className="sp-row-note">no recorded type</span>}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+      {/* The list is org-scoped (every persisted statistical_summary artifact for
+          the tenant) unless a project is open, so the heading says which — it
+          must not misrepresent an organization-wide list as one project's. */}
+      <section className="pj-sec" aria-label="Statistical documents">
+        <div className="pj-sec-h">
+          <h2>{program ? 'Statistical documents for this project' : 'Statistical documents for this organization'}</h2>
+          {govDocs.rows.length > 0 && <span className="sec-sub">{govDocs.rows.length} persisted</span>}
         </div>
-      </div>
+        {govDocs.loading ? (
+          <div role="status" className="scaf-note">Loading governed documents…</div>
+        ) : govDocs.error ? (
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load governed statistical documents"
+            hint="The document store didn't respond. These are the statistical documents AnA Biostats has generated and persisted for this organization — sign in and retry, or check that the AnA Biostats service is reachable."
+          />
+        ) : govDocs.empty ? (
+          <EmptyState
+            icon={I.fileText}
+            title="No governed statistical documents yet"
+            hint="Statistical documents persisted for this project appear here, with their real status."
+          />
+        ) : (
+          <div className="sp-list">
+            {govDocs.rows.map((p) => {
+              const def = p.doc ? docById(p.doc) : undefined;
+              return (
+                /* `doc` is null whenever statisticalDocumentType was not
+                   recorded on the artifact — a condition this type declares as
+                   normal. The row was still a <button> in that case, so
+                   clicking a perfectly ordinary persisted document did
+                   nothing at all. It now says so: a row we cannot open is
+                   rendered as a row, disabled, with the reason in its title,
+                   rather than as a control that silently declines.
+
+                   The artifact id used to lead the row in monospace. It is an
+                   id on a screen that files to an agency (§WA.4.2 rule 10), and
+                   it pushed the study's name — the one thing a reader scans
+                   this list for — into the second column. It leads the row's
+                   `title` instead, where it is still there to be quoted. */
+                <button
+                  key={p.id}
+                  type="button"
+                  className="sp-row"
+                  disabled={!def}
+                  title={`Document ${p.id} · ${def ? `open the ${def.label} generator` : 'no recorded statistical type, so there is no generator to open for it'}`}
+                  onClick={() => { if (p.doc && def) setDocType(p.doc); }}
+                >
+                  <span className="sp-row-b"><span className="sp-row-t">{p.study}</span><span className="sp-row-s">{p.endpoint ? p.endpoint + ' — ' : ''}{def?.label || 'Statistical document'}</span></span>
+                  {/* `draft | review | approved | locked` as the store records
+                      them; said as words by the one document-status map. */}
+                  <span className={'rd-chip tone-' + (p.status === 'approved' ? 'ok' : 'warn')}>{statusWords(p.status)}</span>
+                  {!def && <span className="sp-row-note">no recorded type</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
       <C2CToast msg={toast} />
     </div>
   );
