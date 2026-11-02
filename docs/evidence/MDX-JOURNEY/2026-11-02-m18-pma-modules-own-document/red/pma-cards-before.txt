@@ -1,0 +1,456 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > state the required modules present, as the assembly check counts them 108ms
+   → expected 'Return to project workflowCorvant val…' to match /Original PMA \(21 CFR 814\.20\) · 1 o…/
+ × client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > name the sections finished and written, by code 44ms
+   → expected { Object (el, pill, ...) } to match object { pill: 'present', …(2) }
+(4 matching properties omitted from actual)
+ × client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > ask AnA with the module's own facts 39ms
+   → expected 'Open PMA module "Summary of safety an…' to match /^PMA module 7, "Summary of safety and…/
+ × client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > say so when the project has no PMA document 5015ms
+   → expected 'Return to project workflowCorvant val…' to match /This project has no PMA document, so …/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                Corvant valve
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Phases · modules
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Day-100
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    PMA pathway
+                     · Corvant valve
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Project phase: Planning · No target set
+                  </div>
+                </div>
+                <div
+                  style="display: flex; gap: 8px;"
+                >
+                  <button
+                    class="section-more"
+                  >
+                    Open module editor 
+                    <svg
+                      fill="none"
+                      height="16"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.75"
+                      viewBox="0 0 24 24"
+                      width="16"
+                    >
+                      <path
+                        d="M9 6l6 6-6 6"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    class="section-more"
+                    title="Assemble a draft ZIP of your authored 21 CFR 814.20 sections (one PDF per section plus the combined PDF/DOCX) — NOT the official FDA eSTAR that CDRH ingests"
+                  >
+                    Export PMA package (draft) 
+                    <svg
+                      fill="none"
+                  ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > state the required modules present, as the assembly check counts them
+AssertionError: expected 'Return to project workflowCorvant val…' to match /Original PMA \(21 CFR 814\.20\) · 1 o…/
+
+- Expected:
+/Original PMA \(21 CFR 814\.20\) · 1 of 4 required modules present, as the assembly check\s+counts them/
+
++ Received:
+"Return to project workflowCorvant valveWorkspacePhases · modulesAudit trail021 CFR Part 11Day-1000Agency / NB queriesApprovalsYour pending e-sign · all projectsFilesFull filesystemPMA pathway · Corvant valveProject phase: Planning · No target setOpen module editor Export PMA package (draft) 1. Pre-submission—2. Preclinical—3. IDE approval—4. Manufacturing validation—5. Pivotal trial—6. Labeling—7. Module assembly—8. Advisory panel—9. Approval—10. Post-approval studies—The PMA pathway's 10 phases. None is marked: a project records its project phase, stated above, not a PMA phase.No pivotal-trial figures yetEnrolment, sites and endpoint figures appear here once this project has a registered study.PMA modulesSection-by-section assembly · NaN documents totalAdministrative & regulatory informationnot_started documentsClinical investigations (pivotal study, GCP)present documentsProposed labelingnot_started documentsSummary of safety and effectiveness data (SSED)written documentsReferences & bibliographynot_started documentsOfficial eSTAR · PMA · nIVD eSTARThe field list could not be loadedGenerate official eSTAR (PDF) Not yet producible The official template or its field map is not availableOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.No Vault attachments selected.Add Vault attachmentFields the template carriesGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.Could not load the field listThe field list could not be readTry againeSTAR filing readinessNot yet registered — toggle the prerequisites you holdFDA ESG accountMark heldCDRH Portal accountMark heldOrg identity (DUNS/FEI)Mark heldMDUFA fee accountMark heldCorrespondent and declarationHeld on the org's eSTAR registration and written into the official eSTAR's correspondent and Declaration of Conformity fields. The declaration's company name and address are one legal entity, so both are held here. A blank field stays blank in the eSTAR.Correspondent company nameCorrespondent contact emailCorrespondent telephoneDeclaration of Conformity company nameDeclaration of Conformity company addressSaveAssess a submissionFiling-readiness against your authored contentDevice (nIVD)IVDSelect a submission…Start trackingTracked submissionsNo tracked filings yetNo tracked filings yetSelect a submission type and run a filing-readiness assessment; tracking becomes available once it has one.Serves the eSTAR submission record (FDA 510(k) / De Novo)"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx:94:35
+     92|     const { container } = mount();
+     93|     await waitFor(() => expect(container.querySelectorAll('.pma-mod').…
+     94|     expect(container.textContent).toMatch(/Original PMA \(21 CFR 814\.…
+       |                                   ^
+     95|     expect(container.querySelector('.pma-modules')?.textContent).not.t…
+     96|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > name the sections finished and written, by code
+AssertionError: expected { Object (el, pill, ...) } to match object { pill: 'present', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "desc": "Module 5 · required",
+-   "foot": "Finished: G.1 · written: G.3",
++   "desc": "",
++   "foot": " documents",
+    "pill": "present",
+  }
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx:102:77
+    100|     const { container } = mount();
+    101|     await waitFor(() => expect(container.querySelectorAll('.pma-mod').…
+    102|     expect(card(container, 'Clinical investigations (pivotal study, GC…
+       |                                                                             ^
+    103|       pill: 'present', desc: 'Module 5 · required', foot: 'Finished: G…
+    104|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > ask AnA with the module's own facts
+AssertionError: expected 'Open PMA module "Summary of safety an…' to match /^PMA module 7, "Summary of safety and…/
+
+- Expected:
+/^PMA module 7, "Summary of safety and effectiveness data \(SSED\)": Written, not finished: B\.2\./
+
++ Received:
+"Open PMA module \"Summary of safety and effectiveness data (SSED)\" — undefined documents · status: written. Walk me through what's open and where I should focus."
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx:119:50
+    117|     await waitFor(() => expect(container.querySelectorAll('.pma-mod').…
+    118|     fireEvent.click(card(container, 'Summary of safety and effectivene…
+    119|     expect(String(onAsk.mock.calls.at(-1)?.[0])).toMatch(/^PMA module …
+       |                                                  ^
+    120|   });
+    121|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > say so when the project has no PMA document
+AssertionError: expected 'Return to project workflowCorvant val…' to match /This project has no PMA document, so …/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                Corvant valve
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Phases · modules
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Day-100
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    PMA pathway
+                     · Corvant valve
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Project phase: Planning · No target set
+                  </div>
+                </div>
+                <div
+                  style="display: flex; gap: 8px;"
+                >
+                  <button
+                    class="section-more"
+                  >
+                    Open module editor 
+                    <svg
+                      fill="none"
+                      height="16"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.75"
+                      viewBox="0 0 24 24"
+                      width="16"
+                    >
+                      <path
+                        d="M9 6l6 6-6 6"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    class="section-more"
+                    title="Assemble a draft ZIP of your authored 21 CFR 814.20 sections (one PDF per section plus the combined PDF/DOCX) — NOT the official FDA eSTAR that CDRH ingests"
+                  >
+                    Export PMA package (draft) 
+                    <svg
+                      fill="none"
+                  ...
+
+- Expected:
+/This project has no PMA document, so it has no PMA modules to show/
+
++ Received:
+"Return to project workflowCorvant valveWorkspacePhases · modulesAudit trail021 CFR Part 11Day-1000Agency / NB queriesApprovalsYour pending e-sign · all projectsFilesFull filesystemPMA pathway · Corvant valveProject phase: Planning · No target setOpen module editor Export PMA package (draft) 1. Pre-submission—2. Preclinical—3. IDE approval—4. Manufacturing validation—5. Pivotal trial—6. Labeling—7. Module assembly—8. Advisory panel—9. Approval—10. Post-approval studies—The PMA pathway's 10 phases. None is marked: a project records its project phase, stated above, not a PMA phase.No pivotal-trial figures yetEnrolment, sites and endpoint figures appear here once this project has a registered study.No PMA modules yetModules appear here once 21 CFR 814.20 sections are authored for this project.Official eSTAR · PMA · nIVD eSTARThe field list could not be loadedGenerate official eSTAR (PDF) Not yet producible The official template or its field map is not availableOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.No Vault attachments selected.Add Vault attachmentFields the template carriesGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.Could not load the field listThe field list could not be readTry againeSTAR filing readinessNot yet registered — toggle the prerequisites you holdFDA ESG accountMark heldCDRH Portal accountMark heldOrg identity (DUNS/FEI)Mark heldMDUFA fee accountMark heldCorrespondent and declarationHeld on the org's eSTAR registration and written into the official eSTAR's correspondent and Declaration of Conformity fields. The declaration's company name and address are one legal entity, so both are held here. A blank field stays blank in the eSTAR.Correspondent company nameCorrespondent contact emailCorrespondent telephoneDeclaration of Conformity company nameDeclaration of Conformity company addressSaveAssess a submissionFiling-readiness against your authored contentDevice (nIVD)IVDSelect a submission…Start trackingTracked submissionsNo tracked filings yetNo tracked filings yetSelect a submission type and run a filing-readiness assessment; tracking becomes available once it has one.Serves the eSTAR submission record (FDA 510(k) / De Novo)"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx:125:55
+    123|     stubFetch([]);
+    124|     const { container } = mount();
+    125|     await waitFor(() => expect(container.textContent).toMatch(/This pr…
+       |                                                       ^
+    126|     expect(container.querySelectorAll('.pma-mod').length).toBe(0);
+    127|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  04:40:09
+   Duration  7.68s (transform 1.55s, setup 108ms, import 1.88s, tests 5.21s, environment 367ms)
+

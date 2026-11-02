@@ -1,0 +1,11 @@
+# Draft review issue 2, grouped-form paths. The final cases, run against the reader as pushed at a9202589 (the fix's two source files
+# restored from a9202589; the tests and their support module as committed). 5 of the 7 new cases fail; the two that pass are the own-folder controls.
+# 2026-11-02T04:11:14Z  npx vitest run server/services/legacy-importer
+ × server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into another application 13ms
+ × server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into an application of another type with the same number 4ms
+ × server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into no application at all: a climb through ".." 3ms
+ × server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer that climbs through a folder when no regional backbone names the application 2ms
+ × server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a reused file in another application, and reads one in its own 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 5 passed (6)
+      Tests  5 failed | 111 passed (116)

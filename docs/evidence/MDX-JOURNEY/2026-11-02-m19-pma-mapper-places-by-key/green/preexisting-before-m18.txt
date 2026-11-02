@@ -1,0 +1,1253 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-11-02T05:04:16.232Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-11-02T05:04:16.313Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:04:16.314Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-11-02T05:04:16.314Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > projects the recorded client on cards and retains page count over 60 programs 101ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > supplies the recorded client separately from the retained organisation sponsor identity 24ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > filters inside current access before LIMIT/OFFSET rather than filtering a page 59ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "0" 17ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "-1" 16ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "71junk" 16ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "1.5" 19ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "2147483648" 16ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "9007199254740992" 15ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "" 15ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > conceals another organisation workspace and an unknown workspace 30ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > offers minimal active client options across the accessible set, outside the selected page/filter 36ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses a same-program reanchor observed between card read and response 36ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > keeps accepted anchors immutable and bound to the evaluated actor and executor 18ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > bounds client options and reports further authorized active choices honestly 73ms
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > counts all 60 admitted programs while measuring only the 50 returned rows 44ms
+   → expected { count: 50, limit: 50, …(7) } to match object { count: 50, hasMore: true, …(1) }
+(7 matching properties omitted from actual)
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > filters pathways before paging and preserves independent usable facets 37ms
+   → expected { count: 7, limit: 7, offset: 7, …(6) } to match object { count: 7, hasMore: true, …(1) }
+(7 matching properties omitted from actual)
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > classifies CER and IDE from program type with no regulatory path 49ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > combines Client, workstream and pathway filters before paging and counts 36ms
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > keeps Other rows visible and countable rather than dropping unknown filing types 33ms
+   → expected [ { …(19) } ] to have a length of 11 but got 1
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > does not count private, deleted or archived rows without admission 52ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > excludes another organization from both aggregate and row reads 35ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > returns exact zero counts and empty selected results without removing facet choices 32ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters ws=unknown 18ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters ws=mdx 15ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters ws= 19ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters ws=MDX&ws=Biotech 21ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters pathway=unknown 15ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters pathway= 17ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters pathway=pma&pathway=cer 15ms
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > fails the read if counts cannot be read (08006) instead of presenting page length as a total
+{
+  "timestamp": "2026-11-02T05:04:19.968Z",
+  "level": "error",
+  "message": "[c2c-projects] listing the projects failed",
+  "context": {
+    "err": "count read failed",
+    "correlationId": null,
+    "code": "08006"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > fails the read if counts cannot be read (42P01) instead of presenting page length as a total
+{
+  "timestamp": "2026-11-02T05:04:19.995Z",
+  "level": "error",
+  "message": "[c2c-projects] listing the projects failed",
+  "context": {
+    "err": "count read failed",
+    "correlationId": null,
+    "code": "42P01"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > treats explicit all as the unfiltered portfolio 33ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > fails the read if counts cannot be read (08006) instead of presenting page length as a total 26ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > fails the read if counts cannot be read (42P01) instead of presenting page length as a total 26ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > revalidates accepted anchor mappings after the count read too 33ms
+stderr | tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > K510Surface mounts the pathway tab bar
+An update to DeviceProfilePanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to OfficialEstarPanelForContext inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to OfficialEstarPanelForContext inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to OfficialEstarPanelForContext inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to K510Surface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to K510Surface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to K510Surface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to K510Surface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > PathwayPanes(k510) mounts every tab without errors 152ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > PathwayPanes(pma) mounts every tab without errors 26ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > PathwayPanes(cer) mounts every tab without errors 22ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > the audit pane gates honestly — no fixture chain stands in for a failed read 19ms
+stderr | tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > PmaSurface mounts the pathway tab bar
+An update to PmaSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > PmaSurface mounts the pathway tab bar
+An update to OfficialEstarPanelForContext inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to OfficialEstarPanelForContext inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to OfficialEstarPanelForContext inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PmaSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > CerSurface mounts the pathway tab bar
+An update to CerSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > CerSurface mounts the pathway tab bar
+An update to CerSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CerSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > K510Surface mounts the pathway tab bar 45ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > PmaSurface mounts the pathway tab bar 31ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > CerSurface mounts the pathway tab bar 10ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > dossierStore round-trip > seeds section bodies and persists an edit — without authoring an audit event 1ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > dossierStore round-trip > lists the dossier tree under the program root 0ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > pathway panes — operational flows > Approvals: disables signing when the approval names no document revision 36ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > pathway panes — operational flows > Approvals: a confirmed signature renders the server-issued record 30ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > pathway panes — operational flows > Approvals: a rejected signature shows the reason and stays unsigned 33ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > pathway panes — operational flows > DossierDrawer opens from a LIVE audit row and switches its three tabs 38ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > live backend wiring > renders live audit / correspondence / approvals from the backend 83ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > honest empty states — sample mode off, no live data > renders empty states with zero fixture audit rows on resolved-empty feeds 28ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > honest empty states — sample mode off, no live data > renders an error state — not fixtures — when the feeds fail 18ms
+ × tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > live dossier wiring > async-seeds the Files tree + drawer from the c2c/documents backend 5017ms
+   → Unable to find an element with the text: /LIVE DOSSIER SECTION/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      aria-label="Pathway sub-tabs"
+      class="pwt-bar"
+      role="tablist"
+    >
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Workspace
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Predicate · SE · eSTAR
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Audit trail
+        </span>
+        <span
+          class="pwt-count"
+          title="Not read"
+        >
+          —
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          21 CFR Part 11
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          RTA / AI-Hold
+        </span>
+        <span
+          class="pwt-count"
+          title="Not read"
+        >
+          —
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Agency / NB queries
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Approvals
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Your pending e-sign · all projects
+        </span>
+      </button>
+      <button
+        aria-selected="true"
+        class="pwt-btn active"
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Files
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Full filesystem
+        </span>
+      </button>
+    </div>
+    <div
+      class="pwt-pane"
+    >
+      <div
+        aria-live="polite"
+        class="c2c-empty-state"
+        data-testid="dossier-empty"
+        role="status"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-empty-ic"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-empty-t"
+        >
+          No dossier sections yet
+        </div>
+        <div
+          class="c2c-empty-h"
+        >
+          Sections appear here once the submission outline is scaffolded for this project.
+        </div>
+        <button
+          class="c2c-empty-action"
+          type="button"
+        >
+          Check again
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      aria-label="Pathway sub-tabs"
+      class="pwt-bar"
+      role="tablist"
+    >
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Workspace
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Predicate · SE · eSTAR
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Audit trail
+        </span>
+        <span
+          class="pwt-count"
+          title="Not read"
+        >
+          —
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          21 CFR Part 11
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          RTA / AI-Hold
+        </span>
+        <span
+          class="pwt-count"
+          title="Not read"
+        >
+          —
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Agency / NB queries
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Approvals
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Your pending e-sign · all projects
+        </span>
+      </button>
+      <button
+        aria-selected="true"
+        class="pwt-btn active"
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Files
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Full filesystem
+        </span>
+      </button>
+    </div>
+    <div
+      class="pwt-pane"
+    >
+      <div
+        aria-live="polite"
+        class="c2c-empty-state"
+        data-testid="dossier-empty"
+        role="status"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-empty-ic"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-empty-t"
+        >
+          No dossier sections yet
+        </div>
+        <div
+          class="c2c-empty-h"
+        >
+          Sections appear here once the submission outline is scaffolded for this project.
+        </div>
+        <button
+          class="c2c-empty-action"
+          type="button"
+        >
+          Check again
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > section 9 decides the scope: every slice 1 row is checked here, and only those 2ms
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named with a word from "Not in client copy" 9ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named after a folded feature (section 5.8) 5ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > each slice 1 row carries its section 9 name, exactly 1ms
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the names AnA and the @ menu give a reachable screen (NAVIGATION_TARGETS) use none of the words 2ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the project-home breadcrumb names the open project, once, as the current page 35ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > section 9's own names pass this file's word and fold checks (so the guard can be met) 5ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > section 9 lists the doors 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > the door names live in one module, one constant per job, each with its section 9 name 4ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > no step door still carries today's name (Project*.tsx) 98ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > a job name is written once, in projectDoors.ts, and read from there by every door 260ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > each device workstream door is drawn with its job name, by pathway 221ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · no step carries a Coming later line (removed 2026-10-31) > Plan, Evidence, Author, Review, Submit and Respond carry no roadmap field 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · no step carries a Coming later line (removed 2026-10-31) > each step still says what to do on it, in client copy 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > phase 1 is "Planning", in the catalogue, so Plan and AnA read one name 6ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > no phase name uses a word from "Not in client copy" 4ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > /concept2cure/features opens Subscription & features 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > the shell writes /concept2cure/features for apps, and an old /concept2cure/apps link still arrives 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > no address a client can reach has "app" in it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > the account menu: Subscription & features, Subscription & billing (P-68), Platform licensing 225ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > a member's menu offers Compare subscriptions 50ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > the lock copy (rail, ⌘K, Subscription & features, unlock panel) names the subscription and the job 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > every door to Compare subscriptions has that name (no "View all plans", "View plans", "See plans", "Manage plan") 161ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > no heading or label outside the registry still carries a slice 1 row's old name 643ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > Setup's module panel no longer sends anyone to the Workflows 1ms
+stdout | tests/regulatory/requirements-resolver.test.ts
+{
+  "timestamp": "2026-11-02T05:04:31.592Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:04:31.593Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/requirements-resolver.test.ts
+{
+  "timestamp": "2026-11-02T05:04:31.593Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/requirements-resolver.test.ts
+[database] Database connection successful
+
+ × tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted 51ms
+   → expected { …(718) } to deeply equal { …(718) }
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CTD code from the section brief, naming the entry and how it matched 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CSR alias from the ICH E3 outline, with the basis the outline carries 0ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a lifecycle document type by id, case-insensitively 0ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > says what it does not index, and never answers from another entry 3ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > is the only dispatch: the tool delegates and keeps no copy of the rule 36ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > imports the brief renderers and is imported by none of them 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > live dossier wiring > async-seeds the Files tree + drawer from the c2c/documents backend
+TestingLibraryElementError: Unable to find an element with the text: /LIVE DOSSIER SECTION/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      aria-label="Pathway sub-tabs"
+      class="pwt-bar"
+      role="tablist"
+    >
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Workspace
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Predicate · SE · eSTAR
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Audit trail
+        </span>
+        <span
+          class="pwt-count"
+          title="Not read"
+        >
+          —
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          21 CFR Part 11
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          RTA / AI-Hold
+        </span>
+        <span
+          class="pwt-count"
+          title="Not read"
+        >
+          —
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Agency / NB queries
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Approvals
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Your pending e-sign · all projects
+        </span>
+      </button>
+      <button
+        aria-selected="true"
+        class="pwt-btn active"
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Files
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Full filesystem
+        </span>
+      </button>
+    </div>
+    <div
+      class="pwt-pane"
+    >
+      <div
+        aria-live="polite"
+        class="c2c-empty-state"
+        data-testid="dossier-empty"
+        role="status"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-empty-ic"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-empty-t"
+        >
+          No dossier sections yet
+        </div>
+        <div
+          class="c2c-empty-h"
+        >
+          Sections appear here once the submission outline is scaffolded for this project.
+        </div>
+        <button
+          class="c2c-empty-action"
+          type="button"
+        >
+          Check again
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      aria-label="Pathway sub-tabs"
+      class="pwt-bar"
+      role="tablist"
+    >
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Workspace
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Predicate · SE · eSTAR
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Audit trail
+        </span>
+        <span
+          class="pwt-count"
+          title="Not read"
+        >
+          —
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          21 CFR Part 11
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          RTA / AI-Hold
+        </span>
+        <span
+          class="pwt-count"
+          title="Not read"
+        >
+          —
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Agency / NB queries
+        </span>
+      </button>
+      <button
+        aria-selected="false"
+        class="pwt-btn "
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Approvals
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Your pending e-sign · all projects
+        </span>
+      </button>
+      <button
+        aria-selected="true"
+        class="pwt-btn active"
+        role="tab"
+      >
+        <span
+          class="pwt-label"
+        >
+          Files
+        </span>
+        <span
+          class="pwt-sub"
+        >
+          Full filesystem
+        </span>
+      </button>
+    </div>
+    <div
+      class="pwt-pane"
+    >
+      <div
+        aria-live="polite"
+        class="c2c-empty-state"
+        data-testid="dossier-empty"
+        role="status"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-empty-ic"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-empty-t"
+        >
+          No dossier sections yet
+        </div>
+        <div
+          class="c2c-empty-h"
+        >
+          Sections appear here once the submission outline is scaffolded for this project.
+        </div>
+        <button
+          class="c2c-empty-action"
+          type="button"
+        >
+          Check again
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx:503:30
+    501|     fireEvent.click(getAllByRole('tab')[4]); // Files
+    502|     // Tree shows the backend section (not a BX-204 fixture section).
+    503|     const folderName = await findByText(/LIVE DOSSIER SECTION/);
+       |                              ^
+    504|     fireEvent.click(folderName.closest('button')!); // expand the sect…
+    505|     // Select body.md from the TREE aside (body.md also appears in the…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted
+AssertionError: expected { …(718) } to deeply equal { …(718) }
+
+- Expected
++ Received
+
+@@ -387,20 +387,20 @@
+    "{\"document\":\"clinical study report\",\"section\":\"12.2\"}": "fd055b2bbda191c6",
+    "{\"document\":\"clinical study report\",\"section\":\"99.9\"}": "a21d12ad27f75da4",
+    "{\"document\":\"clinical study report\"}": "176c058cf3810b76",
+    "{\"document\":\"clinical-study-report\"}": "c74dff821f3b31c3",
+    "{\"document\":\"csr\",\"section\":\"\"}": "176c058cf3810b76",
+-   "{\"document\":\"csr\",\"section\":\"1\"}": "c33c0a15db83be07",
++   "{\"document\":\"csr\",\"section\":\"1\"}": "d3baea0647384347",
+    "{\"document\":\"csr\",\"section\":\"10\"}": "d5fd971ae9757fbb",
+    "{\"document\":\"csr\",\"section\":\"10.1\"}": "508cbc288610f50c",
+    "{\"document\":\"csr\",\"section\":\"10.2\"}": "da18dcc110e79b39",
+    "{\"document\":\"csr\",\"section\":\"11\"}": "ff93cf9a9beb4ae8",
+    "{\"document\":\"csr\",\"section\":\"11.1\"}": "bde0a06d6a9516f8",
+    "{\"document\":\"csr\",\"section\":\"11.2\"}": "16ba2c7068a70b15",
+    "{\"document\":\"csr\",\"section\":\"11.3\"}": "6baaeab1d6ab3224",
+    "{\"document\":\"csr\",\"section\":\"11.4\"}": "85d07828bc778a88",
+-   "{\"document\":\"csr\",\"section\":\"11.4.1\"}": "16fac40a54ec55c6",
++   "{\"document\":\"csr\",\"section\":\"11.4.1\"}": "ce06c3b6bc3475cd",
+    "{\"document\":\"csr\",\"section\":\"11.4.2\"}": "a82d19831552a812",
+    "{\"document\":\"csr\",\"section\":\"11.4.2.1\"}": "8201dfa8a2d574b0",
+    "{\"document\":\"csr\",\"section\":\"11.4.2.2\"}": "40c2ea38efbd39c8",
+    "{\"document\":\"csr\",\"section\":\"11.4.2.3\"}": "f4a166977b8a6831",
+    "{\"document\":\"csr\",\"section\":\"11.4.2.4\"}": "d678e35ba5e4f888",
+@@ -470,17 +470,17 @@
+    "{\"document\":\"csr\",\"section\":\"16.2.8\"}": "4b99006bf9a3df62",
+    "{\"document\":\"csr\",\"section\":\"16.3\"}": "ea1a3123146f0b0a",
+    "{\"document\":\"csr\",\"section\":\"16.3.1\"}": "2e2a3d028c43b7b2",
+    "{\"document\":\"csr\",\"section\":\"16.3.2\"}": "f5e2e60b5c4ec7fb",
+    "{\"document\":\"csr\",\"section\":\"16.4\"}": "48315701eac1aa01",
+-   "{\"document\":\"csr\",\"section\":\"2\"}": "2b6bb9eb04f51cd0",
++   "{\"document\":\"csr\",\"section\":\"2\"}": "a5da9f99823a090a",
+    "{\"document\":\"csr\",\"section\":\"3\"}": "4d626463bb07c59e",
+    "{\"document\":\"csr\",\"section\":\"4\"}": "3ec6b8cfd376c61c",
+-   "{\"document\":\"csr\",\"section\":\"5\"}": "0941e2ab4fbd44e0",
+-   "{\"document\":\"csr\",\"section\":\"5.1\"}": "3645799937c39cf3",
+-   "{\"document\":\"csr\",\"section\":\"5.2\"}": "4569c40f1a067292",
+-   "{\"document\":\"csr\",\"section\":\"5.3\"}": "e2ecd3ea88799cd5",
++   "{\"document\":\"csr\",\"section\":\"5\"}": "64442aef9833edfa",
++   "{\"document\":\"csr\",\"section\":\"5.1\"}": "fadfc0f972e0fae9",
++   "{\"document\":\"csr\",\"section\":\"5.2\"}": "f0e41f1af26889c2",
++   "{\"document\":\"csr\",\"section\":\"5.3\"}": "7b8d6fc024aecb81",
+    "{\"document\":\"csr\",\"section\":\"6\"}": "3afe6dbb4868285e",
+    "{\"document\":\"csr\",\"section\":\"7\"}": "4b1b8eae9f98ad7b",
+    "{\"document\":\"csr\",\"section\":\"8\"}": "0dd9ad68f77622fa",
+    "{\"document\":\"csr\",\"section\":\"9\"}": "518ec4edaa43810f",
+    "{\"document\":\"csr\",\"section\":\"9.1\"}": "6c386c67ba3fb614",
+@@ -502,11 +502,11 @@
+    "{\"document\":\"csr\",\"section\":\"9.5.1\"}": "b67980a7155a6e14",
+    "{\"document\":\"csr\",\"section\":\"9.5.2\"}": "a3fb1ac9d71ff641",
+    "{\"document\":\"csr\",\"section\":\"9.5.3\"}": "9b26f4f788882550",
+    "{\"document\":\"csr\",\"section\":\"9.5.4\"}": "33c9ef52e0ea5009",
+    "{\"document\":\"csr\",\"section\":\"9.6\"}": "db5880c359985dc7",
+-   "{\"document\":\"csr\",\"section\":\"9.7\"}": "d8bda3f55c3c968f",
++   "{\"document\":\"csr\",\"section\":\"9.7\"}": "cfb92911ad64feb5",
+    "{\"document\":\"csr\",\"section\":\"9.7.1\"}": "3ab66e061e555db2",
+    "{\"document\":\"csr\",\"section\":\"9.7.2\"}": "cf93d2be09c597ea",
+    "{\"document\":\"csr\",\"section\":\"9.8\"}": "e229077482bc8118",
+    "{\"document\":\"csr\",\"section\":\"99.9\"}": "a21d12ad27f75da4",
+    "{\"document\":\"csr\"}": "176c058cf3810b76",
+
+ ❯ tests/regulatory/requirements-resolver.test.ts:93:17
+     91|     }
+     92|     expect(Object.keys(now).length).toBe(Object.keys(PINNED).length);
+     93|     expect(now).toEqual(PINNED);
+       |                 ^
+     94|   });
+     95| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > counts all 60 admitted programs while measuring only the 50 returned rows
+AssertionError: expected { count: 50, limit: 50, …(7) } to match object { count: 50, hasMore: true, …(1) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -4,11 +4,11 @@
+      "byPathway": {
+        "cer": 10,
+        "ide": 10,
+        "ivdr": 5,
+        "mdl": 4,
+-       "other": 11,
++       "other": 1,
+        "pma": 20,
+      },
+      "byWorkstream": {
+        "Biotech": 10,
+        "MDX": 49,
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:234:27
+    232|     const res = await list('?limit=50');
+    233|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    234|     expect(res.body.meta).toMatchObject({ count: 50, hasMore: true, co…
+       |                           ^
+    235|       total: 60, byWorkstream: { MDX: 49, Biotech: 10, Mystery: 1 },
+    236|       byPathway: { pma: 20, cer: 10, ide: 10, ivdr: 5, mdl: 4, other: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > filters pathways before paging and preserves independent usable facets
+AssertionError: expected { count: 7, limit: 7, offset: 7, …(6) } to match object { count: 7, hasMore: true, …(1) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -4,11 +4,11 @@
+      "byPathway": {
+        "cer": 10,
+        "ide": 10,
+        "ivdr": 5,
+        "mdl": 4,
+-       "other": 11,
++       "other": 1,
+        "pma": 20,
+      },
+      "byWorkstream": {
+        "Biotech": 10,
+        "MDX": 49,
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:252:27
+    250|     expect(res.body.data.every((row: {pathway: string}) => row.pathway…
+    251|     expect(res.body.data[0].id).toBe(program(8));
+    252|     expect(res.body.meta).toMatchObject({ count: 7, hasMore: true, cou…
+       |                           ^
+    253|       total: 20, byWorkstream: { MDX: 49, Biotech: 10, Mystery: 1 },
+    254|       byPathway: { pma: 20, cer: 10, ide: 10, ivdr: 5, mdl: 4, other: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > keeps Other rows visible and countable rather than dropping unknown filing types
+AssertionError: expected [ { …(19) } ] to have a length of 11 but got 1
+
+- Expected
++ Received
+
+- 11
++ 1
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:281:27
+    279|     const res = await list('?pathway=other');
+    280|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    281|     expect(res.body.data).toHaveLength(11);
+       |                           ^
+    282|     expect(res.body.data.some((row: {id: string}) => row.id===program(…
+    283|     expect(res.body.meta.counts.total).toBe(11);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named with a word from "Not in client copy"
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "biostat-workbench: \"Biostat workbench\" (workbench)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:264:96
+    262|
+    263|   it('no surface a client can reach is named with a word from "Not in …
+    264|     expect(offending(CLIENT_SURFACE_IDS.map((id) => [id, getSurfaceMet…
+       |                                                                                                ^
+    265|   });
+    266|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the names AnA and the @ menu give a reachable screen (NAVIGATION_TARGETS) use none of the words
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "NAVIGATION_TARGETS biostat-workbench: \"Biostatistics workbench\" (workbench)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:280:135
+    278|
+    279|   it('the names AnA and the @ menu give a reachable screen (NAVIGATION…
+    280|     expect(offending(NAVIGATION_TARGETS.filter((t) => reachable(t.id))…
+       |                                                                                                                                       ^
+    281|   });
+    282|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  7 failed | 76 passed (83)
+   Start at  05:04:12
+   Duration  19.84s (transform 4.78s, setup 204ms, import 4.42s, tests 13.94s, environment 701ms)
+

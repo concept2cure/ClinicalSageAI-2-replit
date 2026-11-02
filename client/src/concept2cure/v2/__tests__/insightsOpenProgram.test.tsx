@@ -63,6 +63,16 @@ describe('Insights — the open program', () => {
     expect(document.body.textContent).not.toMatch(/C2C-001/);
   });
 
+  it('names the open project in the back link when the address carried only its id', async () => {
+    // Opened from `?program=<id>`: the shell has the id and no title (seen in
+    // the running app, 2026-11-02, where the link read "Project").
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM };
+    answer = overview({ ...lead('HLV-333', 11), label: 'HLV-333 · lupus nephritis (IND)' }, { programId: PROGRAM, state: 'lead' });
+    renderCanvas();
+    await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
+    expect(document.querySelector('[data-work-area="insights"] > .pj-back')?.textContent).toMatch(/HLV-333 · lupus nephritis \(IND\)/);
+  });
+
   it('a program with no project record is stated for that program, not replaced by another', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM, title: 'BX-256 · lupus (IND)', code: 'BX-256' };
     answer = overview(null, { programId: PROGRAM, state: 'unanchored' });

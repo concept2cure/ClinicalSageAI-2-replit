@@ -288,11 +288,11 @@ describe('regulatory-programs routes — sidecar feeds', () => {
 
   it('GET /:id/pma-modules returns 200 + { data: PmaModule[] }', async () => {
     vi.mocked(svc.getPmaModules).mockResolvedValueOnce([
-      { id: 'preclinical', label: 'Preclinical', desc: 'Bench', docs: 47, status: 'complete' },
+      { id: 'nonclinical', module: 4, label: 'Nonclinical laboratory studies', required: true, finished: ['F.1'], written: [], status: 'present' },
     ]);
     const res = await request(makeApp()).get(`/api/regulatory-programs/${PROGRAM_ID}/pma-modules`);
     expect(res.status).toBe(200);
-    expect(res.body.data[0].id).toBe('preclinical');
+    expect(res.body.data[0].id).toBe('nonclinical');
   });
 
   it('GET /:id/pma-trial-metrics returns 200 + { data: TrialMetric[], meta: { study } }', async () => {

@@ -10,13 +10,14 @@
  *   - the later-sequence refusal, a control;
  *   - `sequence_number_missing` and the wrong-backbone pointer, which existing
  *     code already handled but no test exercised.
- * The cases from "a second review" on were run first against 7e7fae33.
+ * The cases from "a second review" on were run first against 7e7fae33, and
+ * "grouped-form paths" against 24694d13.
  */
 import { describe, expect, it, vi } from 'vitest';
 import { loadFiledStateBySubmission } from '../../ectd/prior-sequence-loader';
 import { readFiledSequences, isComplete, type FiledSequence } from '../filed-sequence-reader';
 import { BACKBONE_MAX_BYTES, decodeBackbone } from '../filed-sequence-xml';
-import { H, handSequenceFiles, md5, zipOf, type HandLeaf, type HandSequence } from './support/conformant-sequence';
+import { H, filedStatePool, handSequenceFiles, md5, zipOf, type HandLeaf, type HandSequence } from './support/conformant-sequence';
 
 type Files = Record<string, string | Buffer>;
 
@@ -184,8 +185,7 @@ describe('modified-file pointers', () => {
     const [s0, s1] = out.sequences;
     expect(s1.refusals).toEqual([]);
     expect(s1.leaves[0].modifiedFile).toBe('../0000/index.xml#ov');
-    const pool = (rows: Array<Record<string, unknown>>) => ({ query: async (sql: string) => ({ rows: /leaf_manifest/.test(sql) ? rows : [] }) });
-    const state = await loadFiledStateBySubmission(pool([s0, s1].map((s) => ({ sequence_number: s.sequence, leaf_manifest: s.leaves }))), { organizationId: 1, submissionId: 1 });
+    const state = await loadFiledStateBySubmission(filedStatePool([s0, s1].map((s) => ({ sequence_number: s.sequence!, leaf_manifest: s.leaves }))), { organizationId: 1, submissionId: 1 });
     expect(state.leaves.map((l) => l.fileName).sort()).toEqual(['clinical-overview-v2.pdf', 'cover.pdf', 'csr.pdf']);
   });
 
@@ -372,7 +372,7 @@ describe('a second review of the fixes', () => {
   });
 
   it('binds a grouped-form pointer in an archive zipped without its application folder', async () => {
-    const one = handSequenceFiles({ root: '0001/', sequenceNumber: '0001', ich: [{ headings: [...H.clinicalOverview], href: 'm2/2-5/v2.pdf', id: 'v2', operation: 'replace', modifiedFile: '../../nda123456/0000/index.xml#ov' }] });
+    const one = handSequenceFiles({ root: '0001/', sequenceNumber: '0001', ich: [{ headings: [...H.clinicalOverview], href: 'm2/2-5/v2.pdf', id: 'v2', operation: 'replace', modifiedFile: '../../ind123456/0000/index.xml#ov' }] });
     const [, s1] = (await read({ ...zero(), ...one })).sequences;
     expect(s1.refusals).toEqual([]);
     expect(s1.leaves[0].modifiedFile).toBe('../0000/index.xml#ov');
@@ -462,3 +462,50 @@ describe('a second review of the fixes: headings, applications, identity', () =>
   }, 30_000);
 });
 
+describe('grouped-form paths: only through this application\'s own folder (draft review, 2026-11-02)', () => {
+  // The fixture's regional backbone files an IND (fdaat4) numbered 123456: FDA's folder for it is ind123456.
+  const zero = (extra: Partial<HandSequence> = {}) => handSequenceFiles({ ...BASE, root: '0000/', ...extra });
+  const replaceOv = (modifiedFile: string): HandLeaf => ({ headings: [...H.clinicalOverview], href: 'm2/2-5/v2.pdf', id: 'v2', operation: 'replace', modifiedFile });
+  const reuseOv = (href: string): HandLeaf => ({ headings: [...H.clinicalOverview], href, id: 'r1', omitFile: true, checksum: md5('%PDF-1.4 ov') });
+  const refusedFor = (s: FiledSequence) => s.refusals.map((r) => [r.code, r.leafId]);
+
+  it.each([
+    ['another application', '../../nda999999/0000/index.xml#ov', /"nda999999", not this application's "ind123456"/],
+    ['an application of another type with the same number', '../../nda123456/0000/index.xml#ov', /"nda123456", not this application's "ind123456"/],
+    ['no application at all: a climb through ".."', '../../../0000/index.xml#ov', /"\.\.", not this application's "ind123456"/],
+  ])('refuses a pointer into %s', async (_, pointer, why) => {
+    const one = handSequenceFiles({ root: '0001/', sequenceNumber: '0001', ich: [replaceOv(pointer)] });
+    const [s0, s1] = (await read({ ...zero(), ...one })).sequences;
+    expect(refusedFor(s1)).toEqual([['leaf_modified_file_unresolved', 'v2']]);
+    expect(s1.refusals[0].message).toMatch(why);
+    expect(s1.leaves).toEqual([]);
+    expect(s0.leaves.map((l) => l.leafId)).toContain('ov');
+  });
+
+  it('leaves a pointer through its own folder, at a sequence the archive does not hold, for the filed state', async () => {
+    const s = await only(handSequenceFiles({ root: '', sequenceNumber: '0003', ich: [replaceOv('../../ind123456/0002/index.xml#ov')] }));
+    expect(s.refusals).toEqual([]);
+    expect(s.leaves[0].modifiedFile).toBe('../0002/index.xml#ov');
+    expect(s.outsideArchive).toEqual(['v2']);
+  });
+
+  it('refuses a pointer that climbs through a folder when no regional backbone names the application', async () => {
+    const s = await only(handSequenceFiles({ root: '0003/', sequenceNumber: '0003', noRegionalPointer: true, ich: [replaceOv('../../ind123456/0002/index.xml#ov')] }));
+    const leafRefusals = s.refusals.filter((r) => r.leafId);
+    expect(leafRefusals.map((r) => [r.code, r.leafId])).toEqual([['leaf_modified_file_unresolved', 'v2']]);
+    expect(leafRefusals[0].message).toMatch(/names no FDA application/);
+    expect(s.outsideArchive).toEqual([]);
+  });
+
+  it('refuses a reused file in another application, and reads one in its own', async () => {
+    const own = handSequenceFiles({ root: '0001/', sequenceNumber: '0001', ich: [reuseOv('../../ind123456/0000/m2/2-5/clinical-overview.pdf')] });
+    const [, ok] = (await read({ ...zero(), ...own })).sequences;
+    expect(ok.refusals).toEqual([]);
+    expect(ok.leaves[0].archivePath).toBe('0000/m2/2-5/clinical-overview.pdf');
+    const other = handSequenceFiles({ root: '0001/', sequenceNumber: '0001', ich: [reuseOv('../../nda999999/0000/m2/2-5/clinical-overview.pdf')] });
+    const [, s1] = (await read({ ...zero(), ...other })).sequences;
+    expect(refusedFor(s1)).toEqual([['leaf_href_unsafe', 'r1']]);
+    expect(s1.refusals[0].message).toMatch(/"nda999999", not this application's "ind123456"/);
+    expect(s1.leaves).toEqual([]);
+  });
+});

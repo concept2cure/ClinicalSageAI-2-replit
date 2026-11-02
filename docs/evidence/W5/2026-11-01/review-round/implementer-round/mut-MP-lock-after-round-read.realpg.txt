@@ -1,0 +1,10 @@
+ ✓ tests/db/artifact-review-round-lock.dbtest.ts > F1: a reviewer assignment chooses its round under the artifact row lock > runs as a role RLS applies to (not the owner, not BYPASSRLS) 4ms
+ ✓ tests/db/artifact-review-round-lock.dbtest.ts > F1: a reviewer assignment chooses its round under the artifact row lock > on the production stack, routing again after a request for changes opens round 2, and the approval meets the quorum 256ms
+ ✓ tests/db/artifact-review-round-lock.dbtest.ts > F1: a reviewer assignment chooses its round under the artifact row lock > X chose round 1 while Ben was pending and waits at its insert: Ben's decision and Y wait for X, so the round is not split and every reviewer counts 291ms
+ × tests/db/artifact-review-round-lock.dbtest.ts > F1: a reviewer assignment chooses its round under the artifact row lock > X waits for the artifact's row before it reads the round, and Ben closes round 1 meanwhile: X and Y both land in round 2 266ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/artifact-review-round-lock.dbtest.ts > F1: a reviewer assignment chooses its round under the artifact row lock > X waits for the artifact's row before it reads the round, and Ben closes round 1 meanwhile: X and Y both land in round 2
+- Expected
+-   2,
