@@ -39,9 +39,9 @@ validator.
 
 | Check | Before (detector at `5f30fdda`) | After |
 |---|---|---|
-| `detector-reads-a-filed-sequence.test.ts`: a sequence built by the platform's own packager (Modules 1–5, with STFs) | **5 of 5 fail** ([detector-before-fix.txt](detector-before-fix.txt)). Each failure:<br>• 0 of 5 leaves mapped from a backbone; all 5 placed by filename, with 4 sections wrong at module level (`1`, `3`, `4`, `5`);<br>• the cover letter reported `missing_required_leaf` though the archive holds it;<br>• application, sequence and sponsor all null;<br>• the root `index-md5.txt` not recognized;<br>• a tampered leaf still `suggested` with no error. | 5 of 5 pass |
-| `filed-sequence-reader-round-trip.test.ts`: three sequences (0000 new; 0001 replace and append; 0002 a Module 1 replace into the regional backbone, and a withdrawal), built by `packageEctdSubmission` and put in one archive | — (the reader did not exist) | Every leaf of every sequence equals the packager's recorded manifest on section, file, href, md5, act, `modified-file`, title, backbone ID and backbone. The one exception is the 3.2.S.4.2 leaf, read back at its heading, 3.2.S, as the design records. **The fold (`loadFiledStateBySubmission`, given the manifests as its query's rows) gives the same filed state from the imported sequences as from the platform's own records.** |
-| `filed-sequence-reader-refuses.test.ts` | — | 33 cases:<br>• all 20 refusal codes, each naming the leaf;<br>• the heading reverse map agreeing with every ICH heading the packager writes, and with every FDA Module 1 heading except 1.18, the one `usRegionalHeadingPlacement` already says it cannot stand behind;<br>• pointers bound, refused, or left for the filed state. |
+| `detector-reads-a-filed-sequence.test.ts`: a sequence built by the platform's own packager (Modules 1–5, with STFs) | **5 of 5 fail** ([detector-before-fix.txt](detector-before-fix.txt)). Each failure:<br>• 0 of 5 leaves mapped from a backbone; all 5 placed by filename, with 4 sections wrong at module level (`1`, `3`, `4`, `5`);<br>• the cover letter reported `missing_required_leaf` though the archive holds it;<br>• application, sequence and sponsor all null;<br>• the root `index-md5.txt` not recognized;<br>• the untampered CSR in an archive whose other leaf was tampered with, placed by filename (`suggested`), not mapped from index.xml. The run stopped at that assertion, so it does not show whether the old detector raised an error for the tampered leaf. | 5 of 5 pass |
+| `filed-sequence-reader-round-trip.test.ts`: three sequences (0000 new; 0001 replace and append; 0002 a Module 1 replace into the regional backbone, and a withdrawal), built by `packageEctdSubmission` and put in one archive | — (the reader did not exist) | Every leaf of every sequence equals the packager's recorded manifest on section, file, href, md5, act, `modified-file`, title, backbone ID and backbone. The one exception is the 3.2.S.4.2 leaf, read back at its heading, 3.2.S, as the design records. **The fold (`loadFiledStateBySubmission`, given the manifests as its query's rows) gives the same filed state from the imported sequences as from the platform's own records.** *Corrected 2026-11-02:* that holds only because no two leaves of one sequence share a heading and a file name, and because the test folds the native side at heading level (`HEADING_OF`). Where two leaves do share them, the fold kept one and dropped the other. The review round's reader refuses such leaves (`leaf_identity_ambiguous`) instead. |
+| `filed-sequence-reader-refuses.test.ts` | — | 33 cases:<br>• 19 of the 20 refusal codes, each naming the leaf or, for a sequence-level code, the backbone (*corrected 2026-11-02:* `sequence_number_missing` was not exercised; the review round's tests cover it);<br>• the heading reverse map agreeing with every ICH heading the packager writes, and with every FDA Module 1 heading except 1.18, the one `usRegionalHeadingPlacement` already says it cannot stand behind;<br>• pointers bound, refused, or left for the filed state. |
 | Each guard made to fail | — | [guards-made-to-fail.txt](guards-made-to-fail.txt): eight guards removed one at a time, and each turns at least one test red. The guards: the checksum compare, the archive limits, the wrapper check, the entity pre-check, href containment, pointer binding, the pointer form check and the index-md5 compare. |
 | Consumers | — | [after-fix.txt](after-fix.txt): the legacy-importer suite, the mdx-imports route tests (PGlite, real INSERT), the onboarding aggregate, `tests/mdx-imports-routes.test.ts`, and the archive-limit call sites. All pass. |
 
@@ -89,3 +89,118 @@ suites", was wrong. That run covered 8 files and no AnA test. "Two existing fixt
 should have read five.
 
 The review's other findings are fixed in a following change, recorded below.
+
+## Review round, 2026-11-02: the review's other findings, fixed
+
+The review confirmed 35 findings, each reproduced by a second agent; 4 others
+were refuted. The full list, with each finding's reproduction, is in the
+session's review record, summarised here by what changed. Every case in the new
+`__tests__/filed-sequence-reader-real-archives.test.ts` was written first and
+run against the reader at `0835454a`: **33 of 37 failed**
+([review-round-red-at-0835454a.txt](review-round-red-at-0835454a.txt)). Four
+passed there, as expected:
+- the size cap, which tests the new module directly;
+- the later-sequence refusal, a control;
+- `sequence_number_missing` and the wrong-backbone pointer, which existing code
+  already handled but no test exercised (#32, #33).
+
+| Finding | What the reader did | Now |
+|---|---|---|
+| #1/#23 UTF-8 byte-order mark (written by default by .NET tools) | The whole backbone was refused as not well-formed | Honoured and dropped |
+| #6 declared encoding | ISO-8859-1 titles recorded as U+FFFD; UTF-16 unreadable | Decoded as declared; bytes that are not what they claim are refused (`backbone_encoding_unsupported`) |
+| #5 DTD-fixed prefixes | A backbone relying on the DTD's `#FIXED xmlns:xlink` was refused | `xlink`, `ectd`, `fda-regional` in scope when undeclared |
+| #9 (high) / #14 DOCTYPE pre-check | Quadratic: 20.7 s blocked on a 3 KB upload; bypassed by a quoted `>` | One linear, quote-aware scan; the same input answers in milliseconds |
+| — | No size bound on a backbone | Over 32 MiB is refused (`backbone_too_large`) |
+| #2 ICH file reuse | A leaf reusing an earlier sequence's file was refused as unsafe | Read, with its checksum verified in the archive. A reuse from a sequence the archive does not hold waits on the filed state; one from a later sequence is refused |
+| #8 percent-encoding | `%20` hrefs not found | Decoded when the literal path is absent; a decoded traversal is refused |
+| #12 nested sequence folders | An outer sequence could map an inner sequence's refused file | Refused |
+| #3/#16 grouped-layout pointers | Bound, but recorded as written, so the fold kept the replaced leaf | Recorded as `../<sequence>/<backbone>#<ID>` |
+| #13 extra `../`, another application | Accepted, then bound by the fold to the wrong sequence | Refused |
+| #17 pointer at a replaced leaf, or a withdrawal | Accepted | Refused; also a second act on one leaf in one sequence |
+| #18 pointer at its own or a later sequence (outside the archive) | Accepted | Refused |
+| #19 withdrawal of a leaf outside the archive | Recorded with no file name; the sequence read complete but the fold would throw | `isComplete` is false while anything waits on the filed state |
+| #20 withdrawal under another heading | The fold also withdrew an unrelated leaf | The withdrawal takes the withdrawn leaf's section |
+| #21 sequence number `1` | Recorded; cannot bind or order | Refused (`sequence_number_malformed`) |
+| #30 two leaves, one heading, one file name | The fold kept one, silently | Each refused (`leaf_identity_ambiguous`) |
+| #24 index.xml failing index-md5 | Every Module 2–5 leaf still mapped | No leaf read from either backbone |
+| #34 ICH tree guard | Could never fire | Refuses 2.8, 3.9, 3.2.Z, 4.2.4, 5.9 |
+| #10/#11/#15 work bounds | O(depth²) per leaf; a file re-inflated per leaf; cubic root ownership | Nesting capped at 32; each file inflated and hashed once (asserted); one pass for ownership |
+| #4 grouped FDA submission | Application and number from whichever `<application>` came first | The one with `application-containing-files="true"` |
+| #26 EU envelope | Sequence number lost; a new error | `<sequence>`, `<applicant>`, the procedure number |
+| #7/#25 sequences not read | "No index.xml" even when it was there | Each regional backbone not read is named, with the reason; a folder holding index.xml and index-md5.txt is read whatever its name |
+| #27/#31 refusals and their files | Most leaf refusals named no file; the file became a filename suggestion | Every leaf refusal names its file; that file is stored skipped, not suggested |
+| #28 other regions' backbones | `m1/ca/ca-regional.xml` stored as a Module 1 document | Structure |
+
+**Files.** These two modules are new, inside the folder they came from (RULE 6:
+split, don't add):
+- `filed-sequence-xml.ts`: decoding, parsing, headings;
+- `filed-sequence-pointers.ts`: binding pointers and the identity check.
+
+The reader and the detector are changed. Two tests change:
+- `filed-sequence-reader-refuses.test.ts`: its duplicate-number fixture is now
+  two sibling folders of one application. A duplicate is now judged per
+  application, so the old fixture, a sequence nested inside another, no longer
+  shows one.
+- The detector test gains three cases.
+
+**Green.** [review-round-green.txt](review-round-green.txt): the legacy-importer folder and every
+test file that imports the detector, `mdx-imports`, `mdx-onboarding` or `start_legacy_import`.
+
+**Each guard made to fail.**
+[guards-made-to-fail-review-round.txt](guards-made-to-fail-review-round.txt):
+21 guards, each removed in turn, each turning at least one test red.
+
+**Not fixed, by design.**
+- The fold keys a leaf by section and file name, which lives in
+  `prior-sequence-loader.ts`, held by RIM. A later sequence's leaf with the
+  same heading and file name as an earlier, different document therefore
+  supersedes it, as it would natively for the same precise section. Keying
+  imported leaves by backbone ID is handed to RIM with the pointer-parser
+  convergence.
+- Reading other regions' Module 1 headings beyond the FDA's and the EU's is
+  unchanged.
+
+## Second review, 2026-11-02: the fixes, reviewed before they were pushed
+
+The review round's fixes were reviewed again, read-only and by three lenses:
+coverage of the 35 findings, the tests, and new holes. Each issue went to a
+skeptic. They found problems in the code already committed as `7e7fae33`, so
+that commit was not pushed until they were fixed. Every case below was run
+first against `7e7fae33`: **16 of 18 failed, and the absolute-name case hung
+until killed at 90 s** ([second-review-red-at-7e7fae33.txt](second-review-red-at-7e7fae33.txt)).
+The two that passed are coverage additions: guards the code had, which no test
+exercised (the pointer's backbone, and a refused regional backbone's files).
+
+| Issue | What `7e7fae33` did | Now |
+|---|---|---|
+| **High:** a zip entry named `/x` | The walk to its sequence root never ended (`lastIndexOf('/', -1)` finds the leading `/` again). Any upload holding one hung the detector. | An absolute name belongs to no sequence. The walk is bounded at 1,024 characters and 32 folders. |
+| 32 MiB backbone of empty leaves | About 1.7 million leaves, roughly 3 GB of heap and a 10 s block | Over 50,000 leaves is refused before the document is built (`backbone_too_large`) |
+| A reused file the earlier sequence refused, never read, or never filed | Recorded, complete, and mapped | Refused: a reused file must be one a kept leaf of that earlier sequence filed |
+| An archive zipped without its application folder | A grouped-form pointer (`../../nda123456/0000/…`) was refused | Bound to the sibling sequence |
+| A four-digit ancestor folder (`export/2024/ind123/`) | Reuse refused | Read |
+| A leaf a later filing under the same section and name took off file | A pointer at it bound, so the fold withdrew the re-filing | Refused, as the fold's own supersession implies |
+| An ID such as `1ov` | Recorded; a pointer at it could never be parsed by the fold | Refused (`leaf_id_malformed`), and so is a pointer naming one |
+| Several `<application>` elements, none marked | The first was taken | None is taken |
+| A pointer at a leaf its own sequence then refused as ambiguous | Bound | Identity is checked before anything binds |
+| `m3-2-z-…`, `m2-3-z-…` | Read as 3.2 and 2.3 | Not a heading |
+| A sequence folder inside another of the same number | No longer refused | Refused |
+| A leaf refused for having no ID | Its file became a filename suggestion | Stored skipped |
+| A reused file in the detector | Mapped under the reusing sequence's section | Keeps the section the sequence that filed it gave it |
+| 20,000 reuses refused at once; many leaves with one name | Quadratic: 14 s and 11 s | Linear (a test bounds it) |
+
+**Withdrawn after a dissenting verdict.** One fix refused a leaf filed directly
+in a heading that has sub-headings (3, 3.2, 5.3), as the packager's
+`isPlaceableSection` would. A second verifier pointed out that the ICH DTD lets
+every heading hold leaves. Such a leaf can be in a validly filed sequence, and
+refusing it would keep that sequence out of the filed state. Such leaves are
+read as filed, and a test pins it. A later act at that section is refused
+openly by the packager.
+
+**Each guard made to fail.**
+[guards-made-to-fail-second-review.txt](guards-made-to-fail-second-review.txt).
+On the first pass three guards survived; each got a case only it decides. On
+the second pass every guard turns a test red.
+
+**Green.** [second-review-green.txt](second-review-green.txt): the legacy-importer
+folder and every test file that imports the detector, `mdx-imports`,
+`mdx-onboarding` or `start_legacy_import`.
