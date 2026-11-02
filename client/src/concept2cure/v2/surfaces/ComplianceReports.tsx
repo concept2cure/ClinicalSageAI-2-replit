@@ -45,7 +45,7 @@ const CATALOG_PATH = '/api/audit/reports';
 const muted: React.CSSProperties = { fontSize: 12, color: 'var(--text-400)' };
 const tagStyle: React.CSSProperties = {
   display: 'inline-block', fontSize: 10.5, padding: '1px 7px', borderRadius: 999,
-  border: '1px solid var(--border)', color: 'var(--text-300)', whiteSpace: 'nowrap',
+  border: '1px solid var(--border)', color: 'var(--text-300)', maxWidth: '100%', overflowWrap: 'anywhere',
 };
 const noticeStyle: React.CSSProperties = {
   display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 12px', margin: '0 0 14px',
