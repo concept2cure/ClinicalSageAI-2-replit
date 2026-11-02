@@ -1,0 +1,102 @@
+# Mutation 4 (finding: pre-guard rows). The fold counts only binding rows that carry a manifest, as before the review, so a manifest-less real send beside a second bound row no longer makes the read unreadable.
+# File: server/services/ectd/prior-sequence-loader.ts
+# Replaced (exactly once):
+#   -     if (read.sent.length > 1) {
+#   -       throw new Error(
+#   -         `Sequence ${seq} is bound to more than one transmittal of what it sent (${read.sent.map((t) => t.transmittal_id).join(', ')}); ` +
+#   -           'what is on file cannot be read, so none of it was.',
+#   -       );
+#   -     }
+#   -     const record = read.sent[0]?.leaf_manifest;
+# With:
+#   +     const withRecord = read.sent.filter((t) => t.leaf_manifest != null);
+#   +     if (withRecord.length > 1) {
+#   +       throw new Error(
+#   +         `Sequence ${seq} is bound to more than one transmittal of what it sent (${withRecord.map((t) => t.transmittal_id).join(', ')}); ` +
+#   +           'what is on file cannot be read, so none of it was.',
+#   +       );
+#   +     }
+#   +     const record = withRecord[0]?.leaf_manifest;
+# Command: npx vitest run server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts
+# Exit code: 1 (non-zero = the test caught the mutation)
+# Restored byte for byte: sha256 f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845 before and after
+# Run: 2026-11-02T01:25:31.851520Z
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 18ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > sent before the guard kept the record and never compiled: the next sequence is refused, the view names it 8ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > bound to its attempt, but the transmittal predates the record and there is no compile: the same refusal 8ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > another agency’s row carrying a binding to an FDA sequence is not read 10ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt and sequence under another signature is not read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt under another sequence’s id is not read 4ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > two rows of its own agency bind the attempt, one with no manifest: the read throws, never reads either 15ms
+   → promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > an EU sequence is read from the EMA gateway’s row: the region is compared as one agency, not as text 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 16ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 14ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  01:25:28
+   Duration  2.79s (transform 140ms, setup 75ms, import 110ms, tests 2.37s, environment 1ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > two rows of its own agency bind the attempt, one with no manifest: the read throws, never reads either
+AssertionError: promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "leaves": [
++     {
++       "backbone": "index.xml",
++       "ctdSection": "3.2.S.1",
++       "fileName": "invented.pdf",
++       "history": [
++         {
++           "fileName": "invented.pdf",
++           "md5": "ffffffffffffffffffffffffffffffff",
++           "operation": "new",
++           "sequenceNumber": "0000",
++         },
++       ],
++       "href": "m3/invented.pdf",
++       "leafId": "leaf-invented-pdf",
++       "md5": "ffffffffffffffffffffffffffffffff",
++       "operation": "new",
++       "sequenceNumber": "0000",
++     },
++   ],
++   "sequences": [
++     {
++       "basis": "transmit",
++       "dispatchStatus": "sent",
++       "filed": true,
++       "sequenceNumber": "0000",
++     },
++   ],
++   "throughSequence": "0000",
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:249:32
+    247|     await transmittal({ attemptId: attempt(13), sequenceId: id }, [lea…
+    248|       { region: 'fda', gateway: 'esg', sha: 'e'.repeat(64) });
+    249|     await expect(filedState(13)).rejects.toThrow(/Sequence 0000 is bou…
+       |                                ^
+    250|   });
+    251|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

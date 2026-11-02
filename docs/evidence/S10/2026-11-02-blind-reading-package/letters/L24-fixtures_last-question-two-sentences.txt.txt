@@ -1,0 +1,6 @@
+Requests:
+1. Provide the batch data.
+2. Provide the stability data for the registration batches.
+Include the trend plots for each attribute.
+If you have any questions, please contact the project manager.
+Sincerely,

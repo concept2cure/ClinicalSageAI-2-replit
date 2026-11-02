@@ -66,6 +66,9 @@ beforeAll(async () => {
   await harness.pglite.exec(`
     CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER,
       compilation_type TEXT, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
+    -- The transmittal row the filed fold reads what a sequence sent from (F1, 2026-11-01);
+    -- no sequence here is sent with that record, so each is read from its compiles.
+    CREATE TABLE IF NOT EXISTS submission_transmittals (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, region TEXT, metadata JSONB DEFAULT '{}'::jsonb);
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1, 'IND 123456, sequences 0000-0041 filed elsewhere', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (2, 'IND whose original filed elsewhere was 0003', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
