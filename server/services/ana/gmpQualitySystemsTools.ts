@@ -21,6 +21,8 @@ import type { AnaTool } from '../ai-gateway/types';
 
 const DETERMINISTIC_NOTE =
   'Deterministic — identical input always yields identical output. No LLM, no network. ' +
+  'A required input left out or malformed is refused by name: ask for it, never guess. A true/false fact left out ' +
+  'reads not_stated (inputStates), and what it decides comes back not assessed, undetermined or null: report that and ask for the fact. ' +
   'Report the returned numbers and regulatory citations verbatim. Do NOT recompute, ' +
   'round differently, or substitute your own regulatory interpretation — a fabricated ' +
   'or misattributed regulatory citation in a generic drug submission is a critical defect.';
@@ -66,7 +68,7 @@ export const ASSESS_DATA_INTEGRITY: AnaTool = {
         description:
           'For electronic records only: whether the record is static (fixed, e.g. PDF/printout) ' +
           'or dynamic (user can interact/reprocess, e.g. chromatographic data). Dynamic records ' +
-          'must be retained in dynamic form (FDA DI Guidance Q2).',
+          'must be retained in dynamic form (FDA DI Guidance Q2). Omitted for an electronic record, it reads not_stated.',
       },
       lifecycleStages: {
         type: 'array',
@@ -84,24 +86,25 @@ export const ASSESS_DATA_INTEGRITY: AnaTool = {
         },
         description:
           'Data-lifecycle stages to include in the risk mapping. Omit to assess the full ' +
-          'lifecycle.',
+          'lifecycle; an unknown stage is refused.',
       },
       impactsBatchRelease: {
         type: 'boolean',
         description:
-          'Whether the data directly supports a batch-release / disposition decision. ' +
-          'Raises data criticality to at least high.',
+          'Whether the data directly supports a batch-release / disposition decision. Raises data criticality to at least ' +
+          'high. Omitted or null stays not_stated: unless impactsPatientSafety is true, criticality and review frequency are not assessed.',
       },
       impactsPatientSafety: {
         type: 'boolean',
         description:
-          'Whether the data directly impacts patient safety. Raises data criticality to critical.',
+          'Whether the data directly impacts patient safety. Raises data criticality to critical. Omitted or null stays ' +
+          'not_stated: what it could raise (criticality, review frequency, lifecycle and overall risk) is not_assessed.',
       },
       controls: {
         type: 'object',
         description:
-          'Control state per ALCOA+ attribute and the audit trail. Any omitted field is ' +
-          'treated as "unknown" and flagged for verification (it is not assumed satisfied).',
+          'Control state per ALCOA+ attribute and the audit trail. Any omitted or null field is "unknown" (inputStates: ' +
+          'not_stated), flagged for verification, never assumed satisfied; the overall risk is given only if no unknown could change it.',
         properties: {
           uniqueUserAttribution: {
             type: 'boolean',
@@ -152,7 +155,7 @@ export const ASSESS_DATA_INTEGRITY: AnaTool = {
       gxpArea: {
         type: 'string',
         enum: ['gmp', 'glp', 'gcp', 'gdp', 'gvp'],
-        description: 'GxP area of the data (default "gmp").',
+        description: 'GxP area of the data. Not read: the assessment is the same for every area.',
       },
     },
     required: ['dataDescription', 'recordFormat'],
@@ -204,27 +207,27 @@ export const DESIGN_CAPA: AnaTool = {
         enum: ['low', 'medium', 'high', 'critical'],
         description:
           'Risk to product quality / patient. Drives CAPA formality and target timeline. ' +
-          'If omitted and productImpact is true, inferred as high (severityBasis says so); ' +
+          'If omitted and productImpact is true, inferred as high (severityBasis says so), with no target timeline; ' +
           'otherwise not assessed, and formality and the target timeline are undetermined.',
       },
       recurring: {
         type: 'boolean',
         description:
           'Whether the issue is recurring. Recurrence escalates toward a systemic/preventive ' +
-          'focus and may select FMEA.',
+          'focus and may select FMEA. Omitted or null stays not_stated: a method it could change is undetermined.',
       },
       contributingFactorCount: {
         type: 'number',
         description:
-          'Number of contributing factors believed to be involved. Higher counts steer method ' +
-          'selection toward Ishikawa or FMEA.',
+          'Number of contributing factors believed to be involved (a whole number). Higher counts steer method ' +
+          'selection toward Ishikawa or FMEA. If omitted, a method it could change is undetermined.',
       },
       systemic: {
         type: 'boolean',
         description:
           'Whether the failure is systemic (process/system-wide) rather than an isolated single ' +
           'event. Systemic failures select FMEA and a formal CAPA. If omitted, the extent is ' +
-          'reported as not determined.',
+          'reported as not determined, and a formality or method it could change is undetermined.',
       },
       productImpact: {
         type: 'boolean',
@@ -293,37 +296,38 @@ export const CLASSIFY_GMP_DEVIATION: AnaTool = {
         type: 'boolean',
         description:
           'Whether the affected batch has already been distributed. Influences field-alert and ' +
-          'recall triggers and disposition urgency.',
+          'recall triggers and disposition urgency. If omitted, a trigger it could change is undetermined.',
       },
       sterileProduct: {
         type: 'boolean',
         description:
           'Whether the product is sterile / parenteral. A safety-critical area on a sterile ' +
-          'product escalates to critical.',
+          'product escalates to critical. If omitted, it reads not_stated.',
       },
       outOfSpecConfirmed: {
         type: 'boolean',
         description:
           'Whether a specification (CQA) was confirmed out of limits. Escalates to at least ' +
-          'major and contributes to field-alert evaluation.',
+          'major and contributes to field-alert evaluation. If omitted, what it could change is undetermined.',
       },
       patientSafetyImpact: {
         type: 'boolean',
-        description: 'Whether there is potential patient-safety impact. Escalates to critical.',
+        description: 'Whether there is potential patient-safety impact. Escalates to critical. If omitted, what it could change is undetermined.',
       },
       recurring: {
         type: 'boolean',
-        description: 'Whether the deviation is recurring. Escalates the classification one level.',
+        description:
+          'Whether the deviation is recurring. Escalates the classification one level. If omitted, what it could change is undetermined.',
       },
       usMarketed: {
         type: 'boolean',
         description:
-          'Whether the product is marketed in the US (for Field Alert Report relevance). ' +
-          'Defaults to true (conservative) if omitted.',
+          'Whether the product is marketed in the US (for Field Alert Report relevance). If omitted, ' +
+          'the field-alert evaluation is undetermined unless the other facts settle it.',
       },
       batchesAffected: {
         type: 'number',
-        description: 'Number of batches potentially affected (context for impact scope).',
+        description: 'Number of batches potentially affected. Not read: the result is the same without it.',
       },
     },
     required: ['description', 'area'],
@@ -362,7 +366,7 @@ export const ASSESS_API_GMP: AnaTool = {
           'final_api',
           'physical_processing_packaging',
         ],
-        description: 'The API manufacturing step under assessment.',
+        description: 'The API manufacturing step under assessment. An unknown or missing step is refused.',
       },
       apiName: {
         type: 'string',
@@ -371,20 +375,20 @@ export const ASSESS_API_GMP: AnaTool = {
       isCriticalStep: {
         type: 'boolean',
         description:
-          'Whether the step is identified as a critical process step. Raises stringency and ' +
-          'classifies related changes as significant.',
+          'Whether the step is identified as a critical process step. Raises stringency and classifies related changes as ' +
+          'significant. If omitted, below level 4 the stringency is not_assessed and the controls it would add are marked conditional.',
       },
       sterileApi: {
         type: 'boolean',
         description:
           'Whether the API is sterile (adds ICH Q7 §18 / EU GMP Annex 1 contamination-control ' +
-          'considerations).',
+          'considerations). If omitted, the expectation says it is not stated.',
       },
       changeIsSignificant: {
         type: 'boolean',
         description:
-          'Whether a change being evaluated is significant. Drives the change-control guidance ' +
-          '(revalidation and regulatory notification).',
+          'Whether a change being evaluated is significant. Drives the change-control guidance (revalidation and regulatory ' +
+          'notification). If omitted, unless a critical or level-4 step settles it, the classification is not_assessed and both needs null.',
       },
     },
     required: ['step'],
@@ -422,34 +426,35 @@ export const DESIGN_STERILE_CONTROLS: AnaTool = {
         type: 'boolean',
         description:
           'Whether the product and container can withstand terminal moist-heat sterilisation. ' +
-          'If true, terminal sterilisation (the method of choice) is selected.',
+          'If true, terminal sterilisation (the method of choice) is selected. If omitted, the approach is not_assessed, ' +
+          'and so is the barrier unless one is stated.',
       },
       filterable: {
         type: 'boolean',
         description:
           'Whether the product can be sterile filtered (0.22 µm). Used when not heat-stable to ' +
-          'select filtration + aseptic processing.',
+          'select filtration + aseptic processing. If omitted when heatStable is false, the approach is not_assessed.',
       },
       barrier: {
         type: 'string',
         enum: ['open_cleanroom', 'rabs', 'isolator'],
         description:
           'Barrier technology in use / planned. If omitted, recommended by rule (isolator for ' +
-          'aseptic processing).',
+          'aseptic processing), or not_assessed while heatStable is not stated. Another value is refused.',
       },
       lyophilised: {
         type: 'boolean',
         description:
           'Whether lyophilisation (freeze-drying) is part of the process. Adds Grade A ' +
-          'transfer/loading and lyophiliser-control guidance.',
+          'transfer/loading and lyophiliser-control guidance. If omitted, the note says not assessed.',
       },
       fillingLines: {
         type: 'number',
-        description: 'Annual number of aseptic filling lines/shifts (context for APS scheduling).',
+        description: 'Annual number of aseptic filling lines/shifts. Not read: the plan is the same without it.',
       },
       operatorCount: {
         type: 'number',
-        description: 'Number of operators requiring aseptic qualification (context for APS).',
+        description: 'Number of operators requiring aseptic qualification. Not read: the plan is the same without it.',
       },
     },
     required: ['productDescription'],
@@ -497,15 +502,14 @@ export const ASSESS_COMPUTER_SYSTEM_VALIDATION: AnaTool = {
         enum: ['low', 'medium', 'high', 'critical'],
         description:
           'GxP / patient-safety / product-quality impact of the system. Drives the assurance ' +
-          'approach and rigor. If omitted: inferred as high when directImpact is true (labelled ' +
-          'inferred), otherwise not assessed, and the approach is "undetermined" unless the ' +
-          'software is custom (Category 5).',
+          'approach and rigor. If omitted, it is not assessed (the scaling note labels it inferred high when ' +
+          'directImpact is true); the approach is "undetermined" unless the software is custom (Category 5).',
       },
       electronicRecords: {
         type: 'boolean',
         description:
           'Whether the system creates/maintains electronic records subject to 21 CFR Part 11. ' +
-          'Defaults to true if omitted.',
+          'If omitted, the validation, audit-trail and access controls are "undetermined".',
       },
       electronicSignatures: {
         type: 'boolean',
@@ -517,13 +521,13 @@ export const ASSESS_COMPUTER_SYSTEM_VALIDATION: AnaTool = {
         type: 'boolean',
         description:
           'Whether the system directly impacts product quality or patient safety. Steers toward ' +
-          'scripted/robust testing of direct-impact features.',
+          'scripted/robust testing of direct-impact features. If omitted, an approach it could change is "undetermined".',
       },
       supplierAssessed: {
         type: 'boolean',
         description:
           'Whether a documented supplier assessment/audit exists, allowing supplier development ' +
-          'and testing activities to be leveraged to reduce duplication.',
+          'and testing activities to be leveraged to reduce duplication. If omitted, the supplier deliverable says it is not stated.',
       },
     },
     required: ['systemDescription', 'softwareType'],

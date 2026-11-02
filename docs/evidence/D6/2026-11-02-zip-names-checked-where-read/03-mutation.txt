@@ -1,0 +1,41 @@
+# Each new safeZip guard removed in turn, server/services/archive run, the file restored and compared byte for byte.
+# 2026-11-02T04:23:54Z
+
+## no local-header name check (restored)
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a local header naming a file outside the archive that its directory names harmlessly 11ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a local header naming another file, even a harmless one 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 27 passed (29)
+
+## local and central compared without allowing a backslash for a slash (restored)
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > admits headers that differ only in the backslash a Windows tool wrote in one of them 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 28 passed (29)
+
+## a Unicode path's name not checked for safety (restored)
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path outside the archive 7ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path that climbs out, which JSZip would resolve and read 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 27 passed (29)
+
+## a Unicode path not compared with a plain-ASCII directory name (restored)
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path naming another file 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 28 passed (29)
+
+## the Unicode Path field never found (restored)
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path outside the archive 6ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path naming another file 2ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path that climbs out, which JSZip would resolve and read 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 26 passed (29)
+
+## assertOneName never called (restored)
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a local header naming a file outside the archive that its directory names harmlessly 8ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a local header naming another file, even a harmless one 3ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path outside the archive 2ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path naming another file 2ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path that climbs out, which JSZip would resolve and read 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 24 passed (29)
+

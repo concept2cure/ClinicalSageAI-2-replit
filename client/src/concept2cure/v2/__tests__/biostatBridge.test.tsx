@@ -436,6 +436,28 @@ describe('Biostatistics — the loaded design, where and when it shows', () => {
   });
 });
 
+/**
+ * The ask row carries a name a screen reader can reach.
+ *
+ * `BsStarters` was written in D5-3a with `aria-label="Ask AnA"` on a
+ * role-less `<div>`, where assistive technology ignores it: the row of
+ * starters has no accessible name at all. The coordinator found the identical
+ * shape in CMC on 2026-11-02, having been sent it from Insights; it was in
+ * this file's surface too, and a probe of the running app is what found it
+ * here. `getByRole` is the assertion because it resolves the name the way a
+ * reader's software does — with no role, the query cannot find the element
+ * even though the attribute is sitting on it.
+ */
+describe('Biostatistics — the ask row is named for a screen reader', () => {
+  it('exposes the starters as a group with an accessible name', async () => {
+    route();
+    mount();
+    const row = await screen.findByRole('group', { name: 'Ask AnA' });
+    expect(row.classList.contains('sp-starters')).toBe(true);
+    expect(row.querySelectorAll('button.sp-starter').length).toBeGreaterThan(0);
+  });
+});
+
 describe('Biostatistics — study design bridge, cross-links', () => {
   it('cross-links open the protocol workspace, the task board and the submission center', async () => {
     route();
