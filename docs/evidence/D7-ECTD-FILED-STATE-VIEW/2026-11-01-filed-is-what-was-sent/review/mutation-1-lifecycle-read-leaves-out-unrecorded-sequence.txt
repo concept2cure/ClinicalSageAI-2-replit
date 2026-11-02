@@ -1,0 +1,768 @@
+# Mutation 1 (finding: defect (b) on the filing path). The lifecycle read leaves a sent sequence no record describes out of the prior state, as before the review, instead of refusing.
+# File: server/services/ectd/prior-sequence-loader.ts
+# Replaced (exactly once):
+#   -   if (unrecorded.length > 0) throw new Error(unrecordedRefusal(unrecorded));
+#   -   const { priorSequenceNumber, leaves } = foldManifestRows(rows);
+# With:
+#   +   const { priorSequenceNumber, leaves } = foldManifestRows(rows.filter((r) => r.basis !== 'none'));
+# Command: npx vitest run server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts
+# Exit code: 1 (non-zero = the test caught the mutation)
+# Restored byte for byte: sha256 f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845 before and after
+# Run: 2026-11-02T01:25:20.588374Z
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts
+{
+  "timestamp": "2026-11-02T01:25:07.102Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T01:25:07.103Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > folds the latest recorded compile of each earlier sequence, filed or not, and names the unfiled 6ms
+ × server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > the filed prior state never reads a rehearsal compile, even of a sequence that was sent 12ms
+   → promise resolved "{ priorSequenceNumber: '0000', …(1) }" instead of rejecting
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal
+{
+  "timestamp": "2026-11-02T01:25:11.454Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts
+{
+  "timestamp": "2026-11-02T01:25:11.532Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 2,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal 180ms
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed
+{
+  "timestamp": "2026-11-02T01:25:11.591Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 2,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts 70ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed 63ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > an original sequence has nothing to rehearse against, and says so 11ms
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against
+{
+  "timestamp": "2026-11-02T01:25:11.679Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences
+{
+  "timestamp": "2026-11-02T01:25:11.729Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 2,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against 72ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences 49ms
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts
+{
+  "timestamp": "2026-11-02T01:25:13.896Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T01:25:13.897Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new
+{
+  "timestamp": "2026-11-02T01:25:17.227Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf
+{
+  "timestamp": "2026-11-02T01:25:17.327Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new 169ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf 95ms
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses to assemble against a sent prior that nothing on record describes, instead of shipping a replace of nothing
+{
+  "timestamp": "2026-11-02T01:25:17.394Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence
+{
+  "timestamp": "2026-11-02T01:25:17.472Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 7,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses to assemble against a sent prior that nothing on record describes, instead of shipping a replace of nothing 74ms
+   → promise resolved "{ bundle: { …(9) }, …(12) }" instead of rejecting
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document
+{
+  "timestamp": "2026-11-02T01:25:17.532Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9,
+    "organizationId": 7,
+    "materialized": 0,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence 71ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document 60ms
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file
+{
+  "timestamp": "2026-11-02T01:25:17.592Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9,
+    "organizationId": 7,
+    "materialized": 0,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file 61ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 16ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 4ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > sent before the guard kept the record and never compiled: the next sequence is refused, the view names it 13ms
+   → promise resolved "{ priorSequenceNumber: '0000', …(1) }" instead of rejecting
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > bound to its attempt, but the transmittal predates the record and there is no compile: the same refusal 5ms
+   → promise resolved "{ priorSequenceNumber: '0000', …(1) }" instead of rejecting
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > another agency’s row carrying a binding to an FDA sequence is not read 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt and sequence under another signature is not read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt under another sequence’s id is not read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > two rows of its own agency bind the attempt, one with no manifest: the read throws, never reads either 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > an EU sequence is read from the EMA gateway’s row: the region is compared as one agency, not as text 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 11ms
+
+ Test Files  3 failed (3)
+      Tests  4 failed | 25 passed (29)
+   Start at  01:25:01
+   Duration  19.17s (transform 3.47s, setup 132ms, import 7.62s, tests 10.92s, environment 0ms)
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts
+{
+  "timestamp": "2026-11-02T01:25:07.103Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal
+{
+  "timestamp": "2026-11-02T01:25:11.451Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal
+{
+  "timestamp": "2026-11-02T01:25:11.453Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts
+{
+  "timestamp": "2026-11-02T01:25:11.531Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts
+{
+  "timestamp": "2026-11-02T01:25:11.532Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed
+{
+  "timestamp": "2026-11-02T01:25:11.589Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed
+{
+  "timestamp": "2026-11-02T01:25:11.591Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against
+{
+  "timestamp": "2026-11-02T01:25:11.678Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against
+{
+  "timestamp": "2026-11-02T01:25:11.679Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences
+{
+  "timestamp": "2026-11-02T01:25:11.728Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences
+{
+  "timestamp": "2026-11-02T01:25:11.729Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts
+{
+  "timestamp": "2026-11-02T01:25:13.897Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new
+{
+  "timestamp": "2026-11-02T01:25:17.225Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new
+{
+  "timestamp": "2026-11-02T01:25:17.227Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf
+{
+  "timestamp": "2026-11-02T01:25:17.326Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf
+{
+  "timestamp": "2026-11-02T01:25:17.327Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses to assemble against a sent prior that nothing on record describes, instead of shipping a replace of nothing
+{
+  "timestamp": "2026-11-02T01:25:17.391Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses to assemble against a sent prior that nothing on record describes, instead of shipping a replace of nothing
+{
+  "timestamp": "2026-11-02T01:25:17.394Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence
+{
+  "timestamp": "2026-11-02T01:25:17.470Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 7
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence
+{
+  "timestamp": "2026-11-02T01:25:17.472Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 7
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document
+{
+  "timestamp": "2026-11-02T01:25:17.530Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 9
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document
+{
+  "timestamp": "2026-11-02T01:25:17.532Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 9
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file
+{
+  "timestamp": "2026-11-02T01:25:17.591Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 9
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file
+{
+  "timestamp": "2026-11-02T01:25:17.592Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 9
+  }
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > sent before the guard kept the record and never compiled: the next sequence is refused, the view names it
+AssertionError: promise resolved "{ priorSequenceNumber: '0000', …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "leaves": [
++     {
++       "backbone": "index.xml",
++       "ctdSection": "3.2.S.1",
++       "fileName": "general.pdf",
++       "href": "m3/general.pdf",
++       "leafId": "leaf-general-pdf",
++       "md5": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++       "operation": "new",
++       "sequenceNumber": "0000",
++     },
++   ],
++   "priorSequenceNumber": "0000",
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:188:37
+    186|     await sequence(9, '0002', null);
+    187|     // Below the bound it is what the lifecycle acts would meet, so no…
+    188|     await expect(priorFor(9, '0002')).rejects.toThrow(refusal);
+       |                                     ^
+    189|     // At the bound it is not part of the prior state: 0001 itself bin…
+    190|     expect(names((await priorFor(9, '0001')).leaves)).toEqual(['genera…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > bound to its attempt, but the transmittal predates the record and there is no compile: the same refusal
+AssertionError: promise resolved "{ priorSequenceNumber: '0000', …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "leaves": [
++     {
++       "backbone": "index.xml",
++       "ctdSection": "3.2.S.1",
++       "fileName": "general.pdf",
++       "href": "m3/general.pdf",
++       "leafId": "leaf-general-pdf",
++       "md5": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++       "operation": "new",
++       "sequenceNumber": "0000",
++     },
++   ],
++   "priorSequenceNumber": "0000",
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:207:38
+    205|     const id = await sequence(10, '0001', 'sent', attempt(10));
+    206|     await transmittal({ attemptId: attempt(10), sequenceId: id }, null…
+    207|     await expect(priorFor(10, '0002')).rejects.toThrow(refusal);
+       |                                      ^
+    208|     const state = await filedState(10);
+    209|     expect(state.sequences[1]).toEqual({ sequenceNumber: '0001', dispa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses to assemble against a sent prior that nothing on record describes, instead of shipping a replace of nothing
+AssertionError: promise resolved "{ bundle: { …(9) }, …(12) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "chained": false,
++     "persisted": true,
++   },
++   "bundle": {
++     "displayName": " · FDA Investigational New Drug Application #0001",
++     "dtdStatus": {
++       "missing": [
++         "ich-ectd-3-2.dtd",
++         "us-regional-v3-3.dtd",
++       ],
++       "missingStylesheets": [
++         "ectd-2-0.xsl",
++         "us-regional.xsl",
++       ],
++       "present": [],
++       "presentStylesheets": [],
++       "required": [
++         "ich-ectd-3-2.dtd",
++         "us-regional-v3-3.dtd",
++       ],
++       "requiredStylesheets": [
++         "ectd-2-0.xsl",
++         "us-regional.xsl",
++       ],
++       "selfContained": false,
++       "validation": {
++         "expectedFiles": [
++           "index.xml",
++           "m1/us/us-regional.xml",
++         ],
++         "files": [
++           {
++             "doctype": {
++               "errors": [],
++               "valid": true,
++             },
++             "dtd": {
++               "errors": [
++                 "Declared DTD ich-ectd-3-2.dtd is missing from the package.",
++               ],
++               "mode": "dtd",
++               "ran": false,
++               "valid": false,
++             },
++             "relPath": "index.xml",
++             "wellFormed": {
++               "errors": [],
++               "mode": "well-formed",
++               "ran": true,
++               "valid": true,
++             },
++           },
++           {
++             "doctype": {
++               "errors": [],
++               "valid": true,
++             },
++             "dtd": {
++               "errors": [
++                 "Declared DTD us-regional-v3-3.dtd is missing from the package.",
++               ],
++               "mode": "dtd",
++               "ran": false,
++               "valid": false,
++             },
++             "relPath": "m1/us/us-regional.xml",
++             "wellFormed": {
++               "errors": [],
++               "mode": "well-formed",
++               "ran": true,
++               "valid": true,
++             },
++           },
++         ],
++         "integrity": {
++           "mismatched": [],
++           "missingFiles": [],
++           "ok": true,
++           "unlistedFiles": [],
++           "verified": [],
++         },
++         "passed": false,
++         "version": 1,
++       },
++     },
++     "format": "ectd",
++     "leafManifest": [],
++     "path": "/tmp/c2c-test-bundles-Tw4IEH/staging/ectd-assemble-6-QfgL1G/IND-123456-0001-fda.zip",
++     "regionalBackbone": {
++       "conformanceGap": "<applicant-info> has no <applicant-contacts>: no applicant contact was supplied",
++       "file": "m1/us/us-regional.xml",
++       "region": "fda",
++       "regionConformant": false,
++     },
++     "sha256": "f4ccd1b61c244d078e46a9adc1f0a311d59615c12ac120d9683ef949147cf037",
++     "sizeBytes": 1617,
++     "submissionGrade": {
++       "agencyFormsAsIssued": [],
++       "allPdfA": true,
++       "notConverted": [],
++       "pdfLeaves": 0,
++       "pdfaConverted": 0,
++       "total": 0,
++     },
++   },
++   "cleanup": [Function cleanup],
++   "dryRun": false,
++   "governanceManifestPath": "/tmp/c2c-test-bundles-Tw4IEH/staging/ectd-assemble-6-QfgL1G/package-governance.sha256.json",
++   "materialized": 1,
++   "priorSequence": null,
++   "priorState": "filed",
++   "skipped": [
++     {
++       "reason": "declared replace: no filed prior sequence is on record to act on",
++       "sectionCode": "m3.2.s.1",
++     },
++   ],
++   "unfiledPriorSequences": [],
++   "unfinalized": 0,
++   "unfinalizedSections": [],
++   "unresolvedLeaves": [],
+  }
+
+ ❯ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts:154:29
+    152|     // is packaged now. A declared replace with no filed prior at all …
+    153|     // its reason (lifecycle-rehearsal.pglite.test.ts, "for filing").
+    154|     await expect(assemble(6)).rejects.toThrow(
+       |                             ^
+    155|       /^Sequence 0000 was sent to the agency, but nothing on record sa…
+    156|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > the filed prior state never reads a rehearsal compile, even of a sequence that was sent
+AssertionError: promise resolved "{ priorSequenceNumber: '0000', …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "leaves": [
++     {
++       "backbone": "index.xml",
++       "ctdSection": "m3.2.s.1",
++       "fileName": "filed.pdf",
++       "href": "m3/3-2-s-1/filed.pdf",
++       "leafId": "leaf-m3-2-s-1-filed",
++       "md5": "dddddddddddddddddddddddddddddddd",
++       "operation": "new",
++       "sequenceNumber": "0000",
++     },
++   ],
++   "priorSequenceNumber": "0000",
+  }
+
+ ❯ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts:160:128
+    158|     // carried: the read refuses rather than take the rehearsal for it…
+    159|     // (F1 review, 2026-11-01). Up to 0001, the filed 0000 is read wit…
+    160|     await expect(loadLatestPriorManifestBySubmission(pool(), { organiz…
+       |                                                                                                                                ^
+    161|       .rejects.toThrow(/Sequence 0001 was sent to the agency, but noth…
+    162|     const prior = await loadLatestPriorManifestBySubmission(pool(), { …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+

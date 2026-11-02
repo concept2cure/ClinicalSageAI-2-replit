@@ -1,0 +1,7 @@
+MUTATION 2: the assertion expects applicationType=xyz, a read the screen never makes (the some() assertion is not vacuous)
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type 264ms
+   → expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type
+AssertionError: expected false to be true // Object.is equality
+      Tests  1 failed | 16 skipped (17)

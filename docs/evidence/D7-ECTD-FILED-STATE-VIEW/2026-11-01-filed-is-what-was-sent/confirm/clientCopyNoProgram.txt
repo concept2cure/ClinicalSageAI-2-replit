@@ -1,0 +1,68 @@
+# client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts, tree and clean HEAD export. 2026-11-02T02:27:42Z
+date: 2026-11-02T02:22:55Z
+## tree (HEAD 609ef94c7 + this build)
+$ npx vitest run client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > navigation targets 3ms
+ × client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > screen actions 7ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > slash commands, onboarding answers and notification preferences 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > demonstration scripts: what AnA is told to say 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > the plan-of-work catalogues' phase names 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > screen actions
+AssertionError: expected [ Array(1) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   "biostatistics.load-design.description: Seed the designer from one of the program's persisted study designs (resolved against the live list by id or title; honest misses and ambiguity refusals). A read — the engine recomputes on screen; writing the sample size back to the design and raising tasks stay governed human acts.",
++ ]
+ ❯ client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts:68:10
+     66|       [`${a.id}.label`, a.label] as [string, string],
+     67|       [`${a.id}.description`, a.description] as [string, string],
+     68|     ]))).toEqual([]);
+       |          ^
+     69|   });
+     70|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  02:22:56
+   Duration  1.21s (transform 730ms, setup 130ms, import 709ms, tests 21ms, environment 0ms)
+exit=1
+
+## clean HEAD export (git archive 609ef94c7, node_modules symlinked)
+$ npx vitest run client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/f1-confirm/head-export
+ ✓ client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > navigation targets 6ms
+ × client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > screen actions 27ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > slash commands, onboarding answers and notification preferences 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > demonstration scripts: what AnA is told to say 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > the plan-of-work catalogues' phase names 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > screen actions
+AssertionError: expected [ Array(1) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   "biostatistics.load-design.description: Seed the designer from one of the program's persisted study designs (resolved against the live list by id or title; honest misses and ambiguity refusals). A read — the engine recomputes on screen; writing the sample size back to the design and raising tasks stay governed human acts.",
++ ]
+ ❯ client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts:68:10
+     66|       [`${a.id}.label`, a.label] as [string, string],
+     67|       [`${a.id}.description`, a.description] as [string, string],
+     68|     ]))).toEqual([]);
+       |          ^
+     69|   });
+     70|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  02:22:58
+   Duration  1.32s (transform 761ms, setup 134ms, import 752ms, tests 52ms, environment 0ms)
+exit=1
+
+# Failing case and its received value, tree vs HEAD export:
+IDENTICAL (the string is AnA's biostatistics.load-design screen action; no file of this build)

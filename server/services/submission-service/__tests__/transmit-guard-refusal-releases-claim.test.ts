@@ -170,7 +170,10 @@ vi.mock('../../submission-gateways/bundle-integrity', async (orig) => {
   };
 });
 
-const bundle = { path: '', sha256: '', sizeBytes: 0, format: 'ectd' as const };
+// The leaf manifest every assembled bundle carries (regional-packager.ts packageEctdSubmission
+// always sets it); a sequence transmit without one is refused by the guard before these cases.
+const LEAF_MANIFEST = [{ ctdSection: '2.2', fileName: 'intro.pdf', href: '0000/m2/22-intro/intro.pdf', md5: '0'.repeat(32), operation: 'new' }];
+const bundle = { path: '', sha256: '', sizeBytes: 0, format: 'ectd' as const, leafManifest: LEAF_MANIFEST };
 vi.mock('../../ectd/assemble-from-core', () => ({
   assembleSequence: async (args: { recordedPackageIdentity?: unknown }) => ({ bundle, recordedPackageIdentity: args.recordedPackageIdentity, skipped: [], unfinalized: 0, unfinalizedSections: [], unresolvedLeaves: [], materialized: 1, cleanup: async () => {} }),
   assembledTransmitBlockers: () => [],
@@ -191,7 +194,7 @@ async function writeBundle(pdf: Buffer): Promise<Bundle> {
   const buf = await zip.generateAsync({ type: 'nodebuffer' });
   const p = path.join(await fs.mkdtemp(path.join(os.tmpdir(), 'probe-bundle-')), 'b.zip');
   await fs.writeFile(p, buf);
-  return { path: p, sha256: createHash('sha256').update(buf).digest('hex'), sizeBytes: buf.length, format: 'ectd' };
+  return { path: p, sha256: createHash('sha256').update(buf).digest('hex'), sizeBytes: buf.length, format: 'ectd', leafManifest: LEAF_MANIFEST };
 }
 
 beforeAll(async () => {
