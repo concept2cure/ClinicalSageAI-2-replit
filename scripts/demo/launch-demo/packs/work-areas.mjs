@@ -39,15 +39,29 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
     const board = must(await api('GET', '/api/task-management/board'), 200, 'read task board');
     // Plain titles (each card names its project), so an earlier run is found by
     // title within this project, not across the organisation.
-    const have = new Set(rowsOf(board).filter((t) => String(t.project) === String(projectId)).map((t) => t.title));
+    const have = new Map(rowsOf(board).filter((t) => String(t.project) === String(projectId)).map((t) => [t.title, t]));
     let created = 0;
     for (const t of tasks) {
-      if (have.has(t.title)) { tally.found('task'); continue; }
+      const existing = have.get(t.title);
+      if (existing) {
+        // A named task is reusable only if it still points to the same governed
+        // document. Titles alone never establish source linkage.
+        if (t.sourceEntityType === 'authoring_document' &&
+            String(existing.sourceDocumentId ?? existing.sourceEntityId ?? '') !== String(t.sourceEntityId)) {
+          throw new Error(`Existing task "${t.title}" does not link to its expected authoring document. Reconcile Tasking before retrying.`);
+        }
+        tally.found('task'); continue;
+      }
       must(await api('POST', '/api/tasks/tasks', {
         title: t.title,
         description: t.description,
         moduleType: t.moduleType,
-        taskType: 'deliverable',
+        taskType: t.taskType ?? 'deliverable',
+        ...(t.category ? { category: t.category } : {}),
+        ...(t.moduleSource ? { moduleSource: t.moduleSource } : {}),
+        ...(t.sourceEntityType ? { sourceEntityType: t.sourceEntityType } : {}),
+        ...(t.sourceEntityId ? { sourceEntityId: t.sourceEntityId } : {}),
+        ...(t.moduleData ? { moduleData: t.moduleData } : {}),
         priority: t.priority ?? 'medium',
         status: t.status ?? 'pending',
         projectId,
