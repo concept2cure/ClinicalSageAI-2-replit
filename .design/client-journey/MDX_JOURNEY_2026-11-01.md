@@ -145,6 +145,8 @@ Each is a repair of shipped behaviour (F1): no screen, mount or table.
 | M18 | **Fixed 2026-11-02** (`docs/evidence/MDX-JOURNEY/2026-11-02-m18-pma-modules-own-document/`). Found in the running app: the PMA screen's "PMA modules" read "0 documents total" for a project whose B.2 was written and exported. `getPmaModules` grouped the organization's legacy 510(k) sections (`cerv2_510k_sections`, no project link) by a six-card kit taxonomy, so a project with no PMA document showed every module "complete". The cards now read the PMA mapper over the project's own PMA document, the same computation as the assembly verdict. | `server/services/regulatory-programs.service.ts`, `mdx/surfaces/PmaSurface.tsx` | walk |
 | M19 | **Fixed 2026-11-02** (`docs/evidence/MDX-JOURNEY/2026-11-02-m19-pma-mapper-places-by-key/`): a leaf with a pack key is placed by its key only; B.1, B.5 and B.6 had overcounted modules 2, 4 and 5 the same way. Found in the running app: the PMA mapper places a governed leaf by its title as well as its 814.20 letter. B.2, the SSED's "Device description summary", counts for module 2 ("Device description & indications for use") through `ti('device description')`, so once B.2 is approved the assembly verdict counts module 2 present with nothing under C. | `server/services/pathway-engines/pma/pma-mapper.ts` | walk |
 | M20 | The PMA screen's trial cards bind a study by `metadata.clinicalStudyId`, or else by a product-name `ILIKE` over the organization's studies, and do not say which study they bound. | `server/services/regulatory-programs.service.ts` (`getPmaTrialMetrics`) | read |
+| M21 | Found in the running app: the draft package is named after the class and type the kit derives (`deriveCode`): `pma_pma-content-package-draft.zip`, `Class_II_510k_content-package-draft.zip`. It is not named after the project, so two projects' packages download under one name. | `mdx/hooks/useEstarExport.ts` (`meta.id`), `mdx/hooks/useMdxPrograms.ts` (`deriveCode`) | walk |
+| M22 | Found in the running app: an EU IVDR project's facts panel lists Product code, Regulation, Review panel and Predicate, the FDA 510(k) facts, as "not recorded". | The project home's facts panel (the coordinator's, beside M15) | walk |
 
 ## The order of work
 
@@ -176,7 +178,7 @@ on, not raced.
    of a rewritten filed copy and its remedy (`docs/evidence/MDX-JOURNEY/2026-11-02-slice-5-journey-walked/`). The
    walk found and fixed the home filing's editing copy (`bda1d5aed1`) and the template's section order. It recorded
    M14–M17 and the 390 px clipping. **5b, 2026-11-02: the PMA journey walked** (New project → B.2 written into the PMA
-   filing → the PMA package exported, 200, the filing compared). It found M18 and M19 (fixed) and M20. The seeded NeuroPanel-Dx 510(k), from New project to a signed eSTAR filing record, at
+   filing → the PMA package exported, 200, the filing compared). It found M18 and M19 (fixed) and M20–M21. **The EU IVDR journey walked** the same day (New project → II.1.a written into the IVDR filing). It saw M3 live (the door's screen asks AnA to assemble and offers only an FDA 510(k) eSTAR) and found M22 (`docs/evidence/MDX-JOURNEY/2026-11-02-slice-5b-pma-ivdr-walked/`). The seeded NeuroPanel-Dx 510(k), from New project to a signed eSTAR filing record, at
    1440 px and 390 px. Evidence under `docs/evidence/MDX-JOURNEY/`.
 6. **Reach or retire the unreached device capability** (R1, with `01QoxbL`): the list in §6, each reached in the
    device journey's existing screen or put to the founder for retirement.

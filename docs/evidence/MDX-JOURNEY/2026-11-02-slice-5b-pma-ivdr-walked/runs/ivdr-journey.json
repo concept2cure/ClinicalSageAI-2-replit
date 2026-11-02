@@ -1,0 +1,64 @@
+{
+ "api": [
+  {
+   "m": "POST",
+   "u": "/api/authoring/docs",
+   "s": 201,
+   "msg": "Document created successfully"
+  }
+ ],
+ "errors": [],
+ "planTitle": "What this filing needs",
+ "doors": [
+  "VA",
+  "All projects",
+  "Project settings",
+  "Plan",
+  "Evidence",
+  "Author",
+  "Review",
+  "Submit",
+  "Respond",
+  "Record classification and performance evidence",
+  "Build the risk file and design-control trace",
+  "Build the usability engineering file",
+  "Record analytical and clinical performance (IVDR)",
+  "Add this work’s sources on Evidence",
+  "Check the software and cybersecurity documentation",
+  "Write this work’s documents on Author",
+  "Write the label and IFU",
+  "Assemble the technical documentation",
+  "Answer the agency on Respond",
+  "Check each label’s UDI",
+  "Run post-market surveillance and CAPA",
+  "Refresh sharing",
+  "Grant sharing",
+  "See all tasks in Tasks",
+  "Biostatistics",
+  "See this project’s reports in Reporting & analytics"
+ ],
+ "assemblyDoorCandidates": [
+  "Assemble the technical documentation"
+ ],
+ "assemblyUrl": "/concept2cure/device-diagnostics?program=5728bf01-b707-4585-8138-c621e44fd7d7",
+ "assemblyHeading": "Assess, save and review IVD evidence",
+ "assemblyButtons": [
+  "Assemble technical file",
+  "Generate official eSTAR (PDF)"
+ ],
+ "homeCopyOffered": 1,
+ "outlineCodes": [
+  "II.1",
+  "II.1.a",
+  "II.1.b",
+  "II.1.c",
+  "II.1.d",
+  "II.1.e",
+  "II.1.f",
+  "II.1.g",
+  "II.2",
+  "II.2.a",
+  "II.2.b",
+  "II.3"
+ ]
+}
