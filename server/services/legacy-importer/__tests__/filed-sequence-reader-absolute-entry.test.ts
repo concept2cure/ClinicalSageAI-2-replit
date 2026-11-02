@@ -1,9 +1,12 @@
 /**
  * A zip entry whose name starts with '/' ends the reader's walk to its sequence
  * root. Until 2026-11-02 that walk never ended: lastIndexOf('/', -1) finds the
- * leading '/' again, so any upload holding such an entry hung the detector.
- * safeZip does not refuse the name. This case is in a file of its own because,
- * against the code that looped, it hangs the test worker.
+ * leading '/' again. safeZip refuses the name in a zip's central directory,
+ * but JSZip takes each name from the local header, so an upload whose two
+ * headers disagreed carried it to the detector
+ * (docs/evidence/MR-10/2026-11-01-filed-sequence-reader/zip-local-name-probe.txt).
+ * This case is in a file of its own because, against the code that looped, it
+ * hangs the test worker.
  */
 import { describe, expect, it } from 'vitest';
 import { readFiledSequences } from '../filed-sequence-reader';

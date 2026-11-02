@@ -1,0 +1,50 @@
+# Draft review issue 2: each new guard removed in turn, the legacy-importer folder run, the file restored and compared byte for byte.
+# 2026-11-02T04:11:50Z
+
+## bindPointer: no climbRefusal (restored)
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into another application 12ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into an application of another type with the same number 4ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into no application at all: a climb through ".." 3ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer that climbs through a folder when no regional backbone names the application 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 112 passed (116)
+
+## bindReuses: no climbRefusal (restored)
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a reused file in another application, and reads one in its own 14ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 115 passed (116)
+
+## climbRefusal: an unnamed application lets any folder through (restored)
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > binds a grouped-form pointer in an archive zipped without its application folder 14ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into another application 5ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into an application of another type with the same number 5ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into no application at all: a climb through ".." 3ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > leaves a pointer through its own folder, at a sequence the archive does not hold, for the filed state 3ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer that climbs through a folder when no regional backbone names the application 7ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a reused file in another application, and reads one in its own 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 109 passed (116)
+
+## climbRefusal: any folder is the application's own (restored)
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into another application 11ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into an application of another type with the same number 11ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into no application at all: a climb through ".." 3ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a reused file in another application, and reads one in its own 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 112 passed (116)
+
+## applicationFolder: the number alone, without the type's prefix (restored)
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > binds a grouped-form pointer in an archive zipped without its application folder 13ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into another application 6ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into an application of another type with the same number 8ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a pointer into no application at all: a climb through ".." 3ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > leaves a pointer through its own folder, at a sequence the archive does not hold, for the filed state 2ms
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a reused file in another application, and reads one in its own 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 110 passed (116)
+
+## hrefTarget: the climbed folder not recorded on the reuse (restored)
+ × filed-sequence-reader-real-archives.test.ts > grouped-form paths: only through this application's own folder (draft review, 2026-11-02) > refuses a reused file in another application, and reads one in its own 14ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 115 passed (116)
+

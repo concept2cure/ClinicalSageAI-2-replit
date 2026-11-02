@@ -125,6 +125,17 @@ export async function zipBufferOf(files: Record<string, string | Buffer>): Promi
   return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 }
 
+/**
+ * A pool that answers the fold's filed-manifest query (prior-sequence-loader's
+ * readFiledManifestRows) with these manifests, oldest first, as compiles of
+ * sent sequences: the rows carry `kind: 'compile'`, as that loader's own tests
+ * write them. Since 090f62af the query also returns a row per sequence and per
+ * transmittal; a row without a kind is neither, so it folded to nothing.
+ */
+export function filedStatePool(rows: Array<{ sequence_number: string; leaf_manifest: unknown }>) {
+  return { query: async (sql: string) => ({ rows: /leaf_manifest/.test(sql) ? rows.map((r) => ({ kind: 'compile', ...r })) : [] }) };
+}
+
 /** Heading chains a test can name. */
 export const H = {
   coverLetters: ['m1-2-cover-letters'],

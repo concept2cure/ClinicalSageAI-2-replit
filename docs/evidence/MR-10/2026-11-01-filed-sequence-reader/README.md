@@ -173,10 +173,10 @@ exercised (the pointer's backbone, and a refused regional backbone's files).
 
 | Issue | What `7e7fae33` did | Now |
 |---|---|---|
-| **High:** a zip entry named `/x` | The walk to its sequence root never ended (`lastIndexOf('/', -1)` finds the leading `/` again). Any upload holding one hung the detector. | An absolute name belongs to no sequence. The walk is bounded at 1,024 characters and 32 folders. |
+| **High:** a zip entry named `/x` | The walk to its sequence root never ended (`lastIndexOf('/', -1)` finds the leading `/` again). safeZip refuses the name in a zip's central directory, but JSZip takes each name from the local header, so an upload whose two headers disagree carried it to the reader ("Draft review" below). | An absolute name belongs to no sequence. The walk is bounded at 1,024 characters and 32 folders. |
 | 32 MiB backbone of empty leaves | About 1.7 million leaves, roughly 3 GB of heap and a 10 s block | Over 50,000 leaves is refused before the document is built (`backbone_too_large`) |
 | A reused file the earlier sequence refused, never read, or never filed | Recorded, complete, and mapped | Refused: a reused file must be one a kept leaf of that earlier sequence filed |
-| An archive zipped without its application folder | A grouped-form pointer (`../../nda123456/0000/…`) was refused | Bound to the sibling sequence |
+| An archive zipped without its application folder | A grouped-form pointer (`../../nda123456/0000/…`) was refused | Bound to the sibling sequence, through a folder of any name; since the draft review, only through the application's own (below) |
 | A four-digit ancestor folder (`export/2024/ind123/`) | Reuse refused | Read |
 | A leaf a later filing under the same section and name took off file | A pointer at it bound, so the fold withdrew the re-filing | Refused, as the fold's own supersession implies |
 | An ID such as `1ov` | Recorded; a pointer at it could never be parsed by the fold | Refused (`leaf_id_malformed`), and so is a pointer naming one |
@@ -204,3 +204,74 @@ the second pass every guard turns a test red.
 **Green.** [second-review-green.txt](second-review-green.txt): the legacy-importer
 folder and every test file that imports the detector, `mdx-imports`,
 `mdx-onboarding` or `start_legacy_import`.
+
+## Draft review, 2026-11-02: grouped-form paths, and a trunk change under two tests
+
+A third, read-only review of the second review's fixes confirmed 24 issues.
+`24694d13` fixed 23 of them. This is the 24th, plus two corrections.
+
+**A grouped-form path into another application.** An FDA grouped submission
+files its sequences under one folder per application (`ind123456/0001/`). A
+leaf that modifies one filed under another application names that folder
+(`../../nda999999/0000/index.xml#ov`). The reader at `a9202589` reads an archive
+zipped without its application folder as that folder's contents. So such a
+path climbed out and back in through a folder of any name, and it was bound to
+this application's own sequence of the same number. That would have acted on
+the wrong leaf. The fix: the climbed folder must be this application's own, as
+its regional backbone names it (`fdaApplicationPrefix` of the
+`application-type` attribute, plus the `application-number`). The fixture files
+`ind123456`. Otherwise the leaf is refused, both as a pointer and as a reused
+file. An archive that holds the application folder was already right: there,
+the path leaves the folder, and is refused.
+
+| Case | `a9202589` | Now |
+|---|---|---|
+| `../../nda999999/0000/index.xml#ov` from `0001/` | Bound to `0000/` | Refused, naming both folders |
+| `../../nda123456/…` for IND 123456 (same number, another type) | Bound | Refused |
+| `../../../0000/index.xml#ov` from `0001/` (a climb through `..`) | Bound | Refused |
+| A climb when no regional backbone names the application | Bound | Refused: nothing to match the folder against |
+| A reused file at `../../nda999999/0000/…` | Read from `0000/` | Refused (`leaf_href_unsafe`) |
+| A pointer or reuse through `ind123456` | Bound | Bound (the controls) |
+
+The test that bound `../../nda123456/…` for this IND fixture was wrong, and now
+names `ind123456`.
+
+**Red, green and each guard made to fail.**
+- [grouped-paths-red-at-a9202589.txt](grouped-paths-red-at-a9202589.txt): the
+  final cases against the reader as pushed. 5 of 7 fail; the two that pass are
+  the own-folder controls.
+- [guards-made-to-fail-grouped-paths.txt](guards-made-to-fail-grouped-paths.txt):
+  each of six guards is removed in turn. Every one turns a test red, and each
+  file is restored and compared byte for byte.
+- [grouped-paths-green.txt](grouped-paths-green.txt): green.
+
+**Correction: how `/x` reached the reader.** The second review rated the `/x`
+loop high because "safeZip does not stop that name", and `24694d13` repeated
+it. That reason was imprecise. A draft correction then called the loop latent,
+on the grounds that safeZip refuses the name. That was wrong, and it was not
+applied. The facts, from [zip-local-name-probe.txt](zip-local-name-probe.txt):
+- A plain zip naming `/x` is refused by safeZip.
+- A crafted zip names `ax` in its central directory and `/x` in its local
+  header. It passes safeZip, which reads names from the central directory.
+- JSZip names the entry `/x`, because it takes each name from the local header
+  (and from a Unicode-path extra field). So the detector reached the loop.
+
+The rating stands. The gap is safeZip's and reaches every caller that reads
+with JSZip, so it is fixed in safeZip as its own change. This README links it
+once it lands.
+
+**Correction: two tests went red on trunk under a change to the fold.** At
+02:56, `090f62af` (F1, "what the agency holds is what was sent") changed the
+fold's filed-manifest query to return a `kind` per row. This folder's two
+round-trip tests answered it through a stub pool whose rows carried no kind, so
+the fold read nothing:
+- `records a grouped-layout pointer in the form the fold binds`;
+- `folds into the same filed state as the sequences the platform filed itself`.
+
+Both were red on trunk from the merge of that change until this commit. The
+second review's green run predates the merge, and the pre-push gates do not run
+this folder's tests. The record is
+[filed-state-stub-red-at-a9202589.txt](filed-state-stub-red-at-a9202589.txt).
+The stub is now one helper, `filedStatePool` in the test support module. It
+writes `kind: 'compile'`, as the loader's own tests do. No assertion changed.
+
