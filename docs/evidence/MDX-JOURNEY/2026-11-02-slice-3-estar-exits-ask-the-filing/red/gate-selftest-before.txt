@@ -1,0 +1,21 @@
+[ci:filing-exit-agreement:selftest] ✓ a new seal with no agreement check fails, naming the file and the kind
+[ci:filing-exit-agreement:selftest] ✓ the same seal passes once it asks the question
+[ci:filing-exit-agreement:selftest] ✓ a new device package built from the filing fails
+[ci:filing-exit-agreement:selftest] ✓ a baseline entry with no written reason fails, so it cannot be a snooze
+[ci:filing-exit-agreement:selftest] ✓ a baseline allowing more than exists fails, so freed allowance cannot absorb a new door
+[ci:filing-exit-agreement:selftest] ✓ a door baselined with a real reason passes, and the count is reported
+[ci:filing-exit-agreement:selftest] ✓ the module that defines the question is not read as a door
+[ci:filing-exit-agreement:selftest] ✗ a device package through the section loaders fails, naming each kind
+    exit 0, expected 1
+    output is missing "server/routes/new-sections.ts"
+    output is missing "device-sections-load"
+    output is missing "governed-sections-load"
+    output is missing "2 site(s), baseline allows 0"
+    --- gate output ---
+    [ci:filing-exit-agreement] OK — every seal and every filing-built package asks the agreement question, or is baselined with a reason. 0 baselined site(s) in 0 file(s), exactly as baselined.
+    
+[ci:filing-exit-agreement:selftest] ✓ a device package that asks governedDeviceFilingAgreement passes
+[ci:filing-exit-agreement:selftest] ✓ the device loaders' module is not read as a door
+[ci:filing-exit-agreement:selftest] ✓ an empty tree passes
+[ci:filing-exit-agreement:selftest] FAIL — 1 case(s) did not behave as the gate must.
+exit 1
