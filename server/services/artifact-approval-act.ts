@@ -44,6 +44,7 @@
 
 import type { GovernedSignMeaning } from './part11/signature-meanings';
 import { artifactApproval } from './ectd/package-content-fingerprint';
+import { assertSignerIsNotAuthor, separationOfDutiesRefusal } from './governance/separation-of-duties';
 
 /**
  * The meaning each signed act of the status route is signed with (§11.50(a)(3)).
@@ -264,22 +265,58 @@ export function refuseArtifactTransition(
 /** The artifact as these checks read it. */
 export interface ArtifactActSubject {
   id: number;
+  /** The external artifact_id: the target its authorship and its ledger row are named by. */
+  artifactId: string;
   version: number;
   approvedVersionId: number | null;
   publishedVersionId: number | null;
 }
 
 /**
+ * P-18 (2026-11-01, F1): "An author still cannot approve their own document."
+ * The signer of an approval or a release must not be an author of the artifact
+ * (its creator, or anyone who wrote a version of it), by the platform's one
+ * separation-of-duties check (services/governance/separation-of-duties.ts,
+ * target `artifact:<artifact_id>`). Both meanings these acts sign with require
+ * independence there (requiresIndependence), and a lock always does. With no
+ * reviewer assigned the quorum below is met, so before this an approver could
+ * draft an artifact, route it to review and approve it with their own password.
+ * Throws that check's own errors; read through `q`, so the signing transaction
+ * re-reads it on its own client (services/artifact-signed-act.ts).
+ */
+export async function assertArtifactSignerIndependent(
+  q: ApprovalActQueryable,
+  act: { organizationId: number; signerId: number; artifactId: string; status: 'approved' | 'locked' },
+): Promise<void> {
+  await assertSignerIsNotAuthor(`artifact:${act.artifactId}`, act.organizationId, act.signerId, {
+    command: act.status === 'locked' ? 'lock' : 'sign',
+    meaning: ARTIFACT_ACT_MEANING[act.status],
+    client: q,
+  });
+}
+
+/**
  * What a signed act needs before anyone is asked to sign it, in the status
  * route's order: a lock covers the approval (the filing rule's verdict,
- * imported); no unresolved contradiction blocks promotion; an approval meets
- * the review quorum. A quorum that cannot be read throws: an unread quorum is
- * not met, and the caller answers it as its own failure.
+ * imported); no unresolved contradiction blocks promotion; the signer is not an
+ * author (P-18, answered in the separation-of-duties mapping's own status and
+ * code); an approval meets the review quorum. A quorum that cannot be read
+ * throws: an unread quorum is not met, and the caller answers it as its own
+ * failure.
+ *
+ * 2026-11-01 (F1, P-18): "before anyone is asked to sign" holds on the status
+ * route, which asks this before it verifies the password sent with the
+ * request. AnA's update_artifact_status asks it after the sign-off is verified
+ * (that command's validateSignoff, and the executor's Part 11 gate where the
+ * tenant enforces Part 11, demand the signature first, by design), and before
+ * the signing transaction. On both, a refusal here means nothing was signed.
  */
 export async function refuseSignedArtifactAct(input: {
   q: ApprovalActQueryable;
   organizationId: number;
   projectId: number;
+  /** Who would sign: the session's user on the status route, the dispatch's on AnA. */
+  signerId: number;
   artifact: ArtifactActSubject;
   previousStatus: string;
   status: 'approved' | 'locked';
@@ -305,11 +342,31 @@ export async function refuseSignedArtifactAct(input: {
   const contradictions = await blockingContradictions(organizationId, projectId, artifact.id);
   if (contradictions) return contradictions;
 
+  const author = await authorRefusal(input);
+  if (author) return author;
+
   if (previousStatus === 'review' && status === 'approved') {
     const quorum = await reviewQuorumVerdict(input.q, artifact.id, organizationId, artifact.version);
     if (!quorum.met) return { httpStatus: 400, message: quorum.message };
   }
   return null;
+}
+
+/** The P-18 refusal, in the one separation-of-duties mapping's status, code and words; null when independent. */
+async function authorRefusal(input: Parameters<typeof refuseSignedArtifactAct>[0]): Promise<ArtifactActRefusal | null> {
+  try {
+    await assertArtifactSignerIndependent(input.q, {
+      organizationId: input.organizationId,
+      signerId: input.signerId,
+      artifactId: input.artifact.artifactId,
+      status: input.status,
+    });
+    return null;
+  } catch (err) {
+    const refusal = separationOfDutiesRefusal(err, 'artifact-signed-act');
+    if (!refusal) throw err;
+    return { httpStatus: refusal.status, code: refusal.body.error, message: refusal.body.detail };
+  }
 }
 
 /** Promotion is blocked by an unresolved contradiction finding with that authority. */

@@ -18,6 +18,11 @@
  * Only the re-authentication dependencies and services unrelated to the act are
  * stubbed. The review quorum, the signer lookup, the ledger writer and every
  * table the act writes are the production code over one PGlite connection.
+ *
+ * 2026-11-01 (F1, decision P-18): the seeded artifact names its author (AUTHOR,
+ * a second user), so the signer is not its author unless a case says so.
+ * Before this it named none, and nothing compared the signer with the author;
+ * the separation-of-duties cases are at the end.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
@@ -34,6 +39,8 @@ const holder = vi.hoisted(() => ({
   pg: null as unknown as import('@electric-sql/pglite').PGlite,
   /** Whether the signer is enrolled in TOTP; '123456' is their current code. */
   mfa: false,
+  /** Runs while the signer re-authenticates: after the route's preflight, before the signing transaction. */
+  duringReauth: null as null | (() => Promise<unknown>),
 }));
 const PASSWORD = 'correct-horse-battery';
 
@@ -49,7 +56,10 @@ vi.mock('../../../db', async () => {
 vi.mock('../../../services/part11/reverify-signer-deps', () => ({
   signerReverificationDeps: () => ({
     loadPasswordHash: async () => 'stored-hash',
-    comparePassword: async (plain: string, hash: string) => plain === PASSWORD && hash === 'stored-hash',
+    comparePassword: async (plain: string, hash: string) => {
+      await holder.duringReauth?.();
+      return plain === PASSWORD && hash === 'stored-hash';
+    },
     isMfaEnabled: async () => holder.mfa,
     verifyMfaToken: async (_userId: number, token: string) => token === '123456',
     isAccountActive: async () => true,
@@ -137,6 +147,8 @@ const DDL = [
 
 const ORG = 99;
 const USER = 777;
+/** Who wrote the seeded artifact and its version: not the signer. */
+const AUTHOR = 778;
 const PROJECT = 3;
 const ARTIFACT = 'artifact_abc';
 
@@ -183,17 +195,17 @@ const versions = async () =>
   (await run(`SELECT id, version, content_hash, change_description FROM concept2cure_artifact_versions`)).rows;
 const snapshots = async () => (await run(`SELECT version_id FROM concept2cure_submission_snapshots`)).rows;
 
-async function seed(status: 'review' | 'approved', opts: { versionRow?: boolean } = {}) {
+async function seed(status: 'review' | 'approved', opts: { versionRow?: boolean; author?: number } = {}) {
   await run(
     `INSERT INTO concept2cure_artifacts
-       (artifact_id, organization_id, project_id, type, category, title, content, content_hash, version, status, approved_version_id)
-     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', 2, $4, $5)`,
-    [ARTIFACT, ORG, PROJECT, status, status === 'approved' ? 2 : null],
+       (artifact_id, organization_id, project_id, type, category, title, content, content_hash, version, status, approved_version_id, created_by_id)
+     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', 2, $4, $5, $6)`,
+    [ARTIFACT, ORG, PROJECT, status, status === 'approved' ? 2 : null, opts.author ?? AUTHOR],
   );
   if (opts.versionRow !== false) {
     await run(
-      `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash)
-       SELECT id, organization_id, 2, 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5' FROM concept2cure_artifacts WHERE artifact_id = $1`,
+      `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, created_by_id)
+       SELECT id, organization_id, 2, 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', created_by_id FROM concept2cure_artifacts WHERE artifact_id = $1`,
       [ARTIFACT],
     );
   }
@@ -206,7 +218,8 @@ beforeAll(async () => {
   await holder.pg.exec(GOVERNED_ACTION_LEDGER_PGLITE_DDL);
   await holder.pg.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'Sponsor')`);
   await holder.pg.exec(
-    `INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'signer@example.com', 'Dana Reviewer', 'x')`,
+    `INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'signer@example.com', 'Dana Reviewer', 'x'),
+       (${AUTHOR}, 'author@example.com', 'Ari Author', 'x')`,
   );
   await holder.pg.exec(
     `INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'admin')`,
@@ -217,6 +230,7 @@ afterAll(async () => {
 });
 beforeEach(async () => {
   holder.mfa = false;
+  holder.duringReauth = null;
   await holder.pg.exec(`
     DELETE FROM concept2cure_signatures; DELETE FROM concept2cure_submission_snapshots;
     DELETE FROM concept2cure_provenance_events; DELETE FROM concept2cure_artifact_versions;
@@ -454,6 +468,15 @@ describe('the signed act commits only from the state the signer was shown', () =
     expect(await ledger()).toEqual([]);
     expect(await snapshots()).toEqual([]);
   });
+
+  // 2026-11-01 (F1, decision P-18): the act itself refuses the author, whatever its caller checked first.
+  it.each([['review', 'approved'], ['approved', 'locked']] as const)('%s → %s by the author: not signed, nothing written', async (from, to) => {
+    await seed(from, { author: USER });
+    await expect(commitAs(to, from, await readArtifact(), await readVersion())).rejects.toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
+    expect(await signatures()).toEqual([]);
+    expect(await ledger()).toEqual([]);
+    expect(await snapshots()).toEqual([]);
+  });
 });
 
 /**
@@ -527,4 +550,55 @@ describe('the column set the signed act accepts', () => {
     expect(await signatures()).toEqual([]);
     expect(await ledger()).toEqual([]);
   });
+});
+
+/**
+ * 2026-11-01 (F1, decision P-18): "An author still cannot approve their own
+ * document." A user with signing authority wrote an artifact, sent it to review
+ * with no reviewer assigned (so the quorum was met), and approved it with their
+ * own password: nothing compared the signer with the author. The check is the
+ * platform's one separation-of-duties check, asked by the preflight both doors
+ * share and again on the signing transaction (pinned for the act itself above,
+ * with the other states the act refuses). Every other case in this file signs
+ * as USER over an artifact AUTHOR wrote, so a non-author still signs.
+ */
+describe('P-18: the author cannot approve or release their own artifact', () => {
+  it.each([
+    ['approving', 'review', APPROVE, { status: 'review', approved_version_id: null }],
+    ['releasing (locking)', 'approved', LOCK, { status: 'approved', published_version_id: null }],
+  ] as const)('%s what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written', async (_label, from, body, unchanged) => {
+    await seed(from, { author: USER });
+    let reauthAsked = false;
+    holder.duringReauth = async () => { reauthAsked = true; };
+    const res = await putStatus(body);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(JSON.stringify(res.body)).toContain('SEPARATION_OF_DUTIES');
+    expect(JSON.stringify(res.body)).toMatch(/you are an author of this record/);
+    expect(reauthAsked, 'the password was verified for an act that cannot be signed').toBe(false);
+    expect(await artifactRow()).toMatchObject(unchanged);
+    expect(await signatures()).toEqual([]);
+    expect(await ledger()).toEqual([]);
+    expect(await provenance()).toEqual([]);
+    expect(await snapshots()).toEqual([]);
+  });
+
+  it('becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written', async () => {
+    await seed('review');
+    holder.duringReauth = () =>
+      run(
+        `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, created_by_id)
+         SELECT id, organization_id, 1, 'draft', 'h1', $2 FROM concept2cure_artifacts WHERE artifact_id = $1`,
+        [ARTIFACT, USER],
+      );
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(JSON.stringify(res.body)).toContain('SEPARATION_OF_DUTIES');
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+    expect(await ledger()).toEqual([]);
+    expect(await auditHalf()).toEqual([]);
+  });
+
 });
