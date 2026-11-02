@@ -75,6 +75,7 @@
 .rc-pack{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; text-align:left; }
 .rc-pack .pj-card-foot{ margin-top:10px; }
 .rc-packs-none{ margin:0; font-size:var(--fs-small); color:var(--text-300); }
+.rc-packs + .rc-packs-none{ margin-top:12px; }
 .rc-nc-list{ margin:6px 0 0; padding-left:18px; }
 @media (max-width:640px){ .rc-packs{ grid-template-columns:1fr; } }
 
