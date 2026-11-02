@@ -35,7 +35,8 @@ const props = () => ({
   segment: 'biopharma',
 });
 
-const headerText = () => document.querySelector('.vd-top')?.textContent ?? '';
+// D6-3: the header is D0's `.ph` (title, one line, actions); `.vd-top` was retired (D6 §C.4 step 2).
+const headerText = () => document.querySelector('.ph')?.textContent ?? '';
 
 function vaultWith(vault: () => Response) {
   apiRequest.mockImplementation(async (method: string, url: string) =>
@@ -155,6 +156,8 @@ describe('Vault — a refused read is a refusal', () => {
 
 describe('Vault — upload controls', () => {
   it('names document types for a reader, not by wire token', async () => {
+    // D6-3: the type picker lives in an open project's Uploads view now (D6 §C.4 step 5).
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-301' };
     vaultWith(() => ok({}));
     render(<Vault {...props()} />);
     const picker = (await screen.findByTestId('vault-upload-type')) as HTMLSelectElement;
@@ -188,15 +191,18 @@ describe('Vault — the header reads as a line, and its picker is named', () => 
       documentCounts: { authored: 1, artifacts: 0, uploads: 0 }, tree: [] } }));
     render(<Vault {...props()} />);
     await waitFor(() => expect(headerText()).toMatch(/1 authored document/));
-    const parts = [...document.querySelectorAll('.vd-sub-x .vd-sub-part')];
+    // D6-3: the line is the header's `.ph-sub` (D6 §C.4 step 2).
+    const parts = [...document.querySelectorAll('.ph-sub .vd-sub-part')];
     expect(parts.map((p) => p.textContent?.trim())).toEqual(['IND · 21 CFR 312', '1 authored document · 0 uploaded files']);
     expect(parts[1].firstElementChild?.tagName.toLowerCase(), 'the separator belongs to the part it introduces').toBe('svg');
   });
 
   it('names the upload type picker on screen', async () => {
+    // D6-3: the picker is in an open project's Uploads view, named for what it sets (D6 §C.4 step 5).
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-301' };
     vaultWith(() => ok({}));
     render(<Vault {...props()} />);
     const picker = await screen.findByTestId('vault-upload-type');
-    expect(picker.closest('label')?.textContent).toMatch(/^File type/);
+    expect(picker.closest('label')?.textContent).toMatch(/^Type for files added next/);
   });
 });

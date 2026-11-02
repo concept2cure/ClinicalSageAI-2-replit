@@ -1,0 +1,811 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=false) 2439ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=true) 1664ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current detail read admits only sections 348ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current sections read admits only sections 265ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withdraws cached saved source history after the current document read becomes partial 802ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > distinguishes an admitted empty history from a failed read without selecting or changing text 638ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt malformed manifest 486ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt foreign scoped success 481ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > refuses a newer saved event during reuse instead of silently selecting it 717ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > lets dirty authors inspect but blocks reuse while text or a ceremony owns the editor 1084ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > gives a new catalogue selection precedence over a delayed historical check 514ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > keeps an unresolved structural write held after checking historical references 1237ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across project visit ABA 353ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across account session ABA 719ms
+ × client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it 5823ms
+   → Unable to find an element by: [data-testid="ai-draft-body"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Saved reference working document
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Existing saved section
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Saved reference working document"
+            >
+              Saved reference working document
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Saved reference working document
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Existing saved section
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Saved reference working document"
+            >
+              Saved reference working document
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                ...
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > does not fetch on mount and permits a read-only frozen viewer to inspect historical references 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > rechecks the same exact saved record before adopting selectors and never writes or generates 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > offers the explicit check in the existing build disclosure 478ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > distinguishes admitted empty history from a later failed read without touching editing state 32ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > adopts no old build preferences and does not invoke editor refresh or review navigation 22ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > requires clearing an explicit new selection and checking again before reuse 112ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses no affirmative envelope instead of claiming empty history 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses wrong document instead of claiming empty history 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses wrong project instead of claiming empty history 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses missing record instead of claiming empty history 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses invalid time instead of claiming empty history 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses invalid manifest instead of claiming empty history 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new event between Check and Use without choosing another record 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new event time between Check and Use without choosing another record 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new manifest between Check and Use without choosing another record 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses no latest record between Check and Use without choosing another record 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > checks ownership again after JSON parsing, never publishing a late private result 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > coalesces immediate Check and Use attempts without a second active historical read 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after project ABA and requires a fresh Check 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after document ABA and requires a fresh Check 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after account ABA and requires a fresh Check 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after session ABA and requires a fresh Check 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after source ABA and requires a fresh Check 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not admit a late reuse after dirty opens and closes during its read 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not admit a late reuse after review opens and closes during its read 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not let a retired finalizer release a newer Check after a document round trip 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > never lets a pending Use replace a new selection or revive after source ABA 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during dirty 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during sealed 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during view-only 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during ceremony 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during building 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during unknown 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during accept-unknown 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during review-pane 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > ignores a late Use when an ordinary build lane started and ended during the read 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved reference native credential ownership > refuses a mismatched bearer before a new Check can start without rerendering 46ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved reference native credential ownership > hides a late check after bearer claims change before rerendering 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved reference native credential ownership > hides a late reuse after bearer claims change before rerendering 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved reference native credential ownership > keeps a pending check through genuine same-revision refresh with captured credentials 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved reference native credential ownership > keeps a pending reuse through genuine same-revision refresh with captured credentials 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > retains the nested 422 classification through the shared generation transport 5ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > a fresh refusal creates no review body or Accept control and reports the repair action 98ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > failed regeneration preserves the prior valid candidate and edited review until explicit acceptance 130ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it
+TestingLibraryElementError: Unable to find an element by: [data-testid="ai-draft-body"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Saved reference working document
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Existing saved section
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Saved reference working document"
+            >
+              Saved reference working document
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Saved reference working document
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Existing saved section
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Saved reference working document"
+            >
+              Saved reference working document
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx:281:31
+    279|     fireEvent.click(screen.getByTestId('ai-draft-open'));
+    280|     fireEvent.click(await screen.findByTestId('ai-draft-generate'));
+    281|     const body = await screen.findByTestId('ai-draft-body') as HTMLTex…
+       |                               ^
+    282|     fireEvent.change(body, { target: { value: 'My retained manual revi…
+    283|     await act(async () => { pending.resolve(ok({ success: true, data: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 59 passed (60)
+   Start at  22:40:51
+   Duration  31.00s (transform 5.39s, setup 727ms, import 7.19s, tests 18.83s, environment 3.36s)
+

@@ -51,6 +51,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload } as Response);
 const fail = (status: number) => ({ ok: false, status, json: async () => ({ error: 'nope' }) } as Response);
@@ -122,7 +123,8 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
   it('the History rail says it is reading, never "No prior revisions", while its read is in flight', async () => {
     wire((m, u) => (m === 'GET' && /\/api\/authoring\/sections\/S1\/history/.test(u) ? never() : undefined));
     render(<DocumentAuthoring {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: /History/ }));
+    await screen.findByTestId('ed-more');
+    fireEvent.click(openEditorControl('Versions'));
     await waitFor(() => expect(text()).toMatch(/Reading revision history/));
     expect(text()).not.toMatch(/No prior revisions/);
   });
@@ -270,7 +272,8 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
         return ok({ success: true, revisions: [], comments: [], sources: [] });
       });
       render(<DocumentAuthoring {...props()} />);
-      fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
+      await screen.findByTestId('ed-more');
+      fireEvent.click(openEditorControl(/^Sources/));
       fireEvent.click(await screen.findByText('Remove'));
       await waitFor(() => expect(text()).toMatch(/a frozen citation is immutable/));
     } finally {
@@ -309,7 +312,8 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
         return undefined;
       });
       render(<DocumentAuthoring {...props()} />);
-      fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
+      await screen.findByTestId('ed-more');
+      fireEvent.click(openEditorControl(/^Sources/));
       fireEvent.click(await screen.findByRole('button', { name: /Manufacture/ }));
       await waitFor(() => expect(text()).toMatch(/Manufacture/));
       await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[1] === '/api/authoring/sections/S2/sources')).toBe(true));

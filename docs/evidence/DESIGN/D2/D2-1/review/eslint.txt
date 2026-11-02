@@ -1,0 +1,40 @@
+# ESLint on every changed .ts/.tsx file: the working tree against 'git show HEAD:<file> | npx eslint --stdin'
+# (HEAD 8535bd981). Only Projects.tsx has findings; the other 11 files have 0 errors and 0 warnings.
+
+## The builder's Projects.tsx: 0 errors, 8 warnings, one more than HEAD
+   complexity: Function 'Projects' has a complexity of 17. Maximum allowed is 15.   <- new
+   (three copies of '!live.loading && !live.error' in the Projects body: portfolioMean, the new search
+   placeholder, and PortfolioPagedNote)
+
+## Fix (skeptic): one 'const settled = !live.loading && !live.error' used in all three places
+
+HEAD Projects.tsx: 0 errors, 7 warnings
+   complexity :119 Function 'programTypeFor' has a complexity of 43. Maximum allowed is 15.
+   max-lines-per-function :324 Function 'NewProjectWizardSession' has too many lines (693). Maximum allowed is 100.
+   complexity :324 Function 'NewProjectWizardSession' has a complexity of 137. Maximum allowed is 15.
+   complexity :501 Async arrow function has a complexity of 39. Maximum allowed is 15.
+   max-lines :728 File has too many lines (1328). Maximum allowed is 500.
+   max-lines-per-function :1305 Function 'Projects' has too many lines (354). Maximum allowed is 100.
+   complexity :1392 Arrow function has a complexity of 27. Maximum allowed is 15.
+
+Projects.tsx after the fix: 0 errors, 7 warnings
+   complexity :120 Function 'programTypeFor' has a complexity of 43. Maximum allowed is 15.
+   max-lines-per-function :325 Function 'NewProjectWizardSession' has too many lines (693). Maximum allowed is 100.
+   complexity :325 Function 'NewProjectWizardSession' has a complexity of 137. Maximum allowed is 15.
+   complexity :502 Async arrow function has a complexity of 39. Maximum allowed is 15.
+   max-lines :728 File has too many lines (1334). Maximum allowed is 500.
+   max-lines-per-function :1338 Function 'Projects' has too many lines (342). Maximum allowed is 100.
+   complexity :1427 Arrow function has a complexity of 27. Maximum allowed is 15.
+
+## Other changed files (after the fix): errors, warnings, file
+0 0 client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx
+0 0 client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx
+0 0 client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx
+0 0 client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx
+0 0 client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx
+0 0 client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx
+0 0 client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx
+0 0 client/src/concept2cure/v2/surfaces/ProjectClientFilter.tsx
+0 0 client/src/concept2cure/v2/surfaces/ProjectPortfolioFilters.tsx
+0 0 tests/e2e/projects-mdx-destination.e2e.ts
+0 0 tests/e2e/projects-pathway-counts.e2e.ts

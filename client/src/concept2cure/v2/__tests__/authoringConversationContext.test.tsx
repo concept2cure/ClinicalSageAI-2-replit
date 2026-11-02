@@ -25,6 +25,7 @@ import {
   CanonicalAuthoringFlow, clearAuthoringFlowScope, FLOW_DOC, FLOW_PROGRAM, FLOW_SECTION,
   sendAuthoringPrefill, sentAuthoringTurns, serveAuthoringStream, setAuthoringFlowScope, toolbarDraftButton,
 } from './canonicalAuthoringFlow';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const SECOND_SECTION = 'aaaaaaaa-0000-4000-8000-000000000002';
 const AT = '2026-10-13T10:00:00Z';
@@ -57,8 +58,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); clearAuthoringFlowScope(); vi.unstubAllGlobals(); });
 
 function reviewOpenSection() {
-  fireEvent.click(screen.getByText('Review with AnA'));
-  fireEvent.click(screen.getByRole('button', { name: 'Review section' }));
+  fireEvent.click(openEditorControl('Review section', 'ana'));
 }
 
 describe('embedded asks carry the saved section that asked', () => {

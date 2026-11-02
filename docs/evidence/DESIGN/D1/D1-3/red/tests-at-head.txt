@@ -1,0 +1,1783 @@
+# D1-3 red run: the new and rewritten tests (final text) against HEAD's sources, in a scratch export of HEAD (1c48581ae) client/, shared/, server/, services/, .design/, docs/design/, config/ and the vitest config, with node_modules linked; 2026-11-02T01:37:19Z
+# Shell.tsx and app-v2.css in the export are byte-identical to HEAD's (checked with diff before the run)
+# npx vitest run --config vitest.config.ts --maxWorkers=1 <files>
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/head-export
+
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses Vault before routing or action dispatch 707ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses Tasks before routing or action dispatch 259ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses logo before routing or action dispatch 336ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses project before routing or action dispatch 168ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses help before routing or action dispatch 242ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses account before routing or action dispatch 201ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses client type before routing or action dispatch 175ms
+ × client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > preserves query and selection when pending work refuses a keyboard-selected result before action dispatch 163ms
+   → Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > a seeded conversation carries its files > sends the seeding composer's uploads by id, so the stream can open them
+[useAnaChat] stream failed: Stream request failed: 503
+
+ × client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > re-seeds when the user is already on the conversation surface 5089ms
+   → Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named 1588ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > "Back to" returns to the screen it was asked from 363ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > vault has no AnA column and no seam 60ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > projects has no AnA column and no seam 36ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > submission-center has no AnA column and no seam 31ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > home has no AnA column and no seam 43ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > crl-library has no AnA column and no seam 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > ⌘\ opens nothing and persists nothing: there is no rail to toggle 47ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order 212ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading 45ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the feature catalog, Conversation and a second task entry are not on the rail 25ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no two entries share an icon 27ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=false) 201ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=true) 156ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > every entry opens a screen in this release 51ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Quality is on the rail, and opens Quality 73ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Projects is on the rail, and opens the Projects index 79ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > says a project screen needs a project when none is open, instead of doing nothing visible 191ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > CMC / Module 3 is on the rail beside Quality, and opens CMC 66ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Home is explicitly labelled and opens Home 64ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no entry carries an AnA badge, and no section lists retired or locked screens 18ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the mark goes to Home 80ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is reached without a rail entry > ⌘K finds Conversation and opens the conversation screen 50ms
+   → Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+stderr | client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the governed artifacts across projects, once the Artifacts center, are reached from ⌘K as the Vault > the sidebar’s Search opens the palette, and the result opens the Vault, not a retired screen
+An update to CmdK inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the board at its own address, not the action’s alias 65ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the governed artifacts across projects, once the Artifacts center, are reached from ⌘K as the Vault > the sidebar’s Search opens the palette, and the result opens the Vault, not a retired screen 92ms
+   → Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+stderr | client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > locks a tier-gated surface, states the real reason, and does not navigate
+An update to NavUnlockPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > locks a tier-gated surface, states the real reason, and does not navigate 213ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > hands a locked result to the unlock panel, which outlives the palette 247ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > keeps a locked result arrow-reachable and Enter-activatable 84ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > leaves an entitled surface completely alone 181ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > shows no locks for the master-admin owner grant 175ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > gates the default list without ever locking a surface the catalog has no row for 113ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a tier lock 189ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a disabled lock 152ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a industry lock 153ms
+ × client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > "Go to" lists the places, in the rail's order 82ms
+   → expected [] to deeply equal [ 'Home', 'Projects', 'Tasks', …(7) ]
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > a place opens as the rail opens it 301ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > a surface outside the release is not listed; a licence lock still is, with its reason 263ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > with a project open, its steps are listed, and a step opens the project on it 152ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > with no project open, no steps are listed 39ms
+ × client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > groups: This project, Recent conversations, Go to, Actions, in sentence case 5030ms
+   → Unable to find an element with the text: Summarize the nonclinical package. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<html>
+  <head />
+    [DOM dump omitted]
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > the first two .rail-nav buttons are "New conversation" and "Search"
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > New conversation opens Home, where a question starts a new conversation
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > the first two .rail-nav buttons are "New conversation" and "Search" 198ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > Search still opens the command palette
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > New conversation opens Home, where a question starts a new conversation 155ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > names the organisation under the person, and in the button’s title
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > with no organisation known, says the role in words, never the raw value
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > the menu head names the organisation and the role on one line
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > Search still opens the command palette 108ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > names the organisation under the person, and in the button’s title 19ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > with no organisation known, says the role in words, never the raw value 18ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > the menu head names the organisation and the role on one line 43ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > "What AnA remembers" follows Account, opens the drawer, and Escape returns focus to the account button 131ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > Organizations and invitations sits in the sidebar foot, after the account
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > collapsed, the foot stacks the expand toggle, organisation access, then the avatar
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > "Open the sidebar" is the bar’s first control and opens it
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > draws no sidebar button that would do nothing
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > has no Organizations and invitations button of its own
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > keeps the admin entries gated exactly as before 137ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > Organizations and invitations sits in the sidebar foot, after the account 29ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > collapsed, the foot stacks the expand toggle, organisation access, then the avatar 27ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > "Open the sidebar" is the bar’s first control and opens it 12ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > draws no sidebar button that would do nothing 18ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > a place, New conversation and Search each close it
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > has no Organizations and invitations button of its own 24ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > wider than that, the sidebar stays as it is
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > a place, New conversation and Search each close it 266ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in it) 98ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > draws no search box, organisation label, project chip, Task chip or Help; the open project is a crumb button
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Vault with C2C-101 open it reads "C2C-101 › Vault", and the project crumb opens the project page
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on the project page it reads "C2C-101" once, as the current page
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home with no project open: exactly Collaborate, New task and Your work, and no text
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > with no project open there is no project button (Projects is the sidebar’s), and none is invented for an id alone
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > Collaborate, New task and Your work are icon buttons, in that order, that keep their handlers
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > at phone width: the sidebar button first, New conversation last, and it opens Home
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > New conversation waits for unsaved work, as the sidebar’s does
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > wider than that, the sidebar stays as it is 73ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > draws no search box, organisation label, project chip, Task chip or Help; the open project is a crumb button 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Vault with C2C-101 open it reads "C2C-101 › Vault", and the project crumb opens the project page 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on the project page it reads "C2C-101" once, as the current page 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > a project feature reads "the project › the feature"; a one-category or admin page names only itself 13ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home with no project open: exactly Collaborate, New task and Your work, and no text 8ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home and in a conversation with a project open, the project crumb is the bar’s one text 9ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > with no project open there is no project button (Projects is the sidebar’s), and none is invented for an id alone 8ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > Collaborate, New task and Your work are icon buttons, in that order, that keep their handlers 5ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > at phone width: the sidebar button first, New conversation last, and it opens Home 6ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > New conversation waits for unsaved work, as the sidebar’s does 5ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the lazy fallback says "Loading…" (§D1.B step 8) > a screen still loading shows one quiet status line, still busy for the probes that wait on it 11ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > finds the sidebar’s rules 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the round "+" of New conversation is the sidebar’s one orange 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > no brand fill beside Home’s own row, and the ".RI" in ink 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > group labels are 12px sentence case in --text-300 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > rows are 14px, recents 13px, and nothing in the sidebar is under 12px 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the avatar is ink, in the sidebar and the account menu’s head, ranked above the menu block’s own rule 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the account’s second line is 12px --text-300; the menu head’s line 13px 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > at ≤640px no strip is reserved, the collapsed rail is not drawn, and the expanded one is the drawer 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > finds the bar’s rules 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the bar: 4px between controls, a hairline under it that Home drops 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the crumbs: 13px --text-300, the page --text-100 at 500, the project a quiet button that hovers --bg-100, unclipped 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > icon buttons: 32px, --text-300, hover --bg-100; 44px at phone width 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > at phone width the menu and New conversation show, and Collaborate and New task go to ⌘K 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the badge is ink at 12px, and red when something is overdue 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > no orange and nothing under 12px in the bar’s rules 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the retired bar classes have no rule left 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the lazy fallback is a quiet line, not a box (§D1.B step 8) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a member is offered neither the Admin console, Subscription & features, Access requests nor Platform licensing 268ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a customer's administrator is offered the Admin console, not Platform licensing 94ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a platform administrator is offered Platform licensing 44ms
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > engineering evidence, with a project open: the project › the feature
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > IVDR evidence, with a project open: the same trail, and no "Medical Device & IVD" parent
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names the project once, as the crumb button that opens its page
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > engineering evidence, with a project open: the project › the feature 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > IVDR evidence, with a project open: the same trail, and no "Medical Device & IVD" parent 14ms
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names a project with no code by its title
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names the project once, as the crumb button that opens its page 17ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names a project with no code by its title 10ms
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > follows the channel when another project is opened
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with no project open: the feature alone
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): the feature alone
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > the project page is still named by the project, once, as the current page
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > a core place carries the project crumb while a project is open
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > every MDX project feature: its parent is the open project, never the old tier 106ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > follows the channel when another project is opened 13ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with no project open: the feature alone 13ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): the feature alone 7ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > the project page is still named by the project, once, as the current page 9ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > a core place carries the project crumb while a project is open 9ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > a one-category surface keeps its category; an admin surface keeps Admin 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the registry model names Projects as a project feature’s parent > for every MDX project feature 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the registry model names Projects as a project feature’s parent > no surface is crumbed with the old tier 1ms
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > engineering evidence 49ms
+   → Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+⎯⎯⎯⎯⎯⎯ Failed Tests 34 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > "Go to" lists the places, in the rail's order
+AssertionError: expected [] to deeply equal [ 'Home', 'Projects', 'Tasks', …(7) ]
+
+- Expected
++ Received
+
+- [
+-   "Home",
+-   "Projects",
+-   "Tasks",
+-   "Communication",
+-   "Vault",
+-   "Submission Center",
+-   "CMC / Module 3",
+-   "Risk-based monitoring",
+-   "Quality",
+-   "Reporting & analytics",
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:131:32
+    129|     serve();
+    130|     await mount();
+    131|     expect(rowsUnder('Go to')).toEqual([
+       |                                ^
+    132|       'Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'Submissi…
+    133|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > groups: This project, Recent conversations, Go to, Actions, in sentence case
+TestingLibraryElementError: Unable to find an element with the text: Summarize the nonclinical package. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ waitForWrapper ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:202:18
+    200|     serve([], threadsOk);
+    201|     await mount();
+    202|     await screen.findByText('Summarize the nonclinical package');
+       |                  ^
+    203|     expect(headers()).toEqual(['This project', 'Recent conversations',…
+    204|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > lists the person’s conversations first, newest first, read only while the palette is open
+TestingLibraryElementError: Unable to find an element with the text: Summarize the nonclinical package. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ waitForWrapper ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:209:18
+    207|     serve([], threadsOk);
+    208|     await mount();
+    209|     await screen.findByText('Summarize the nonclinical package');
+       |                  ^
+    210|     expect(headers()).toEqual(['Recent conversations', 'Go to', 'Actio…
+    211|     expect(rowsUnder('Recent conversations')).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > a conversation opens as the sidebar’s Recents opens it, by click or by Enter
+TestingLibraryElementError: Unable to find role="button" and name `/^Draft the cover letter/`
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ waitForWrapper ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:227:34
+    225|     serve([], threadsOk);
+    226|     const { onNav, onClose } = await mount();
+    227|     fireEvent.click(await screen.findByRole('button', { name: /^Draft …
+       |                                  ^
+    228|     expect(window.C2C_CONVO).toEqual({ id: 't-3' });
+    229|     expect(onNav).toHaveBeenCalledExactlyOnceWith('conversation-thread…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > a failed read says so; none is no group at all
+AssertionError: expected 'Jump toHomeProjectsTasksCommunication…' to contain 'Conversations could not be read, so n…'
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<html>
+  <head />
+    [DOM dump omitted]
+Expected: "Conversations could not be read, so none are listed here."
+Received: "Jump toHomeProjectsTasksCommunicationVaultSubmission CenterCMC / Module 3Biotech & PharmaRisk-based monitoringQualityReporting & analyticsQuick actionsRun validationActionExport documentAction · e-sign↑↓ navigate↵ selectesc close/ jump · > action"
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:244:59
+    242|     serve([], () => ({ ok: false, status: 500, json: async () => ({ er…
+    243|     await mount();
+    244|     await waitFor(() => expect(document.body.textContent).toContain('C…
+       |                                                           ^
+    245|     expect(headers()).toEqual(['Recent conversations', 'Go to', 'Actio…
+    246|     expect(rowsUnder('Recent conversations')).toEqual(['']);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > a place carries no hint; Actions are the two quick actions, New task and Message a colleague
+AssertionError: expected 'Biotech & Pharma' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ Biotech & Pharma
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:256:38
+    254|     serve([], threadsOk);
+    255|     await mount();
+    256|     expect(hintOf('CMC / Module 3')).toBe('');
+       |                                      ^
+    257|     expect(hintOf('Vault')).toBe('');
+    258|     expect(rowsUnder('Actions')).toEqual(['Run validation', 'Export do…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > "New task" opens the launcher on its tab, as the top bar does, and closes the palette
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > "Message a colleague" opens the launcher on its tab, as the top bar does, and closes the palette
+Error: Unable to fire a "click" event - please provide a DOM element.
+ ❯ createEvent ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/events.js:27:11
+ ❯ Function.createEvent.<computed> [as click] ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/events.js:106:38
+ ❯ Function.fireEvent.<computed> [as click] ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/events.js:110:68
+ ❯ Function.fireEvent.<computed> [as click] ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/react/dist/fire-event.js:15:52
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:269:15
+    267|     serve([], threadsOk);
+    268|     const { onNav, onClose } = await mount();
+    269|     fireEvent.click(rowNamed(label)!);
+       |               ^
+    270|     expect(open).toHaveBeenCalledExactlyOnceWith(mode);
+    271|     expect(onClose).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K’s words when searching (§D1.F steps 1, 4 and 5) > the field names projects, conversations, pages and ">" for actions; there is no footer of key hints
+AssertionError: expected 'Search surfaces, or ">" for actions…' to be 'Search projects, conversations and pa…' // Object.is equality
+
+Expected: "Search projects, conversations and pages, or type > for actions"
+Received: "Search surfaces, or ">" for actions…"
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:280:69
+    278|     serve();
+    279|     await mount();
+    280|     expect(screen.getByRole('textbox').getAttribute('placeholder')).to…
+       |                                                                     ^
+    281|     expect(document.querySelector('.cmdk-foot')).toBeNull();
+    282|     expect(document.body.textContent).not.toMatch(/↑↓|↵|esc close|\/ j…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K’s words when searching (§D1.F steps 1, 4 and 5) > pages are under "Pages"; "Ask AnA" ends the list with no header or hint of its own
+AssertionError: expected [] to include 'Vault'
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:289:32
+    287|     await mount();
+    288|     search('vault');
+    289|     expect(rowsUnder('Pages')).toContain('Vault');
+       |                                ^
+    290|     expect(headers()).not.toContain('Surfaces');
+    291|     expect(headers()).not.toContain('AnA');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K’s words when searching (§D1.F steps 1, 4 and 5) > ">" lists the AI actions; New task is found by its name
+AssertionError: expected [] to include 'New task'
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:307:34
+    305|     expect(labels).toEqual(expect.arrayContaining(['Run validation', '…
+    306|     search('new task');
+    307|     expect(rowsUnder('Actions')).toContain('New task');
+       |                                  ^
+    308|   });
+    309| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > a centred dialog on a dimmed, lightly blurred page, with a fade that reduced motion turns off
+AssertionError: expected 'position:fixed;inset:0;background:rgb…' to match /…/ \.24\);backdrop-filter:blur\(4px\);animation:de-fade var\(--dur\) var\(--ease\)
+
+- Expected:
+/z-index:80;.*padding:14vh 16px 16px;background:rgb\(20 20 19 \/ \.24\);backdrop-filter:blur\(4px\);animation:de-fade var\(--dur\) var\(--ease\)/
+
++ Received:
+"position:fixed;inset:0;background:rgba(20,20,19,.3);display:flex;align-items:flex-start;justify-content:center;padding-top:12vh;z-index:50;"
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:332:38
+    330|
+    331|   it('a centred dialog on a dimmed, lightly blurred page, with a fade …
+    332|     expect(body('.c2c-v2 .cmdk-bd')).toMatch(/z-index:80;.*padding:14v…
+       |                                      ^
+    333|     expect(body('.c2c-v2.dark .cmdk-bd')).toMatch(/background:rgb\(0 0…
+    334|     expect(body('.c2c-v2 .cmdk-bd', 'reduced')).toMatch(/animation:non…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > rows: 36px, 14px --text-200, grey icons, 12px hints; the selected row a soft fill, --bg-200 in dark
+AssertionError: expected 'display:flex;align-items:center;gap:1…' to match /min-height:36px;.*font-size:var\(--fs…/
+
+- Expected:
+/min-height:36px;.*font-size:var\(--fs-body,\s*14px\);color:var\(--text-200\)/
+
++ Received:
+"display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--radius-md);width:100%;font-size:13px;"
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:339:40
+    337|
+    338|   it('rows: 36px, 14px --text-200, grey icons, 12px hints; the selecte…
+    339|     expect(body('.c2c-v2 .cmdk-item')).toMatch(/min-height:36px;.*font…
+       |                                        ^
+    340|     expect(body('.c2c-v2 .cmdk-item.on')).toMatch(/background:var\(--b…
+    341|     expect(body('.c2c-v2.dark .cmdk-item.on')).toMatch(/background:var…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > group labels are 12px sentence case in --text-300
+AssertionError: expected 'padding:8px 16px 4px;font-size:var(--…' to match /font-size:var\(--fs-caption,\s*12px\)…/
+
+- Expected:
+/font-size:var\(--fs-caption,\s*12px\);font-weight:500;letter-spacing:0;text-transform:none;color:var\(--text-300\)/
+
++ Received:
+"padding:8px 16px 4px;font-size:var(--fs-caption);font-weight:600;color:var(--text-400);user-select:none;"
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:347:39
+    345|
+    346|   it('group labels are 12px sentence case in --text-300', () => {
+    347|     expect(body('.c2c-v2 .cmdk-hdr')).toMatch(/font-size:var\(--fs-cap…
+       |                                       ^
+    348|   });
+    349|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > the field is a large quiet line with no ring of its own; D0’s focus rule still steps the outline aside
+AssertionError: expected 'flex:1;font-size:15px;' to match /border:0;background:none;font-size:va…/
+
+- Expected:
+/border:0;background:none;font-size:var\(--fs-section,\s*15px\);color:var\(--text-100\)/
+
++ Received:
+"flex:1;font-size:15px;"
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:351:44
+    349|
+    350|   it('the field is a large quiet line with no ring of its own; D0’s fo…
+    351|     expect(body('.c2c-v2 .cmdk-in input')).toMatch(/border:0;backgroun…
+       |                                            ^
+    352|     expect(palette.filter((r) => /\.cmdk-in/.test(r.selector) && /box-…
+    353|     expect(body('.c2c-v2 :is(.landing-input, .pj-composer textarea, .c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > no orange and nothing under 12px in the palette’s rules
+AssertionError: expected [ '.c2c-v2 .cmdk-item.on', …(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   ".c2c-v2 .cmdk-item.on",
++   ".c2c-v2 .cmdk-item .ico",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:357:120
+    355|
+    356|   it('no orange and nothing under 12px in the palette’s rules', () => {
+    357|     expect(palette.filter((r) => /var\(--accent-(strong|100|200|000|mu…
+       |                                                                                                                        ^
+    358|     const small = palette.flatMap((r) =>
+    359|       Array.from(r.body.matchAll(/font-size\s*:\s*(?:var\(--fs-[\w-]+,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > at phone width the dialog sits 8px from the top and rows are 44px
+AssertionError: expected '' to match /padding-top:8px/
+
+- Expected:
+/padding-top:8px/
+
++ Received:
+""
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:365:47
+    363|
+    364|   it('at phone width the dialog sits 8px from the top and rows are 44p…
+    365|     expect(body('.c2c-v2 .cmdk-bd', 'phone')).toMatch(/padding-top:8px…
+       |                                               ^
+    366|     expect(body('.c2c-v2 .cmdk-item', 'phone')).toMatch(/min-height:44…
+    367|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > the footer has no rule left, the list and the empty line one each, and the lock rules are kept
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:370:47
+    368|
+    369|   it('the footer has no rule left, the list and the empty line one eac…
+    370|     expect(APP_V2_CSS.includes('.cmdk-foot')).toBe(false);
+       |                                               ^
+    371|     expect(ALL.filter((r) => r.media === null && r.selector === '.c2c-…
+    372|     expect(ALL.filter((r) => r.media === null && r.selector === '.c2c-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > engineering evidence
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ search client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:211:29
+    209|     });
+    210|     // D1-3 (D1.md §D1.F step 1): the field's words name projects, con…
+    211|     fireEvent.change(screen.getByPlaceholderText(/^Search projects, co…
+       |                             ^
+    212|   }
+    213|   const hintOf = (label: string) => {
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:222:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > IVDR evidence
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ search client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:211:29
+    209|     });
+    210|     // D1-3 (D1.md §D1.F step 1): the field's words name projects, con…
+    211|     fireEvent.change(screen.getByPlaceholderText(/^Search projects, co…
+       |                             ^
+    212|   }
+    213|   const hintOf = (label: string) => {
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:227:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > no row for a folded screen: risk management, design controls and IVD completeness live in their targets
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ search client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:211:29
+    209|     });
+    210|     // D1-3 (D1.md §D1.F step 1): the field's words name projects, con…
+    211|     fireEvent.change(screen.getByPlaceholderText(/^Search projects, co…
+       |                             ^
+    212|   }
+    213|   const hintOf = (label: string) => {
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:233:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > no ⌘K row is hinted with the old tier
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ search client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:211:29
+    209|     });
+    210|     // D1-3 (D1.md §D1.F step 1): the field's words name projects, con…
+    211|     fireEvent.change(screen.getByPlaceholderText(/^Search projects, co…
+       |                             ^
+    212|   }
+    213|   const hintOf = (label: string) => {
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:240:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > seeds the conversation surface and goes there, instead of arming a hidden rail
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ waitForWrapper ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ askThroughPalette client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx:123:30
+    121|   fireEvent.keyDown(window, { key: 'k', metaKey: true });
+    122|   // D1-3 (D1.md §D1.F step 1): the field's words name projects, conve…
+    123|   const input = await screen.findByPlaceholderText(/^Search projects, …
+       |                              ^
+    124|   fireEvent.change(input, { target: { value: question } });
+    125|   // A predicate, not `new RegExp(question)`. Semgrep's detect-non-lit…
+ ❯ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx:154:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > re-seeds when the user is already on the conversation surface
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ waitForWrapper ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ askThroughPalette client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx:123:30
+    121|   fireEvent.keyDown(window, { key: 'k', metaKey: true });
+    122|   // D1-3 (D1.md §D1.F step 1): the field's words name projects, conve…
+    123|   const input = await screen.findByPlaceholderText(/^Search projects, …
+       |                              ^
+    124|   fireEvent.change(input, { target: { value: question } });
+    125|   // A predicate, not `new RegExp(question)`. Semgrep's detect-non-lit…
+ ❯ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx:182:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that keeps the rail > goes to the conversation and sends there, naming the screen it was asked from
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ waitForWrapper ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ askThroughPalette client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx:123:30
+    121|   fireEvent.keyDown(window, { key: 'k', metaKey: true });
+    122|   // D1-3 (D1.md §D1.F step 1): the field's words name projects, conve…
+    123|   const input = await screen.findByPlaceholderText(/^Search projects, …
+       |                              ^
+    124|   fireEvent.change(input, { target: { value: question } });
+    125|   // A predicate, not `new RegExp(question)`. Semgrep's detect-non-lit…
+ ❯ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx:225:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is reached without a rail entry > ⌘K finds Conversation and opens the conversation screen
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/shellNav.test.tsx:269:29
+    267|     await settle();
+    268|     // D1-3 (D1.md §D1.F step 1): the field's words name projects, con…
+    269|     fireEvent.change(screen.getByPlaceholderText(/^Search projects, co…
+       |                             ^
+    270|     const hit = screen.getAllByRole('button').find((b) => b.querySelec…
+    271|     expect(hit, 'a Conversation result').toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the governed artifacts across projects, once the Artifacts center, are reached from ⌘K as the Vault > the sidebar’s Search opens the palette, and the result opens the Vault, not a retired screen
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+    [DOM dump omitted]
+<body>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/shellNav.test.tsx:351:29
+    349|     fireEvent.click(within(screen.getByRole('navigation', { name: 'Pri…
+    350|     // D1-3 (D1.md §D1.F step 1): the field's words name projects, con…
+    351|     fireEvent.change(screen.getByPlaceholderText(/^Search projects, co…
+       |                             ^
+    352|     expect(screen.queryAllByRole('button', { name: /Artifacts center/i…
+    353|     fireEvent.change(screen.getByPlaceholderText(/^Search projects, co…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > preserves query and selection when pending work refuses a keyboard-selected result before action dispatch
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ query client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:67:39
+     65| const palette = () => screen.getByRole('dialog', { name: 'Command pale…
+     66| // D1-3 (D1.md §D1.F step 1): the field's words name projects, convers…
+     67| const query = () => within(palette()).getByPlaceholderText(/^Search pr…
+       |                                       ^
+     68| function result(label: string) {
+     69|   const button = within(palette()).getAllByRole('button').find(element…
+ ❯ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:127:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > permits a clean result despite its own dialog while the shared default remains strict
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ query client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:67:39
+     65| const palette = () => screen.getByRole('dialog', { name: 'Command pale…
+     66| // D1-3 (D1.md §D1.F step 1): the field's words name projects, convers…
+     67| const query = () => within(palette()).getByPlaceholderText(/^Search pr…
+       |                                       ^
+     68| function result(label: string) {
+     69|   const button = within(palette()).getAllByRole('button').find(element…
+ ❯ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:137:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > still refuses an underlying native dialog with the same cmdk class
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ query client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:67:39
+     65| const palette = () => screen.getByRole('dialog', { name: 'Command pale…
+     66| // D1-3 (D1.md §D1.F step 1): the field's words name projects, convers…
+     67| const query = () => within(palette()).getByPlaceholderText(/^Search pr…
+       |                                       ^
+     68| function result(label: string) {
+     69|   const button = within(palette()).getAllByRole('button').find(element…
+ ❯ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:145:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > refuses a step result before creating a deferred action or conversation handoff
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ query client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:67:39
+     65| const palette = () => screen.getByRole('dialog', { name: 'Command pale…
+     66| // D1-3 (D1.md §D1.F step 1): the field's words name projects, convers…
+     67| const query = () => within(palette()).getByPlaceholderText(/^Search pr…
+       |                                       ^
+     68| function result(label: string) {
+     69|   const button = within(palette()).getAllByRole('button').find(element…
+ ❯ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:162:45
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > refuses a ask result before creating a deferred action or conversation handoff
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ query client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:67:39
+     65| const palette = () => screen.getByRole('dialog', { name: 'Command pale…
+     66| // D1-3 (D1.md §D1.F step 1): the field's words name projects, convers…
+     67| const query = () => within(palette()).getByPlaceholderText(/^Search pr…
+       |                                       ^
+     68| function result(label: string) {
+     69|   const button = within(palette()).getAllByRole('button').find(element…
+ ❯ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:165:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > does not replay a rejected palette result after changes are reverted; a fresh keyboard request succeeds
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ query client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:67:39
+     65| const palette = () => screen.getByRole('dialog', { name: 'Command pale…
+     66| // D1-3 (D1.md §D1.F step 1): the field's words name projects, convers…
+     67| const query = () => within(palette()).getByPlaceholderText(/^Search pr…
+       |                                       ^
+     68| function result(label: string) {
+     69|   const button = within(palette()).getAllByRole('button').find(element…
+ ❯ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:175:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/34]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > keeps governed ceremony ownership even when the palette itself is ignored
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /^Search projects, conversations and pages/
+
+    [DOM dump omitted]
+Ignored nodes: comments, script, style
+<div
+  aria-label="Command palette"
+  aria-modal="true"
+  class="cmdk"
+  role="dialog"
+>
+    [DOM dump omitted]
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ query client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:67:39
+     65| const palette = () => screen.getByRole('dialog', { name: 'Command pale…
+     66| // D1-3 (D1.md §D1.F step 1): the field's words name projects, convers…
+     67| const query = () => within(palette()).getByPlaceholderText(/^Search pr…
+       |                                       ^
+     68| function result(label: string) {
+     69|   const button = within(palette()).getAllByRole('button').find(element…
+ ❯ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx:188:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/34]⎯
+
+
+ Test Files  5 failed | 3 passed (8)
+      Tests  34 failed | 130 passed (164)
+   Start at  01:37:20
+   Duration  62.50s (transform 6.59s, setup 721ms, import 6.22s, tests 50.27s, environment 4.00s)
+
+exit 1

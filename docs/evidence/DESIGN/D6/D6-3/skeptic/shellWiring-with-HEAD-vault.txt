@@ -1,0 +1,3 @@
+ × client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > locked for the workspace: the conversation shows the offer as a record, not a button 5391ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 skipped (5)

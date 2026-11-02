@@ -52,6 +52,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 
 import { DocumentCanvas } from '../editor/DocumentCanvas';
 import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const DOC = 'aaaaaaaa-0000-4000-8000-000000000001';
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
@@ -253,10 +254,10 @@ describe('DocumentCanvas — converts into the full editor in place', () => {
     await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
     fireEvent.click(screen.getByTestId('dc-open-editor'));
     const expanded = await screen.findByTestId('dc-expanded');
-    await within(expanded).findByRole('button', { name: /Draft with AnA/ });
-    // The workbench's own AnA rail is not offered in a conversation host.
-    expect(within(expanded).queryByRole('button', { name: /^AnA(\s|$)/ })).toBeNull();
-    fireEvent.click(within(expanded).getByRole('button', { name: /Draft with AnA/ }));
+    await within(expanded).findByTestId('ed-ana');
+    // The workbench's own way to the conversation is not offered in a conversation host.
+    expect(within(expanded).queryByRole('button', { name: 'Show the conversation' })).toBeNull();
+    fireEvent.click(openEditorControl('Draft with AnA', 'ana'));
     const composer = screen.getByLabelText('Reply to AnA') as HTMLTextAreaElement;
     await waitFor(() => expect(composer.value).toMatch(/^Draft 2\.5\.1 Product Development Rationale/));
     expect(within(expanded).queryByLabelText('AnA — document authoring')).toBeNull();

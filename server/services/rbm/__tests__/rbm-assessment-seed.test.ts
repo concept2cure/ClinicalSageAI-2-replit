@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 const h = vi.hoisted(() => ({ access: vi.fn(), write: vi.fn() }));
 vi.mock('../../c2c/current-program-access', () => ({ requireCurrentProgramAccess: h.access }));
 vi.mock('../../c2c/governed-program-write', () => ({ requireGovernedProgramWriteTx: h.write }));
-import { seedRbmAssessment, seedRbmAssessmentFromPool } from '../rbm-assessment-seed';
+import { inOwnedRbmTransaction, inOwnedRbmTransactionFromPool, seedRbmAssessment, seedRbmAssessmentFromPool } from '../rbm-assessment-seed';
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 let db: PGlite;
 beforeAll(async () => { db = new PGlite(); await db.exec(`CREATE TABLE rbm_risk_assessments(id serial PRIMARY KEY,organization_id integer,program_id uuid,title text,framework text,overall_risk text,status text,created_by integer,approved_by integer,approved_at timestamptz);
@@ -63,6 +63,23 @@ describe('shared canonical assessment seed', () => {
    await db.exec('ROLLBACK'); open = false;
    expect((await db.query('SELECT COUNT(*)::int AS count FROM rbm_risk_assessments')).rows[0]).toEqual({ count: 0 });
   } finally { if (open) await db.exec('ROLLBACK'); }
+ });
+
+ // The same owned transaction carries AnA's add_ctq_factor write (F1 2026-11-01).
+ it('rolls back another RBM write through the shared owned transaction when its work fails', async () => {
+  const work = async (tx: { query: (sql: string, args?: unknown[]) => Promise<unknown> }) => {
+   await tx.query("INSERT INTO rbm_risk_items(organization_id, program_id, ctq_factor) VALUES (7, $1, 'Late SAE entry')", [PROGRAM]);
+   throw new Error('Controlled failure after the insert');
+  };
+  await expect(inOwnedRbmTransaction(q(), work)).rejects.toThrow('Controlled failure after the insert');
+  expect((await db.query('SELECT COUNT(*)::int AS count FROM rbm_risk_items')).rows[0]).toEqual({ count: 0 });
+ });
+ it('commits another RBM write on one released pool lease', async () => {
+  const lease = { ...q(), release: vi.fn() }, pool = { connect: vi.fn(async () => lease) };
+  const out = await inOwnedRbmTransactionFromPool(pool, async tx => (await tx.query("INSERT INTO rbm_risk_items(organization_id, ctq_factor) VALUES (7, 'x') RETURNING id")).rows[0]);
+  expect(out).toMatchObject({ id: expect.any(Number) });
+  expect(pool.connect).toHaveBeenCalledOnce(); expect(lease.release).toHaveBeenCalledOnce();
+  expect((await db.query('SELECT COUNT(*)::int AS count FROM rbm_risk_items')).rows[0]).toEqual({ count: 1 });
  });
 
 });

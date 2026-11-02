@@ -78,36 +78,36 @@ async function signFreeze() {
    figure its cited sources do not hold. The bar asks figure by figure, each
    starting at "Go back and correct it", and re-signs with every key only
    when every one is kept. */
-describe('when the server refuses over figures not in their cited sources', () => {
-  const ITEMS = [
-    { key: 'S1#1:HR 0.71', sectionId: 'S1', sectionCode: '2.5.4', sectionTitle: 'Overview of efficacy', text: 'HR 0.71', kind: 'hr', reason: 'not_in_cited_source' },
-    { key: 'S2#1:52%', sectionId: 'S2', sectionCode: '2.5.5', sectionTitle: 'Overview of safety', text: '52%', kind: 'percent', reason: 'source_unavailable' },
-  ];
-  const unverified = (message: string) => {
-    const err: any = new Error(message);
-    err.name = 'ApiRequestError';
-    err.status = 409;
-    err.code = 'FIGURES_UNVERIFIED';
-    err.payload = { unverifiedFigures: { digest: 'd'.repeat(64), items: ITEMS } };
-    return err;
-  };
-  const esignCalls = () => apiRequest.mock.calls.filter((c) => c[1] === '/api/authoring/docs/D1/e-sign');
-  async function approve() {
-    fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('radio', { name: /Approval/ }));
-    fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
-    fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
-  }
-  async function signAgain() {
-    const dialog = await screen.findByRole('dialog');
-    expect(dialog.textContent).toMatch(/You kept 2 figures not found in their cited sources\. Your signature records each one\./);
-    fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
-    fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
-  }
+const ITEMS = [
+  { key: 'S1#1:HR 0.71', sectionId: 'S1', sectionCode: '2.5.4', sectionTitle: 'Overview of efficacy', text: 'HR 0.71', kind: 'hr', reason: 'not_in_cited_source' },
+  { key: 'S2#1:52%', sectionId: 'S2', sectionCode: '2.5.5', sectionTitle: 'Overview of safety', text: '52%', kind: 'percent', reason: 'source_unavailable' },
+];
+const unverified = (message: string) => {
+  const err: any = new Error(message);
+  err.name = 'ApiRequestError';
+  err.status = 409;
+  err.code = 'FIGURES_UNVERIFIED';
+  err.payload = { unverifiedFigures: { digest: 'd'.repeat(64), items: ITEMS } };
+  return err;
+};
+const esignCalls = () => apiRequest.mock.calls.filter((c) => c[1] === '/api/authoring/docs/D1/e-sign');
+async function approve() {
+  fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+  const dialog = await screen.findByRole('dialog');
+  fireEvent.click(within(dialog).getByRole('radio', { name: /Approval/ }));
+  fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+  fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+  fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+}
+async function signAgain() {
+  const dialog = await screen.findByRole('dialog');
+  expect(dialog.textContent).toMatch(/You kept 2 figures not found in their cited sources\. Your signature records each one\./);
+  fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+  fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+  fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+}
 
+describe('when the server refuses over figures not in their cited sources', () => {
   it('asks about each figure by name, each starting at "go back", and sends no acknowledgement first', async () => {
     stubSignerChecks();
     apiRequest.mockRejectedValueOnce(unverified('Not approved — 2 figures in this document are not in the sources their sections cite.'));
@@ -135,6 +135,18 @@ describe('when the server refuses over figures not in their cited sources', () =
     await waitFor(() => expect(onChanged).toHaveBeenCalled());
     expect(esignCalls()).toHaveLength(2);
     expect(esignCalls()[1][2]).toMatchObject({ meaning: 'APPROVER', acknowledgedFigures: ['S1#1:HR 0.71', 'S2#1:52%'] });
+    // The signed confirmation stays on screen. Found in the running app (2026-11-02): clearing the
+    // question on success flipped the dialog's default meaning, and its reset wiped the confirmation.
+    const done = await screen.findByRole('heading', { name: 'Signature applied' });
+    expect(within(screen.getByRole('dialog')).getByText(/Approval signature recorded/)).toBeTruthy();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(done.isConnected).toBe(true);
+    // Done closes it, and the next E-sign starts clean: no figure is carried into another signature.
+    fireEvent.click(screen.getByRole('button', { name: /^Done$/ }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    const fresh = await screen.findByRole('dialog');
+    expect(fresh.textContent).not.toMatch(/You kept/);
   });
 
   it('keeping one figure and correcting another sends nothing and goes back', async () => {
@@ -165,5 +177,31 @@ describe('when the server refuses over figures not in their cited sources', () =
     await signAgain();
     await waitFor(() => expect(onChanged).toHaveBeenCalled());
     expect(freezeCalls()[1][2]).toMatchObject({ meaning: 'AUTHOR', acknowledgedFigures: ['S1#1:HR 0.71', 'S2#1:52%'] });
+  });
+});
+
+/* Found in the running app, 2026-11-02 (docs/evidence/D5-SIGNATURE-FIGURE-GATE/2026-11-01/live/). */
+describe('the signed confirmation stays on screen after a question was answered', () => {
+  it('the older "not settled" approval keeps its signed confirmation on screen too (same cause)', async () => {
+    stubSignerChecks();
+    const notSettled: any = new Error('Not approved — this document still has 1 unresolved comment.');
+    notSettled.name = 'ApiRequestError';
+    notSettled.status = 409;
+    notSettled.code = 'DOCUMENT_NOT_SETTLED';
+    notSettled.payload = { unresolved: { openComments: 1, pendingEdits: 0 } };
+    apiRequest.mockRejectedValueOnce(notSettled);
+    renderBar();
+    await approve();
+    await waitFor(() => expect(screen.getByTestId('form-title').textContent).toMatch(/not settled/i));
+    answers.figures = { acknowledge: 'approve' };
+    apiRequest.mockResolvedValue(ok({ success: true, signatureId: 's5', documentHash: 'h', signedAt: '2026-11-02T00:00:00Z' }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+    fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+    const done = await screen.findByRole('heading', { name: 'Signature applied' });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(done.isConnected).toBe(true);
   });
 });

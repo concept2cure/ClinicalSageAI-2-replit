@@ -3,6 +3,7 @@ import path from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { OPEN_PROGRAM_SURFACE } from '../programAction';
+import { RAIL_CORE } from '../registryModel';
 
 const client = path.resolve(__dirname, '../..');
 const source = (file: string) => fs.readFileSync(path.join(client, file), 'utf8');
@@ -33,8 +34,18 @@ function pickerListenerReachesProjects(code: string, destination: string) {
  * Onboarding and MdxSurfaceHost suites. These existing choose/open doors keep
  * their index outcome; silently opening a creation wizard would change it. */
 describe('existing project doors keep their reachable destination', () => {
+  /* D1-2 (.design/claude-convergence/D1.md §D1.B step 4): v2/Shell.tsx's literal door was the
+     top bar's "No project open" chip, which went with the chip. The shell's door to the
+     Projects index is the sidebar's Projects place: a RAIL_CORE entry that opens its own id,
+     clicked and pinned in shellNav.test.tsx ("Projects is on the rail, and opens the Projects
+     index"). */
+  it('v2/Shell.tsx keeps its Projects index door: the sidebar’s Projects place', () => {
+    const place = RAIL_CORE.find(entry => entry.id === OPEN_PROGRAM_SURFACE);
+    expect(place && !('target' in place) && !('applies' in place) && !('group' in place)).toBe(true);
+  });
+
   it.each([
-    'v2/Shell.tsx', 'v2/LaunchScopeGate.tsx', 'mdx/MdxSurfaceHost.tsx',
+    'v2/LaunchScopeGate.tsx', 'mdx/MdxSurfaceHost.tsx',
     'v2/surfaces/Vault.tsx', 'v2/surfaces/CommunicationCenter.tsx',
     'v2/surfaces/CroPortfolio.tsx',
     'v2/surfaces/ProjectHome.tsx', 'v2/surfaces/HomeSections.tsx',

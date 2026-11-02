@@ -608,9 +608,6 @@
    classes keep the TSX clean and the CSP surface minimal */
 .c2c-v2 .ana-hidden-input { display: none; }
 .c2c-v2 .rail-account .chev { color: var(--text-400); font-size: 14px; }
-.c2c-v2 .cmdk-list { max-height: 380px; }
-.c2c-v2 .cmdk-empty { padding: 20px 16px; text-align: center; color: var(--text-400); font-size: 12px; }
-.c2c-v2 .cmdk-foot-hint { margin-left: auto; opacity: 0.5; }
 .c2c-v2 .esign-f .btn { flex: 1; justify-content: center; }
 .c2c-v2 .page-full { padding: 0; display: flex; }
 
@@ -834,7 +831,6 @@
 .c2c-v2 .tb-dom:hover{background:var(--bg-050);}
 .c2c-v2 .tb-dom[data-open="true"]{border-color:var(--accent-100);background:var(--bg-050);}
 .c2c-v2 .tb-dom-lbl{max-width:172px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.c2c-v2 .tb-dom .tb-org-chev{font-size:13px;color:var(--text-400);}
 .c2c-v2 .tb-dom-scrim{position:fixed;inset:0;z-index:40;}
 .c2c-v2 .tb-dom-menu{position:absolute;top:38px;right:0;z-index:41;width:312px;background:var(--bg-000);border:1px solid var(--border-strong);border-radius:var(--radius-lg);box-shadow:var(--v2-shadow-lg);padding:6px;}
 .c2c-v2 .tb-dom-sec{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);padding:8px 8px 4px;}
@@ -1015,7 +1011,10 @@
 
 /* ── Task Tray — persistent "what needs me" slide-over (top bar) ── */
 .c2c-v2 .tt-trigger{position:relative;}
-.c2c-v2 .tt-badge{position:absolute;top:1px;right:1px;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--accent-strong);color:var(--accent-on-strong);font-size:10px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;}
+/* The count in ink, not orange; red only when something is overdue (TaskTray.tsx sets
+   data-overdue and says "n overdue" in the button's name). D1.md §D1.B step 7. */
+.c2c-v2 .tt-badge{position:absolute;top:1px;right:1px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--text-100);color:var(--bg-000);font-size:var(--fs-caption,12px);font-weight:600;line-height:18px;text-align:center;}
+.c2c-v2 .tt-trigger[data-overdue] .tt-badge{background:var(--error);color:var(--on-error,#fff);}
 /* The scrim's chrome is the drawer backdrop's (journey-v2.css .de-bd, D0 §4.2.14); it keeps its
    own layer, under the panel (91). The class is doubled because that rule loads later at the same
    specificity and would otherwise lift the scrim to 120, over the panel it belongs to. */
@@ -1037,36 +1036,42 @@
   .c2c-v2 .tb-detail,.c2c-v2 .tb-detail.tb-create,
   .c2c-v2 .cl-bd,.c2c-v2 .cl-modal,.c2c-v2 .cl-toast{animation:none;}
 }
-.c2c-v2 .tt-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
-.c2c-v2 .tt-head b{font-size:14px;font-weight:600;}
-.c2c-v2 .tt-head-meta{font-size:11px;color:var(--text-400);}
-.c2c-v2 .tt-close{margin-left:auto;width:26px;height:26px;border-radius:var(--radius-md);color:var(--text-400);display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;}
-.c2c-v2 .tt-close:hover{background:var(--bg-100);color:var(--text-100);}
-.c2c-v2 .tt-triage{display:flex;align-items:center;gap:7px;margin:12px 14px;padding:10px 12px;border-radius:9px;background:color-mix(in srgb, var(--accent-100) 8%, transparent);border:1px solid var(--accent-100);color:var(--text-100);font-size:12.5px;font-weight:600;cursor:pointer;transition:background var(--dur);}
-.c2c-v2 .tt-triage:hover{background:color-mix(in srgb, var(--accent-100) 14%, transparent);}
-.c2c-v2 .tt-triage svg{color:var(--accent-100);}
+/* Your work (D1 §D1.G): a 16px title, one quiet line of counts, then plain lists.
+   Colour only where something is late or blocked; the ✻ is the panel's one
+   orange. The head, the scroll and the rows also draw the Notification
+   preferences and Organizations drawers (their own `.tt-head`) and Home's "Your
+   open items" (OpenWorkGroups). */
+.c2c-v2 .tt-head{display:flex;align-items:center;gap:10px;padding:16px 16px 12px 20px;border-bottom:1px solid var(--border);}
+.c2c-v2 .tt-head b{font-size:16px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .tt-head-meta{flex:1;font-size:var(--fs-small,13px);color:var(--text-300);}
+/* The text "Close" of the Notification preferences and Organizations drawers. The
+   tray's own close is a D0 `.btn`. `:where()` adds no rank, so the 760px rule
+   below still makes either close a 44px square. */
+.c2c-v2 .tt-close:where(:not(.btn)){margin-left:auto;width:26px;height:26px;border-radius:var(--radius-md);color:var(--text-400);display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;}
+.c2c-v2 .tt-close:where(:not(.btn)):hover{background:var(--bg-100);color:var(--text-100);}
+/* Triage: a `.btn.ghost` row led by the ✻, not a tinted box. */
+.c2c-v2 .tt-triage{justify-content:flex-start;width:calc(100% - 24px);margin:12px 12px 4px;height:36px;}
+.c2c-v2 .tt-spark{color:var(--accent-100);font-size:15px;}
 .c2c-v2 .tt-scroll{flex:1;overflow-y:auto;padding:0 14px 14px;}
 .c2c-v2 .tt-group{margin-bottom:16px;}
-.c2c-v2 .tt-group-head{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);padding:6px 2px;}
-.c2c-v2 .tt-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;border-radius:9px;background:none;border:0;cursor:pointer;transition:background var(--dur);}
-.c2c-v2 .tt-item:hover{background:var(--bg-050);}
+.c2c-v2 .tt-group-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 6px;font-size:var(--fs-small,13px);font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-300);}
+.c2c-v2 .tt-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;border-radius:var(--radius-lg);background:none;border:0;cursor:pointer;transition:background-color var(--dur) var(--ease);}
+.c2c-v2 .tt-item:hover{background:var(--bg-100);}
 .c2c-v2 .tt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .c2c-v2 .tt-dot-err{background:var(--error);}
 .c2c-v2 .tt-dot-warn{background:var(--warning);}
-.c2c-v2 .tt-dot-ok{background:var(--success);}
+/* Nothing to flag: the dot keeps its place, unseen. The row's words say when it is due. */
+.c2c-v2 .tt-dot[data-quiet]{visibility:hidden;}
 .c2c-v2 .tt-item-body{flex:1;min-width:0;display:flex;flex-direction:column;}
-.c2c-v2 .tt-item-title{font-size:12.5px;font-weight:500;color:var(--text-100);line-height:1.35;}
-.c2c-v2 .tt-item-sub{font-size:11px;color:var(--text-400);margin-top:1px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.c2c-v2 .tt-item-title{font-size:var(--fs-body,14px);font-weight:500;color:var(--text-100);line-height:1.35;}
+.c2c-v2 .tt-item-sub{font-size:var(--fs-small,13px);color:var(--text-300);margin-top:1px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .c2c-v2 .tt-go{color:var(--text-400);display:inline-flex;flex-shrink:0;}
-.c2c-v2 .tt-item:hover .tt-go{color:var(--accent-100);}
+.c2c-v2 .tt-item:hover .tt-go, .c2c-v2 .tt-foot:hover{color:var(--text-100);}
 .c2c-v2 .tt-notif{cursor:default;}
-.c2c-v2 .tt-read{width:24px;height:24px;border-radius:var(--radius-md);color:var(--text-400);display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;flex-shrink:0;}
-.c2c-v2 .tt-read:hover{background:var(--bg-100);color:var(--success);}
-.c2c-v2 .tt-empty{font-size:11.5px;color:var(--text-400);padding:8px 10px;}
-.c2c-v2 .tt-more{display:block;width:100%;text-align:center;font-size:11.5px;color:var(--text-300);padding:7px;background:none;border:0;cursor:pointer;border-radius:var(--radius-lg);}
+.c2c-v2 .tt-empty{font-size:var(--fs-small,13px);color:var(--text-300);padding:8px 10px;}
+.c2c-v2 .tt-more{display:block;width:100%;text-align:center;font-size:var(--fs-small,13px);color:var(--text-300);padding:7px;background:none;border:0;cursor:pointer;border-radius:var(--radius-lg);}
 .c2c-v2 .tt-more:hover{background:var(--bg-050);color:var(--text-100);}
-.c2c-v2 .tt-foot{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-300);font-weight:500;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer;}
-.c2c-v2 .tt-foot:hover{color:var(--accent-100);}
+.c2c-v2 .tt-foot{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-top:1px solid var(--border);font-size:var(--fs-small,13px);color:var(--text-300);font-weight:500;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer;}
 /* The tray at a phone's width: every control in it a 44px target (RR5 phone
    acceptance, 2026-10-30). Measured at 390px: Close 26px, each notice's Mark
    read 24px, Notification preferences and each notice's open button 32px,
@@ -1508,25 +1513,22 @@
    (docs/design/ONE_ANA_ONE_CANVAS.md, slices 9 and 2A). */
 .c2c-v2.shell{display:grid;grid-template-columns:var(--rail) 1fr;grid-template-rows:100vh;height:100vh;overflow:hidden;background:var(--bg-000);}
 /* ── Phone-width rail (<=640px) ──
-   At 430px the 264px expanded rail crushed the content column to nothing —
-   the whole app behind an open rail was unusable. The grid now always
-   reserves only the collapsed strip (--rail is narrowed, so every shell
-   variant below inherits it), and the EXPANDED rail paints OVER the content
-   as a fixed drawer above the .rail-scrim, which tap-closes it; Escape does
-   the same via the shell-level listener. Desktop is untouched — none of this
-   applies above 640px, and the scrim renders display:none there. */
-@media (max-width: 640px) {
-  .c2c-v2.shell { --rail: var(--rail-collapsed); }
-  .c2c-v2.shell:not([data-collapsed="true"]) .rail {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: min(300px, 84vw);
-    z-index: 61;
-    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.25);
-  }
-  .c2c-v2.shell:not([data-collapsed="true"]) .rail-scrim { display: block; }
+   Claude's phone layout: no strip beside the content (D1.md §D1.A step 7). At
+   430px the 264px expanded rail had crushed the content column to nothing, and
+   the 56px strip that replaced it took 14% of a 390px screen. Both rail
+   variables are 0 here, so every grid that reads them (this sheet's, and the
+   editor's in authoring-v2.css) reserves nothing; the collapsed rail is not
+   drawn. The top bar's "Open the sidebar" (.tb-rail, Shell.tsx TopBar) opens
+   the EXPANDED rail as a fixed drawer over the .rail-scrim, which tap-closes
+   it; Escape does the same via the shell-level listener, and choosing an item
+   closes it (Shell.tsx Rail). None of this applies above 640px, and the scrim
+   renders display:none there; so does the button, by the top bar's own
+   :is(.tb-rail, .tb-new) rules below. */
+@media (max-width:640px){
+  .c2c-v2.shell{--rail:0px;--rail-collapsed:0px;}
+  .c2c-v2.shell[data-collapsed="true"] .rail{display:none;}
+  .c2c-v2.shell:not([data-collapsed="true"]) .rail{position:fixed;top:0;bottom:0;left:0;width:min(300px,84vw);z-index:61;box-shadow:var(--v2-shadow-lg);}
+  .c2c-v2.shell:not([data-collapsed="true"]) .rail-scrim{display:block;}
 }
 .c2c-v2 .rail-scrim {
   display: none;
@@ -1547,19 +1549,20 @@
    and closed it; the client type and the Apps catalog are in that menu. The
    list scrolls and clips inside .rail-scroll instead. */
 .c2c-v2 .rail{grid-column:1;grid-row:1;height:100vh;display:flex;flex-direction:column;background:var(--bg-100);border-right:1px solid var(--border);min-width:0;}
-.c2c-v2 .rail-top{display:flex;align-items:center;justify-content:space-between;height:var(--topbar);padding:0 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.c2c-v2 .rail-logo{display:flex;align-items:center;gap:9px;min-width:0;}
+.c2c-v2 .rail-top{display:flex;align-items:center;justify-content:space-between;height:var(--topbar);padding:0 8px 0 10px;border-bottom:0;flex-shrink:0;}
+.c2c-v2 .rail-logo{display:flex;align-items:center;gap:8px;min-width:0;padding:4px 6px;border-radius:var(--radius-lg);transition:background-color var(--dur) var(--ease);}
+.c2c-v2 .rail-logo:hover{background:var(--bg-200);}
 .c2c-v2 .rail-logo img{width:24px;height:24px;flex-shrink:0;border-radius:var(--radius-md);}
-.c2c-v2 .rail-logo-text{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.c2c-v2 .rail-logo-text span{color:var(--accent-100);font-weight:500;}
+.c2c-v2 .rail-logo-text{font-size:var(--fs-section,15px);font-weight:600;letter-spacing:-.01em;color:var(--text-100);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2 .rail-logo-text span{color:var(--text-300);font-weight:500;}
 .c2c-v2.shell[data-collapsed="true"] .rail-logo-text{display:none;}
 /* Collapsed, the brand mark has the top to itself and the toggle sits in the
    foot (Shell.tsx Rail) — side by side they left the mark 5px wide (finding 135). */
 .c2c-v2.shell[data-collapsed="true"] .rail-top{justify-content:center;padding:0;}
 .c2c-v2 .rail-foot .rail-collapse{margin:0 auto 6px;}
-.c2c-v2 .rail-collapse{width:26px;height:26px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-300);flex-shrink:0;font-size:16px;}
+.c2c-v2 .rail-collapse{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:var(--text-300);flex-shrink:0;font-size:16px;}
 .c2c-v2 .rail-collapse:hover{background:var(--bg-200);color:var(--text-100);}
-.c2c-v2 .rail-scroll{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;padding:6px 0 12px;}
+.c2c-v2 .rail-scroll{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;padding:2px 0 12px;}
 .c2c-v2 .rc-move{color:var(--success);font-weight:600;}
 .c2c-v2 .rc-move-tag{font-size:10px;color:var(--text-400);font-weight:400;}
 .c2c-v2 .riskmx-dot[data-moved]{box-shadow:0 0 0 2px var(--success-muted);}
@@ -1572,25 +1575,32 @@
 .c2c-v2 .rail-nav{display:flex;flex-direction:column;gap:1px;padding:0 8px;}
 /* The work areas, under their own heading below the places (registryModel.ts
    RAIL_CORE). Collapsed, the heading gives way to a rule between the groups. */
-.c2c-v2 .rail-group{margin-top:14px;}
-.c2c-v2 .rail-group-h{padding:0 8px 4px;font-size:var(--fs-caption);font-weight:600;color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2 .rail-group{margin-top:20px;}
+.c2c-v2 .rail-group-h{padding:0 8px 6px;font-size:var(--fs-caption,12px);font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .c2c-v2.shell[data-collapsed="true"] .rail-group{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
 .c2c-v2.shell[data-collapsed="true"] .rail-group-h{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
-.c2c-v2 .nav-item{display:flex;align-items:center;gap:10px;min-height:30px;padding:5px 8px;border-radius:var(--radius-md);color:var(--text-200);font-size:13px;transition:background var(--dur) var(--ease);white-space:nowrap;overflow:hidden;width:100%;position:relative;}
-.c2c-v2 .nav-item .ico{width:16px;height:16px;font-size:16px;flex-shrink:0;color:var(--text-400);display:flex;align-items:center;justify-content:center;}
+.c2c-v2 .nav-item{display:flex;align-items:center;gap:10px;min-height:32px;padding:6px 8px;border-radius:var(--radius-lg);color:var(--text-200);font-size:var(--fs-body,14px);transition:background-color var(--dur) var(--ease),color var(--dur) var(--ease);white-space:nowrap;overflow:hidden;width:100%;position:relative;}
+.c2c-v2 .nav-item .ico{width:16px;height:16px;font-size:16px;flex-shrink:0;color:var(--text-300);display:flex;align-items:center;justify-content:center;}
 .c2c-v2 .nav-item .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;}
-.c2c-v2 .nav-item:hover{background:var(--bg-200);color:var(--text-100);}
+.c2c-v2 .nav-item:hover{background:color-mix(in srgb,var(--bg-200) 60%,transparent);color:var(--text-100);}
 .c2c-v2 .nav-item:hover .ico{color:var(--text-200);}
 /* Where the user is: the open surface's entry (aria-current="page"). This read
    [aria-current="true"], which only the client-category buttons carried, so the
    category was the one thing ever highlighted and the open surface never was
-   (launch sweep finding 130). */
-.c2c-v2 .nav-item[aria-current="page"]{background:var(--bg-300,var(--bg-200));color:var(--text-100);font-weight:500;}
+   (launch sweep finding 130). Claude's active row is a soft neutral fill, with
+   no marker bar and no orange (D1.md §D1.A step 6). */
+.c2c-v2 .nav-item[aria-current="page"]{background:var(--bg-200);color:var(--text-100);font-weight:500;}
 .c2c-v2 .nav-item[aria-current="page"] .ico{color:var(--text-100);}
-.c2c-v2 .rail-actions{margin-top:1px;}
+/* New conversation and Search, above the places (Shell.tsx Rail). */
+.c2c-v2 .rail-actions{margin:0 0 12px;}
+/* New conversation: Claude's orange "+", the sidebar's one orange. Ranked with
+   .nav-item so the row's hover (.nav-item:hover .ico) does not recolour it. */
+.c2c-v2 .nav-item.rail-new .ico{width:22px;height:22px;border-radius:50%;background:var(--accent-strong);color:var(--accent-on-strong);}
+.c2c-v2 .rail-new .ico svg{width:14px;height:14px;}
+.c2c-v2 .rail-new .lbl{color:var(--text-100);font-weight:500;}
 .c2c-v2 .rail-recents{margin-top:14px;}
-.c2c-v2 .rail-recent{min-height:28px;padding:4px 8px;font-size:13px;color:var(--text-200);}
-.c2c-v2 .rail-recents-note{padding:4px 8px;font-size:12px;color:var(--text-300);}
+.c2c-v2 .rail-recent{min-height:30px;padding:5px 8px;font-size:var(--fs-small,13px);color:var(--text-200);}
+.c2c-v2 .rail-recents-note{padding:4px 8px;font-size:var(--fs-small,13px);color:var(--text-300);}
 /* The client type is no longer a rail entry (it is the account menu's
    "Client type", a checked menu item), so no rail rule draws a chosen one. */
 .c2c-v2.shell[data-collapsed="true"] .nav-item .lbl{display:none;}
@@ -1631,55 +1641,63 @@
 .c2c-v2 .nav-unlock-status{margin-top:2px;font-size:11.5px;font-weight:500;color:var(--text-400);}
 .c2c-v2 .nav-unlock-body{margin:12px 0 0;font-size:13px;line-height:1.55;color:var(--text-300);}
 .c2c-v2 .nav-unlock-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
-.c2c-v2 .rail-foot{flex-shrink:0;border-top:1px solid var(--border);padding:8px;}
-.c2c-v2 .rail-account{display:flex;align-items:center;gap:9px;width:100%;padding:6px 8px;border-radius:var(--radius-md);}
+/* The account, with organisation access beside it (Shell.tsx Rail). No rule
+   above it: the foot sits on the rail's own fill. */
+.c2c-v2 .rail-foot{display:flex;align-items:center;gap:4px;flex-shrink:0;padding:8px;border-top:0;}
+.c2c-v2 .rail-account{display:flex;align-items:center;flex:1;min-width:0;gap:10px;width:100%;padding:6px 8px;border-radius:var(--radius-lg);}
 .c2c-v2 .rail-account:hover{background:var(--bg-200);}
-.c2c-v2 .avatar{width:26px;height:26px;border-radius:50%;background:var(--accent-strong);color:var(--accent-on-strong);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+/* The avatar's shape. Its two users are both in Shell.tsx (the account button
+   and the account menu's head), and its fill is theirs, below. */
+.c2c-v2 .avatar{border-radius:50%;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+/* An ink avatar, not a second orange. `.rail` ranks it above the account menu
+   block's own `.acct-head .avatar` (later in this sheet, and in coverage-v2.css,
+   imported after it); the menu opens inside the rail's foot. */
+.c2c-v2 .rail :is(.rail-account, .acct-head) .avatar{width:28px;height:28px;background:var(--text-100);color:var(--bg-000);font-size:var(--fs-caption,12px);}
+/* The menu head's second line: the organisation and the role, in words. */
+.c2c-v2 .rail .acct-head .rl{font-size:var(--fs-small,13px);color:var(--text-300);}
 .c2c-v2 .rail-account .who{min-width:0;flex:1;}
-.c2c-v2 .rail-account .nm{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.c2c-v2 .rail-account .rl{font-size:10px;color:var(--text-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2 .rail-account .nm{font-size:var(--fs-small,13px);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2 .rail-account .rl{font-size:var(--fs-caption,12px);color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .c2c-v2.shell[data-collapsed="true"] .rail-account .who, .c2c-v2.shell[data-collapsed="true"] .rail-account .chev{display:none;}
+/* Collapsed, the foot stacks: the expand toggle, organisation access, the avatar. */
+.c2c-v2.shell[data-collapsed="true"] .rail-foot{flex-direction:column;}
+.c2c-v2.shell[data-collapsed="true"] .rail-account{justify-content:center;padding:6px;}
 
 /* ── Main + topbar ── */
 .c2c-v2 .main{grid-column:2;grid-row:1;height:100vh;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg-000);}
-.c2c-v2 .topbar{height:var(--topbar);display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
-/* The header shrinks in priority order (launch sweep finding 134: at 1440px
-   with AnA open the crumbs got nothing — "Concept2Cure.RI › Biotech & Ph",
-   the page name gone — while the org name wrapped onto two lines). The
-   search box and the org label give way first (higher flex-shrink, both
-   ellipsize — the same 100000:1 factor as inside the crumbs, below), and
-   inside the crumbs the path gives way before the page name. */
-.c2c-v2 .crumbs{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-300);min-width:0;flex:0 1 auto;overflow:hidden;white-space:nowrap;}
-/* Flex shrink is proportional (factor × width), so the path takes a factor
-   of 100000 to the page name's 1: while the path has room left, the page
-   name's share of the squeeze is below a layout unit (1/64px) and rounds to
-   nothing — at 1000 it was ~0.07px, enough to draw an ellipsis on a name that
-   fit. Once the path is at its minimum, the page name takes it all and
-   ellipsizes. (A page-name factor below 1 does not do this: alone, it absorbs
-   only that fraction of the overflow and the rest is clipped, no ellipsis.) */
-.c2c-v2 .crumbs>span{min-width:0;overflow:hidden;text-overflow:ellipsis;flex-shrink:100000;}
+.c2c-v2 .topbar{height:var(--topbar);display:flex;align-items:center;gap:4px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+/* Claude's top bar (D1.md §D1.B): where you are in one quiet line, then a few quiet
+   icons. The open project is the first crumb, a button that opens its page
+   (Shell.tsx TopBar); the page follows it. The search box, the organisation label,
+   the project chip, the tinted Task and Help left the bar (the sidebar's Search and
+   ⌘K, its account and the account menu hold them). On Home the bar drops its rule:
+   V2App.tsx names the screen on .main. */
+.c2c-v2 .main[data-surface="home"] .topbar{border-bottom-color:transparent;}
+/* The crumbs clip (overflow:hidden) so a long trail ellipsizes, and a clip cuts
+   whatever pokes past it. The project crumb sits 8px to the left of its text (its
+   margin-left:-8px), so the row starts 8px earlier, padded back: the hover fill
+   keeps its left edge and the page name, alone, still starts at the bar's 16px. */
+.c2c-v2 .crumbs{display:flex;align-items:center;gap:6px;min-width:0;flex:0 1 auto;overflow:hidden;white-space:nowrap;font-size:var(--fs-small,13px);color:var(--text-300);margin-left:-8px;padding-left:8px;}
 .c2c-v2 .crumbs .sep{color:var(--text-400);flex-shrink:0;}
-/* The category crumb gives way before the page name, but never to nothing:
-   shrunk to zero it left an orphan "›" before the page name. */
-.c2c-v2 .crumbs .crumb-tier{min-width:3.5em;max-width:10em;}
-.c2c-v2 .crumbs .here{color:var(--text-100);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;}
+/* When the bar is narrow the project gives way before the page name (launch sweep
+   finding 134): flex shrink is proportional (factor × width), so its 100000 to the
+   page's 1 means the page name takes none of the squeeze until the project is at its
+   minimum, and that minimum keeps the folder and an ellipsis, never an orphan "›". */
+.c2c-v2 .crumbs .here{min-width:0;color:var(--text-100);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;}
+.c2c-v2 .crumb-proj{display:inline-flex;align-items:center;gap:6px;height:28px;max-width:280px;min-width:3.5em;flex-shrink:100000;padding:0 8px;margin-left:-8px;border-radius:var(--radius-lg);color:var(--text-200);font-weight:500;overflow:hidden;text-overflow:ellipsis;transition:background-color var(--dur) var(--ease);}
+.c2c-v2 .crumb-proj:hover{background:var(--bg-100);color:var(--text-100);}
+/* The focus ring inside the button: the crumbs are as tall as it is and clip, so the
+   shell's 2px-outset ring (.c2c-v2 button:focus-visible) would not show. */
+.c2c-v2 .crumb-proj:focus-visible{outline-offset:-2px;}
+.c2c-v2 .crumb-proj .ico{display:inline-flex;font-size:16px;color:var(--text-300);}
+/* The name in its own box, so a long title ends in an ellipsis (text-overflow does
+   not reach a bare text node inside a flex container). */
+.c2c-v2 .crumb-proj .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .c2c-v2 .tb-spacer{flex:1;}
-.c2c-v2 .tb-cmdk{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-lg);color:var(--text-400);font-size:12px;background:var(--bg-050);min-width:64px;flex:0 100000 230px;max-width:230px;transition:border-color var(--dur);}
-.c2c-v2 .tb-cmdk:hover{border-color:var(--border-strong);}
-.c2c-v2 .tb-cmdk .ico{font-size:15px;}
-.c2c-v2 .tb-cmdk .lbl{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
-/* Where the header is narrow — AnA open below 1500px, or any shell below
-   1100px — the search box is its icon and ⌘K. Shrunk further it showed a
-   clipped sliver of its label and still took the crumbs' room. The button's
-   aria-label (Shell.tsx) keeps its name when the label is not drawn. */
-@media (max-width:1100px){.c2c-v2 .tb-cmdk .lbl{display:none;}.c2c-v2 .tb-cmdk{flex:0 0 auto;min-width:0;}}
-/* Same pressure, the crumbs: the root crumb repeats the brand mark beside it,
-   so it goes first rather than ellipsizing to "Concept2…" and taking the page
-   name's room. */
-@media (max-width:1100px){.c2c-v2 .crumbs .crumb-root,.c2c-v2 .crumbs .crumb-root-sep{display:none;}}
-.c2c-v2 .tb-cmdk .kbd{font-family:var(--font-mono);font-size:10px;padding:1px 5px;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-400);}
-.c2c-v2 .tb-btn{width:32px;height:32px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-400);font-size:17px;}
-.c2c-v2 .tb-btn:hover{background:var(--bg-200);color:var(--text-100);}
+.c2c-v2 .tb-btn{position:relative;width:32px;height:32px;border-radius:var(--radius-lg);display:inline-flex;align-items:center;justify-content:center;color:var(--text-300);font-size:16px;transition:background-color var(--dur) var(--ease),color var(--dur) var(--ease);}
+.c2c-v2 .tb-btn:hover{background:var(--bg-100);color:var(--text-100);}
+/* Phone-only: "Open the sidebar" and New conversation (Shell.tsx TopBar). */
+.c2c-v2 :is(.tb-rail, .tb-new){display:none;}
 /* Engaged state for a .tb-btn that toggles something.
 
    It had none, and two shipping filters relied on it. `K510Surface.tsx:200`
@@ -1695,24 +1713,17 @@
    none, so it takes the fill and the text colour only. */
 .c2c-v2 .tb-btn.on{background:var(--accent-000);color:var(--accent-200);}
 .c2c-v2 .tb-btn.on:hover{background:var(--accent-000);color:var(--accent-200);}
-.c2c-v2 .rail-logo[data-on="true"]{background:var(--bg-200);}
-/* A label, not a control (finding 131): no hover. It gives way before the
-   crumbs do, down to the mark alone. */
-.c2c-v2 .tb-org{display:flex;align-items:center;gap:7px;height:30px;padding:0 8px 0 6px;min-width:28px;flex:0 100000 auto;}
-.c2c-v2 .tb-org-mark{width:20px;height:20px;border-radius:5px;background:var(--accent-strong);color:var(--accent-on-strong);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.c2c-v2 .tb-org-name{font-size:12.5px;font-weight:500;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
-.c2c-v2 .tb-org-chev{color:var(--text-400);font-size:13px;display:flex;}
-.c2c-v2 .tb-cmdk .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-@media (max-width:1180px){ .c2c-v2 .tb-cmdk .lbl{display:none;} .c2c-v2 .tb-org-name{display:none;} .c2c-v2 .crumbs .sep, .c2c-v2 .crumbs span:not(.here){display:none;} }
-/* At phone width the bar's controls and their gaps were wider than the screen,
-   and the last one, Get help, was cut off. A phone has no ⌘K, so the key hint
-   goes, and the gaps close up. The crumb and the project chip's name had room
-   only for "H…" and "No …": the page's own heading names the screen, and the
-   chip keeps its name for a screen reader and its title. */
+/* At phone width: the menu button, the crumbs, then Your work and New conversation,
+   each 44px. Collaborate and New task are in ⌘K there (D1.md §D1.F step 3). The
+   crumbs and the project crumb sit flush after the menu button: pulled 8px left,
+   the row would lie over the button's last 4px and take its taps. */
 @media (max-width:640px){
-  .c2c-v2 .topbar{gap:6px;padding:0 10px;}
-  .c2c-v2 .tb-cmdk .kbd, .c2c-v2 .topbar .crumbs{display:none;}
-  .c2c-v2 .tb-proj-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+  .c2c-v2 .topbar{padding:0 8px;}
+  .c2c-v2 :is(.tb-rail, .tb-new){display:inline-flex;}
+  .c2c-v2 .topbar .tb-collab, .c2c-v2 .topbar .tb-newtask{display:none;}
+  .c2c-v2 :is(.tb-btn){width:44px;height:44px;}
+  .c2c-v2 .topbar .crumbs{margin-left:0;padding-left:0;}
+  .c2c-v2 .topbar .crumb-proj{margin-left:0;}
 }
 .c2c-v2 .page{flex:1;overflow-y:auto;}
 
@@ -2207,12 +2218,6 @@
 
 
 /* ════════ Universal collaboration layer (collab.jsx) ════════ */
-/* topbar "Task" button */
-.c2c-v2 .tb-task{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:var(--radius-lg);background:var(--accent-000);border:1px solid var(--accent-muted);color:var(--accent-200);font-size:12.5px;font-weight:600;transition:background var(--dur);}
-.c2c-v2 .tb-task:hover{background:var(--accent-muted);}
-.c2c-v2 .tb-task .ico{font-size:15px;}
-@media(max-width:900px){.c2c-v2 .tb-task-lbl{display:none;}.c2c-v2 .tb-task{padding:0 9px;}}
-
 
 /* modal */
 .c2c-v2 .cl-bd{position:fixed;inset:0;background:rgb(20 20 19/.34);display:flex;align-items:flex-start;justify-content:center;padding:7vh 16px 16px;z-index:80;animation:clFade .14s ease;}
@@ -2313,15 +2318,6 @@
 /* `dim` and `err` are emitted by fifteen call sites (`rd-chip tone-` + tone) and had no rule: a
    "no sources" or "failed" chip rendered as unstyled text. */
 .c2c-v2 .tone-dim{background:var(--bg-100);color:var(--text-400);}
-/* The tone vocabulary above is a CHIP's. `EmptyState` renders
-   `c2c-empty-state tone-idle` (dataConnect.tsx:711), so `.tone-idle` — same
-   specificity as `.c2c-empty-state`, declared later — won, and every one of
-   the 579 empty states in the app drew a chip's tinted panel behind it,
-   through D0 §4.2.12's `background: none`. Found rendering CMC's registers as
-   sections, where the panel is the whole width of the page. The honest fix is
-   for the component to stop borrowing a chip's class; until it does (it is
-   outside this package's files), the collision is undone here. */
-.c2c-v2 .c2c-empty-state.tone-idle{background:none;}
 .c2c-v2 .tone-err{background:var(--error-muted);color:var(--error);}
 
 /* ── Labeling / IFU workbench ── */
@@ -2416,6 +2412,9 @@
 .c2c-v2 .scaf-ana{margin-top:14px;}
 .c2c-v2 .scaf-tag{display:inline-block;font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:var(--radius-md);background:var(--bg-200);color:var(--text-200);margin:0 6px 6px 0;}
 .c2c-v2 .scaf-note{margin-top:14px;padding:14px 16px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-100);font-size:13px;line-height:1.55;color:var(--text-200);}
+/* A screen still loading (surfaceViews.ts SurfaceChunkFallback): one quiet line, not a
+   box (D1.md §D1.B step 8). */
+.c2c-v2 .scaf-note[aria-busy="true"]{border:0;background:none;padding:48px 16px;text-align:center;font-size:var(--fs-small,13px);color:var(--text-300);}
 .c2c-v2 .scaf-install{margin-top:18px;border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;}
 .c2c-v2 .scaf-install-hdr{padding:12px 16px;background:var(--bg-100);font-size:12px;font-weight:600;border-bottom:1px solid var(--border);}
 .c2c-v2 .scaf-step{display:flex;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);font-size:12px;align-items:flex-start;}
@@ -2469,20 +2468,31 @@
 .c2c-v2 .gri-cite .c{font-family:var(--font-mono);font-size:10px;padding:3px 8px;border-radius:var(--radius-md);background:var(--accent-000);color:var(--accent-200);}
 .c2c-v2 .gri-caveat{font-size:11.5px;color:var(--text-400);line-height:1.5;font-style:italic;border-top:1px solid var(--border);padding-top:10px;}
 
-/* ── Cmd-K ── */
-.c2c-v2 .cmdk-bd{position:fixed;inset:0;background:rgba(20,20,19,.3);display:flex;align-items:flex-start;justify-content:center;padding-top:12vh;z-index:50;}
-.c2c-v2 .cmdk{width:min(620px,92vw);background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-2xl);box-shadow:var(--v2-shadow-lg);overflow:hidden;}
-.c2c-v2 .cmdk-in{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
-.c2c-v2 .cmdk-in .ico{font-size:18px;color:var(--text-400);}
-.c2c-v2 .cmdk-in input{flex:1;font-size:15px;}
-.c2c-v2 .cmdk-list{max-height:340px;overflow-y:auto;padding:6px;}
-.c2c-v2 .cmdk-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--radius-md);width:100%;font-size:13px;}
-.c2c-v2 .cmdk-item.on{background:var(--accent-000);}
-.c2c-v2 .cmdk-item .ico{font-size:15px;color:var(--accent-100);flex-shrink:0;}
-.c2c-v2 .cmdk-item .lbl{flex:1;}
-.c2c-v2 .cmdk-item .hint{font-size:11px;color:var(--text-400);}
-.c2c-v2 .cmdk-foot{display:flex;gap:14px;padding:9px 16px;border-top:1px solid var(--border);font-size:10px;color:var(--text-400);}
-.c2c-v2 .cmdk-hdr{padding:8px 16px 4px;font-size:var(--fs-caption);font-weight:600;color:var(--text-400);user-select:none;}
+/* ── ⌘K (D1 §D1.F): a centred dialog on a dimmed, lightly blurred page (the one
+   place blur is used), a large quiet field with no ring of its own (D0's input
+   rule steps the outline aside), sentence-case groups, ink rows with grey icons,
+   and a soft fill on the selected row, which is both the pointer's hover and the
+   keyboard's cursor. No orange. The arrow keys, Enter and Escape need no footer;
+   ">" is named in the placeholder. ── */
+.c2c-v2 .cmdk-bd{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-start;justify-content:center;padding:14vh 16px 16px;background:rgb(20 20 19 / .24);backdrop-filter:blur(4px);animation:de-fade var(--dur) var(--ease);}
+.c2c-v2.dark .cmdk-bd{background:rgb(0 0 0 / .5);}
+.c2c-v2 .cmdk{width:min(640px,100%);background:var(--canvas-elevated);border:1px solid var(--border);border-radius:var(--radius-2xl);box-shadow:var(--v2-shadow-lg);overflow:hidden;}
+.c2c-v2 .cmdk-in{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);}
+.c2c-v2 .cmdk-in .ico{font-size:18px;color:var(--text-300);}
+.c2c-v2 .cmdk-in input{flex:1;border:0;background:none;font-size:var(--fs-section,15px);color:var(--text-100);min-width:0;}
+.c2c-v2 .cmdk-list{max-height:min(440px,60vh);overflow-y:auto;padding:6px;}
+.c2c-v2 .cmdk-hdr{padding:10px 10px 4px;font-size:var(--fs-caption,12px);font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-300);user-select:none;}
+/* `width:100%` and the label's ellipsis are structure the spec's block leaves as it was:
+   a flex button does not stretch on its own, and a conversation's title is one line. */
+.c2c-v2 .cmdk-item{display:flex;align-items:center;gap:10px;min-height:36px;padding:6px 10px;border-radius:var(--radius-lg);font-size:var(--fs-body,14px);color:var(--text-200);width:100%;}
+.c2c-v2 .cmdk-item.on{background:var(--bg-100);color:var(--text-100);}
+.c2c-v2.dark .cmdk-item.on{background:var(--bg-200);}
+.c2c-v2 .cmdk-item .ico{font-size:16px;color:var(--text-300);flex-shrink:0;}
+.c2c-v2 .cmdk-item .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.c2c-v2 .cmdk-item .hint{font-size:var(--fs-caption,12px);color:var(--text-300);}
+.c2c-v2 .cmdk-empty{padding:12px 10px;font-size:var(--fs-small,13px);color:var(--text-300);}
+@media (max-width:640px){.c2c-v2 .cmdk-bd{padding-top:8px;}.c2c-v2 .cmdk-item{min-height:44px;}}
+@media (prefers-reduced-motion:reduce){.c2c-v2 .cmdk-bd{animation:none;}}
 
 /* ── Locked ⌘K results ──────────────────────────────────────────────────────
    The palette is the second door onto every destination the rail greys out, so
@@ -2500,9 +2510,10 @@
    13px text, and the WCAG exception for it is scoped to "disabled/decorative"
    uses — which a row a customer is meant to activate and read is not. --text-300
    is 5.21:1 / 6.82:1, still an unmistakable step down from the unlocked label,
-   and passes in both themes. The reason text gets the same treatment rather than
-   the generic hint's --text-400: it is the only place the palette states WHY,
-   so it is the last string in this component that should be hard to read. */
+   and passes in both themes. The reason text gets the same treatment (the
+   generic hint was --text-400 until D1-3, which set every hint in --text-300):
+   it is the only place the palette states WHY, so it is the last string in this
+   component that should be hard to read. */
 .c2c-v2 .cmdk-item[data-locked] .lbl{color:var(--text-300);}
 .c2c-v2 .cmdk-item[data-locked] .ico{color:var(--text-300);}
 .c2c-v2 .cmdk-item[data-locked] .hint{color:var(--text-300);}
@@ -3856,21 +3867,6 @@
   .c2c-v2 * { transition-duration: 1ms !important; }
 }
 
-/* ── Top bar: the open project (FILING_SPINE F8) ─────────────────────────────
-   Replaces the "Switch client domain" control, whose job the account menu's
-   Client type already does (.tb-dom* above is no longer rendered). The chip
-   names the open project and opens its page; with none open it reads "No
-   project open" in a muted, dashed chip, which says so by its words, not its
-   colour alone. Hover moves the border only: the surface stays --bg-000, so
-   the chip establishes no tinted surface for the text ramp to re-base. On a
-   narrow bar its label truncates rather than wrapping. */
-.c2c-v2 .tb-proj{display:inline-flex;align-items:center;gap:7px;height:30px;min-width:0;max-width:260px;flex:0 1 auto;padding:0 10px 0 8px;border-radius:var(--radius-md);border:1px solid var(--border-strong);background:var(--bg-000);color:var(--text-100);font-size:12px;font-weight:500;transition:border-color var(--dur);}
-.c2c-v2 .tb-proj:hover{border-color:var(--accent-100);}
-.c2c-v2 .tb-proj .ico{display:inline-flex;flex-shrink:0;font-size:15px;color:var(--accent-100);}
-.c2c-v2 .tb-proj-lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.c2c-v2 .tb-proj[data-empty="true"]{border-style:dashed;color:var(--text-300);font-weight:400;}
-.c2c-v2 .tb-proj[data-empty="true"] .ico{color:var(--text-300);}
-
 /* ════ Work-area page pattern (ONE_DESIGN_PLAN §2 "A work area"; D5 §WA.4.1) ════
    Every work area's root carries data-work-area="<surface id>" beside its
    container class. Built from D0's primitives; this block only PLACES them —
@@ -3893,6 +3889,9 @@
 .c2c-v2 [data-work-area] > .ph{margin:0 0 16px;}
 .c2c-v2 [data-work-area] > .sp-starters[data-layout="row"]{justify-content:flex-start;margin:0 0 24px;}
 .c2c-v2 [data-work-area] > .seg{margin:0 0 16px;}
+/* A pressed row in a work area's own list (Biostatistics' method list, D5 §B.4 item 5): a quiet fill and a
+   hairline, never orange (§WA.3 "Colour"). Carried here, in D5-0's block, so D5-3 needs no app-v2.css turn. */
+.c2c-v2 [data-work-area] .sp-row[aria-pressed="true"]{background:var(--bg-100);box-shadow:inset 0 0 0 1px var(--border-strong);}
 .c2c-v2 [data-work-area] .tabs{margin:0 0 24px;}
 /* A tab body that brought its own page padding drops it: the page provides the
    gutters. `.cm-body` is shared with twelve surfaces outside D5's packages

@@ -93,11 +93,15 @@ export function useOpenWorkReads(full: boolean, refreshKey: number) {
 
 type Go = (surface: string) => void;
 
-/** One row: a dot whose tone repeats the words beside it, a title, a line of detail. */
+/** One row: a dot whose tone repeats the words beside it, a title, a line of detail.
+ *  The dot shows only where something is late or blocked (`err`, `warn`). An `ok`
+ *  row keeps the dot's place, hidden (`data-quiet`), so the titles stay aligned;
+ *  its words already say when it is due (D1 §D1.G step 3). */
 function WorkRow({ tone, title, sub, onOpen }: { tone: 'err' | 'warn' | 'ok'; title: string; sub: string; onOpen: () => void }) {
+  const quiet = tone === 'ok';
   return (
     <button className="tt-item" onClick={onOpen}>
-      <span className={`tt-dot tt-dot-${tone}`} aria-hidden />
+      <span className={quiet ? 'tt-dot' : `tt-dot tt-dot-${tone}`} data-quiet={quiet ? '' : undefined} aria-hidden />
       <span className="tt-item-body">
         <span className="tt-item-title">{title}</span>
         <span className="tt-item-sub">{sub}</span>

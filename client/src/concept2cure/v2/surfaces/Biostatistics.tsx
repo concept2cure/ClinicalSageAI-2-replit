@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
+import { getSurfaceMeta } from '../registryModel';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
-import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { useAuthoringHandoff, openSavedAuthoring, type AuthoringHandoffResult } from '../authoringHandoff';
@@ -441,51 +441,65 @@ type DocState =
  * files anything: "Save as a working document" replaced "File it to the
  * dossier", which filed nothing; filing is "Place into filing" in the editor.
  */
-function ResultLead({ ready, docLabel, n, example, agency, busy, onOpen, onSave }: {
-  ready: Extract<EngineState, { kind: 'ready' }>;
+/** An engine verdict token as a word: "not_adequate" → "Not adequate". */
+function verdictWord(verdict: string): string {
+  const opened = String(verdict || '').replace(/_/g, ' ').trim();
+  return opened ? opened.charAt(0).toUpperCase() + opened.slice(1) : '—';
+}
+
+/**
+ * The page's one ask row (§WA.4.2 rule 4): three starters, the first of which
+ * is the question the retired banner opened with — and it branches the same
+ * way the banner did, because asking "is my sample size defensible?" over a
+ * WORKED EXAMPLE would be asking about somebody else's study.
+ */
+function BsStarters({ ask, isExample, docLabel, agency }: {
+  ask: (text: string) => void;
+  isExample: boolean;
   docLabel: string;
-  n: number;
-  /** The worked example on screen, or null when the inputs came from the project's study design. */
-  example: { name: string; modified: boolean } | null;
   agency: string;
-  busy: boolean;
-  onOpen: () => void;
-  onSave: () => void;
 }) {
-  const verdict = ready.judgment.overallVerdict;
-  const verdictWords = verdict.replace(/_/g, ' ');
-  const power = (ready.computation.power * 100).toFixed(0);
-  const figures = <><b>{n} subjects</b>, {power}% power, and the design reads as <b>{verdictWords}</b></>;
-  if (example) {
-    return (
-      <AnswerLead
-        tone="calm"
-        eyebrow={`Worked example${example.modified ? ' (modified)' : ''} — ${example.name}, not your study`}
-        headline={<>The engine has drafted the <b>{docLabel}</b> for a worked example — {figures}.</>}
-        body={example.modified
-          ? <>You changed the example’s inputs. It is still an example, not your project’s design: choose your project’s study design on the left to size your own study.</>
-          : <>Choose your project’s study design on the left, or change any input, and the engine sizes it and rewrites the document.</>}
-        action={{ label: busy ? 'Copying to the editor…' : 'Copy the example to the editor', onClick: onOpen,
-          alt: { label: busy ? 'Saving…' : 'Save the example as a working document', onClick: onSave } }}
-        secondary="Or pick a different document and adjust the design on the left."
-      />
-    );
-  }
+  const starters = [
+    isExample
+      ? {
+          label: 'Size my own study instead of the example',
+          prompt: 'Which of my project’s study designs should I size, and what do you need from me?',
+        }
+      : {
+          label: 'Is my sample size defensible?',
+          prompt: `Is the ${docLabel} for this design defensible to ${agency}? Use the engine’s computation and judgment on screen.`,
+        },
+    { label: `Refine the ${docLabel.toLowerCase()}`, prompt: `Refine the ${docLabel} for this design.` },
+    {
+      label: 'What will the reviewer question first?',
+      prompt: `Which assumption in this design will a ${agency} reviewer question first, and why?`,
+    },
+  ];
   return (
-    <AnswerLead
-      tone={verdict === 'inadequate' ? 'urgent' : verdict === 'adequate' ? 'good' : 'calm'}
-      eyebrow={`Your ${docLabel.toLowerCase()} is ready to review`}
-      headline={<>I've drafted the <b>{docLabel}</b> for your {vocabPhrase(STUDY_TYPE_LABELS, ready.input.studyType)} design — {figures}.</>}
-      body={<>Everything below is written, not just calculated — the method, the assumptions and the fragility assessment ({ready.judgment.fragility.category.replace(/_/g, ' ')}) are already in the prose, with a provenance footer for the reviewer. Change any design input and the engine re-sizes it and rewrites the document.</>}
-      reassure={verdict === 'inadequate'
-        ? 'I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it.'
-        : `It’s drafted to ${agency} expectations. Read it, adjust it, and open it in the editor to file it.`}
-      action={{ label: busy ? 'Saving to the editor…' : 'Open in document editor', onClick: onOpen,
-        alt: { label: busy ? 'Saving…' : 'Save as a working document', onClick: onSave } }}
-      secondary="Or pick a different document and adjust the design on the left."
-    />
+    <div className="sp-starters" data-layout="row" aria-label="Ask AnA">
+      {starters.map((st) => (
+        <button key={st.label} type="button" className="sp-starter" onClick={() => ask(st.prompt)}>
+          <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{st.label}</span>
+        </button>
+      ))}
+    </div>
   );
 }
+
+/* `ResultLead` — the tinted serif answer banner over this page — is deleted
+   (D5 §B.4.3, §WA.4.2 rule 4). It said four things and each has a place:
+     • its question    → the page's first starter, which asks AnA the same
+                         thing and branches the same way on the worked example;
+     • its figures     → the design-assessment section's grey line ("56
+                         subjects · 91% power · Inadequate · 4 of 10 checks
+                         pass") and the artifact header's meta;
+     • its actions     → the header's one primary ("Open in editor" / "Copy
+                         example to editor") and the artifact bar's Save;
+     • its reassurance → deleted. "I flagged the underpowering honestly" is
+                         AnA's voice; the document's own risk section states
+                         it, and she says it when asked.
+   The helper's rule that a worked example is ALWAYS called one is kept in two
+   places rather than one: the artifact's meta and a quiet note above it. */
 
 /* ════ Biostatistics surface ════ */
 
@@ -890,42 +904,69 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
 
   const retryCompute = useCallback(() => setRetryTick((t) => t + 1), []);
 
-  return (
-    <div className="page-inner bs">
-      <div className="sp-head">
-        <div>
-          <div className="sp-eyebrow">Clinical statistics</div>
-          <h1 className="sp-title">Biostatistics</h1>
-          <p className="sp-state">Describe the study once — the statistical engine sizes and judges the design deterministically (ICH E9(R1)) and writes the governed statistical document you actually need to file. Nothing is computed in the browser.</p>
-        </div>
-        {onNav && (
-          <button type="button" className="btn ghost" onClick={() => onNav('biostat-workbench')}>
-            {I.sigma} Design calculators
-          </button>
-        )}
-      </div>
+  /* The row StudyDesignCard selects. `BridgeDesignRow` keys on `studyId`
+     and titles on `title` — the spec's `d.id` / `d.label` are not this
+     type's fields. */
+  const selectedDesign = designs.rows.find((d) => d.studyId === selectedStudyId);
+  const agencyLabel = vocabLabel(AGENCY_LABELS, ready?.regulatory?.body || input.regulatoryBody || 'FDA');
 
-      {ready && docDef && (
-        <ResultLead
-          ready={ready}
-          docLabel={docDef.label}
-          n={n}
-          example={isExample ? { name: exampleName, modified: edited } : null}
-          agency={vocabLabel(AGENCY_LABELS, ready.regulatory?.body || input.regulatoryBody || 'FDA')}
-          busy={opening || attaching}
-          onOpen={() => void openEditor()}
-          onSave={() => void saveWorking()}
-        />
+  return (
+    <div className="page-inner bs" data-work-area="biostatistics">
+      {program && (
+        <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>
+          {I.left} {program.title ?? 'Project'}
+        </button>
       )}
+      <header className="ph">
+        <div>
+          <h1 className="ph-title">{getSurfaceMeta('biostatistics').label}</h1>
+          {/* One sentence (§WA.3 "Type"). The three it replaced said what the
+              engine is, that it is deterministic, and that nothing runs in the
+              browser; the last is a standards note and moves to the assessment's
+              disclosure, where a reviewer looks for it. */}
+          <p className="ph-sub">
+            {selectedDesign
+              ? `Size and judge ${selectedDesign.title}’s design on the statistical engine, and write the documents it needs.`
+              : 'Size and judge a study design on the statistical engine, and write the documents it needs.'}
+          </p>
+        </div>
+        <div className="ph-acts">
+          {onNav && (
+            <button type="button" className="btn ghost" onClick={() => onNav('biostat-workbench')}>
+              {I.sigma} Design calculators
+            </button>
+          )}
+          {/* The page's ONE primary: take the document into the one editor. */}
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => void openEditor()}
+            disabled={handoff.blocked || doc.kind !== 'ready' || opening || attaching}
+            title={handoff.blocked ? 'The editor handoff is blocked — see the notice below' : undefined}
+          >
+            {I.penLine}{' '}
+            {opening ? 'Saving to the editor…' : isExample ? 'Copy example to editor' : 'Open in editor'}
+          </button>
+        </div>
+      </header>
+
+      <BsStarters
+        ask={onAsk}
+        isExample={isExample}
+        docLabel={docDef?.label ?? 'statistical document'}
+        agency={agencyLabel}
+      />
 
       <AuthoringHandoffNotice handoff={handoff} onNav={onNav} />
       <div className="bs-doc-layout">
         {/* Left: the study, what to produce, design inputs, the assessment */}
         <div className="bs-side">
           <StudyDesignCard designs={designs} selectedId={selectedStudyId} onSelect={setSelectedStudyId} />
-          <div className="pj-card">
-            <div className="pj-card-h"><span className="t">Document</span><span className="s">what to produce</span></div>
-            <div className="pj-card-b" style={{ padding: 10 }}>
+          {/* "what to produce" goes: a heading reading "Document" over a list
+              of document names does not need telling what it is (§WA.3). */}
+          <section className="pj-sec" aria-label="Document">
+            <div className="pj-sec-h"><h2>Document</h2></div>
+            <>
               {Object.entries(groups).map(([g, docs]) => (
                 <div key={g} className="bs-doc-group">
                   <div className="bs-doc-gl">{g}</div>
@@ -936,14 +977,21 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                   ))}
                 </div>
               ))}
+            </>
+          </section>
+          <section className="pj-sec" aria-label="Design inputs">
+            <div className="pj-sec-h">
+              <h2>Design inputs</h2>
+              <span className="sec-sub">the engine re-sizes it live</span>
             </div>
-          </div>
-          <div className="pj-card">
-            <div className="pj-card-h"><span className="t">Design inputs</span><span className="s">the engine re-sizes it live</span></div>
-            <div className="pj-card-b" style={{ padding: 12 }}>
+            <>
+              {/* Toggles, with the state in `aria-pressed` as well as the class
+                  the tests read. The loaded design's preset was a filled orange
+                  — one of this page's four — for a control that chooses which
+                  numbers to load, not an act (D5 §B.4.5). */}
               <div className="bs-presets">
-                {loadedDesign && <button className={'bs-preset' + (preset === 'design' ? ' on' : '')} onClick={() => { const seed = loadedDesign.adapter.input; if (seed) { setInput(seed as unknown as EngineInput); setPreset('design'); setEdited(false); } }} disabled={!loadedDesign.adapter.input} title={loadedDesign.adapter.input ? 'The loaded study design' : 'The loaded design cannot be sized until its blocking gaps are resolved'}>{I.sigma} {loadedDesign.title}</button>}
-                {Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => applyPreset(k)} title="A worked example, not your study">{p.label}</button>)}
+                {loadedDesign && <button type="button" className={'bs-preset' + (preset === 'design' ? ' on' : '')} aria-pressed={preset === 'design'} onClick={() => { const seed = loadedDesign.adapter.input; if (seed) { setInput(seed as unknown as EngineInput); setPreset('design'); setEdited(false); } }} disabled={!loadedDesign.adapter.input} title={loadedDesign.adapter.input ? 'The loaded study design' : 'The loaded design cannot be sized until its blocking gaps are resolved'}>{I.sigma} {loadedDesign.title}</button>}
+                {Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} type="button" className={'bs-preset' + (preset === k ? ' on' : '')} aria-pressed={preset === k} onClick={() => applyPreset(k)} title="A worked example, not your study">{p.label}</button>)}
               </div>
               {/* Every option is the engine's own vocabulary, by its label
                   (shared/biostat-vocabulary.ts). The study-type list used to
@@ -998,7 +1046,10 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                   <div className="bs-mini">
                     <span><b>{n}</b> subjects</span>
                     <span><b>{(ready.computation.power * 100).toFixed(0)}%</b> power</span>
-                    <span className={'rd-chip tone-' + vTone(ready.judgment.overallVerdict)}>{ready.judgment.overallVerdict}</span>
+                    {/* The engine's verdict token ("not_adequate") read as a
+                        word; the figures beside it are the engine's own, which
+                        is why the retired banner's copy of them is no loss. */}
+                    <span className={'rd-chip tone-' + vTone(ready.judgment.overallVerdict)}>{verdictWord(ready.judgment.overallVerdict)}</span>
                   </div>
                   {/* The method and the sizing identity the engine used, in its
                       own words. The required event count for a time-to-event
@@ -1012,31 +1063,62 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                   )}
                 </>
               )}
-            </div>
-          </div>
+            </>
+          </section>
         </div>
 
-        {/* Center: the DOCUMENT — the deliverable */}
-        <div className="bs-doc">
-          {/* Two lines: the document and its actions, then where it came from
-              and where it files, in plain text. The bar used to squeeze all
-              four onto one line in monospace, wrapping titles and buttons
-              mid-word (2026-10-31 audit). */}
+        {/* Center: the DOCUMENT — the deliverable.
+            The note and the artifact are ONE grid child: as two, the note took
+            the second column and the artifact wrapped onto a row of its own
+            under the study column, where a reader never saw it. */}
+        <div className="bs-main">
+        {/* A worked example is called one ABOVE the artifact as well as in its
+            meta. The helper's rule is that an example is always named as one,
+            and one place is one place to miss. */}
+        {isExample && (
+          <p className="bs-example-note" role="note">
+            Worked example{edited ? ' (modified)' : ''} — {exampleName}, not your study. Choose your project’s study
+            design on the left and the engine sizes your own.
+          </p>
+        )}
+        <section className="bs-doc" aria-label={docDef?.label}>
+          {/* The artifact's slim header (D0 §4.2.17): what it is and where it
+              came from on the left, icon actions on the right. "Open in
+              editor" has left it — the page's one primary in the header is the
+              same call, and the bar held the second of this page's four orange
+              fills. */}
           <div className="bs-doc-bar">
-            <div className="bs-doc-bar-row">
+            <div className="bs-doc-bar-l">
               <span className="bs-doc-kind">{docDef?.label}</span>
-              <div className="bs-doc-bar-a">
-                <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
-                <button className="bs-da primary" onClick={() => void openEditor()} disabled={handoff.blocked || doc.kind !== 'ready'}>{I.penLine} {opening ? 'Saving to the editor…' : isExample ? 'Copy example to editor' : 'Open in editor'}</button>
-              </div>
+              {/* Provenance describes where THIS document came from: generated
+                  by the statistical engine from its own computation and
+                  judgment, with the version and status it stamped on the
+                  document — not a literal written here, and not `connected()`. */}
+              <span className="bs-doc-meta">
+                Deterministic engine{doc.kind === 'ready' && doc.engineVersion ? ', version ' + doc.engineVersion : ''}{doc.kind === 'ready' && doc.status ? ' · ' + doc.status : ''}
+                {isExample ? ' · worked example, not your study' : placement ? <> · <FilingPlacementNote placement={placement} /></> : null}
+              </span>
             </div>
-            {/* Provenance describes where THIS document came from: generated by
-                the statistical engine from its own computation and judgment,
-                with the version and status it stamped on the document — not a
-                literal written here, and not `connected()`. */}
-            <div className="bs-doc-meta">
-              Deterministic engine{doc.kind === 'ready' && doc.engineVersion ? ', version ' + doc.engineVersion : ''}{doc.kind === 'ready' && doc.status ? ' · ' + doc.status : ''}
-              {isExample ? ' · worked example, not your study' : placement ? <> · <FilingPlacementNote placement={placement} /></> : null}
+            <div className="bs-doc-bar-a">
+              <button
+                type="button"
+                className="btn small"
+                title="Refine with AnA"
+                aria-label="Refine with AnA"
+                onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}
+              >
+                {I.sparkles}
+              </button>
+              <button
+                type="button"
+                className="btn small"
+                title={isExample ? 'Save the example as a working document' : 'Save as a working document'}
+                aria-label={isExample ? 'Save the example as a working document' : 'Save as a working document'}
+                onClick={() => void saveWorking()}
+                disabled={doc.kind !== 'ready' || attaching}
+              >
+                {I.fileDown}
+              </button>
             </div>
           </div>
           <div className="bs-doc-page">
@@ -1071,6 +1153,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
               />
             )}
           </div>
+        </section>
         </div>
       </div>
 

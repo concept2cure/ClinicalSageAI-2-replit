@@ -1,0 +1,7 @@
+# Narrow typecheck: NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p <scratch>/tsconfig.narrow.json (extends the repo tsconfig; include = Shell.tsx, the 7 changed tests, _cssRules.ts, client/src/**/*.d.ts, server/types/**/*.d.ts), 2026-11-02T01:40:13Z
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/v2/Shell.tsx(21,23): error TS2307: Cannot find module '@/assets/concept2cure-icon.svg' or its corresponding type declarations.
+client/src/utils/sentry.ts(5,29): error TS2339: Property 'VITE_SENTRY_DSN' does not exist on type 'ImportMetaEnv'.
+# exit code: 2

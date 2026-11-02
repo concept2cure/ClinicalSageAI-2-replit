@@ -1,0 +1,5 @@
+[css-shadowing] 2 baseline entr(y/ies) no longer shadowed — delete these lines:
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .reg-eyebrow
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .tb-cmdk .lbl
+
+[css-shadowing] OK — 49 stylesheets, 16 known shadowed selector(s), 0 new.

@@ -164,6 +164,18 @@ describe('a dose-finding design is not chosen from an unanswered deciding fact',
     expect(await run('select_dose_finding_design', changed(finding, { targetToxicityRate })))
       .toMatchObject({ status: 'needs_parameters', code: 'invalid_input', field: 'targetToxicityRate' });
   });
+  it('lists no 3+3 fallback and names no chosen design when none is recommended', () => {
+    const out = selectDoseFindingDesign(changed(finding, { realTimeStatisticianAvailable: undefined }));
+    expect(out.warnings.join(' ')).toMatch(/3\+3 design is discouraged/);
+    expect(out.warnings.join(' ')).not.toMatch(/listed only as a fallback/);
+    expect(out.rationale.join(' ')).toMatch(/seeks an optimal biological dose/);
+    expect(out.rationale.join(' ')).not.toMatch(/chosen toxicity-finding design/);
+  });
+  it('keeps the fallback and chosen-design sentences when a design is recommended', () => {
+    const out = selectDoseFindingDesign(finding);
+    expect(out.warnings.join(' ')).toMatch(/It is listed only as a fallback for resource-constrained contexts\./);
+    expect(out.rationale.join(' ')).toMatch(/The chosen toxicity-finding design should be paired with backfill cohorts/);
+  });
 });
 
 describe('Project Optimus alignment does not score or gap an unanswered pillar', () => {
@@ -235,6 +247,29 @@ describe('a randomized dose comparison is not sized or framed from an unanswered
       .toMatchObject({ illustrativePerArmSize: 60, illustrativeTotalSize: 120 });
     expect(designRandomizedDoseComparison({ ...comparison, tolerabilityCoPrimary: false })
       .endpointStrategy.coPrimaryOrKey[0]).toMatch(/^Key secondary:/);
+    expect(designRandomizedDoseComparison({ ...comparison, anticipatedResponseRateHighDose: 0.35 }))
+      .toMatchObject({ illustrativePerArmSize: 52, illustrativeTotalSize: 104 });
+    expect(designRandomizedDoseComparison({ ...comparison, candidateDoses: [200, 50, 100, 100] }))
+      .toMatchObject({ numberOfArms: 3, recommendedDoses: [50, 100, 200], allocationRatio: '1:1:1' });
+  });
+  it.each(['0.35', 35, 1.5, 0, NaN])('refuses a malformed anticipated response rate %j instead of sizing 30 per arm', async anticipatedResponseRateHighDose => {
+    expect(await run('design_randomized_dose_comparison', changed(comparison, { anticipatedResponseRateHighDose })))
+      .toMatchObject({ status: 'needs_parameters', code: 'invalid_input', field: 'anticipatedResponseRateHighDose' });
+  });
+  it.each([{ candidateDoses: undefined }, { candidateDoses: null }, { candidateDoses: [] }, { candidateDoses: [100] },
+    { candidateDoses: [100, 100] }])('refuses candidateDoses $candidateDoses: fewer than 2 distinct doses compare nothing', async ({ candidateDoses }) => {
+    expect(await run('design_randomized_dose_comparison', changed(comparison, { candidateDoses })))
+      .toMatchObject({ status: 'needs_parameters', code: 'missing_input', field: 'candidateDoses' });
+  });
+  it.each([
+    { candidateDoses: ['100', 200], field: 'candidateDoses[0]' },
+    { candidateDoses: [100, -5], field: 'candidateDoses[1]' },
+    { candidateDoses: [100, NaN, 200], field: 'candidateDoses[1]' },
+    { candidateDoses: [100, null, 200], field: 'candidateDoses[1]' },
+    { candidateDoses: '100,200', field: 'candidateDoses' },
+  ])('refuses a malformed dose list at $field instead of dropping the entry', async ({ candidateDoses, field }) => {
+    expect(await run('design_randomized_dose_comparison', changed(comparison, { candidateDoses })))
+      .toMatchObject({ status: 'needs_parameters', code: 'invalid_input', field });
   });
 });
 
@@ -284,6 +319,25 @@ describe('RP2D selection needs stated tolerability and effect evidence', () => {
     expect(out.doseEvaluations.map(e => e.verdict)).toEqual(['sub_therapeutic', 'insufficient_data']);
     expect(out.warnings.join(' ')).toMatch(/each insufficient_data row names what was not stated/);
   });
+  it.each([0, -10])('refuses a dose of %j by its row', async dose => {
+    expect(await run('select_rp2d', changed(rp2d, { doseLevels: [tolerable(100), tolerable(dose, { targetExposureAchieved: true })] })))
+      .toMatchObject({ status: 'needs_parameters', code: 'invalid_input', field: 'doseLevels[1].dose' });
+  });
+  it('a dose bounded by a stated MTD is tolerable on the MTD, not on a stated toxicity', () => {
+    const out = selectRP2D(changed(rp2d, { doseLevels: [{ dose: 200, longitudinalTolerabilityAcceptable: true }, tolerable(300)] }));
+    expect(out.doseEvaluations.map(e => e.note)).toEqual([
+      'Tolerable on the stated MTD and longitudinal-tolerability evidence; candidate RP2D.',
+      'Tolerable on the stated toxicity and longitudinal-tolerability evidence; candidate RP2D.',
+    ]);
+  });
+  it('recommends confirming an RP2D only when one is selected', () => {
+    expect(selectRP2D(changed(rp2d, { doseLevels: [{ dose: 100 }, { dose: 200 }] })).recommendations).toEqual([]);
+    expect(selectRP2D(rp2d).recommendations.join(' ')).toMatch(/^Confirm the selected RP2D/);
+  });
+  it('a dose sub-therapeutic on its stated evidence is not insufficient_data, whatever else is unstated', () => {
+    expect(selectRP2D(changed(rp2d, { mtd: undefined, doseLevels: [{ dose: 10, targetExposureAchieved: false,
+      targetEngagementSaturated: false }] })).doseEvaluations.map(e => e.verdict)).toEqual(['sub_therapeutic']);
+  });
   it('names a malformed row by its index as sent, before sorting', async () => {
     expect(await run('select_rp2d', changed(rp2d, { doseLevels: [tolerable(300), { dose: 100, targetExposureAchieved: 'yes' }] })))
       .toMatchObject({ status: 'needs_parameters', code: 'invalid_input', field: 'doseLevels[1].targetExposureAchieved' });
@@ -318,6 +372,15 @@ describe('backfill does not read an unanswered biopsy fact as "biopsy not feasib
     expect(out.totalBackfillPatients).toBeNull();
     expect(out.warnings.join(' ')).not.toMatch(/constrains cohorts/);
   });
+  it.each([
+    { field: 'clearedDoseLevels[0]', clearedDoseLevels: ['10', 20] },
+    { field: 'clearedDoseLevels[1]', clearedDoseLevels: [10, 0] },
+    { field: 'objectives[0]', objectives: ['PD', 'pk'], biopsyFeasible: undefined },
+    { field: 'objectives[1]', objectives: ['pk', null] },
+  ])('refuses $field instead of dropping it or sizing around it', async ({ field, ...overrides }) => {
+    expect(await run('design_backfill_strategy', changed(backfill, overrides)))
+      .toMatchObject({ status: 'needs_parameters', code: 'invalid_input', field });
+  });
   it('keeps the stated branches and objectives that do not need a biopsy', () => {
     const infeasible = designBackfillStrategy({ ...backfill, biopsyFeasible: false });
     expect(sizes(infeasible)).toEqual([8, 8]);
@@ -339,5 +402,27 @@ describe('exposure-response reports an unmeasured curve as not_assessed, never f
     expect(assessDoseExposureResponse(changed(er, { safetyExposureResponse: [] })))
       .toMatchObject({ safetyRisesWithExposure: 'not_assessed', efficacyResponseFlat: true, therapeuticWindow: 'indeterminate',
         metrics: { safetyResponseRangeAbsolute: null, safetySlopeSign: 'not_assessed', efficacySlopeSign: 'flat' } });
+  });
+  it('two points at one exposure measure no trend', () => {
+    expect(assessDoseExposureResponse(changed(er, { efficacyExposureResponse: [{ exposure: 20, response: 0.4 },
+      { exposure: 20, response: 0.41 }] }))).toMatchObject({ efficacyResponseFlat: 'not_assessed',
+      therapeuticWindow: 'indeterminate', metrics: { efficacyResponseRangeAbsolute: null, efficacySlopeSign: 'not_assessed' } });
+  });
+  it('reads tied exposures at their mean response, whatever the order of the input', () => {
+    const tied = [{ exposure: 10, response: 0.1 }, { exposure: 10, response: 0.3 }, { exposure: 40, response: 0.1 },
+      { exposure: 40, response: 0.3 }];
+    for (const safetyExposureResponse of [tied, [...tied].reverse(), [tied[3], tied[0], tied[2], tied[1]]]) {
+      expect(assessDoseExposureResponse(changed(er, { safetyExposureResponse }))).toMatchObject({
+        safetyRisesWithExposure: false, metrics: { safetySlopeSign: 'flat', safetyResponseRangeAbsolute: 0 } });
+    }
+  });
+  it.each([
+    { curve: 'efficacyExposureResponse', at: 0, response: 30 },
+    { curve: 'efficacyExposureResponse', at: 1, response: -0.5 },
+    { curve: 'safetyExposureResponse', at: 2, response: 1.2 },
+  ] as const)('refuses $curve[$at].response = $response, a probability outside 0-1', async ({ curve, at, response }) => {
+    const points = er[curve].map((p, i) => (i === at ? { ...p, response } : p));
+    expect(await run('assess_dose_exposure_response', changed(er, { [curve]: points })))
+      .toMatchObject({ status: 'needs_parameters', code: 'invalid_input', field: `${curve}[${at}].response` });
   });
 });

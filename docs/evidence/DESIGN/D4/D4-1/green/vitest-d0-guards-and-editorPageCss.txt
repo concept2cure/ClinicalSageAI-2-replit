@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > reads the client TSX and the v2 stylesheets 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-head`: no more than 18 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-eyebrow`: no more than 19 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-title`: no more than 18 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-state`: no more than 23 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-head`: no more than 11 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-eyebrow`: no more than 9 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-title`: no more than 11 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-sub`: no more than 10 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-head`: no more than 3 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-kicker`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-title`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-head`: no more than 5 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-kicker`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-eyebrow`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-cta`: no more than 19 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `landing-newproj`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `btn sm`: no more than 14 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-card`: no more than 15 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tabs`: no more than 11 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tab`: no more than 13 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-subtab`: no more than 0 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sc-ws`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cc-tab`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-seg`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-seg`: no more than 4 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cl-toast`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `tb-detail`: no more than 4 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-modal`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-connect`: no more than 0 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-stageband`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `This work flows into`: no more than 1 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > reads the stylesheets it guards 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > every allowlist entry carries a written reason 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > no `text-transform: uppercase` in v2/styles/*.css or design-system/colors_and_type.css 23ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > reads the v2 stylesheets and resolves nesting and :is() lists 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .btn is defined in exactly one stylesheet, app-v2.css 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card-h is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .rd-chip is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-lead is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-k is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .ph-title is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .seg is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .tab is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .reg-tbl th is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-input is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-empty-state is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de is defined in exactly one stylesheet, journey-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de-toast is defined in exactly one stylesheet, journey-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-seclbl is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > retired alias .btn.sm is defined at most once, in app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's page type (D4-1, .design/claude-convergence/D4.md §D4.K) > parses nesting and :is() lists 3ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's page type (D4-1, .design/claude-convergence/D4.md §D4.K) > reads the section in the serif at the prose size, and its paragraphs inherit it (defect 1) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's page type (D4-1, .design/claude-convergence/D4.md §D4.K) > reads document view the same way, wherever a section body is drawn 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's page type (D4-1, .design/claude-convergence/D4.md §D4.K) > scopes the page type to `.ed`, so RichSectionEditor's other hosts keep theirs 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > colours a drafted section's dot in the outline (defect 2) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > marks the current item with a soft fill, not orange (defect 3) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > contains the outline in its own scroll, so the page does not scroll (defect 4) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > sets the page on a centred reading measure 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > keeps the ribbon on one row that scrolls inside itself, each control at its own width (defect 5) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > keeps notes and links quiet in the editor (defect 5) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > holds the outline's and the page's own text at the 12px floor or above (D0 §3) 1ms
+
+ Test Files  4 passed (4)
+      Tests  64 passed (64)
+   Start at  22:33:40
+   Duration  5.02s (transform 330ms, setup 141ms, import 3.67s, tests 405ms, environment 0ms)
+

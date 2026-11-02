@@ -1,0 +1,22 @@
+# HEAD's own shellWiring.test.tsx, run alone on HEAD b854c54c2b's sources (git archive HEAD client/src into a scratch mirror; the repo's vitest config, include narrowed), 2026-11-01
+# exit code: 1. Both Live Drive cases time out at 5s when the file runs first in a cold worker (the conversation surface is a lazy import). This is the host's load, not D1-1: the same file passes inside the 33-suite run (red/neighbours-head.txt), where earlier files warm the transform cache.
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d1-1/head/client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > locked for the workspace: the conversation shows the offer as a record, not a button
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d1-1/head/client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > not locked: the same offer is a button that starts the demonstration
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d1-1/head/client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > choosing a client type from the account menu > lands on that type’s default screen, which is in this release
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d1-1/head/client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > choosing a client type from the account menu > choosing the type already chosen leaves the person where they are
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d1-1/head/client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > locked for the workspace: the conversation shows the offer as a record, not a button
+    TestingLibraryElementError: Unable to find an element with the text: Start demonstration: Sales demonstration. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+    class="c2c-v2 shell"
+    data-ana-open="false"
+    data-collapsed="false"
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d1-1/head/client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > not locked: the same offer is a button that starts the demonstration
+    TestingLibraryElementError: Unable to find role="button" and name `/Start demonstration/`
+    class="c2c-v2 shell"
+    data-ana-open="false"
+    data-collapsed="false"
+
+Test Files  1 failed (1)
+Tests  2 failed | 2 passed (4)

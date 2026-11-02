@@ -1,0 +1,42 @@
+# The three D0 guards and ci:undefined-css-classes, judged on D2-1 alone (skeptic, 2026-11-01).
+#
+# In the shared working tree both are red for reasons outside D2-1:
+#  - foundationsRetiredRatchet: 3 failed (cm-head, cm-kicker, cm-title: 'has no uses left: delete its alias and
+#    retired rules (D0-6)'). The CMC lane's D5-2 (ff6825ef6, merged) took their last uses to 0 while D0's :is() aliases
+#    stay in app-v2.css (BUILD_ORDER §2.1: the ratchet-zero alias deletion belongs to D5-1/D5-2). Red at HEAD alone.
+#  - ci:undefined-css-classes: FAIL on classes in Vault.tsx (vd, vd-browse, vd-dr-more...), the L8 lane's uncommitted
+#    edits in this tree.
+#
+# To judge D2-1 alone, two scratch trees were built with 'git archive HEAD client/src design-system <gate script>':
+#   g-headonly  = HEAD's client/src exactly
+#   g-headplus  = the same, plus D2-1's 3 surfaces, 2 sheets, regenerated ramp and 7 test files
+# and the three guards run in each (vitest, include foundations*.test.ts), then the CSS gate.
+# (client/src from c0a0b1fa7; the one later commit, 1d789b516, changes only dataConnect.tsx and its test.)
+# Result: identical. D2-1 adds no guard failure and no undefined class.
+
+== g-headonly (client/src at c0a0b1fa7)
+     × `cm-head`: no more than 3 uses, and gone from the CSS at 0 28ms
+     × `cm-kicker`: no more than 3 uses, and gone from the CSS at 0 13ms
+     × `cm-title`: no more than 3 uses, and gone from the CSS at 0 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 2 passed (3)
+      Tests  3 failed | 50 passed (53)
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+== g-headplus (client/src at c0a0b1fa7 + D2-1 files)
+     × `cm-head`: no more than 3 uses, and gone from the CSS at 0 44ms
+     × `cm-kicker`: no more than 3 uses, and gone from the CSS at 0 19ms
+     × `cm-title`: no more than 3 uses, and gone from the CSS at 0 27ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 2 passed (3)
+      Tests  3 failed | 50 passed (53)
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+## Working tree (HEAD 1d789b516 plus every lane's uncommitted edits)
+ × client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-head`: no more than 3 uses, and gone from the CSS at 0 22ms
+ × client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-kicker`: no more than 3 uses, and gone from the CSS at 0 11ms
+ × client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-title`: no more than 3 uses, and gone from the CSS at 0 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 2 passed (3)
+      Tests  3 failed | 50 passed (53)
+[ci:undefined-css-classes] FAIL — class names no stylesheet defines:
+  vd

@@ -23,6 +23,7 @@ import { clearAuthToken } from '@/utils/authToken';
 import { clearEditorTarget, peekEditorTarget } from '../../editorTarget';
 import { clearShellProject, publishShellProject } from '../../shellProject';
 import { __resetCeremonies } from '../../ceremony';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111391';
 const PRIOR = '22222222-2222-4222-8222-222222222391';
@@ -110,7 +111,8 @@ async function start(inline = false, beforeLaunch?: () => void, expectForm = tru
   const chooser = await screen.findByTestId('source-assembly-dialog');
   await waitFor(() => expect((within(chooser).getByLabelText('Working document') as HTMLSelectElement).disabled).toBe(false));
   fireEvent.click(within(chooser).getByRole('button', { name: /^(?:New document|Open document editor|Close to create a document)$/ }));
-  await screen.findAllByRole('button', { name: 'New document' });
+  /* D4-2: the editor's New document is an item of the bar's More menu. */
+  await screen.findByTestId('ed-more');
   if (expectForm) await screen.findByRole('dialog', { name: 'New document' }, { timeout: 750 });
   return view;
 }
@@ -149,7 +151,7 @@ describe('selected sources continue through the real document creation host', ()
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.queryByTestId('assembly-selected-sources')).toBeNull();
     expect(posts()).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: 'New document' }));
+    fireEvent.click(openEditorControl('New document…'));
     await screen.findByRole('dialog', { name: 'New document' });
     expect(screen.queryByText(/This start uses 2 selected sources/)).toBeNull();
     await fillCreation(); fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
@@ -235,7 +237,7 @@ describe('source starts keep explicit receipt delivery and recovery', () => {
     await waitFor(() => expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true));
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull(); expect(posts()).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: 'New document' }));
+    fireEvent.click(openEditorControl('New document…'));
     await screen.findByRole('dialog', { name: 'New document' });
     expect(screen.getAllByRole('dialog')).toHaveLength(1);
     expect(screen.queryByText(/This start uses 2 selected sources/)).toBeNull();

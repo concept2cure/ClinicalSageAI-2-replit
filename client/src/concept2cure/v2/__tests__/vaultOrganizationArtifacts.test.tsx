@@ -288,6 +288,8 @@ describe('with a project open, the organization view is one click away and reads
     render(<Vault {...props()} />);
     const panel = await orgPanel();
     expect(urls()).not.toContain(ORG);
+    // D6-3: with a project open, the listing is a section of the Governed artifacts view (D6 §C.4 step 5).
+    fireEvent.click(screen.getByRole('tab', { name: 'Governed artifacts' }));
     fireEvent.click(within(panel).getByRole('button', { name: /Show governed artifacts across your projects/ }));
     await within(panel).findByText('IND cover letter');
     expect(urls()).toContain(ORG);

@@ -230,17 +230,17 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
   if (!projectId || !userId) return null;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div className="ed-collab">
       {/* Presence roster — the server's live connectedUsers, never fabricated. */}
       {joined && peers.length > 0 && (
-        <div style={{ display: 'flex', gap: 2 }} title={peers.map((p) => p.displayName || p.userId).join(', ')}>
+        <div className="ed-collab-peers" title={peers.map((p) => p.displayName || p.userId).join(', ')}>
           {peers.slice(0, 4).map((p) => (
-            <span key={p.userId} className="cmt-av" style={{ width: 22, height: 22, fontSize: 10 }}
+            <span key={p.userId} className="cmt-av"
               data-me={p.userId === userId || undefined}>
               {initials(p.displayName || p.userId)}
             </span>
           ))}
-          {peers.length > 4 && <span style={{ fontSize: 11, color: 'var(--text-400)' }}>+{peers.length - 4}</span>}
+          {peers.length > 4 && <span className="ed-collab-more">+{peers.length - 4}</span>}
         </div>
       )}
       {otherLock ? (
@@ -250,8 +250,7 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
           </span>
           {confirmTakeover && (
             <input
-              className="rd-input"
-              style={{ height: 30, minWidth: 240 }}
+              className="rd-input ed-collab-reason"
               autoFocus
               value={takeoverReason}
               onChange={(e) => setTakeoverReason(e.target.value)}
@@ -262,8 +261,8 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
             />
           )}
           <button
-            className="btn ghost"
-            style={{ height: 30, ...(confirmTakeover ? { color: 'var(--error)', borderColor: 'var(--error)' } : {}) }}
+            className="btn ghost small"
+            data-confirm={confirmTakeover || undefined}
             onClick={takeover}
             disabled={confirmTakeover && !takeoverReasonOk}
             title={
@@ -277,20 +276,21 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
           </button>
           {confirmTakeover && (
             <button
-              className="btn ghost"
-              style={{ height: 30 }}
+              className="btn ghost small"
               onClick={() => { setConfirmTakeover(false); setTakeoverReason(''); }}
             >Cancel</button>
           )}
         </>
       ) : myLock ? (
-        <button className="btn ghost" style={{ height: 30 }} onClick={release} title="Release your section lock">
-          {I.lock} Unlock
+        /* Icon-only in the editor's bar (D4.md §D4.B step 5); the old visible
+           words are the accessible name, and the title is unchanged. */
+        <button type="button" className="btn ed-ico" onClick={release} title="Release your section lock" aria-label="Unlock" data-locked="mine">
+          {I.lock}
         </button>
       ) : (
-        <button className="btn ghost" style={{ height: 30 }} onClick={acquire} disabled={!sectionId}
+        <button type="button" className="btn ed-ico" onClick={acquire} disabled={!sectionId} aria-label="Lock section"
           title={sectionId ? 'Lock this section while you edit' : 'Select a section to lock'}>
-          {I.lock} Lock section
+          {I.lock}
         </button>
       )}
     </div>

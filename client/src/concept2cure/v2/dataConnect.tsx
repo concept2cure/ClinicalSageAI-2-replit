@@ -708,7 +708,9 @@ export function EmptyState({
      status — it must not interrupt. The assertive case now lives in ErrorState. */
   return (
     <div
-      className="c2c-empty-state tone-idle"
+      /* No tone class: `.tone-idle` is a chip's tone, and it painted a chip's tinted
+         panel behind every empty state (emptyState.contract.test.tsx, case 5). */
+      className="c2c-empty-state"
       role="status"
       aria-live="polite"
       aria-busy={busy || undefined}
