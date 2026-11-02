@@ -1,0 +1,48 @@
+# mutant m4-no-type: no `type="button"` (it would submit an enclosing form)
+# edits to client/src/concept2cure/v2/dataConnect.tsx (reverted after the run):
+#   - '<button type="button" className="pj-back" onClick={() => onNav?.(\'project-home\')}>\n      {I.left} {project.title'
+#   + '<button className="pj-back" onClick={() => onNav?.(\'project-home\')}>\n      {I.left} {project.title'
+$ npx vitest run --config vitest.config.ts --maxWorkers=1 client/src/concept2cure/v2/__tests__/projectBack.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > renders nothing while no project is open 29ms
+ × client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > is a .pj-back button named by the open project, its arrow hidden from screen readers 232ms
+   → expected null to be 'button' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is missing, so the button always has a name 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is empty, so the button always has a name 29ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is blank, so the button always has a name 17ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > goes to the project home on click 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > works from the keyboard: Tab reaches it, and Enter and Space each go back 132ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > follows the shell channel: it appears when a project opens after mount and goes when it closes 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > does nothing, and throws nothing, when the screen gives it no onNav 20ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  02:39:15
+   Duration  2.43s (transform 375ms, setup 255ms, import 494ms, tests 575ms, environment 769ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > is a .pj-back button named by the open project, its arrow hidden from screen readers
+AssertionError: expected null to be 'button' // Object.is equality
+
+- Expected:
+"button"
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/projectBack.test.tsx:44:39
+     42|     const back = screen.getByRole('button', { name: 'C2C-101 anti-IL-2…
+     43|     expect(back.className).toBe('pj-back');
+     44|     expect(back.getAttribute('type')).toBe('button');
+       |                                       ^
+     45|     const arrow = back.querySelector('svg');
+     46|     expect(arrow).not.toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit 1

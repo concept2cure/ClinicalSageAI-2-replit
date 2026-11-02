@@ -21,6 +21,7 @@
 import React from 'react';
 import { apiRequest, redactInternals } from '@/lib/queryClient';
 import { I } from './icons';
+import { useShellProject } from './shellProject';
 import { getAuthToken } from '@/utils/authToken';
 import { withReadDeadline } from '../mdx/hooks/useFetchJson';
 
@@ -744,5 +745,41 @@ export function EmptyState({
       )}
       {regulation && <div className="c2c-empty-reg">{regulation}</div>}
     </div>
+  );
+}
+
+/**
+ * The work area's way back to its project (D5 §WA.4.2 rule 2): the open
+ * project's name after a left arrow, and a click goes to its Project home.
+ *
+ * One link, not one per screen. CMC (`CmBack`), Vault, Reporting
+ * (`ReportingHead`) and Biostatistics each drew it by hand; each converges here
+ * in its own lane (docs/evidence/DESIGN/D0/D0-7-project-back/README.md).
+ *
+ * - **Nothing renders while no project is open.** CMC's portfolio and the
+ *   org-scoped registers are readable without one, and a dead link is worse
+ *   than no link.
+ * - **The project is read from the shell channel, reactively**, so a project
+ *   opened after the screen mounted shows its link. `onNav('project-home')`
+ *   carries no id because the channel already does: Project home reads the
+ *   open project from it, and the shell writes `?program=` to the URL.
+ * - **The arrow is decorative** (every icon is `aria-hidden`), so the
+ *   project's title is the button's whole name. A missing or blank title falls
+ *   back to "Project", never to a button with no name. The title is read as
+ *   the channel's own `shellProgramName` reads it, `String(v ?? '')`, because
+ *   the global is loosely typed and restored from storage with only its id
+ *   checked: a `.trim()` on a non-string would take the work area down.
+ *
+ * The look is `.pj-back` in `styles/app-v2.css`, and its focus ring is the
+ * shared `.c2c-v2 button:focus-visible`. `ProjectHome`'s "All projects" link
+ * shares the class but leaves the project, so it is not this component.
+ */
+export function ProjectBack({ onNav }: { onNav?: (id: string) => void }) {
+  const project = useShellProject();
+  if (!project) return null;
+  return (
+    <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>
+      {I.left} {String(project.title ?? '').trim() || 'Project'}
+    </button>
   );
 }

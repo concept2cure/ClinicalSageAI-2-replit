@@ -1,0 +1,298 @@
+TAP version 13
+# Subtest: v2 read stops waiting for stalled transport, keeps failure distinct from empty, and aborts its request
+ok 1 - v2 read stops waiting for stalled transport, keeps failure distinct from empty, and aborts its request
+  ---
+  duration_ms: 599.986282
+  type: 'test'
+  ...
+# Subtest: v2 read stops waiting for stalled body, keeps failure distinct from empty, and aborts its request
+ok 2 - v2 read stops waiting for stalled body, keeps failure distinct from empty, and aborts its request
+  ---
+  duration_ms: 314.030221
+  type: 'test'
+  ...
+# Subtest: v2 read stops waiting for stalled error-body, keeps failure distinct from empty, and aborts its request
+ok 3 - v2 read stops waiting for stalled error-body, keeps failure distinct from empty, and aborts its request
+  ---
+  duration_ms: 234.822362
+  type: 'test'
+  ...
+# Subtest: v2 read stops waiting for stalled session-body, keeps failure distinct from empty, and aborts its request
+ok 4 - v2 read stops waiting for stalled session-body, keeps failure distinct from empty, and aborts its request
+  ---
+  duration_ms: 221.597195
+  type: 'test'
+  ...
+# Subtest: v2 timeout remains final even when the original response ignores abort and arrives late
+ok 5 - v2 timeout remains final even when the original response ignores abort and arrives late
+  ---
+  duration_ms: 201.086802
+  type: 'test'
+  ...
+# Subtest: v2 read preserves supplied headers, bearer and cancellation signal
+ok 6 - v2 read preserves supplied headers, bearer and cancellation signal
+  ---
+  duration_ms: 106.847113
+  type: 'test'
+  ...
+# Subtest: an already-cancelled v2 read performs no fetch
+ok 7 - an already-cancelled v2 read performs no fetch
+  ---
+  duration_ms: 134.495722
+  type: 'test'
+  ...
+# Subtest: cancelling an in-flight v2 read settles it even if the transport ignores abort
+ok 8 - cancelling an in-flight v2 read settles it even if the transport ignores abort
+  ---
+  duration_ms: 232.364186
+  type: 'test'
+  ...
+# Subtest: v2 preserves status 403 and code MODULE_NOT_LICENSED instead of misclassifying a completed refusal as a timeout
+ok 9 - v2 preserves status 403 and code MODULE_NOT_LICENSED instead of misclassifying a completed refusal as a timeout
+  ---
+  duration_ms: 163.154592
+  type: 'test'
+  ...
+# Subtest: v2 preserves status 404 and code NOT_FOUND instead of misclassifying a completed refusal as a timeout
+ok 10 - v2 preserves status 404 and code NOT_FOUND instead of misclassifying a completed refusal as a timeout
+  ---
+  duration_ms: 70.268223
+  type: 'test'
+  ...
+# Subtest: v2 preserves status 503 and code VERIFICATION_UNAVAILABLE instead of misclassifying a completed refusal as a timeout
+ok 11 - v2 preserves status 503 and code VERIFICATION_UNAVAILABLE instead of misclassifying a completed refusal as a timeout
+  ---
+  duration_ms: 160.726328
+  type: 'test'
+  ...
+# Subtest: v2 legitimate empty list is not a timeout or a failure
+ok 12 - v2 legitimate empty list is not a timeout or a failure
+  ---
+  duration_ms: 167.517735
+  type: 'test'
+  ...
+# Subtest: v2 legitimate no content is not a timeout or a failure
+ok 13 - v2 legitimate no content is not a timeout or a failure
+  ---
+  duration_ms: 118.449676
+  type: 'test'
+  ...
+# Subtest: v2 missing-store metadata survives; no fixture or false completed data is supplied
+ok 14 - v2 missing-store metadata survives; no fixture or false completed data is supplied
+  ---
+  duration_ms: 128.306488
+  type: 'test'
+  ...
+# Subtest: v2 malformed JSON and shape guard refusals settle without timers left behind
+ok 15 - v2 malformed JSON and shape guard refusals settle without timers left behind
+  ---
+  duration_ms: 124.382597
+  type: 'test'
+  ...
+# Subtest: v2 hook clears loading on timeout and existing retry dependency recovers the real result
+ok 16 - v2 hook clears loading on timeout and existing retry dependency recovers the real result
+  ---
+  duration_ms: 105.341524
+  type: 'test'
+  ...
+# Subtest: v2 navigation always reloads a changed path even when caller deps omit it
+ok 17 - v2 navigation always reloads a changed path even when caller deps omit it
+  ---
+  duration_ms: 130.084176
+  type: 'test'
+  ...
+# Subtest: v2 navigation cancels the previous transport and ignores its late data
+ok 18 - v2 navigation cancels the previous transport and ignores its late data
+  ---
+  duration_ms: 99.709108
+  type: 'test'
+  ...
+# Subtest: v2 unmount cancels both the read and the deadline without updating state
+ok 19 - v2 unmount cancels both the read and the deadline without updating state
+  ---
+  duration_ms: 101.888533
+  type: 'test'
+  ...
+# Subtest: v2 disabling a read stops loading even when explicit deps are unchanged
+ok 20 - v2 disabling a read stops loading even when explicit deps are unchanged
+  ---
+  duration_ms: 80.973771
+  type: 'test'
+  ...
+# Subtest: expired v2 read ownership hides old data without another permanent loading state
+ok 21 - expired v2 read ownership hides old data without another permanent loading state
+  ---
+  duration_ms: 90.240064
+  type: 'test'
+  ...
+# Subtest: MDX/Quality hook ends stalled transport with a retryable read failure
+ok 22 - MDX/Quality hook ends stalled transport with a retryable read failure
+  ---
+  duration_ms: 55.83921
+  type: 'test'
+  ...
+# Subtest: MDX/Quality hook ends stalled body with a retryable read failure
+ok 23 - MDX/Quality hook ends stalled body with a retryable read failure
+  ---
+  duration_ms: 93.024457
+  type: 'test'
+  ...
+# Subtest: MDX/Quality hook ends stalled error-body with a retryable read failure
+ok 24 - MDX/Quality hook ends stalled error-body with a retryable read failure
+  ---
+  duration_ms: 112.843499
+  type: 'test'
+  ...
+# Subtest: MDX refresh after timeout recovers and a late old response cannot overwrite it
+ok 25 - MDX refresh after timeout recovers and a late old response cannot overwrite it
+  ---
+  duration_ms: 103.689289
+  type: 'test'
+  ...
+# Subtest: an unexpected AbortError is an ended load, not a permanent spinner
+ok 26 - an unexpected AbortError is an ended load, not a permanent spinner
+  ---
+  duration_ms: 185.564637
+  type: 'test'
+  ...
+# Subtest: MDX URL changes abort old work and cleanup retires the timer
+ok 27 - MDX URL changes abort old work and cleanup retires the timer
+  ---
+  duration_ms: 104.803836
+  type: 'test'
+  ...
+# Subtest: MDX null URL remains idle and issues no requests
+ok 28 - MDX null URL remains idle and issues no requests
+  ---
+  duration_ms: 63.049799
+  type: 'test'
+  ...
+# Subtest: MDX/Quality preserves 403/MODULE_NOT_LICENSED as not-enabled
+ok 29 - MDX/Quality preserves 403/MODULE_NOT_LICENSED as not-enabled
+  ---
+  duration_ms: 59.369197
+  type: 'test'
+  ...
+# Subtest: MDX/Quality preserves 403/LAUNCH_SCOPE as out-of-release
+ok 30 - MDX/Quality preserves 403/LAUNCH_SCOPE as out-of-release
+  ---
+  duration_ms: 76.889156
+  type: 'test'
+  ...
+# Subtest: MDX/Quality preserves 403/ORG_REQUIRED as no-organization
+ok 31 - MDX/Quality preserves 403/ORG_REQUIRED as no-organization
+  ---
+  duration_ms: 70.665838
+  type: 'test'
+  ...
+# Subtest: MDX/Quality preserves 404/NOT_FOUND as not-found
+ok 32 - MDX/Quality preserves 404/NOT_FOUND as not-found
+  ---
+  duration_ms: 63.910207
+  type: 'test'
+  ...
+# Subtest: MDX/Quality preserves 503/VERIFICATION_UNAVAILABLE as unchecked
+ok 33 - MDX/Quality preserves 503/VERIFICATION_UNAVAILABLE as unchecked
+  ---
+  duration_ms: 64.759327
+  type: 'test'
+  ...
+# Subtest: UI read deadline does not cancel, retry or falsely complete a governed write
+ok 34 - UI read deadline does not cancel, retry or falsely complete a governed write
+  ---
+  duration_ms: 109.208223
+  type: 'test'
+  ...
+# Subtest: timeout copy survives the actual error renderer and its existing retry action remains operable
+ok 35 - timeout copy survives the actual error renderer and its existing retry action remains operable
+  ---
+  duration_ms: 135.438894
+  type: 'test'
+  ...
+# Subtest: busy retry stays disabled; empty, loading and failure retain their distinct accessibility states
+ok 36 - busy retry stays disabled; empty, loading and failure retain their distinct accessibility states
+  ---
+  duration_ms: 91.561113
+  type: 'test'
+  ...
+# Subtest: a timed-out old 401 cannot announce the end of a newer session
+ok 37 - a timed-out old 401 cannot announce the end of a newer session
+  ---
+  duration_ms: 67.398413
+  type: 'test'
+  ...
+# Subtest: a current 401 still announces the session outcome and gives actionable sign-in wording
+ok 38 - a current 401 still announces the session outcome and gives actionable sign-in wording
+  ---
+  duration_ms: 91.061614
+  type: 'test'
+  ...
+# Subtest: successful v2 reads detach the caller cancellation listener
+ok 39 - successful v2 reads detach the caller cancellation listener
+  ---
+  duration_ms: 50.71535
+  type: 'test'
+  ...
+# Subtest: MDX/Quality caller cancellation is honored before a request starts
+ok 40 - MDX/Quality caller cancellation is honored before a request starts
+  ---
+  duration_ms: 81.765502
+  type: 'test'
+  ...
+# Subtest: MDX/Quality refresh uses the active bearer and organization, not stale headers
+ok 41 - MDX/Quality refresh uses the active bearer and organization, not stale headers
+  ---
+  duration_ms: 98.413175
+  type: 'test'
+  ...
+# Subtest: the existing non-GET hook option is not timed out or retried as a read
+ok 42 - the existing non-GET hook option is not timed out or retried as a read
+  ---
+  duration_ms: 60.462638
+  type: 'test'
+  ...
+# Subtest: no automatic request storm starts after a v2 read timeout
+ok 43 - no automatic request storm starts after a v2 read timeout
+  ---
+  duration_ms: 53.037679
+  type: 'test'
+  ...
+# Subtest: v2 renders no previous-project payload during a new project load
+ok 44 - v2 renders no previous-project payload during a new project load
+  ---
+  duration_ms: 46.634894
+  type: 'test'
+  ...
+# Subtest: a new valid ownership visit can recover after the prior owner was retired
+ok 45 - a new valid ownership visit can recover after the prior owner was retired
+  ---
+  duration_ms: 48.79404
+  type: 'test'
+  ...
+# Subtest: a late transport rejection after timeout is handled and cannot reset the failure
+ok 46 - a late transport rejection after timeout is handled and cannot reset the failure
+  ---
+  duration_ms: 103.145283
+  type: 'test'
+  ...
+# Subtest: a throwing response guard produces a completed error, never a stuck load
+ok 47 - a throwing response guard produces a completed error, never a stuck load
+  ---
+  duration_ms: 55.337815
+  type: 'test'
+  ...
+# Subtest: audit warnings for a completed write still use the existing event path
+ok 48 - audit warnings for a completed write still use the existing event path
+  ---
+  duration_ms: 66.550981
+  type: 'test'
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 48
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6277.145332
