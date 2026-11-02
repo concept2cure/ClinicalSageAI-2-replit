@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { CsrSourceEnvelopeSchema } from '../csr-source-input.js';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
+import path from 'node:path';
+import { CsrSourceEnvelopeSchema, type CsrSourceEnvelope } from '../csr-source-input.js';
 import { csrSourceContract } from '../csr-source-contract.js';
 import { sourceFixture } from '../../server/services/csr/__tests__/source-input-fixture.js';
 
@@ -57,5 +60,47 @@ describe('explicit CSR supporting source input', () => {
     expect(contract.description).toContain('do not establish clinical verification');
     expect(contract.validationRules.join(' ')).toContain('crossover');
     expect(JSON.stringify(contract)).not.toContain('synthetic-a');
+  });
+});
+
+/** Compressed only for source control; the Vault receives the decompressed JSON.
+ * No live document IDs, approvals, model outputs or trial registration are fabricated. */
+const fauxBiotech = (): CsrSourceEnvelope => JSON.parse(gunzipSync(readFileSync(path.resolve(__dirname,
+  '../../docs/demo/faux-biotech-csr/FBT201_CSR_SOURCE_SYNTHETIC_v2.json.gz'))).toString('utf8'));
+const completeWithdrawnSubject = (source: CsrSourceEnvelope) => {
+  const subject = source.participants.find(p => p.subjectId === 'FBT201-A003')!;
+  subject.completed = true;
+  source.studyData.treatmentArms.find(a => a.armId === subject.armId)!.populations.completed++;
+  source.studyData.disposition.find(d => d.subjectId === subject.subjectId)!.status = 'completed';
+};
+
+describe('Faux Biotech revision 2 and treatment disposition', () => {
+  it('parses the complete synthetic source through the real schema without rewriting it', () => {
+    const source = fauxBiotech();
+    expect(CsrSourceEnvelopeSchema.parse(source)).toEqual(source);
+    expect(source.studyData.treatmentArms.map(a => a.populations.completed)).toEqual([74, 76]);
+  });
+  it.each(['event', 'subject'] as const)('refuses contradictory %s-level treatment withdrawal', basis => {
+    const source = fauxBiotech();
+    if (basis === 'subject') {
+      const withdrawn = new Set(source.studyData.adverseEvents.filter(e => e.ledToDiscontinuation).map(e => e.subjectId));
+      source.studyData.aeDiscontinuationBasis = 'subject';
+      source.studyData.disposition.forEach(d => { d.discontinuedForAdverseEvent = withdrawn.has(d.subjectId); });
+      source.studyData.adverseEvents.forEach(e => { delete e.ledToDiscontinuation; });
+    }
+    completeWithdrawnSubject(source);
+    const result = CsrSourceEnvelopeSchema.safeParse(source);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues.some(i => i.message.includes('cannot also be recorded as completing treatment'))).toBe(true);
+  });
+  it.each(['end-of-study', undefined] as const)('does not infer treatment completion from %s disposition', basis => {
+    const source = fauxBiotech(); completeWithdrawnSubject(source);
+    if (basis) source.studyData.dispositionBasis = basis; else delete source.studyData.dispositionBasis;
+    expect(CsrSourceEnvelopeSchema.safeParse(source).success).toBe(true);
+  });
+  it('still refuses unknown fields, invalid dates and extra clinical-verification claims', () => {
+    const source = fauxBiotech();
+    expect(CsrSourceEnvelopeSchema.safeParse({ ...source, sourceApproval: 'approved' }).success).toBe(false);
+    expect(CsrSourceEnvelopeSchema.safeParse({ ...source, dataCutDate: '2026-02-30' }).success).toBe(false);
   });
 });

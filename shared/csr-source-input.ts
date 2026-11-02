@@ -160,6 +160,18 @@ function validateAeDiscontinuationBasis(source: CsrSourceData, subjects: Map<str
   } else if (records.some(r => r.discontinuedForAdverseEvent !== undefined)) {
     fail('Declare aeDiscontinuationBasis "subject" to record AE discontinuation on disposition records.');
   }
+  // Treatment withdrawal and study follow-up are different outcomes. Only an
+  // explicitly end-of-treatment listing makes completion contradictory here;
+  // do not reinterpret end-of-study or legacy unspecified disposition.
+  if (source.studyData.dispositionBasis === 'end-of-treatment') {
+    const withdrawn = new Set(subjectLevel
+      ? records.filter(r => r.discontinuedForAdverseEvent === true).map(r => r.subjectId)
+      : source.studyData.adverseEvents.filter(e => e.ledToDiscontinuation === true).map(e => e.subjectId));
+    if (source.participants.some(p => p.completed && withdrawn.has(p.subjectId))) {
+      fail('A participant who discontinued treatment for an adverse event cannot also be recorded as completing treatment.',
+        ['studyData', 'disposition']);
+    }
+  }
 }
 
 /** D11: each declared population's per-arm counts equal its explicit participant flags. */

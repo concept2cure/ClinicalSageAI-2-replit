@@ -1,91 +1,78 @@
-# Faux Biotech Therapeutics — synthetic CSR demonstration dossier
+# Faux Biotech CSR demonstration — synthetic revision 2
 
-**DATA-ONLY DEMO SCENARIO — NO APPLICATION CODE CHANGES**
+**Current data: revision 2. Hosted provisioning and ingestion: NOT PERFORMED.**
+This package is entirely fictional. It is not clinical evidence, a completed CSR,
+a regulatory submission, or proof of a working hosted demonstration.
 
-**Provisioning status:** Not created in the hosted application. GitHub stores a scenario definition; it does not provision a Concept2Cure tenant or create live application records. The complete generated dataset is delivered separately as `Faux_Biotech_CSR_Full_Lifecycle_Demo_Data.zip` in the ChatGPT handoff. This README is not evidence that it was imported.
+## Current files
 
-## Fictional client and study
+- `FBT201_CSR_SOURCE_SYNTHETIC_v2.json.gz` retains the complete structured source
+  in GitHub. Decompress it and upload the resulting `.json` through the existing
+  Vault UI. Do not upload the gzip file as if it were supported clinical-source JSON.
+- `ADSL_160_SUBJECT_QC_INDEX.csv` is the corrected 160-row index; placebo identities
+  are the original **FBT201-P001–P080**, not the earlier erroneous B-series IDs.
+- `TLF_PRIMARY_EFFICACY.csv` and `ANALYSIS_SUMMARY.json` carry revision-2 completion
+  totals. Efficacy and safety aggregate counts are unchanged.
+- The delivered `Faux_Biotech_CSR_Demo_Revision_2.zip` contains the uncompressed
+  JSON, revised ADSL, unchanged ADEFF/ADAE/ADLB, protocol/SAP, updated TLF/CSR draft,
+  traceability, proposed tasks, correction log and preserved original archive.
 
-- Organization: **Faux Biotech Therapeutics [DEMO / FICTIONAL]**
-- Proposed organization slug: `faux-biotech-therapeutics-demo`
-- Industry: Biotech & Pharma
-- Proposed workspace: Clinical Development / CSR Demonstration
-- Primary project: **FBT-201 — Clinical Study Report**
-- Study protocol: **FBT-201-2026**
-- Investigational biologic: **FBT-201**, fictional
-- Phase: **2**
-- Indication: moderate-to-severe plaque psoriasis
-- Study design: randomized 1:1, double-blind, parallel-group, placebo-controlled
-- Data cut: 2026-09-30
-- Required badge: **Synthetic / for demonstration only — not clinical evidence**
+## Correction of the earlier package
 
-## Related fictional projects
+Three original synthetic records had both AEWITH=Y and COMPLTRT=Y:
+FBT201-A003, FBT201-A067 and FBT201-P006. Revision 2 changes only their treatment
+completion flags to N, explicitly uses end-of-treatment disposition, and updates
+the associated participant/disposition records and totals. No real clinical
+source is changed. The original source bytes remain in the handoff archive.
 
-1. **FBT-102 — Nonclinical to IND** (planning; demonstration shell only)
-2. **FBT-201 — Phase 2 CSR** (active; supplied synthetic evidence package)
-3. **FBT-202 — Phase 3 Protocol Planning** (planning; demonstration shell only)
-
-Do not report these as application records until an actual authenticated import creates and verifies them.
-
-## Dataset inventory (complete external handoff archive)
-
-- `01_ADSL_synthetic.csv`: 160 artificial randomized IDs, 80 per arm
-- `02_ADEFF_synthetic.csv`: baseline and Week 12 PASI data, 320 rows
-- `03_ADAE_synthetic.csv`: 79 illustrative AE rows (one per affected subject)
-- `04_ADLB_synthetic.csv`: 320 illustrative ALT observations
-- `05_TLF_11_4_primary_efficacy.csv`: primary endpoint table
-- `06_TLF_12_2_safety.csv`: safety summary
-- `07_PROTOCOL_v2.md`: hypothetical protocol
-- `08_SAP_v1.md`: hypothetical statistical analysis plan
-- `09_TLF_SUMMARY.json`: calculated aggregate endpoint and risk-difference statistics
-- `10_CSR_DRAFT_ICH_E3.md`: 16-heading synthetic CSR narrative
-- `11_SOURCE_TO_CLAIM_TRACE.csv`: section-to-evidence references
-- `12_HUMAN_REVIEW_AND_TASKS.csv`: illustrative task and signoff states
-- `13_CLIENT_DEMO_PLAN.md`: UI walkthrough and acceptance
-- `00_ORGANIZATION_AND_STUDY.json`: source study metadata
-- `14_MANIFEST.json`: archive file checksums and not-provisioned flags
-
-All items are entirely invented. The filenames use ADaM-inspired conventions but no CDISC conformance is asserted.
-
-## Deliberately synthetic analysis results
-
-| Item | FBT-201 200 mg | Placebo |
+| Measure | FBT-201 200 mg | Placebo |
 |---|---:|---:|
-| Randomized / ITT / safety N | 80 | 80 |
-| PASI 75 Week 12 responders | 52 (65.0%) | 30 (37.5%) |
-| Completed treatment | 76 | 77 |
-| Subjects with TEAE | 42 (52.5%) | 37 (46.3%) |
-| Subjects with SAE | 3 (3.8%) | 2 (2.5%) |
-| AE withdrawals | 2 (2.5%) | 1 (1.3%) |
-| Deaths generated | 0 | 0 |
+| Randomized / ITT / safety | 80 | 80 |
+| Week 12 PASI75 responders | 52 (65.0%) | 30 (37.5%) |
+| Treatment completed — revision 2 | 74 | 76 |
+| Subjects with TEAE | 42 | 37 |
+| Subjects with SAE | 3 | 2 |
+| AE-related treatment withdrawals | 2 | 1 |
 
-- Arithmetic risk difference: **27.5 percentage points**, active minus placebo.
-- Unadjusted Wald 95% CI and Fisher exact p-value are in the supplied aggregate JSON.
-- These statistics are for a **fictional dataset only**; no clinical benefit, safety, approval, or regulatory claim is supported.
-- Missing actual dosing/exposure, investigator documents, source verification, randomization trace, trial registration, and clinical approvals must remain visible gaps.
+Earlier dated reconciliation notes and the original 76/77 completion totals are
+**historical, not the current import source**. Their checksum checks did not prove
+cross-record consistency. The earlier QC index's placebo IDs were incorrect.
+Do not mix the revision-2 source with an original completion table or draft.
 
-## Reuse the application that already exists
+## Existing application path, not another demo system
 
-Use the existing tenant / membership onboarding, Projects and client workspace, Data Room / Vault upload and catalog, Biostatistics, CSR editor / AnA, Tasking and Communication, reviewer workflow, versioning, audit and Part 11 signature controls. **Do not build a parallel demo service, duplicate UI, or bypass permission gates.**
+Use the existing organization and client-workspace workflow to provision
+**Faux Biotech Therapeutics (fictional demonstration)** and the Clinical Development /
+CSR Demonstration workspace. The proposed projects remain FBT-102 (nonclinical/IND
+planning), FBT-201 (Phase 2 CSR), and FBT-202 (Phase 3 planning). Only FBT-201 has
+synthetic outcome data. These names are proposals, not created application IDs.
 
-Operational acceptance requires, in the **same deployed environment**:
+In that same authenticated tenant, upload the JSON and original source documents,
+retain actual returned IDs/hashes, complete authorized source review, select the
+existing CSR component template, preview/freeze its study data, and then draft in
+the existing editor. Preserve unknown exposure, lab-range classification, vital
+signs, source approval and provider/model readiness as unresolved where applicable.
+A saved JSON file does not create a Vault document, clinical table, CSR build,
+review task, signature or filing. No NCT number or agency identifier is invented.
 
-1. Provision a genuinely separate fictional organization and a member with the intended role.
-2. Sign in through the intended demo identity and verify that the JWT organization matches this tenant.
-3. Create and reopen the client workspace and three projects through existing governed APIs/screens.
-4. Ingest, reopen and identify every synthetic source file in the correct project Data Room.
-5. Execute a legitimate biostatistics analysis / evidence selection; compare its results with the package's calculations.
-6. Open the existing ICH E3 editor, initiate CSR section drafting, verify numerical/source lineage, edit, save and reopen.
-7. Open every advertised left-rail target (especially Projects, Vault, Authoring, Biostatistics, Tasking and Communication) and verify non-loading steady states.
-8. Record a real reviewer comment and task resolution; demonstrate signature only through the actual authorized application ceremony.
-9. Reopen/export the final artifact and verify its provenance. No synthetic signoff may be represented as a real electronic signature.
+## Verification scope
 
-**Acceptance status:** Not run. No hosted organization, workspace, project, source ingest, analysis, editor draft or approval has been created by this data-only GitHub documentation commit.
+`node --test tests/ops/csr-demo-source-consistency.test.mjs` executes the actual
+source file's cross-record refinement functions. **21 passed; the original
+validator failed four of these cases.** It does not execute Zod's field parsers.
+The extended native-schema suite is
+`shared/__tests__/csr-source-input.test.ts`; it has not run in this executor.
+Native schema acceptance, PGlite, full TypeScript/build and hosted/browser acceptance
+remain open. Evidence: `docs/evidence/D2-CSR/2026-11-02-faux-source-reconciliation/`.
 
+The new consistency gate applies only to explicitly end-of-treatment disposition.
+A subject can stop treatment and still complete study follow-up; end-of-study and
+unspecified disposition are not reinterpreted as treatment completion.
 
-## Source-verified data additions (2026-11-02)
+## Live acceptance remains unexecuted
 
-- [160-subject QC index](ADSL_160_SUBJECT_QC_INDEX.csv) — row-level synthesized reference index derived from the original ADSL/ADAE outcome flags (responders, completion, TEAE, SAE, AE withdrawal) with matched subject IDs and arm assignments. It is not the complete ADSL.
-- [Synthetic data reconciliation report](SYNTHETIC_DATA_RECONCILIATION_2026-11-02.md) — independently checked 14 source-file SHA-256 values, study/visit/arm cardinality, patient-level efficacy flags, AE linkages, and source-to-ICH-E3 mapping.
-
-The full original participant-level ADSL, ADEFF, ADAE, ADLB and medical-writing draft remain in the separate 15-file handoff ZIP; they have **not** been ingested into a hosted Faux Biotech tenant. The repository's derived QC index is suitable for deterministic pre-demo checks, **not** a replacement source or proof of clinical verification.
+Verify the actual demo identity and tenant, create/reopen the projects, ingest and
+reopen source records, preview and freeze tables, draft/save/reopen the CSR, open
+its reviewer task and exact document, complete review through actual authorized
+controls, and verify each advertised navigation destination. Do not represent
+proposed CSV tasks or example narrative as executed reviews or real signatures.

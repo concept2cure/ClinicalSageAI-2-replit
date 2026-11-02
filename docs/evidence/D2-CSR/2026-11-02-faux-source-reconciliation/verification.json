@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-02",
+  "base_commit": "0b89821bbf012af85d2d93cc25adcf41d4ff9c48",
+  "branch": "concept2cure-v2",
+  "runtime": {
+    "node": "v22.16.0",
+    "typescript": "5.8.3"
+  },
+  "command": "node --test tests/ops/csr-demo-source-consistency.test.mjs",
+  "original": {
+    "tests": 21,
+    "pass": 17,
+    "fail": 4,
+    "skipped": 0
+  },
+  "repaired": {
+    "tests": 21,
+    "pass": 21,
+    "fail": 0,
+    "skipped": 0
+  },
+  "scope": "Actual cross-record functions and superRefine callback executed from TypeScript AST; native Zod field parser not executed.",
+  "syntax_diagnostics": 0,
+  "native_zod": "not_executed",
+  "vitest_pglite": "not_executed",
+  "full_build_typecheck_lint_pre_push": "not_executed",
+  "hosted_provisioning_deployment": "not_performed",
+  "browser": "unavailable_not_executed",
+  "files": {
+    "docs/demo/faux-biotech-csr/ADSL_160_SUBJECT_QC_INDEX.csv": {
+      "bytes": 15047,
+      "sha256": "6893fd53aff00a8aa7bee6f8c303792ce3ca2f159b49c86e05409b4a0773ef77",
+      "git_blob_sha": "8ce238a5b044c691fd59778670bb6dfcc1ceb8f4"
+    },
+    "docs/demo/faux-biotech-csr/ANALYSIS_SUMMARY.json": {
+      "bytes": 935,
+      "sha256": "45785a458bc666ec4ad5096f70f0d59fb6b9ca4329aea4012d063d2cd73e2c27",
+      "git_blob_sha": "5a737986614ba6bcce06cfdf58ba3cb499a35635"
+    },
+    "docs/demo/faux-biotech-csr/FBT201_CSR_SOURCE_SYNTHETIC_v2.json.gz": {
+      "bytes": 3679,
+      "sha256": "3c981295b1009a3290289e76ded7f73668c9c45b634c27839541bb959e1d23e3",
+      "git_blob_sha": "3448b374223b7c7b9468705a516bfce12e0b86db"
+    },
+    "docs/demo/faux-biotech-csr/README.md": {
+      "bytes": 4426,
+      "sha256": "ab76449b9bc057963aa9850c40bd7922e4d7bb501b1ffde99844c1c7dc768531",
+      "git_blob_sha": "959609ff0fd07ff2ac455aff068e7a8eaed3965e"
+    },
+    "docs/demo/faux-biotech-csr/REVISION_PROVENANCE_v2.json": {
+      "bytes": 2400,
+      "sha256": "1936260a4ef9094bc320a7661867916151d359f2d0f797f48401322a3c7530ec",
+      "git_blob_sha": "df46daf797f365d683daf230a4b08c75fc641a4d"
+    },
+    "docs/demo/faux-biotech-csr/TLF_PRIMARY_EFFICACY.csv": {
+      "bytes": 107,
+      "sha256": "3c57ac8101fb186858df4f1fa0398fec38b9763604a635a47e72793f0d0ce2b9",
+      "git_blob_sha": "d6d565291657a777f875379ac5bb1c3d519c3e12"
+    },
+    "shared/__tests__/csr-source-input.test.ts": {
+      "bytes": 7313,
+      "sha256": "1b30a0774b439132f88af87ada0d90a1c4c1db64c1d78ea19beee4f588d4474f",
+      "git_blob_sha": "73a4ff4614f7efb835913c9edb87c957bed4509e"
+    },
+    "shared/csr-source-input.ts": {
+      "bytes": 24473,
+      "sha256": "b456ee7e6c716eef9ba649d604760f0ff0aa023f75a8314fa058b4993aab787a",
+      "git_blob_sha": "59b86f97f0bac17635ba059b0607343d8025c8c0"
+    },
+    "tests/ops/csr-demo-source-consistency.test.mjs": {
+      "bytes": 9504,
+      "sha256": "74e41ce95af461041ea67c0bd314c227635877898f668eb18f7294fc6b647ca1",
+      "git_blob_sha": "428d0b19167389452a222689b3afe4a44501a29f"
+    }
+  },
+  "logs": {
+    "red.tap": {
+      "sha256": "473ed3c5f9634b832d1e1d7d4b6ab70b33261e2ab43ab3cea83e1adfe3fc2c36",
+      "bytes": 8087
+    },
+    "green.tap": {
+      "sha256": "acf2479096545d5be9f80e4df6bf184c3ba29a97fedacf71c5aa3b52d0d1e29b",
+      "bytes": 4426
+    },
+    "syntax.txt": {
+      "sha256": "66f98c482bf2c55db40a33c758810e400a71895e10320197e9c9ec242a6657d1",
+      "bytes": 192
+    }
+  }
+}

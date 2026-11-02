@@ -1,19 +1,19 @@
 {
-  "source": "Synthetic dataset exact TLF computation",
+  "source": "Synthetic revision 2; original archive retained; not clinical evidence",
   "primary": [
     {
       "arm": "FBT-201 200 mg",
       "ITT": 80,
       "responders": 52,
-      "response_rate_pct": 65,
-      "treatment_complete": 76
+      "response_rate_pct": 65.0,
+      "treatment_complete": 74
     },
     {
       "arm": "Placebo",
       "ITT": 80,
       "responders": 30,
       "response_rate_pct": 37.5,
-      "treatment_complete": 77
+      "treatment_complete": 76
     }
   ],
   "risk_difference": 0.275,
@@ -39,5 +39,6 @@
       "subjects_ae_withdrawal": 1,
       "deaths": 0
     }
-  ]
+  ],
+  "revision": 2
 }

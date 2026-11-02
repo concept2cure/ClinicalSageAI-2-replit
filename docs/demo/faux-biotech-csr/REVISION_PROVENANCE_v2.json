@@ -1,0 +1,71 @@
+{
+  "revision": 2,
+  "synthetic": true,
+  "clinical_verification": "not-established",
+  "hosted_ingestion": "not-performed",
+  "original_source_sha256": "268185a71ca48ae5cca03799f1c6e944fccf88e4eba367315fdf0441fbfa4433",
+  "revised_source_sha256": "be9993dfa6a8eee53b10d0b18ea642b3c987b2e3df09dd9973040f601669c15a",
+  "source_gzip_sha256": "3c981295b1009a3290289e76ded7f73668c9c45b634c27839541bb959e1d23e3",
+  "corrections": [
+    {
+      "subject_id": "FBT201-A003",
+      "file": "01_ADSL_synthetic.csv",
+      "field": "COMPLTRT",
+      "original": "Y",
+      "revised": "N",
+      "basis": "Synthetic scenario repair: AEWITH=Y means permanent treatment withdrawal. No clinical source record changed."
+    },
+    {
+      "subject_id": "FBT201-A067",
+      "file": "01_ADSL_synthetic.csv",
+      "field": "COMPLTRT",
+      "original": "Y",
+      "revised": "N",
+      "basis": "Synthetic scenario repair: AEWITH=Y means permanent treatment withdrawal. No clinical source record changed."
+    },
+    {
+      "subject_id": "FBT201-P006",
+      "file": "01_ADSL_synthetic.csv",
+      "field": "COMPLTRT",
+      "original": "Y",
+      "revised": "N",
+      "basis": "Synthetic scenario repair: AEWITH=Y means permanent treatment withdrawal. No clinical source record changed."
+    }
+  ],
+  "results": [
+    {
+      "arm": "FBT-201 200 mg",
+      "participants": 80,
+      "responders": 52,
+      "completed_treatment": 74,
+      "subjects_with_teae": 42,
+      "subjects_with_sae": 3,
+      "subjects_ae_withdrawal": 2
+    },
+    {
+      "arm": "Placebo",
+      "participants": 80,
+      "responders": 30,
+      "completed_treatment": 76,
+      "subjects_with_teae": 37,
+      "subjects_with_sae": 2,
+      "subjects_ae_withdrawal": 1
+    }
+  ],
+  "disposition_basis": "end-of-treatment",
+  "limitations": [
+    "No native Zod parse has been executed yet.",
+    "Missing exposure, validated lab shifts, vital signs and real approval remain missing.",
+    "Revision is not a human clinical source record."
+  ],
+  "index_correction": "Original placebo source IDs are FBT201-P...; the earlier repository index incorrectly used FBT201-B.... Revision 2 retains the P-series identities.",
+  "executed_verification": {
+    "actual_cross_record_refinements": {
+      "tests": 21,
+      "passed": 21,
+      "failed": 0
+    },
+    "native_zod_parser": "not_executed",
+    "live_ingestion": "not_performed"
+  }
+}
