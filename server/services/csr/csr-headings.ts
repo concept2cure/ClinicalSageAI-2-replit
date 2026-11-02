@@ -11,7 +11,7 @@
  * job has no output for it, else its effective review state (an approval of
  * since-redrafted text reads as a draft, csr-section-review.ts).
  */
-import { flattenICHE3Sections, type CSRSection } from '../csr-builder.js';
+import { flattenICHE3Sections, hasUnresolvedPlaceholders, type CSRSection } from '../csr-builder.js';
 import type { getCSRSectionOutputs } from './csr-job-runner.js';
 import { effectiveReviewState, type CsrSectionReviewState } from './csr-section-review';
 
@@ -22,6 +22,8 @@ export interface CsrWorkflowHeading {
   depth: number;
   /** 'manual' headings (§3, §14–16) are prepared from records, never drafted by a job. */
   manual: boolean;
+  /** Saved text still contains an unresolved data placeholder; not a finished draft. */
+  placeholder?: boolean;
   state: 'not_drafted' | CsrSectionReviewState;
   staleApproval?: true;
   contentHash?: string;
@@ -48,8 +50,9 @@ export function buildHeadings(structure: CSRSection[], outputs: readonly Partial
     const output = bySection.get(node.number);
     if (!output) return heading;
     const { state, staleApproval } = effectiveReviewState(output);
+    const placeholder = typeof output.content === 'string' && hasUnresolvedPlaceholders(output.content);
     return {
-      ...heading, state, ...(staleApproval ? { staleApproval: true as const } : {}),
+      ...heading, state, ...(placeholder ? { placeholder: true } : {}), ...(staleApproval ? { staleApproval: true as const } : {}),
       contentHash: typeof output.contentHash === 'string' ? output.contentHash : undefined,
       reviewerId: output.reviewerId ?? null, decidedAt: iso(output.reviewDecidedAt), reason: output.reviewReason ?? null,
     };
