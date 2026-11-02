@@ -17,7 +17,6 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | Files | Held by | For | Until |
 |---|---|---|---|
 | `styles/app-v2.css` | **one holder at a time**. Now: the coordinating session, for D0's fixes and the shared `ProjectBack`. Ask for a turn, keep the change a small CSS-only commit, and say when you release it | BUILD_ORDER §2.1 | each step's commit |
-| `Projects.tsx` (the New project wizard only), `styles/project-home-v2.css` (the `.npw-*` block) | the coordinating session | L3, D2-2: the New project wizard's look; `.rpk-*` waits for an `app-v2.css` turn | its commit |
 | `client/src/concept2cure/v2/AnswerLead.tsx`, `icons.tsx`, `C2CForm.tsx`, `dataConnect.tsx` | the coordinating session | D0 (use them; change them only through D0) | D0 closes |
 
 ### Holds on other files (one session per file, plan §4.6)
@@ -25,7 +24,6 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | Files | Held by | For |
 |---|---|---|
 | (none held) | MDX journey (`01P6GW…`) | F1, M8 (2026-11-02) landed: Labeling's empty state renders its action, which asks AnA (`create_labeling_document`) to start the record, for writers only (`docs/evidence/MDX-JOURNEY/2026-11-02-m8-labeling-empty-state-action/`); its hold is released. **→ filing types (`011Fyq…`):** `create_labeling_document` in `AnaToolExecutor.ts` stores `program_id` without the project admission `POST /api/mdx/labeling` makes (`admitProject`), so a deleted project is not refused. F1, M11 (2026-11-02) landed: the device screens' registry notes and the CER header say what the screens do (`docs/evidence/MDX-JOURNEY/2026-11-02-m11-device-screens-describe-themselves/`); its holds are released. **→ coordinator:** `projects`'s note says "Partially built in ui_kits/home and ui_kits/mdx.", the same build-status copy, outside this lane. F1, M3's server half (2026-11-02) landed: the EU technical file asks whether the filing holds the document's text (`docs/evidence/MDX-JOURNEY/2026-11-02-m3-technical-file-asks-the-filing/`); its holds are released. F1 slice 3 (2026-11-02) landed: the eSTAR exits ask whether the filing holds the document's text (P-29.3), and the filing-exit gate learned the two device section loaders it could not see (`docs/evidence/MDX-JOURNEY/2026-11-02-slice-3-estar-exits-ask-the-filing/`). Its holds are released. **→ AI architecture (`017CFk…`):** when `server/routes/authoring.router.ts` is released, `filingDivergedRefusal` can name its nodes with `divergedSectionLabel` (`server/services/c2c/filing-section-target.ts`), the same rule it states inline today. **→ filing types (`011Fyq…`):** in `server/services/ana/AnaToolExecutor.ts`, `advise_device_readiness`'s `advise` rebuilds the engine input field by field and drops the new `filedCopyDiverged`; one line, `filedCopyDiverged: a.filedCopyDiverged`, makes AnA's project-mode advice carry the P-29.3 verdict (the advisor half landed in `ana-advisory/device-market-advisor.ts`; until then that advice can say Ready over a rewritten filed copy, which every exit refuses). **→ RIM:** M4 needs a per-row pathway door in `SubmissionCenter.tsx` (`onOpenPathway`) and `v2/surfaces/DeviceFilings.tsx` (`docs/evidence/MDX-JOURNEY/2026-11-01-slice-1-device-rows-open/README.md`). Next here: M3's UI half (the IVDR door reaches the technical-file export), with R1 (`01QoxbL`); held when it starts |
-| `server/services/ectd/prior-sequence-loader.ts`, `server/services/submission-gateways/index.ts`, the filed-state route in `server/routes/ectd-compile.ts`, `client/src/concept2cure/v2/surfaces/EctdFiledState.tsx` (copy only) | RIM (`011e42…`) | F1 slice 1: what the agency holds is what was sent (no migration) |
 | `server/services/submission-service/submission-service.ts`, `filed-dispatch.ts`, `server/services/submission-gateways/fda-esg-receipts.ts`; copy only in `SubmissionSeqWorkspaces.tsx`, `SubmissionCenter.tsx`, `As2ReceiptUpload.tsx` | RIM | F1 slice 2 (after slice 1): a test-environment send is not a filing |
 | S10's G3 files: `shared/agency/**`, `server/services/agency-responses/**` | RIM | S10 (after slices 1 and 2): the letter splitter keeps its verbatim contract (no footers, control characters, signature blocks or duplicate numbers in a question) |
 | `server/services/gcp-operations/gcp-operations-knowledge.ts`, `server/services/ana/gcpOperationsTools.ts`, `server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts`, `server/services/ana/gmpQualitySystemsTools.ts`, the skill text naming them; `server/services/ana/intelligence-questions/engine.ts` | filing types (`011Fyq…`) | Rule 2 S5c (F1): an omitted boolean is not stated. S5a is done in all five families, reviewed and followed up (`4ca455993`, `df34a3a2e`); its holds are released. Next S5b, then S5d, each file list first. |
@@ -55,6 +53,12 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 
 S10 (the agency's communications back into the project) is held by RIM since 2026-11-01; its earlier holder (`011Dpx…`) has ended.
 
+## Held by the founder
+
+- **D4-3 waits until after the Phase 2 CSR demo** (the founder, 2026-11-02). D4-3 moves Freeze, E-sign and Place
+  into filing from the editor's bar into the inspector; until the demo is done they stay in the bar (`b6a46499f`), so
+  the rehearsed path does not move. The AI architecture session (`017CFk…`) says when the demo is over.
+
 ## Known caveats
 
 - **R1's inventory can report a false "no caller"** (`docs/evidence/DESIGN/R1/2026-11-01-inventory/inventory.json`):
@@ -71,7 +75,9 @@ S10 (the agency's communications back into the project) is held by RIM since 202
 
 ## What every session does
 
-1. Fetch, read this file, and stay off the locked rows.
+1. Fetch, read this file, and stay off the locked rows. **Check your hooks once per container:** `git config
+   core.hooksPath` must print `.husky/_`; if it prints nothing, run `npx husky`. Without it, `git push` skips every
+   pre-push gate, the plan gate included (RIM found its container so on 2026-11-02).
 2. Every commit names one package (`Plan: <ID>`) and the existing path it finishes (`Completes: <path>`), and stays
    inside that package's ledger paths.
 3. An S package changes behaviour on a screen, never its layout (plan §3). Layout follows the screen's D spec in
