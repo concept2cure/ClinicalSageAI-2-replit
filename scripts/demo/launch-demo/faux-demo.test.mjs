@@ -128,7 +128,15 @@ function fakeApplication({ organization = identity, otherType = false } = {}) {
 }
 
 test('checked-in synthetic source is complete and remains explicitly artificial', () => {
-  const original = gunzipSync(readFileSync(sourcePath));
+  const compressed = readFileSync(sourcePath);
+  const original = gunzipSync(compressed);
+  const provenance = JSON.parse(readFileSync(
+    path.join(root, 'docs/demo/faux-biotech-csr/REVISION_PROVENANCE_v2.json'), 'utf8'));
+  assert.equal(provenance.revision, 2);
+  assert.equal(provenance.synthetic, true);
+  assert.equal(provenance.clinical_verification, 'not-established');
+  assert.equal(sha256(compressed), provenance.source_gzip_sha256);
+  assert.equal(sha256(original), provenance.revised_source_sha256);
   const data = JSON.parse(original.toString('utf8'));
   assert.equal(data.format, 'concept2cure.csr-source.v1');
   assert.equal(data.studyData.dispositionBasis, 'end-of-treatment');
@@ -216,6 +224,14 @@ test('CLI rejects accidental mixed-tenant seed selection without starting any co
     { encoding: 'utf8', env: { ...process.env, DEMO_SEED_TOKEN: '', DEMO_SEED_EMAIL: '' } });
   assert.equal(result.status, 2);
   assert.match(result.stderr, /must run alone/);
+});
+
+test('CLI requires exact organization ID before connecting to any Faux Biotech tenant', () => {
+  const result = spawnSync(process.execPath, [path.join(HERE, 'seed.mjs'), '--pack', 'faux'],
+    { encoding: 'utf8', env: { ...process.env, DEMO_SEED_TOKEN: '',
+      DEMO_SEED_EMAIL: '', DEMO_EXPECTED_ORGANIZATION_ID: '' } });
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /requires --organization-id/);
 });
 
 test('CLI rejects a fake tenant plus an explicit client-workspace bypass', () => {
