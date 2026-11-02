@@ -21,6 +21,7 @@
  * signature after workflow-source-import; nothing here changes those gates.
  */
 import { createHash } from 'node:crypto';
+import { hasUnresolvedPlaceholders } from '../csr-builder.js';
 
 export interface CsrReviewQueryable {
   query(text: string, params?: unknown[]): Promise<{ rows: Record<string, unknown>[] }>;
@@ -151,6 +152,13 @@ function assertReviewable(row: Record<string, unknown>, input: CsrSectionReviewI
   if (!content.trim() || row.content_hash !== sha) {
     throw new CsrSectionReviewError('CSR_SECTION_HASH_MISMATCH', 409,
       `Saved CSR section ${input.sectionNumber} does not match its recorded content hash. Nothing was recorded.`);
+  }
+  // This is an intermediate review, not an authorization to approve an
+  // incomplete template as scientific text. The same placeholder detector
+  // is used by the CSR builder's output-integrity and release gates.
+  if (input.decision !== 'send_back' && hasUnresolvedPlaceholders(content)) {
+    throw new CsrSectionReviewError('CSR_SECTION_DATA_PLACEHOLDER', 409,
+      `CSR section ${input.sectionNumber} still contains unresolved source-data placeholders. Complete its text before submitting it for review.`);
   }
   if (row.content_hash !== input.expectedContentHash) {
     throw new CsrSectionReviewError('CSR_SECTION_CHANGED', 409,
