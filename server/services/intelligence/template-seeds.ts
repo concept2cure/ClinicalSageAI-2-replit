@@ -203,15 +203,18 @@ export const SEED_TEMPLATES: SeedTemplate[] = [
        comparison, software and labeling reached no node at all
        (docs/evidence/ANA-REASONING/2026-10-05/r16/template-outline-code-collision/).
        Pinned against the outline by __tests__/template-510k-files-under-its-own-heading.test.ts;
-       a corrected seed re-applies on boot (seedSetDrift). */
+       a corrected seed re-applies on boot (seedSetDrift). The sections are in the
+       outline's order too (2026-11-02, found in the running app): in the old
+       reading order every new document warned that its stored order differs
+       from its codes, and exported out of the eSTAR's order. */
     sections: [
       { sectionCode: 'B1', sectionTitle: 'Device description and intended use', ordering: 100, required: true, criticality: 'blocking', requiredElements: ['indication for use', 'principle of operation'] },
       { sectionCode: 'C1', sectionTitle: 'Predicate device identification', ordering: 200, required: true, criticality: 'blocking', requiredElements: ['predicate K-number', 'predicate name'] },
       { sectionCode: 'C2', sectionTitle: 'Substantial equivalence comparison matrix', ordering: 300, required: true, criticality: 'blocking', requiredElements: ['indication comparison', 'technological characteristics comparison', 'performance testing'] },
-      { sectionCode: 'E5', sectionTitle: 'Bench testing', ordering: 400, required: true, criticality: 'blocking' },
+      { sectionCode: 'D2', sectionTitle: 'Labeling (IFU, package insert)', ordering: 400, required: true, criticality: 'blocking' },
       { sectionCode: 'E1', sectionTitle: 'Biocompatibility (ISO 10993)', ordering: 500, required: true, criticality: 'blocking' },
       { sectionCode: 'E2', sectionTitle: 'Software documentation (if SaMD)', ordering: 600, required: false, criticality: 'important' },
-      { sectionCode: 'D2', sectionTitle: 'Labeling (IFU, package insert)', ordering: 700, required: true, criticality: 'blocking' },
+      { sectionCode: 'E5', sectionTitle: 'Bench testing', ordering: 700, required: true, criticality: 'blocking' },
       { sectionCode: 'E7', sectionTitle: 'Clinical performance (if applicable)', ordering: 800, required: false, criticality: 'important' },
     ],
   },
