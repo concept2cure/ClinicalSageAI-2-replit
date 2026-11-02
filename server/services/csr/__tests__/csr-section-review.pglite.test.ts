@@ -102,6 +102,16 @@ describe('per-section review state', () => {
     expect(resubmitted).toMatchObject({ state: 'in_review', contentHash: sha(REDRAFT) });
   });
 
+  it('never submits a placeholder-filled template as reviewable clinical writing', async () => {
+    const template = '§10.1 Disposition: [DATA TO BE INSERTED FROM SOURCE RECORDS]';
+    await db.query(`INSERT INTO csr_section_outputs (organization_id, project_id, job_id, section_number, content, content_hash)
+      VALUES (7, 11, 1, '10.1', $1, $2)`, [template, sha(template)]);
+    await expect(decide({ sectionNumber: '10.1', expectedContentHash: sha(template), decision: 'submit' }))
+      .rejects.toMatchObject({ code: 'CSR_SECTION_DATA_PLACEHOLDER', status: 409 });
+    const rows = await db.query<{ review_status: string }>(`SELECT review_status FROM csr_section_outputs WHERE job_id=1 AND section_number='10.1'`);
+    expect(rows.rows[0].review_status).toBe('draft');
+  });
+
   it('refuses tampered text, a foreign tenant and a missing section', async () => {
     await db.query(`UPDATE csr_section_outputs SET content = 'edited outside the runner' WHERE job_id = 1`);
     await expect(decide({ decision: 'approve', expectedContentHash: sha(REDRAFT) })).rejects.toMatchObject({ code: 'CSR_SECTION_HASH_MISMATCH' });
