@@ -13,6 +13,14 @@
 - `/api/authoring/templates?search=Clinical%20Study%20Report` and `/api/authoring/docs`: the already-existing template picker and project-scoped authoring-document store. The demo requires exactly one `component:clinical_study_report` template (not legacy `registry:ICH_CSR`) with real ICH E3 sections, saves an ordinary working document with its template id, and confirms the document is readable again under the project. That is the existing `DocumentWorkbench.tsx` / `StudyDataBuild.tsx` path for **Build from the study's data**; no second writer or CSR screen is introduced.
 - `scripts/demo/launch-demo/packs/work-areas.mjs`: the existing `ensureTasks` writes through the authenticated task board API. This pack creates three **pending** tasks, and the human review task carries `sourceEntityType: authoring_document` and the exact document UUID. The existing TaskBoard document navigation can now reach its authoring draft. A task is NOT a governed authoring review request, an approval, or a signature.
 
+### Stronger preflight and duplicate protection
+
+Before any tenant mutation, `--pack faux` now requires a numeric **target organization ID** (explicit `--organization-id` or `DEMO_EXPECTED_ORGANIZATION_ID`) as well as the matching authenticated Faux Biotech organization name. It also checks the actual compressed and decompressed synthetic source digests against `REVISION_PROVENANCE_v2.json` and resolves exactly one canonical `component:clinical_study_report` template with seeded sections. A missing/duplicated template is a refusal **before project or Vault creation**.
+
+When the same-title project source or CSR working document is already present, the pack refuses ambiguous duplicates; it does not silently take the first row. Existing source bytes are rechecked against the revision digest. The human review task is source-linked to the exact UUID of the canonical working document; revisiting an existing task with a mismatched document reference is refused instead of counted as completed.
+
+These are **seeding safety controls**, not a new product service and not a substitute for browser qualification. The current native Node test suite includes fail-closed cases for missing/duplicate templates, wrong prior template IDs, duplicate source/editor records, missing tenant ID, source digest integrity, source-linked tasks and idempotent replay.
+
 ## Fictional source scope
 
 FBT-201-2026 is an invented Phase 2 biologic trial with 160 simulated participants (80 per arm), revision-2 source `docs/demo/faux-biotech-csr/FBT201_CSR_SOURCE_SYNTHETIC_v2.json.gz`. The file is decompressed to plain JSON for upload; **do not upload gzip as clinical-source JSON**. Current source checks expect 79 artificial AEs, 74/76 treatment completers, 52/30 PASI75 responders, and a declared end-of-treatment disposition basis. The pack stores source SHA-256 from the actual uploaded bytes.
