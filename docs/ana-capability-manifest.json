@@ -2770,7 +2770,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Classify a GMP deviation as critical, major, or minor; assign a handling timeline (initial response hours and ~30-day investigation target per 21 CFR 211.192); produce a product-impact assessment with disposition guidance; and determine whether a Field Alert Report evaluation (21 CFR 314.81) and/or a recall (health-hazard) evaluation (21 CFR Part 7) is triggered. Baseline class is derived from the deviation area (sterility assurance, cross-contamination, and mix-up/mislabeling are critical; specification/process/equipment are major; documentation/training are minor) and escalated by safety impact, confirmed OOS, sterile product, and recurrence. Returns classification with rationale, timeline, product impact, reporting triggers, whether a CAPA is required, and citations (21 CFR 211.100/192/198/22, ICH Q10). A fact left out is not read as false: what it could change is \"undetermined\" (see notAssessed); an unknown area is refused. Use when the user needs to triage/classify a deviation or decide if a field alert or recall evaluation is warranted. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Classify a GMP deviation as critical, major, or minor; assign a handling timeline (initial response hours and ~30-day investigation target per 21 CFR 211.192); produce a product-impact assessment with disposition guidance; and determine whether a Field Alert Report evaluation (21 CFR 314.81) and/or a recall (health-hazard) evaluation (21 CFR Part 7) is triggered. Baseline class is derived from the deviation area (sterility assurance, cross-contamination, and mix-up/mislabeling are critical; specification/process/equipment are major; documentation/training are minor) and escalated by safety impact, confirmed OOS, sterile product, and recurrence. Returns classification with rationale, timeline, product impact, reporting triggers, whether a CAPA is required, and citations (21 CFR 211.100/192/198/22, ICH Q10). A fact left out is not read as false: what it could change is \"undetermined\" (see notAssessed); an unknown area is refused. Use when the user needs to triage/classify a deviation or decide if a field alert or recall evaluation is warranted. Deterministic — identical input always yields identical output. No LLM, no network. A required input left out or malformed is refused by name: ask for it, never guess. A true/false fact left out reads not_stated (inputStates), and what it decides comes back not assessed, undetermined or null: report that and ask for the fact. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -2792,43 +2792,43 @@
           "name": "batchDistributed",
           "type": "boolean",
           "required": false,
-          "description": "Whether the affected batch has already been distributed. Influences field-alert and recall triggers and disposition urgency."
+          "description": "Whether the affected batch has already been distributed. Influences field-alert and recall triggers and disposition urgency. If omitted, a trigger it could change is undetermined."
         },
         {
           "name": "sterileProduct",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product is sterile / parenteral. A safety-critical area on a sterile product escalates to critical."
+          "description": "Whether the product is sterile / parenteral. A safety-critical area on a sterile product escalates to critical. If omitted, it reads not_stated."
         },
         {
           "name": "outOfSpecConfirmed",
           "type": "boolean",
           "required": false,
-          "description": "Whether a specification (CQA) was confirmed out of limits. Escalates to at least major and contributes to field-alert evaluation."
+          "description": "Whether a specification (CQA) was confirmed out of limits. Escalates to at least major and contributes to field-alert evaluation. If omitted, what it could change is undetermined."
         },
         {
           "name": "patientSafetyImpact",
           "type": "boolean",
           "required": false,
-          "description": "Whether there is potential patient-safety impact. Escalates to critical."
+          "description": "Whether there is potential patient-safety impact. Escalates to critical. If omitted, what it could change is undetermined."
         },
         {
           "name": "recurring",
           "type": "boolean",
           "required": false,
-          "description": "Whether the deviation is recurring. Escalates the classification one level."
+          "description": "Whether the deviation is recurring. Escalates the classification one level. If omitted, what it could change is undetermined."
         },
         {
           "name": "usMarketed",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product is marketed in the US (for Field Alert Report relevance). Defaults to true (conservative) if omitted."
+          "description": "Whether the product is marketed in the US (for Field Alert Report relevance). If omitted, the field-alert evaluation is undetermined unless the other facts settle it."
         },
         {
           "name": "batchesAffected",
           "type": "number",
           "required": false,
-          "description": "Number of batches potentially affected (context for impact scope)."
+          "description": "Number of batches potentially affected. Not read: the result is the same without it."
         }
       ],
       "requiredInputs": [
@@ -11458,10 +11458,10 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Adds a Critical-to-Quality (CtQ) factor to a program's risk assessment (RACT). Ask the user for the factor and its likelihood (1–5) and impact (1–5); infer the risk score (likelihood×impact) and, unless told otherwise, mark it critical when the score falls in the high band. Optionally capture category, a risk description and the planned mitigation. Use when the user describes a new risk to the study.",
+      "description": "Adds a Critical-to-Quality (CtQ) factor to a program's risk assessment (RACT): the draft assessment named by assessmentId, or else the study's one open draft. Ask the user for the factor and its likelihood (1–5) and impact (1–5); infer the risk score (likelihood×impact) and, unless told otherwise, mark it critical when the score falls in the high band. Optionally capture category, a risk description and the planned mitigation. Use when the user describes a new risk to the study. Refuses, saving nothing, when the assessment is signed (an amendment must be opened), when the study has no assessment (start one with run_rbm_assessment seed: true), when it has several drafts and none is named, or when a rating is not a whole number from 1 to 5.",
       "scope": "global",
       "governed": false,
-      "renderer": "ranked-cards",
+      "renderer": "document-canvas",
       "example": "",
       "inputs": [
         {
@@ -11469,6 +11469,12 @@
           "type": "string",
           "required": true,
           "description": "Program (project) UUID."
+        },
+        {
+          "name": "assessmentId",
+          "type": "number",
+          "required": false,
+          "description": "The draft risk assessment to add the factor to, if known. Default: the study's one open draft."
         },
         {
           "name": "ctqFactor",
@@ -13643,7 +13649,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess ICH Q7 (API GMP) expectations for a specific API manufacturing step, applying the increasing-GMP-stringency principle: GMP is applied with increasing rigor from API starting-material production, through introduction of the starting material (where full GMP begins), intermediate production, isolation/purification, to final API and physical processing/packaging (highest stringency). Returns the step's GMP stringency profile and level (1–4), the relevant critical process controls (CPP/IPC identification, process validation, impurity control, release testing, stability — scaled to the step), a change-control guidance block (significant vs minor, revalidation and regulatory-notification needs per ICH Q7 §13 / ICH Q10), the independent-quality-unit expectation, and citations (ICH Q7 Table 1 / §2.2 / §8 / §12 / §13, 21 CFR 211.165). Use when the user asks what GMP expectations apply to a given API/intermediate step or how to handle a change to it. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess ICH Q7 (API GMP) expectations for a specific API manufacturing step, applying the increasing-GMP-stringency principle: GMP is applied with increasing rigor from API starting-material production, through introduction of the starting material (where full GMP begins), intermediate production, isolation/purification, to final API and physical processing/packaging (highest stringency). Returns the step's GMP stringency profile and level (1–4), the relevant critical process controls (CPP/IPC identification, process validation, impurity control, release testing, stability — scaled to the step), a change-control guidance block (significant vs minor, revalidation and regulatory-notification needs per ICH Q7 §13 / ICH Q10), the independent-quality-unit expectation, and citations (ICH Q7 Table 1 / §2.2 / §8 / §12 / §13, 21 CFR 211.165). Use when the user asks what GMP expectations apply to a given API/intermediate step or how to handle a change to it. Deterministic — identical input always yields identical output. No LLM, no network. A required input left out or malformed is refused by name: ask for it, never guess. A true/false fact left out reads not_stated (inputStates), and what it decides comes back not assessed, undetermined or null: report that and ask for the fact. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -13653,7 +13659,7 @@
           "name": "step",
           "type": "string",
           "required": true,
-          "description": "The API manufacturing step under assessment."
+          "description": "The API manufacturing step under assessment. An unknown or missing step is refused."
         },
         {
           "name": "apiName",
@@ -13665,19 +13671,19 @@
           "name": "isCriticalStep",
           "type": "boolean",
           "required": false,
-          "description": "Whether the step is identified as a critical process step. Raises stringency and classifies related changes as significant."
+          "description": "Whether the step is identified as a critical process step. Raises stringency and classifies related changes as significant. If omitted, below level 4 the stringency is not_assessed and the controls it would add are marked conditional."
         },
         {
           "name": "sterileApi",
           "type": "boolean",
           "required": false,
-          "description": "Whether the API is sterile (adds ICH Q7 §18 / EU GMP Annex 1 contamination-control considerations)."
+          "description": "Whether the API is sterile (adds ICH Q7 §18 / EU GMP Annex 1 contamination-control considerations). If omitted, the expectation says it is not stated."
         },
         {
           "name": "changeIsSignificant",
           "type": "boolean",
           "required": false,
-          "description": "Whether a change being evaluated is significant. Drives the change-control guidance (revalidation and regulatory notification)."
+          "description": "Whether a change being evaluated is significant. Drives the change-control guidance (revalidation and regulatory notification). If omitted, unless a critical or level-4 step settles it, the classification is not_assessed and both needs null"
         }
       ],
       "requiredInputs": [
@@ -14680,7 +14686,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess computer system validation per GAMP 5 (2nd ed). Determines the GAMP software category (1 = infrastructure, 3 = non-configured/off-the-shelf, 4 = configured, 5 = custom/bespoke), recommends a risk-based assurance approach across the CSV–CSA spectrum (CSA unscripted/exploratory with supplier leveraging for low-risk standard software; risk-based mixed scripted/unscripted for configured/direct-impact systems; full scripted lifecycle CSV for custom/critical systems), maps the applicable 21 CFR Part 11 controls (validation, secure time-stamped audit trail, access controls/authority checks, e-signature manifestation and uniqueness, signature/record linking, predicate-rule scoping), and lists the validation deliverables scaled to category and risk (URS, functional/config and design specs, supplier assessment, test evidence, data-integrity controls verification, traceability matrix, validation summary report). Returns all of the above with citations (GAMP 5 2nd ed Appendix M4 / CSA, 21 CFR Part 11 §11.10/§11.50/§11.70/§11.200, EU GMP Annex 11). Use when the user needs a GAMP category, a CSV-vs-CSA decision, Part 11 controls, or a validation deliverables list. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess computer system validation per GAMP 5 (2nd ed). Determines the GAMP software category (1 = infrastructure, 3 = non-configured/off-the-shelf, 4 = configured, 5 = custom/bespoke), recommends a risk-based assurance approach across the CSV–CSA spectrum (CSA unscripted/exploratory with supplier leveraging for low-risk standard software; risk-based mixed scripted/unscripted for configured/direct-impact systems; full scripted lifecycle CSV for custom/critical systems), maps the applicable 21 CFR Part 11 controls (validation, secure time-stamped audit trail, access controls/authority checks, e-signature manifestation and uniqueness, signature/record linking, predicate-rule scoping), and lists the validation deliverables scaled to category and risk (URS, functional/config and design specs, supplier assessment, test evidence, data-integrity controls verification, traceability matrix, validation summary report). Returns all of the above with citations (GAMP 5 2nd ed Appendix M4 / CSA, 21 CFR Part 11 §11.10/§11.50/§11.70/§11.200, EU GMP Annex 11). Use when the user needs a GAMP category, a CSV-vs-CSA decision, Part 11 controls, or a validation deliverables list. Deterministic — identical input always yields identical output. No LLM, no network. A required input left out or malformed is refused by name: ask for it, never guess. A true/false fact left out reads not_stated (inputStates), and what it decides comes back not assessed, undetermined or null: report that and ask for the fact. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": true,
       "renderer": "table-csv",
@@ -14702,13 +14708,13 @@
           "name": "gxpImpact",
           "type": "string",
           "required": false,
-          "description": "GxP / patient-safety / product-quality impact of the system. Drives the assurance approach and rigor. If omitted: inferred as high when directImpact is true (labelled inferred), otherwise not assessed, and the approach is \"undetermined\" unl"
+          "description": "GxP / patient-safety / product-quality impact of the system. Drives the assurance approach and rigor. If omitted, it is not assessed (the scaling note labels it inferred high when directImpact is true); the approach is \"undetermined\" unless"
         },
         {
           "name": "electronicRecords",
           "type": "boolean",
           "required": false,
-          "description": "Whether the system creates/maintains electronic records subject to 21 CFR Part 11. Defaults to true if omitted."
+          "description": "Whether the system creates/maintains electronic records subject to 21 CFR Part 11. If omitted, the validation, audit-trail and access controls are \"undetermined\"."
         },
         {
           "name": "electronicSignatures",
@@ -14720,13 +14726,13 @@
           "name": "directImpact",
           "type": "boolean",
           "required": false,
-          "description": "Whether the system directly impacts product quality or patient safety. Steers toward scripted/robust testing of direct-impact features."
+          "description": "Whether the system directly impacts product quality or patient safety. Steers toward scripted/robust testing of direct-impact features. If omitted, an approach it could change is \"undetermined\"."
         },
         {
           "name": "supplierAssessed",
           "type": "boolean",
           "required": false,
-          "description": "Whether a documented supplier assessment/audit exists, allowing supplier development and testing activities to be leveraged to reduce duplication."
+          "description": "Whether a documented supplier assessment/audit exists, allowing supplier development and testing activities to be leveraged to reduce duplication. If omitted, the supplier deliverable says it is not stated."
         }
       ],
       "requiredInputs": [
@@ -14805,7 +14811,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess a GMP record or dataset against the ALCOA+ data-integrity principles (Attributable, Legible, Contemporaneous, Original, Accurate, plus Complete, Consistent, Enduring, Available), review audit-trail expectations, judge data criticality, and map inherent integrity risk across the data lifecycle (generation, processing, review, reporting, retention, retrieval, destruction). Returns per-attribute findings with gaps, an audit-trail review finding (required / enabled / reviewed, with risk-based review frequency), lifecycle-stage risk bands with key controls, an overall data-integrity risk rating, prioritized recommendations, and citations (FDA Data Integrity Guidance 2018, MHRA GxP Data Integrity 2018, PIC/S PI 041, 21 CFR Part 11 §11.10, EU GMP Annex 11). Use when the user asks whether a record/system meets ALCOA+, how often audit trails must be reviewed, or what the data-integrity risk of a paper/hybrid/electronic record is. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess a GMP record or dataset against the ALCOA+ data-integrity principles (Attributable, Legible, Contemporaneous, Original, Accurate, plus Complete, Consistent, Enduring, Available), review audit-trail expectations, judge data criticality, and map inherent integrity risk across the data lifecycle (generation, processing, review, reporting, retention, retrieval, destruction). Returns per-attribute findings with gaps, an audit-trail review finding (required / enabled / reviewed, with risk-based review frequency), lifecycle-stage risk bands with key controls, an overall data-integrity risk rating, prioritized recommendations, and citations (FDA Data Integrity Guidance 2018, MHRA GxP Data Integrity 2018, PIC/S PI 041, 21 CFR Part 11 §11.10, EU GMP Annex 11). Use when the user asks whether a record/system meets ALCOA+, how often audit trails must be reviewed, or what the data-integrity risk of a paper/hybrid/electronic record is. Deterministic — identical input always yields identical output. No LLM, no network. A required input left out or malformed is refused by name: ask for it, never guess. A true/false fact left out reads not_stated (inputStates), and what it decides comes back not assessed, undetermined or null: report that and ask for the fact. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -14827,37 +14833,37 @@
           "name": "recordType",
           "type": "string",
           "required": false,
-          "description": "For electronic records only: whether the record is static (fixed, e.g. PDF/printout) or dynamic (user can interact/reprocess, e.g. chromatographic data). Dynamic records must be retained in dynamic form (FDA DI Guidance Q2)."
+          "description": "For electronic records only: whether the record is static (fixed, e.g. PDF/printout) or dynamic (user can interact/reprocess, e.g. chromatographic data). Dynamic records must be retained in dynamic form (FDA DI Guidance Q2). Omitted for an "
         },
         {
           "name": "lifecycleStages",
           "type": "array",
           "required": false,
-          "description": "Data-lifecycle stages to include in the risk mapping. Omit to assess the full lifecycle."
+          "description": "Data-lifecycle stages to include in the risk mapping. Omit to assess the full lifecycle; an unknown stage is refused."
         },
         {
           "name": "impactsBatchRelease",
           "type": "boolean",
           "required": false,
-          "description": "Whether the data directly supports a batch-release / disposition decision. Raises data criticality to at least high."
+          "description": "Whether the data directly supports a batch-release / disposition decision. Raises data criticality to at least high. Omitted or null stays not_stated: unless impactsPatientSafety is true, criticality and review frequency are not assessed."
         },
         {
           "name": "impactsPatientSafety",
           "type": "boolean",
           "required": false,
-          "description": "Whether the data directly impacts patient safety. Raises data criticality to critical."
+          "description": "Whether the data directly impacts patient safety. Raises data criticality to critical. Omitted or null stays not_stated: what it could raise (criticality, review frequency, lifecycle and overall risk) is not_assessed."
         },
         {
           "name": "controls",
           "type": "object",
           "required": false,
-          "description": "Control state per ALCOA+ attribute and the audit trail. Any omitted field is treated as \"unknown\" and flagged for verification (it is not assumed satisfied)."
+          "description": "Control state per ALCOA+ attribute and the audit trail. Any omitted or null field is \"unknown\" (inputStates: not_stated), flagged for verification, never assumed satisfied; the overall risk is given only if no unknown could change it."
         },
         {
           "name": "gxpArea",
           "type": "string",
           "required": false,
-          "description": "GxP area of the data (default \"gmp\")."
+          "description": "GxP area of the data. Not read: the assessment is the same for every area."
         }
       ],
       "requiredInputs": [
@@ -22040,7 +22046,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a CAPA (Corrective and Preventive Action) plan per ICH Q10 §3.2.2. Produces an objective problem statement, selects an appropriate root-cause method by rule (5 Whys, Ishikawa/fishbone, FMEA/FMECA, Fault Tree Analysis, or Is/Is-Not) with its step-by-step procedure and alternative methods, distinguishes the three action types (correction = immediate fix; corrective = eliminate root cause; preventive = prevent occurrence elsewhere), defines effectiveness checks with metrics/timing/acceptance criteria, sets a risk-commensurate target timeline and closure conditions, and scales formality to risk per ICH Q9(R1). Returns the full plan with citations (ICH Q10, ICH Q9(R1), 21 CFR 211.192). Use when the user needs to plan a CAPA, pick a root-cause analysis technique, or distinguish correction vs corrective vs preventive action. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Design a CAPA (Corrective and Preventive Action) plan per ICH Q10 §3.2.2. Produces an objective problem statement, selects an appropriate root-cause method by rule (5 Whys, Ishikawa/fishbone, FMEA/FMECA, Fault Tree Analysis, or Is/Is-Not) with its step-by-step procedure and alternative methods, distinguishes the three action types (correction = immediate fix; corrective = eliminate root cause; preventive = prevent occurrence elsewhere), defines effectiveness checks with metrics/timing/acceptance criteria, sets a risk-commensurate target timeline and closure conditions, and scales formality to risk per ICH Q9(R1). Returns the full plan with citations (ICH Q10, ICH Q9(R1), 21 CFR 211.192). Use when the user needs to plan a CAPA, pick a root-cause analysis technique, or distinguish correction vs corrective vs preventive action. Deterministic — identical input always yields identical output. No LLM, no network. A required input left out or malformed is refused by name: ask for it, never guess. A true/false fact left out reads not_stated (inputStates), and what it decides comes back not assessed, undetermined or null: report that and ask for the fact. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -22062,25 +22068,25 @@
           "name": "severity",
           "type": "string",
           "required": false,
-          "description": "Risk to product quality / patient. Drives CAPA formality and target timeline. If omitted and productImpact is true, inferred as high (severityBasis says so); otherwise not assessed, and formality and the target timeline are undetermined."
+          "description": "Risk to product quality / patient. Drives CAPA formality and target timeline. If omitted and productImpact is true, inferred as high (severityBasis says so), with no target timeline; otherwise not assessed, and formality and the target time"
         },
         {
           "name": "recurring",
           "type": "boolean",
           "required": false,
-          "description": "Whether the issue is recurring. Recurrence escalates toward a systemic/preventive focus and may select FMEA."
+          "description": "Whether the issue is recurring. Recurrence escalates toward a systemic/preventive focus and may select FMEA. Omitted or null stays not_stated: a method it could change is undetermined."
         },
         {
           "name": "contributingFactorCount",
           "type": "number",
           "required": false,
-          "description": "Number of contributing factors believed to be involved. Higher counts steer method selection toward Ishikawa or FMEA."
+          "description": "Number of contributing factors believed to be involved (a whole number). Higher counts steer method selection toward Ishikawa or FMEA. If omitted, a method it could change is undetermined."
         },
         {
           "name": "systemic",
           "type": "boolean",
           "required": false,
-          "description": "Whether the failure is systemic (process/system-wide) rather than an isolated single event. Systemic failures select FMEA and a formal CAPA. If omitted, the extent is reported as not determined."
+          "description": "Whether the failure is systemic (process/system-wide) rather than an isolated single event. Systemic failures select FMEA and a formal CAPA. If omitted, the extent is reported as not determined, and a formality or method it could change is "
         },
         {
           "name": "productImpact",
@@ -23875,7 +23881,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design an EU GMP Annex 1 (2022) contamination control strategy for a sterile product. Selects the sterilisation approach by rule — terminal moist heat (the method of choice, SAL ≤ 10⁻⁶) where the product is heat-stable, else sterilising-grade filtration plus aseptic processing where filterable, else full aseptic processing — and recommends a barrier technology (isolator favored for aseptic processing, RABS as alternative, open cleanroom for terminally sterilised). Returns the cleanroom grade table (A–D with at-rest and in-operation particulate and microbial expectations), a QRM-based environmental monitoring plan (including continuous Grade A viable/non-viable monitoring), an aseptic process simulation / media-fill plan (zero-contaminated-unit target, semi-annual requalification per line/shift/operator), a lyophilisation note where applicable, prioritized recommendations, and citations (EU GMP Annex 1 2022 §2/§4/§8/§9, Tables 1/5/6). Use when the user is planning sterile manufacturing controls, choosing a sterilisation method, or defining cleanroom grades / media-fill expectations. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Design an EU GMP Annex 1 (2022) contamination control strategy for a sterile product. Selects the sterilisation approach by rule — terminal moist heat (the method of choice, SAL ≤ 10⁻⁶) where the product is heat-stable, else sterilising-grade filtration plus aseptic processing where filterable, else full aseptic processing — and recommends a barrier technology (isolator favored for aseptic processing, RABS as alternative, open cleanroom for terminally sterilised). Returns the cleanroom grade table (A–D with at-rest and in-operation particulate and microbial expectations), a QRM-based environmental monitoring plan (including continuous Grade A viable/non-viable monitoring), an aseptic process simulation / media-fill plan (zero-contaminated-unit target, semi-annual requalification per line/shift/operator), a lyophilisation note where applicable, prioritized recommendations, and citations (EU GMP Annex 1 2022 §2/§4/§8/§9, Tables 1/5/6). Use when the user is planning sterile manufacturing controls, choosing a sterilisation method, or defining cleanroom grades / media-fill expectations. Deterministic — identical input always yields identical output. No LLM, no network. A required input left out or malformed is refused by name: ask for it, never guess. A true/false fact left out reads not_stated (inputStates), and what it decides comes back not assessed, undetermined or null: report that and ask for the fact. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -23891,37 +23897,37 @@
           "name": "heatStable",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product and container can withstand terminal moist-heat sterilisation. If true, terminal sterilisation (the method of choice) is selected."
+          "description": "Whether the product and container can withstand terminal moist-heat sterilisation. If true, terminal sterilisation (the method of choice) is selected. If omitted, the approach is not_assessed, and so is the barrier unless one is stated."
         },
         {
           "name": "filterable",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product can be sterile filtered (0.22 µm). Used when not heat-stable to select filtration + aseptic processing."
+          "description": "Whether the product can be sterile filtered (0.22 µm). Used when not heat-stable to select filtration + aseptic processing. If omitted when heatStable is false, the approach is not_assessed."
         },
         {
           "name": "barrier",
           "type": "string",
           "required": false,
-          "description": "Barrier technology in use / planned. If omitted, recommended by rule (isolator for aseptic processing)."
+          "description": "Barrier technology in use / planned. If omitted, recommended by rule (isolator for aseptic processing), or not_assessed while heatStable is not stated. Another value is refused."
         },
         {
           "name": "lyophilised",
           "type": "boolean",
           "required": false,
-          "description": "Whether lyophilisation (freeze-drying) is part of the process. Adds Grade A transfer/loading and lyophiliser-control guidance."
+          "description": "Whether lyophilisation (freeze-drying) is part of the process. Adds Grade A transfer/loading and lyophiliser-control guidance. If omitted, the note says not assessed."
         },
         {
           "name": "fillingLines",
           "type": "number",
           "required": false,
-          "description": "Annual number of aseptic filling lines/shifts (context for APS scheduling)."
+          "description": "Annual number of aseptic filling lines/shifts. Not read: the plan is the same without it."
         },
         {
           "name": "operatorCount",
           "type": "number",
           "required": false,
-          "description": "Number of operators requiring aseptic qualification (context for APS)."
+          "description": "Number of operators requiring aseptic qualification. Not read: the plan is the same without it."
         }
       ],
       "requiredInputs": [
@@ -25278,7 +25284,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Drafts an integrated risk-based monitoring plan for a program: recommends a monitoring strategy (centralized / risk-based / hybrid) from the assessment's overall risk and proposes monitoring actions from the critical CtQ factors. Advisory — must be reviewed and approved.",
+      "description": "Proposes the risk-based monitoring plan a program's APPROVED risk assessment (RACT) derives, and saves nothing: the monitoring strategy (centralized / risk-based / hybrid) from the overall risk that assessment records, one action per open critical CtQ factor of that assessment, and one oversight visit per enhanced-tier site — exactly what generating the plan would save as a draft. Refuses when the study has no assessment, when it is not approved, or when the approved one records no overall risk. Also says when a draft plan is already open.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -32144,7 +32150,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Risk-Based Monitoring (ICH E6(R3)/E8(R1)) advisor: seeds a DRAFT or summarizes a study Risk Assessment (RACT) for a program — Critical-to-Quality (CtQ) factors with likelihood × impact scores, the critical factors, and the rolled-up overall risk level. Use when scoping risk-based quality management for a study. A seeded draft needs review and signed approval on the assessment before activation. Reads/writes the program's RBM risk assessment.",
+      "description": "Risk-Based Monitoring (ICH E6(R3)/E8(R1)) advisor: seeds a DRAFT or summarizes a study Risk Assessment (RACT) for a program. The summary is the study's latest assessment version (the one the RACT screen shows) with its status and version, and that version's own Critical-to-Quality (CtQ) factors with likelihood × impact scores, the critical factors, and the rolled-up overall risk level. A version with status \"draft\" is unsigned and governs nothing. Use when scoping risk-based quality management for a study. A seeded draft needs review and signed approval on the assessment before activation. Reads/writes the program's RBM risk assessment.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
