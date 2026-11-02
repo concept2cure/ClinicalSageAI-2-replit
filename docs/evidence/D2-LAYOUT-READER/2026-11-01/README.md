@@ -164,9 +164,26 @@ sent a second time: Vault read it, then refused the bytes as a duplicate (409 `D
 - **The two controls passed** before and after: full coverage, and unchanged chunking without spans.
 - **Green:** 5 of 5. The 38 existing chunking, section, Vault ingest and layout suites pass (503 tests).
 
-**Flag off, chunks are unchanged** (`flag-off-identity/chunks-*.json`, `chunk-identity.ts`). The texts of the same
-40 PDFs, read with the flag off, were chunked by the chunker at `HEAD` before this change and by the new one. 209
-chunks, 0 differences.
+**Flag off, chunks are unchanged** (`flag-off-identity/chunks-*.json`, `chunk-identity.ts`).
+- **The check.** The texts of the same 40 PDFs, read with the flag off, were chunked by the chunker at `HEAD` before
+  this change and by the new one. 209 chunks, 0 differences.
+- **It fails when it should** (`red-chunks-with-injected-span.json`). With one table span injected into each text,
+  39 of 39 non-empty texts differ. The 40th, `server/tests/fixtures/testdoc.pdf`, has no text, so no chunks either
+  way.
+
+**What the stand-in is and is not.** The real docling-serve image was not pulled here: its layers are served from a
+host this environment's network refuses. Every reader answer in these runs came from the stand-in, which serves real
+DoclingDocuments from Docling's own test data. What is proven is everything on the platform's side of the reader:
+the request, the reading, the catalog, the chunks and the fallback. The reader itself is not proven.
+
+**Chunks already stored still resolve** (`downstream-chunk-readers.txt`).
+- **Nothing stored is rewritten.** The change rewrites no stored chunk: there is no migration and no re-chunking.
+  Chunk ids, spans and citations of documents ingested before it are untouched. In the running app, the first
+  document, ingested before the fix, still has its one chunk.
+- **The backfill is unchanged.** It re-chunks through `chunkAndEmbedDocument` with no spans, so it chunks exactly as
+  before.
+- **The suites that read chunks pass:** 48 files and 587 tests, covering RAG retrieval, citation locators and
+  section citations, passage search and its context spans, the citation engine, disposition, tenant scope and purge.
 
 ## Owed
 
