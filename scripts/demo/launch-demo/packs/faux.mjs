@@ -177,6 +177,85 @@ async function ensureSource({ api, run, tally }, project, spec) {
   });
 }
 
+/** The existing ONE editor only exposes the study-data build when the
+ * working document stores this exact component template entry. Resolve its
+ * current UUID from the existing governed catalog, never by guessing a row
+ * or selecting the second legacy ICH_CSR template. */
+const CSR_TEMPLATE_ENTRY = 'component:clinical_study_report';
+const AUTHORING_DOC_NAME = 'FBT-201 ICH E3 Clinical Study Report — working draft';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function ensureCsrWorkingDocument({ api, run, tally }, project) {
+  let document;
+  await run.step('Canvas / one editor: create or reopen ICH E3 CSR working draft', async () => {
+    const search = must(await api('GET',
+      '/api/authoring/templates?search=Clinical%20Study%20Report'), 200, 'read the existing authoring template catalog');
+    const matches = (Array.isArray(search.templates) ? search.templates : [])
+      .filter(template => template.entryId === CSR_TEMPLATE_ENTRY);
+    if (matches.length !== 1 || !UUID_RE.test(String(matches[0].id ?? '')) ||
+        !(Number(matches[0].section_count) > 0)) {
+      throw new Error('The one canonical CSR component template is unavailable or duplicated. No blank or legacy CSR document was created.');
+    }
+    const template = matches[0];
+    const endpoint = `/api/authoring/docs?status=all&programId=${encodeURIComponent(project.id)}`;
+    const before = must(await api('GET', endpoint), 200, 'list the project\'s working documents');
+    if (!Array.isArray(before.documents)) {
+      throw new Error('The authorized project document list was not readable; no CSR draft was created.');
+    }
+    const titleText = title(AUTHORING_DOC_NAME);
+    const already = before.documents.filter(row => row.title === titleText);
+    if (already.length > 1) {
+      throw new Error('Multiple same-title CSR working documents already exist. Reconcile in the one editor; no new document was created.');
+    }
+    if (already.length && (
+        String(already[0].program_id ?? '') !== String(project.id) ||
+        String(already[0].template_id ?? '') !== String(template.id) ||
+        !UUID_RE.test(String(already[0].id ?? '')))) {
+      throw new Error('An existing CSR working document has the wrong project or template. No record was replaced.');
+    }
+
+    let id;
+    if (already.length) {
+      id = String(already[0].id);
+      tally.found('authoring-document');
+    } else {
+      const started = must(await api('POST', '/api/authoring/docs', {
+        title: titleText,
+        template_id: template.id,
+        client_program_id: project.id,
+      }), 201, 'create the CSR working copy in the existing editor');
+      id = String(started.document?.id ?? '');
+      if (!UUID_RE.test(id)) {
+        throw new Error('Authoring creation did not return a stored document UUID. Inspect the created records before retrying.');
+      }
+      tally.created('authoring-document');
+    }
+
+    // The list read is the same endpoint used by DocumentAuthoring. It must
+    // actually show the new or found document in the CURRENT project.
+    const after = must(await api('GET', endpoint), 200, 'reopen the project\'s CSR working document');
+    const saved = (Array.isArray(after.documents) ? after.documents : [])
+      .find(row => String(row.id) === id && row.title === titleText);
+    if (!saved || String(saved.program_id ?? '') !== String(project.id) ||
+        String(saved.template_id ?? '') !== String(template.id) ||
+        !(Number(saved.section_count) > 0)) {
+      throw new Error('The editor did not return the CSR document with the canonical template and seeded ICH E3 sections. The demo is not ready.');
+    }
+    document = {
+      id,
+      title: titleText,
+      templateId: String(template.id),
+      templateEntry: CSR_TEMPLATE_ENTRY,
+      programId: String(project.id),
+      sectionCount: Number(saved.section_count),
+      status: saved.status ?? 'draft',
+    };
+    run.record('authoring.document', document);
+    return `document ${id}, ${document.sectionCount} ICH E3 sections (not approved)`;
+  });
+  return document;
+}
+
 /** The original evidence stays in the project's Data Room; no fabricated approval. */
 export async function seed(ctx) {
   checkDemoOrg(ctx.identity);
@@ -203,7 +282,16 @@ export async function seed(ctx) {
       bytes: () => pdfFromMarkdown(filename, label),
     });
   }
-  await ensureTasks(c, project, tasks, 'FBT-201');
+  const workingDocument = await ensureCsrWorkingDocument(c, project);
+  // The original Tasking and one-editor navigation already understand the
+  // authoring_document origin. This is a pending work item, not an executed
+  // review or an electronic signature.
+  const linkedTasks = tasks.map(task => task.title.includes('Human-review')
+    ? { ...task, moduleType: 'Authoring', taskType: 'review', category: 'review',
+      sourceEntityType: 'authoring_document', sourceEntityId: workingDocument.id,
+      moduleData: { authoringDocId: workingDocument.id, programId: project.id, raisedFrom: 'demo-project' },
+    } : task);
+  await ensureTasks(c, project, linkedTasks, 'FBT-201');
   const sum = counts => Object.values(counts).reduce((a, b) => a + b, 0);
   ctx.run.record('summary', { created: sum(tally.tally.created), found: sum(tally.tally.found) });
   ctx.run.note('CSR source is uploaded, not reviewed or approved. Authorized source selection/preview/freeze, real AnA drafting, editor save/reopen and reviewer actions must be completed in the existing UI.');
