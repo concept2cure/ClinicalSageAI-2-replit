@@ -60,8 +60,9 @@ export async function freezeCsrStudyData(connectable: RequestConnectable, q: Req
 /**
  * The study data a document is read against, newest first: receipts only, never the subject-level snapshot.
  * That is the study data frozen for it and, for a working copy imported from a CSR build, the study data the
- * build was drafted over (CSR scientific review, CDISC pilot demo walk 2026-11-02). Either row is read in this
- * organization and this project only; the build is this organization's.
+ * build was drafted over (CSR scientific review, CDISC pilot demo walk 2026-11-02). A stored import names its
+ * build as `importSource.id`, the job id as text, as authoring-source-import.ts reads it. Either row is read in
+ * this organization and this project only; the build is this organization's.
  */
 export async function listCsrStudyData(q: RequestSqlClient, scope: CsrSourceScope, authoringDocumentId: string): Promise<CsrStudyDataEntry[]> {
   await authorizeCsrSourceProgram(q, scope);
@@ -70,7 +71,7 @@ export async function listCsrStudyData(q: RequestSqlClient, scope: CsrSourceScop
       s.authoring_document_id = $3 AS own
     FROM csr_study_data s WHERE s.organization_id = $1 AND s.program_id = $2
       AND (s.authoring_document_id = $3 OR s.study_data_id::text IN (SELECT j.source_run_id FROM authoring_documents d
-        JOIN csr_build_jobs j ON j.organization_id = d.tenant_id AND j.id::text = d.provenance -> 'importSource' ->> 'jobId'
+        JOIN csr_build_jobs j ON j.organization_id = d.tenant_id AND j.id::text = d.provenance -> 'importSource' ->> 'id'
         WHERE d.id = $3 AND d.tenant_id = $1 AND d.provenance -> 'importSource' ->> 'kind' = 'csr'))
     ORDER BY s.created_at DESC, s.study_data_id DESC LIMIT 50`, [scope.organizationId, scope.programId, authoringDocumentId]);
   return rows.map(row => ({
