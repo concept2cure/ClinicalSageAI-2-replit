@@ -1,0 +1,12 @@
+# C2C_UI_TEST_ROOT = a git archive of HEAD (620a844ca), i.e. without this change
+$ C2C_UI_TEST_ROOT=<export of HEAD> node --test tests/ops/ui-read-recovery.test.mjs
+1..48
+# tests 48
+# suites 0
+# pass 48
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3814.906254
+exit 0
