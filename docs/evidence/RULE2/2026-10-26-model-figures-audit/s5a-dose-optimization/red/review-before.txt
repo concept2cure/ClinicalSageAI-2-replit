@@ -1,0 +1,161 @@
+# S5a dose optimization review follow-up, red: server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts with the follow-up's cases, on trunk b4bd7a877 (the engine as 2cc9340e2 left it). 29 of 128 fail; 99 pass. (The rate case shown as "null" is NaN: vitest's %j prints NaN as null.)
+
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > all six existing dose-optimization tools still compute from stated inputs > 'select_dose_finding_design' reaches its canonical engine with a stated basis 5ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > all six existing dose-optimization tools still compute from stated inputs > 'assess_project_optimus_alignment' reaches its canonical engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > all six existing dose-optimization tools still compute from stated inputs > 'design_randomized_dose_comparison' reaches its canonical engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > all six existing dose-optimization tools still compute from stated inputs > 'select_rp2d' reaches its canonical engine with a stated basis 3ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > all six existing dose-optimization tools still compute from stated inputs > 'design_backfill_strategy' reaches its canonical engine with a stated basis 3ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > all six existing dose-optimization tools still compute from stated inputs > 'assess_dose_exposure_response' reaches its canonical engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > each definition tells the model about not_stated, within the trimmed description length > 'select_dose_finding_design' 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > each definition tells the model about not_stated, within the trimmed description length > 'assess_project_optimus_alignment' 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > each definition tells the model about not_stated, within the trimmed description length > 'design_randomized_dose_comparison' 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > each definition tells the model about not_stated, within the trimmed description length > 'select_rp2d' 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > each definition tells the model about not_stated, within the trimmed description length > 'design_backfill_strategy' 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > each definition tells the model about not_stated, within the trimmed description length > 'assess_dose_exposure_response' 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'select_dose_finding_design' preserves boolean answers > lateOnsetToxicityExpected distinguishes absence, true, false and malformed input 3ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'select_dose_finding_design' preserves boolean answers > realTimeStatisticianAvailable distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'select_dose_finding_design' preserves boolean answers > optimalBiologicalDoseSought distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'assess_project_optimus_alignment' preserves boolean answers > doseSelectedByMtdAlone distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'assess_project_optimus_alignment' preserves boolean answers > patientReportedOutcomesCollected distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'assess_project_optimus_alignment' preserves boolean answers > randomizedDoseComparisonConducted distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'assess_project_optimus_alignment' preserves boolean answers > exposureResponseEfficacyCharacterized distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'assess_project_optimus_alignment' preserves boolean answers > exposureResponseSafetyCharacterized distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'assess_project_optimus_alignment' preserves boolean answers > pkCharacterized distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'assess_project_optimus_alignment' preserves boolean answers > pdOrTargetEngagementCharacterized distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'assess_project_optimus_alignment' preserves boolean answers > longitudinalTolerabilityAssessed distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'assess_project_optimus_alignment' preserves boolean answers > optimizationBeforeMarketingApplication distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'design_randomized_dose_comparison' preserves boolean answers > goalNonInferiorActivityLowerDose distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'design_randomized_dose_comparison' preserves boolean answers > tolerabilityCoPrimary distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'select_rp2d' preserves boolean answers > activityPlateauObserved distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'design_backfill_strategy' preserves boolean answers > biopsyFeasible distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > 'design_backfill_strategy' preserves boolean answers > escalationOngoing distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > recommends no design with realTimeStatisticianAvailable undefined 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > recommends no design with realTimeStatisticianAvailable null 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > recommends no design when nothing states or indicates late-onset toxicity 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > a late-onset modality decides on a TITE design but not which one 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > keeps the stated branch: late onset false, statistician false 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > keeps the stated branch: late onset false, statistician true 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > keeps the stated branch: late onset true, statistician false 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > keeps the stated branch: late onset true, statistician true 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > keeps a DLT window that indicates late onset 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > discloses the 0.25 target toxicity default when the rate is undefined 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > discloses the 0.25 target toxicity default when the rate is null 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > applies a stated target toxicity rate and warns outside the usual range 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > refuses a malformed target toxicity rate "0.3" instead of replacing it with 0.25 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > refuses a malformed target toxicity rate 0 instead of replacing it with 0.25 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > refuses a malformed target toxicity rate 1 instead of replacing it with 0.25 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > refuses a malformed target toxicity rate 1.5 instead of replacing it with 0.25 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > refuses a malformed target toxicity rate null instead of replacing it with 0.25 0ms
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > lists no 3+3 fallback and names no chosen design when none is recommended 8ms
+   → expected 'The rule-based 3+3 design is discoura…' not to match /listed only as a fallback/
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a dose-finding design is not chosen from an unanswered deciding fact > keeps the fallback and chosen-design sentences when a design is recommended 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > an unanswered doseSelectedByMtdAlone (undefined) is not met and earns no 20 points 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > an unanswered doseSelectedByMtdAlone (null) is not met and earns no 20 points 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > an unanswered 'randomizedDoseComparisonConducted' is not a 'OPT-NO-RANDOMIZED' gap 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > an unanswered 'exposureResponseEfficacyCharacterized' is not a 'OPT-NO-ER-EFF' gap 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > an unanswered 'exposureResponseSafetyCharacterized' is not a 'OPT-NO-ER-SAFETY' gap 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > an unanswered 'pkCharacterized' is not a 'OPT-NO-PK' gap 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > an unanswered 'pdOrTargetEngagementCharacterized' is not a 'OPT-NO-PD' gap 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > an unanswered 'longitudinalTolerabilityAssessed' is not a 'OPT-NO-LONGITUDINAL' gap 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > an unanswered 'optimizationBeforeMarketingApplication' is not a 'OPT-TIMING' gap 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > names the unanswered pillars and asks for them 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > does not tell a phase 3 program it lacks a randomized comparison it never described 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > keeps the score and every gap for stated negative answers 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > reads a stated true randomized comparison as >= 2 doses, and a stated count of 1 as partial 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > refuses a malformed dose count "3" 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > refuses a malformed dose count 2.5 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > Project Optimus alignment does not score or gap an unanswered pillar > refuses a malformed dose count -1 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > gives no illustrative size with goalNonInferiorActivityLowerDose undefined 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > gives no illustrative size with goalNonInferiorActivityLowerDose null 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > does not cap a size it never computed 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > leaves the tolerability endpoint role not assessed with tolerabilityCoPrimary undefined 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > leaves the tolerability endpoint role not assessed with tolerabilityCoPrimary null 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > keeps the stated branches 0ms
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses a malformed anticipated response rate "0.35" instead of sizing 30 per arm 10ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses a malformed anticipated response rate 35 instead of sizing 30 per arm 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses a malformed anticipated response rate 1.5 instead of sizing 30 per arm 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses a malformed anticipated response rate 0 instead of sizing 30 per arm 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses a malformed anticipated response rate null instead of sizing 30 per arm 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses candidateDoses undefined: fewer than 2 distinct doses compare nothing 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses candidateDoses null: fewer than 2 distinct doses compare nothing 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses candidateDoses []: fewer than 2 distinct doses compare nothing 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses candidateDoses [ 100 ]: fewer than 2 distinct doses compare nothing 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses candidateDoses [ 100, 100 ]: fewer than 2 distinct doses compare nothing 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses a malformed dose list at 'candidateDoses[0]' instead of dropping the entry 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses a malformed dose list at 'candidateDoses[1]' instead of dropping the entry 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses a malformed dose list at 'candidateDoses[1]' instead of dropping the entry 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses a malformed dose list at 'candidateDoses[1]' instead of dropping the entry 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > a randomized dose comparison is not sized or framed from an unanswered goal > refuses a malformed dose list at 'candidateDoses' instead of dropping the entry 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > a dose-only row is insufficient_data, never viable or selected 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > without an MTD an unanswered toxicity probability is insufficient_data 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > selects no RP2D from tolerable doses with no stated effect evidence 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > does not take the highest effective dose from an unanswered plateau 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > keeps a stated or class-indicated plateau, a stated absence, and a single effective dose 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > reports each row's stated answers 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > does not say a stated-tolerable sub-therapeutic dose lacks tolerability evidence 0ms
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses a dose of 0 by its row 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses a dose of -10 by its row 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > a dose bounded by a stated MTD is tolerable on the MTD, not on a stated toxicity 1ms
+   → expected [ …(2) ] to deeply equal [ …(2) ]
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > recommends confirming an RP2D only when one is selected 1ms
+   → expected [ …(2) ] to deeply equal []
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > a dose sub-therapeutic on its stated evidence is not insufficient_data, whatever else is unstated 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > names a malformed row by its index as sent, before sorting 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'toxicityProbability' = '0.2' 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'toxicityProbability' = 1.5 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'toxicityProbability' = -0.1 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'toxicityProbability' = NaN 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'activitySignal' = '0.2' 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'activitySignal' = 1.5 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'activitySignal' = -0.1 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'activitySignal' = NaN 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'targetExposureAchieved' = 'true' 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'targetExposureAchieved' = +0 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'targetEngagementSaturated' = 'true' 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'targetEngagementSaturated' = +0 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'longitudinalTolerabilityAcceptable' = 'true' 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > RP2D selection needs stated tolerability and effect evidence > refuses doseLevels[0].'longitudinalTolerabilityAcceptable' = +0 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > backfill does not read an unanswered biopsy fact as "biopsy not feasible" > leaves cohort sizes and the biopsy plan unassessed with biopsyFeasible undefined 1ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > backfill does not read an unanswered biopsy fact as "biopsy not feasible" > leaves cohort sizes and the biopsy plan unassessed with biopsyFeasible null 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > backfill does not read an unanswered biopsy fact as "biopsy not feasible" > a biomarker objective alone also waits for the biopsy fact 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > backfill does not read an unanswered biopsy fact as "biopsy not feasible" > does not cap a size it never computed 1ms
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > backfill does not read an unanswered biopsy fact as "biopsy not feasible" > refuses 'clearedDoseLevels[0]' instead of dropping it or sizing around it 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > backfill does not read an unanswered biopsy fact as "biopsy not feasible" > refuses 'clearedDoseLevels[1]' instead of dropping it or sizing around it 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > backfill does not read an unanswered biopsy fact as "biopsy not feasible" > refuses 'objectives[0]' instead of dropping it or sizing around it 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > backfill does not read an unanswered biopsy fact as "biopsy not feasible" > refuses 'objectives[1]' instead of dropping it or sizing around it 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > backfill does not read an unanswered biopsy fact as "biopsy not feasible" > keeps the stated branches and objectives that do not need a biopsy 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > exposure-response reports an unmeasured curve as not_assessed, never flat or 0 > one efficacy point measures no efficacy trend 0ms
+ ✓ server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > exposure-response reports an unmeasured curve as not_assessed, never flat or 0 > no safety points measure no safety trend 0ms
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > exposure-response reports an unmeasured curve as not_assessed, never flat or 0 > two points at one exposure measure no trend 1ms
+   → expected { exposureMetric: 'AUC', …(8) } to match object { …(3) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > exposure-response reports an unmeasured curve as not_assessed, never flat or 0 > reads tied exposures at their mean response, whatever the order of the input 1ms
+   → expected { exposureMetric: 'AUC', …(8) } to match object { Object (safetyRisesWithExposure, metrics) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > exposure-response reports an unmeasured curve as not_assessed, never flat or 0 > refuses 'efficacyExposureResponse'[+0].response = 30, a probability outside 0-1 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > exposure-response reports an unmeasured curve as not_assessed, never flat or 0 > refuses 'efficacyExposureResponse'[1].response = -0.5, a probability outside 0-1 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/dose-optimization-unstated-inputs.test.ts > exposure-response reports an unmeasured curve as not_assessed, never flat or 0 > refuses 'safetyExposureResponse'[2].response = 1.2, a probability outside 0-1 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ Test Files  1 failed (1)
+      Tests  29 failed | 99 passed (128)

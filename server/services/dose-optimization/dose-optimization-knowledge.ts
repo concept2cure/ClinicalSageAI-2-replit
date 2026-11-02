@@ -4,7 +4,7 @@
  *
  * A pure, closed-form, reproducible knowledge base for oncology dose
  * optimization. NO LLM, NO network, NO database; it imports only the shared
- * stated-input readers. Identical input always yields identical output. An
+ * stated-input readers and refusal. Identical input always yields identical output. An
  * unanswered boolean is not_stated, never true or false (Rule 2 S5a).
  *
  * GROUNDING / PRIMARY SOURCES
@@ -40,7 +40,22 @@
  * @module server/services/dose-optimization/dose-optimization-knowledge
  */
 
-import { booleanInputStates, statedBoolean, statedNumber } from '../immunogenicity/immunogenicity-reference';
+import { ComputationRefusal } from '../ana-biostats/computation-engine';
+import { booleanInputStates, statedBoolean, statedNumber, statedOneOf } from '../immunogenicity/immunogenicity-reference';
+
+/** Read a list by index: a non-list, or an empty or malformed entry, is refused, never dropped. */
+function statedList<T>(field: string, list: unknown, read: (at: string, value: unknown) => T | undefined): T[] {
+  if (list === undefined || list === null) return [];
+  if (!Array.isArray(list)) throw new ComputationRefusal('invalid_input', `${field} must be a list.`, field);
+  return list.map((value, i) => {
+    const at = `${field}[${i}]`;
+    if (value === undefined || value === null) throw new ComputationRefusal('invalid_input', `${at} is empty.`, at);
+    return read(at, value) as T;
+  });
+}
+const positiveDose = (at: string, dose: unknown) => statedNumber(at, dose, n => n > 0, 'a positive number');
+const statedDoses = (field: string, list: unknown) =>
+  Array.from(new Set(statedList(field, list, positiveDose))).sort((a, b) => a - b);
 
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 
@@ -607,16 +622,16 @@ export function selectDoseFindingDesign(
   warnings.push(
     'The rule-based 3+3 design is discouraged: it cannot target a pre-specified ' +
       'toxicity rate, imprecisely estimates the MTD, and is misaligned with Project ' +
-      'Optimus expectations. It is listed only as a fallback for resource-constrained ' +
-      'contexts.',
+      'Optimus expectations.' + (recommended === 'not_assessed' ? '' :
+      ' It is listed only as a fallback for resource-constrained contexts.'),
   );
 
   if (params.optimalBiologicalDoseSought === true) {
     rationale.push(
-      'The program seeks an optimal biological dose (OBD), not merely an MTD. The ' +
-        'chosen toxicity-finding design should be paired with backfill cohorts and ' +
+      'The program seeks an optimal biological dose (OBD), not merely an MTD.' + (recommended === 'not_assessed' ? '' :
+        ' The chosen toxicity-finding design should be paired with backfill cohorts and ' +
         'integration of PK/PD and efficacy (e.g., BOIN12/uTPI-style OBD extensions, ' +
-        'and/or a downstream randomized dose comparison).',
+        'and/or a downstream randomized dose comparison).'),
     );
     warnings.push(
       'OBD characterization requires more than a toxicity-driven escalation design; ' +
@@ -1230,23 +1245,13 @@ export function designRandomizedDoseComparison(
 
   const doseUnit = params.doseUnit && params.doseUnit.trim() ? params.doseUnit : 'mg';
 
-  // Sanitize candidate doses deterministically: dedupe + ascending sort.
-  const cleaned = Array.from(
-    new Set(
-      (params.candidateDoses || []).filter(
-        (d: number) => typeof d === 'number' && isFinite(d) && d > 0,
-      ),
-    ),
-  ).sort((a: number, b: number) => a - b);
-
-  let recommendedDoses = cleaned;
+  const cleaned = statedDoses('candidateDoses', params.candidateDoses);
   if (cleaned.length < 2) {
-    warnings.push(
-      'A dose-optimization comparison requires at least 2 dosages. Fewer than 2 valid ' +
-        'doses were supplied; specify a higher (e.g., MTD-anchored) and a lower candidate dose.',
-    );
-    recommendedDoses = cleaned;
-  } else if (cleaned.length > 3) {
+    throw new ComputationRefusal('missing_input', 'candidateDoses must list at least 2 distinct positive ' +
+      'doses to compare: a higher (e.g., MTD-anchored) and a lower one.', 'candidateDoses');
+  }
+  const recommendedDoses = cleaned;
+  if (cleaned.length > 3) {
     warnings.push(
       `${cleaned.length} candidate doses supplied; 2-3 arms are typically most feasible ` +
         'for a randomized dose comparison. Consider narrowing to the most informative doses.',
@@ -1257,7 +1262,7 @@ export function designRandomizedDoseComparison(
     );
   }
 
-  const numberOfArms = Math.max(recommendedDoses.length, 2);
+  const numberOfArms = recommendedDoses.length;
 
   // Endpoint strategy.
   const primaryEndpoint = params.primaryActivityEndpoint || 'ORR';
@@ -1297,6 +1302,8 @@ export function designRandomizedDoseComparison(
   // This is an ESTIMATION-oriented heuristic, not a powered superiority calculation.
   // Rationale encoded: randomized dose-optimization arms in oncology are commonly
   // ~20-50 patients/arm to estimate ORR and tolerability with reasonable precision.
+  const statedResponseRate = statedNumber('anticipatedResponseRateHighDose', params.anticipatedResponseRateHighDose,
+    n => n > 0 && n < 1, 'a probability strictly between 0 and 1');
   let illustrativePerArmSize: number | null;
   if (inputStates.goalNonInferiorActivityLowerDose === 'not_stated') {
     illustrativePerArmSize = null;
@@ -1312,13 +1319,9 @@ export function designRandomizedDoseComparison(
         'activity endpoint requires a pre-specified margin and is sample-size intensive; ' +
         'a larger per-arm size (illustratively ~60) is used here.',
     );
-  } else if (
-    typeof params.anticipatedResponseRateHighDose === 'number' &&
-    params.anticipatedResponseRateHighDose > 0 &&
-    params.anticipatedResponseRateHighDose < 1
-  ) {
+  } else if (statedResponseRate !== undefined) {
     // Width of a 95% CI on a proportion ~ 1.96*sqrt(p(1-p)/n). Target half-width ~0.13.
-    const p = params.anticipatedResponseRateHighDose;
+    const p = statedResponseRate;
     const targetHalfWidth = 0.13;
     const n = Math.ceil((1.96 * 1.96 * p * (1 - p)) / (targetHalfWidth * targetHalfWidth));
     illustrativePerArmSize = Math.max(20, Math.min(80, n));
@@ -1363,7 +1366,7 @@ export function designRandomizedDoseComparison(
   );
 
   // Allocation.
-  const allocationRatio = recommendedDoses.map(() => '1').join(':') || '1:1';
+  const allocationRatio = recommendedDoses.map(() => '1').join(':');
   designNotes.push(
     `Balanced ${allocationRatio} randomization across arms supports unbiased ` +
       'between-dose comparison of activity and tolerability.',
@@ -1494,7 +1497,7 @@ function statedDoseEvidence(l: DoseLevelEvidence, index: number): StatedDoseEvid
   const state = (name: keyof StatedDoseEvidence['inputStates']): boolean | 'not_stated' =>
     statedBoolean(field(name), l[name]) ?? 'not_stated';
   return {
-    dose: l.dose,
+    dose: positiveDose(field('dose'), l.dose) as number,
     toxicityProbability: probability('toxicityProbability'),
     activitySignal: probability('activitySignal'),
     inputStates: {
@@ -1508,10 +1511,10 @@ function statedDoseEvidence(l: DoseLevelEvidence, index: number): StatedDoseEvid
 /**
  * Recommend a Phase 2 dose (RP2D) by integrating MTD, PK exposure, target
  * engagement/PD, longitudinal safety/tolerability, and efficacy — explicitly
- * NOT simply the MTD. Deterministic selection cascade. A dose without stated
- * toxicity (or an MTD it does not exceed), or without stated longitudinal
- * tolerability, is insufficient_data; no RP2D is selected without stated effect
- * evidence.
+ * NOT simply the MTD. Deterministic selection cascade. A dose not too toxic or
+ * sub-therapeutic on its stated evidence, and without stated toxicity (or an MTD
+ * it does not exceed) or stated longitudinal tolerability, is insufficient_data;
+ * no RP2D is selected without stated effect evidence.
  */
 export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
   const warnings: string[] = [];
@@ -1562,12 +1565,11 @@ export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
   const toxicityCeiling = 0.33;
   const mtdDefined = typeof params.mtd === 'number' && isFinite(params.mtd);
 
-  // Classify each dose. Tolerable needs stated evidence: an unanswered toxicity or
-  // longitudinal-tolerability fact makes the dose insufficient_data, never viable.
+  // Classify each dose. Tolerable needs stated toxicity (or an MTD the dose does not exceed) and
+  // stated longitudinal tolerability; an unanswered one never makes a dose viable.
   const viableDoses: StatedDoseEvidence[] = [];
   for (const l of levels) {
-    const aboveMtd =
-      typeof params.mtd === 'number' && isFinite(params.mtd) && l.dose > params.mtd;
+    const aboveMtd = mtdDefined && l.dose > (params.mtd as number);
     const tooToxicByProb =
       l.toxicityProbability !== undefined && l.toxicityProbability > toxicityCeiling;
     const tolerabilityBad = l.inputStates.longitudinalTolerabilityAcceptable === false;
@@ -1609,7 +1611,8 @@ export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
     }
 
     viableDoses.push(l);
-    evaluate(l, 'viable', 'Tolerable on the stated toxicity and longitudinal-tolerability evidence; candidate RP2D.');
+    evaluate(l, 'viable', `Tolerable on the stated ${l.toxicityProbability === undefined ? 'MTD' : 'toxicity'} and ` +
+      'longitudinal-tolerability evidence; candidate RP2D.');
   }
 
   let recommendedRP2D: number | undefined;
@@ -1714,7 +1717,7 @@ export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
       'MTD; it must not default to the MTD without supporting PK/PD/tolerability/efficacy data.';
   }
 
-  recommendations.push(
+  if (recommendedRP2D !== undefined) recommendations.push(
     'Confirm the selected RP2D with a randomized dose comparison where feasible, and ' +
       'document a totality-of-evidence dose-justification narrative.',
     'Continue to monitor longitudinal tolerability (dose modifications, chronic/cumulative ' +
@@ -1799,20 +1802,11 @@ export function designBackfillStrategy(
 
   const doseUnit = params.doseUnit && params.doseUnit.trim() ? params.doseUnit : 'mg';
 
-  const cleared = Array.from(
-    new Set(
-      (params.clearedDoseLevels || []).filter(
-        (d: number) => typeof d === 'number' && isFinite(d) && d > 0,
-      ),
-    ),
-  ).sort((a: number, b: number) => a - b);
-
-  const objectives =
-    params.objectives && params.objectives.length > 0
-      ? params.objectives
-      : (['pk', 'pd', 'biomarker', 'preliminary_activity'] as Array<
-          'pk' | 'pd' | 'biomarker' | 'target_engagement' | 'preliminary_activity' | 'tolerability'
-        >);
+  const cleared = statedDoses('clearedDoseLevels', params.clearedDoseLevels);
+  const statedObjectives = statedList('objectives', params.objectives, (at, o) =>
+    statedOneOf(at, o, ['pk', 'pd', 'biomarker', 'target_engagement', 'preliminary_activity', 'tolerability'] as const));
+  const objectives = statedObjectives.length > 0 ? statedObjectives
+    : (['pk', 'pd', 'biomarker', 'preliminary_activity'] as typeof statedObjectives);
 
   const objectiveLabels: Record<string, string> = {
     pk: 'Pharmacokinetics (rich sampling for exposure metrics across doses)',
@@ -1997,13 +1991,13 @@ export interface AssessDoseExposureResponseParams {
 
 export interface AssessDoseExposureResponseResult {
   exposureMetric: string;
-  /** Is the efficacy E-R effectively flat? not_assessed with fewer than 2 valid efficacy points. */
+  /** Is the efficacy E-R effectively flat? not_assessed with fewer than 2 distinct efficacy exposures. */
   efficacyResponseFlat: boolean | 'not_assessed';
-  /** Is safety rising with exposure? not_assessed with fewer than 2 valid safety points. */
+  /** Is safety rising with exposure? not_assessed with fewer than 2 distinct safety exposures. */
   safetyRisesWithExposure: boolean | 'not_assessed';
   /** Qualitative therapeutic window/index assessment. */
   therapeuticWindow: 'wide' | 'moderate' | 'narrow' | 'indeterminate';
-  /** Quantitative deltas used (deterministic); null or not_assessed where a curve has fewer than 2 points. */
+  /** Quantitative deltas used (deterministic); null or not_assessed where a curve has fewer than 2 distinct exposures. */
   metrics: {
     efficacyResponseRangeAbsolute: number | null;
     efficacyRelativeGainAcrossRange: number | null;
@@ -2017,18 +2011,17 @@ export interface AssessDoseExposureResponseResult {
   citations: Citation[];
 }
 
-/** Sort E-R points ascending by exposure (deterministic, pure). */
-function sortByExposure(points: ExposureResponsePoint[]): ExposureResponsePoint[] {
-  return Array.from(points || [])
-    .filter(
-      (p: ExposureResponsePoint) =>
-        p &&
-        typeof p.exposure === 'number' &&
-        isFinite(p.exposure) &&
-        typeof p.response === 'number' &&
-        isFinite(p.response),
-    )
-    .sort((a: ExposureResponsePoint, b: ExposureResponsePoint) => a.exposure - b.exposure);
+/** One E-R point per exposure at its mean response, ascending, whatever the input order; a finite response outside 0-1 is refused. */
+function sortByExposure(points: ExposureResponsePoint[], curve: string): ExposureResponsePoint[] {
+  const byExposure = new Map<number, number[]>();
+  Array.from(points || []).forEach((p, i) => {
+    if (p && Number.isFinite(p.exposure) && Number.isFinite(p.response)) {
+      statedNumber(`${curve}[${i}].response`, p.response, n => n >= 0 && n <= 1, 'a probability between 0 and 1');
+      byExposure.set(p.exposure, [...(byExposure.get(p.exposure) ?? []), p.response]);
+    }
+  });
+  return Array.from(byExposure, ([exposure, rs]) => ({ exposure, response: rs.sort((a, b) => a - b).reduce((s, r) => s + r) / rs.length }))
+    .sort((a, b) => a.exposure - b.exposure);
 }
 
 /** Deterministic sign of the overall slope across the exposure range. */
@@ -2047,9 +2040,9 @@ function overallSlopeSign(
 /**
  * Exposure-response assessment for dose selection. Evaluates whether the
  * efficacy E-R is flat (supporting a lower dose) and whether safety rises with
- * exposure, and synthesizes a therapeutic-window verdict. Deterministic. A curve
- * with fewer than 2 valid points has its flags not_assessed and its metrics null,
- * never false, flat or 0.
+ * exposure, and synthesizes a therapeutic-window verdict. Deterministic. A curve with fewer
+ * than 2 distinct exposures has its flags and slope signs not_assessed and its range metrics
+ * null, never false, flat or 0.
  */
 export function assessDoseExposureResponse(
   params: AssessDoseExposureResponseParams,
@@ -2060,18 +2053,18 @@ export function assessDoseExposureResponse(
 
   const exposureMetric = params.exposureMetric || 'AUC';
 
-  const eff = sortByExposure(params.efficacyExposureResponse);
-  const saf = sortByExposure(params.safetyExposureResponse);
+  const eff = sortByExposure(params.efficacyExposureResponse, 'efficacyExposureResponse');
+  const saf = sortByExposure(params.safetyExposureResponse, 'safetyExposureResponse');
 
   if (eff.length < 2) {
     warnings.push(
-      'Fewer than 2 valid efficacy exposure-response points; flatness of the efficacy ' +
+      'Fewer than 2 valid efficacy points at distinct exposures; flatness of the efficacy ' +
         'curve cannot be assessed. Provide >= 3 points spanning the dose range.',
     );
   }
   if (saf.length < 2) {
     warnings.push(
-      'Fewer than 2 valid safety exposure-response points; the safety E-R trend cannot ' +
+      'Fewer than 2 valid safety points at distinct exposures; the safety E-R trend cannot ' +
         'be assessed. Provide >= 3 points spanning the dose range.',
     );
   }

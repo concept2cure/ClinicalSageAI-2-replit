@@ -586,15 +586,21 @@ exposure-response engines are other tools and are not touched. Evidence:
 `s5a-dose-optimization/`.
 
 **Dose optimization execution result:** an unanswered Optimus pillar is `not_stated` and
-leaves the score and tier `not_assessed`; an omitted "dose selected by MTD alone" no longer
-earns a met pillar. An unstated statistician or late-onset fact leaves the escalation design
-`not_assessed` with no ranked alternatives; an unstated goal or tolerability role leaves the
-arm size and endpoint role unassessed. A dose without stated toxicity (or an MTD it does not
-exceed) or longitudinal tolerability is `insufficient_data`, and no RP2D is chosen without
+leaves the score `null` and the tier `not_assessed`; an omitted "dose selected by MTD alone"
+no longer earns a met pillar. An unstated statistician or late-onset fact leaves the
+escalation design `not_assessed` with no ranked alternatives; an unstated goal or tolerability
+role leaves the arm size and endpoint role unassessed. A dose that is not too toxic or
+sub-therapeutic on its stated evidence, and lacks stated toxicity (or an MTD it does not
+exceed) or longitudinal tolerability, is `insufficient_data`, and no RP2D is chosen without
 exposure, engagement or activity evidence. An unstated biopsy feasibility sizes no backfill
-cohort, and a one-point exposure-response curve is not called flat. A malformed value,
-including a target toxicity rate, is refused by field. No source reader, app or service was
-added.
+cohort, and an exposure-response curve with fewer than two distinct exposures is not called
+flat. A malformed boolean, target toxicity rate, anticipated response rate, Optimus dose
+count, dose-row toxicity or activity, candidate or cleared dose, or backfill objective is
+refused by field. So are a finite dose-row dose at or below zero, a finite exposure-response
+response outside 0–1, and fewer than two distinct candidate doses. The other malformed
+numbers that `s5a-dose-optimization/README.md` lists as residuals are still ignored, and the
+dose rows and exposure-response points it names are still dropped. No source reader, app or
+service was added.
 
 **S5a RWE — What already exists (execution audit):** the six functions in
 `rwe/rwe-methodology-knowledge.ts` are already reached by `rweMethodologyTools.ts`, the
