@@ -114,13 +114,13 @@ afterEach(() => {
    canvas offers this segment's packs: the "Portfolio oversight pack". */
 const renderCanvas = () =>
   render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment="health" onNav={vi.fn()} />);
-const ready = () => waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+const ready = () => waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 async function openPack() {
   renderCanvas();
   await ready();
   // "Where to start": the segment's first pack, offered for the open project.
   const opener = await waitFor(() => {
-    const button = document.querySelector<HTMLElement>('.rc-opener .rc-preset-btn');
+    const button = document.querySelector<HTMLElement>('[data-work-area="insights"] .ph-acts .btn.primary');
     expect(button?.textContent).toMatch(/Build the Portfolio oversight pack/);
     return button!;
   });

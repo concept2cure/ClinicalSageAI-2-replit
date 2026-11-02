@@ -57,7 +57,7 @@ describe('Insights — the open program', () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM, title: 'HLV-333', code: 'HLV-333' };
     answer = overview(lead('HLV-333', 11), { programId: PROGRAM, state: 'lead' });
     renderCanvas();
-    await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+    await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
     expect(overviewUrls()).toEqual([`/api/insights-canvas/overview?programId=${PROGRAM}`]);
     expect(document.body.textContent).toMatch(/HLV-333/);
     expect(document.body.textContent).not.toMatch(/C2C-001/);
@@ -74,7 +74,7 @@ describe('Insights — the open program', () => {
   it('with no program open, the organisation view is read as before', async () => {
     answer = overview(lead('C2C-001', 1), null);
     renderCanvas();
-    await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+    await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
     expect(overviewUrls()).toEqual(['/api/insights-canvas/overview']);
   });
 });

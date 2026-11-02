@@ -73,7 +73,7 @@ async function catalog() {
   await screen.findByRole('heading', { name: 'Report catalog' });
 }
 async function pack() {
-  fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
+  fireEvent.click(document.querySelector('[data-work-area="insights"] .ph-acts .btn.primary') as HTMLElement);
   await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
 }
 
