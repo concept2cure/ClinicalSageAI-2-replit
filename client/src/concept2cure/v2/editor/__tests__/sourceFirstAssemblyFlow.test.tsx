@@ -20,6 +20,7 @@ import { clearEditorTarget, peekEditorTarget, setEditorTarget } from '../../edit
 import { publishShellProject } from '../../shellProject';
 import { __resetCeremonies, registerCeremonyOpen } from '../../ceremony';
 import { SourceAssemblyAction } from '../SourceAssemblyDialog';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111281';
 const PRIOR = '22222222-2222-4222-8222-222222222281';
@@ -226,7 +227,7 @@ describe('a changed source selection cannot become broad retrieval', () => {
     await screen.findByTestId('ai-draft-body');
     handoff([{ kind: 'data-room', sourceId: 13, expectedChecksum: 'f'.repeat(64) }]);
     await waitFor(() => expect(screen.getByTestId('assembly-selected-sources').textContent).toContain('Data Room source 13'));
-    if (!screen.queryByTestId('ai-draft-panel')) fireEvent.click(screen.getByTestId('ai-draft-open'));
+    if (!screen.queryByTestId('ai-draft-panel')) fireEvent.click(openEditorControl('Draft from sources', 'ana'));
     const generate = screen.queryByTestId('ai-draft-generate') ?? screen.queryByTestId('ai-draft-regenerate');
     if (generate) fireEvent.click(generate);
     await act(async () => { await Promise.resolve(); });

@@ -20,6 +20,7 @@ import { ConversationThread } from '../../surfaces/ConversationThread';
 import { AuthoringRemedies } from '../AuthoringRemedies';
 import { DocumentCanvas } from '../DocumentCanvas';
 import { clearEditorTarget, peekEditorTarget } from '../../editorTarget';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const DOC = 'dddddddd-0000-4000-8000-000000000001';
 const SEC = 'aaaaaaaa-0000-4000-8000-000000000001';
@@ -87,8 +88,7 @@ async function prepareFix(base = AT, qualified = true, amendment?: { proposal: R
     if (amendment?.empty) expect(document.querySelector('.tiptap')?.textContent).toBe('');
     else expect(document.querySelector('.tiptap')?.textContent).toContain('18 months');
   });
-  fireEvent.click(screen.getByText('Review with AnA'));
-  fireEvent.click(screen.getByRole('button', { name: 'Prepare targeted fixes' }));
+  fireEvent.click(openEditorControl('Prepare targeted fixes', 'ana'));
   const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' });
   await waitFor(() => expect((screen.getByRole('button', { name: 'Send message to AnA' }) as HTMLButtonElement).disabled).toBe(false));
   expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/ana-ri/stream'))).toBe(false);
@@ -151,8 +151,7 @@ describe('AnA remedies reach the existing editor', () => {
       expect(bridge).toBeTruthy();
       expect(document.querySelector('.tiptap')?.textContent).toContain('18 months');
     });
-    fireEvent.click(screen.getByText('Review with AnA'));
-    fireEvent.click(screen.getByRole('button', { name: 'Review document' }));
+    fireEvent.click(openEditorControl('Review document', 'ana'));
     expect(onAsk.mock.calls[0][0]).toContain('critique_document');
     await waitFor(() => expect((screen.getByRole('button', { name: 'Apply as tracked suggestion' }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByRole('button', { name: 'Apply as tracked suggestion' }));
@@ -183,7 +182,7 @@ describe('AnA remedies reach the existing editor', () => {
     await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('18 months'));
     const editor = (document.querySelector('.tiptap') as unknown as { editor: Editor }).editor;
     act(() => { editor.commands.insertContent('Unsaved note. '); });
-    fireEvent.click(screen.getByTestId('vault-rail-open'));
+    fireEvent.click(openEditorControl('Project files'));
     fireEvent.click(screen.getByRole('button', { name: 'Open pulled working copy' }));
     await screen.findByRole('alertdialog', { name: 'Unsaved changes in 3.2.P.8.1' });
     expect(onNav).not.toHaveBeenCalled();

@@ -1,0 +1,1472 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > a current partial canvas preserves a sent review request > checks the canonical session again before a prepared confirmation can write
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > a current partial canvas preserves a sent review request > does not create follow-on tasks using a replacement session after a sent review request
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > a current partial canvas preserves a sent review request > blocks new confirmation and retains the actual pending review/task receipt
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > sends every chosen reviewer in one request, and gives each a task
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > requires a reviewer and a reason at the server’s floor before anything is sent
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > shows a refusal in the server’s words, creates no task, and lets the person send again
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > the object gate’s refusal is said as what it means for this act, not as “the authoring object”
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a success that names another document is not a receipt for this one
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a reviewer the answer names no task for is unconfirmed, and the task list is offered, not a retry 906ms
+   → expected <body><div>…(1)</div></body> to be <button type="button" …(5)>…(1)</button> // Object.is equality
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the Tasks rail > the Tasks rail offers Send for review, not a task-only assignment
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a task is never written by the dialog (RR5) > the toast counts the server’s route tasks, and the dialog posts no task
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a member whose review is pending cannot be chosen; one whose verdict is recorded can be asked again, and is told the verdict stays in the record
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a row that comes back with a verdict gets no task, and is never reported as requested
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > when no row was reopened, nothing is reported as requested and no task is made
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > existing requests that could not be read: no one can be chosen, and reading them again recovers
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > a roster that could not be read offers to read it again, and does
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the task says how it closes > each reviewer’s task says the review signature closes it, and where a change request goes
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > does not offer the document’s author as a reviewer, and says why
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > the workbench passes the document’s author, so she is not offered there either
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > says the reviewer was given the Reviewer role when the server granted it
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > a requester who may not grant access is told, in the server’s words, that no access was granted
+ ↓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > an author refusal from the server is shown in its words and creates no task
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > draws one bar with the title and its state, and no crumbs or "Save and sign" group
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > makes Save the one primary and opens the reason strip only while there is something to save
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > holds every panel and act in More, by name and test id, with arrows, Escape and focus return
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > opens a panel chosen from More, and its close returns focus to More
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > opens Review tasks from the status word and the versions from "v{n}"
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > puts Draft with AnA, Draft from sources and Review with AnA in the ✻ menu, and an ask lands in the conversation
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > opens the existing New document and New section drawers from More
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > keeps Download in the bar as an icon, the same menu
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > keeps Freeze, E-sign and Place into filing in the bar until D4-3 moves their mounts
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > shows the conversation from the page placement where the AnA button stood
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > MenuButton is a menu button that skips items it does not show
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > DownloadMenu compact draws the icon only, named Download
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > AuthoringOversightActions as a menu: the four asks as items, the same note, each ask closes the menu
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > AuthoringCreateExport with triggers="download" draws Download only and opens its drawers on request
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > AuthoringCreateExport says a refused request in a toast and opens no drawer
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the bar and menu CSS (§D4.K) > a focused menu item keeps a visible ring, not outline: none alone
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the bar and menu CSS (§D4.K) > retires the header rules no surface draws any more, and the editor draws none of the old header
+ × client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the bar and menu CSS (§D4.K) > wraps rather than clips at every width, and wins over D0’s later `.dcv-bar` shell 19ms
+   → expected '' to match /flex-wrap\s*:\s*wrap/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a reviewer the answer names no task for is unconfirmed, and the task list is offered, not a retry
+AssertionError: expected <body><div>…(1)</div></body> to be <button type="button" …(5)>…(1)</button> // Object.is equality
+- Expected
++ Received
+@@ -1,6 +1,277 @@
++ <body>
++   <div>
++     <div
++       class="ed"
++     >
++       <aside
++         class="ed-tree"
++       >
++         <div
++           class="ed-tree-h"
++         >
++           <div
++             class="ed-tree-p"
++             data-testid="ed-tree-p"
++             title="C2C-101"
++           >
++             C2C-101 · Planning · M2
++           </div>
++           <div
++             class="ed-tree-t"
++             tabindex="-1"
++           >
++             Document tree
++           </div>
++           <div
++             class="ed-tree-m"
++           >
++             1 document · all
++           </div>
++           <div
++             style="display: flex; gap: 6px; margin-top: 8px;"
++           >
++             <select
++               aria-label="Filter documents by status"
++               class="c2c-input"
++               style="height: 28px; flex: 1 1 0%;"
++             >
++               <option
++                 value="all"
++               >
++                 all
++               </option>
++               <option
++                 value="draft"
++               >
++                 draft
++               </option>
++               <option
++                 value="in_review"
++               >
++                 in review
++               </option>
++               <option
++                 value="approved"
++               >
++                 approved
++               </option>
++               <option
++                 value="frozen"
++               >
++                 frozen
++               </option>
++             </select>
++           </div>
++         </div>
++         <div
++           class="ed-tree-scroll"
++         >
++           <div
++             class="ed-vol"
++           >
++             <button
++               class="ed-tree-row"
++               data-active="true"
++               style="font-weight: 600;"
++             >
++               <span
++                 class="ed-num"
++               >
++                 M2
++               </span>
++               <span
++                 class="ed-lbl"
++               >
++                 Module 2.5 Clinical Overview
++               </span>
++               <span
++                 class="rd-chip tone-idle"
++                 style="margin-left: auto;"
++               >
++                 1
++               </span>
++             </button>
+              <button
++               class="ed-tree-row"
++               data-active="true"
++               style="padding-left: 22px;"
++             >
++               <span
++                 class="ed-num"
++               >
++                 2.5.1
++               </span>
++               <span
++                 class="ed-lbl"
++               >
++                 Rationale
++               </span>
++             </button>
++           </div>
++         </div>
++       </aside>
++       <section
++         class="ed-doc"
++       >
++         <header
++           class="dcv-bar ed-bar"
++           data-testid="ed-bar"
++         >
++           <div
++             class="ed-bar-id"
++           >
++             <span
++               class="dcv-bar-t"
++               title="Module 2.5 Clinical Overview — C2C-101 · Planning"
++             >
++               Module 2.5 Clinical Overview
++             </span>
++             <span
++               class="dcv-bar-p"
++             >
++               <button
++                 class="ed-status"
++                 data-testid="ed-status"
++                 title="Review and sign"
++                 type="button"
++               >
++                 <span
++                   class="cdl-pill"
++                   data-status="DRAFT"
++                 >
++                   Draft
++                 </span>
++               </button>
++               <button
++                 aria-label="Versions: 0 revisions of 2.5.1"
++                 class="ed-ver"
++                 data-testid="ed-versions"
++                 type="button"
++               >
++                 v
++                 1
++               </button>
++               <span
++                 class="ed-saved"
++                 data-testid="ed-saved"
++               />
++             </span>
++           </div>
++           <div
++             class="ed-bar-acts"
++           >
++             <div
++               aria-label="Editor view"
++               class="seg ed-view"
++               role="group"
++             >
++               <button
++                 aria-pressed="true"
++                 class="seg-b"
++                 title="Edit one section"
++                 type="button"
++               >
++                 Section
++               </button>
++               <button
++                 aria-pressed="false"
++                 class="seg-b"
++                 title="Read the whole document"
++                 type="button"
++               >
++                 Document
++               </button>
++             </div>
++             <button
++               class="btn ed-save"
++               data-testid="save-section"
++               disabled=""
++               type="button"
++             >
++               <svg
++                 aria-hidden="true"
++                 class="lucide lucide-check"
++                 fill="none"
++                 focusable="false"
++                 height="1em"
++                 stroke="currentColor"
++                 stroke-linecap="round"
++                 stroke-linejoin="round"
++                 stroke-width="1.5"
++                 viewBox="0 0 24 24"
++                 width="1em"
++                 xmlns="http://www.w3.org/2000/svg"
++               >
++                 <path
++                   d="M20 6 9 17l-5-5"
++                 />
++               </svg>
++                
++               Saved
++             </button>
++             <button
++               class="btn ghost"
++               disabled=""
++               style="height: 30px;"
++               title="Open a saved section bound to a filing first."
++               type="button"
++             >
++               Re-file saved text
++             </button>
++             <span
++               class="dlm"
++               data-testid="ed-ana"
++             >
++               <button
++                 aria-expanded="false"
++                 aria-haspopup="menu"
++                 aria-label="AnA"
++                 class="btn ed-ico"
++                 title="Ask AnA"
++                 type="button"
++               >
++                 <span
++                   aria-hidden="true"
++                   class="ed-spark"
++                 >
++                   ✻
++                 </span>
++               </button>
++             </span>
++             <button
++               aria-label="Comments"
++               aria-pressed="false"
++               class="btn ed-ico"
++               data-testid="ed-comments-open"
++               title="Comments"
++               type="button"
++             >
++               <svg
++                 aria-hidden="true"
++                 class="lucide lucide-message-square"
++                 fill="none"
++                 focusable="false"
++                 height="1em"
++                 stroke="currentColor"
++                 stroke-linecap="round"
++                 stroke-linejoin="round"
++                 stroke-width="1.5"
++                 viewBox="0 0 24 24"
++                 width="1em"
++                 xmlns="http://www.w3.org/2000/svg"
++               >
++                 <path
++                   d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
++                 />
++               </svg>
++             </button>
++             <span
++               class="dlm"
++               data-testid="ed-more"
++             >
++               <button
+                  aria-expanded="false"
+                  aria-haspopup="menu"
+                  aria-label="More document actions"
+                  class="btn ed-ico"
+                  title="More"
+@@ -35,5 +306,1117 @@
+                      cy="19"
+                      r="1"
+                    />
+                  </svg>
+                </button>
++             </span>
++             <button
++               aria-label="Show the conversation"
++               class="btn ed-ico"
++               data-testid="ed-show-conversation"
++               title="Show the conversation"
++               type="button"
++             >
++               <svg
++                 aria-hidden="true"
++                 class="lucide lucide-minimize"
++                 fill="none"
++                 focusable="false"
++                 height="1em"
++                 stroke="currentColor"
++                 stroke-linecap="round"
++                 stroke-linejoin="round"
++                 stroke-width="1.5"
++                 viewBox="0 0 24 24"
++                 width="1em"
++                 xmlns="http://www.w3.org/2000/svg"
++               >
++                 <path
++                   d="M8 3v3a2 2 0 0 1-2 2H3"
++                 />
++                 <path
++                   d="M21 8h-3a2 2 0 0 1-2-2V3"
++                 />
++                 <path
++                   d="M3 16h3a2 2 0 0 1 2 2v3"
++                 />
++                 <path
++                   d="M16 21v-3a2 2 0 0 1 2-2h3"
++                 />
++               </svg>
++             </button>
++           </div>
++         </header>
++         <div
++           data-testid="authoring-creation-notices"
++         />
++         <div
++           class="ed-doc-scroll"
++         >
++           <div
++             class="ed-doc-inner"
++           >
++             <section
++               aria-label="Document assembly"
++               class="authoring-oversight"
++               style="min-width: 0;"
++             >
++               <details
++                 class="authoring-oversight-options"
++               >
++                 <summary
++                   aria-describedby="_r_4_"
++                   class="authoring-oversight-toggle"
++                 >
++                   Build document or section
++                 </summary>
++                 <div
++                   class="ed-source-detail"
++                   style="min-width: 0; grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere;"
++                 >
++                   <p
++                     id="_r_4_"
++                   >
++                     Assemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.
++                   </p>
++                   <p
++                     role="status"
++                   >
++                     Your signed-in account or organization changed. Sign in and reopen this document before building.
++                   </p>
++                   <div
++                     class="ed-source-detail"
++                     data-testid="saved-assembly-sources"
++                     style="min-width: 0; overflow-wrap: anywhere;"
++                   >
++                     <strong>
++                       Last recorded build source references
++                     </strong>
++                     <p>
++                       Check the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.
++                     </p>
++                     <div
++                       class="authoring-oversight-actions"
++                     >
++                       <button
++                         class="btn ghost authoring-oversight-action"
++                         disabled=""
++                         title="Your signed-in account or organization changed. Reopen this document before checking saved sources."
++                         type="button"
++                       >
++                         Check saved sources
++                       </button>
++                     </div>
++                   </div>
++                   <div
++                     class="ed-source-detail"
++                     style="min-width: 0; grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere;"
++                   >
++                     <div
++                       style="display: grid; min-width: 0; gap: var(--space-1);"
++                     >
++                       <label
++                         for="_r_5_"
++                       >
++                         Template
++                       </label>
++                       <label
++                         class="de-label"
++                         for="_r_5_-search"
++                       >
++                         Search templates
++                       </label>
++                       <div
++                         style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);"
++                       >
++                         <input
++                           aria-controls="_r_5_"
++                           aria-describedby="_r_5_-search-hint _r_5_-results"
++                           class="de-input"
++                           disabled=""
++                           id="_r_5_-search"
++                           placeholder="Search titles and template details"
++                           style="min-width: 0; flex: 1 1 0%;"
++                           type="search"
++                           value=""
++                         />
++                         <button
++                           aria-label="Clear template search"
++                           class="btn ghost"
++                           disabled=""
++                           type="button"
++                         >
++                           Clear
++                         </button>
++                       </div>
++                       <p
++                         class="de-desc"
++                         id="_r_5_-search-hint"
++                       >
++                         Search titles, descriptions, types, categories, regions and recorded template details.
++                       </p>
++                       <div
++                         class="de-desc"
++                         id="_r_5_-results"
++                         role="status"
++                       >
++                         <div>
++                           0
++                            of 
++                           0
++                            
++                           templates
++                         </div>
++                         <div>
++                           No templates are available.
++                         </div>
++                       </div>
++                       <select
++                         aria-describedby="_r_4_ _r_5_-results"
++                         class="de-select"
++                         disabled=""
++                         id="_r_5_"
++                         style="width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"
++                       >
++                         <option
++                           value=""
++                         >
++                           Choose a template
++                         </option>
++                       </select>
++                     </div>
++                     <label
++                       style="display: grid; min-width: 0; gap: var(--space-1);"
++                     >
++                       Build target 
++                       <select
++                         class="c2c-input"
++                         disabled=""
++                         style="width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"
++                       >
++                         <option
++                           value=""
++                         >
++                           Entire document
++                         </option>
++                       </select>
++                     </label>
++                     <label>
++                       <input
++                         disabled=""
++                         type="checkbox"
++                       />
++                        Draft empty eligible sections with AnA
++                     </label>
++                     <label
++                       style="display: grid; min-width: 0; gap: var(--space-1);"
++                     >
++                       Reason for build 
++                       <input
++                         class="c2c-input"
++                         disabled=""
++                         maxlength="2000"
++                         placeholder="Why sections are being assembled"
++                         style="width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"
++                         value=""
++                       />
++                     </label>
++                     <div
++                       class="authoring-oversight-actions"
++                     >
++                       <button
++                         class="btn ghost authoring-oversight-action"
++                         disabled=""
++                         type="button"
++                       >
++                         Preview build
++                       </button>
++                       <button
++                         class="btn primary authoring-oversight-action"
++                         disabled=""
++                         type="button"
++                       >
++                         Build document
++                       </button>
++                     </div>
++                   </div>
++                 </div>
++               </details>
++             </section>
++             <div
++               class="ed-mast"
++             >
++               <div
++                 class="ed-mast-num"
++               >
++                 2.5.1
++               </div>
++               <h1
++                 class="ed-mast-t"
++                 style="display: inline;"
++               >
++                 Rationale
++               </h1>
++               <button
++                 class="nda-open"
++                 style="margin-left: 8px; vertical-align: middle;"
++                 title="Rename this section's code and title — its content and history are unchanged"
++               >
++                 <svg
++                   aria-hidden="true"
++                   class="lucide lucide-pen-line"
++                   fill="none"
++                   focusable="false"
++                   height="1em"
++                   stroke="currentColor"
++                   stroke-linecap="round"
++                   stroke-linejoin="round"
++                   stroke-width="1.5"
++                   viewBox="0 0 24 24"
++                   width="1em"
++                   xmlns="http://www.w3.org/2000/svg"
++                 >
++                   <path
++                     d="M12 20h9"
++                   />
++                   <path
++                     d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
++                   />
++                 </svg>
++                  Rename
++               </button>
++               <button
++                 class="nda-open"
++                 style="margin-left: 4px; vertical-align: middle;"
++                 title="Mechanical checks over the saved section — length, module keywords, CTD elements, tables, placeholders, structure. Heuristic signals, not a compliance determination."
++               >
++                 <svg
++                   aria-hidden="true"
++                   class="lucide lucide-circle-check-big"
++                   fill="none"
++                   focusable="false"
++                   height="1em"
++                   stroke="currentColor"
++                   stroke-linecap="round"
++                   stroke-linejoin="round"
++                   stroke-width="1.5"
++                   viewBox="0 0 24 24"
++                   width="1em"
++                   xmlns="http://www.w3.org/2000/svg"
++                 >
++                   <path
++                     d="M21.801 10A10 10 0 1 1 17 3.335"
++                   />
++                   <path
++                     d="m9 11 3 3L22 4"
++                   />
++                 </svg>
++                  
++                 Check
++               </button>
++               <div
++                 class="ed-mast-meta"
++               >
++                 Module 2.5 Clinical Overview
++               </div>
++             </div>
++             <div
++               style="min-height: 460px; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column;"
++             >
++               <div
++                 class="rse-root"
++               >
++                 <div
++                   aria-label="Formatting"
++                   class="rse-ribbon"
++                   role="toolbar"
++                 >
++                   <select
++                     aria-label="Paragraph style"
++                     class="rse-sel"
++                   >
++                     <option
++                       value="p"
++                     >
++                       Paragraph
++                     </option>
++                     <option
++                       value="h1"
++                     >
++                       Heading 1
++                     </option>
++                     <option
++                       value="h2"
++                     >
++                       Heading 2
++                     </option>
++                     <option
++                       value="h3"
++                     >
++                       Heading 3
++                     </option>
++                     <option
++                       value="h4"
++                     >
++                       Heading 4
++                     </option>
++                     <option
++                       value="h5"
++                     >
++                       Heading 5
++                     </option>
++                   </select>
++                   <span
++                     class="rse-sep"
++                   />
++                   <button
++                     aria-label="Bold (⌘B)"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-bold"
++                     title="Bold (⌘B)"
++                     type="button"
++                   >
++                     <b>
++                       B
++                     </b>
++                   </button>
++                   <button
++                     aria-label="Italic (⌘I)"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-italic"
++                     title="Italic (⌘I)"
++                     type="button"
++                   >
++                     <i>
++                       I
++                     </i>
++                   </button>
++                   <button
++                     aria-label="Underline (⌘U)"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-underline"
++                     title="Underline (⌘U)"
++                     type="button"
++                   >
++                     <span
++                       style="text-decoration: underline;"
++                     >
++                       U
++                     </span>
++                   </button>
++                   <button
++                     aria-label="Superscript (⌘.) — x2"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-superscript"
++                     title="Superscript (⌘.)"
++                     type="button"
++                   >
++                     <span
++                       aria-hidden="true"
++                     >
++                       x
++                       <sup>
++                         2
++                       </sup>
++                     </span>
++                   </button>
++                   <button
++                     aria-label="Subscript (⌘,) — x2"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-subscript"
++                     title="Subscript (⌘,)"
++                     type="button"
++                   >
++                     <span
++                       aria-hidden="true"
++                     >
++                       x
++                       <sub>
++                         2
++                       </sub>
++                     </span>
++                   </button>
++                   <button
++                     aria-label="Highlight — ab"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-highlight"
++                     title="Highlight"
++                     type="button"
++                   >
++                     <span
++                       aria-hidden="true"
++                       class="rse-hl-glyph"
++                     >
++                       ab
++                     </span>
++                   </button>
++                   <span
++                     class="rse-sep"
++                   />
++                   <button
++                     aria-label="Bullet list (⌘⇧8)"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-bullet-list"
++                     title="Bullet list (⌘⇧8)"
++                     type="button"
++                   >
++                     <svg
++                       aria-hidden="true"
++                       class="lucide lucide-list"
++                       fill="none"
++                       focusable="false"
++                       height="1em"
++                       stroke="currentColor"
++                       stroke-linecap="round"
++                       stroke-linejoin="round"
++                       stroke-width="1.5"
++                       viewBox="0 0 24 24"
++                       width="1em"
++                       xmlns="http://www.w3.org/2000/svg"
++                     >
++                       <path
++                         d="M3 12h.01"
++                       />
++                       <path
++                         d="M3 18h.01"
++                       />
++                       <path
++                         d="M3 6h.01"
++                       />
++                       <path
++                         d="M8 12h13"
++                       />
++                       <path
++                         d="M8 18h13"
++                       />
++                       <path
++                         d="M8 6h13"
++                       />
++                     </svg>
++                   </button>
++                   <button
++                     aria-label="Numbered list (⌘⇧7)"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-numbered-list"
++                     title="Numbered list (⌘⇧7)"
++                     type="button"
++                   >
++                     <svg
++                       aria-hidden="true"
++                       class="lucide lucide-list-ordered"
++                       fill="none"
++                       focusable="false"
++                       height="1em"
++                       stroke="currentColor"
++                       stroke-linecap="round"
++                       stroke-linejoin="round"
++                       stroke-width="1.5"
++                       viewBox="0 0 24 24"
++                       width="1em"
++                       xmlns="http://www.w3.org/2000/svg"
++                     >
++                       <path
++                         d="M10 12h11"
++                       />
++                       <path
++                         d="M10 18h11"
++                       />
++                       <path
++                         d="M10 6h11"
++                       />
++                       <path
++                         d="M4 10h2"
++                       />
++                       <path
++                         d="M4 6h1v4"
++                       />
++                       <path
++                         d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"
++                       />
++                     </svg>
++                   </button>
++                   <span
++                     class="rse-sep"
++                   />
++                   <button
++                     aria-label="Align left"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-align-left"
++                     title="Align left"
++                     type="button"
++                   >
++                     <svg
++                       aria-hidden="true"
++                       class="lucide lucide-align-left"
++                       fill="none"
++                       focusable="false"
++                       height="1em"
++                       stroke="currentColor"
++                       stroke-linecap="round"
++                       stroke-linejoin="round"
++                       stroke-width="1.5"
++                       viewBox="0 0 24 24"
++                       width="1em"
++                       xmlns="http://www.w3.org/2000/svg"
++                     >
++                       <path
++                         d="M15 12H3"
++                       />
++                       <path
++                         d="M17 18H3"
++                       />
++                       <path
++                         d="M21 6H3"
++                       />
++                     </svg>
++                   </button>
++                   <button
++                     aria-label="Align center"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-align-center"
++                     title="Align center"
++                     type="button"
++                   >
++                     <svg
++                       aria-hidden="true"
++                       class="lucide lucide-align-center"
++                       fill="none"
++                       focusable="false"
++                       height="1em"
++                       stroke="currentColor"
++                       stroke-linecap="round"
++                       stroke-linejoin="round"
++                       stroke-width="1.5"
++                       viewBox="0 0 24 24"
++                       width="1em"
++                       xmlns="http://www.w3.org/2000/svg"
++                     >
++                       <path
++                         d="M17 12H7"
++                       />
++                       <path
++                         d="M19 18H5"
++                       />
++                       <path
++                         d="M21 6H3"
++                       />
++                     </svg>
++                   </button>
++                   <button
++                     aria-label="Align right"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-align-right"
++                     title="Align right"
++                     type="button"
++                   >
++                     <svg
++                       aria-hidden="true"
++                       class="lucide lucide-align-right"
++                       fill="none"
++                       focusable="false"
++                       height="1em"
++                       stroke="currentColor"
++                       stroke-linecap="round"
++                       stroke-linejoin="round"
++                       stroke-width="1.5"
++                       viewBox="0 0 24 24"
++                       width="1em"
++                       xmlns="http://www.w3.org/2000/svg"
++                     >
++                       <path
++                         d="M21 12H9"
++                       />
++                       <path
++                         d="M21 18H7"
++                       />
++                       <path
++                         d="M21 6H3"
++                       />
++                     </svg>
++                   </button>
++                   <button
++                     aria-label="Insert a link"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-insert-a-link"
++                     disabled=""
++                     title="Insert a link"
++                     type="button"
++                   >
++                     <svg
++                       aria-hidden="true"
++                       class="lucide lucide-link"
++                       fill="none"
++                       focusable="false"
++                       height="1em"
++                       stroke="currentColor"
++                       stroke-linecap="round"
++                       stroke-linejoin="round"
++                       stroke-width="1.5"
++                       viewBox="0 0 24 24"
++                       width="1em"
++                       xmlns="http://www.w3.org/2000/svg"
++                     >
++                       <path
++                         d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
++                       />
++                       <path
++                         d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
++                       />
++                     </svg>
++                   </button>
++                   <button
++                     aria-label="Insert a cross-reference to another section — § Ref"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-insert-a-cross-reference-to-another-section"
++                     title="Insert a cross-reference to another section"
++                     type="button"
++                   >
++                     § Ref
++                   </button>
++                   <button
++                     aria-label="Cite a source — inserts a numbered citation and adds the source to this document’s reference list"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-cite-a-source-inserts-a-numbered-citation-and-adds-the-source-to-this-document-s-reference-list"
++                     title="Cite a source — inserts a numbered citation and adds the source to this document’s reference list"
++                     type="button"
++                   >
++                     Cite
++                   </button>
++                   <span
++                     class="rse-sep"
++                   />
++                   <button
++                     aria-label="Insert table (3 columns × 3 rows, header row)"
++                     class="rse-rb"
++                     data-testid="rse-rb-insert-table-3-columns-3-rows-header-row-"
++                     title="Insert table (3 columns × 3 rows, header row)"
++                     type="button"
++                   >
++                     <svg
++                       aria-hidden="true"
++                       class="lucide lucide-table"
++                       fill="none"
++                       focusable="false"
++                       height="1em"
++                       stroke="currentColor"
++                       stroke-linecap="round"
++                       stroke-linejoin="round"
++                       stroke-width="1.5"
++                       viewBox="0 0 24 24"
++                       width="1em"
++                       xmlns="http://www.w3.org/2000/svg"
++                     >
++                       <path
++                         d="M12 3v18"
++                       />
++                       <rect
++                         height="18"
++                         rx="2"
++                         width="18"
++                         x="3"
++                         y="3"
++                       />
++                       <path
++                         d="M3 9h18"
++                       />
++                       <path
++                         d="M3 15h18"
++                       />
++                     </svg>
++                      Table
++                   </button>
++                   <button
++                     aria-label="Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)"
++                     class="rse-rb"
++                     data-testid="rse-rb-insert-an-image-png-jpeg-or-gif-stored-in-the-tenant-s-governed-image-store-"
++                     title="Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)"
++                     type="button"
++                   >
++                     <svg
++                       aria-hidden="true"
++                       class="lucide lucide-image"
++                       fill="none"
++                       focusable="false"
++                       height="1em"
++                       stroke="currentColor"
++                       stroke-linecap="round"
++                       stroke-linejoin="round"
++                       stroke-width="1.5"
++                       viewBox="0 0 24 24"
++                       width="1em"
++                       xmlns="http://www.w3.org/2000/svg"
++                     >
++                       <rect
++                         height="18"
++                         rx="2"
++                         ry="2"
++                         width="18"
++                         x="3"
++                         y="3"
++                       />
++                       <circle
++                         cx="9"
++                         cy="9"
++                         r="2"
++                       />
++                       <path
++                         d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"
++                       />
++                     </svg>
++                   </button>
++                   <button
++                     aria-label="Caption a table or figure — put the cursor in a table, or select a figure"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-caption-a-table-or-figure-put-the-cursor-in-a-table-or-select-a-figure"
++                     disabled=""
++                     title="Caption a table or figure — put the cursor in a table, or select a figure"
++                     type="button"
++                   >
++                     Caption
++                   </button>
++                   <select
++                     aria-label="Insert symbol"
++                     class="rse-sel"
++                     title="Insert a symbol"
++                   >
++                     <option
++                       value=""
++                     >
++                       Ω…
++                     </option>
++                     <option
++                       value="±"
++                     >
++                       ±
++                     </option>
++                     <option
++                       value="°"
++                     >
++                       °
++                     </option>
++                     <option
++                       value="µ"
++                     >
++                       µ
++                     </option>
++                     <option
++                       value="≤"
++                     >
++                       ≤
++                     </option>
++                     <option
++                       value="≥"
++                     >
++                       ≥
++                     </option>
++                     <option
++                       value="×"
++                     >
++                       ×
++                     </option>
++                     <option
++                       value="≈"
++                     >
++                       ≈
++                     </option>
++                     <option
++                       value="½"
++                     >
++                       ½
++                     </option>
++                     <option
++                       value="α"
++                     >
++                       α
++                     </option>
++                     <option
++                       value="β"
++                     >
++                       β
++                     </option>
++                     <option
++                       value="γ"
++                     >
++                       γ
++                     </option>
++                     <option
++                       value="Δ"
++                     >
++                       Δ
++                     </option>
++                   </select>
++                   <span
++                     class="rse-sep"
++                   />
++                   <button
++                     aria-label="Undo (⌘Z)"
++                     class="rse-rb"
++                     data-testid="rse-rb-undo"
++                     title="Undo (⌘Z)"
++                     type="button"
++                   >
++                     <svg
++                       aria-hidden="true"
++                       class="lucide lucide-undo2"
++                       fill="none"
++                       focusable="false"
++                       height="1em"
++                       stroke="currentColor"
++                       stroke-linecap="round"
++                       stroke-linejoin="round"
++                       stroke-width="1.5"
++                       viewBox="0 0 24 24"
++                       width="1em"
++                       xmlns="http://www.w3.org/2000/svg"
++                     >
++                       <path
++                         d="M9 14 4 9l5-5"
++                       />
++                       <path
++                         d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"
++                       />
++                     </svg>
++                   </button>
++                   <button
++                     aria-label="Redo (⌘⇧Z)"
++                     class="rse-rb"
++                     data-testid="rse-rb-redo"
++                     title="Redo (⌘⇧Z)"
++                     type="button"
++                   >
++                     <svg
++                       aria-hidden="true"
++                       class="lucide lucide-redo2"
++                       fill="none"
++                       focusable="false"
++                       height="1em"
++                       stroke="currentColor"
++                       stroke-linecap="round"
++                       stroke-linejoin="round"
++                       stroke-width="1.5"
++                       viewBox="0 0 24 24"
++                       width="1em"
++                       xmlns="http://www.w3.org/2000/svg"
++                     >
++                       <path
++                         d="m15 14 5-5-5-5"
++                       />
++                       <path
++                         d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"
++                       />
++                     </svg>
++                   </button>
++                   <span
++                     class="rse-sep"
++                   />
++                   <button
++                     aria-label="Find & replace (Ctrl/⌘-F)"
++                     aria-pressed="false"
++                     class="rse-rb"
++                     data-testid="rse-rb-find-replace-ctrl-f-"
++                     title="Find & replace (Ctrl/⌘-F)"
++                     type="button"
++                   >
++                     <svg
++                       aria-hidden="true"
++                       class="lucide lucide-search"
++                       fill="none"
++                       focusable="false"
++                       height="1em"
++                       stroke="currentColor"
++                       stroke-linecap="round"
++                       stroke-linejoin="round"
++                       stroke-width="1.5"
++                       viewBox="0 0 24 24"
++                       width="1em"
++                       xmlns="http://www.w3.org/2000/svg"
++                     >
++                       <circle
++                         cx="11"
++                         cy="11"
++                         r="8"
++                       />
++                       <path
++                         d="m21 21-4.3-4.3"
++                       />
++                     </svg>
++                   </button>
++                   <span
++                     class="rse-sep"
++                   />
++                   <button
++                     aria-label="Ask AnA to suggest a source for the selected claim — this does not insert a citation — Ask for a source"
++                     class="rse-rb"
++                     data-testid="rse-rb-ask-ana-to-suggest-a-source-for-the-selected-claim-this-does-not-insert-a-citation"
++                     title="Ask AnA to suggest a source for the selected claim — this does not insert a citation"
++                     type="button"
++                   >
++                     Ask for a source
++                   </button>
++                   <button
++                     aria-label="Offer alternatives for the selected passage: AnA drafts up to three, and nothing changes until you choose one"
++                     class="rse-rb"
++                     data-testid="rse-rb-offer-alternatives-for-the-selected-passage-ana-drafts-up-to-three-and-nothing-changes-until-you-choose-one"
++                     title="Offer alternatives for the selected passage: AnA drafts up to three, and nothing changes until you choose one"
++                     type="button"
++                   >
++                     Offer alternatives
++                   </button>
++                   <button
++                     aria-label="Comment on the selection"
++                     class="rse-rb"
++                     data-testid="rse-rb-comment-on-the-selection"
++                     title="Comment on the selection"
++                     type="button"
++                   >
++                     Comment
++                   </button>
++                   <span
++                     style="flex: 1 1 0%;"
++                   />
++                   <label
++                     class="rse-track"
++                     title="Suggest text edits instead of applying them. Edits within a paragraph are captured as attributed suggestions; structural changes (paragraph joins and splits, table changes) and formatting apply directly and are not tracked."
++                   >
++                     <input
++                       type="checkbox"
++                     />
++                     Track changes
++                   </label>
++                 </div>
++                 <div
++                   class="rse-body"
++                 >
++                   <div>
++                     <div
++                       data-state="closed"
++                       style="display: contents;"
++                     >
++                       <div
++                         aria-label="Section 2.5.1 — Rationale"
++                       >
++                         <div
++                           aria-label="Section 2.5.1 — Rationale"
++                           aria-multiline="true"
++                           class="tiptap ProseMirror"
++                           contenteditable="true"
++                           role="textbox"
++                           tabindex="0"
++                           translate="no"
++                         >
++                           <p>
++                             The product rationale.
++                           </p>
++                         </div>
++                       </div>
++                     </div>
++                   </div>
++                   <div
++                     style="margin-top: 12px;"
++                   >
++                     <section
++                       aria-label="Document attribution"
++                       style="border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-size: 12px; line-height: 1.5;"
++                     >
++                       <span
++                         role="alert"
++                         style="color: var(--warning, #955d22);"
++                       >
++                         Attribution could not be read, so none is shown. 
++                         Failed to parse URL from /api/data-origins/document?documentTable=authoring_sections&documentId=ssssssss-ssss-4sss-8sss-ssssssssssss
++                       </span>
++                        
++                       <button
++                         style="border: 1px solid var(--border); background: transparent; color: var(--text-100); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;"
++                         type="button"
++                       >
++                         Try again
++                       </button>
++                     </section>
++                   </div>
++                 </div>
++                 <div
++                   class="rse-foot"
++                 >
++                   <span
++                     class="rse-save"
++                   >
++                     <span
++                       class="rse-dot"
++                       style="background: var(--success);"
++                     />
++                     All changes saved
++                   </span>
++                   <span
++                     aria-hidden="true"
++                     class="rse-foot-sep"
++                   >
++                     ·
++                   </span>
++                   <span>
++                     3 words
++                   </span>
++                   <span
++                     style="flex: 1 1 0%;"
++                   />
++                 </div>
++                 <input
++                   accept="image/png,image/jpeg,image/gif"
++                   aria-hidden="true"
++                   style="display: none;"
++                   tabindex="-1"
++                   type="file"
++                 />
++               </div>
++             </div>
++           </div>
++         </div>
++       </section>
++       <div
++         class="de-toast"
++         role="status"
++       >
++         <span
++           class="ico"
++         >
++           <svg
++             aria-hidden="true"
++             class="lucide lucide-circle-check-big"
++             fill="none"
++             focusable="false"
++             height="1em"
++             stroke="currentColor"
++             stroke-linecap="round"
++             stroke-linejoin="round"
++             stroke-width="1.5"
++             viewBox="0 0 24 24"
++             width="1em"
++             xmlns="http://www.w3.org/2000/svg"
++           >
++             <path
++               d="M21.801 10A10 10 0 1 1 17 3.335"
++             />
++             <path
++               d="m9 11 3 3L22 4"
++             />
++           </svg>
++         </span>
++         Review requested from OQ Signer. It is listed on the Review board. Review tasks: 1 with an unknown outcome. Check the task list before sending again.
++       </div>
++     </div>
++   </div>
++ </body>
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:400:36
+    398|     fireEvent.click(closeTasks);
+    399|     await waitFor(() => expect(screen.queryByRole('complementary', { n…
+    400|     expect(document.activeElement).toBe(within(screen.getByTestId('ed-…
+       |                                    ^
+    401|   });
+    402|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the bar and menu CSS (§D4.K) > wraps rather than clips at every width, and wins over D0’s later `.dcv-bar` shell
+AssertionError: expected '' to match /flex-wrap\s*:\s*wrap/
+- Expected:
+/flex-wrap\s*:\s*wrap/
++ Received:
+""
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx:328:37
+    326|        Place into filing and Re-file saved text: wider than the page c…
+    327|        with a rail open. An unwrapped row with acts that never shrink …
+    328|     expect(rule('.dcv-bar.ed-bar')).toMatch(/flex-wrap\s*:\s*wrap/);
+       |                                     ^
+    329|     expect(rule('.dcv-bar.ed-bar')).toMatch(/gap\s*:\s*4px/);
+    330|     const acts = rule('.ed-bar-acts');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+ Test Files  2 failed (2)
+      Tests  2 failed | 40 skipped (42)
+   Start at  01:05:24
+   Duration  8.55s (transform 4.11s, setup 248ms, import 5.83s, tests 935ms, environment 1.16s)

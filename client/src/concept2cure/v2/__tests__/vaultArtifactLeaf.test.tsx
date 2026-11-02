@@ -315,6 +315,8 @@ describe('the governed-artifact manifest — one builder for the Vault’s proje
     mockApi();
     render(<Vault {...props()} />);
     const laneEl = await screen.findByTestId('vault-artifacts-lane');
+    // D6-3: the branch's counts are a section of the Governed artifacts view (D6 §C.4 step 5).
+    fireEvent.click(screen.getByRole('tab', { name: 'Governed artifacts' }));
     fireEvent.click(within(laneEl).getByRole('button', { name: /Export manifest/ }));
     expect(dl.csv).toHaveBeenCalledTimes(1);
     const [name, headers, rows] = dl.csv.mock.calls[0] as [string, string[], unknown[][]];

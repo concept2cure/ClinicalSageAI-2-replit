@@ -24,6 +24,7 @@ vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFi
 import { DocumentAuthoring } from '../../surfaces/DocumentAuthoring';
 import { ApiRequestError } from '@/lib/queryClient';
 import { PassageAlternatives, type PassageAlternativesProps } from '../DraftPassage';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const DOC = 'dddddddd-0000-4000-8000-000000000012';
 const SEC = 'aaaaaaaa-0000-4000-8000-000000000012';
@@ -330,15 +331,15 @@ describe('The passage view is left as the person leaves it: back, closed, anothe
     offer();
     fireEvent.click(within(panel()).getByRole('button', { name: 'Close' }));
     expect(passageShown()).toBeNull();
-    fireEvent.click(screen.getByTestId('ai-draft-open'));
+    fireEvent.click(openEditorControl('Draft from sources', 'ana'));
     expect(passageShown()).toBeNull();
     expect(screen.getByRole('button', { name: 'Draft three alternatives' })).toBeTruthy();
     // The toolbar's own toggle ends a passage as well.
     select(QUOTE, 1);
     offer();
     expect(passageShown()).toBeTruthy();
-    fireEvent.click(screen.getByTestId('ai-draft-open'));
-    fireEvent.click(screen.getByTestId('ai-draft-open'));
+    fireEvent.click(openEditorControl('Draft from sources', 'ana'));
+    fireEvent.click(openEditorControl('Draft from sources', 'ana'));
     expect(passageShown()).toBeNull();
     expect(screen.getByRole('button', { name: 'Draft three alternatives' })).toBeTruthy();
   });
@@ -350,7 +351,7 @@ describe('The passage view is left as the person leaves it: back, closed, anothe
     offer();
     fireEvent.click(screen.getByRole('button', { name: 'Document' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Document' }).getAttribute('aria-pressed')).toBe('true'));
-    fireEvent.click(screen.getByTestId('ai-draft-open'));
+    fireEvent.click(openEditorControl('Draft from sources', 'ana'));
     await screen.findByTestId('ai-draft-panel');
     expect(screen.queryByRole('region', { name: /alternatives for a passage/i })).toBeNull();
   });

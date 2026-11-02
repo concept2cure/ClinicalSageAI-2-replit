@@ -1,0 +1,46 @@
+# npx vitest run --config vitest.config.ts --maxWorkers=1 client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx
+# on e4ea399d6c + the D1-4 working tree (uncommitted), 2026-11-01T22:06Z
+# exit code: 0
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > is exported with the words the tray has always asked 7ms
+stderr | client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > the triage row asks exactly it, as a quiet ghost button led by the ✻
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > the triage row asks exactly it, as a quiet ghost button led by the ✻ 384ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the header (D1 §D1.G step 1) > says "none overdue" rather than counting zero, and closes with a D0 button 120ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the header (D1 §D1.G step 1) > still gives the number when something is late 29ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > rows: colour only where something is late or blocked (D1 §D1.G step 3) > a row due in 14 days keeps its dot’s place but shows none; late and blocked rows keep theirs 63ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > shows a severity dot only for a warning or a critical notice 50ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > draws Mark read, the open button and the preferences button with D0’s buttons 48ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > finds the tray block 0ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > uses orange only for the ✻ 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > sets no text under the 12px floor 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > keeps the group heads in sentence case and hides a quiet dot 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > gives the panel title 16px and the counts line 13px 1ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  22:06:04
+   Duration  2.86s (transform 801ms, setup 191ms, import 1.02s, tests 715ms, environment 685ms)
+

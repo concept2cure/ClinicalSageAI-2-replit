@@ -1,0 +1,68 @@
+              </div>
+            </div>
+            <section
+              aria-labelledby="ai-draft-h"
+              class="scaf-note"
+              data-testid="ai-draft-panel"
+              style="margin-bottom: 12px; display: grid; gap: 10px;"
+            >
+              <div
+                style="display: flex; gap: 8px; align-items: baseline;"
+              >
+                <h2
+                  id="ai-draft-h"
+                  style="font-size: 13px; font-weight: 600; margin: 0px;"
+                  tabindex="-1"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-sparkles"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                    />
+                    <path
+                      d="M20 3v4"
+                    />
+                    <path
+                      d="M22 5h-4"
+                    />
+                    <path
+                      d="M4 17v2"
+                    />
+                    <path
+                      d="M5 18H3"
+                    />
+                  </svg>
+                   Draft 
+                  3.2.S.1
+                   from Data Room sources
+                </h2>
+                <span
+                  style="flex: 1 1 0%;"
+                />
+                <button
+                  class="nda-open"
+                >
+                  Close
+                </button>
+              </div>
+              <p
+                data-testid="ai-draft-region-note"
+                role="status"
+                style="font-size: 12px; margin: 0px;"
+              >
+                The saved section or application could not be read. Re-read this section before drafting.
+              </p>
+              <p
+                style="font-size: 12px; margin: 0px; opacity: 0.85;"

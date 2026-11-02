@@ -280,11 +280,17 @@ describe('A.1 · the registry labels a client reads (breadcrumb, page title, ⌘
     expect(offending(NAVIGATION_TARGETS.filter((t) => reachable(t.id)).map((t) => [`NAVIGATION_TARGETS ${t.id}`, t.label] as const))).toEqual([]);
   });
 
-  it('the project-home breadcrumb names the open project, as the project chip does', async () => {
+  it('the project-home breadcrumb names the open project, once, as the current page', async () => {
     publishShellProject({ id: '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d', code: 'BX-301', title: 'Brexolimab IND' });
     render(<TopBar surface={getSurfaceMeta('project-home') as UiSurface} onPalette={() => {}} segment="biopharma" onSegment={() => {}} />);
     await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
-    expect(document.querySelector('.crumbs .here')?.textContent).toBe('BX-301');
+    // D1-2 (D1.md §D1.B step 1): the project crumb names the page, so no `here` repeats it,
+    // and the root crumb ("Concept2Cure.RI") went to the sidebar's wordmark.
+    const crumb = document.querySelector('.crumbs .crumb-proj');
+    expect(crumb?.textContent).toBe('BX-301');
+    expect(crumb?.getAttribute('aria-current')).toBe('page');
+    expect(document.querySelector('.crumbs .here')).toBeNull();
+    expect(document.querySelector('.crumbs')?.textContent).toBe('BX-301');
   });
 
   it("section 9's own names pass this file's word and fold checks (so the guard can be met)", () => {

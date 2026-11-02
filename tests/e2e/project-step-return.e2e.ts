@@ -41,7 +41,7 @@ test('the project chip and a reload remember Plan after starting a document', as
   await expect(page).toHaveURL(/document-authoring/, { timeout: 30_000 });
   await expect(page.getByRole('heading', { name: 'Target Product Profile', exact: true })).toBeVisible();
 
-  await page.locator('button.tb-proj').click();
+  await page.locator('button.crumb-proj').click();
   await expect(page).toHaveURL(/project-home/);
   await expect(activeStep).toHaveText('Plan');
   await expect(page.locator('details[data-phase="phase1"] > summary')).toContainText('1 started');
@@ -52,7 +52,7 @@ test('the project chip and a reload remember Plan after starting a document', as
   await page.getByRole('button', { name: 'Evidence', exact: true }).click();
   await page.getByRole('button', { name: 'Add or find files in Vault', exact: true }).click();
   await expect(page).toHaveURL(/\/vault/);
-  await page.locator('button.tb-proj').click();
+  await page.locator('button.crumb-proj').click();
   await expect(page).toHaveURL(/project-home/);
   await expect(activeStep).toHaveText('Evidence');
 });

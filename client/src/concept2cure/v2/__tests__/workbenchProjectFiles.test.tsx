@@ -39,6 +39,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
@@ -100,7 +101,7 @@ async function openProjectFiles() {
   render(<DocumentAuthoring {...props()} />);
   await screen.findAllByText('Rationale');
   await waitFor(() => expect((document.querySelector('.rse-body .tiptap')?.textContent ?? '')).toContain('product rationale'));
-  fireEvent.click(screen.getByTestId('vault-rail-open'));
+  fireEvent.click(openEditorControl('Project files'));
   return screen.findByRole('complementary', { name: 'Project files' });
 }
 
@@ -170,7 +171,7 @@ describe('DocumentWorkbench — Project files', () => {
     mockApi();
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('Rationale');
-    fireEvent.click(screen.getByTestId('vault-rail-open'));
+    fireEvent.click(openEditorControl('Project files'));
     expect(await screen.findByTestId('pf-no-program')).toBeTruthy();
     expect(apiRequest.mock.calls.some(c => String(c[1]).startsWith('/api/c2c/project-vault/'))).toBe(false);
   });

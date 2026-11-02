@@ -17,6 +17,7 @@ vi.mock('../ProjectFilesPanel', () => ({ ProjectFilesPanel: ({ onAsk }: { onAsk?
 import { DocumentAuthoring } from '../../surfaces/DocumentAuthoring';
 import { clearEditorTarget } from '../../editorTarget';
 import { publishShellProject } from '../../shellProject';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const DOC = 'dddddddd-0000-4000-8000-000000000001';
 const SEC = 'aaaaaaaa-0000-4000-8000-000000000001';
@@ -60,8 +61,7 @@ async function mount(dirty = false) {
   return onNav;
 }
 function review() {
-  fireEvent.click(screen.getByText('Review with AnA'));
-  fireEvent.click(screen.getByRole('button', { name: 'Prepare targeted fixes' }));
+  fireEvent.click(openEditorControl('Prepare targeted fixes', 'ana'));
 }
 
 describe('new editor asks use the guarded canonical conversation', () => {
@@ -92,7 +92,7 @@ describe('new editor asks use the guarded canonical conversation', () => {
 
   it('uses the same leave guard for saved source requests, excluding unsaved text after explicit leave', async () => {
     const onNav = await mount(true);
-    fireEvent.click(screen.getByTestId('vault-rail-open'));
+    fireEvent.click(openEditorControl('Project files'));
     fireEvent.click(screen.getByRole('button', { name: 'Ask about saved source' }));
     await screen.findByRole('alertdialog', { name: 'Unsaved changes in 3.2.P.8.1' });
     expect(handoff()).toBeUndefined();
@@ -170,7 +170,7 @@ describe('project decisions and canonical conversation handoffs share the same g
     act(() => { publishShellProject({ id: OTHER, title: 'Other program' }); });
     fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
     review();
-    fireEvent.click(screen.getByRole('button', { name: 'AnA' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show the conversation' }));
     expect(handoff()).toBeUndefined();
     expect(onNav).not.toHaveBeenCalled();
     expect(document.querySelector('.tiptap')?.textContent).toContain('Unsaved private note.');

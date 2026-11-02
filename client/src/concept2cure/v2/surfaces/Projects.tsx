@@ -6,8 +6,9 @@ import { useTenant } from '@/contexts/TenantContext';
 import { capturedActorHeaders } from '@/utils/authToken';
 import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake-workspace';
 import { createProjectIntake, readProjectIntakeWorkspaces, type IntakeOptionsAnswer } from './projectIntakeRequest';
-import { ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
-import { ProjectPortfolioFilters, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices } from './ProjectPortfolioFilters';
+import { ClientChoicesNote, ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
+import { ProjectPortfolioFilters, WS_LABEL, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices } from './ProjectPortfolioFilters';
+import { enumWords } from './projectWords';
 import { useDialog } from '../useDialog';
 import {
   productTypeForFilingType,
@@ -1194,7 +1195,7 @@ function countFloor(n: number, paged: boolean): string {
 function PortfolioPagedNote({ paged, settled, count, scopedCounts }: { paged: boolean; settled: boolean; count: number; scopedCounts: boolean }) {
   if (!paged || !settled) return null;
   return (
-    <div role="status" className="scaf-note" style={{ marginBottom: 12 }}>
+    <div role="status" className="scaf-note">
       Showing the first {count} projects. {scopedCounts ? 'The average readiness, status filter and search cover these only. Counts cover all projects matching the selected filters.' : 'The totals, the average readiness, status filter and search cover these only.'}
     </div>
   );
@@ -1269,11 +1270,43 @@ function daysUntil(isoDate: string | null | undefined, today: Date = new Date())
   return Math.round((due - now) / 86_400_000);
 }
 
-/** Workstream → chip tone (presentation config, not data). */
-const WS_TONE: Record<string, string> = { MDX: 'ai', Biotech: 'ok', Pharma: 'warn', CRO: 'idle' };
+/** The list view's columns: project, client type, stage, dossier readiness,
+ *  status, lead, target date. The list is the dense view: it holds, as text,
+ *  what the cards leave out (D2 §1.4 item 6). */
+const LIST_COLUMNS = '1.8fr 150px 110px 130px 100px 120px 120px';
 
-/** The list view's columns: project, workstream, stage, status, lead, due. */
-const LIST_COLUMNS = '1.6fr 100px 1fr 120px 100px 100px';
+/** A stated text value, or null for none: blank, or the server's '—'. */
+function stated(value: string | null | undefined): string | null {
+  const v = value?.trim();
+  return v && v !== '—' ? v : null;
+}
+
+/**
+ * The card's one line: what the project is (D2 §1.4 item 5; ONE_DESIGN_PLAN §2
+ * "Projects": "the name, a one-line description and when it was updated").
+ * The stated description first; otherwise the filing in words (filing type,
+ * agency, indication), each only when stated; otherwise, for a payload without
+ * those fields, the stage and the lead the card used to show. Nothing is
+ * filled in that the record does not hold.
+ */
+function cardLine(p: Pick<ProjPortfolioEntry, 'description' | 'program_type' | 'agency' | 'indication' | 'stage' | 'lead'>): string {
+  const description = stated(p.description);
+  if (description) return description;
+  const programType = stated(p.program_type);
+  const filing = [programType ? filingLabel(programType) : null, stated(p.agency), stated(p.indication)].filter(Boolean);
+  if (filing.length) return filing.join(' · ');
+  const lead = stated(p.lead);
+  return [stated(p.stage), lead ? `Lead ${lead}` : null].filter(Boolean).join(' · ');
+}
+
+/** What the search covers, in its placeholder: the loaded page, which is the
+ *  whole portfolio unless the read was paged ("the first n"). No count while the
+ *  read is in flight or failed. */
+function searchPlaceholder(loaded: number, paged: boolean, settled: boolean): string {
+  if (!settled || loaded === 0) return 'Search projects';
+  if (paged) return `Search the first ${loaded} projects`;
+  return loaded === 1 ? 'Search 1 project' : `Search ${loaded} projects`;
+}
 
 /* A program whose stored status is `blocked` while the list carries no blocker
    for it. The product writes only active and archived (POST and the close-out
@@ -1351,8 +1384,10 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      failed, so every figure here resolved to a settled 0 — and the `|| 1`
      divisor turned what would at least have been a visible NaN into a clean
      "0%", a portfolio-mean readiness computed over no programs. A director
-     reading the header learned they run nothing and have nothing blocked. */
-  const { mean: meanReadiness, cover: measuredCover } = portfolioMean(projects, !live.loading && !live.error);
+     reading the header learned they run nothing and have nothing blocked.
+     `settled` also gates the search placeholder's count and the paged note. */
+  const settled = !live.loading && !live.error;
+  const { mean: meanReadiness, cover: measuredCover } = portfolioMean(projects, settled);
   /* No "Blocked" figure. A program's status is only ever written as active or
      archived (POST and the close-out routes in server/routes/c2c/projects.ts),
      and the list computes no blocker, so the count could only read 0: an
@@ -1381,9 +1416,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   /* What AnA can see of this screen.
      The portfolio is the screen a user is most likely to ask a general question
      on — "which programs are at risk?", "what should I do next?" — and until now
-     she was told only that the surface was called "projects". The button in the
-     header literally sends her "Which programs are at risk this week?" with no
-     way to know which programs exist.
+     she was told only that the surface was called "projects". The header's
+     "Ask AnA" button (gone since D2-1; ⌘K asks AnA) sent her "Which programs
+     are at risk this week?" with no way to know which programs exist.
 
      A FAILED read publishes the failure. `projects` is [] both when the org has
      no programmes and when the read threw, and a summary saying "0 programs"
@@ -1456,7 +1491,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         // `p.lead` is deliberately NOT published: the server projects it as
         // COALESCE(u.name, u.email, '—'), so a lead with no name set resolves to
         // an EMAIL — PII that must not enter the model prompt. It stays on the
-        // card (where the person reads it); the sibling ProjectHome publisher
+        // list (where the person reads it); the sibling ProjectHome publisher
         // drops the team member's email for the same reason.
         programs: list.slice(0, 12).map(p => ({
           id: p.id, code: p.code, title: p.title, workstream: p.ws, pathway: p.pathway ?? null, stage: p.stage,
@@ -1465,9 +1500,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       },
       availableActions: [
         'Open a project to enter its project home',
-        'Filter the portfolio by workstream (MDX, Biotech, Pharma), pathway or client; filter the loaded page by status',
+        'Filter the portfolio by client type (medical device & IVD, biotech, pharma), pathway or client; filter the loaded page by status',
         'Search the portfolio by project title or code',
-        'Switch between the grid and list views',
+        'Switch between the grid and list views; the list shows readiness, status, lead and the portfolio figures',
         'Create a new project through the new-project wizard',
       ],
     };
@@ -1605,68 +1640,50 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
        `.page-inner` here is what capped the workspace index at a 1160px reading
        measure — see the note beside `projects:` in surfaceViews.ts. */
     <div className="pj-index">
+      {/* Claude's Projects page (D2 §1.3–1.4): the serif title and one primary
+          action. The "Workspace" eyebrow, the sub-line and "Ask AnA" are gone:
+          the rail and the crumb say where you are, and ⌘K's "Ask AnA" and the
+          Home composer ask AnA anything, over this screen's published context. */}
       <div className="ph">
         <div>
-          <div className="ph-eyebrow">Workspace</div>
           <h1 className="ph-title">Projects</h1>
-          <div className="ph-sub">Every regulatory project across all workstreams. Open one to enter its project home.</div>
           <NeedsProjectNotice />
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn ghost" onClick={() => onAsk('Which projects are at risk this week?')}>{I.sparkles} Ask AnA</button>
-          <button className="btn primary" onClick={() => openNewProject(onNav)}>{I.plus} New project</button>
+        <div className="ph-acts">
+          <button type="button" className="btn primary" onClick={() => openNewProject(onNav)}>{I.plus} New project</button>
         </div>
       </div>
 
-      {/* ── The four metric tiles are one line now (2026-09-07) ──
-          "Active programs / Average readiness / Blocked / Filing < 60 days" was
-          a dashboard bolted to the top of a directory: four large figures a
-          person had to read past to reach the thing they came for, which is
-          their project. The figures themselves are unchanged and still honest —
-          `kv()` still resolves every one of them to an em dash while the read is
-          in flight or has failed, so a failed portfolio read cannot render as a
-          real "0%" portfolio mean. They are simply quiet now. */}
-      <div className="pj-summary">
-        {health.map((h, i) => (
-          <span key={i} className="pj-summary-i" data-tone={h.t || undefined}>
-            <strong>{h.n}</strong> {h.l.toLowerCase()}{'q' in h && h.q ? `, ${h.q}` : ''}
-          </span>
-        ))}
-      </div>
-      <PortfolioPagedNote paged={truncated} settled={!live.loading && !live.error} count={projects.length} scopedCounts={counts !== null} />
-
+      {/* One quiet toolbar row: search, the filters as selects, the view. */}
       <div className="pj-toolbar">
         <div className="pj-search">
           <span className="ico">{I.search}</span>
           <input
             type="search"
             className="pj-search-i"
-            placeholder="Search projects"
+            placeholder={searchPlaceholder(projects.length, truncated, settled)}
             value={q}
             onChange={e => setQ(e.target.value)}
             aria-label="Search projects by title or code"
           />
         </div>
-        <ProjectClientFilter value={clientWorkspaceId} clients={clients} hasMore={clientContext.hasMore} onChange={setClientWorkspaceId} />
-        <span style={{ flex: 1 }} />
-        <div className="seg">
-          <button className={`seg-b${view === 'grid' ? ' on' : ''}`} onClick={() => setView('grid')}>Grid</button>
-          <button className={`seg-b${view === 'list' ? ' on' : ''}`} onClick={() => setView('list')}>List</button>
+        <ProjectClientFilter value={clientWorkspaceId} clients={clients} onChange={setClientWorkspaceId} />
+        <ProjectPortfolioFilters workstream={ws} pathway={pathway} counts={counts}
+          hasDeviceRows={projects.some(project => project.ws === 'MDX')} onWorkstream={setWs} onPathway={setPathway} />
+        {statusChoices.visible && (
+          <select className="c2c-input pj-filter" aria-label="Status" value={status} onChange={e => setStatus(e.target.value)}>
+            {statusChoices.choices.map(s => (
+              <option key={s} value={s}>{s === 'all' ? 'All statuses' : enumWords(s) ?? s}</option>
+            ))}
+          </select>
+        )}
+        <span className="pj-toolbar-gap" />
+        <div className="seg" role="group" aria-label="View">
+          <button type="button" className={`seg-b${view === 'grid' ? ' on' : ''}`} aria-pressed={view === 'grid'} onClick={() => setView('grid')}>Grid</button>
+          <button type="button" className={`seg-b${view === 'list' ? ' on' : ''}`} aria-pressed={view === 'list'} onClick={() => setView('list')}>List</button>
         </div>
       </div>
-
-      <ProjectPortfolioFilters workstream={ws} pathway={pathway} counts={counts}
-        hasDeviceRows={projects.some(project => project.ws === 'MDX')} onWorkstream={setWs} onPathway={setPathway} />
-
-      {statusChoices.visible && (
-        <div className="seg" style={{ marginBottom: 18 }}>
-          {statusChoices.choices.map(s => (
-            <button key={s} className={`seg-b${status === s ? ' on' : ''}`} onClick={() => setStatus(s)}>
-              {s[0].toUpperCase() + s.slice(1)}
-            </button>
-          ))}
-        </div>
-      )}
+      <ClientChoicesNote hasMore={clientContext.hasMore} />
 
       {live.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading projects…</div>
@@ -1696,78 +1713,85 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           hint={
             needle
               ? 'Search matches a project’s title or code on the loaded page. Clear the search, or adjust the filters.'
-              : 'Adjust the client, workstream, pathway or status filter to see more.'
+              : 'Adjust the client, client type, pathway or status filter to see more.'
           }
         />
       ) : view === 'grid' ? (
+        /* A calm card: the name, one line of what the project is, and its code
+           and last update (the device portfolio's "last activity", folded into
+           Projects: D2, fold F6, 2026-10-30). Readiness, client type, stage and
+           lead are the list view's columns (D2 §1.5). */
         <div className="pj-cards">
-          {list.map(p => (
-            <button key={p.id} className="pj-card" onClick={() => openProj(p)}>
-              <div className="pj-card-t">{p.title}</div>
-              {/* The last activity is the record's own (the device portfolio's
-                  "last activity", folded into Projects: D2, fold F6, 2026-10-30). */}
-              <div className="pj-card-m">{p.code} · {p.stage} · Lead {p.lead}{p.activity ? ` · ${p.activity}` : ''}</div>
-              {/* No figure draws no bar: an empty track reads as 0. */}
-              {isMeasuredReadiness(p.readiness, p.readinessState) ? (
-                <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>
-                  <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
+          {list.map(p => {
+            const line = cardLine(p);
+            return (
+              <button type="button" key={p.id} className="pj-card" onClick={() => openProj(p)}>
+                <div className="pj-card-t">{p.title}</div>
+                {line && <div className="pj-card-m">{line}</div>}
+                <div className="pj-card-r">
+                  <span>{[stated(p.code), p.activity].filter(Boolean).join(' · ')}</span>
+                  {p.due_date && <span>Due {p.due}</span>}
                 </div>
-              ) : <div style={{ height: 12 }} />}
-              <div className="pj-card-r">
-                <span title={p.readinessReason ?? DOSSIER_READINESS_MEANS}>{DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness, p.readinessState)}</span><span>{p.due}</span>
-              </div>
-              <div className="pj-card-f">
-                <span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span>
-                <span className={`rd-chip tone-${p.status === 'blocked' ? 'err' : p.status === 'complete' ? 'ok' : 'ai'}`}>{p.status}</span>
-                {/* The list assesses no blockers, so it says nothing of them.
-                    A status of blocked (NM-512 in the QA organisation, QA
-                    2026-10-08 j1) says in words that no cause is recorded:
-                    the red chip alone read as a finding with its cause withheld. */}
+                {/* Active is the default and is not stated. The list assesses no
+                    blockers, so a status of blocked (NM-512 in the QA
+                    organisation, QA 2026-10-08 j1) says in words that no cause is
+                    recorded: a red chip alone read as a finding with its cause
+                    withheld. */}
                 {p.status === 'blocked' && (
-                  <span className="pj-card-blk" title={BLOCKED_NO_CAUSE_TITLE}>{I.alertTriangle} {BLOCKED_NO_CAUSE}</span>
+                  <span className="pj-card-blk" title={BLOCKED_NO_CAUSE_TITLE}>{I.alertTriangle} Blocked · {BLOCKED_NO_CAUSE}</span>
                 )}
-              </div>
-            </button>
-          ))}
+                {p.status && p.status !== 'active' && p.status !== 'blocked' && (
+                  <span className="pj-card-foot">{enumWords(p.status)}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="ctable">
           {/* Status, where a Blocker column read "—" on every row: the list
-              assesses no blockers (2026-10-31). */}
+              assesses no blockers (2026-10-31). The figure is text under the
+              name Project home uses, with the server's reason as its title. */}
           <div className="ct-head" style={{ gridTemplateColumns: LIST_COLUMNS }}>
-            <div>Project</div><div>Workstream</div><div>Stage / readiness</div><div>Status</div><div>Lead</div><div>Due</div>
+            <div>Project</div><div>Client type</div><div>Stage</div><div>{DOSSIER_READINESS_LABEL}</div><div>Status</div><div>Lead</div><div>Target date</div>
           </div>
           {list.map(p => (
-            <button key={p.id} className="ct-row" style={{ gridTemplateColumns: LIST_COLUMNS }} onClick={() => openProj(p)}>
+            <button type="button" key={p.id} className="ct-row" style={{ gridTemplateColumns: LIST_COLUMNS }} onClick={() => openProj(p)}>
               <div>
                 <div className="ct-strong">{p.title}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.code}{p.activity ? ` · ${p.activity}` : ''}</div>
+                <div className="pj-list-sub">{[stated(p.code), p.activity].filter(Boolean).join(' · ')}</div>
               </div>
-              <div><span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span></div>
-              <div>
-                <div style={{ fontSize: 11.5 }}>{p.stage}</div>
-                {isMeasuredReadiness(p.readiness, p.readinessState) && (
-                  <div className="ph-bar-track" style={{ marginTop: 5 }}>
-                    <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
-                  </div>
-                )}
-                <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 3 }} title={p.readinessReason ?? DOSSIER_READINESS_MEANS}>
-                  {DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness, p.readinessState)}
-                </div>
-              </div>
+              <div>{WS_LABEL[p.ws] ?? p.ws}</div>
+              <div>{p.stage}</div>
+              <div><span title={p.readinessReason ?? DOSSIER_READINESS_MEANS}>{dossierReadinessValue(p.readiness, p.readinessState)}</span></div>
               <div
-                style={{ fontSize: 11, color: p.status === 'blocked' ? 'var(--warning)' : 'var(--text-300)' }}
+                data-tone={p.status === 'blocked' ? 'warn' : undefined}
                 title={p.status === 'blocked' ? BLOCKED_NO_CAUSE_TITLE : undefined}
               >
-                {p.status ? p.status[0].toUpperCase() + p.status.slice(1) : 'Not recorded'}
-                {p.status === 'blocked' && <div>{BLOCKED_NO_CAUSE}</div>}
+                {enumWords(p.status) ?? 'Not recorded'}
+                {p.status === 'blocked' && <div className="pj-list-sub">{BLOCKED_NO_CAUSE}</div>}
               </div>
-              <div style={{ fontSize: 11.5 }}>{p.lead}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.due}</div>
+              <div>{p.lead}</div>
+              <div>{p.due}</div>
             </button>
           ))}
         </div>
       )}
+
+      {/* The portfolio figures are the list's footing, not the page's chrome
+          (plan §2: no stat strip). `kv()` still resolves every one of them to
+          an em dash while the read is in flight or has failed, so a failed
+          portfolio read cannot render as a real "0%" portfolio mean. */}
+      {view === 'list' && (
+        <div className="pj-summary">
+          {health.map((h, i) => (
+            <span key={i} className="pj-summary-i" data-tone={h.t || undefined}>
+              <strong>{h.n}</strong> {h.l.toLowerCase()}{'q' in h && h.q ? `, ${h.q}` : ''}
+            </span>
+          ))}
+        </div>
+      )}
+      <PortfolioPagedNote paged={truncated} settled={settled} count={projects.length} scopedCounts={counts !== null} />
     </div>
   );
 }

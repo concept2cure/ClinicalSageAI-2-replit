@@ -1,0 +1,18 @@
+The 139 further suites that mount the shell, a conversation, a project or the editor (any import of ConversationThread,
+V2App, DocumentWorkbench, DocumentAuthoring, DocumentCanvas, the canonical flow helper, ProjectHome, Biostatistics,
+ControlledDocumentWorkbench or SopRegister), run on the D4-2 tree:
+  tests 1480 passed 1469 failed 11
+    client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx 2
+    client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts 1
+    client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx 1
+    client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx 1
+    client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx 5
+    client/src/concept2cure/v2/__tests__/shellWiring.test.tsx 1
+
+None is D4-2's:
+  runPolicySwitch (5) and projectHomeOwnershipBoundary (1) fail at HEAD 378c7526e as well (HEAD export run).
+  projectCreationDoors.contract ("v2/Shell.tsx retains its Projects index door") and shellWiring ("Start demonstration")
+  read the shell lane's uncommitted Shell.tsx work; both pass at HEAD.
+  clientNamesSlice1 fails on "biostat-workbench: Biostat workbench", a surface registry label (the shell lane has
+  surfaceViews.ts and this test modified); it could not run in the HEAD export (a file it reads was not exported).
+  projectDocumentDisposition (the Data Room pins) passes when run alone on the same tree: an order-dependent flake.

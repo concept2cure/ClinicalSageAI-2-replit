@@ -27,6 +27,9 @@ interface FilingOfferView {
   tier: 'build_and_sequence' | 'author_only' | 'not_offered'; label: string; reason: string;
   /** Registry ids the tier is stated for; null when it holds for every filing of the type. */
   appliesTo?: string[] | null;
+  /** A refusal stated for one filing, keyed by registry id, where it differs from `reason` (ICH / Global's
+   *  QOS and Module 3 sections are written inside their application). Absent means `reason` holds for all. */
+  reasonByFiling?: Readonly<Record<string, string>>;
 }
 /** What the picker says about one offered filing: the server's offer, or, for a
  *  filing that creates the application type without being that application (a
@@ -166,7 +169,12 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
       const row = rowFor(offers.byType.get(type), e.agency);
       // Every pair was read, so a missing row is a defect in the read, stated as such.
       if (!row?.offer) { refused.push({ entry: e, reason: 'The server stated no offer for this filing\'s market.' }); continue; }
-      if (row.offer.tier === 'not_offered') { refused.push({ entry: e, reason: row.offer.reason }); continue; }
+      if (row.offer.tier === 'not_offered') {
+        /* The filing's own refusal when the server states one, matched as `appliesTo` is (lowercase ids). */
+        const own = Object.entries(row.offer.reasonByFiling ?? {}).find(([id]) => id.toLowerCase() === e.id.toLowerCase())?.[1];
+        refused.push({ entry: e, reason: own ?? row.offer.reason });
+        continue;
+      }
       const scope = row.offer.appliesTo;
       if (Array.isArray(scope) && !scope.some((id) => id.toLowerCase() === e.id.toLowerCase())) {
         const names = scope.map((id) => nameOf.get(id.toLowerCase()) ?? id);

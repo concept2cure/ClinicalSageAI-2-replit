@@ -44,6 +44,7 @@ import { DocumentCanvas } from '../editor/DocumentCanvas';
 import { FileToVaultDialog } from '../editor/FileToVaultDialog';
 import { DocumentWorkbench } from '../editor/DocumentWorkbench';
 import { authService } from '@/services/portal/authService';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
@@ -75,7 +76,8 @@ const props = () => ({ surface: { id: 'document-authoring', label: 'Authoring' }
 async function openDialog() {
   render(<DocumentAuthoring {...props()} />);
   await screen.findAllByText('Rationale');
-  fireEvent.click(await screen.findByTestId('file-to-vault-open'));
+  await screen.findByTestId('ed-more');
+  fireEvent.click(openEditorControl('File to vault…'));
   return screen.findByTestId('file-to-vault-dialog');
 }
 
@@ -240,7 +242,7 @@ describe('canvas current-access refusal preserves a sent vault outcome', () => {
       readRefusal={refused ? 'Current access could not be verified.' : null} onNav={vi.fn()} reloadDocs={vi.fn()} />;
     const view = render(workbench(false));
     await screen.findAllByText('Rationale');
-    fireEvent.click(screen.getByTestId('file-to-vault-open'));
+    fireEvent.click(openEditorControl('File to vault…'));
     const dialog = screen.getByTestId('file-to-vault-dialog');
     fireEvent.click(within(dialog).getByTestId('ftv-submit'));
     view.rerender(workbench(true));
@@ -260,7 +262,8 @@ describe('canvas current-access refusal preserves a sent vault outcome', () => {
       fromThisConversation={false} expanded onExpandedChange={vi.fn()} onNav={vi.fn()} onAsk={vi.fn()}
       fireToast={vi.fn()} refreshKey={refreshKey} />;
     const view = render(editor(0));
-    fireEvent.click(await screen.findByTestId('file-to-vault-open'));
+    await screen.findByTestId('ed-more');
+    fireEvent.click(openEditorControl('File to vault…'));
     const dialog = screen.getByTestId('file-to-vault-dialog');
     fireEvent.click(within(dialog).getByTestId('ftv-submit'));
     const normal = apiRequest.getMockImplementation()!;
@@ -329,7 +332,7 @@ it('keeps an uncertain filing held when the workbench closes and reopens the exi
   const error = (await within(dlg).findByTestId('ftv-error')).textContent;
   fireEvent.click(within(dlg).getByLabelText('Close'));
   expect(screen.queryByTestId('file-to-vault-dialog')).toBeNull();
-  fireEvent.click(screen.getByTestId('file-to-vault-open'));
+  fireEvent.click(openEditorControl('File to vault…'));
   const reopened = await screen.findByTestId('file-to-vault-dialog');
   expect(within(reopened).getByTestId('ftv-error').textContent).toBe(error);
   expect((within(reopened).getByTestId('ftv-submit') as HTMLButtonElement).disabled).toBe(true);

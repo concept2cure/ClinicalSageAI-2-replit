@@ -16,6 +16,7 @@ vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFi
 import { authService, type AuthUser } from '@/services/portal/authService';
 import { DocumentWorkbench } from '../DocumentWorkbench';
 import { useActiveSurfaceContext } from '../../surfaceContext';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const DOC = '10000000-0000-4000-8000-000000000001';
 const SEC = '20000000-0000-4000-8000-000000000001';
@@ -75,7 +76,7 @@ function PublishedSourceContext() {
 }
 async function openSources() {
   await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('Current admitted prose.'));
-  fireEvent.click(screen.getByTestId('sources-rail-open'));
+  fireEvent.click(openEditorControl(/^Sources/));
   await screen.findByRole('button', { name: 'Record a source' });
 }
 async function replaceSession() {
@@ -147,7 +148,7 @@ describe('Workbench source replies stay with the original readable visit', () =>
     });
     mount();
     await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('Current admitted prose.'));
-    fireEvent.click(screen.getByTestId('sources-rail-open'));
+    fireEvent.click(openEditorControl(/^Sources/));
     await waitFor(() => expect(decoding).toBe(true));
     await replaceSession();
     await act(async () => { oldBody.resolve({ sources: [source('Prior-session recorded safety source')] }); await oldBody.promise; });
@@ -184,7 +185,7 @@ describe('Workbench source replies stay with the original readable visit', () =>
     expect(document.body.textContent).not.toContain('Source recorded —');
     expect(document.body.textContent).not.toContain('Citation removed.');
     expect(document.body.textContent).not.toContain('Earlier session source re-read.');
-    expect(screen.getByTestId('sources-rail-open').textContent?.replace(/\s+/g, ' ').trim()).toBe('Sources 1');
+    expect(openEditorControl(/^Sources/).textContent?.replace(/\s+/g, ' ').trim()).toBe('Sources 1');
     expect(sourceReads.length).toBe(readsBeforeReceipt);
   });
 

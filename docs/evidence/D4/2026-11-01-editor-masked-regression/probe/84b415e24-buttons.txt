@@ -1,0 +1,15 @@
+PROBE[clean] /Save/i matched 2
+  name="Saved" testid=save-section aria-label=null title=null disabled=true group="Save and sign" class="btn primary" owner=DocumentWorkbench < DocumentAuthoring
+  name="Check saved sources" testid=null aria-label=null title="Open a document in its project before checking saved sources." disabled=true group=null class="btn ghost authoring-oversight-action" owner=SavedAssemblySourcesNotice < AuthoringAssemblyBuild < DocumentWorkbench < DocumentAuthoring
+PROBE[clean] /check/i matched 2
+  name="Check saved sources" testid=null aria-label=null title="Open a document in its project before checking saved sources." disabled=true group=null class="btn ghost authoring-oversight-action" owner=SavedAssemblySourcesNotice < AuthoringAssemblyBuild < DocumentWorkbench < DocumentAuthoring
+  name="Check" testid=null aria-label=null title="Mechanical checks over the saved section — length, module keywords, CTD elements, tables, placeholders, structure. Heuristic signals, not a compliance determination." disabled=false group=null class="nda-open" owner=DocumentWorkbench < DocumentAuthoring
+PROBE[dirty] /Save/i matched 2
+  name="Save" testid=save-section aria-label=null title="Say why this section changed, in at least 8 characters — it is recorded with the revision." disabled=true group="Save and sign" class="btn primary" owner=DocumentWorkbench < DocumentAuthoring
+  name="Check saved sources" testid=null aria-label=null title="Open a document in its project before checking saved sources." disabled=true group=null class="btn ghost authoring-oversight-action" owner=SavedAssemblySourcesNotice < AuthoringAssemblyBuild < DocumentWorkbench < DocumentAuthoring
+PROBE[dirty] /check/i matched 2
+  name="Check saved sources" testid=null aria-label=null title="Open a document in its project before checking saved sources." disabled=true group=null class="btn ghost authoring-oversight-action" owner=SavedAssemblySourcesNotice < AuthoringAssemblyBuild < DocumentWorkbench < DocumentAuthoring
+  name="Check" testid=null aria-label=null title="Mechanical checks over the saved section — length, module keywords, CTD elements, tables, placeholders, structure. Heuristic signals, not a compliance determination." disabled=false group=null class="nda-open" owner=DocumentWorkbench < DocumentAuthoring
+PROBE section-check present before click: false
+PROBE exact Check buttons: 1 DocumentWorkbench < DocumentAuthoring
+      Tests  1 passed (1)

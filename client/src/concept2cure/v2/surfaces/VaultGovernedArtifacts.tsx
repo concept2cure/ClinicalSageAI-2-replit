@@ -39,7 +39,7 @@
  * Slice C (2026-10-29) folds the Artifacts center's gallery into the Vault as
  * its organization view: ./VaultOrganizationArtifacts.tsx.
  */
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
 import { I } from '../icons';
 import { flattenDocs, vaultStatus, type VaultDoc, type VaultArtifactFacts, type VaultFolder } from '../fixtures/vault-data';
@@ -98,17 +98,24 @@ export function GovernedArtifactsLane({
   /** Download the listed rows' CSV manifest (slice B). */
   onExportManifest?: () => void;
 }) {
+  const headingId = useId();
+  // A section of the Governed artifacts view (D6 §C.4 step 11): heading, count, the branch's two acts.
+  const head = (sub?: React.ReactNode, acts?: React.ReactNode) => (
+    <div className="pj-sec-h">
+      <h2 id={headingId}>{ARTIFACTS_BRANCH}</h2>
+      {sub ? <span className="sec-sub">{sub}</span> : null}
+      {acts ? <div className="pj-sec-acts">{acts}</div> : null}
+    </div>
+  );
   if (unavailableReason) {
     return (
-      <div className="vd-dr" data-testid="vault-artifacts-lane">
-        <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.shieldCheck} {ARTIFACTS_BRANCH}</span>
-        </div>
+      <section className="pj-sec" data-testid="vault-artifacts-lane" aria-labelledby={headingId}>
+        {head()}
         <div className="vd-dr-err" role="alert">
           {I.alertTriangle} The project’s governed artifacts could not be read, so none are listed. This is
           not an empty registry. {unavailableReason}
         </div>
-      </div>
+      </section>
     );
   }
   // An older server, or a store not provisioned at all: nothing was read, so nothing is claimed.
@@ -119,35 +126,28 @@ export function GovernedArtifactsLane({
   ];
   const sig = block.signatures;
   return (
-    <div className="vd-dr" data-testid="vault-artifacts-lane">
-      <div className="vd-dr-head">
-        <span className="vd-dr-title">{I.shieldCheck} {ARTIFACTS_BRANCH}</span>
-        <span className="vd-dr-meta">
+    <section className="pj-sec" data-testid="vault-artifacts-lane" aria-labelledby={headingId}>
+      {head(
+        <>
           {plural(block.total, 'governed artifact', 'governed artifacts')} in this project
           {block.window.truncated
             ? ` · the newest ${block.window.shown} are listed, and the counts below cover them`
             : ''}
-        </span>
-        {block.total > 0 && (
-          <button className="vd-dr-toggle" onClick={onOpen}>
-            Open governed artifacts
-          </button>
-        )}
-        {block.total > 0 && onExportManifest && (
-          <button
-            className="vd-dr-toggle"
-            onClick={onExportManifest}
-            title={
-              block.window.truncated
-                ? `Download the index of the ${block.window.shown} listed governed artifacts as CSV (their governance, not the files)`
-                : 'Download the index of these governed artifacts as CSV (their governance, not the files)'
-            }
-            data-testid="vault-artifacts-manifest"
-          >
-            {I.download} Export manifest
-          </button>
-        )}
-      </div>
+        </>,
+        block.total > 0 ? (
+          <>
+            <button type="button" className="btn ghost small" onClick={onOpen}>
+              Open governed artifacts
+            </button>
+            {onExportManifest && (
+              <button type="button" className="btn ghost small" onClick={onExportManifest} data-testid="vault-artifacts-manifest"
+                title={`Download the index of ${block.window.truncated ? `the ${block.window.shown} listed` : 'these'} governed artifacts as CSV (their governance, not the files)`}>
+                {I.download} Export manifest
+              </button>
+            )}
+          </>
+        ) : null,
+      )}
       {block.total === 0 ? (
         <div className="vd-dr-empty">
           No governed artifacts in this project yet. What AnA drafts for it, the Module 3 sections the CMC
@@ -182,7 +182,7 @@ export function GovernedArtifactsLane({
           </div>
         </>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -239,8 +239,8 @@ export function ArtifactGovernanceDetail({ doc }: { doc: VaultDoc }) {
   const a = doc.artifact;
   if (!a) return null;
   return (
+    /* Headed by the record's "Governed artifact" disclosure (Vault.tsx, D6 §C.4 step 9). */
     <>
-      <div className="vd-d-seclbl">Governed artifact</div>
       <div className="vd-d-filing" data-testid="vault-artifact-governance">
         <Row k="Kind">{a.kind}</Row>
         <Row k="Format">{a.format ? a.format.toUpperCase() : 'Not recorded'}</Row>
@@ -310,7 +310,7 @@ function ReadNotShown({
       {words.retryable && (
         <>
           {' '}
-          <button type="button" className="sp-ask" onClick={onRetry}>
+          <button type="button" className="btn ghost small" onClick={onRetry}>
             Try again
           </button>
         </>
@@ -344,8 +344,8 @@ export function ArtifactVersions({ projectId, doc }: { projectId: string; doc: V
   const read = useLiveData<ArtifactVersionsRead>(path, [path, epoch], isVersionsRead);
   const signedOn = a.signature === 'current' || a.signature === 'stale' ? a.signedVersion : null;
   return (
+    /* Headed by the record's "Versions" disclosure. */
     <>
-      <div className="vd-d-seclbl">Versions</div>
       <div className="vd-vers" data-testid="vault-artifact-versions">
         {read.loading ? (
           <div className="vd-d-idx" role="status">
@@ -460,8 +460,8 @@ export function ArtifactAuditReport({ projectId, doc }: { projectId: string; doc
   const r = read.data;
   const note = a.origin ? HASH_NOTE[a.origin] : undefined;
   return (
+    /* Headed by the record's "Audit report" disclosure. */
     <>
-      <div className="vd-d-seclbl">Audit report</div>
       <div className="vd-d-filing" data-testid="vault-artifact-audit">
         {!asked ? (
           <>
@@ -472,7 +472,7 @@ export function ArtifactAuditReport({ projectId, doc }: { projectId: string; doc
               </span>
             </div>
             <div className="vd-d-filing-acts">
-              <button type="button" className="sp-ask" onClick={() => setAsked(1)}>
+              <button type="button" className="btn ghost small" onClick={() => setAsked(1)}>
                 Read the audit report
               </button>
             </div>

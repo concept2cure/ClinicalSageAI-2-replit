@@ -1,0 +1,39 @@
+# npx vite build; npx vitest run --config vitest.visual-qa.config.ts; node scripts/visual-qa/check-contrast.mjs
+# tree: git archive of f2385372 (after D0), extracted to a scratch directory (node_modules symlinked to the main tree)
+# run: 2026-11-01, by the D0 verdict pass
+
+## capture
+ FAIL  scripts/visual-qa/dump-insert-gate.spec.tsx > capture: the conversation’s insert offers > writes one admitted offer and every refusal the gate can print
+Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 111 passed (112)
+
+## contrast
+[visual-qa:contrast] capture is current (newer than every source file).
+[visual-qa:contrast] self-check OK — black on white measures 21:1.
+
+[visual-qa:contrast] 108 surfaces × 2 themes · 5760 text elements measured · 2 below WCAG 2.2 AA (0.0%).
+
+    light    2880 measured ·     1 below AA (0.0%)
+    dark     2880 measured ·     1 below AA (0.0%)
+
+  (0 additional low-contrast elements were lone separator glyphs — excluded as decorative per WCAG 1.4.3.
+   0 were text inside a disabled control — excluded as an inactive user interface component, same clause.)
+
+  BY COLOUR PAIR — the actionable view. One token fixed clears every row:
+        1  rgb(117, 115, 109) on rgb(238, 236, 228) [light]
+        1  rgb(142, 140, 132) on rgb(60, 60, 57) [dark]
+
+  surfaces with failures (worst first):
+       1 / 52    v2__document-authoring [light]
+       1 / 52    v2__document-authoring [dark]
+
+  the 20 lowest ratios anywhere:
+      3.29:1 (needs 4.5) rgb(142, 140, 132) on rgb(60, 60, 57) 12px  div.c2c-empty-reg  "Every save records an auditable revision (21 CFR"  [v2__document-authoring [dark]]
+      4.01:1 (needs 4.5) rgb(117, 115, 109) on rgb(238, 236, 228) 12px  div.c2c-empty-reg  "Every save records an auditable revision (21 CFR"  [v2__document-authoring [light]]
+
+[visual-qa:contrast] Scope: SC 1.4.3 contrast only, on static captured markup. Keyboard
+[visual-qa:contrast] operability, focus order and screen-reader semantics are NOT covered —
+[visual-qa:contrast] React handlers do not survive serialization. This is evidence toward a
+[visual-qa:contrast] VPAT, not a conformance claim.
+contrast exit 0

@@ -19,6 +19,7 @@ vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: 
 vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFiling: () => null }));
 
 import { DocumentAuthoring } from '../../surfaces/DocumentAuthoring';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const DOC = 'dddddddd-0000-4000-8000-000000000011';
 const SEC = 'aaaaaaaa-0000-4000-8000-000000000011';
@@ -50,7 +51,9 @@ function serve(content: string, qualified = true) {
     }
     if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
-    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
+    /* The sections read as the server sends it since 8013c9457 (authoring-document-read.ts): every section carries its
+       writing-agency projection. This report records no saved template, so the projection is 'not-recorded'. */
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [{ ...section, draftingRegion: null, draftingRegionState: 'not-recorded' }] });
     if (url.startsWith('/api/c2c/documents/')) return ok({ success: false }, 404);
     return ok({ success: true });
   });
@@ -65,10 +68,18 @@ async function openAlternatives(expectEmpty = false) {
     if (expectEmpty) expect(canvas?.textContent).toBe('');
     else expect(canvas?.textContent).toContain('primary endpoint');
   });
-  const open = screen.getByTestId('ai-draft-open') as HTMLButtonElement;
-  await waitFor(() => expect(open.disabled).toBe(false));
-  fireEvent.click(open);
-  fireEvent.click(await screen.findByRole('button', { name: 'Draft three alternatives' }));
+  /* D4-2: "Draft from sources" is an item of the bar's AnA (✻) menu (D4.md §D4.G). */
+  const open = () => openEditorControl('Draft from sources', 'ana');
+  await waitFor(() => expect(open().getAttribute('aria-disabled')).toBeNull());
+  fireEvent.click(open());
+  /* No receiving agency is recorded, so none is assumed: the person chooses one before drafting
+     (8013c9457; docs/evidence/D4/2026-10-30-ind-development/region-ui.md). */
+  const three = await screen.findByRole('button', { name: 'Draft three alternatives' }) as HTMLButtonElement;
+  const region = within(screen.getByTestId('ai-draft-panel')).getByLabelText('Region') as HTMLSelectElement;
+  expect(region.value).toBe(''); expect(three.disabled).toBe(true);
+  fireEvent.change(region, { target: { value: 'FDA' } });
+  await waitFor(() => expect(three.disabled).toBe(false));
+  fireEvent.click(three);
   const group = await screen.findByRole('radiogroup', { name: /alternatives/i });
   await waitFor(() => expect((within(group).getByRole('radio', { name: /Detailed/ }) as HTMLInputElement).disabled).toBe(false));
   return group;

@@ -47,7 +47,8 @@ afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });
 
 async function searchLibrary() {
   render(<Vault {...props()} />);
-  fireEvent.click(await screen.findByLabelText('Accessible projects'));
+  // D6-3: the scope toggle reads "All my projects" now, said for a person (D6 §C.4 step 7).
+  fireEvent.click(await screen.findByLabelText('All my projects'));
   fireEvent.change(screen.getByLabelText('Search this vault'), { target: { value: 'stability' } });
 }
 

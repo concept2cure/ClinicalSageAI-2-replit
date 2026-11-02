@@ -1,0 +1,36 @@
+# HEAD's foundationsRetiredRatchet.test.ts (git show HEAD:...) run against the same tree.
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > reads the client TSX and the v2 stylesheets 3ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-head`: no more than 18 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-eyebrow`: no more than 19 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-title`: no more than 18 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-state`: no more than 23 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-head`: no more than 11 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-eyebrow`: no more than 9 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-title`: no more than 11 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-sub`: no more than 10 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-head`: no more than 0 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-kicker`: no more than 0 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-title`: no more than 0 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-head`: no more than 5 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-kicker`: no more than 2 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-eyebrow`: no more than 1 uses, and gone from the CSS at 0 15ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-cta`: no more than 19 uses, and gone from the CSS at 0 15ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `landing-newproj`: no more than 1 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `btn sm`: no more than 14 uses, and gone from the CSS at 0 16ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-card`: no more than 15 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tabs`: no more than 11 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tab`: no more than 13 uses, and gone from the CSS at 0 13ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-subtab`: no more than 0 uses, and gone from the CSS at 0 14ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sc-ws`: no more than 1 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cc-tab`: no more than 1 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-seg`: no more than 2 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-seg`: no more than 4 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cl-toast`: no more than 1 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `tb-detail`: no more than 4 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-modal`: no more than 3 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-connect`: no more than 0 uses, and gone from the CSS at 0 15ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-stageband`: no more than 2 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 1 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/zzDpSkepticHeadRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `This work flows into`: no more than 1 uses, and gone from the CSS at 0 9ms
+ Test Files  1 passed (1)
+      Tests  33 passed (33)

@@ -1,6 +1,7 @@
 {
 "commit": "18261a908",
 "generated": "2026-11-01",
+"correction": "2026-11-01: callers built from path constants, then the HTTP method and the call site (method/CHANGELOG-template-callers.md)",
 "rows": [
 {
 "m": "GET",
@@ -391,8 +392,13 @@
 "device-510k"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/mdx/hooks/useK510.ts",
+"callerAt": "client/src/concept2cure/mdx/hooks/useK510.ts:143",
+"builtAt": "client/src/concept2cure/mdx/hooks/useK510.ts:141",
+"via": "template",
+"how": "",
+"pattern": "/api/510k/projects/${\u2026}/document-preview",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -582,7 +588,12 @@
 "claimedBy": [],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/AdminPlatformGrants.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/AdminPlatformGrants.tsx:28",
+"builtAt": "client/src/concept2cure/v2/surfaces/AdminPlatformGrants.tsx:28",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/admin/access/grants/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -802,7 +813,12 @@
 "claimedBy": [],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/MasterLicensing.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/MasterLicensing.tsx:496",
+"builtAt": "client/src/concept2cure/v2/surfaces/MasterLicensing.tsx:496",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/admin/master/feature-flags/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -882,7 +898,12 @@
 "claimedBy": [],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/MasterLicensing.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/MasterLicensing.tsx:389",
+"builtAt": "client/src/concept2cure/v2/surfaces/MasterLicensing.tsx:389",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/admin/master/licensing/modules/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -891,8 +912,13 @@
 "prod": "never-gated",
 "claimedBy": [],
 "packages": [],
-"caller": "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/MasterLicensing.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/MasterLicensing.tsx:254",
+"builtAt": "client/src/concept2cure/v2/surfaces/MasterLicensing.tsx:251",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/admin/master/licensing/tenants/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -942,7 +968,12 @@
 "claimedBy": [],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/licensing/TrialsPanel.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/licensing/TrialsPanel.tsx:298",
+"builtAt": "client/src/concept2cure/v2/surfaces/licensing/TrialsPanel.tsx:297",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/admin/master/licensing/trials/convert",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -952,7 +983,12 @@
 "claimedBy": [],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/licensing/TrialsPanel.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/licensing/TrialsPanel.tsx:298",
+"builtAt": "client/src/concept2cure/v2/surfaces/licensing/TrialsPanel.tsx:297",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/admin/master/licensing/trials/end",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -2702,7 +2738,12 @@
 "S4"
 ],
 "caller": "client/src/concept2cure/v2/SkillStudio.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/SkillStudio.tsx:54",
+"builtAt": "client/src/concept2cure/v2/SkillStudio.tsx:54",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/ana-skills/organization/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -4572,8 +4613,13 @@
 "prod": "never-gated",
 "claimedBy": [],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/ComplianceReviewRecords.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/ComplianceReviewRecords.tsx:212",
+"builtAt": "client/src/concept2cure/v2/surfaces/ComplianceReviewRecords.tsx:212",
+"via": "path-constant",
+"how": "import",
+"pattern": "/api/audit/reviews/${\u2026}/sign",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -6398,7 +6444,12 @@
 "claimedBy": [],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/BatchDraft.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/BatchDraft.tsx:491",
+"builtAt": "client/src/concept2cure/v2/surfaces/BatchDraft.tsx:491",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/batch-draft/documents/${\u2026}/accept",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -7311,8 +7362,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/assurance",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -7491,8 +7547,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/diagnostic/bayesian-device",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7506,8 +7567,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/diagnostic/mrmc",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7521,8 +7587,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/diagnostic/sizing",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7536,8 +7607,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/dose-finding/boin",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7551,8 +7627,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/enrollment/backtest",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7566,8 +7647,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/enrollment/forecast",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7716,8 +7802,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/external-control/sensitivity",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7792,7 +7883,12 @@
 "S3"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts:149",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts:149",
+"via": "path-constant",
+"how": "constant+helper",
+"pattern": "/api/biostat/knowledge/endpoint-method-matrix",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7807,7 +7903,12 @@
 "S3"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts:142",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts:142",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/biostat/knowledge/ingest-csr",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -7822,7 +7923,12 @@
 "S3"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts:144",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts:144",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/biostat/knowledge/method-landscape/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7837,7 +7943,12 @@
 "S3"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts:141",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts:141",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/biostat/knowledge/query",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -7852,7 +7963,12 @@
 "S3"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts:151",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatKnowledgeApi.ts:151",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/biostat/knowledge/trend/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7866,8 +7982,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/mmrm/power",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7881,8 +8002,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/mmrm/sample-size",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -7911,8 +8037,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/multiplicity/test",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -8091,8 +8222,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/survival/rmst",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -8106,8 +8242,13 @@
 "packages": [
 "S3"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/biostat/win-ratio",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -9518,6 +9659,10 @@
 "S1"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx",
+"samePathAt": "client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx:395",
+"samePathMethods": [
+"PUT"
+],
 "confidence": "probable"
 },
 {
@@ -9533,6 +9678,10 @@
 "S1"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx",
+"samePathAt": "client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx:395",
+"samePathMethods": [
+"PUT"
+],
 "confidence": "probable"
 },
 {
@@ -9548,7 +9697,12 @@
 "S1"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx:395",
+"builtAt": "client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx:395",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/c2c/templates/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -9563,7 +9717,12 @@
 "S1"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx:417",
+"builtAt": "client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx:417",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/c2c/templates/${\u2026}/render",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -10331,8 +10490,13 @@
 "device-cer"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/mdx/hooks/useCerLiterature.ts",
+"callerAt": "client/src/concept2cure/mdx/hooks/useCerLiterature.ts:386",
+"builtAt": "client/src/concept2cure/mdx/hooks/useCerLiterature.ts:372",
+"via": "template",
+"how": "",
+"pattern": "/api/cerv2/literature/screening",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -10908,8 +11072,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/company-documents/CompanyBrandingPolicy.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyBrandingPolicy.tsx:17",
+"builtAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyBrandingPolicy.tsx:17",
+"via": "path-constant",
+"how": "import",
+"pattern": "/api/client-branding/company-documents/branding-policy",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -10948,8 +11117,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": "client/src/concept2cure/v2/surfaces/InsightsPackageStationery.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx:51",
+"builtAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx:51",
+"via": "path-constant",
+"how": "import",
+"pattern": "/api/client-branding/company-documents/designs/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -10968,8 +11142,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx:33",
+"builtAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx:33",
+"via": "path-constant",
+"how": "constant+import",
+"pattern": "/api/client-branding/company-documents/designs/${\u2026}/proof",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -10978,8 +11157,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx:25",
+"builtAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx:25",
+"via": "path-constant",
+"how": "argument+constant+import",
+"pattern": "/api/client-branding/company-documents/designs/${\u2026}/publish",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -10988,8 +11172,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": "client/src/concept2cure/v2/surfaces/CompanyFilingIdentityReview.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx:25",
+"builtAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx:25",
+"via": "path-constant",
+"how": "argument+constant+import",
+"pattern": "/api/client-branding/company-documents/designs/${\u2026}/review",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -11018,8 +11207,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": "client/src/concept2cure/v2/surfaces/useCompanyDocumentSettings.ts",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/company-documents/CompanyLegacyAdoption.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyLegacyAdoption.tsx:25",
+"builtAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyLegacyAdoption.tsx:25",
+"via": "path-constant",
+"how": "import",
+"pattern": "/api/client-branding/company-documents/legacy-adoption",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -11029,7 +11223,12 @@
 "claimedBy": [],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/useCompanyDocumentSettings.ts",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/useCompanyDocumentSettings.ts:112",
+"builtAt": "client/src/concept2cure/v2/surfaces/useCompanyDocumentSettings.ts:112",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/client-branding/company-documents/legacy-adoption",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -11038,8 +11237,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": "client/src/concept2cure/v2/surfaces/CompanySubmissionDocuments.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/company-documents/CompanyLegalInventory.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyLegalInventory.tsx:60",
+"builtAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyLegalInventory.tsx:27",
+"via": "path-constant",
+"how": "import",
+"pattern": "/api/client-branding/company-documents/legal-documents",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -11048,8 +11252,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": "client/src/concept2cure/v2/surfaces/CompanySubmissionDocuments.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx:162",
+"builtAt": "client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx:162",
+"via": "path-constant",
+"how": "import",
+"pattern": "/api/client-branding/company-documents/legal-documents",
+"confidence": "exact"
 },
 {
 "m": "DELETE",
@@ -11058,8 +11267,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": "client/src/concept2cure/v2/surfaces/CompanySubmissionDocuments.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx:171",
+"builtAt": "client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx:171",
+"via": "path-constant",
+"how": "import",
+"pattern": "/api/client-branding/company-documents/legal-documents/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -11169,7 +11383,12 @@
 "claimedBy": [],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/useCompanyDocumentSettings.ts",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/useCompanyDocumentSettings.ts:170",
+"builtAt": "client/src/concept2cure/v2/surfaces/useCompanyDocumentSettings.ts:167",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/client-branding/company-documents/letterhead/preview",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -11188,8 +11407,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPermissionsPanel.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPermissionsPanel.tsx:47",
+"builtAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPermissionsPanel.tsx:47",
+"via": "path-constant",
+"how": "import",
+"pattern": "/api/client-branding/company-documents/permissions",
+"confidence": "exact"
 },
 {
 "m": "PUT",
@@ -11198,8 +11422,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPermissionsPanel.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPermissionsPanel.tsx:25",
+"builtAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPermissionsPanel.tsx:25",
+"via": "path-constant",
+"how": "import",
+"pattern": "/api/client-branding/company-documents/permissions/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -11208,8 +11437,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPresentationHistory.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPresentationHistory.tsx:65",
+"builtAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPresentationHistory.tsx:64",
+"via": "path-constant",
+"how": "import",
+"pattern": "/api/client-branding/company-documents/revisions",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -11218,8 +11452,13 @@
 "prod": "launch",
 "claimedBy": [],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPresentationHistory.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPresentationHistory.tsx:41",
+"builtAt": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPresentationHistory.tsx:41",
+"via": "path-constant",
+"how": "import",
+"pattern": "/api/client-branding/company-documents/revisions/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -11997,7 +12236,12 @@
 "claimedBy": [],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/ClinicalOps.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/ClinicalOps.tsx:356",
+"builtAt": "client/src/concept2cure/v2/surfaces/ClinicalOps.tsx:356",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/clinical-operations/studies/${\u2026}/deviations",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -12203,6 +12447,10 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+"samePathAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2330",
+"samePathMethods": [
+"GET"
+],
 "confidence": "probable"
 },
 {
@@ -12217,8 +12465,13 @@
 "S7",
 "S12"
 ],
-"caller": "client/src/concept2cure/v2/surfaces/cmcSpec.ts",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2386",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2386",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/batch-records/${\u2026}/release",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -12233,7 +12486,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2330",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2330",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/batch-records/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -12862,7 +13120,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:280",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:280",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/build-section/${\u2026}/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -12877,7 +13140,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:205",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:205",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/build-state/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -12892,7 +13160,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:263",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:263",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/compile/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "PATCH",
@@ -12907,7 +13180,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:318",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:318",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/contradictions/${\u2026}/resolve",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -12921,8 +13199,13 @@
 "S7",
 "S12"
 ],
-"caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2823",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2823",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/contradictions/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -12937,7 +13220,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:289",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:289",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/contradictions/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -12952,7 +13240,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:337",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:337",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/guard/final-export/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -12967,7 +13260,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcPlaceIntoSubmission.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcPlaceIntoSubmission.tsx:91",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcPlaceIntoSubmission.tsx:91",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/place-into-submission/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -12981,8 +13279,13 @@
 "S7",
 "S12"
 ],
-"caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2848",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2848",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/provenance/${\u2026}/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -12996,8 +13299,13 @@
 "S7",
 "S12"
 ],
-"caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:669",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:669",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/readiness/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -13041,8 +13349,13 @@
 "S7",
 "S12"
 ],
-"caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2820",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2820",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/sections/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -13102,7 +13415,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx:226",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx:225",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/module3-os/source-evidence/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -13117,7 +13435,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx:233",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx:233",
+"via": "path-constant",
+"how": "argument+constant",
+"pattern": "/api/cmc/module3-os/source-evidence/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -13132,7 +13455,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx:233",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx:233",
+"via": "path-constant",
+"how": "argument+constant",
+"pattern": "/api/cmc/module3-os/source-evidence/${\u2026}/${\u2026}/unlink",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -13147,7 +13475,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx:227",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx:227",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/cmc/module3-os/source-evidence/${\u2026}/documents",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -13222,7 +13555,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2630",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2630",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/projects/${\u2026}/process-capability",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -13282,7 +13620,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcQuality.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcQuality.tsx:166",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcQuality.tsx:166",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/quality/qbd/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -13386,8 +13729,13 @@
 "S7",
 "S12"
 ],
-"caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1184",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1184",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/specifications/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -13401,8 +13749,13 @@
 "S7",
 "S12"
 ],
-"caller": "client/src/concept2cure/v2/surfaces/cmcSpec.ts",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1215",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1215",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/specifications/${\u2026}/approve",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -13431,8 +13784,13 @@
 "S7",
 "S12"
 ],
-"caller": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1127",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1127",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/specifications/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -13476,8 +13834,13 @@
 "S7",
 "S12"
 ],
-"caller": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1646",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1646",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/stability-studies/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -13506,8 +13869,13 @@
 "S7",
 "S12"
 ],
-"caller": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1680",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1680",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/stability-studies/${\u2026}/shelf-life",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -13522,7 +13890,12 @@
 "S12"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1718",
+"builtAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1718",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/cmc/stability-studies/${\u2026}/trending",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -13600,7 +13973,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx:191",
+"builtAt": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx:191",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/coauthor/documents/${\u2026}/compliance",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -13660,7 +14038,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx:183",
+"builtAt": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx:183",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/coauthor/documents/${\u2026}/validate",
+"confidence": "exact"
 },
 {
 "m": "DELETE",
@@ -13672,6 +14055,11 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx",
+"samePathAt": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx:399",
+"samePathMethods": [
+"GET",
+"PUT"
+],
 "confidence": "probable"
 },
 {
@@ -13684,7 +14072,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx:410",
+"builtAt": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx:410",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/coauthor/documents/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "PUT",
@@ -13696,7 +14089,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx:399",
+"builtAt": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx:399",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/coauthor/documents/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -18389,8 +18787,13 @@
 "ectd-compile"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/CsrPlacementLifecycle.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CsrPlacementLifecycle.tsx:44",
+"builtAt": "client/src/concept2cure/v2/surfaces/CsrPlacementLifecycle.tsx:44",
+"via": "path-constant",
+"how": "argument+constant",
+"pattern": "/api/csr/jobs/${\u2026}/assembly/${\u2026}/lifecycle",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -18402,7 +18805,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/CsrAssemblyControl.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CsrAssemblyControl.tsx:284",
+"builtAt": "client/src/concept2cure/v2/surfaces/CsrAssemblyControl.tsx:284",
+"via": "path-constant",
+"how": "argument+constant",
+"pattern": "/api/csr/jobs/${\u2026}/assembly/${\u2026}/place",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -18413,8 +18821,13 @@
 "ectd-compile"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/CsrPlacementLifecycle.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/CsrPlacementLifecycle.tsx:124",
+"builtAt": "client/src/concept2cure/v2/surfaces/CsrPlacementLifecycle.tsx:124",
+"via": "path-constant",
+"how": "argument+constant",
+"pattern": "/api/csr/jobs/${\u2026}/assembly/${\u2026}/withdraw-placement",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -18438,7 +18851,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/CsrAssemblyControl.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CsrAssemblyControl.tsx:250",
+"builtAt": "client/src/concept2cure/v2/surfaces/CsrAssemblyControl.tsx:250",
+"via": "path-constant",
+"how": "argument+constant",
+"pattern": "/api/csr/jobs/${\u2026}/assembly/targets",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -18462,7 +18880,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/CsrRunBuilds.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/CsrRunBuilds.tsx:112",
+"builtAt": "client/src/concept2cure/v2/surfaces/CsrRunBuilds.tsx:112",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/csr/jobs/${\u2026}/headings",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -18797,8 +19220,13 @@
 "packages": [
 "S2"
 ],
-"caller": "client/src/concept2cure/v2/fixtures/decision-lineage-data.ts",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/DecisionLineage.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/DecisionLineage.tsx:235",
+"builtAt": "client/src/concept2cure/v2/surfaces/DecisionLineage.tsx:232",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/decision-lineage/${\u2026}/${\u2026}/export",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -19203,8 +19631,13 @@
 "biostat-workbench"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/diagnostics-performance/analytical/detection-capability",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -19215,8 +19648,13 @@
 "biostat-workbench"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/diagnostics-performance/analytical/imprecision",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -19227,8 +19665,13 @@
 "biostat-workbench"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/diagnostics-performance/analytical/interference",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -19239,8 +19682,13 @@
 "biostat-workbench"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/diagnostics-performance/analytical/linearity",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -19251,8 +19699,13 @@
 "biostat-workbench"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/diagnostics-performance/analytical/method-comparison",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -19263,8 +19716,13 @@
 "biostat-workbench"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/diagnostics-performance/analytical/qualitative-dose-response",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -19275,8 +19733,13 @@
 "biostat-workbench"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/diagnostics-performance/analytical/reference-interval",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -19287,8 +19750,13 @@
 "biostat-workbench"
 ],
 "packages": [],
-"caller": "shared/constants/ui-surface-registry.ts",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/diagnostics-performance/analytical/stability",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -19299,8 +19767,13 @@
 "biostat-workbench"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/diagnostics-performance/clinical/accuracy",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -19311,8 +19784,13 @@
 "biostat-workbench"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/diagnostics-performance/clinical/roc",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -19323,8 +19801,13 @@
 "biostat-workbench"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375",
+"builtAt": "client/src/concept2cure/v2/surfaces/biostatCalculatorContract.ts:116",
+"via": "path-constant",
+"how": "constant+element+import",
+"pattern": "/api/diagnostics-performance/clinical/weighted-kappa",
+"confidence": "exact"
 },
 {
 "m": "PATCH",
@@ -19651,8 +20134,13 @@
 "packages": [
 "S5"
 ],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/EctdFiledState.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/EctdFiledState.tsx:107",
+"builtAt": "client/src/concept2cure/v2/surfaces/EctdFiledState.tsx:107",
+"via": "path-constant",
+"how": "argument+constant",
+"pattern": "/api/ectd-compile/${\u2026}/filed-state",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -19679,8 +20167,13 @@
 "packages": [
 "S5"
 ],
-"caller": "shared/schema.ts",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx:1003",
+"builtAt": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx:1003",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/ectd-compile/${\u2026}/status",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -20260,7 +20753,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/hooks/useEsignature.ts",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/hooks/useEsignature.ts:29",
+"builtAt": "client/src/concept2cure/hooks/useEsignature.ts:29",
+"via": "path-constant",
+"how": "argument+constant",
+"pattern": "/api/esignature/verify-mfa",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -20272,7 +20770,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/hooks/useEsignature.ts",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/hooks/useEsignature.ts:29",
+"builtAt": "client/src/concept2cure/hooks/useEsignature.ts:29",
+"via": "path-constant",
+"how": "argument+constant",
+"pattern": "/api/esignature/verify-password",
+"confidence": "exact"
 },
 {
 "m": "DELETE",
@@ -20416,6 +20919,10 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/Etmf.tsx",
+"samePathAt": "client/src/concept2cure/v2/surfaces/Etmf.tsx:385",
+"samePathMethods": [
+"POST"
+],
 "confidence": "probable"
 },
 {
@@ -20428,7 +20935,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/Etmf.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/Etmf.tsx:385",
+"builtAt": "client/src/concept2cure/v2/surfaces/Etmf.tsx:385",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/etmf/trials/${\u2026}/artifacts",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -20452,7 +20964,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/Etmf.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/Etmf.tsx:132",
+"builtAt": "client/src/concept2cure/v2/surfaces/Etmf.tsx:130",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/etmf/trials/${\u2026}/completeness",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -20464,7 +20981,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/Etmf.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/Etmf.tsx:424",
+"builtAt": "client/src/concept2cure/v2/surfaces/Etmf.tsx:424",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/etmf/trials/${\u2026}/inspection-package",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -21552,7 +22074,12 @@
 ],
 "packages": [],
 "caller": "client/src/hooks/useGlobalRiCatalog.ts",
-"confidence": "probable"
+"callerAt": "client/src/hooks/useGlobalRiCatalog.ts:34",
+"builtAt": "client/src/hooks/useGlobalRiCatalog.ts:21",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/global-ri/catalog/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -22766,7 +23293,12 @@
 "claimedBy": [],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx:243",
+"builtAt": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx:227",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/governed-intelligence-inconsistency/projects/${\u2026}/inconsistency",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -22802,7 +23334,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx:650",
+"builtAt": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx:650",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/governed-intelligence/assumptions/${\u2026}/revalue",
+"confidence": "exact"
 },
 {
 "m": "PATCH",
@@ -22886,7 +23423,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx:192",
+"builtAt": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx:192",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/governed-intelligence/contradictions/${\u2026}/review",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -22910,7 +23452,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx:418",
+"builtAt": "client/src/concept2cure/v2/surfaces/Inconsistency.tsx:418",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/governed-intelligence/contradictions/scan/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -24024,7 +24571,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/HumanFactors.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/HumanFactors.tsx:362",
+"builtAt": "client/src/concept2cure/v2/surfaces/HumanFactors.tsx:362",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/human-factors/scenarios/${\u2026}/mitigate",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -25366,6 +25918,11 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx",
+"samePathAt": "client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx:107",
+"samePathMethods": [
+"PATCH",
+"POST"
+],
 "confidence": "probable"
 },
 {
@@ -25378,7 +25935,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx:107",
+"builtAt": "client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx:107",
+"via": "template",
+"how": "",
+"pattern": "/api/ind-master-data/sponsors/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -25605,8 +26167,13 @@
 "insights"
 ],
 "packages": [],
-"caller": "client/src/concept2cure/v2/surfaces/InsightsSchedulesPanel.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts",
+"callerAt": "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts:598",
+"builtAt": "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts:598",
+"via": "template",
+"how": "",
+"pattern": "/api/insights/subscriptions/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -28165,8 +28732,13 @@
 "packages": [
 "S8"
 ],
-"caller": "client/src/concept2cure/v2/fixtures/rbm-data.ts",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/Rbm.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/Rbm.tsx:144",
+"builtAt": "client/src/concept2cure/v2/surfaces/Rbm.tsx:143",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/mdx-rbm/rbm-board/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -29252,8 +29824,13 @@
 "labeling"
 ],
 "packages": [],
-"caller": "client/src/concept2cure/v2/SignedContentState.tsx",
-"confidence": "probable"
+"caller": "client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx:76",
+"builtAt": "client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx:76",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/mdx/labeling/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "PATCH",
@@ -29265,6 +29842,10 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/SignedContentState.tsx",
+"samePathAt": "client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx:76",
+"samePathMethods": [
+"GET"
+],
 "confidence": "probable"
 },
 {
@@ -29349,7 +29930,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/Labeling.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/Labeling.tsx:314",
+"builtAt": "client/src/concept2cure/v2/surfaces/Labeling.tsx:314",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/mdx/labeling/translations/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -29457,7 +30043,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/NotificationPreferences.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/NotificationPreferences.tsx:77",
+"builtAt": "client/src/concept2cure/v2/NotificationPreferences.tsx:77",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/mdx/notification-subscriptions/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -32213,7 +32804,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/Orchestration.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/Orchestration.tsx:668",
+"builtAt": "client/src/concept2cure/v2/surfaces/Orchestration.tsx:668",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/orchestration/checkpoints/${\u2026}/decision",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -37181,8 +37777,13 @@
 "document-authoring"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx:110",
+"builtAt": "client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx:110",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/realtime-collab/rooms/${\u2026}/users/me",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -37225,8 +37826,13 @@
 "submission-center"
 ],
 "packages": [],
-"caller": null,
-"confidence": "none"
+"caller": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+"callerAt": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:553",
+"builtAt": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:551",
+"via": "template",
+"how": "",
+"pattern": "/api/region-profiles/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -39281,7 +39887,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/Insights.tsx:1396",
+"builtAt": "client/src/concept2cure/v2/surfaces/Insights.tsx:1396",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/report-os/bundles/${\u2026}/export.pdf",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -44444,7 +45055,12 @@
 "S5"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:767",
+"builtAt": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:767",
+"via": "template",
+"how": "",
+"pattern": "/api/submissions/sequences/${\u2026}/transition",
+"confidence": "exact"
 },
 {
 "m": "POST",
@@ -44459,7 +45075,12 @@
 "S5"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:910",
+"builtAt": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:910",
+"via": "template",
+"how": "",
+"pattern": "/api/submissions/sequences/${\u2026}/transmit",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -44712,7 +45333,12 @@
 ],
 "packages": [],
 "caller": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx:2175",
+"builtAt": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx:2175",
+"via": "concatenation",
+"how": "",
+"pattern": "/api/task-management/tasks/from-template/${\u2026}",
+"confidence": "exact"
 },
 {
 "m": "GET",
@@ -46613,7 +47239,12 @@
 "S6"
 ],
 "caller": "client/src/concept2cure/v2/surfaces/LegalHoldsCard.tsx",
-"confidence": "probable"
+"callerAt": "client/src/concept2cure/v2/surfaces/LegalHoldsCard.tsx:208",
+"builtAt": "client/src/concept2cure/v2/surfaces/LegalHoldsCard.tsx:208",
+"via": "path-constant",
+"how": "constant",
+"pattern": "/api/vault/legal-holds/${\u2026}/lift",
+"confidence": "exact"
 },
 {
 "m": "GET",

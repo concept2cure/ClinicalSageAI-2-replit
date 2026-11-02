@@ -1,0 +1,12 @@
+# AnA=true case with a blanket 'not-recorded' projection on every section (first fixture draft, superseded)
+# Command: vitest run --maxWorkers=1 savedAssemblySourcesFlow.test.tsx -t 'AnA=true' (DEBUG_PRINT_LIMIT=2000000); full DOM trimmed to the lines below
+6:   → Unable to find an element with the text: /Structure built in this document|candidate retained for individual review/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+1179:                          The saved section does not establish a drafting region. Confirm its recorded template or region before retrying.
+3263:                          The saved section does not establish a drafting region. Confirm its recorded template or region before retrying.
+4189:⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+4191: FAIL  client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=true)
+4192:TestingLibraryElementError: Unable to find an element with the text: /Structure built in this document|candidate retained for individual review/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+5365:                          The saved section does not establish a drafting region. Confirm its recorded template or region before retrying.
+7449:                          The saved section does not establish a drafting region. Confirm its recorded template or region before retrying.
+8363: ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx:143:18
+8375:      Tests  1 failed | 14 skipped (15)

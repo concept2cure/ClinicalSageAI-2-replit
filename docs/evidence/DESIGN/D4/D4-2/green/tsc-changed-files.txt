@@ -1,0 +1,10 @@
+Typecheck of the changed files and everything they import (tsc -p, a tsconfig extending the repo's with these files only;
+the full project tsc runs out of memory at 8 GB on this machine):
+
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/v2/surfaceActions.ts(305,19): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+exit 2
+
+0 errors in any D4-2 file. The 4 are environment-only (CSS-module and import.meta.env declarations the narrowed config does not load).

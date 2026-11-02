@@ -13,7 +13,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 const auth = vi.hoisted(() => ({ user: null as null | { id: string; permissions?: string[] } }));
@@ -58,7 +58,8 @@ async function openVault() {
   render(<Vault {...props()} />);
   await screen.findByTestId('vault-edit-details');
   await screen.findByTestId('vault-relationships');
-  fireEvent.click(await screen.findByText('Show sections'));
+  // D6-3: the Required documents view lists the sections open; there is no "Show sections" to press (D6 §C.4 step 5).
+  await screen.findByTestId('vault-coverage-missing-3.2.S');
 }
 
 describe('the Vault offers its write controls to the writing roles only', () => {
@@ -70,7 +71,8 @@ describe('the Vault offers its write controls to the writing roles only', () => 
       expect(screen.queryByTestId(id), id).toBeNull();
     }
     for (const name of [/^Move$/, /^Unfile$/, /Check stored files/, /Upload new version/, /Ask AnA to import/]) {
-      expect(screen.queryByRole('button', { name }), String(name)).toBeNull();
+      // D6-3: the views not on screen are `hidden`, so the absence is checked in every view, not only the Library's.
+      expect(screen.queryByRole('button', { name, hidden: true }), String(name)).toBeNull();
     }
     for (const id of ['vault-filing-view-only', 'vault-edit-details-view-only', 'vault-annotations-view-only',
       'vault-relationships-view-only', 'vault-fixity-view-only']) {
@@ -80,7 +82,7 @@ describe('the Vault offers its write controls to the writing roles only', () => 
     expect(screen.getByTestId('vault-edit-details').textContent).toContain('Stability summary');
     const gap = screen.getByTestId('vault-coverage-missing-3.2.S');
     expect(gap.textContent).toContain('No confirmed document');
-    expect(within(gap).queryByRole('button')).toBeNull();
+    expect(within(gap).queryByRole('button', { hidden: true })).toBeNull();
   });
 
   it('a member is offered each control, and no view-only note', async () => {
@@ -91,8 +93,9 @@ describe('the Vault offers its write controls to the writing roles only', () => 
       expect(screen.getByTestId(id), id).toBeTruthy();
     }
     await waitFor(() => expect(screen.getByRole('button', { name: /Upload new version/ })).toBeTruthy());
-    expect(screen.getByRole('button', { name: /Check stored files/ })).toBeTruthy();
-    expect(within(screen.getByTestId('vault-coverage-missing-3.2.S')).getByRole('button', { name: /Upload/ })).toBeTruthy();
+    // D6-3: fixity and coverage are the Seals & fixity and Required documents views, one tab away (D6 §C.4 step 5).
+    expect(screen.getByRole('button', { name: /Check stored files/, hidden: true })).toBeTruthy();
+    expect(within(screen.getByTestId('vault-coverage-missing-3.2.S')).getByRole('button', { name: /Upload/, hidden: true })).toBeTruthy();
     expect(screen.queryAllByText(/^View only\./)).toHaveLength(0);
   });
 
