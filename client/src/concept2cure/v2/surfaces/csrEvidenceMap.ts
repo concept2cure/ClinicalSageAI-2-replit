@@ -16,7 +16,7 @@
  * reviewer's attestations. The server re-verifies every byte.
  */
 import {
-  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, markupRanges, reportedDisplayAt,
+  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, markupRanges, placeholderIn, quotedPlaceholder, reportedDisplayAt,
   type CsrTableKey, type RetainedScientificRun, type ScientificCellClaim, type ScientificReviewSubmission,
 } from '@shared/authoring/csr-scientific-review';
 
@@ -109,7 +109,9 @@ export function mapGaps(map: ReviewerMap, occurrences: readonly FigureOccurrence
   const label = (s: SavedSection) => `${s.code}${s.title ? ` ${s.title}` : ''}`;
   if (!map.runIds.length) gaps.push('Select the retained analysis run whose tables this CSR reports.');
   for (const s of map.sections) {
+    const held = placeholderIn(s.content);
     if (!s.content?.trim()) gaps.push(`Section ${label(s)} has no saved text. A CSR is approved only when every section is written.`);
+    else if (held) gaps.push(`Section ${label(s)} still holds a data placeholder, ${quotedPlaceholder(held)}. A CSR is approved only when every section states its data.`);
     else if (!map.rationale.get(s.id)?.trim()) gaps.push(`Section ${label(s)} needs your statement of how you checked it.`);
   }
   const undecided = occurrences.filter((o) => !map.choices.has(o.key));

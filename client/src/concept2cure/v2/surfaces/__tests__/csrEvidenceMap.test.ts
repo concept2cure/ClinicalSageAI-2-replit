@@ -129,3 +129,29 @@ describe('mapGaps says what still stops approval, and buildSubmission refuses wh
     expect(mapGaps(withBlank, occurrences).join(' ')).toMatch(/16\.1\.5 Signatures has no saved text/);
   });
 });
+
+/**
+ * F8 of the CSR demo walk (2026-11-02): a section that still holds a data placeholder ("[DATA TO BE INSERTED …]")
+ * is named before the reviewer tries to approve. The server refuses it (CSR_EVIDENCE_SECTION_PLACEHOLDER), so the
+ * screen says so first, by the same shared rule.
+ */
+describe('a section still holding a data placeholder is named', () => {
+  const cells = claimableCells(runs);
+  const held = { id: '6e7f8a9b-0c1d-4e2f-8a3b-4c5d6e7f8a9b', code: '10.1', title: 'Disposition of patients',
+    content: '<p>Twelve were randomized to LMN-201. [DATA TO BE INSERTED FROM SOURCE RECORDS]</p>' };
+  const withHeld = [...sections, held];
+  const occurrences = withHeld.flatMap((s) => figureOccurrences(s, cells));
+  const map: ReviewerMap = { runIds: [RUN], tablesSha256: 'c'.repeat(64), sections: withHeld, choices: new Map(),
+    rationale: new Map(withHeld.map((s) => [s.id, 'Checked against the retained tables.'])),
+    allQuantitativeResultsMapped: true, populationsMethodsUnitsReviewed: true };
+
+  it('names the section and the placeholder, and the map cannot be submitted', async () => {
+    const gaps = mapGaps(map, occurrences);
+    expect(gaps.join(' ')).toMatch(/10\.1 Disposition of patients still holds a data placeholder, \[DATA TO BE INSERTED FROM SOURCE RECORDS\]/);
+    await expect(buildSubmission(map, occurrences)).rejects.toThrow();
+  });
+
+  it('a section without one is not named', () => {
+    expect(mapGaps(map, occurrences).join(' ')).not.toMatch(/11\.4 Efficacy results still holds/);
+  });
+});
