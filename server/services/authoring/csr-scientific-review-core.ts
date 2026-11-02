@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
    (shared/authoring/csr-scientific-review.ts), so the screen never offers a
    figure this verifier would refuse. Re-exported for this module's importers. */
 import {
-  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, containsExactNumericalDisplay, markupRanges, reportedDisplayAt,
+  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, containsExactNumericalDisplay, markupRanges, placeholderIn, quotedPlaceholder, reportedDisplayAt,
   type CsrTableKey, type RetainedScientificRun, type RetainedScientificTable,
   type ScientificCellClaim, type ScientificReviewSubmission, type ScientificSectionReview,
 } from '../../../shared/authoring/csr-scientific-review.js';
@@ -154,6 +154,12 @@ export function scientificTablesSha256(runs: readonly RetainedScientificRun[]): 
   return scientificSha256(canonicalScientificJson(scientificTableBundle(runs)));
 }
 
+/** F8 (CSR demo walk, 2026-11-02): a section still holding a data placeholder is not written, as a blank one is not. */
+function refuseHeldPlaceholder(content: string): void {
+  const held = placeholderIn(content);
+  if (held) fail('CSR_EVIDENCE_SECTION_PLACEHOLDER', `A saved section still holds a data placeholder, ${quotedPlaceholder(held)}. A CSR is approved only when every section states its data.`);
+}
+
 export function prepareScientificReviewReceipt(args: {
   organizationId: number; programId: string; documentId: string;
   snapshotHash: string; reviewId: string; reviewerId: string;
@@ -187,6 +193,7 @@ export function prepareScientificReviewReceipt(args: {
       review.contentSha256 !== scientificSha256(section.content)) {
       return fail('CSR_EVIDENCE_SECTION_CHANGED', 'A saved section is missing, blank or no longer matches its reviewed content.');
     }
+    refuseHeldPlaceholder(section.content);
     for (const claim of review.claims) {
       const quote = section.content.slice(claim.start, claim.end);
       if (claim.end > section.content.length || scientificSha256(quote) !== claim.quoteSha256 || !containsExactNumericalDisplay(quote, claim.expectedValue)) {

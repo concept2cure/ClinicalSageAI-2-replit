@@ -141,7 +141,7 @@ test pinned the old empty-state copy; it now pins the new copy.
 | F5 | **The "Clinical source" picker lists every JSON file in the project's Vault**, including the efficacy file, which cannot be a clinical source. | `vault-source-input.ts` source list | Low risk; it belongs with the source-list owner |
 | F6 | **"Import approved sections into Authoring" creates a new working copy.** It does not fill the CSR started from New document. | Roadmap step 3 ("a heading's draft is the editor's section draft") | Roadmap work, not a repair |
 | F7 | **The builder does not pace itself under the gateway's 30-per-minute user limit.** Without a key, instant demo-mode replies cross it (39 refusals in build 2). With a real key each heading takes seconds or more, so a sequential build stays far below the limit. | `csr-job-runner.ts` | Not reached with a model key; kept on record from the 10-31 walk |
-| F8 | **No placeholder gate on the editor's path to filing.** An imported working copy that still holds "[DATA TO BE INSERTED…]" can be approved (APPROVER e-sign), snapshotted and placed at 5.3.5.1 as an approved CSR leaf. Only the assembly's placement refuses a placeholder (`CSR_PLACEMENT_BODY_PLACEHOLDER`, `csr-assembly-placement.ts:132`); the authoring side has only an advisory scan (`authoring.router.ts:4609`). Fail closed requires a gate. | `server/routes/authoring.router.ts` (approval), `AuthoringPlaceIntoFiling` | Signing and filing are another lane's held files; needs a hold and, for the gate's scope, the coordinator |
+| F8 | **Fixed later the same day (addendum below).** An imported working copy that still held "[DATA TO BE INSERTED…]" could be approved and placed as an approved CSR leaf; only the assembly's placement refused a placeholder. The CSR scientific review now refuses it, by the same rule. | `shared/authoring/csr-scientific-review.ts`, `csr-scientific-review-core.ts`, `csr-placeholders.ts`, `csrEvidenceMap.ts` | — |
 | F9 | **A heading is approved on the build board without its text.** The section review shows no section text, so the approver cannot read what they approve before the import. | `CsrBuildProgress.tsx` `CsrHeadingReview` | Same file as F2; roadmap step 5 folds this review into the editor's |
 | F10 | **A failed build shows no reason**, only "CSR build N · failed · NN%". The list returns no error, and `GET /api/csr/jobs/:jobId` has no client caller. | `server/routes/csr-jobs.ts` list, `CsrRunBuilds.tsx` | Another file; needs a hold |
 | F11 | **Copy that no longer matches the product.** The imported §14.3.3 says to "run the narratives again on the build board", a label that does not exist (it is "CSR builds from this study data"). eCTD Compile still says "First-study AI narrative generation remains unavailable." while the editor composed 95 narratives. | `CsrNarrativeReferenceView.tsx`, `CsrNarrativeReadiness` | Copy in other lanes' files |
@@ -153,11 +153,10 @@ file: the approval count, the appendix count, the row count, the P-89 claim and 
 
 ## Not walked (blocked in this environment)
 
-- **Real drafting.** This container has no model key, so the gateway runs in demo mode. Without real drafts, these
-  were not walked:
-  - section approvals;
-  - "Import approved sections";
-  - the review of drafted text;
+- **Real drafting.** This container has no model key, so the gateway runs in demo mode. Section approvals, "Import
+  approved sections" and the scientific review of the imported copy were walked later on build 2's template text
+  (addendum). Without real drafts, these were not walked:
+  - the review of drafted text, with figures mapped to cells;
   - E-sign of the CSR (P-89's figure question does not apply to it: an imported copy carries no project source
     references, so the gate returns clear);
   - "Place CSR files";
@@ -165,6 +164,57 @@ file: the approval count, the appendix count, the row count, the P-89 claim and 
 
   This is reported as blocked, not done.
 - **Production mode.** The pinned drafting model is PQ-pending (`server/services/ai-gateway/approved-models.ts`). With `NODE_ENV=production`, high-risk drafting is refused, every heading falls back to its template, and the build fails. A demo in production mode first needs the model's PQ, or a founder decision.
+
+## Addendum (later, 2026-11-02): the import path walked, F8 fixed, and a correction to `c29fdcb4e`
+
+The founder offered a model key. None reaches this container: no environment variable, no `.env` value, and no
+credential at the proxy (`api.anthropic.com` answers 401). Real drafting therefore stays blocked, and it is the next
+rehearsal once the key is in the environment. Meanwhile, the import path the first walk could not reach was walked
+on build 2's template text, the fail-closed gap F8 was fixed, and the walk found that one of this morning's fixes
+did not work on real data.
+
+**Walked in the running app (`live/11-…` to `13-…`):**
+1. JM sent build 2's 20 headings for review on the build board, and Ava, who did not request the build, approved
+   all 20 (`11-…`).
+2. JM pressed "Import approved sections into Authoring". The working copy, titled with the study's title, has 20
+   sections. The receipt lists the failed build, three headings with no output and a placeholder in §9.8 (`12-…`).
+3. JM sent the copy to Rhea. Her board lists it as "Awaiting your review".
+4. Rhea's scientific review offered "Study data the imported CSR build was drafted from · CDISCPILOT01 · source
+   v1.0 · frozen 2026-11-02 02:57 UTC". The server read its tables (preview 200).
+5. The review named the **16 sections that still hold a data placeholder**, each with its text. "Record approval"
+   stayed disabled (`13-…`).
+
+**The correction to `c29fdcb4e`.** That fix followed `importSource.jobId`. A stored import names its build as
+`importSource.id`, the job id as text, with the selection beside it (`authoring-from-draft.ts`; read the same way by
+`authoring-source-import.ts`). Its test had built the origin from the selection's type, so it passed, and the list
+missed every real import.
+- On the working copy, the corrected query finds `920a530f…`.
+- The test now uses the stored shape. It fails on the old query (`red/study-data-stored-shape-red.txt`) and
+  passes on the new one.
+
+**F8, fixed.**
+- **One rule.** The bracket rule moved into `shared/authoring/csr-scientific-review.ts` (`CSR_DATA_PLACEHOLDER`).
+  `csr-placeholders.ts`, which the build runner and the assembly's placement use, takes it from there.
+- **The verifier.** `placeholderIn` reads a section's visible text, markup read as blank. The verifier refuses a
+  section that still holds a placeholder (`CSR_EVIDENCE_SECTION_PLACEHOLDER`), beside its refusal of a blank one.
+- **Where it applies.** The same verifier runs when the review is approved and again at every release (freeze,
+  signature, export). So a CSR with a placeholder can be neither approved nor released.
+- **Behaviour change, named.** A CSR approved before this change, whose text still holds a placeholder, is now
+  refused at its next release.
+- **The screen.** The reviewer's gap list names each such section first, quoting a long placeholder cut and
+  closed with "…]".
+
+**Tests.**
+
+| Run | Result |
+|---|---|
+| Red, before the fix | 5 failed: the verifier accepted a correctly mapped section that still said "[DATA TO BE INSERTED FROM SOURCE RECORDS]" (`red/f8-placeholder-red.txt`) |
+| Green | 20 of 20 |
+| Every suite that reaches these modules | 86 files, 1,053 tests (`green/f8-suites.txt`) |
+| Mutation: reading raw HTML instead of the visible text | fails the two markup controls (`red/f8-mutation-without-markup-masking.txt`) |
+
+The verifier's complexity is unchanged: the check is a function of its own.
+
 
 ## Demo runbook (for the founder)
 
@@ -203,9 +253,10 @@ study does not have.
 10. **Build CSR draft**, then wait. It drafts up to 119 headings one after another: tens of minutes.
 11. **Approve the headings** on the build board, as the reviewer or approver (not the requester). The board shows
     no section text (F9), so read the drafts after step 12 and send back what is wrong.
-12. **Import approved sections into Authoring** (author). This creates a working copy, the document that is
-    reviewed, signed and filed (F6). **Read every section and replace any "[…]" text by hand: nothing stops a
-    placeholder from being approved and filed on this path (F8).**
+12. **Import approved sections into Authoring** (author). This creates a working copy, titled with the study's
+    title: the document that is reviewed, signed and filed (F6). The import's receipt lists each section that still
+    holds a "[…]" placeholder. Replace each one with the study's data, by hand: the scientific review refuses a
+    section that still holds one, so the CSR cannot be approved until it is gone.
 13. **Build narratives** (seconds) and **Assemble CSR files**. Supply each blocking §16 appendix from the Vault
     (PDF) or declare it not applicable with a reason; 16.1.x and 16.3 come only from the sponsor.
 14. **Send the working copy for review** to the reviewer. In Submission Center, create sequence 0000 for the

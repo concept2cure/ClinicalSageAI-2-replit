@@ -1,0 +1,27 @@
+# F8 red, before the fix: the verifier accepted a mapped section still holding a placeholder
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > finds each reported figure that is exactly a retained cell, with every cell it could be 3ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > never offers markup, or a figure inside a longer number ("12" in "10/12", "190" in "1190", "100" in a style) 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > a section with no matching figure offers none 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > WebCrypto and node:crypto agree on the same text 3ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > a confirmed map passes the server verifier, which checks every claim 4ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > an edited section after mapping is refused by the server, so a stale map cannot approve 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > mapGaps says what still stops approval, and buildSubmission refuses while any remains > undecided figures, missing statements, no mapped result and both attestations 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > mapGaps says what still stops approval, and buildSubmission refuses while any remains > a blank section is named: the server approves a CSR only when every section is written 0ms
+ × client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > a section still holding a data placeholder is named > names the section and the placeholder, and the map cannot be submitted 6ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > a section still holding a data placeholder is named > a section without one is not named 0ms
+ × server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > refuses the build's own placeholder, though the section's figure is correctly mapped 9ms
+ × server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > refuses a short placeholder ("[N]") and one split by markup 2ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > accepts a section with no placeholder, a numeric citation, or brackets inside markup only (contr
+ × server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > the build and placement rule (csr-placeholders.ts) and the review's rule agree on plain text 1ms
+ × server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > the review reads the visible text: brackets inside markup are not a placeholder, and the placeholder it names is the text's 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > refuses the build's own placeholder, though the section's figure is correctly mapped
+AssertionError: expected function to throw an error, but it didn't
+ FAIL  server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > refuses a short placeholder ("[N]") and one split by markup
+ FAIL  server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > the build and placement rule (csr-placeholders.ts) and the review's rule agree on plain text
+TypeError: placeholderIn is not a function
+ FAIL  server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > the review reads the visible text: brackets inside markup are not a placeholder, and the placeholder it names is the text's
+ FAIL  client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > a section still holding a data placeholder is named > names the section and the placeholder, and the map cannot be submitted
+AssertionError: expected '5 figures have no decision yet: choos…' to match /10\.1 Disposition of patients still h…/
+ Test Files  2 failed (2)
+      Tests  5 failed | 10 passed (15)

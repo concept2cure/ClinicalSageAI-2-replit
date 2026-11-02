@@ -115,6 +115,30 @@ export function markupRanges(content: string): Array<[number, number]> {
 }
 
 /**
+ * An unresolved data placeholder in CSR text: a bracketed span holding a letter, such as "[DATA TO BE INSERTED]",
+ * "[N]" or "[value]", the convention the build's prompt and its template use where data is missing. The one rule
+ * of the build runner, the assembly's placement (server/services/csr/csr-placeholders.ts) and the scientific review.
+ */
+export const CSR_DATA_PLACEHOLDER = /\[[^[\]]*[A-Za-z][^[\]]*\]/;
+
+/**
+ * The first data placeholder in a saved section's visible text, or null. Markup is read as blank, so brackets in
+ * an attribute are not text (F8 of the CSR demo walk, 2026-11-02: the scientific review now refuses a section
+ * that still holds one).
+ */
+export function placeholderIn(content: string | null | undefined): string | null {
+  if (!content) return null;
+  const visible: string[] = [];
+  let at = 0;
+  for (const [from, to] of markupRanges(content)) { visible.push(content.slice(at, from), ' '.repeat(to - from)); at = to; }
+  visible.push(content.slice(at));
+  return CSR_DATA_PLACEHOLDER.exec(visible.join(''))?.[0] ?? null;
+}
+
+/** A placeholder as a message quotes it: whole up to 80 characters, otherwise cut and closed with "…]". */
+export const quotedPlaceholder = (held: string): string => (held.length <= 80 ? held : `${held.slice(0, 78)}…]`);
+
+/**
  * Whether a retained cell's value `display` is reported at `at` in a saved
  * section's `content`: outside markup and on the number boundaries above, so
  * "190" is not inside "1190" and "12" is not inside "12.5". A following "%"

@@ -1,0 +1,10 @@
+# c29fdcb4e correction, red: on the stored import shape (importSource.id) the list missed the import
+ ✓ server/services/csr/__tests__/csr-study-data-list.pglite.test.ts > the study data a document is reviewed against > the CSR document lists the study data frozen for it, as before, saying so 9ms
+ × server/services/csr/__tests__/csr-study-data-list.pglite.test.ts > the study data a document is reviewed against > a working copy imported from a CSR build lists the study data that build was drafted from 9ms
+ ✓ server/services/csr/__tests__/csr-study-data-list.pglite.test.ts > the study data a document is reviewed against > a build in another organization, or study data in another project, is never listed 4ms
+ ✓ server/services/csr/__tests__/csr-study-data-list.pglite.test.ts > the study data a document is reviewed against > a document with neither lists nothing 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/csr/__tests__/csr-study-data-list.pglite.test.ts > the study data a document is reviewed against > a working copy imported from a CSR build lists the study data that build was drafted from
+AssertionError: expected [] to deeply equal [ [ …(2) ] ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
