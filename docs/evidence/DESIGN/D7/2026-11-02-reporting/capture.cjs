@@ -15,40 +15,48 @@ const SIZES = [
   { key: '390', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
 ];
 
-/* Measured in the page. Every value is read, none assumed. */
+/* Measured in the page. Every value is read, none assumed. Playwright sends
+   only this function into the page, so its helpers are declared inside it. */
 function probe() {
-  const area = document.querySelector('[data-work-area]');
-  const cs = (el) => (el ? getComputedStyle(el) : null);
-  const root = document.querySelector('.c2c-v2');
-  const accent = root ? getComputedStyle(root).getPropertyValue('--accent-strong').trim() : null;
-  // Resolve the token to the rgb() string computed styles report.
-  const swatch = document.createElement('div');
-  swatch.style.background = accent || 'transparent';
-  document.body.appendChild(swatch);
-  const accentRgb = getComputedStyle(swatch).backgroundColor;
-  swatch.remove();
+  const style = (el) => (el ? window.getComputedStyle(el) : null);
+  const text = (sel) => document.querySelector(sel)?.textContent ?? null;
+  const label = (el) => `${el.tagName.toLowerCase()}${el.className ? '.' + String(el.className).trim().split(/\s+/).join('.') : ''}`;
+  // Resolve --accent-strong to the rgb() string computed styles report.
+  const accentRgbOf = () => {
+    const root = document.querySelector('.c2c-v2');
+    const swatch = document.createElement('div');
+    swatch.style.background = (root && style(root).getPropertyValue('--accent-strong').trim()) || 'transparent';
+    document.body.appendChild(swatch);
+    const rgb = style(swatch).backgroundColor;
+    swatch.remove();
+    return rgb;
+  };
   const visible = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
-  const orange = area ? [...area.querySelectorAll('*')].filter((el) => visible(el) && cs(el).backgroundColor === accentRgb)
-    .map((el) => `${el.tagName.toLowerCase()}.${[...el.classList].join('.')} "${(el.textContent || '').trim().slice(0, 50)}"`) : [];
-  const kids = area ? [...area.children].map((el) => {
+  const orangeFills = (area, rgb) => [...area.querySelectorAll('*')]
+    .filter((el) => visible(el) && style(el).backgroundColor === rgb)
+    .map((el) => `${label(el)} "${(el.textContent || '').trim().slice(0, 50)}"`);
+  const childrenOf = (area) => [...area.children].map((el) => {
     const r = el.getBoundingClientRect();
-    return { el: `${el.tagName.toLowerCase()}${el.className ? '.' + String(el.className).trim().split(/\s+/).join('.') : ''}`, x: Math.round(r.left), w: Math.round(r.width), top: Math.round(r.top + window.scrollY) };
-  }) : [];
+    return { el: label(el), x: Math.round(r.left), w: Math.round(r.width), top: Math.round(r.top + window.scrollY) };
+  });
+  const area = document.querySelector('[data-work-area]');
+  const accentRgb = accentRgbOf();
+  const kids = area ? childrenOf(area) : [];
   const page = document.querySelector('#c2c-page');
   return {
     url: location.pathname + location.search,
     workArea: area?.getAttribute('data-work-area') ?? null,
-    title: document.querySelector('[data-work-area] .ph-title')?.textContent ?? null,
-    sub: document.querySelector('[data-work-area] > .ph .ph-sub')?.textContent ?? null,
-    back: document.querySelector('[data-work-area] > .pj-back')?.textContent?.trim() ?? null,
+    title: text('[data-work-area] .ph-title'),
+    sub: text('[data-work-area] > .ph .ph-sub'),
+    back: text('[data-work-area] > .pj-back')?.trim() ?? null,
     actions: [...document.querySelectorAll('[data-work-area] > .ph .ph-acts button')].map((b) => `${b.className}: ${b.textContent.trim()}`),
-    areaDisplay: cs(area)?.display ?? null,
+    areaDisplay: style(area)?.display ?? null,
     childrenInOrder: kids,
     oneColumn: kids.length > 0 && new Set(kids.filter((k) => k.w > 0).map((k) => k.x)).size === 1,
     tabs: [...document.querySelectorAll('[role="tablist"] [role="tab"]')].map((t) => `${t.textContent.trim()}${t.getAttribute('aria-selected') === 'true' ? ' (selected)' : ''}`),
     suggestions: [...document.querySelectorAll('[aria-label="Find suggestions"] .sp-starter')].map((b) => b.textContent.trim()),
     accentStrong: accentRgb,
-    orangeFills: orange,
+    orangeFills: area ? orangeFills(area, accentRgb) : [],
     horizontalOverflow: page ? page.scrollWidth - page.clientWidth : null,
     documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   };
@@ -123,5 +131,5 @@ function probe() {
   }
   await browser.close();
   fs.writeFileSync(path.join(OUT, 'probes.json'), JSON.stringify(results, null, 2));
-  console.log('captured', Object.keys(results.screens).length);
+  console.info('captured', Object.keys(results.screens).length);
 })().catch((e) => { console.error(e); process.exit(1); });
