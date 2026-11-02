@@ -40,9 +40,9 @@ repair was shown red before it was fixed.
 | `ssh2-sftp-client` (bundles over 1 GiB) | Open, low. **Not declared**: no FDA source in the repository documents an SFTP channel (a new integration under RULE 6). The refusal comes only after signing, as a 500 | F1 | **RIM** (the refusal before signing needs `sequenceTransmitReadiness`); the founder (scope) |
 | `classifyDocument` changes a verdict row's module | **Fixed** by `c3f2b287a` (2026-10-01) | — | — |
 | Two approval role tables; quorum met by a completed assignment with no decision | **Fixed** by `7038fec50a` (2026-10-01) and `c91dba5264` (2026-10-09) | — | — |
-| The second role table left in `decision-architecture.ts`, and `isActorAuthorized` admitting an action nobody listed | Open, low | F1 | this session (in progress) |
-| An author can approve their own artifact, which P-18 forbids (found while re-checking the quorum) | Open | F1 | this session (in progress) |
-| Device titles: a word beginning "plan" (plantar, planar) reads as a plan; a mixed-case "IfU" is not the IFU | Open, low; a regression from this session's `2364f546dd` | F1 | this session (in progress) |
+| The second role table left in `decision-architecture.ts`, and `isActorAuthorized` admitting an action nobody listed | **Fixed here**, `d3be2ca7b7`, evidence `author-not-approver/` | F1 | this session |
+| An author can approve their own artifact, which P-18 forbids (found while re-checking the quorum) | **Fixed here**, `7b7b043fda`, evidence `author-not-approver/` | F1 | this session |
+| Device titles: a word beginning "plan" (plantar, planar) reads as a plan; a mixed-case "IfU" is not the IFU | **Fixed here**, `fda2509d8d`, evidence `device-titles/` (a regression from this session's `2364f546dd`) | F1 | this session |
 | AnA package tool (a): a first sequence written `'0'` | **Fixed here**, `c60cdcac25`, evidence `sequence-four-digits/` | F1 | this session |
 | AnA package tool (b): an upper-case `'DELETE'`; (c): `modified_file` not checked against the filed manifest | Open, low | F1 | **filing types** (holds `AnaToolExecutor.ts`) |
 | Shadow Review run records no leaf manifest | **Fixed** by `3cacf2e15a` (2026-10-25) | — | — |
@@ -131,10 +131,8 @@ Part (a) was fixed in the packager itself (`c60cdcac25`), so every caller is cov
 
 ## What this session does next
 
-1. Land the three repairs in progress, each red first, reviewed by two adversarial lenses, and
-   committed under F1:
-   - the author is not the approver;
-   - the stale role table;
-   - device titles.
-2. Push to `concept2cure-v2` once the pre-push gates pass.
-3. Nothing in another session's held files.
+1. ~~Land the three repairs in progress.~~ *Landed 2026-11-02: `fda2509d8d` device titles, `7b7b043fda`
+   author is not the approver, `d3be2ca7b7` the stale role table. Each was red first and reviewed by
+   two adversarial lenses; the lane's holds are released in `COORDINATION.md`.*
+2. Nothing in another session's held files. What remains on D7 is RIM's (above), the filing-types
+   session's (above), the founder's five questions, and the licensed artefacts and credentials.

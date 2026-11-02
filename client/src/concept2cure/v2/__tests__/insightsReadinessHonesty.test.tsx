@@ -66,7 +66,7 @@ afterEach(() => cleanup());
 
 async function renderCanvas() {
   render(<InsightsCanvas {...PROPS} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 describe('Insights — readiness that was not computed', () => {
@@ -79,7 +79,7 @@ describe('Insights — readiness that was not computed', () => {
 
   it('draws no ring for a program without a readiness, and averages only the computed ones', async () => {
     await renderCanvas();
-    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+    const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
     fireEvent.change(composer, { target: { value: 'portfolio board view across all programs' } });
     fireEvent.keyDown(composer, { key: 'Enter' });
     await screen.findByText(/Portfolio — board view/);
@@ -118,7 +118,7 @@ describe('Insights — a readiness figure carrying outstanding critical gaps', (
 
   it('qualifies the figure on the regional comparison line too', async () => {
     await renderCanvas();
-    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+    const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
     fireEvent.change(composer, { target: { value: 'compare FDA and EMA markets for harmonization' } });
     fireEvent.keyDown(composer, { key: 'Enter' });
     await waitFor(() => expect(document.querySelector('.ro-dash-progline')).not.toBeNull());

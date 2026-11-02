@@ -100,7 +100,7 @@ function wire(overrides: { exportPdf?: () => unknown } = {}) {
 async function runThenExport() {
   render(<InsightsCanvas {...OWNED_PROPS} />);
   const composer = await waitFor(() => {
-    const el = document.querySelector('.rc-input textarea') as HTMLTextAreaElement | null;
+    const el = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement | null;
     if (!el) throw new Error('composer not mounted');
     return el;
   });

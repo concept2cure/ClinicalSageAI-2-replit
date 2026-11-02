@@ -81,9 +81,9 @@ afterEach(() => {
 /* The shell passes its segment preference; for a biologic program it reads 'biopharma'. */
 const renderCanvas = () =>
   render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment="biopharma" onNav={onNav} />);
-const ready = () => waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+const ready = () => waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 function ask(text: string) {
-  const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+  const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
   fireEvent.change(composer, { target: { value: text } });
   fireEvent.keyDown(composer, { key: 'Enter' });
 }
@@ -99,7 +99,7 @@ describe('1 — a type no engine computes', () => {
   it('a pack lists only the types an engine computes — no not-computed tile inside it', async () => {
     renderCanvas();
     await ready();
-    fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
+    fireEvent.click(document.querySelector('[data-work-area="insights"] .ph-acts .btn.primary') as HTMLElement);
     await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
     expect(screen.queryAllByTestId('ro-pack-not-computed')).toEqual([]);
     const grid = document.querySelector('.ro-pack-grid')!;

@@ -149,9 +149,15 @@ export function euOutlineKey(sectionCode: string | null | undefined): string {
  * (client/src/concept2cure/v2/useVaultUpload.ts) and placed at a CTD code, so
  * the title is the only signal — and 'IFU_EN_rev3' / 'GSPR_Checklist_v2' left
  * their required slots empty.
+ *
+ * 2026-11-01 (F1, W5 residual F(2), device titles): the first step spells an IFU written in any
+ * case as the acronym, a word of its own (MIXED_CASE_IFU), so the case
+ * transition no longer splits a mixed-case one. 'eIFU' is now read as the one
+ * token 'eifu', which the IFU slot also lists.
  */
 function tokens(s: string): string[] {
   return s
+    .replace(MIXED_CASE_IFU, (m) => `${m.toUpperCase()} `)
     .replace(/(\p{Ll})(\p{Lu})/gu, '$1 $2')
     .replace(/(\p{Lu}{2,})(\p{Ll}+)/gu, capitalRun)
     .toLowerCase()
@@ -164,6 +170,27 @@ function tokens(s: string): string[] {
  * phrases spell as acronyms. See capitalRun().
  */
 const TITLE_ACRONYMS = new Set(['IFU', 'EIFU', 'GSPR', 'PMS']);
+
+/**
+ * 2026-11-01 (F1, W5 residual F(2), device titles): an IFU in mixed case — 'IfU', 'iFU', 'eIfU',
+ * 'e-IfU', 'EIfU' at the start of a word, or 'IfU' after a lower-case letter
+ * ('deviceIfU'). The lower-to-upper split in tokens() read 'IfU_EN_rev3' as
+ * 'if', 'u', so since 2364f546dd (2026-09-23) a Vault IFU named that way left
+ * the required IFU slot empty; the case-insensitive substring match that commit
+ * replaced had filed it. tokens() upper-cases a match and ends the word there
+ * ('IfUs' → ifu, s), so a capitalised word glued after it keeps its own slot
+ * ('IfuGSPR' → ifu, gspr, as before this change; upper-casing alone made it
+ * 'ifugspr').
+ * Inside a word it is not matched ('Gifu', 'GIFU', 'bifurcation', 'Shifu'),
+ * nor where its 'U' starts a camel-case word ('IfUpdated', 'checkIfUnchanged'):
+ * only a plural 's' may follow before a non-lower-case character. The pattern
+ * also matches an all-capital or all-lower-case IFU; that reads to the same
+ * slots as before, except that capitals glued after an all-capital IFU are now
+ * a word of their own ('IFUGSPR' → ifu, gspr), and so is a plan glued to an
+ * IFU: 'IFUPLAN_Biocompatibility' reads as 'IFU_PLAN_Biocompatibility' did,
+ * a plan, and stays out of the V&V slot (it was 'ifuplan', no plan).
+ */
+const MIXED_CASE_IFU = /(?:(?<!\p{L})[eE]?[iI][fF][uU]|(?<=\p{Ll})I[fF][uU])(?=s?(?!\p{Ll}))/gu;
 
 /**
  * 2026-09-23 (W5/D7, final pass — repair): a capital run followed by
@@ -199,22 +226,30 @@ function capitalRun(_m: string, run: string, rest: string): string {
  * plan and report' is the outline's own II.6.2.c label for the PER). An
  * occurrence that is so qualified is skipped and any other occurrence still
  * matches.
+ *
+ * 2026-11-01 (F1, W5 residual F(2), device titles): `notBefore` is a test of the next word
+ * rather than a list of its beginnings, so the plan rule is the one isPlan()
+ * the V&V guard also reads. A following word that begins with 'plan' still
+ * counts, except the words of NOT_A_PLAN: the prefix rule of 2364f546dd
+ * (2026-09-23) read 'plantar', 'planar' and 'plane' as 'plan', so 'Clinical
+ * evaluation – plantar fasciitis orthosis' and 'Performance evaluation –
+ * planar array immunoassay' left the required CER / PER slot empty.
  */
 interface PhraseRule {
   phrase: string[];
   notAfter: string[];
-  notBefore: string[];
+  notBefore: (next: string) => boolean;
   notBeforeUnless: string[];
 }
 interface Qualifiers {
   notAfter?: string[];
-  notBefore?: string[];
+  notBefore?: (next: string) => boolean;
   notBeforeUnless?: string[];
 }
 const phrase = (x: string, q: Qualifiers = {}): PhraseRule => ({
   phrase: tokens(x),
   notAfter: q.notAfter ?? [],
-  notBefore: q.notBefore ?? [],
+  notBefore: q.notBefore ?? (() => false),
   notBeforeUnless: q.notBeforeUnless ?? [],
 });
 const PLURAL_ENDINGS = ['', 's', 'es'];
@@ -236,23 +271,37 @@ function phraseIn(t: string[], r: PhraseRule): boolean {
     if (!occurrenceAt(t, i, r)) continue;
     if (i > 0 && r.notAfter.includes(t[i - 1])) continue;
     const next = wordAfter(t, i + n - 1, r.phrase[n - 1]);
-    if (beforeApplies && r.notBefore.some((b) => next.startsWith(b))) continue;
+    if (beforeApplies && r.notBefore(next)) continue;
     return true;
   }
   return false;
 }
 const unkeyed = (l: TechDocInputLeaf) => !EU_OUTLINE_KEY.test(euOutlineKey(l.sectionCode));
-const titleMatches = (rules: PhraseRule[]): Matcher => (l) => {
-  if (!unkeyed(l)) return false;
-  const t = tokens(l.title ?? '');
-  return rules.some((r) => phraseIn(t, r));
-};
+/** A test on the title's tokens, for a leaf the EU outline does not key (see EU_OUTLINE_KEY). */
+const titleTokens = (test: (t: string[]) => boolean): Matcher => (l) => unkeyed(l) && test(tokens(l.title ?? ''));
+const titleMatches = (rules: PhraseRule[]): Matcher => titleTokens((t) => rules.some((r) => phraseIn(t, r)));
 /** Title fallback for a leaf the EU outline does not key (see EU_OUTLINE_KEY): any of the phrases, as tokens. */
 const titleHas = (...n: string[]): Matcher => titleMatches(n.map((x) => phrase(x)));
 /** As titleHas for one phrase, skipping an occurrence the qualifiers make a different thing. */
 const titleHasUnqualified = (x: string, q: Qualifiers): Matcher => titleMatches([phrase(x, q)]);
+/**
+ * 2026-11-01 (F1, W5 residual F(2), device titles): the title words that begin with 'plan' and
+ * are not plans — a device for the sole of the foot ('plantar'), a flat array
+ * or image ('planar'), a plane wave or a plane of section ('plane', 'planes').
+ * A closed list: a word is exempt only once it is named here, with a test.
+ */
+const NOT_A_PLAN = ['plantar', 'planar', 'plane', 'planes'];
+/**
+ * A title word that is a plan (2026-11-01, F1, W5 residual F(2), device titles): any word that
+ * begins with 'plan' — 'plans', 'planning', 'planned', and a plan with a
+ * file-name tail glued on ('Planv2' → planv, 'planrev3', 'plandraft') — except
+ * NOT_A_PLAN. An unknown 'plan…' word is read as a plan on purpose: skipping
+ * it only leaves a slot unfilled, where reading a plan as its report fills a
+ * required slot with no report in it.
+ */
+const isPlan = (w: string): boolean => w.startsWith('plan') && !NOT_A_PLAN.includes(w);
 /** A plan is not the report it plans, unless the title says it is both. */
-const NOT_THE_PLAN: Qualifiers = { notBefore: ['plan'], notBeforeUnless: ['report'] };
+const NOT_THE_PLAN: Qualifiers = { notBefore: isPlan, notBeforeUnless: ['report'] };
 const any = (...m: Matcher[]): Matcher => (l) => m.some((f) => f(l));
 const all = (...m: Matcher[]): Matcher => (l) => m.every((f) => f(l));
 const not = (m: Matcher): Matcher => (l) => !m(l);
@@ -260,8 +309,27 @@ const not = (m: Matcher): Matcher => (l) => !m(l);
  * A plan or protocol anywhere in the title, and no report or results: the
  * plan for a test, not its evidence. NOT_THE_PLAN reads only the word right
  * after a phrase, which misses 'Biocompatibility evaluation plan'.
+ * 2026-11-01 (F1, W5 residual F(2), device titles): the plan is an isPlan() title word. This
+ * guard, added on 2026-10-05 (e6f80d7577) when title phrases replaced
+ * codeStarts('4', '5'), used titleHas('plan', 'protocol'), whose last token
+ * may run on, so 'Biocompatibility – plantar insole', 'Design verification –
+ * planar detector' and 'Bench test summary – plane of section' were read as
+ * plans and left out of the required V&V slot. Any other word that begins with
+ * 'plan' is still a plan ('Design_verification_Planv2'), as 'protocol' still
+ * runs on ('Bench_test_protocolv2').
  */
-const A_PLAN_NOT_ITS_REPORT: Matcher = all(titleHas('plan', 'protocol'), not(titleHas('report', 'result')));
+const A_PLAN_NOT_ITS_REPORT: Matcher = all(any(titleTokens((t) => t.some(isPlan)), titleHas('protocol')), not(titleHas('report', 'result')));
+/**
+ * A plan for a plantar, planar or plane device (2026-11-01, F1, W5 residual
+ * F(2), adversarial re-check). NOT_THE_PLAN reads only the word right after
+ * the phrase, so once NOT_A_PLAN exempted that word, 'Clinical_Evaluation_
+ * Plantar_Insole_Plan_v2' filled the required CER slot with the plan for it.
+ * Before the exemption the exempt word was itself read as 'plan', so the
+ * title failed closed. Confined to titles holding an exempt word: elsewhere
+ * the CER/PER arms keep their HEAD behaviour ('Clinical_Evaluation_Knee_
+ * Insole_Plan_v2' is a pre-existing gap, left to its own decision).
+ */
+const A_PLAN_FOR_AN_EXEMPT_SUBJECT: Matcher = all(titleTokens((t) => t.some((w) => NOT_A_PLAN.includes(w))), A_PLAN_NOT_ITS_REPORT);
 
 /**
  * Rule-pack section keys — the codes the GOVERNED authoring store carries for
@@ -297,6 +365,10 @@ const exactKey = (...keys: string[]): Matcher => (l) => keys.includes(euOutlineK
  * the title token ('IFUs', 'GSPRs_checklist', 'Device descriptions'), and a
  * capital run that is one of TITLE_ACRONYMS is that acronym before lower-case
  * letters ('GSPRchecklist', 'IFUen') — see phraseIn() and capitalRun().
+ * 2026-11-01 (F1, W5 residual F(2), device titles): a mixed-case IFU ('IfU_EN_rev3', 'eIfU',
+ * 'deviceIfU') is the IFU too, and 'eIFU' is now read as 'eifu' rather than
+ * through the case transition (MIXED_CASE_IFU); a CER / PER title followed by
+ * 'plantar', 'planar' or 'plane' is no longer read as the plan (NOT_A_PLAN).
  */
 /*
  * `gsprTypes` (2026-10-05, g-ivdr-gspr-checklist): the document types that are
@@ -329,7 +401,7 @@ const MDR_SECTIONS: Array<TechDocSlot & { match: Matcher }> = [
      protocol for one of those tests ('Design verification plan') is not its
      evidence and does not fill the slot through them (fix round 2). */
   { id: 'preclinical-clinical', label: 'Product verification & validation (preclinical + clinical)', annex: 'Annex II 6', required: true, match: any(docType('preclinical', 'verification_validation'), titleHas('preclinical', 'verification and validation'), all(titleHas('bench test', 'biocompatibility', 'electrical safety', 'design verification'), not(A_PLAN_NOT_ITS_REPORT)), all(annexKey('II.6'), not(exactKey('II.6.1.g')))) },
-  { id: 'clinical-evaluation', label: 'Clinical Evaluation Report (CER)', annex: 'Annex XIV', required: true, match: any(docType('cer', 'clinical_evaluation'), titleHasUnqualified('clinical evaluation', { notAfter: ['pre', 'non'], ...NOT_THE_PLAN }), exactKey('II.6.1.g')) },
+  { id: 'clinical-evaluation', label: 'Clinical Evaluation Report (CER)', annex: 'Annex XIV', required: true, match: any(docType('cer', 'clinical_evaluation'), all(titleHasUnqualified('clinical evaluation', { notAfter: ['pre', 'non'], ...NOT_THE_PLAN }), not(A_PLAN_FOR_AN_EXEMPT_SUBJECT)), exactKey('II.6.1.g')) },
   { id: 'pms-plan', label: 'Post-market surveillance plan', annex: 'Annex III', required: true, match: any(docType('pms_plan', 'pms'), titleHas('post-market surveillance', 'pms plan'), annexKey('III')) },
 ];
 
@@ -355,7 +427,7 @@ const IVDR_SECTIONS: Array<TechDocSlot & { match: Matcher }> = [
   ...commonSlots('Annex II', ['gspr', 'ivdr_gspr_checklist', 'gspr_checklist']),
   { id: 'analytical-performance', label: 'Analytical performance', annex: 'Annex II 6.1', required: true, match: any(docType('analytical_performance'), titleHas('analytical performance'), annexKey('II.6.1')) },
   { id: 'clinical-performance', label: 'Clinical performance', annex: 'Annex II 6.2', required: true, match: any(docType('clinical_performance'), titleHas('clinical performance'), all(annexKey('II.6.2'), not(exactKey('II.6.2.c')))) },
-  { id: 'performance-evaluation', label: 'Performance Evaluation Report (PER) & scientific validity', annex: 'Annex XIII', required: true, match: any(docType('per', 'performance_evaluation', 'scientific_validity'), titleHasUnqualified('performance evaluation', { notAfter: ['analytical', 'clinical'], ...NOT_THE_PLAN }), titleHas('scientific validity'), exactKey('II.6.2.c')) },
+  { id: 'performance-evaluation', label: 'Performance Evaluation Report (PER) & scientific validity', annex: 'Annex XIII', required: true, match: any(docType('per', 'performance_evaluation', 'scientific_validity'), all(titleHasUnqualified('performance evaluation', { notAfter: ['analytical', 'clinical'], ...NOT_THE_PLAN }), not(A_PLAN_FOR_AN_EXEMPT_SUBJECT)), titleHas('scientific validity'), exactKey('II.6.2.c')) },
   { id: 'stability', label: 'Stability (shelf life, in-use, transport)', annex: 'Annex II 6.3', required: true, match: any(docType('stability'), titleHasUnqualified('stability', { notAfter: ['specimen', 'sample'] }), titleHas('shelf life'), annexKey('II.6.3')) },
   { id: 'software-cybersecurity', label: 'Software verification & cybersecurity', annex: 'Annex II 6.4', required: false, match: any(titleHas('cybersecurity', 'software verification', 'software validation'), annexKey('II.6.4')) },
   { id: 'usability', label: 'Usability & human factors', annex: 'Annex II 6.5', required: false, match: any(titleHas('usability', 'human factors'), annexKey('II.6.5')) },
