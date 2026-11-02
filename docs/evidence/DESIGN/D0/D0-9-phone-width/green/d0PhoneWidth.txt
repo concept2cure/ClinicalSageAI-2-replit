@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 2: a page header never turns its text block’s width into a height > the text block wraps on a 420px floor, with a 0% basis that a column cannot stretch 19ms
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 2: a page header never turns its text block’s width into a height > no stylesheet turns a page header into a column (Tasks’ ≤760px rule is gone) 35ms
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 3: at phone width a table scrolls inside its card or section, never the page > one rule, at ≤640px, scrolls a table that is a direct child of a card, a card body or a work area’s section 7ms
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 3: at phone width a table scrolls inside its card or section, never the page > no other stylesheet keeps a second copy 15ms
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .de-textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 5ms
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .landing-input: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 7ms
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .pj-composer textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 8ms
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .ct-composer textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 8ms
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > nothing outranks it: no scoped rule in any sheet, and no rule in another sheet, sizes these fields 21ms
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 8: the drawer footer keeps each label on one line at 390 > a drawer button never breaks its label 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 8: the drawer footer keeps each label on one line at 390 > at ≤640px the ghost button is as wide as its label and the primary takes the rest 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 8: the drawer footer keeps each label on one line at 390 > at ≤640px a footer too wide for one row wraps, rather than running past the screen 0ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  03:39:47
+   Duration  757ms (transform 122ms, setup 114ms, import 95ms, tests 130ms, environment 0ms)
+

@@ -1,0 +1,55 @@
+v2/surfaces/CmcModule.tsx: 7
+v2/surfaces/CmcModule3Build.tsx: 2
+v2/surfaces/CmcQuality.tsx: 5
+v2/surfaces/EctdCompile.tsx: 1
+v2/surfaces/EctdCompileDtdEvidence.tsx: 1
+v2/surfaces/GatewayTransmittals.tsx: 2
+v2/surfaces/IdentityConsole.tsx: 3
+v2/surfaces/MarketAccess.tsx: 2
+v2/surfaces/MissionControl.tsx: 1
+v2/surfaces/NdaCockpit.tsx: 2
+v2/surfaces/PvCockpit.tsx: 1
+v2/surfaces/QmpWorkspace.tsx: 1
+v2/surfaces/Registrations.tsx: 2
+v2/surfaces/ReportGovernance.tsx: 2
+v2/surfaces/SubmissionConsistency.tsx: 1
+v2/surfaces/SubmissionModule2Qc.tsx: 1
+v2/surfaces/SubmissionTwin.tsx: 3
+total tables 37 files 17
+  v2/surfaces/CmcModule3Build.tsx:589 parent <div className="pj-card-b">
+  v2/surfaces/CmcModule3Build.tsx:627 parent <div className="pj-card-b">
+  v2/surfaces/EctdCompile.tsx:1570 parent <div className="pj-card-b">
+  v2/surfaces/SubmissionConsistency.tsx:135 parent <div className="pj-card-b">
+  v2/surfaces/GatewayTransmittals.tsx:535 parent <div className="pj-card-b">
+  v2/surfaces/GatewayTransmittals.tsx:568 parent <div className="pj-card-b">
+  v2/surfaces/NdaCockpit.tsx:677 parent <div className="reg-card">
+  v2/surfaces/NdaCockpit.tsx:768 parent <div className="reg-card">
+  v2/surfaces/ReportGovernance.tsx:173 parent <div className="pj-card-b">
+  v2/surfaces/ReportGovernance.tsx:204 parent <div className="pj-card-b">
+  v2/surfaces/CmcQuality.tsx:352 parent <div className="pj-card-b">
+  v2/surfaces/CmcQuality.tsx:390 parent <div className="pj-card-b">
+  v2/surfaces/CmcQuality.tsx:447 parent <div className="pj-card-b">
+  v2/surfaces/CmcQuality.tsx:501 parent <div className="pj-card-b">
+  v2/surfaces/CmcQuality.tsx:531 parent <div className="pj-card-b">
+  v2/surfaces/CmcModule.tsx:1400 parent <div className="pj-card-b">
+  v2/surfaces/CmcModule.tsx:2049 parent <div className="pj-card-b">
+  v2/surfaces/CmcModule.tsx:2156 parent <div className="pj-card-b">
+  v2/surfaces/CmcModule.tsx:2581 parent <div className="pj-card-b">
+  v2/surfaces/CmcModule.tsx:2843 parent <div className="pj-card-b">
+  v2/surfaces/CmcModule.tsx:3089 parent <div className="pj-card-b">
+  v2/surfaces/CmcModule.tsx:3129 parent <div className="pj-card-b">
+  v2/surfaces/MarketAccess.tsx:228 parent <div className="reg-card">
+  v2/surfaces/MarketAccess.tsx:319 parent <div className="reg-card">
+  v2/surfaces/SubmissionTwin.tsx:307 parent <div className="pj-card-b">
+  v2/surfaces/SubmissionTwin.tsx:325 parent <div className="pj-card-b">
+  v2/surfaces/SubmissionTwin.tsx:342 parent <div className="pj-card-b">
+  v2/surfaces/QmpWorkspace.tsx:351 parent <div className="pj-card-b">
+  v2/surfaces/EctdCompileDtdEvidence.tsx:184 parent <div className="pj-card-b">
+  v2/surfaces/Registrations.tsx:440 parent <div className="reg-card">
+  v2/surfaces/Registrations.tsx:488 parent <div className="reg-card">
+  v2/surfaces/IdentityConsole.tsx:379 parent <div className="pj-card-b">
+  v2/surfaces/IdentityConsole.tsx:404 parent <div className="pj-card-b">
+  v2/surfaces/IdentityConsole.tsx:425 parent <div className="pj-card-b">
+  v2/surfaces/SubmissionModule2Qc.tsx:85 parent <div className="pj-card-b">
+  v2/surfaces/MissionControl.tsx:640 parent <div className="pj-card-b">
+  v2/surfaces/PvCockpit.tsx:322 parent <div className="pj-card-b">

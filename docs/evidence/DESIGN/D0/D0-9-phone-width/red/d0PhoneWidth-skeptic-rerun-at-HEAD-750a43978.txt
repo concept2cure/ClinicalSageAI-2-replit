@@ -1,0 +1,13 @@
+     × the text block wraps on a 420px floor, with a 0% basis that a column cannot stretch 48ms
+     × no stylesheet turns a page header into a column (Tasks’ ≤760px rule is gone) 60ms
+     × one rule, at ≤640px, scrolls a table that is a direct child of a card, a card body or a work area’s section 22ms
+     × .de-textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 6ms
+     × .landing-input: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 10ms
+     × .pj-composer textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 5ms
+     × .ct-composer textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 5ms
+     × a drawer button never breaks its label 1ms
+     × at ≤640px the ghost button is as wide as its label and the primary takes the rest 1ms
+     × at ≤640px a footer too wide for one row wraps, rather than running past the screen 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)
