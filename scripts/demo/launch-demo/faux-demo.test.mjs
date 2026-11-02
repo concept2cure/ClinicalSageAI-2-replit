@@ -26,7 +26,7 @@ const identity = Object.freeze({ email: 'demo@fictional.example', organizationId
 const ok = (json, status = 200) => ({ status, json, text: JSON.stringify(json) });
 
 function fakeApplication({ organization = identity, otherType = false } = {}) {
-  const state = { calls: [], clients: [], projects: [], vault: [], tasks: [] };
+  const state = { calls: [], clients: [], projects: [], vault: [], documents: [], tasks: [] };
   let nextDocumentId = 1;
   const api = async (method, url, body) => {
     state.calls.push({ method, url, body });
@@ -75,6 +75,28 @@ function fakeApplication({ organization = identity, otherType = false } = {}) {
       state.vault.push(doc);
       return ok({ document: doc }, 201);
     }
+    if (method === 'GET' && url === '/api/authoring/templates?search=Clinical%20Study%20Report') {
+      return ok({ templates: [{
+        id: '4331e7e3-7777-5c21-8c9b-0e2f56194e7e',
+        entryId: 'component:clinical_study_report', section_count: 16,
+      }] });
+    }
+    if (method === 'GET' && url === '/api/authoring/docs?status=all&programId=p1') {
+      return ok({ success: true, documents: state.documents });
+    }
+    if (method === 'POST' && url === '/api/authoring/docs') {
+      if (body.client_program_id !== 'p1' ||
+          body.template_id !== '4331e7e3-7777-5c21-8c9b-0e2f56194e7e') {
+        return ok({ error: 'Wrong CSR working template or project' }, 400);
+      }
+      const doc = {
+        id: 'df541fa2-594e-48d7-b451-3a5a3d994d39',
+        title: body.title, template_id: body.template_id,
+        program_id: body.client_program_id, section_count: 16, status: 'draft',
+      };
+      state.documents.push(doc);
+      return ok({ success: true, document: doc, sections_seeded: 16 }, 201);
+    }
     if (method === 'GET' && url === '/api/projects') {
       return ok({ data: [{ id: 11, regulatoryProgramId: 'p1' }] });
     }
@@ -85,7 +107,9 @@ function fakeApplication({ organization = identity, otherType = false } = {}) {
       assert.equal(body.projectId, 11);
       assert.equal(body.status, 'pending');
       const row = { taskId: `task-${state.tasks.length + 1}`,
-        title: body.title, project: String(body.projectId) };
+        title: body.title, project: String(body.projectId),
+        ...(body.sourceEntityType === 'authoring_document'
+          ? { sourceDocumentId: body.sourceEntityId } : {}) };
       state.tasks.push(row);
       return ok({ data: row }, 201);
     }
@@ -118,13 +142,20 @@ test('checked-in synthetic source is complete and remains explicitly artificial'
   assert.equal(Object.hasOwn(data, 'organizationId'), false);
 });
 
-test('seeds one ordinary CSR project, three Vault sources, and pending tasks', async () => {
+test('seeds one CSR project, three Vault sources, a canonical CSR editor document and pending tasks', async () => {
   const app = fakeApplication(), run = app.run();
   await seed({ api: app.api, identity: app.identity, run });
   assert.equal(app.state.projects.length, 1);
   assert.equal(app.state.projects[0].program_type, 'csr');
   assert.equal(app.state.vault.length, 3);
+  assert.equal(app.state.documents.length, 1);
+  assert.equal(app.state.documents[0].template_id, '4331e7e3-7777-5c21-8c9b-0e2f56194e7e');
+  assert.equal(app.state.documents[0].program_id, 'p1');
+  assert.equal(run.records['authoring.document'].templateEntry, 'component:clinical_study_report');
+  assert.equal(run.records['authoring.document'].sectionCount, 16);
   assert.equal(app.state.tasks.length, 3);
+  const reviewerTask = app.state.tasks.find(t => t.title.includes('Human-review'));
+  assert.equal(reviewerTask?.sourceDocumentId, app.state.documents[0].id);
   assert.ok(app.state.tasks.every(t => /FBT-201/.test(t.title)));
   const content = gunzipSync(readFileSync(sourcePath));
   const csr = app.state.vault.find(d => /clinical source JSON/.test(d.title));
@@ -134,7 +165,7 @@ test('seeds one ordinary CSR project, three Vault sources, and pending tasks', a
   assert.equal(run.records.sourceRevision.sha256, sha256(content));
   assert.ok(app.state.calls.every(call => !/approve|sign|dispatch|file-into/i.test(call.url)));
   assert.deepEqual(Object.values(run.records.tally.created)
-    .reduce((sum, n) => sum + n, 0), 8);
+    .reduce((sum, n) => sum + n, 0), 9);
 });
 
 test('replaying the pack reuses governed records without rewriting existing data', async () => {
@@ -148,8 +179,10 @@ test('replaying the pack reuses governed records without rewriting existing data
   assert.equal(app.state.clients.length, 1);
   assert.equal(app.state.projects.length, 1);
   assert.equal(app.state.vault.length, 3);
+  assert.equal(app.state.documents.length, 1);
   assert.equal(app.state.tasks.length, 3);
   assert.ok(run.records.tally.found['source-document'] >= 3);
+  assert.equal(run.records.tally.found['authoring-document'], 1);
 });
 
 test('refuses wrong organization before any project or source read/write', async () => {
@@ -198,4 +231,40 @@ test('purge is an honest refusal to delete governed source records', async () =>
   await purge({ api: app.api, identity: app.identity, run });
   assert.equal(app.state.calls.length, 0);
   assert.match(run.notes.join(' '), /no destructive|archive/i);
+});
+
+test('a prior CSR working document with a non-canonical template is never adopted', async () => {
+  const app = fakeApplication();
+  app.state.documents.push({ id: 'bf544753-673f-4656-bbf0-156e48c85109',
+    title: '[Demo · Faux] FBT-201 ICH E3 Clinical Study Report — working draft',
+    program_id: 'p1', template_id: '5d888ae5-4216-594e-bc5e-9c8bc22f9527',
+    section_count: 16, status: 'draft' });
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /wrong project or template/i);
+  assert.equal(app.state.documents.length, 1);
+  assert.equal(app.state.tasks.length, 0);
+});
+
+test('an existing reviewer task whose origin no longer matches the document is not reused', async () => {
+  const app = fakeApplication();
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  const reviewer = app.state.tasks.find(t => t.title.includes('Human-review'));
+  reviewer.sourceDocumentId = '24a965fc-1c79-46f6-8b77-9e9bf77dca90';
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /does not link to its expected authoring document/);
+  assert.equal(app.state.documents.length, 1);
+  assert.equal(app.state.tasks.length, 3);
+});
+
+test('all review tasks remain pending; the seed never uses a review or approval ceremony', async () => {
+  const app = fakeApplication();
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  const reviewCreate = app.state.calls.find(c => c.method === 'POST' && c.url === '/api/tasks/tasks' &&
+    c.body.taskType === 'review');
+  assert.ok(reviewCreate);
+  assert.equal(reviewCreate.body.sourceEntityType, 'authoring_document');
+  assert.equal(reviewCreate.body.sourceEntityId, app.state.documents[0].id);
+  assert.equal(reviewCreate.body.status, 'pending');
+  assert.equal(reviewCreate.body.moduleData.authoringDocId, app.state.documents[0].id);
+  assert.equal(app.state.calls.some(c => /\/request-review|\/e-sign|\/freeze|\/submit|\/dispatch/.test(c.url)), false);
 });
