@@ -1,0 +1,24 @@
+// Scratch config: serves ProjectHome.tsx with its Team section mutated, to show that
+// newProjectWizardLook's reachability test fails when the place the review names is gone.
+// MUTATION=heading renames the Team heading; MUTATION=sharing drops the sharing controls.
+import { mergeConfig } from 'vitest/config';
+import base from '/home/user/ClinicalSageAI-2-replit/vitest.config.ts';
+
+const TARGET = '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/ProjectHome.tsx';
+const mutation = process.env.MUTATION;
+
+export default mergeConfig(base, {
+  root: '/home/user/ClinicalSageAI-2-replit',
+  plugins: [{
+    name: 'mutate-team-section',
+    enforce: 'pre',
+    transform(code: string, id: string) {
+      if (id.split('?')[0] !== TARGET) return null;
+      const before = code;
+      if (mutation === 'heading') code = code.replace('<div className="pj-sec-h"><h2>Team</h2></div>', '<div className="pj-sec-h"><h2>People</h2></div>');
+      if (mutation === 'sharing') code = code.replace('{sharingProjectId !== null && <ProjectTeamSharing', '{false && <ProjectTeamSharing');
+      if (code === before) throw new Error(`mutation ${mutation} did not apply`);
+      return code;
+    },
+  }],
+});

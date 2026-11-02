@@ -379,7 +379,9 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
     setDeviceFlags(f => (f.includes(id) ? f.filter(x => x !== id) : [...f, id]));
   // Team assignment needs a persisted project id (GET /:id/team); no endpoint
   // lists selectable org members for a not-yet-created project, so the wizard
-  // creates the project solo and teammates are added afterward.
+  // creates the project solo (the creator-only list the server expects) and
+  // people are added afterward on the project's Team section, through
+  // ProjectTeamSharing.tsx ("Grant sharing").
   const [team] = useState<string[]>([]);
   const [target, setTarget] = useState('');
   const [creating, setCreating] = useState(false);
@@ -625,12 +627,12 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
         <span className="pd-crumb-here">New project</span>
       </div>
 
+      {/* No eyebrow: the crumb above says where this is (D2.md §2.4 item 1). */}
       <header className="npw-head">
         <div className="npw-head-inner">
-          <div className="ph-eyebrow">Workspace</div>
           <h1 className="ph-title" id="new-project-title">New project</h1>
           <p className="ph-sub">
-            What are you filing? Choose the filing, describe the product, then review what will be recorded.
+            Choose the filing, describe the project, then review what will be recorded.
             The filing decides the dossier outline the project is built against.
           </p>
         </div>
@@ -641,7 +643,8 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
           strip. Position is stated three ways here: the number or tick, the
           step's own name, and aria-current. Nothing is signalled by colour
           alone. A finished step is re-openable; a step ahead of the current one
-          is not, because nothing has been entered into it yet. */}
+          is not, because nothing has been entered into it yet. "Step N" is read
+          by screen readers and not shown: the disc already numbers the step. */}
       <nav className="npw-steps" aria-label="New project steps">
         <ol>
           {STEP_LABELS.map((label, i) => (
@@ -659,7 +662,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
               >
                 <span className="npw-step-n" aria-hidden="true">{i < step ? I.check : i + 1}</span>
                 <span className="npw-step-l">
-                  <span className="npw-step-k">Step {i + 1}</span>
+                  <span className="sr-only">Step {i + 1}</span>
                   <span className="npw-step-t">{label}</span>
                 </span>
               </button>
@@ -676,8 +679,8 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
           {/* Step 0: Choose template */}
           {step === 0 && (
             <div>
+              {/* One quiet line above the catalogue. No spark: it marks AnA, not a note. */}
               <div className="npw-seg-note">
-                <span className="ico" aria-hidden="true">{I.sparkles}</span>
                 <div>
                   <div className="npw-seg-t">Tailored for {segLabel}</div>
                   <div className="npw-seg-s">The filings for your client type come first. Use the tabs for other kinds of product, or search by name.</div>
@@ -947,19 +950,11 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
                     as `npw-field` it stacked the box above its words. */}
                 <span><span className="npw-flag-l">Risk-based monitoring</span>{' '}<span className="npw-flag-w">Include risk assessment, monitoring indicators and site oversight for this project. No assessment or monitoring data is created during setup; existing access requirements apply.</span></span>
               </label>
-
-              <div className="npw-field npw-field-wide">
-                <span className="npw-field-l">Team members</span>
-                {/* Backend gap: no endpoint lists selectable org members for a
-                    not-yet-created project (GET /api/c2c/projects/:id/team needs a
-                    persisted project id). Rather than show a fabricated roster, the
-                    project is created solo and teammates are added afterward. */}
-                <EmptyState
-                  icon={I.info}
-                  title="Team assignment isn't available yet"
-                  hint="You'll be able to add teammates once the project exists and org members can be listed."
-                />
-              </div>
+              {/* No "Team members" field. It was an empty box saying team
+                  assignment "isn't available yet": a roadmap message in place of
+                  a control. People are added once the project exists, on its
+                  Team section (ProjectHome.tsx → ProjectTeamSharing.tsx), and the
+                  review step below says so (D2.md §2.4 item 7). */}
             </div>
           )}
 
@@ -1073,10 +1068,14 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
                 )}
               </dl>
 
-              <div className="npw-next">
-                <span className="ico" aria-hidden="true">{I.sparkles}</span>
-                <span>Your project is saved to the portfolio and opens in its workspace, where you can add documents and author sections with AnA.</span>
-              </div>
+              {/* What happens on create, and where people are added: one quiet
+                  line under the list, not a tinted box with AnA's spark. "Team"
+                  is the project page's heading for its people and their sharing
+                  (newProjectWizardLook.test.tsx follows it there). */}
+              <p className="npw-review-note">
+                Your project is saved to the portfolio and opens in its workspace, where you can add documents and author sections with AnA.
+                {' '}After it is created, share it with people in your organization from its Team section.
+              </p>
             </div>
           )}
 

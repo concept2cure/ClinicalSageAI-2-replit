@@ -1,0 +1,60 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > has no eyebrow, and one sub-line that says what the three steps do
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > states each step for screen readers only, and the current one with aria-current
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > keeps the step-1 note as text, without AnA’s spark
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 2 has no Team members field and no empty-state box
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 3 says, under the list, what happens on create and where to add people; the body is unchanged
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > the place the review names exists: the project page has a Team section that grants sharing 6139ms
+   → Unable to find a label with the text of: Organization member
+Ignored nodes: comments, script, style
+<section
+  class="pj-sec"
+>
+  <div
+    class="pj-sec-h"
+  >
+    <h2>
+      Team
+    </h2>
+  </div>
+  <div>
+    <p
+      class="pj-team-note"
+    >
+      Recorded responsibilities describe coordination. Sharing roles apply to specific actions; they do not grant universal editing or approval/signing authority. Review and approval assignments remain document-specific.
+    </p>
+    <ul
+      aria-label="Recorded project team"
+      class="pj-team-list"
+    >
+      <li
+        class="pj-team-person"
+      >
+        <div
+          class="pj-team-identity"
+        >
+          <strong>
+            Coordinator
+          </strong>
+          <span>
+            Current organization member
+          </span>
+        </div>
+        <dl
+          class="pj-team-facts"
+        >
+          <div>
+            <dt>
+              Recorded responsibilities
+            </dt>
+            <dd>
+              <span
+                class="rd-chip tone-idle"
+              >
+                Project owner
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt>
+              Sharing

@@ -1,0 +1,218 @@
+# Mutation 1: fold-ignores-transmittal
+# 2026-11-01T21:54:56Z
+# What it removes: The fold ignores the transmittal and reads compiles only: the join to submission_transmittals never matches.
+# File: server/services/ectd/prior-sequence-loader.ts
+# Replaced:
+#   -          JOIN submission_transmittals t
+#   -            ON t.organization_id = $1
+# With:
+#   +          JOIN submission_transmittals t
+#   +            ON FALSE AND t.organization_id = $1
+# Test run: npx vitest run server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts  (exit 1)
+# Expected to fail on its own assertion: ['the phantom leaf', 'sent with no compile on record']
+# Failed as expected: {'the phantom leaf': True, 'sent with no compile on record': True}
+# Failed on an assertion (no build or syntax error): True
+# File restored byte for byte: True (sha256 before 001a307b619d2c956c183aa15adcde7999d343d6a1580f8a5feb2a996e4c0ad1, after 001a307b619d2c956c183aa15adcde7999d343d6a1580f8a5feb2a996e4c0ad1)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 19ms
+   → expected [ 'draft-only.pdf', 'general.pdf' ] to deeply equal [ 'general.pdf' ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 6ms
+   → expected [] to deeply equal [ 'csr.pdf', 'general.pdf' ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 7ms
+   → expected { leaves: [], basis: null } to deeply equal { leaves: [ 'resend.pdf' ], …(1) }
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 5ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 9ms
+   → promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 7ms
+   → expected [ [ '0001', 'replace' ] ] to deeply equal [ [ '0000', 'new' ], …(1) ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 6ms
+   → expected [ [ 'general.pdf', '0000', 'a' ] ] to deeply equal [ [ 'general.pdf', '0001', 'b' ] ]
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  21:54:53
+   Duration  2.53s (transform 116ms, setup 79ms, import 86ms, tests 2.10s, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf)
+AssertionError: expected [ 'draft-only.pdf', 'general.pdf' ] to deeply equal [ 'general.pdf' ]
+
+- Expected
++ Received
+
+  [
++   "draft-only.pdf",
+    "general.pdf",
+  ]
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:114:33
+    112|     await transmittal({ attemptId: attempt(1), sequenceId: id }, [leaf…
+    113|     const state = await filedState(1);
+    114|     expect(names(state.leaves)).toEqual(['general.pdf']);
+       |                                 ^
+    115|     expect(state.sequences).toEqual([{ sequenceNumber: '0000', dispatc…
+    116|     expect(names((await priorFor(1, '0001')).leaves)).toEqual(['genera…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it
+AssertionError: expected [] to deeply equal [ 'csr.pdf', 'general.pdf' ]
+
+- Expected
++ Received
+
+- [
+-   "csr.pdf",
+-   "general.pdf",
+- ]
++ []
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:124:33
+    122|     await transmittal({ attemptId: attempt(2), sequenceId: id }, [leaf…
+    123|     const state = await filedState(2);
+    124|     expect(names(state.leaves)).toEqual(['csr.pdf', 'general.pdf']);
+       |                                 ^
+    125|     expect(state.throughSequence).toBe('0000');
+    126|     expect(state.sequences).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read
+AssertionError: expected { leaves: [], basis: null } to deeply equal { leaves: [ 'resend.pdf' ], …(1) }
+
+- Expected
++ Received
+
+  {
+-   "basis": "transmit",
+-   "leaves": [
+-     "resend.pdf",
+-   ],
++   "basis": null,
++   "leaves": [],
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:139:104
+    137|     await transmittal({ attemptId: attempt(31), sequenceId: id }, [lea…
+    138|     await transmittal({ attemptId: attempt(32), sequenceId: id }, [lea…
+    139|     await expect(filedState(3).then((s) => ({ leaves: names(s.leaves),…
+       |                                                                                                        ^
+    140|       .resolves.toEqual({ leaves: ['resend.pdf'], basis: 'transmit' });
+    141|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence
+AssertionError: promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "leaves": [
++     {
++       "backbone": "index.xml",
++       "ctdSection": "3.2.S.1",
++       "fileName": "compiled.pdf",
++       "history": [
++         {
++           "fileName": "compiled.pdf",
++           "md5": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++           "operation": "new",
++           "sequenceNumber": "0000",
++         },
++       ],
++       "href": "m3/compiled.pdf",
++       "leafId": "leaf-compiled-pdf",
++       "md5": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++       "operation": "new",
++       "sequenceNumber": "0000",
++     },
++   ],
++   "sequences": [
++     {
++       "basis": "compiles",
++       "dispatchStatus": "sent",
++       "filed": true,
++       "sequenceNumber": "0000",
++     },
++     {
++       "basis": null,
++       "dispatchStatus": null,
++       "filed": false,
++       "sequenceNumber": "0001",
++     },
++   ],
++   "throughSequence": "0000",
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:176:31
+    174|     await transmittal({ attemptId: attempt(5), sequenceId: id }, [leaf…
+    175|     const sentence = /Sequence 0000 is bound to more than one transmit…
+    176|     await expect(filedState(5)).rejects.toThrow(sentence);
+       |                               ^
+    177|     await expect(priorFor(5, '0001')).rejects.toThrow(sentence);
+    178|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles
+AssertionError: expected [ [ '0001', 'replace' ] ] to deeply equal [ [ '0000', 'new' ], …(1) ]
+
+- Expected
++ Received
+
+  [
+    [
+-     "0000",
+-     "new",
+-   ],
+-   [
+      "0001",
+      "replace",
+    ],
+  ]
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:192:81
+    190|     const state = await filedState(7);
+    191|     expect(state.leaves.map((l) => [l.fileName, l.sequenceNumber, l.md…
+    192|     expect(state.leaves[0].history.map((a) => [a.sequenceNumber, a.ope…
+       |                                                                                 ^
+    193|     expect(state.sequences.map((s) => s.basis)).toEqual(['transmit', '…
+    194|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal
+AssertionError: expected [ [ 'general.pdf', '0000', 'a' ] ] to deeply equal [ [ 'general.pdf', '0001', 'b' ] ]
+
+- Expected
++ Received
+
+  [
+    [
+      "general.pdf",
+-     "0001",
+-     "b",
++     "0000",
++     "a",
+    ],
+  ]
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:202:79
+    200|     await transmittal({ attemptId: attempt(8), sequenceId: id }, gener…
+    201|     const state = await filedState(8);
+    202|     expect(state.leaves.map((l) => [l.fileName, l.sequenceNumber, l.md…
+       |                                                                               ^
+    203|     expect(state.leaves[0].history.map((a) => [a.sequenceNumber, a.ope…
+    204|     expect(state.sequences.map((s) => s.basis)).toEqual(['compiles', '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+

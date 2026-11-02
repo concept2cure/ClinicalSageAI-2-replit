@@ -1,0 +1,96 @@
+# mutant m5-dead-link: renders with no project open: a dead link
+# edits to client/src/concept2cure/v2/dataConnect.tsx (reverted after the run):
+#   - 'const project = useShellProject();\n  if (!project) return null;'
+#   + 'const project = useShellProject();'
+#   - "{I.left} {project.title?.trim() || 'Project'}"
+#   + "{I.left} {project?.title?.trim() || 'Project'}"
+$ npx vitest run --config vitest.config.ts --maxWorkers=1 client/src/concept2cure/v2/__tests__/projectBack.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > renders nothing while no project is open 45ms
+   → expected '<button type="button" class="pj-back"…' to be '' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > is a .pj-back button named by the open project, its arrow hidden from screen readers 275ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is missing, so the button always has a name 22ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is empty, so the button always has a name 23ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is blank, so the button always has a name 17ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > goes to the project home on click 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > works from the keyboard: Tab reaches it, and Enter and Space each go back 80ms
+ × client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > follows the shell channel: it appears when a project opens after mount and goes when it closes 32ms
+   → expected <button type="button" …(1)>…(1)</button> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > does nothing, and throws nothing, when the screen gives it no onNav 17ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  02:39:19
+   Duration  2.36s (transform 452ms, setup 197ms, import 599ms, tests 548ms, environment 725ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > renders nothing while no project is open
+AssertionError: expected '<button type="button" class="pj-back"…' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ <button type="button" class="pj-back"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left" aria-hidden="true" focusable="false"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg> Project</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectBack.test.tsx:34:33
+     32|   it('renders nothing while no project is open', () => {
+     33|     const { container } = render(<ProjectBack onNav={vi.fn()} />);
+     34|     expect(container.innerHTML).toBe('');
+       |                                 ^
+     35|     expect(screen.queryByRole('button')).toBeNull();
+     36|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > follows the shell channel: it appears when a project opens after mount and goes when it closes
+AssertionError: expected <button type="button" …(1)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="pj-back"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-arrow-left"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="m12 19-7-7 7-7"
+    />
+    <path
+      d="M19 12H5"
+    />
+  </svg>
+   
+  Project
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectBack.test.tsx:96:42
+     94|   it('follows the shell channel: it appears when a project opens after…
+     95|     render(<ProjectBack onNav={vi.fn()} />);
+     96|     expect(screen.queryByRole('button')).toBeNull();
+       |                                          ^
+     97|
+     98|     act(() => publishShellProject({ id: PID, title: 'BX-301' }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit 1

@@ -1,0 +1,105 @@
+# Mutation 4: fold-takes-first-of-two
+# 2026-11-01T21:55:07Z
+# What it removes: The fold keeps the first of two transmittals binding one attempt of one sequence instead of throwing.
+# File: server/services/ectd/prior-sequence-loader.ts
+# Replaced:
+#   -   for (const [seq, transmittals] of sentBy) {
+#   -     if (transmittals.length > 1) {
+#   -       throw new Error(
+#   -         `Sequence ${seq} is bound to more than one transmittal of what it sent (${transmittals.join(', ')}); ` +
+#   -           'what is on file cannot be read, so none of it was.',
+#   -       );
+#   -     }
+#   -   }
+#   -   return rows;
+# With:
+#   +   const kept = new Set<string>();
+#   +   return rows.filter((row) => {
+#   +     if (row.basis !== 'transmit') return true;
+#   +     const seq = String(row.sequence_number ?? '');
+#   +     if (kept.has(seq)) return false;
+#   +     kept.add(seq);
+#   +     return true;
+#   +   });
+# Test run: npx vitest run server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts  (exit 1)
+# Expected to fail on its own assertion: ['two transmittals binding one attempt']
+# Failed as expected: {'two transmittals binding one attempt': True}
+# Failed on an assertion (no build or syntax error): True
+# File restored byte for byte: True (sha256 before 001a307b619d2c956c183aa15adcde7999d343d6a1580f8a5feb2a996e4c0ad1, after 001a307b619d2c956c183aa15adcde7999d343d6a1580f8a5feb2a996e4c0ad1)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 16ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 4ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 15ms
+   → promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 5ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  21:55:04
+   Duration  2.67s (transform 119ms, setup 84ms, import 72ms, tests 2.27s, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence
+AssertionError: promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "leaves": [
++     {
++       "backbone": "index.xml",
++       "ctdSection": "3.2.S.1",
++       "fileName": "one.pdf",
++       "history": [
++         {
++           "fileName": "one.pdf",
++           "md5": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++           "operation": "new",
++           "sequenceNumber": "0000",
++         },
++       ],
++       "href": "m3/one.pdf",
++       "leafId": "leaf-one-pdf",
++       "md5": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++       "operation": "new",
++       "sequenceNumber": "0000",
++     },
++   ],
++   "sequences": [
++     {
++       "basis": "transmit",
++       "dispatchStatus": "sent",
++       "filed": true,
++       "sequenceNumber": "0000",
++     },
++     {
++       "basis": null,
++       "dispatchStatus": null,
++       "filed": false,
++       "sequenceNumber": "0001",
++     },
++   ],
++   "throughSequence": "0000",
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:176:31
+    174|     await transmittal({ attemptId: attempt(5), sequenceId: id }, [leaf…
+    175|     const sentence = /Sequence 0000 is bound to more than one transmit…
+    176|     await expect(filedState(5)).rejects.toThrow(sentence);
+       |                               ^
+    177|     await expect(priorFor(5, '0001')).rejects.toThrow(sentence);
+    178|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

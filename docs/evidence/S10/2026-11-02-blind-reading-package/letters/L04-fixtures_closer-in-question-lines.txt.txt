@@ -1,0 +1,12 @@
+INFORMATION REQUEST
+We have the following requests for information:
+1. Provide the batch analyses for the registration batches.
+2. The dissolution method has not been shown to be discriminating.
+We request that you submit data from batches manufactured with
+deliberate variations in the critical process parameters.
+3. Provide the updated specification.
+Your response should include a justification for each acceptance
+criterion that is wider than the clinical batch results.
+4. Please clarify the storage condition.
+Sincerely,
+Jane Reviewer

@@ -1878,3 +1878,54 @@ Raised by the D7-record session ("For the founder" 5; `artifact-approval-act.ts`
 - **Still to settle, not by a session:** which document types count as regulated is read from the document-type
   catalog's existing classification; where the catalog does not say, the document is treated as regulated (fail
   closed).
+
+### P-96 — An acknowledgement recorded as FDA's before DP-81 is marked in the product
+
+The founder, 2026-11-02, answering "Before the DP-81 fix, some acknowledgement downloads were recorded as coming from
+FDA ('agency') without being verified. The records are corrected going forward. Do sponsors who already have such a
+record need to be told?": **"Mark it in the product."** Raised by the D7-record session
+(`docs/evidence/W5/2026-11-01/README.md`, "For the founder" 3; DP-81 fixed in `8d5bbef3b`).
+
+- **What is decided.** Each acknowledgement recorded as the agency's before the DP-81 fix, and not verified as FDA's,
+  gets an audit-trailed correction and a visible note on its submission: this acknowledgement was not verified as
+  FDA's. No outbound email or notice.
+- **How it reaches a deployed database (RULE 1).** The correction is data, so it lands only through a file in
+  `C2C_MIGRATION_FILES`, guarded to run once per row (it marks; it never deletes or rewrites the original record),
+  with a row-count assertion and its audit row in the same statement set.
+- **Owner.** RIM (`011e42…`), which holds `fda-esg-receipts.ts`, with the D7-record session's DP-81 evidence; under F1.
+
+### P-97 — A project that already filed keeps its filed state when eCTD compile is refused
+
+The founder, 2026-11-02, answering "RIM is about to refuse eCTD compile for document-class and regional device
+projects. A project of that kind that already has a dispatched sequence would lose its filed-state view. Nobody here
+can query the deployed database to check whether any exist. How should RIM proceed?": **"Keep filed state
+regardless."**
+
+- **What is decided.** Filing types' 3b slice 3(c) refuses compile, status and validate for a filing-class or regional
+  device project with 422 `ECTD_NOT_APPLICABLE`, **except** that a project with any dispatched sequence keeps its
+  filed-state view (read-only). The deployed-row query is no longer a precondition: nothing filed is hidden either way.
+- **Owner.** RIM, under F1, with the client's 422 handling in the same change.
+
+### P-98 — Numbered comments inside an FDA response in meeting minutes are not offered as questions
+
+The founder, 2026-11-02, answering "When FDA meeting minutes contain an FDA response with its own numbered comments,
+should those comments be offered as questions for the sponsor to answer?": **"Not offered."** Raised by RIM's S10
+design (item 4).
+
+- **What is decided.** They are FDA's responses, not open questions. The letter splitter does not offer them, and the
+  letter shows a note saying they were not offered as questions.
+- **Owner.** RIM, in S10.
+
+### P-99 — An unrecorded sent sequence is re-derived from its bytes, or restored by a signed statement
+
+The founder, 2026-11-02, answering "RIM's slice 1 found that a sequence could be marked sent or acknowledged with no
+record of what was transmitted. The next sequence of such a submission is now refused, and the screen names the gap.
+How should a sequence like that be put back on record?": **"Re-derive, else signed statement."** Raised by RIM's F1
+slice 1 (`090f62af1`, its evidence README, "Owed, not built here").
+
+- **What is decided.** Where the exact sent bytes were kept (sends since `3cab286e1`, 2026-10-29), the transmit record
+  is re-derived from them deterministically, with its derivation recorded. For an older send, the record is restored by
+  a signed statement of what the sequence carried, with re-authentication and the agency's acknowledgement kept in
+  Vault and linked to the act. Neither path invents a leaf the bytes or the statement do not name.
+- **What is not decided.** A re-filing is not required. Nothing restores a sequence silently.
+- **Owner.** RIM, under F1, after slice 2.

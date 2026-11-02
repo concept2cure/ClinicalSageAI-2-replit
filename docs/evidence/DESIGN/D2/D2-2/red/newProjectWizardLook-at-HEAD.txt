@@ -1,0 +1,812 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > has no eyebrow, and one sub-line that says what the three steps do 63ms
+   → expected <div class="ph-eyebrow"></div> to be null
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > states each step for screen readers only, and the current one with aria-current 23ms
+   → expected undefined to be 'Step 1' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > keeps the step-1 note as text, without AnA’s spark 43ms
+   → expected <span class="ico" …(1)>…(1)</span> to be null
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 2 has no Team members field and no empty-state box 721ms
+   → expected ' Projects/New projectWorkspaceNew pro…' not to match /Team members|Team assignment|add tea…/i
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 3 says, under the list, what happens on create and where to add people; the body is unchanged 418ms
+   → expected <div class="npw-next">…(2)</div> to be null
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > the place the review names exists: the project page has a Team section that grants sharing 303ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > is found 1ms
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > draws no orange: the one primary button is D0’s, not this block’s 1ms
+   → expected '\n.c2c-v2 .npw{\n  flex:1;\n  min-wid…' not to match /--accent/
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > sizes every text from the D0 type scale, never below 12px 1ms
+   → 11px: expected '11px' to match /^var\(--fs-(caption|small|body|sectio…/
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > uses no muted ink below --text-300 (the quiet floor off --bg-000) 1ms
+   → expected '\n.c2c-v2 .npw{\n  flex:1;\n  min-wid…' not to match /--text-[45]00/
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > marks the current step in ink, a done step in --text-200, never in a status colour 1ms
+   → expected 'border-bottom-color:var(--accent-100);' to match /border-bottom-color:\s*var\(--text-10…/
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > turns the step-1 box into one quiet line, and retires the kicker and the green box 1ms
+   → expected '\n  display:flex;\n  align-items:flex…' to match /background:\s*none/
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > keeps `.npw-seg-t` a heading where step 2 uses it, outside the step-1 note 1ms
+   → expected 'font-size:12.5px;font-weight:600;colo…' to match /margin:\s*0/
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > frames the review once, at radius 12, with hairline rows and no fill 1ms
+   → expected '\n  margin:0;\n  border:1px solid var…' to match /border-radius:\s*var\(--radius-xl\)/
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > aligns the header, rail, body and footer on one gutter, the Projects page’s 1120px column 3ms
+   → .npw-head: expected 'padding:22px 32px 0;;padding:18px 18p…' to contain 'max(40px, calc((100% - 1120px) / 2))'
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > gives form fields 36px, and gives touch its 44px back 1ms
+   → expected '' to match /min-height:\s*36px/
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > keeps the shared field classes’ layout where other screens use them: the two-column grid is the wizard’s own 1ms
+   → expected '' to match /grid-template-columns:\s*repeat\(2,\s…/
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > has no eyebrow, and one sub-line that says what the three steps do
+AssertionError: expected <div class="ph-eyebrow"></div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="ph-eyebrow"
+>
+  Workspace
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:88:48
+     86|   it('has no eyebrow, and one sub-line that says what the three steps …
+     87|     render(<NewProjectWizard onClose={vi.fn()} onNav={vi.fn()} />);
+     88|     expect(npw().querySelector('.ph-eyebrow')).toBeNull();
+       |                                                ^
+     89|     expect(screen.getByRole('heading', { level: 1, name: 'New project'…
+     90|     expect(npw().querySelector('.npw-head .ph-sub')?.textContent).toBe(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > states each step for screen readers only, and the current one with aria-current
+AssertionError: expected undefined to be 'Step 1' // Object.is equality
+
+- Expected:
+"Step 1"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:101:35
+     99|     steps.forEach((step, i) => {
+    100|       const kicker = step.querySelector('.sr-only');
+    101|       expect(kicker?.textContent).toBe(`Step ${i + 1}`);
+       |                                   ^
+    102|       /* No visible kicker is left beside the name. */
+    103|       expect(step.querySelector('.npw-step-k')).toBeNull();
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:99:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > keeps the step-1 note as text, without AnA’s spark
+AssertionError: expected <span class="ico" …(1)>…(1)</span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  aria-hidden="true"
+  class="ico"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-sparkles"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+    />
+    <path
+      d="M20 3v4"
+    />
+    <path
+      d="M22 5h-4"
+    />
+    <path
+      d="M4 17v2"
+    />
+    <path
+      d="M5 18H3"
+    />
+  </svg>
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:112:40
+    110|     render(<NewProjectWizard onClose={vi.fn()} onNav={vi.fn()} segment…
+    111|     const note = npw().querySelector('.npw-seg-note') as HTMLElement;
+    112|     expect(note.querySelector('.ico')).toBeNull();
+       |                                        ^
+    113|     expect(note.querySelector('.npw-seg-t')?.textContent).toBe('Tailor…
+    114|     expect(note.querySelector('.npw-seg-s')?.textContent).toMatch(/^Th…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 2 has no Team members field and no empty-state box
+AssertionError: expected ' Projects/New projectWorkspaceNew pro…' not to match /Team members|Team assignment|add tea…/i
+
+- Expected:
+/Team members|Team assignment|add teammates/i
+
++ Received:
+" Projects/New projectWorkspaceNew projectWhat are you filing? Choose the filing, describe the product, then review what will be recorded. The filing decides the dossier outline the project is built against.Step 1Choose filing type2Step 2Configure project3Step 3Review & createConfigure your Traditional 510(k) projectWhat this filing sets up could not be read. RetryStart from your saved discoveryReview your organization's recorded project context, then choose whether to copy it. Your entered fields stay as you wrote them.Review saved discoveryClient workspaceChoose a client workspaceSponsor ASponsor A is the only active client workspace and is recorded for this project.Project nameRequired. The project is listed under this name.Product nameDevice classNot yet determinedClass IClass IIClass IIIProduct typeMedical deviceIn-vitro diagnosticCompanion diagnosticSoftware as a medical deviceThe filing default is selected. Choose the product type this project will record.Target submission dateProduct codeThe three-letter FDA product code from the product classification database. Enter its regulation number and review panel below; they are not filled in from it.Regulation numberThe 21 CFR regulation listed for the product code.Review panelNot yet determinedAnesthesiologyCardiovascularChemistryDentalEar, Nose & ThroatGastroenterology & UrologyGeneral & Plastic SurgeryGeneral HospitalHematologyImmunologyMicrobiologyNeurologyObstetrics & GynecologyOphthalmicOrthopedicPathologyPhysical MedicineRadiologyClinical ToxicologyPredicate 510(k) numberThe cleared device this one is substantially equivalent to.Predicate device nameThe eSTAR prints this beside the number, so give both or neither — the record does not hold half a claim of substantial equivalence.Indications for useProduct characteristicsEach of these adds required content to the submission, so they are recorded now rather than discovered at assembly.Combination product21 CFR 3.2(e) — adds a lead-centre determination and the other centre’s contentSoftware / AI-MLJune 2023 device software guidance — Documentation Level, architecture, SRS/SDS, V&V, SBOMCyber deviceFD&C Act §524B — cybersecurity documentation; an RTA ground when absentSterileSterilisation validation, packaging and shelf-life dataImplantableLong-term biocompatibility and, for some codes, clinical dataCLIA-waived (IVD)CLIA categorisation and a waiver application under 42 CFR 493Clinical data submittedFDA 3454/3455 financial certification or disclosureRisk-based monitoring Include risk assessment, monitoring indicators and site oversight for this project. No assessment or monitoring data is created during setup; existing access requirements apply.Team membersTeam assignment isn't available yetYou'll be able to add teammates once the project exists and org members can be listed.CancelBackContinue"
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:122:35
+    120|     render(<NewProjectWizard onClose={vi.fn()} onNav={vi.fn()} />);
+    121|     await toStep2();
+    122|     expect(npw().textContent).not.toMatch(/Team members|Team assignmen…
+       |                                   ^
+    123|     expect(npw().querySelector('.c2c-empty-state')).toBeNull();
+    124|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 3 says, under the list, what happens on create and where to add people; the body is unchanged
+AssertionError: expected <div class="npw-next">…(2)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="npw-next"
+>
+  <span
+    aria-hidden="true"
+    class="ico"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-sparkles"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.5"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+      />
+      <path
+        d="M20 3v4"
+      />
+      <path
+        d="M22 5h-4"
+      />
+      <path
+        d="M4 17v2"
+      />
+      <path
+        d="M5 18H3"
+      />
+    </svg>
+  </span>
+  <span>
+    Your project is saved to the portfolio and opens in its workspace, where you can add documents and author sections with AnA.
+  </span>
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:130:46
+    128|     render(<NewProjectWizard onClose={vi.fn()} onNav={onNav} />);
+    129|     await toReview();
+    130|     expect(npw().querySelector('.npw-next')).toBeNull();
+       |                                              ^
+    131|     expect(npw().querySelector('.npw-form .ico')).toBeNull();
+    132|     const note = npw().querySelector('dl.npw-review + p.npw-review-not…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > the place the review names exists: the project page has a Team section that grants sharing
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:145:66
+    143|     render(<NewProjectWizard onClose={vi.fn()} onNav={vi.fn()} />);
+    144|     await toReview();
+    145|     expect(npw().querySelector('.npw-review-note')?.textContent).toCon…
+       |                                                                  ^
+    146|     cleanup();
+    147|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > draws no orange: the one primary button is D0’s, not this block’s
+AssertionError: expected '\n.c2c-v2 .npw{\n  flex:1;\n  min-wid…' not to match /--accent/
+
+- Expected:
+/--accent/
+
++ Received:
+"
+.c2c-v2 .npw{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.c2c-v2 .npw-head{padding:22px 32px 0;}
+.c2c-v2 .npw-head-inner{max-width:760px;}
+.c2c-v2 .npw-head .ph-sub{margin-top:8px;}
+
+
+.c2c-v2 .npw-steps{padding:20px 32px 0;}
+.c2c-v2 .npw-steps ol{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  list-style:none;
+  margin:0;
+  padding:0;
+  border-bottom:1px solid var(--border);
+}
+.c2c-v2 .npw-step{flex:0 1 auto;}
+.c2c-v2 .npw-step-btn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 14px 12px;
+  background:none;
+  border:0;
+  border-bottom:2px solid transparent;
+  text-align:left;
+  cursor:pointer;
+  transition:border-color var(--dur) var(--ease),color var(--dur) var(--ease);
+}
+.c2c-v2 .npw-step-btn:disabled{cursor:default;}
+.c2c-v2 .npw-step-n{
+  width:22px;
+  height:22px;
+  flex:0 0 auto;
+  border-radius:50%;
+  border:1px solid var(--border-control);
+  color:var(--text-300);
+  font-size:11px;
+  font-weight:600;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.c2c-v2 .npw-step-n svg{width:12px;height:12px;}
+.c2c-v2 .npw-step-l{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.c2c-v2 .npw-step-k{
+  font-size:var(--fs-caption);
+  font-weight:600;
+  color:var(--text-400);
+}
+.c2c-v2 .npw-step-t{font-size:12.5px;font-weight:500;color:var(--text-300);}
+.c2c-v2 .npw-step[data-state=\"done\"] .npw-step-n{
+  border-color:var(--success);
+  color:var(--success);
+}
+.c2c-v2 .npw-step[data-state=\"done\"] .npw-step-t{color:var(--text-200);}
+.c2c-v2 .npw-step[data-state=\"current\"] .npw-step-btn{border-bottom-color:var(--accent-100);}
+.c2c-v2 .npw-step[data-state=\"current\"] .npw-step-n{
+  border-color:var(--accent-100);
+  background:var(--accent-100);
+  color:var(--accent-on-strong);
+}
+.c2c-v2 .npw-step[data-state=\"current\"] .npw-step-k{color:var(--accent-200);}
+.c2c-v2 .npw-step[data-state=\"current\"] .npw-step-t{color:var(--text-100);font-weight:600;}
+
+.c2c-v2 .npw-scroll{flex:1;min-height:0;overflow-y:auto;padding:24px 32px 36px;}
+
+.c2c-v2 .npw-inner{margin:0 auto;}
+.c2c-v2 .npw-inner[data-measure=\"wide\"]{max-width:1180px;}
+.c2c-v2 .npw-inner[data-measure=\"form\"]{max-width:760px;}
+
+.c2c-v2 .npw-seg-note{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:12px 14px;
+  margin-bottom:18px;
+  border:1px solid var(--accent-muted,var(--border));
+  border-radius:var(--v2-radius-lg,12px);
+  background:var(--accent-000);
+}
+.c2c-v2 .npw-seg-note .ico{color:var(--accent-200);display:inline-flex;flex:0 0 auto;margin-top:1px;}
+.c2c-v2 .npw-seg-note .ico svg{width:16px;height:16px;}
+.c2c-v2 .npw-seg-t{font-size:12.5px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .npw-seg-s{font-size:11.5px;color:var(--text-300);margin-top:2px;line-height:1.5;}
+
+.c2c-v2 .npw-form{display:flex;flex-direction:column;gap:18px;}
+.c2c-v2 .npw-h2{font-size:15px;font-weight:600;margin:0;}
+
+.c2c-v2 .npw-fields{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:16px 20px;
+}
+.c2c-v2 .npw-field{display:flex;flex-direction:column;gap:5px;}
+.c2c-v2 .npw-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.c2c-v2 .npw-field-wide{grid-column:1/-1;}
+.c2c-v2 .npw-field-l{font-size:11.5px;font-weight:500;color:var(--text-300);}
+.c2c-v2 .npw-field .c2c-input{min-height:36px;font-size:13px;padding:6px 11px;}
+.c2c-v2 .npw-field > .c2c-input{margin-top:0;}
+
+
+.c2c-v2 .npw-field-help{
+  font-size:11px;line-height:1.45;color:var(--text-400);margin-top:4px;
+}
+.c2c-v2 .npw-flags{border:0;padding:0;margin:0;min-width:0;}
+.c2c-v2 .npw-flags legend{padding:0;}
+.c2c-v2 .npw-flag-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));
+  gap:8px;margin-top:8px;
+}
+.c2c-v2 .npw-flag{
+  display:flex;gap:8px;align-items:flex-start;
+  border:1px solid var(--border);border-radius:var(--radius-md);padding:9px 11px;
+  cursor:pointer;background:var(--bg-000);
+  transition:border-color var(--dur) var(--ease),background var(--dur) var(--ease);
+}
+.c2c-v2 .npw-flag:hover{border-color:var(--border-strong,var(--border));}
+.c2c-v2 .npw-flag:focus-within{outline:2px solid var(--border-focus);outline-offset:1px;}
+.c2c-v2 .npw-flag input{margin-top:2px;flex:none;}
+.c2c-v2 .npw-flag-l{display:block;font-size:12.5px;font-weight:500;color:var(--text-200);}
+.c2c-v2 .npw-flag-w{display:block;font-size:11px;line-height:1.4;color:var(--text-400);margin-top:2px;}
+@media (prefers-reduced-motion:reduce){
+  .c2c-v2 .npw-flag{transition:none;}
+}
+
+.c2c-v2 .npw-review{
+  margin:0;
+  border:1px solid var(--border);
+  border-radius:var(--v2-radius-lg,12px);
+  background:var(--bg-050);
+  overflow:hidden;
+}
+.c2c-v2 .npw-review-row{
+  display:grid;
+  grid-template-columns:190px 1fr;
+  gap:16px;
+  padding:11px 18px;
+  border-top:1px solid var(--border);
+  font-size:13px;
+}
+.c2c-v2 .npw-review-row:first-child{border-top:0;}
+.c2c-v2 .npw-review dt{color:var(--text-300);font-weight:500;margin:0;}
+.c2c-v2 .npw-review dd{margin:0;color:var(--text-100);}
+.c2c-v2 .npw-review-strong{font-weight:600;}
+
+.c2c-v2 .npw-next{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  padding:11px 14px;
+  border:1px solid var(--success);
+  border-radius:var(--v2-radius-md,8px);
+  background:color-mix(in srgb,var(--success) 8%,transparent);
+  font-size:12px;
+  line-height:1.5;
+  color:var(--text-200);
+}
+.c2c-v2 .npw-next .ico{color:var(--success);display:inline-flex;flex:0 0 auto;margin-top:1px;}
+.c2c-v2 .npw-next .ico svg{width:15px;height:15px;}
+
+.c2c-v2 .npw-outcome{margin-top:18px;}
+
+.c2c-v2 .npw-foot{flex:0 0 auto;border-top:1px solid var(--border);background:var(--bg-000);}
+.c2c-v2 .npw-foot-inner{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:14px 32px;
+  margin:0 auto;
+  max-width:1180px;
+}
+.c2c-v2 .npw-foot-gap{flex:1;}
+
+@media (max-width:760px){
+  .c2c-v2 .npw-head{padding:18px 18px 0;}
+  .c2c-v2 .npw-steps{padding:16px 18px 0;}
+  .c2c-v2 .npw-scroll{padding:20px 18px 28px;}
+  .c2c-v2 .npw-foot-inner{padding:12px 18px;}
+  .c2c-v2 .npw-review-row{grid-template-columns:1fr;gap:2px;}
+}
+
+"
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:192:23
+    190|
+    191|   it('draws no orange: the one primary button is D0’s, not this block’…
+    192|     expect(BLOCK).not.toMatch(/--accent/);
+       |                       ^
+    193|   });
+    194|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > sizes every text from the D0 type scale, never below 12px
+AssertionError: 11px: expected '11px' to match /^var\(--fs-(caption|small|body|sectio…/
+
+- Expected:
+/^var\(--fs-(caption|small|body|section)\)$/
+
++ Received:
+"11px"
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:198:50
+    196|     const sizes = Array.from(BLOCK.matchAll(/font-size\s*:\s*([^;}]+)/…
+    197|     expect(sizes.length).toBeGreaterThan(5);
+    198|     for (const size of sizes) expect(size, size).toMatch(/^var\(--fs-(…
+       |                                                  ^
+    199|   });
+    200|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > uses no muted ink below --text-300 (the quiet floor off --bg-000)
+AssertionError: expected '\n.c2c-v2 .npw{\n  flex:1;\n  min-wid…' not to match /--text-[45]00/
+
+- Expected:
+/--text-[45]00/
+
++ Received:
+"
+.c2c-v2 .npw{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.c2c-v2 .npw-head{padding:22px 32px 0;}
+.c2c-v2 .npw-head-inner{max-width:760px;}
+.c2c-v2 .npw-head .ph-sub{margin-top:8px;}
+
+
+.c2c-v2 .npw-steps{padding:20px 32px 0;}
+.c2c-v2 .npw-steps ol{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  list-style:none;
+  margin:0;
+  padding:0;
+  border-bottom:1px solid var(--border);
+}
+.c2c-v2 .npw-step{flex:0 1 auto;}
+.c2c-v2 .npw-step-btn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 14px 12px;
+  background:none;
+  border:0;
+  border-bottom:2px solid transparent;
+  text-align:left;
+  cursor:pointer;
+  transition:border-color var(--dur) var(--ease),color var(--dur) var(--ease);
+}
+.c2c-v2 .npw-step-btn:disabled{cursor:default;}
+.c2c-v2 .npw-step-n{
+  width:22px;
+  height:22px;
+  flex:0 0 auto;
+  border-radius:50%;
+  border:1px solid var(--border-control);
+  color:var(--text-300);
+  font-size:11px;
+  font-weight:600;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.c2c-v2 .npw-step-n svg{width:12px;height:12px;}
+.c2c-v2 .npw-step-l{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.c2c-v2 .npw-step-k{
+  font-size:var(--fs-caption);
+  font-weight:600;
+  color:var(--text-400);
+}
+.c2c-v2 .npw-step-t{font-size:12.5px;font-weight:500;color:var(--text-300);}
+.c2c-v2 .npw-step[data-state=\"done\"] .npw-step-n{
+  border-color:var(--success);
+  color:var(--success);
+}
+.c2c-v2 .npw-step[data-state=\"done\"] .npw-step-t{color:var(--text-200);}
+.c2c-v2 .npw-step[data-state=\"current\"] .npw-step-btn{border-bottom-color:var(--accent-100);}
+.c2c-v2 .npw-step[data-state=\"current\"] .npw-step-n{
+  border-color:var(--accent-100);
+  background:var(--accent-100);
+  color:var(--accent-on-strong);
+}
+.c2c-v2 .npw-step[data-state=\"current\"] .npw-step-k{color:var(--accent-200);}
+.c2c-v2 .npw-step[data-state=\"current\"] .npw-step-t{color:var(--text-100);font-weight:600;}
+
+.c2c-v2 .npw-scroll{flex:1;min-height:0;overflow-y:auto;padding:24px 32px 36px;}
+
+.c2c-v2 .npw-inner{margin:0 auto;}
+.c2c-v2 .npw-inner[data-measure=\"wide\"]{max-width:1180px;}
+.c2c-v2 .npw-inner[data-measure=\"form\"]{max-width:760px;}
+
+.c2c-v2 .npw-seg-note{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:12px 14px;
+  margin-bottom:18px;
+  border:1px solid var(--accent-muted,var(--border));
+  border-radius:var(--v2-radius-lg,12px);
+  background:var(--accent-000);
+}
+.c2c-v2 .npw-seg-note .ico{color:var(--accent-200);display:inline-flex;flex:0 0 auto;margin-top:1px;}
+.c2c-v2 .npw-seg-note .ico svg{width:16px;height:16px;}
+.c2c-v2 .npw-seg-t{font-size:12.5px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .npw-seg-s{font-size:11.5px;color:var(--text-300);margin-top:2px;line-height:1.5;}
+
+.c2c-v2 .npw-form{display:flex;flex-direction:column;gap:18px;}
+.c2c-v2 .npw-h2{font-size:15px;font-weight:600;margin:0;}
+
+.c2c-v2 .npw-fields{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:16px 20px;
+}
+.c2c-v2 .npw-field{display:flex;flex-direction:column;gap:5px;}
+.c2c-v2 .npw-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.c2c-v2 .npw-field-wide{grid-column:1/-1;}
+.c2c-v2 .npw-field-l{font-size:11.5px;font-weight:500;color:var(--text-300);}
+.c2c-v2 .npw-field .c2c-input{min-height:36px;font-size:13px;padding:6px 11px;}
+.c2c-v2 .npw-field > .c2c-input{margin-top:0;}
+
+
+.c2c-v2 .npw-field-help{
+  font-size:11px;line-height:1.45;color:var(--text-400);margin-top:4px;
+}
+.c2c-v2 .npw-flags{border:0;padding:0;margin:0;min-width:0;}
+.c2c-v2 .npw-flags legend{padding:0;}
+.c2c-v2 .npw-flag-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));
+  gap:8px;margin-top:8px;
+}
+.c2c-v2 .npw-flag{
+  display:flex;gap:8px;align-items:flex-start;
+  border:1px solid var(--border);border-radius:var(--radius-md);padding:9px 11px;
+  cursor:pointer;background:var(--bg-000);
+  transition:border-color var(--dur) var(--ease),background var(--dur) var(--ease);
+}
+.c2c-v2 .npw-flag:hover{border-color:var(--border-strong,var(--border));}
+.c2c-v2 .npw-flag:focus-within{outline:2px solid var(--border-focus);outline-offset:1px;}
+.c2c-v2 .npw-flag input{margin-top:2px;flex:none;}
+.c2c-v2 .npw-flag-l{display:block;font-size:12.5px;font-weight:500;color:var(--text-200);}
+.c2c-v2 .npw-flag-w{display:block;font-size:11px;line-height:1.4;color:var(--text-400);margin-top:2px;}
+@media (prefers-reduced-motion:reduce){
+  .c2c-v2 .npw-flag{transition:none;}
+}
+
+.c2c-v2 .npw-review{
+  margin:0;
+  border:1px solid var(--border);
+  border-radius:var(--v2-radius-lg,12px);
+  background:var(--bg-050);
+  overflow:hidden;
+}
+.c2c-v2 .npw-review-row{
+  display:grid;
+  grid-template-columns:190px 1fr;
+  gap:16px;
+  padding:11px 18px;
+  border-top:1px solid var(--border);
+  font-size:13px;
+}
+.c2c-v2 .npw-review-row:first-child{border-top:0;}
+.c2c-v2 .npw-review dt{color:var(--text-300);font-weight:500;margin:0;}
+.c2c-v2 .npw-review dd{margin:0;color:var(--text-100);}
+.c2c-v2 .npw-review-strong{font-weight:600;}
+
+.c2c-v2 .npw-next{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  padding:11px 14px;
+  border:1px solid var(--success);
+  border-radius:var(--v2-radius-md,8px);
+  background:color-mix(in srgb,var(--success) 8%,transparent);
+  font-size:12px;
+  line-height:1.5;
+  color:var(--text-200);
+}
+.c2c-v2 .npw-next .ico{color:var(--success);display:inline-flex;flex:0 0 auto;margin-top:1px;}
+.c2c-v2 .npw-next .ico svg{width:15px;height:15px;}
+
+.c2c-v2 .npw-outcome{margin-top:18px;}
+
+.c2c-v2 .npw-foot{flex:0 0 auto;border-top:1px solid var(--border);background:var(--bg-000);}
+.c2c-v2 .npw-foot-inner{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:14px 32px;
+  margin:0 auto;
+  max-width:1180px;
+}
+.c2c-v2 .npw-foot-gap{flex:1;}
+
+@media (max-width:760px){
+  .c2c-v2 .npw-head{padding:18px 18px 0;}
+  .c2c-v2 .npw-steps{padding:16px 18px 0;}
+  .c2c-v2 .npw-scroll{padding:20px 18px 28px;}
+  .c2c-v2 .npw-foot-inner{padding:12px 18px;}
+  .c2c-v2 .npw-review-row{grid-template-columns:1fr;gap:2px;}
+}
+
+"
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:202:23
+    200|
+    201|   it('uses no muted ink below --text-300 (the quiet floor off --bg-000…
+    202|     expect(BLOCK).not.toMatch(/--text-[45]00/);
+       |                       ^
+    203|   });
+    204|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > marks the current step in ink, a done step in --text-200, never in a status colour
+AssertionError: expected 'border-bottom-color:var(--accent-100);' to match /border-bottom-color:\s*var\(--text-10…/
+
+- Expected:
+/border-bottom-color:\s*var\(--text-100\)/
+
++ Received:
+"border-bottom-color:var(--accent-100);"
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:206:75
+    204|
+    205|   it('marks the current step in ink, a done step in --text-200, never …
+    206|     expect(decl('.c2c-v2 .npw-step[data-state="current"] .npw-step-btn…
+       |                                                                           ^
+    207|     expect(decl('.c2c-v2 .npw-step[data-state="current"] .npw-step-n')…
+    208|     expect(decl('.c2c-v2 .npw-step[data-state="current"] .npw-step-n')…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > turns the step-1 box into one quiet line, and retires the kicker and the green box
+AssertionError: expected '\n  display:flex;\n  align-items:flex…' to match /background:\s*none/
+
+- Expected:
+/background:\s*none/
+
++ Received:
+"
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:12px 14px;
+  margin-bottom:18px;
+  border:1px solid var(--accent-muted,var(--border));
+  border-radius:var(--v2-radius-lg,12px);
+  background:var(--accent-000);
+"
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:215:18
+    213|   it('turns the step-1 box into one quiet line, and retires the kicker…
+    214|     const note = decl('.c2c-v2 .npw-seg-note');
+    215|     expect(note).toMatch(/background:\s*none/);
+       |                  ^
+    216|     expect(note).toMatch(/border:\s*0/);
+    217|     expect(RULES.some(([s]) => /\.npw-step-k\b|\.npw-next\b|\.npw-seg-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > keeps `.npw-seg-t` a heading where step 2 uses it, outside the step-1 note
+AssertionError: expected 'font-size:12.5px;font-weight:600;colo…' to match /margin:\s*0/
+
+- Expected:
+/margin:\s*0/
+
++ Received:
+"font-size:12.5px;font-weight:600;color:var(--text-100);"
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:227:18
+    225|     expect(base).toMatch(/font-weight:\s*600/);
+    226|     expect(base).toMatch(/color:\s*var\(--text-100\)/);
+    227|     expect(base).toMatch(/margin:\s*0/);
+       |                  ^
+    228|     expect(base).not.toMatch(/display:\s*inline/);
+    229|     /* The step-1 note's quiet inline form overrides it there. */
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > frames the review once, at radius 12, with hairline rows and no fill
+AssertionError: expected '\n  margin:0;\n  border:1px solid var…' to match /border-radius:\s*var\(--radius-xl\)/
+
+- Expected:
+/border-radius:\s*var\(--radius-xl\)/
+
++ Received:
+"
+  margin:0;
+  border:1px solid var(--border);
+  border-radius:var(--v2-radius-lg,12px);
+  background:var(--bg-050);
+  overflow:hidden;
+"
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:234:41
+    232|
+    233|   it('frames the review once, at radius 12, with hairline rows and no …
+    234|     expect(decl('.c2c-v2 .npw-review')).toMatch(/border-radius:\s*var\…
+       |                                         ^
+    235|     expect(decl('.c2c-v2 .npw-review')).toMatch(/background:\s*var\(--…
+    236|     expect(decl('.c2c-v2 .npw-review-row')).toMatch(/background:\s*non…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > aligns the header, rail, body and footer on one gutter, the Projects page’s 1120px column
+AssertionError: .npw-head: expected 'padding:22px 32px 0;;padding:18px 18p…' to contain 'max(40px, calc((100% - 1120px) / 2))'
+
+Expected: "max(40px, calc((100% - 1120px) / 2))"
+Received: "padding:22px 32px 0;;padding:18px 18px 0;"
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:244:45
+    242|     const gutter = 'max(40px, calc((100% - 1120px) / 2))';
+    243|     for (const part of ['.npw-head', '.npw-steps', '.npw-inner', '.npw…
+    244|       expect(decl(`.c2c-v2 ${part}`), part).toContain(gutter);
+       |                                             ^
+    245|     }
+    246|     expect(decl('.c2c-v2 .npw-inner[data-measure="form"] > *')).toMatc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > gives form fields 36px, and gives touch its 44px back
+AssertionError: expected '' to match /min-height:\s*36px/
+
+- Expected:
+/min-height:\s*36px/
+
++ Received:
+""
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:250:45
+    248|
+    249|   it('gives form fields 36px, and gives touch its 44px back', () => {
+    250|     expect(decl('.c2c-v2 .npw .c2c-input')).toMatch(/min-height:\s*36p…
+       |                                             ^
+    251|     const coarse = BLOCK.match(/@media\s*\(pointer:\s*coarse\)\s*\{([\…
+    252|     expect(coarse).toMatch(/\.c2c-v2 \.npw \.c2c-input[^{]*\{[^}]*min-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > keeps the shared field classes’ layout where other screens use them: the two-column grid is the wizard’s own
+AssertionError: expected '' to match /grid-template-columns:\s*repeat\(2,\s…/
+
+- Expected:
+/grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/
+
++ Received:
+""
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx:257:46
+    255|   it('keeps the shared field classes’ layout where other screens use t…
+    256|     /* ProjectSettings.tsx and DiscoveryQuestions.tsx reuse .npw-field…
+    257|     expect(decl('.c2c-v2 .npw .npw-fields')).toMatch(/grid-template-co…
+       |                                              ^
+    258|     expect(decl('.c2c-v2 .npw-fields')).toMatch(/auto-fit/);
+    259|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 failed | 1 passed (17)
+   Start at  03:10:24
+   Duration  7.35s (transform 3.84s, setup 208ms, import 4.64s, tests 1.59s, environment 658ms)
+

@@ -1,0 +1,12 @@
+# The commit this build becomes, evaluated before it exists through ci:one-design-plan's own exported evaluateCommit
+# (scripts/ci/check-one-design-plan.mjs), with the trailers the orchestrator will write. Script: scratchpad f1-confirm/plan-check.mjs.
+$ node plan-check.mjs
+files in the build: 94 (24 modified, 70 new)
+new non-test, non-evidence files: []
+files that could add a surface, mount, AnA tool, route, service or table: []
+Completes: ["server/services/ectd/prior-sequence-loader.ts","server/services/submission-gateways/index.ts"]; missing at HEAD: []
+package F1: "open"
+findings: []
+negative control, no trailer: [{"sha":"uncommitted-build","reason":"names no package: add a \"Plan: <ID>\" trailer naming an open package of docs/design/one-design-plan.json"}]
+negative control, Completes names a missing path: [{"sha":"uncommitted-build","reason":"\"Completes: server/services/ectd/does-not-exist.ts\" names nothing that existed before this commit (RULE 6)"}]
+exit=0

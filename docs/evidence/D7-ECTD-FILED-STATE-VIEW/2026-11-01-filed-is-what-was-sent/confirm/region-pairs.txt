@@ -1,0 +1,86 @@
+# The fold's agency check against the real router: for every sequence region transmitRouteFor (submission-service.ts) routes,
+# canonicalRegionOf(sequence region) === canonicalRegionOf(the gateway region its send writes)? 'NOT READ' would make a send made
+# after this change fall back to compiles. Verifier's scratch script (source below). 2026-11-02T02:39:33Z
+
+## applicationType MAA
+fda (biotech) -> gateway fda/esg: canonical US vs US => read
+fda (mdx) -> gateway fda/esg: canonical US vs US => read
+jp (biotech) -> gateway pmda/pmda_gateway: canonical JP vs JP => read
+jp (mdx) -> gateway pmda/pmda_gateway: canonical JP vs JP => read
+pmda (biotech) -> gateway pmda/pmda_gateway: canonical JP vs JP => read
+pmda (mdx) -> gateway pmda/pmda_gateway: canonical JP vs JP => read
+eu (biotech): not routed (EU_MAA (Marketing Authorisation Application) goes to EMA eSu…)
+eu (mdx) -> gateway ema/eudamed: canonical EU vs EU => read
+ema (biotech): not routed (EU_MAA (Marketing Authorisation Application) goes to EMA eSu…)
+ema (mdx) -> gateway ema/eudamed: canonical EU vs EU => read
+ca (biotech) -> gateway ca/hc_cesg: canonical CA vs CA => read
+ca (mdx) -> gateway ca/hc_cesg: canonical CA vs CA => read
+uk (biotech) -> gateway uk/mhra_gateway: canonical UK vs UK => read
+uk (mdx) -> gateway uk/mhra_gateway: canonical UK vs UK => read
+cn (biotech) -> gateway cn/nmpa_gateway: canonical CN vs CN => read
+cn (mdx) -> gateway cn/nmpa_gateway: canonical CN vs CN => read
+au (biotech) -> gateway au/tga_ebs: canonical AU vs AU => read
+au (mdx) -> gateway au/tga_ebs: canonical AU vs AU => read
+ch (biotech) -> gateway ch/swissmedic_egateway: canonical CH vs CH => read
+ch (mdx) -> gateway ch/swissmedic_egateway: canonical CH vs CH => read
+br (biotech) -> gateway br/anvisa_gateway: canonical BR vs BR => read
+br (mdx) -> gateway br/anvisa_gateway: canonical BR vs BR => read
+in (biotech) -> gateway in/cdsco_sugam: canonical IN vs IN => read
+in (mdx) -> gateway in/cdsco_sugam: canonical IN vs IN => read
+kr (biotech) -> gateway kr/mfds_dbio: canonical KR vs KR => read
+kr (mdx) -> gateway kr/mfds_dbio: canonical KR vs KR => read
+sg (biotech) -> gateway sg/hsa_prism: canonical SG vs SG => read
+sg (mdx) -> gateway sg/hsa_prism: canonical SG vs SG => read
+mismatches: 0
+
+## applicationType NATIONAL
+fda (biotech) -> gateway fda/esg: canonical US vs US => read
+fda (mdx) -> gateway fda/esg: canonical US vs US => read
+jp (biotech) -> gateway pmda/pmda_gateway: canonical JP vs JP => read
+jp (mdx) -> gateway pmda/pmda_gateway: canonical JP vs JP => read
+pmda (biotech) -> gateway pmda/pmda_gateway: canonical JP vs JP => read
+pmda (mdx) -> gateway pmda/pmda_gateway: canonical JP vs JP => read
+eu (biotech): not routed (The filing type "NATIONAL" names no filing in the regulatory…)
+eu (mdx) -> gateway ema/eudamed: canonical EU vs EU => read
+ema (biotech): not routed (The filing type "NATIONAL" names no filing in the regulatory…)
+ema (mdx) -> gateway ema/eudamed: canonical EU vs EU => read
+ca (biotech) -> gateway ca/hc_cesg: canonical CA vs CA => read
+ca (mdx) -> gateway ca/hc_cesg: canonical CA vs CA => read
+uk (biotech) -> gateway uk/mhra_gateway: canonical UK vs UK => read
+uk (mdx) -> gateway uk/mhra_gateway: canonical UK vs UK => read
+cn (biotech) -> gateway cn/nmpa_gateway: canonical CN vs CN => read
+cn (mdx) -> gateway cn/nmpa_gateway: canonical CN vs CN => read
+au (biotech) -> gateway au/tga_ebs: canonical AU vs AU => read
+au (mdx) -> gateway au/tga_ebs: canonical AU vs AU => read
+ch (biotech) -> gateway ch/swissmedic_egateway: canonical CH vs CH => read
+ch (mdx) -> gateway ch/swissmedic_egateway: canonical CH vs CH => read
+br (biotech) -> gateway br/anvisa_gateway: canonical BR vs BR => read
+br (mdx) -> gateway br/anvisa_gateway: canonical BR vs BR => read
+in (biotech) -> gateway in/cdsco_sugam: canonical IN vs IN => read
+in (mdx) -> gateway in/cdsco_sugam: canonical IN vs IN => read
+kr (biotech) -> gateway kr/mfds_dbio: canonical KR vs KR => read
+kr (mdx) -> gateway kr/mfds_dbio: canonical KR vs KR => read
+sg (biotech) -> gateway sg/hsa_prism: canonical SG vs SG => read
+sg (mdx) -> gateway sg/hsa_prism: canonical SG vs SG => read
+mismatches: 0
+
+## source
+// For every sequence region transmitSequence routes (transmitRouteFor), does the fold's agency check
+// (canonicalRegionOf on both sides) accept the transmittal its own gateway writes? A 'false' would make a
+// post-change send of that region fall back to compiles (or refuse), never read from what it sent.
+import { transmitRouteFor } from '/home/user/ClinicalSageAI-2-replit/server/services/submission-service/submission-service';
+import { canonicalRegionOf } from '/home/user/ClinicalSageAI-2-replit/shared/regulatory/region-identity';
+const regions = ['fda', 'jp', 'pmda', 'eu', 'ema', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'];
+let bad = 0;
+for (const r of regions) {
+  for (const clientType of ['biotech', 'mdx']) {
+    const route = transmitRouteFor(r, clientType, process.env.APP_TYPE ?? 'MAA');
+    if (!route.ok) { console.log(`${r} (${clientType}): not routed (${route.reason.slice(0, 60)}…)`); continue; }
+    const seq = canonicalRegionOf(r); const gw = canonicalRegionOf(route.gwRegion);
+    const same = seq !== undefined && seq === gw;
+    if (!same) bad++;
+    console.log(`${r} (${clientType}) -> gateway ${route.gwRegion}/${route.gwName}: canonical ${String(seq)} vs ${String(gw)} => ${same ? 'read' : 'NOT READ'}`);
+  }
+}
+console.log(`mismatches: ${bad}`);
+process.exit(0);

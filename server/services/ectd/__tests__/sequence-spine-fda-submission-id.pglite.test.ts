@@ -48,6 +48,9 @@ beforeAll(async () => {
   await harness.pglite.exec(`
     CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER,
       compilation_type TEXT, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
+    -- The transmittal row the filed fold reads what a sequence sent from (F1, 2026-11-01);
+    -- no sequence here is sent with that record, so each is read from its compiles.
+    CREATE TABLE IF NOT EXISTS submission_transmittals (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, region TEXT, metadata JSONB DEFAULT '{}'::jsonb);
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1, 'IND 123456', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (2, 'IND with no original sequence', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
@@ -64,6 +67,12 @@ beforeAll(async () => {
       (9, 1, 'fda', '0004', 'original',  ${ORG}, ${USER}, NULL),
       (10, 4, 'ema', '0000', 'original', ${ORG}, ${USER}, 'acknowledged'),
       (11, 4, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL);
+    -- What submission 1's filed 0000 and 0001 carried (F1 review, 2026-11-01): nothing is bound
+    -- against a sent sequence no record describes, so each has a compile, as one sent before the
+    -- platform kept what each send carried does. Other sections than the follow-ups file.
+    INSERT INTO ectd_compilations (organization_id, submission_id, compilation_type, sequence_number, leaf_manifest) VALUES
+      (${ORG}, 1, 'initial', '0000', '[{"ctdSection":"m2.2","fileName":"introduction.pdf","href":"m2/22-intro/introduction.pdf","md5":"${'a'.repeat(32)}","operation":"new"}]'),
+      (${ORG}, 1, 'initial', '0001', '[{"ctdSection":"m2.3","fileName":"qos.pdf","href":"m2/23-qos/qos.pdf","md5":"${'b'.repeat(32)}","operation":"new"}]');
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number)
       VALUES (100, ${ORG}, 'Drug Substance General', '<p>DS general</p>', '3.2');
     INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by, checksum)

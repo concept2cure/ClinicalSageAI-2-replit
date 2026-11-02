@@ -75,7 +75,8 @@ function stubPool(dispatchBySeq: Record<string, string | null>) {
         const d = dispatchBySeq[c.sequence_number];
         return d === 'sent' || d === 'acknowledged';
       });
-      return { rows };
+      // Compile rows, as the fold's read names them (F1 review, 2026-11-01).
+      return { rows: rows.map((r) => ({ kind: 'compile', ...r })) };
     },
   };
   return { pool, seen };
