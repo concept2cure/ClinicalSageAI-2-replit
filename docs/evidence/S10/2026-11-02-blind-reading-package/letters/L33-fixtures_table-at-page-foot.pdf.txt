@@ -1,0 +1,26 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Food and Drug Administration
+IND 123456
+INFORMATION REQUEST
+Dear Dr. Example:
+We have the following requests for information:
+1. Provide the impurity results for the registration batches, as shown in
+Table 2
+Reference ID: 5123456
+
+-- 1 of 3 --
+
+and justify the proposed limits.
+2. Provide the dissolution results for the same batches, as given in
+Table 5
+Reference ID: 5123456
+
+-- 2 of 3 --
+
+and provide the trend plots.
+3. Provide the batch analysis for lot 3.
+Sincerely,
+Jane Reviewer
+Reference ID: 5123456
+
+-- 3 of 3 --
