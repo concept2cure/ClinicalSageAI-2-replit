@@ -1,0 +1,23 @@
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a backbone of more leaves than any real one, before building its document
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a sequence folder inside another sequence of the same number
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a reused file whose own leaf for it the earlier sequence refused
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a reused file in an earlier sequence nothing of which was read
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a reused file that the earlier sequence holds but never filed
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > reads a reused file under an application folder whose ancestor is named with four digits
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > binds a grouped-form pointer in an archive zipped without its application folder
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a pointer at a leaf a later filing under its section and name already took off file
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a leaf ID, or a pointer's ID, the filed state could not bind
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a leaf filed where the ICH tree files none: ["m3-quality","m3-2-body-of-data"]
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a leaf filed where the ICH tree files none: ["m3-quality"]
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a leaf filed where the ICH tree files none: ["m5-clinical-study-reports","m5-3-clinical-study-reports"]
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a leaf filed where the ICH tree files none: ["m3-quality","m3-2-body-of-data","m3-2-z-other"]
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > takes no application from a grouped backbone that marks none as carrying the files
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > binds nothing to a leaf its own sequence refused as ambiguous
+ ✓ filed-sequence-reader-real-archives.test.ts > a second review of the fixes > binds a pointer to the leaf of the backbone it names when both backbones carry the ID
+ ✓ filed-sequence-reader-real-archives.test.ts > a second review of the fixes > does not call a refused regional backbone's files unreferenced
+ × filed-sequence-reader-real-archives.test.ts > a second review of the fixes > answers in a few seconds on 20,000 reuses refused at once (it took 14 s)
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  16 failed | 2 passed | 37 skipped (55)
+--- absolute entry, under a 90 s limit:
+Terminated
+(the run was killed at the 90 s limit: "Terminated". The reader looped forever on the entry named '/evil.pdf'.)

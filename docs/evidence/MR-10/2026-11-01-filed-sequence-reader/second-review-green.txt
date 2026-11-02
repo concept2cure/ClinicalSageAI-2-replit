@@ -1,0 +1,198 @@
+ ✓ server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts > start_legacy_import — what a detected file is stored as > stores a filename-pattern placement as an unconfirmed suggestion with no confidence figure, and says how many need confirming
+ ✓ server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts > start_legacy_import — what a detected file is stored as > maps only the leaves the backbone declares, and records the skipped files on the job
+ ✓ server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts > start_legacy_import — what a detected file is stored as > stores the same file rows and job counts as POST /api/mdx/imports for the same archive
+ ✓ server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts > legacy-import tool definitions > send the model to confirm or correct each 'suggested' row, not to look for low-confidence rows
+ ✓ server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts > legacy-import tool definitions > override_import_mapping's description names the mapping_source its handler stores
+ ✓ server/services/ana/__tests__/start-legacy-import-marks-a-failed-job-failed.pglite.test.ts > start_legacy_import — a job that fails after it was created > is marked failed with the error when the archive cannot be read, as the REST import marks it
+ ✓ server/services/ana/__tests__/start-legacy-import-marks-a-failed-job-failed.pglite.test.ts > start_legacy_import — a job that fails after it was created > is marked failed with the error when a row write fails part-way through the import
+ ✓ server/services/ana/__tests__/approve-import-one-implementation.pglite.test.ts > approve_import is the REST approve > refuses a project of another organisation and writes nothing
+ ✓ server/services/ana/__tests__/approve-import-one-implementation.pglite.test.ts > approve_import is the REST approve > records who approved the import, as the REST approve does
+ ✓ server/services/ana/__tests__/approve-import-one-implementation.pglite.test.ts > approve_import is the REST approve > stores the same job, artifact and file rows as POST /api/mdx/imports/:id/approve
+ ✓ server/services/ana/__tests__/approve-import-one-implementation.pglite.test.ts > approve_import is the REST approve > refuses a job that is no longer awaiting review
+ ✓ server/routes/__tests__/mdx-onboarding-aggregate-counts-only-confirmed-mappings.pglite.test.ts > GET /api/mdx/onboarding/:tenantId — what the aggregate says about mappings > reports no confidence for an unmeasured placement and counts only declared, confirmed or imported files as mapped
+ ✓ server/routes/__tests__/mdx-imports-structure-files-recognized-by-path.pglite.test.ts > POST /api/mdx/imports — the archive's structure files > are stored as recognized by path, with no confidence, beside the leaf the backbone declares
+ ✓ server/routes/__tests__/mdx-imports-structure-files-recognized-by-path.pglite.test.ts > POST /api/mdx/imports — the archive's structure files > come out of the detector as recognized by path, not declared
+ ✓ server/services/ana/__tests__/import-mapping-override-records-a-decision-not-a-confidence.pglite.test.ts > import mapping override — a person decides, nobody measured a confidence > PATCH /imports/:id/files/:fileId status 'mapped' is stored as a manual decision with no confidence
+ ✓ server/services/ana/__tests__/import-mapping-override-records-a-decision-not-a-confidence.pglite.test.ts > import mapping override — a person decides, nobody measured a confidence > PATCH /imports/:id/files/:fileId status 'skipped' is stored as a manual decision with no confidence
+ ✓ server/services/ana/__tests__/import-mapping-override-records-a-decision-not-a-confidence.pglite.test.ts > import mapping override — a person decides, nobody measured a confidence > override_import_mapping status 'mapped' is stored as AnA's decision with no confidence
+ ✓ server/services/ana/__tests__/import-mapping-override-records-a-decision-not-a-confidence.pglite.test.ts > import mapping override — a person decides, nobody measured a confidence > override_import_mapping status 'skipped' is stored as AnA's decision with no confidence
+ ✓ server/services/ana/__tests__/import-mapping-override-records-a-decision-not-a-confidence.pglite.test.ts > import mapping override — a person decides, nobody measured a confidence > a PATCH naming no field is refused and leaves a declared placement as the archive declared it
+ ✓ server/services/ana/__tests__/import-mapping-override-records-a-decision-not-a-confidence.pglite.test.ts > import mapping override — a person decides, nobody measured a confidence > an override_import_mapping naming no field is refused and leaves the row as it was
+ ✓ server/services/ana/__tests__/import-mapping-override-records-a-decision-not-a-confidence.pglite.test.ts > import mapping override — a person decides, nobody measured a confidence > override_import_mapping's description does not promise a confidence the handler no longer stores
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a bomb DOCX with 422 ARCHIVE_LIMITS_EXCEEDED
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a "Word container" whose directory cannot be read, rather than handing it on
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > admits an ordinary DOCX
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > template extraction (extractTemplateFromFile) > refuses a bomb DOCX before it inflates
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > template extraction (extractTemplateFromFile) > still reads an ordinary DOCX
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > document text extraction (extractDocumentText) > reads no text from a bomb DOCX, and never hands it to the DOCX reader
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > document text extraction (extractDocumentText) > still reads an ordinary DOCX
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > eCTD package validation (validateEctdPackage) > refuses a caller-supplied bomb package
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > eCTD package validation (validateEctdPackage) > still validates an ordinary package, and a package this server assembled is not bounded by an upload limit
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > legacy import detection (detectArchive) > reports a bomb archive as refused, reading none of its files
+ ✓ server/routes/__tests__/mdx-imports-filename-suggestion-not-mapped.pglite.test.ts > POST /api/mdx/imports — what a detected file is stored as > stores a filename-pattern placement as an unconfirmed suggestion with no confidence figure
+ ✓ server/routes/__tests__/mdx-imports-filename-suggestion-not-mapped.pglite.test.ts > POST /api/mdx/imports — what a detected file is stored as > maps only the leaves the backbone declares, and counts only those as mapped
+ ✓ server/routes/__tests__/mdx-onboarding-aggregate-reports-what-is-recorded.pglite.test.ts > GET /api/mdx/onboarding/:tenantId — what the aggregate reports > counts the files actually imported, past the listing's row limit, and says the listing is cut
+ ✓ server/routes/__tests__/mdx-onboarding-aggregate-reports-what-is-recorded.pglite.test.ts > GET /api/mdx/onboarding/:tenantId — what the aggregate reports > counts per-file issues and open findings from the unresolved findings recorded
+ ✓ server/routes/__tests__/mdx-onboarding-aggregate-reports-what-is-recorded.pglite.test.ts > GET /api/mdx/onboarding/:tenantId — what the aggregate reports > gives the Connect step no verdict, because nothing records it
+ ✓ server/routes/__tests__/mdx-imports-errors-are-fixed-sentences-and-overrides-are-audited.pglite.test.ts > a failure is stored and returned as a fixed sentence > markImportJobFailed stores no raw error text
+ ✓ server/routes/__tests__/mdx-imports-errors-are-fixed-sentences-and-overrides-are-audited.pglite.test.ts > a failure is stored and returned as a fixed sentence > GET /imports/:id returns no raw text already stored on the job or a file
+ ✓ server/routes/__tests__/mdx-imports-errors-are-fixed-sentences-and-overrides-are-audited.pglite.test.ts > PATCH /imports/:id/files/:fileId records who changed the placement > writes an audit row with the actor, the file and the placement before and after
+ ✓ server/routes/__tests__/mdx-imports-errors-are-fixed-sentences-and-overrides-are-audited.pglite.test.ts > PATCH /imports/:id/files/:fileId records who changed the placement > control: another job's file is not found, and nothing is audited
+ ✓ server/routes/__tests__/mdx-imports-errors-are-fixed-sentences-and-overrides-are-audited.pglite.test.ts > the onboarding steps say what happens > names who places files and what validation checks
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > encodings real publishing tools write > reads a backbone that starts with a UTF-8 byte-order mark, as .NET writes by default
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > encodings real publishing tools write > decodes a backbone in the encoding it declares, so an accented title is recorded as written
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > encodings real publishing tools write > refuses a backbone whose bytes are not the UTF-8 it implies, rather than recording replacement characters
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > encodings real publishing tools write > refuses a backbone over the size a backbone can have, before decoding it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > encodings real publishing tools write > reads backbones that rely on the DTD to fix the xlink, ectd and fda-regional prefixes
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the DOCTYPE check is linear and quote-aware > answers within a second on a backbone of repeated <!DOCTYPE (it took 20 s for three of them)
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the DOCTYPE check is linear and quote-aware > refuses an internal subset after a ">" inside a quoted system literal
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a href into an earlier sequence: ICH file reuse > reads a leaf whose file is in an earlier sequence of the archive, verifying its checksum there
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a href into an earlier sequence: ICH file reuse > reads one reused from the regional backbone too
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a href into an earlier sequence: ICH file reuse > refuses a reused file whose bytes are not the ones the leaf checksums
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a href into an earlier sequence: ICH file reuse > refuses a href into a later sequence
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a href into an earlier sequence: ICH file reuse > leaves a file reused from a sequence the archive does not hold for the filed state to bind; the sequence is not complete until then
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a href into an earlier sequence: ICH file reuse > checks an archive-root sequence's reuse against the number its regional backbone gives it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a href into an earlier sequence: ICH file reuse > refuses a href from an outer sequence into a sequence folder nested inside it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > percent-encoded hrefs > reads a href whose file name the publisher percent-encoded
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > percent-encoded hrefs > still refuses traversal spelled in percent-encoding
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > modified-file pointers > records a grouped-layout pointer in the form the fold binds, so the replaced leaf leaves the filed state
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > modified-file pointers > refuses a pointer that climbs past its own application, or names another application
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > modified-file pointers > refuses a pointer at a leaf already replaced, or at a withdrawal
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > modified-file pointers > refuses a second leaf of one sequence replacing the leaf another already replaces
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > modified-file pointers > refuses a pointer at its own sequence or a later one, wherever that sequence is
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > modified-file pointers > a withdrawal of a leaf the archive does not hold leaves the sequence not complete
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > modified-file pointers > a withdrawal takes the withdrawn leaf's section, so the fold withdraws only that leaf
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > modified-file pointers > refuses a pointer that names the right ID in the wrong backbone
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > what the fold could not tell apart > refuses two leaves of one sequence filed under one heading with one file name, rather than fold one away
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the sequence itself > refuses a number that is not four digits
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the sequence itself > says so when nothing gives the sequence a number
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the sequence itself > reads no leaf from an index.xml its index-md5.txt does not vouch for, and calls nothing unreferenced
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the sequence itself > reads a sequence folder not named with four digits when it holds index-md5.txt, numbered by its backbone
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the sequence itself > takes the application from the <application> whose files the grouped backbone carries
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the sequence itself > reads an EU sequence's number and applicant from its envelope
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the ICH tree and the nesting it allows > refuses a leaf under <m2-8-other>, a section no ICH heading has
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the ICH tree and the nesting it allows > refuses a leaf under <m3-9-other>, a section no ICH heading has
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the ICH tree and the nesting it allows > refuses a leaf under <m5-9-other>, a section no ICH heading has
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > the ICH tree and the nesting it allows > refuses a leaf nested deeper than any backbone nests, without walking all of it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > every file is inflated and hashed once > reads a file once however many leaves name it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > refusals name the file > names the file of a leaf refused for its heading, its ID, its operation or its pointer, and counts it as referenced
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a backbone of more leaves than any real one, before building its document
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a reused file whose own leaf for it the earlier sequence refused
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a reused file in an earlier sequence nothing of which was read
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a reused file that the earlier sequence holds but never filed
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes > reads a reused file under an application folder whose ancestor is named with four digits
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes > binds a grouped-form pointer in an archive zipped without its application folder
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a pointer at a leaf a later filing under its section and name already took off file
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a leaf ID, or a pointer's ID, the filed state could not bind
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes: headings, applications, identity > refuses a leaf under a heading whose name says a section letter the CTD does not have: ["m3-quality","m3-2-body-of-data","m3-2-z-other"]
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes: headings, applications, identity > refuses a leaf under a heading whose name says a section letter the CTD does not have: ["m2-common-technical-document-summaries","m2-3-z-other"]
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes: headings, applications, identity > reads a leaf filed in a heading that has sub-headings, as the DTD allows: ["m3-quality","m3-2-body-of-data"]
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes: headings, applications, identity > reads a leaf filed in a heading that has sub-headings, as the DTD allows: ["m3-quality"]
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes: headings, applications, identity > reads a leaf filed in a heading that has sub-headings, as the DTD allows: ["m5-clinical-study-reports","m5-3-clinical-study-reports"]
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes: headings, applications, identity > takes no application from a grouped backbone that marks none as carrying the files
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes: headings, applications, identity > binds nothing to a leaf its own sequence refused as ambiguous
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes: headings, applications, identity > binds a pointer to the leaf of the backbone it names when both backbones carry the ID
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes: headings, applications, identity > does not call a refused regional backbone's files unreferenced
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes: headings, applications, identity > refuses a sequence folder inside another sequence of the same number
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > a second review of the fixes: headings, applications, identity > answers in a few seconds on 20,000 reuses refused at once (it took 14 s)
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader on a conformant sequence > reads every leaf of both backbones at its declared heading, from the sequence root
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader on a conformant sequence > reports a file neither backbone references, and does not place it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a leaf whose bytes are not the ones its backbone checksums
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a leaf with no checksum
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a href out of the sequence, without reading it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a href absolute, without reading it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a href a URL, without reading it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a href a backslash path, without reading it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a leaf whose file is not in the archive
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a leaf under a heading this tree does not know and whose name encodes no section, rather than guessing its section
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a leaf under a heading outside Modules 1-5, rather than guessing its section
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a leaf under a heading whose section is not inside the heading holding it, rather than guessing its section
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a leaf under no heading at all, rather than guessing its section
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a Module 1 leaf directly under <m1-regional>
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a replace, append or delete that names no filed leaf
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > an unknown operation, a missing ID and a repeated ID
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > an index.xml whose index-md5.txt does not hold its MD5, or is absent
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > a regional backbone index.xml checksums differently
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > a regional backbone index.xml does not reference
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > a backbone that declares entities or an internal subset, before parsing it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > a backbone that is not well-formed
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > a regional backbone index.xml points at and the archive does not hold
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > one sequence number twice in one application
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > a sequence folder its regional backbone numbers differently
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > an archive over the upload limits, before inflating it (SEC-17)
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > pointers between sequences in one archive > binds a replace to the leaf it names, and refuses one that names no leaf there
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > pointers between sequences in one archive > leaves a pointer to a sequence the archive does not hold for the filed state to bind, and says so
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > pointers between sequences in one archive > refuses a pointer into the archive that names no sequence's backbone
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > pointers between sequences in one archive > refuses a pointer at a sequence outside the archive that names no leaf ID, rather than leaving it to be bound
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > pointers between sequences in one archive > refuses a pointer at a later sequence
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > a heading name says its section, and agrees with the trees this repository writes > every ICH heading the packager writes reads back as its own section
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > a heading name says its section, and agrees with the trees this repository writes > every FDA Module 1 heading the packager writes reads back as its own section, except the one the code says it cannot stand behind
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts > a heading name says its section, and agrees with the trees this repository writes > reads the ICH DTD names deeper than that tree, and a letter only where the CTD has one
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-round-trip.test.ts > a filed sequence reads back as the manifest its filing recorded > finds the three sequences, in order, each complete
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-round-trip.test.ts > a filed sequence reads back as the manifest its filing recorded > sequence 0000: every leaf, with its section, file, href, md5, act, pointer, title and backbone ID
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-round-trip.test.ts > a filed sequence reads back as the manifest its filing recorded > sequence 0001: every leaf, with its section, file, href, md5, act, pointer, title and backbone ID
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-round-trip.test.ts > a filed sequence reads back as the manifest its filing recorded > sequence 0002: every leaf, with its section, file, href, md5, act, pointer, title and backbone ID
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-round-trip.test.ts > a filed sequence reads back as the manifest its filing recorded > says the 3.2.S.4.2 leaf reads back at its heading, 3.2.S, because that is all the backbone records
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-round-trip.test.ts > a filed sequence reads back as the manifest its filing recorded > folds into the same filed state as the sequences the platform filed itself
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-round-trip.test.ts > a filed sequence reads back as the manifest its filing recorded > a pointer into the regional backbone is read from the sequence root, as the packager records it
+ ✓ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > maps every leaf, Modules 1 to 5, from the backbone that declares it, at its heading
+ ✓ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > reports no leaf missing that the archive holds, and no error at all
+ ✓ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > reads the application, sequence and applicant from the regional backbone
+ ✓ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the packager wrote > recognizes the sequence root's index-md5.txt as structure
+ ✓ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on a sequence the reader refuses part of > does not map a leaf whose bytes are not the ones its backbone checksums, and says why
+ ✓ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on what the reader cannot read (review round, 2026-11-02) > stores a file whose leaf the reader refused as skipped, not as a filename suggestion, and the error names it
+ ✓ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on what the reader cannot read (review round, 2026-11-02) > stores the file of a leaf refused for having no ID as skipped, too
+ ✓ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on what the reader cannot read (review round, 2026-11-02) > names each regional backbone no sequence was read for, and why
+ ✓ server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts > detectArchive on what the reader cannot read (review round, 2026-11-02) > stores a Health Canada regional backbone as structure, not as a Module 1 document
+ ✓ tests/mdx-imports-routes.test.ts > auth gate > GET /api/mdx/imports returns 403 without org context
+ ✓ tests/mdx-imports-routes.test.ts > auth gate > POST /api/mdx/imports returns 403 without org context
+ ✓ tests/mdx-imports-routes.test.ts > auth gate > GET /api/mdx/imports/1 returns 403 without org context
+ ✓ tests/mdx-imports-routes.test.ts > auth gate > POST /api/mdx/imports/1/approve returns 403 without org context
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports > rejects missing sourcePath
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports > detects + persists files + findings, returns 201
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports > marks job failed when detector throws
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports > 400s a host path outside every root, and neither persists nor reads it
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports > 400s another tenant's upload prefix, and neither persists nor reads it
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports > 400s a prefix that only string-matches ours, and neither persists nor reads it
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports > 400s a climb out of our prefix, and neither persists nor reads it
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports > 400s the tenant vault, and neither persists nor reads it
+ ✓ tests/mdx-imports-routes.test.ts > GET /imports/:id > 404s when not in tenant
+ ✓ tests/mdx-imports-routes.test.ts > GET /imports/:id > returns job + files + findings
+ ✓ tests/mdx-imports-routes.test.ts > PATCH /imports/:id/files/:fileId > 400-equiv when both numeric ids missing
+ ✓ tests/mdx-imports-routes.test.ts > PATCH /imports/:id/files/:fileId > marks mapping_source=manual on override
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports/:id/approve > rejects missing projectId
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports/:id/approve > 409 when job is not ready_for_review
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports/:id/cancel > 409 when not in cancellable state
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports/:id/cancel > 200 when cancellable
+ ✓ tests/mdx-imports-routes.test.ts > MDX persistence routers — role gate on every governed write > post /api/mdx/imports is refused for a read-only viewer
+ ✓ tests/mdx-imports-routes.test.ts > MDX persistence routers — role gate on every governed write > patch /api/mdx/imports/1/files/2 is refused for a read-only viewer
+ ✓ tests/mdx-imports-routes.test.ts > MDX persistence routers — role gate on every governed write > post /api/mdx/imports/1/approve is refused for a read-only viewer
+ ✓ tests/mdx-imports-routes.test.ts > MDX persistence routers — role gate on every governed write > post /api/mdx/imports/1/cancel is refused for a read-only viewer
+ ✓ tests/mdx-imports-routes.test.ts > MDX persistence routers — role gate on every governed write > post /api/mdx/imports/1/findings/2/resolve is refused for a read-only viewer
+ ✓ tests/mdx-imports-routes.test.ts > MDX persistence routers — role gate on every governed write > post /api/mdx/imports is not refused for a member
+ ✓ tests/mdx-imports-routes.test.ts > MDX persistence routers — role gate on every governed write > patch /api/mdx/imports/1/files/2 is not refused for a member
+ ✓ tests/mdx-imports-routes.test.ts > MDX persistence routers — role gate on every governed write > post /api/mdx/imports/1/approve is not refused for a member
+ ✓ tests/mdx-imports-routes.test.ts > MDX persistence routers — role gate on every governed write > post /api/mdx/imports/1/cancel is not refused for a member
+ ✓ tests/mdx-imports-routes.test.ts > MDX persistence routers — role gate on every governed write > post /api/mdx/imports/1/findings/2/resolve is not refused for a member
+ ✓ tests/mdx-imports-routes.test.ts > POST /imports/:id/approve — the project must be the caller's too > 404s a projectId outside the tenant, and writes nothing
+ ✓ server/services/legacy-importer/__tests__/detector-filename-match-is-a-suggestion.test.ts > detectArchive — a filename pattern suggests, it does not map > stores protocol_deviation_log.xlsx and software_license.pdf as suggestions naming the rule, with no confidence figure
+ ✓ server/services/legacy-importer/__tests__/detector-filename-match-is-a-suggestion.test.ts > detectArchive — a filename pattern suggests, it does not map > says how many placements are unconfirmed suggestions
+ ✓ server/services/legacy-importer/__tests__/detector-filename-match-is-a-suggestion.test.ts > detectArchive — a filename pattern suggests, it does not map > maps a leaf only where the regional backbone declares it
+ ✓ server/services/legacy-importer/__tests__/detector-filename-match-is-a-suggestion.test.ts > detectArchive — a filename pattern suggests, it does not map > reports a file nothing matched without inventing a confidence for it
+ ✓ server/services/legacy-importer/__tests__/filed-sequence-reader-absolute-entry.test.ts > an absolute zip entry name > belongs to no sequence, and the archive is read
+ ✓ server/services/ana-ri/__tests__/mdx-context-resolver.test.ts > buildMdxContextBlock > renders the active surface block when activeNav matches
+ ✓ server/services/ana-ri/__tests__/mdx-context-resolver.test.ts > buildMdxContextBlock > renders without a surface when activeNav is unknown
+ ✓ server/services/ana-ri/__tests__/mdx-context-resolver.test.ts > buildMdxContextBlock > surfaces critical alerts in the block
+ ✓ server/services/ana-ri/__tests__/mdx-context-resolver.test.ts > buildMdxContextBlock > truncates beyond 12 alerts
+ ✓ server/services/ana-ri/__tests__/mdx-context-resolver.test.ts > buildMdxContextBlock > skips proactive snapshot when includeProactive=false
+ ✓ server/services/ana-ri/__tests__/mdx-context-resolver.test.ts > buildMdxContextBlock > degrades gracefully when both downstreams throw
+ ✓ server/services/ana-ri/__tests__/mdx-onboarding-milestone.test.ts > getMdxOnboardingMilestone > returns no_program when zero programs exist
+ ✓ server/services/ana-ri/__tests__/mdx-onboarding-milestone.test.ts > getMdxOnboardingMilestone > returns transmitted when audit_logs has a transmit row
+ ✓ server/services/ana-ri/__tests__/mdx-onboarding-milestone.test.ts > getMdxOnboardingMilestone > returns preflight_ready when ≥4 sections approved + 0 drafting
+ ✓ server/services/ana-ri/__tests__/mdx-onboarding-milestone.test.ts > getMdxOnboardingMilestone > returns presub_in_flight when a Q-Sub is mid-review
+ ✓ server/services/ana-ri/__tests__/mdx-onboarding-milestone.test.ts > getMdxOnboardingMilestone > returns authoring when sections are in drafting
+ ✓ server/services/ana-ri/__tests__/mdx-onboarding-milestone.test.ts > getMdxOnboardingMilestone > returns no_predicates when programs exist but no predicate set
+ ✓ server/services/ana-ri/__tests__/mdx-onboarding-milestone.test.ts > getMdxOnboardingMilestone > returns predicates_set when predicates picked but no further work
+ ✓ server/services/ana-ri/__tests__/mdx-onboarding-milestone.test.ts > getMdxOnboardingMilestone > is fail-soft when individual queries throw
+ Test Files  19 passed (19)
+      Tests  196 passed (196)
