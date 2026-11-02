@@ -168,7 +168,7 @@ export const DESIGN_RANDOMIZED_DOSE_COMPARISON: AnaTool = {
       candidateDoses: {
         type: 'array',
         items: { type: 'number' },
-        description: 'Candidate doses to compare (label values). Must be ≥ 2 entries.',
+        description: 'Candidate doses to compare (positive label values). Fewer than 2 distinct doses, or an entry that is not a positive number, is refused.',
       },
       doseUnit: { type: 'string', description: 'Unit label for the doses (e.g., "mg", "mg/kg", "mg QD").' },
       primaryActivityEndpoint: {
@@ -176,7 +176,7 @@ export const DESIGN_RANDOMIZED_DOSE_COMPARISON: AnaTool = {
         enum: ['ORR', 'PFS', 'OS', 'pCR', 'DoR', 'biomarker_response', 'other'],
         description: 'Primary activity endpoint type.',
       },
-      anticipatedResponseRateHighDose: { type: 'number', description: 'Anticipated response rate at the higher dose (0–1), for ORR-type endpoints.' },
+      anticipatedResponseRateHighDose: { type: 'number', description: 'Anticipated response rate at the higher dose (strictly between 0 and 1), for ORR-type endpoints. A value outside that range is refused.' },
       goalNonInferiorActivityLowerDose: { type: 'boolean', description: 'Whether the comparison is intended to demonstrate non-inferior activity at a lower dose. Omitted is not_stated, and no illustrative sample size is given.' },
       feasibleSampleSize: { type: 'number', description: 'Total feasible randomized sample size, if constrained.' },
       timing: {
@@ -215,12 +215,12 @@ export const SELECT_RP2D: AnaTool = {
         items: {
           type: 'object',
           properties: {
-            dose: { type: 'number', description: 'Dose value (label only).' },
-            toxicityProbability: { type: 'number', description: 'Observed/estimated DLT or relevant toxicity probability at this dose (0–1). Without it, or a stated MTD the dose does not exceed, the dose is insufficient_data.' },
+            dose: { type: 'number', description: 'Dose value (label only); zero or negative is refused.' },
+            toxicityProbability: { type: 'number', description: 'Observed/estimated DLT or relevant toxicity probability at this dose (0–1). Without it, or a stated MTD the dose does not exceed, a dose not too toxic or sub-therapeutic on its other stated evidence is insufficient_data.' },
             targetExposureAchieved: { type: 'boolean', description: 'Whether target steady-state exposure was achieved at/above this dose.' },
             targetEngagementSaturated: { type: 'boolean', description: 'Target engagement / PD effect saturated at/above this dose?' },
             activitySignal: { type: 'number', description: 'Observed response rate or activity signal (0–1) at this dose.' },
-            longitudinalTolerabilityAcceptable: { type: 'boolean', description: 'Longitudinal tolerability acceptable at this dose (multi-cycle)? Omitted is not_stated, and the dose is insufficient_data.' },
+            longitudinalTolerabilityAcceptable: { type: 'boolean', description: 'Longitudinal tolerability acceptable at this dose (multi-cycle)? Omitted is not_stated, and a dose not too toxic or sub-therapeutic on its other stated evidence is insufficient_data.' },
           },
           required: ['dose'],
         },
@@ -283,14 +283,14 @@ export const ASSESS_DOSE_EXPOSURE_RESPONSE: AnaTool = {
   name: 'assess_dose_exposure_response',
   description:
     'Assess exposure-response (E-R) for both efficacy and safety to inform dose ' +
-    'selection. Sorts E-R points by exposure and deterministically computes whether ' +
-    'the efficacy relationship is effectively flat over the studied range, whether ' +
+    'selection. Sorts E-R points by exposure, averaging responses at one exposure, and computes ' +
+    'whether the efficacy relationship is effectively flat, whether ' +
     'safety rises with exposure, and a qualitative therapeutic-window classification ' +
-    '(wide / moderate / narrow / indeterminate), with the underlying metrics ' +
+    '(wide/moderate/narrow/indeterminate), with the metrics ' +
     '(absolute and relative response ranges, slope signs). Returns interpretation ' +
-    'and dose implications — e.g., a flat efficacy curve with rising toxicity ' +
-    'supports a lower dose. A curve with fewer than 2 valid points has its flags ' +
-    'not_assessed and its metrics null. Cites ICH E4 and the FDA dose-optimization draft ' +
+    'and dose implications — e.g., flat efficacy with rising toxicity ' +
+    'supports a lower dose. A curve with fewer than 2 distinct exposures has its flags and slope ' +
+    'signs not_assessed and its range metrics null. Cites ICH E4 and the FDA dose-optimization draft ' +
     'guidance (Jan 2023). ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -307,7 +307,7 @@ export const ASSESS_DOSE_EXPOSURE_RESPONSE: AnaTool = {
           type: 'object',
           properties: {
             exposure: { type: 'number', description: 'Exposure metric value (e.g., AUC or Cmin).' },
-            response: { type: 'number', description: 'Response/probability (0–1) for the efficacy endpoint at this exposure.' },
+            response: { type: 'number', description: 'Response/probability (0–1) for the efficacy endpoint at this exposure; a value outside 0–1 is refused.' },
           },
           required: ['exposure', 'response'],
         },
@@ -319,7 +319,7 @@ export const ASSESS_DOSE_EXPOSURE_RESPONSE: AnaTool = {
           type: 'object',
           properties: {
             exposure: { type: 'number', description: 'Exposure metric value.' },
-            response: { type: 'number', description: 'Probability (0–1) of the safety event at this exposure.' },
+            response: { type: 'number', description: 'Probability (0–1) of the safety event at this exposure; a value outside 0–1 is refused.' },
           },
           required: ['exposure', 'response'],
         },

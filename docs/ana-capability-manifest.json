@@ -4722,7 +4722,7 @@
         "id": "clinical_pharmacology",
         "label": "Clinical pharmacology"
       },
-      "description": "Assess exposure-response (E-R) for both efficacy and safety to inform dose selection. Sorts E-R points by exposure and deterministically computes whether the efficacy relationship is effectively flat over the studied range, whether safety rises with exposure, and a qualitative therapeutic-window classification (wide / moderate / narrow / indeterminate), with the underlying metrics (absolute and relative response ranges, slope signs). Returns interpretation and dose implications — e.g., a flat efficacy curve with rising toxicity supports a lower dose. A curve with fewer than 2 valid points has its flags not_assessed and its metrics null. Cites ICH E4 and the FDA dose-optimization draft guidance (Jan 2023). Deterministic over stated inputs; no LLM or network. An unanswered boolean is not_stated; what depends on it is not_assessed or null: ask for it. Report results and citations verbatim; do not recompute, re-rank or reinterpret. Relay a validation error; ask for the value.",
+      "description": "Assess exposure-response (E-R) for both efficacy and safety to inform dose selection. Sorts E-R points by exposure, averaging responses at one exposure, and computes whether the efficacy relationship is effectively flat, whether safety rises with exposure, and a qualitative therapeutic-window classification (wide/moderate/narrow/indeterminate), with the metrics (absolute and relative response ranges, slope signs). Returns interpretation and dose implications — e.g., flat efficacy with rising toxicity supports a lower dose. A curve with fewer than 2 distinct exposures has its flags and slope signs not_assessed and its range metrics null. Cites ICH E4 and the FDA dose-optimization draft guidance (Jan 2023). Deterministic over stated inputs; no LLM or network. An unanswered boolean is not_stated; what depends on it is not_assessed or null: ask for it. Report results and citations verbatim; do not recompute, re-rank or reinterpret. Relay a validation error; ask for the value.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -23624,7 +23624,7 @@
           "name": "candidateDoses",
           "type": "array",
           "required": true,
-          "description": "Candidate doses to compare (label values). Must be ≥ 2 entries."
+          "description": "Candidate doses to compare (positive label values). Fewer than 2 distinct doses, or an entry that is not a positive number, is refused."
         },
         {
           "name": "doseUnit",
@@ -23642,7 +23642,7 @@
           "name": "anticipatedResponseRateHighDose",
           "type": "number",
           "required": false,
-          "description": "Anticipated response rate at the higher dose (0–1), for ORR-type endpoints."
+          "description": "Anticipated response rate at the higher dose (strictly between 0 and 1), for ORR-type endpoints. A value outside that range is refused."
         },
         {
           "name": "goalNonInferiorActivityLowerDose",
