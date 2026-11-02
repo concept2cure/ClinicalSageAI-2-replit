@@ -351,7 +351,7 @@ describe('other existing specialist controls use the exact editor target', () =>
     const onNav = vi.fn(() => targets.push(consumeEditorTarget()));
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
-    fireEvent.click(screen.getByRole('button', { name: 'Copy the example to the editor' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy example to editor' }));
     await waitFor(() => expect(onNav).toHaveBeenCalledWith('document-authoring'));
     expect(targets[0]).toMatchObject({ docId: DOC_ID, programId: PROGRAM, sectionCode: 'sample_size_rationale' });
   });
