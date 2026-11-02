@@ -35,6 +35,7 @@ vi.mock('../../utils/document-file-roots', async (importOriginal) => ({
 }));
 
 import importsRouter from '../mdx-imports';
+import { handSequenceFiles } from '../../services/legacy-importer/__tests__/support/conformant-sequence';
 
 const ORG = 99;
 const USER = 777;
@@ -73,10 +74,19 @@ function app() {
   return a;
 }
 
-const US_REGIONAL = `<fda-regional>
-  <leaf ID="L1" operation="new" xlink:href="m1/us/1-1/cover-letter.pdf"><title>Cover letter</title></leaf>
-  <leaf ID="L2" operation="new" xlink:href="m1/us/1-2/application-form.pdf"><title>Application form</title></leaf>
-</fda-regional>`;
+/**
+ * A sequence as a publisher writes it: index.xml at the root pointing at
+ * m1/us/us-regional.xml, whose hrefs are relative to m1/us/, with every
+ * checksum right. Until 2026-11-02 this was a bare us-regional.xml with
+ * root-relative hrefs and no index.xml, the one shape the regex reader then in
+ * the detector could map (MR-10 Stage 9, docs/design/FILED_SEQUENCE_READER_2026-11-01.md).
+ */
+const DECLARED = handSequenceFiles({
+  m1: [
+    { headings: ['m1-1-forms'], href: '1-1/application-form.pdf', id: 'L2', title: 'Application form', bytes: 'form' },
+    { headings: ['m1-2-cover-letters'], href: '1-2/cover-letter.pdf', id: 'L1', title: 'Cover letter', bytes: 'letter' },
+  ],
+});
 
 interface AggregateArtifact { legacy: string; confidence: number | null; state: string }
 
@@ -84,9 +94,7 @@ describe('GET /api/mdx/onboarding/:tenantId — what the aggregate says about ma
   it('reports no confidence for an unmeasured placement and counts only declared, confirmed or imported files as mapped', async () => {
     const zip = new JSZip();
     for (const [entry, body] of Object.entries({
-      'm1/us/us-regional.xml': US_REGIONAL,
-      'm1/us/1-1/cover-letter.pdf': 'letter',
-      'm1/us/1-2/application-form.pdf': 'form',
+      ...DECLARED,
       'm5/53-clin-stud-rep/protocol-amendment-2.pdf': 'amendment',
       'notes.txt': 'n',
       'util/index-md5.txt': 'md5',
@@ -100,7 +108,7 @@ describe('GET /api/mdx/onboarding/:tenantId — what the aggregate says about ma
     // Approve's own write to a materialized file row (POST /imports/:id/approve), applied directly.
     await pg.query(
       `UPDATE import_job_files SET status = 'imported', artifact_id = 501
-        WHERE import_job_id = $1 AND relative_path = 'm1/us/1-2/application-form.pdf'`,
+        WHERE import_job_id = $1 AND relative_path = 'm1/us/1-1/application-form.pdf'`,
       [Number(started.body.data.id)],
     );
 
