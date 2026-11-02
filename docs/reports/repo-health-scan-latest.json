@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-02T10:46:14.601Z",
+  "generatedAt": "2026-11-02T20:24:07.766Z",
   "git": {
-    "sha": "ba823cf41747fe5aab457f7a46a1021cfc6d9cd5",
+    "sha": "0b89821bbf012af85d2d93cc25adcf41d4ff9c48",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2519,7 +2519,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "bytes": 131143
+        "bytes": 132146
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2781,7 +2781,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 2344
+        "lines": 2363
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
