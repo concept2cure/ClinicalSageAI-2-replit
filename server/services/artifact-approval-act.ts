@@ -5,7 +5,11 @@
  * writers of approved_version_id:
  *   - the status route, PUT /projects/:projectId/artifacts/:artifactId/status,
  *     review → approved (server/routes/c2c/artifacts.ts), which owned it inline;
- *   - authoring-actions approve-artifact (server/routes/authoring-actions.ts).
+ *   - AnA's update_artifact_status, signed
+ *     (server/services/ana-ri/ana-signed-artifact-act.ts).
+ * 2026-11-01 (F1): the second act was named here as authoring-actions
+ * approve-artifact, which was removed on 2026-10-01 (see that note below).
+ * Both acts commit through server/services/artifact-signed-act.ts.
  *
  * 2026-09-23 (W5/D7, residual repair, round 3): moved here unchanged from the
  * status route, with the route's role table, so promote_artifact and the AnA
