@@ -59,6 +59,10 @@ function useSavedRuns(scope: PeerReviewScope, programId: string | null) {
   const [runs, setRuns] = React.useState<RunChoice[] | null>(null);
   const [error, setError] = React.useState('');
   React.useEffect(() => {
+    // Never leave a previous document's retained choices visible when the
+    // reviewer changes project, document or selected account.
+    setRuns(null);
+    setError('');
     if (!programId) { setError('This document is not filed under a program, so no retained analysis run can be selected.'); return; }
     let live = true;
     const program = encodeURIComponent(programId);
@@ -66,8 +70,6 @@ function useSavedRuns(scope: PeerReviewScope, programId: string | null) {
     // Earlier submission-package history is optional: failure to list package
     // runs must not block scientific review of the document's retained data.
     // Unlike the optional history, a failed document-data read fails CLOSED.
-    setRuns(null);
-    setError('');
     void Promise.allSettled([
       readJson('GET', `/api/submission-orchestrator/csr/study-data?programId=${program}&documentId=${encodeURIComponent(scope.documentId)}`, scope),
       readJson('GET', `/api/submission-orchestrator/runs?programId=${program}`, scope),
