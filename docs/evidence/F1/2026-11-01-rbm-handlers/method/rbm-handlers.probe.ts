@@ -17,9 +17,8 @@ const h = vi.hoisted(() => ({
 }));
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 
-async function query(sql: string, params: unknown[] = []) {
-  h.calls.push({ sql, params });
-  const s = sql.replace(/\s+/g, ' ').trim();
+/** A transaction statement or an insert: answered here, so `query` stays one reader of the selects. */
+function writeAnswer(s: string, params: unknown[]): { rows: unknown[] } | null {
   if (/^(BEGIN|COMMIT|ROLLBACK)/.test(s)) return { rows: [] };
   if (s.startsWith('INSERT INTO rbm_risk_assessments')) {
     const row = { id: 1, status: 'draft', overall_risk: params[4] as string, version: 1, program_id: PROGRAM };
@@ -27,6 +26,14 @@ async function query(sql: string, params: unknown[] = []) {
     return { rows: [row] };
   }
   if (s.startsWith('INSERT INTO rbm_risk_items')) return { rows: [{ id: 99, assessment_id: params[1] ?? null }] };
+  return null;
+}
+
+async function query(sql: string, params: unknown[] = []) {
+  h.calls.push({ sql, params });
+  const s = sql.replace(/\s+/g, ' ').trim();
+  const written = writeAnswer(s, params);
+  if (written) return written;
   // recordProgram (rbm-access.ts:26) and requireDraftAssessment (rbm-actuator.ts:70)
   if (s.includes('FROM rbm_risk_assessments WHERE organization_id=$1 AND id=$2')) {
     const a = h.assessments.find(x => x.id === Number(params[1]));
