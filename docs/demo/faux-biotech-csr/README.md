@@ -81,3 +81,11 @@ Operational acceptance requires, in the **same deployed environment**:
 9. Reopen/export the final artifact and verify its provenance. No synthetic signoff may be represented as a real electronic signature.
 
 **Acceptance status:** Not run. No hosted organization, workspace, project, source ingest, analysis, editor draft or approval has been created by this data-only GitHub documentation commit.
+
+
+## Source-verified data additions (2026-11-02)
+
+- [160-subject QC index](ADSL_160_SUBJECT_QC_INDEX.csv) — row-level synthesized reference index derived from the original ADSL/ADAE outcome flags (responders, completion, TEAE, SAE, AE withdrawal) with matched subject IDs and arm assignments. It is not the complete ADSL.
+- [Synthetic data reconciliation report](SYNTHETIC_DATA_RECONCILIATION_2026-11-02.md) — independently checked 14 source-file SHA-256 values, study/visit/arm cardinality, patient-level efficacy flags, AE linkages, and source-to-ICH-E3 mapping.
+
+The full original participant-level ADSL, ADEFF, ADAE, ADLB and medical-writing draft remain in the separate 15-file handoff ZIP; they have **not** been ingested into a hosted Faux Biotech tenant. The repository's derived QC index is suitable for deterministic pre-demo checks, **not** a replacement source or proof of clinical verification.
