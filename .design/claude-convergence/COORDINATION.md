@@ -54,6 +54,12 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 
 S10 (the agency's communications back into the project) is held by RIM since 2026-11-01; its earlier holder (`011Dpx…`) has ended.
 
+## Held by the founder
+
+- **D4-3 waits until after the Phase 2 CSR demo** (the founder, 2026-11-02). D4-3 moves Freeze, E-sign and Place
+  into filing from the editor's bar into the inspector; until the demo is done they stay in the bar (`b6a46499f`), so
+  the rehearsed path does not move. The AI architecture session (`017CFk…`) says when the demo is over.
+
 ## Known caveats
 
 - **R1's inventory can report a false "no caller"** (`docs/evidence/DESIGN/R1/2026-11-01-inventory/inventory.json`):
