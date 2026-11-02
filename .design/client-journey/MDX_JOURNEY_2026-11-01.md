@@ -140,8 +140,11 @@ Each is a repair of shipped behaviour (F1): no screen, mount or table.
 | M13 | The AnA k510 transmit is in launch scope, while the HTTP package transmit is refused 403 in production. | `ana-launch-scope.inventory.json`; `ui-surface-registry.ts:418-422` | search |
 | M14 | Found in the running app, 2026-11-02: a working document's advice, "place the document into a filing", leads to the eCTD placement dialog, which on a device project has no submission and refuses "B1" as "not a CTD section code". The home filing's own editing copy is now offered beside it (`bda1d5aed1`). | `editor/DocumentWorkbench.tsx` (the unbound working copy note), the Place into filing dialog | walk |
 | M15 | Found in the running app: a device 510(k)'s Author tab offers "Write the protocol in the protocol workspace", and its work areas list Biostatistics. | Project home, Author tab and work areas | walk |
-| M16 | Found in the running app: Engineering's "What's blocking your documents" tags every eSTAR node "DHF", the cover letter included, and its zero "Open risks" card is red. | `mdx/surfaces/EngineeringSurface.tsx` | walk |
+| M16 | Found in the running app: Engineering's "What's blocking your documents" tags every eSTAR node "DHF", the cover letter included, and its zero "Open risks" card is red. **The tag is P-60's reading** (the DHF panel reads the project's own document sections, every one of them), so whether a filing's administrative nodes belong in the design history file is the founder's question under P-60, not a repair. | `mdx/surfaces/EngineeringSurface.tsx` | walk |
 | M17 | **Fixed 2026-11-02** (`docs/evidence/MDX-JOURNEY/2026-11-02-m17-udi-empty-state-door/`): the action is Open Labeling. Found in the running app: UDI's empty state is the passive instruction M8 fixed on Labeling ("appear here once labeling documents are created", with only "Check again"). | `mdx/surfaces/UdiSurface.tsx` | walk |
+| M18 | **Fixed 2026-11-02** (`docs/evidence/MDX-JOURNEY/2026-11-02-m18-pma-modules-own-document/`). Found in the running app: the PMA screen's "PMA modules" read "0 documents total" for a project whose B.2 was written and exported. `getPmaModules` grouped the organization's legacy 510(k) sections (`cerv2_510k_sections`, no project link) by a six-card kit taxonomy, so a project with no PMA document showed every module "complete". The cards now read the PMA mapper over the project's own PMA document, the same computation as the assembly verdict. | `server/services/regulatory-programs.service.ts`, `mdx/surfaces/PmaSurface.tsx` | walk |
+| M19 | Found in the running app: the PMA mapper places a governed leaf by its title as well as its 814.20 letter. B.2, the SSED's "Device description summary", counts for module 2 ("Device description & indications for use") through `ti('device description')`, so once B.2 is approved the assembly verdict counts module 2 present with nothing under C. | `server/services/pathway-engines/pma/pma-mapper.ts` | walk |
+| M20 | The PMA screen's trial cards bind a study by `metadata.clinicalStudyId`, or else by a product-name `ILIKE` over the organization's studies, and do not say which study they bound. | `server/services/regulatory-programs.service.ts` (`getPmaTrialMetrics`) | read |
 
 ## The order of work
 
@@ -172,7 +175,8 @@ on, not raced.
    running app and used"). **Walked 2026-11-02** at 1440 and 390 px, from New project to the draft package, its refusal
    of a rewritten filed copy and its remedy (`docs/evidence/MDX-JOURNEY/2026-11-02-slice-5-journey-walked/`). The
    walk found and fixed the home filing's editing copy (`bda1d5aed1`) and the template's section order. It recorded
-   M14–M17 and the 390 px clipping. The seeded NeuroPanel-Dx 510(k), from New project to a signed eSTAR filing record, at
+   M14–M17 and the 390 px clipping. **5b, 2026-11-02: the PMA journey walked** (New project → B.2 written into the PMA
+   filing → the PMA package exported, 200, the filing compared). It found M18 (fixed) and M19–M20. The seeded NeuroPanel-Dx 510(k), from New project to a signed eSTAR filing record, at
    1440 px and 390 px. Evidence under `docs/evidence/MDX-JOURNEY/`.
 6. **Reach or retire the unreached device capability** (R1, with `01QoxbL`): the list in §6, each reached in the
    device journey's existing screen or put to the founder for retirement.

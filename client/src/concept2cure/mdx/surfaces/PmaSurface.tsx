@@ -1,5 +1,5 @@
 /**
- * PMA surface — 10-phase grid · 4 trial KPIs · 6 module cards.
+ * PMA surface — 10-phase grid · 4 trial KPIs · the project's 21 CFR 814 modules.
  * Ported from Surfaces.jsx > PMASurface.
  */
 
@@ -17,6 +17,7 @@ import { PathwayPanes } from './pathway/PathwayPanes';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
 import type { EditorSectionRef } from '../../v2/editorTarget';
+import type { PmaModule } from '../hooks/useProgramExtras';
 
 export interface PmaSurfaceProps {
   /** Active PMA program from App.tsx. When null, the surface renders the
@@ -85,16 +86,36 @@ export function useRecordedPhaseLine(programId: string | null): string | null {
   return `Project phase: ${PROJECT_PHASE_LABEL[phase as ProgramPhase] ?? phase.replace(/_/g, ' ')}`;
 }
 
+/* MDX journey M18 (2026-11-02): a module's state is what the PMA mapper says of
+   the project's own PMA document, the same as the assembly verdict. "present"
+   is the verdict's word: at least one finished section counts for the module. */
+const PMA_MODULE_PILL: Record<PmaModule['status'], { tone: string; text: string }> = {
+  present: { tone: 'complete', text: 'present' },
+  written: { tone: 'review', text: 'written' },
+  not_started: { tone: 'empty', text: 'not started' },
+};
+
+/** What is written in a module, by section code. */
+export function pmaModuleFacts(m: PmaModule): string {
+  if (m.finished.length) {
+    const more = m.written.length ? ` · written: ${m.written.join(', ')}` : '';
+    return `Finished: ${m.finished.join(', ')}${more}`;
+  }
+  if (m.written.length) return `Written, not finished: ${m.written.join(', ')}`;
+  return 'Nothing written';
+}
+
 export function PmaSurface({ program, onAskAna, onOpenEditor, onOpenLetter }: PmaSurfaceProps) {
   /* Slice 0: the taxonomy, no position — see the note above PROJECT_PHASE_LABEL. */
   const phases = PMA_PHASES;
   const phaseLine = useRecordedPhaseLine(program ? String(program.id) : null);
 
-  /* Live PMA modules + trial metrics. Modules group cerv2_510k_sections by
-     PMA module taxonomy (preclinical / clinical / manufacturing /
-     labeling / statistical / financial). Trial metrics join to
-     clinical_ops.studies for the program's enrollment / sites / AE
-     rate / endpoints.
+  /* Live PMA modules + trial metrics. Modules are the project's own PMA
+     document scored by the PMA mapper (pathway-engines/pma/pma-mapper.ts), the
+     same computation as the assembly verdict; until M18 (2026-11-02) they
+     grouped the organization's legacy 510(k) sections by a six-card kit
+     taxonomy. Trial metrics join to clinical_ops.studies for the program's
+     enrollment / sites / AE rate / endpoints.
 
      These two read `Falls back to kit fixtures during load + on error`, and
      did exactly that, through a ternary rather than a `??`:
@@ -259,15 +280,19 @@ export function PmaSurface({ program, onAskAna, onOpenEditor, onOpenLetter }: Pm
       <DataGate
         state={modulesState}
         label="PMA modules"
-        emptyHint="Modules appear here once 21 CFR 814.20 sections are authored for this project."
+        emptyHint="This project has no PMA document, so it has no PMA modules to show."
       >
-        {(mods) => (
+        {(mods) => {
+          const required = mods.filter((m) => m.required);
+          const present = required.filter((m) => m.status === 'present').length;
+          return (
       <>
       <div className="section-hdr">
         <div>
           <div className="section-title">PMA modules</div>
           <div className="section-sub">
-            Section-by-section assembly · {mods.reduce((n, m) => n + m.docs, 0)} document{mods.reduce((n, m) => n + m.docs, 0) === 1 ? '' : 's'} total
+            Original PMA (21 CFR 814.20) · {present} of {required.length} required modules present, as the assembly check
+            counts them
           </div>
         </div>
       </div>
@@ -278,26 +303,27 @@ export function PmaSurface({ program, onAskAna, onOpenEditor, onOpenLetter }: Pm
             className="pma-mod"
             onClick={() =>
               onAskAna(
-                `Open PMA module "${m.label}" — ${m.docs} documents · status: ${m.status}. ` +
+                `PMA module ${m.module}, "${m.label}": ${pmaModuleFacts(m)}. ` +
                   `Walk me through what's open and where I should focus.`,
               )
             }
-            title={`Open ${m.label}`}
+            title={`Ask AnA about ${m.label}`}
           >
             <div className="pma-mod-hdr">
               <div className="pma-mod-label">{m.label}</div>
-              <span className={`status-pill ${m.status}`}>{m.status}</span>
+              <span className={`status-pill ${PMA_MODULE_PILL[m.status].tone}`}>{PMA_MODULE_PILL[m.status].text}</span>
             </div>
-            <div className="pma-mod-desc">{m.desc}</div>
+            <div className="pma-mod-desc">Module {m.module} · {m.required ? 'required' : 'conditional'}</div>
             <div className="pma-mod-foot">
-              <span>{m.docs} documents</span>
+              <span>{pmaModuleFacts(m)}</span>
               <span>{I.chevronRight}</span>
             </div>
           </button>
         ))}
       </div>
       </>
-        )}
+          );
+        }}
       </DataGate>
 
       {/* The official FDA eSTAR PDF — readiness gate, the governed field

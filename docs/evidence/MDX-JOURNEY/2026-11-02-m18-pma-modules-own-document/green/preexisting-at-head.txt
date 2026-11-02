@@ -1,0 +1,692 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > starts with no attachment rows or metadata/source reads, and retains export without attachments 185ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > blocks an incomplete row while destinations load, and removal restores export without attachments 102ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for 510k/device 134ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+-   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   "/api/510k/estar/attachment-slots?type=510k&variant=device",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for de_novo/ivd 116ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+-   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   "/api/510k/estar/attachment-slots?type=de_novo&variant=ivd",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for pma/ivd 102ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+-   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   "/api/510k/estar/attachment-slots?type=pma&variant=ivd",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the companion diagnostic product family through destination reads and the official export 78ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+    "/api/510k/estar/attachment-slots?type=510k&variant=ivd",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/510k/estar/attachment-slots?type=510k&variant=ivd",
++   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the case-varied companion diagnostic product family through destination reads and the official export 73ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+    "/api/510k/estar/attachment-slots?type=510k&variant=ivd",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/510k/estar/attachment-slots?type=510k&variant=ivd",
++   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the complementary diagnostic product family through destination reads and the official export 68ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+    "/api/510k/estar/attachment-slots?type=510k&variant=ivd",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/510k/estar/attachment-slots?type=510k&variant=ivd",
++   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the software as a medical device product family through destination reads and the official export 67ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+    "/api/510k/estar/attachment-slots?type=510k&variant=device",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/510k/estar/attachment-slots?type=510k&variant=device",
++   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the medical device product family through destination reads and the official export 66ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+    "/api/510k/estar/attachment-slots?type=510k&variant=device",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/510k/estar/attachment-slots?type=510k&variant=device",
++   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > uses the existing picker pages instead of hiding matches after the first page 101ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > blocks duplicate single-file destinations and preserves a deliberate change or removal 205ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > caps even queued Add activations at the server’s 150-assignment limit 853ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > rejects a selectable Vault result without a recorded hash 128ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > keeps earlier versions unavailable in the reused picker 91ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > rejects a successful catalog with wrong type instead of offering unverified destinations 77ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > rejects a successful catalog with wrong variant instead of offering unverified destinations 62ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > rejects a successful catalog with missing template version instead of offering unverified destinations 53ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > rejects a successful catalog with duplicate slot instead of offering unverified destinations 53ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > retries a failed slot read without discarding the row or treating failure as empty 82ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > describes a verified catalog with no destinations and permits removing the optional row 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > renders actual server refusal reasons and keeps the chosen version reviewable 102ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > resets selected rows when the program changes 68ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > resets selected rows when the pathway changes 63ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > resets selected rows when the variant changes 66ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > resets selected rows when the session changes 67ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > disables assignment edits while an attachment-bearing export is pending 98ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > does not expose attachment controls for PreSTAR preparation 10ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > keeps EU evaluation filings distinct from a separately recorded US route 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > carries the server product_type onto the kit Program, alongside the k510 pathway 64ms
+ × client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > carries the server regulatory_path onto the kit Program — De Novo stays De Novo under the k510 pathway 60ms
+   → expected 'de_novo' to be 'k510' // Object.is equality
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > device portfolio retains each device filing and states no invented readiness > does not read creation progress or stale progress as readiness 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > device portfolio retains each device filing and states no invented readiness > keeps IDE, regional and unknown device rows, but excludes medicinal filings 55ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > carries the server regulatory_path onto the kit Program — De Novo stays De Novo under the k510 pathway
+AssertionError: expected 'de_novo' to be 'k510' // Object.is equality
+
+Expected: "k510"
+Received: "de_novo"
+
+ ❯ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts:96:28
+     94|     await waitFor(() => expect(result.current.programs).not.toBeNull()…
+     95|     const [deNovo, pma, unset] = result.current.programs!;
+     96|     expect(deNovo.pathway).toBe('k510');
+       |                            ^
+     97|     expect(deNovo.regulatoryPath).toBe('de_novo');
+     98|     expect(pma.pathway).toBe('pma');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for 510k/device
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+-   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   "/api/510k/estar/attachment-slots?type=510k&variant=device",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx:105:24
+    103|     expect(screen.getByTestId('official-estar-attachment-receipts').te…
+    104|     expect(screen.getByTestId('official-estar-attachment-receipts').te…
+    105|     expect(apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/project-v…
+       |                        ^
+    106|     expect(vi.mocked(downloadBase64)).toHaveBeenCalledTimes(1);
+    107|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for de_novo/ivd
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+-   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   "/api/510k/estar/attachment-slots?type=de_novo&variant=ivd",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx:105:24
+    103|     expect(screen.getByTestId('official-estar-attachment-receipts').te…
+    104|     expect(screen.getByTestId('official-estar-attachment-receipts').te…
+    105|     expect(apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/project-v…
+       |                        ^
+    106|     expect(vi.mocked(downloadBase64)).toHaveBeenCalledTimes(1);
+    107|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for pma/ivd
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+-   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   "/api/510k/estar/attachment-slots?type=pma&variant=ivd",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx:105:24
+    103|     expect(screen.getByTestId('official-estar-attachment-receipts').te…
+    104|     expect(screen.getByTestId('official-estar-attachment-receipts').te…
+    105|     expect(apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/project-v…
+       |                        ^
+    106|     expect(vi.mocked(downloadBase64)).toHaveBeenCalledTimes(1);
+    107|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the companion diagnostic product family through destination reads and the official export
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the case-varied companion diagnostic product family through destination reads and the official export
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the complementary diagnostic product family through destination reads and the official export
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+    "/api/510k/estar/attachment-slots?type=510k&variant=ivd",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/510k/estar/attachment-slots?type=510k&variant=ivd",
++   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx:118:24
+    116|     await ready({ ...props(), program, variant: officialEstarVariantFo…
+    117|     add(); await choose();
+    118|     expect(apiRequest).toHaveBeenCalledWith('GET', `/api/510k/estar/at…
+       |                        ^
+    119|     fireEvent.click(generate());
+    120|     await screen.findByTestId('official-estar-attachment-receipts');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the software as a medical device product family through destination reads and the official export
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the medical device product family through destination reads and the official export
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+    "/api/510k/estar/attachment-slots?type=510k&variant=device",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/510k/estar/attachment-slots?type=510k&variant=device",
++   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/search?q=summary&limit=25",
++   undefined,
++   undefined,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 2
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx:118:24
+    116|     await ready({ ...props(), program, variant: officialEstarVariantFo…
+    117|     add(); await choose();
+    118|     expect(apiRequest).toHaveBeenCalledWith('GET', `/api/510k/estar/at…
+       |                        ^
+    119|     fireEvent.click(generate());
+    120|     await screen.findByTestId('official-estar-attachment-receipts');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 24 passed (33)
+   Start at  04:42:28
+   Duration  5.31s (transform 545ms, setup 163ms, import 710ms, tests 3.47s, environment 732ms)
+

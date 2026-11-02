@@ -1,0 +1,18 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > state the required modules present, as the assembly check counts them 107ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > name the sections finished and written, by code 44ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > ask AnA with the module's own facts 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > say so when the project has no PMA document 31ms
+ ✓ server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > are this project's PMA document, scored by the PMA mapper's 21 CFR 814 modules 11ms
+ ✓ server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > say the same as the assembly verdict over the same document 4ms
+ ✓ server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > show a blank PMA as not started, whatever the organization's 510(k) sections say 3ms
+ ✓ server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > are none for a project with no PMA document 2ms
+ ✓ server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > are not another organization's 4ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  04:40:25
+   Duration  5.30s (transform 2.01s, setup 136ms, import 2.74s, tests 1.87s, environment 342ms)
+
