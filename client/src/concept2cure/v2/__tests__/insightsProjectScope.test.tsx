@@ -53,7 +53,7 @@ async function renderCanvas(seg: string) {
 describe('Insights — reports run over the lead project', () => {
   it('sends the project scope and id the overview names', async () => {
     await renderCanvas('pharma');
-    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+    const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
     fireEvent.change(composer, { target: { value: 'Generate the Executive Readiness Digest for ABC-101' } });
     fireEvent.keyDown(composer, { key: 'Enter' });
     await waitFor(() => expect(apiRequest.mock.calls.some(([m, u]) => m === 'POST' && u === '/api/report-os/runs')).toBe(true));

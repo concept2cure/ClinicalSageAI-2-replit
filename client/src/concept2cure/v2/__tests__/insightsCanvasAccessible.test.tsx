@@ -89,7 +89,7 @@ describe("a report's tables and sources", () => {
     });
     render(<InsightsCanvas {...PROPS} />);
     const composer = await waitFor(() => {
-      const el = document.querySelector('.rc-input textarea') as HTMLTextAreaElement | null;
+      const el = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement | null;
       if (!el) throw new Error('composer not mounted');
       return el;
     });

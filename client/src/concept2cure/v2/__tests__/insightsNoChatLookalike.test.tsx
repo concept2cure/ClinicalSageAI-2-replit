@@ -140,9 +140,11 @@ describe('Reporting: "Find a report"', () => {
     await screen.findByText(/any of these can be run/);
     expect(document.querySelectorAll(CHAT_SHAPES)).toHaveLength(0);
     // A search keeps what was searched for; a chat composer clears itself.
-    expect((field as HTMLTextAreaElement).value).toBe('something about the weather');
-    // The words are not echoed back as a message.
-    expect(screen.getAllByText('something about the weather', { exact: false }).every((el) => el === field)).toBe(true);
+    expect((field as HTMLInputElement).value).toBe('something about the weather');
+    // The words are not echoed back as a message: no element but the field
+    // carries them. (A textarea's text matched here as the field itself; an
+    // input's value is not text, so the field is simply absent from the list.)
+    expect(screen.queryAllByText('something about the weather', { exact: false }).filter((el) => el !== field)).toEqual([]);
     // The router's choices are offered as buttons inside the result.
     expect(screen.getByRole('button', { name: 'Executive Readiness Digest' })).toBeTruthy();
 

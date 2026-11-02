@@ -98,7 +98,7 @@ async function openBoard(isTruncated: boolean, programCount: number) {
     />,
   );
   await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
-  const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+  const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
   fireEvent.change(composer, { target: { value: 'portfolio board view across all programs' } });
   fireEvent.keyDown(composer, { key: 'Enter' });
   await waitFor(() => expect(document.querySelector('.ro-dash')).not.toBeNull());

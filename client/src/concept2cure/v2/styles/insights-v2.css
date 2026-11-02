@@ -54,14 +54,19 @@
 .rc-tier-lbl{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin-right:3px; }
 .rc-tier-b{ background:var(--bg-000); border:1px solid var(--border); color:var(--text-300); font-size:11px; font-weight:600; padding:4px 9px; border-radius:7px; cursor:pointer; }
 .rc-tier-b.on{ background:var(--accent-strong); color:var(--accent-on-strong); border-color:var(--accent-strong); }
-.rc-input{ display:flex; align-items:flex-end; gap:8px; background:var(--bg-000); border:1px solid var(--border-control); border-radius:13px; padding:8px 8px 8px 12px; transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
-.rc-input:focus-within{ border-color:var(--accent-200); box-shadow:0 0 0 3px var(--accent-000); }
-.rc-input textarea{ flex:1; border:none; outline:none; resize:none; background:transparent; font:inherit; font-size:13px; color:var(--text-100); line-height:1.5; max-height:120px; padding:3px 0; }
+/* Find a report (D7 §D.4 step 3): label, field and Find on one line. The
+   field is D0's `.c2c-input`; nothing here restyles it. */
+.rc-find{ display:flex; align-items:center; gap:8px; margin:0 0 16px; }
+.rc-find-l{ flex:0 0 auto; font-size:var(--fs-small); color:var(--text-300); }
+.rc-find-i{ flex:1 1 auto; min-width:0; }
+@media (max-width:640px){ .rc-find{ flex-wrap:wrap; } .rc-find-l{ flex-basis:100%; } }
+/* The last search's result (step 5): quiet text, replaced by the next find. */
+.rc-result .rc-op-body{ font-size:var(--fs-small); color:var(--text-200); }
+.rc-result .sp-starters{ justify-content:flex-start; margin:0 0 8px; }
 .rc-send{ flex-shrink:0; width:30px; height:30px; border:none; border-radius:var(--radius-lg); background:var(--accent-strong); color:var(--accent-on-strong); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
 .rc-send:disabled{ opacity:.5; cursor:default; }
 .rc-send svg{ width:15px; height:15px; }
-.rc-guardrail{ display:flex; align-items:flex-start; gap:6px; font-size:10.5px; color:var(--text-400); line-height:1.45; margin-top:8px; }
-.rc-guardrail svg{ width:12px; height:12px; flex-shrink:0; margin-top:1px; }
+.rc-guardrail{ margin:0; max-width:68ch; }
 
 /* ── Right: artifact canvas ── */
 .rc-canvas{ min-width:0; }

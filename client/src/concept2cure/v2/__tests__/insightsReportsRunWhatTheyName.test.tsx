@@ -83,7 +83,7 @@ const renderCanvas = () =>
   render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment="biopharma" onNav={onNav} />);
 const ready = () => waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 function ask(text: string) {
-  const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+  const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
   fireEvent.change(composer, { target: { value: text } });
   fireEvent.keyDown(composer, { key: 'Enter' });
 }

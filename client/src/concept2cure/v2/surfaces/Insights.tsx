@@ -2165,6 +2165,20 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
           )}
         </>}
       />
+      {/* Find a report: one line under the header. A plain search field, not
+          the composer's look: it runs a deterministic router, and nothing but
+          the conversation may look like talking to AnA (FILING_SPINE §7.2 F6;
+          confirmed by the founder with P-91). Find is quiet for the same reason:
+          orange is the send glyph's in a conversation. Enter finds, as the
+          button does; the words stay after a search, so the field always says
+          what the result answers. */}
+      <div className="rc-find" role="search">
+        <label className="rc-find-l" htmlFor={fieldId}>Find a report</label>
+        <input id={fieldId} type="text" className="c2c-input rc-find-i" value={query} placeholder={`A report type, market or question for ${p.code}`}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void findReport(); } }} />
+        <button type="button" className="btn ghost" disabled={!tierResolved || !query.trim() || busy} onClick={() => void findReport()}>Find</button>
+      </div>
       {/* -- Left: report routing pane --
            This column called itself "AnA -- Reporting analyst" and spoke in the
            first person, while what answered was `roRouteReply`: a deterministic
@@ -2204,13 +2218,12 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
 
           {/* The result of the last search: the router's words, the choices it
               offers and the plan lock, in one section the next search replaces.
-              Not a thread: the searched words stay in the field below. The
+              Not a thread: the searched words stay in the field above. The
               section and its live region stay mounted, empty until the first
               search, so the first result is announced too (a live region
               inserted already holding its text is often not read). It is named
               "Result", a region, only while it holds one. */}
-          <section aria-label={found ? 'Result' : undefined} data-testid="rc-find-result" data-empty={found ? undefined : 'true'}>
-            {found && <div className="ro-rep-eyebrow">Result</div>}
+          <section className="rc-result" aria-label={found ? 'Result' : undefined} data-testid="rc-find-result" data-empty={found ? undefined : 'true'}>
             <p className="rc-op-body" role="status" style={found ? undefined : { margin: 0 }}>{found?.locked && !tierResolved ? REPORT_PLAN_UNVERIFIED : found?.text ?? ''}</p>
             {found?.locked && tierResolved && (
               <div className="rc-lock">
@@ -2222,8 +2235,12 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
                 </div>
               </div>
             )}
-            {found?.chips && found.chips.length ? <div className="rc-chips">{found.chips.map((c, ci) => (<button key={ci} className="rc-chip" disabled={!tierResolved} onClick={() => findReport(c[1])}>{c[0]}</button>))}</div> : null}
-            {found?.nav ? <div className="rc-chips"><button type="button" className="rc-chip" onClick={() => { if (found.nav && onNav) onNav(found.nav.surface); }}>{found.nav.label}</button></div> : null}
+            {found?.chips && found.chips.length ? (
+              <div className="sp-starters" data-layout="row" aria-label="Find next">
+                {found.chips.map((c, ci) => (<button key={ci} type="button" className="sp-starter" disabled={!tierResolved} onClick={() => findReport(c[1])}><span className="sk" aria-hidden="true">{I.search}</span><span>{c[0]}</span></button>))}
+              </div>
+            ) : null}
+            {found?.nav ? <div className="sp-starters" data-layout="row"><button type="button" className="sp-starter" onClick={() => { if (found.nav && onNav) onNav(found.nav.surface); }}><span>{found.nav.label}</span></button></div> : null}
           </section>
           {/* A run in flight is a sentence in a status region. It was three
               pulsing dots beside AnA's mark, which is how a chat says "typing". */}
@@ -2231,7 +2248,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
           {runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}
         </div>
 
-        {/* Find a report, and the plan it is read against */}
+        {/* The plan the reports are read against */}
         <div className="rc-composer">
           <div className="rc-tier" role="group" aria-label="Subscription tier">
             <span className="rc-tier-lbl">Plan</span>
@@ -2253,16 +2270,6 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
           {/* Not previewing, and the plan was never read: say so where the plan
               is shown, so a wall of locks is not read as the plan's doing. */}
           {!previewing && planNotice}
-          <label className="gov-label" htmlFor={fieldId} style={{ display: 'block', marginBottom: 5 }}>Find a report</label>
-          <div className="rc-input">
-            {/* One line: Enter finds, as the button does. The words stay after a
-                search, so the field always says what the result answers. */}
-            <textarea id={fieldId} rows={1} value={query} placeholder={`A report type, market or question for ${p.code}`}
-              onChange={e => setQuery(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void findReport(); } }} />
-            <button type="button" className="btn primary" disabled={!tierResolved || !query.trim() || busy} onClick={() => void findReport()}>Find</button>
-          </div>
-          <div className="rc-guardrail">{I.shieldCheck} {RO_GUARDRAIL}</div>
         </div>
       </div>
 
@@ -2312,6 +2319,12 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
         {deviceSection}
         </div>
       </div>
+      {/* How the numbers are made: the guardrail, whole, at the page foot. It
+          was six small lines under the field, read before anything was found. */}
+      <details className="pj-more">
+        <summary>How reports are computed</summary>
+        <p className="rc-guardrail">{RO_GUARDRAIL}</p>
+      </details>
       {signing && report && reportRunId != null && (
         <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />
       )}
