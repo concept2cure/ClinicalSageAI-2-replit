@@ -25,6 +25,7 @@
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 import { OTHER_POSITION } from '../../../../../shared/types/intelligence-questions.js';
 import { orphanProgrammeLeaves, usOrphanDesignationField } from './ind-submission-orphan-designation.js';
+import { FEE_SETTLED, userFeeField } from './nda-submission-user-fee.js';
 
 export function createBlaSubmissionFlow(): FlowDefinition {
   return {
@@ -236,18 +237,19 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             helpText:
               'Per 21 CFR 207.69 (or 21 CFR 607.40 for blood establishments), each foreign establishment must designate a United States agent who resides or maintains a place of business in the US.',
           },
-          {
-            id: 'user_fee_paid',
-            label: 'PDUFA User Fee Paid',
-            type: 'yes_no',
+          /* 2026-11-02 (S4): a yes/no labelled PDUFA, asked of a 351(k)
+             biosimilar too, which pays BsUFA. The positions
+             (nda-submission-user-fee.ts). */
+          userFeeField({
+            label: 'Application user fee (PDUFA; BsUFA for a 351(k) biosimilar)',
             helpText:
               'Per 21 USC 379h (PDUFA), the application fee must be paid before a 351(a) BLA will be received. The FY2026 application fee exceeds $4 million. A 351(a) BLA for an orphan-designated product is exempt from the application fee unless it also includes an indication for other than a rare disease or condition (FD&C Act §736(a)(1)(F)); the exemption is claimed on the user fee cover sheet, not requested as a waiver. A 351(k) biosimilar application pays BsUFA fees, which hold no orphan exemption.',
-          },
+          }),
           {
             id: 'pdufa_goal_date',
             label: 'PDUFA Goal Date',
             type: 'date',
-            visibleWhen: { field: 'user_fee_paid', operator: 'eq', value: true },
+            visibleWhen: FEE_SETTLED,
             helpText:
               'Standard review target: 10 months from filing. Priority Review target: 6 months from filing.',
           },
@@ -264,12 +266,12 @@ export function createBlaSubmissionFlow(): FlowDefinition {
         issueChecks: [
           {
             id: 'user_fee_not_paid',
-            condition: { field: 'user_fee_paid', operator: 'eq', value: false },
+            condition: { field: 'user_fee_paid', operator: 'eq', value: 'not_paid' },
             severity: 'critical',
-            title: 'PDUFA User Fee Required',
+            title: 'Application User Fee Required',
             message:
-              'Per 21 USC 379h, the BLA will not be received for filing until the PDUFA user fee is paid or a fee waiver is granted. Ensure payment is submitted before or contemporaneously with the BLA.',
-            reference: 'PDUFA (21 USC 379h)',
+              'The BLA is not accepted for filing until the fees owed are paid (21 USC 379h(e) for a 351(a) BLA under PDUFA; a 351(k) biosimilar pays under BsUFA). Pay before or with the submission. If FDA has designated a 351(a) product an orphan drug and the application includes no other indication, the application is exempt (21 USC 379h(a)(1)(F)): choose the exemption instead.',
+            reference: 'PDUFA (21 USC 379h), including 379h(a)(1)(F) and (e); BsUFA for a 351(k) biosimilar',
           },
         ],
       },

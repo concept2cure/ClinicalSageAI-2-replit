@@ -27,6 +27,7 @@ import {
 } from './cross-node-context.js';
 import { programmeFactsFrom } from './programme-facts.js';
 import { STABILITY_SHELF_LIFE_RULE } from './cross-node-rules-stability.js';
+import { USER_FEE_EXEMPTION_RULE } from './cross-node-rules-user-fee.js';
 
 /* ─── Cross-node rule definitions ────────────────────────────────────── */
 
@@ -505,6 +506,7 @@ export const CROSS_NODE_RULES: CrossNodeRule[] = [
     },
   },
   STABILITY_SHELF_LIFE_RULE,
+  USER_FEE_EXEMPTION_RULE,
   {
     id: 'xn_high_risk_device_no_human_factors',
     appliesTo: ['device_510k', 'device_pma'],
