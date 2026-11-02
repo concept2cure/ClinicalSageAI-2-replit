@@ -1,0 +1,9 @@
+applied mutant drop-plantar: "const NOT_A_PLAN = ['plantar', 'planar', 'plane', 'planes'];" -> "const NOT_A_PLAN = ['planar', 'plane', 'planes'];"
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a CER or PER title whose next word begins with 'plan' fills the CER / PER slot 18ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a V&V report on a plantar, planar or plane subject fills the V&V slot; planned changes do not 4ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a Vault-built MDR set with a mixed-case IFU and a plantar-device CER is ready 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: Clinical evaluation – plantar fasciitis orthosis: expected [] to include 'clinical-evaluation'
+AssertionError: Biocompatibility – plantar insole (ISO 10993): expected [] to deeply equal [ 'preclinical-clinical' ]
+AssertionError: expected [ 'clinical-evaluation' ] to deeply equal []
+      Tests  3 failed | 49 passed (52)
