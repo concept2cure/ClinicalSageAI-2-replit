@@ -1,29 +1,66 @@
 /**
- * Project map — the MILESTONES and capability inventory for a document type.
+ * Project map — ONE project flow configured by the selected document type.
+ *
+ * FOUNDER CLARIFICATION (2026-11-02)
+ * CSR is a document choice in Project Management, not a separate CSR module.
+ * IND, BLA and CTD likewise do not introduce separate applications, editors or
+ * data rooms. The selected project document/filing definition changes the
+ * questions, evidence requirements, outline and applicable actions inside the
+ * same system. "Biotech" describes client/product context, not a separate
+ * customer-facing workspace or workflow.
+ *
+ * The user journey this map must guide:
+ * 1. PROJECT MANAGEMENT: choose the document/filing type and define the goal,
+ *    hypothesis, trial/protocol context, team and relevant project history.
+ *    Retain the source and history of those facts; do not invent missing facts.
+ * 2. GUIDED DEFINITION: present accompanying choices and questions appropriate
+ *    to that type and the recorded context. Reuse recorded answers and expose
+ *    unknowns. Do not send the user into a separate type-specific application.
+ * 3. DATA ROOM: files uploaded in the project enter its existing governed data
+ *    catalog, with originals, versions, classification, processing status and
+ *    lineage. Link requirements and derived evidence to those catalog records.
+ *    An upload is not, by itself, proof of standards conformance or approval.
+ * 4. EVIDENCE: the existing applicable engines use the project's authorized
+ *    sources. Preserve source/run/version identity and missing-data findings.
+ * 5. CANVAS + ONE EDITOR + AnA: use the same document-building environment for
+ *    every type. Its outline, templates, questions and tools adapt to the
+ *    selected type. People can author directly or direct AnA; neither path
+ *    creates a parallel document store, generator or editor.
+ * 6. SHARED LIFECYCLE: tasks, communication, review, comments, versions and
+ *    signatures stay linked to that project and document. Export/filing uses
+ *    the existing applicable path; a document project is not automatically a
+ *    complete regulatory submission.
+ *
+ * Canonical placement and implementation owners:
+ * .design/client-journey/INFORMATION_ARCHITECTURE.md
+ * docs/design/ONE_DESIGN_PLAN.md
+ *
+ * Internal names such as WorkspaceConfig, apps and clinical_csr are retained
+ * compatibility identifiers for existing capabilities, NOT permission to create
+ * separate CSR/IND/BLA/CTD product modules. CTD content-module numbers are not
+ * separate application modules. Do not rename or remove existing capabilities
+ * merely to match this wording; finish their reachable shared-flow owners.
+ *
+ * This pure resolver supplies milestones/capability metadata. It does not
+ * itself implement the guided forms, ingestion, editor, authorization or human
+ * review. The journey above is the governing direction and acceptance path,
+ * not a claim that every UI hand-off has already been implemented or verified.
  *
  * `resolveWorkspaceConfig(need)` answers "what abilities does this document type
- * need" as a flat set. It does not answer "WHEN is each one needed." A regulatory
- * program is a sequence: you set strategy, then build quality + nonclinical +
- * clinical evidence, then author + assemble + transmit, then survive review and
- * run the post-market lifecycle. Each phase pulls in a different slice of the
- * platform's apps and services.
- *
- * This module turns the resolved config + its claim spine into an ordered set of
- * MILESTONES (the project map) and a CAPABILITY INVENTORY (every app/service the
- * project will need, and the phase[s] at which each becomes relevant). Both are
- * what project setup surfaces to suggest capabilities to the client and to seed
- * the milestone plan — and what AnA grounds her "you'll need X next" guidance in.
+ * need" as a flat set. It does not answer "WHEN is each one needed." This module
+ * turns that config and its claim spine into ordered MILESTONES and a CAPABILITY
+ * INVENTORY for project setup and AnA's contextual next-step guidance.
  *
  * Derived, not hand-enumerated: phases come from the evidence claim spine
  * (`cfg.program.requiredClaims`) plus structural framing phases (strategy /
  * assembly / submission / review / post-market). Pure, no DB.
  *
- * This is the CROSS-SEGMENT, qualitative scaffold (all ~190 document types: which
- * apps/services at which phase). It is distinct from — and complementary to — the
- * IVD-specific quantitative engine in `server/services/regulatory/program-plan.ts`
+ * This is the CROSS-SEGMENT, qualitative scaffold (all ~190 document types:
+ * which capabilities at which phase). It complements the IVD-specific
+ * quantitative engine in `server/services/regulatory/program-plan.ts`
  * (`buildProgramPlan`: classification → CDx pairing → study design → reviewer
- * simulation → Monte-Carlo timeline/cost). That engine can later fill quantitative
- * detail into an IVD project's phases; this names the phases for every segment.
+ * simulation → Monte-Carlo timeline/cost). That engine can fill quantitative
+ * detail into an IVD project's phases without creating a separate user journey.
  *
  * @module shared/regulatory/project-map
  */
@@ -117,7 +154,7 @@ const APP_PHASES: Record<WorkspaceAppId, ProjectPhase[]> = {
   cer: ['clinical'],
   etmf: ['clinical'],
   risk: ['clinical', 'post_market'],
-  human_factors: ['clinical'],
+  human_factors: ['clinical', 'post_market'],
   cybersecurity: ['clinical', 'post_market'],
   substantial_equiv: ['clinical'],
   labeling: ['authoring'],
@@ -189,7 +226,7 @@ const DOMAIN_PHASES: Record<StandardDomain, ProjectPhase[]> = {
   quality_system: ['quality'],
   risk: ['clinical', 'post_market'],
   software: ['quality', 'clinical'],
-  human_factors: ['clinical'],
+  human_factors: ['clinical', 'post_market'],
   cybersecurity: ['clinical', 'post_market'],
   analytical_performance: ['quality'],
   cmc_biologic: ['quality'],
@@ -411,7 +448,7 @@ function buildInventory(cfg: WorkspaceConfig, emitted: Set<ProjectPhase>): Capab
       const phases = APP_PHASES[a.id].filter((p) => emitted.has(p));
       const ordered = PHASE_ORDER.filter((p) => phases.includes(p));
       return ordered.length
-        ? { id: a.id, label: getApp(a.id).label, neededAtPhases: ordered, firstNeededPhase: ordered[0] }
+        ? { id: a.id, label: a.label, neededAtPhases: ordered, firstNeededPhase: ordered[0] }
         : null;
     })
     .filter((x): x is InventoryItem<WorkspaceAppId> => x !== null);
