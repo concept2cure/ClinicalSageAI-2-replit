@@ -1,0 +1,77 @@
+# Mutation 7 (finding: the receipt pin was never shown failing). The receipt writer rebuilds the row's metadata from named keys instead of merging, so a settled receipt drops metadata.leafManifest.
+# File: server/services/submission-gateways/fda-esg-receipts.ts
+# Replaced (exactly once):
+#   -     const metadata = { ...current.metadata, as2Receipt: receipt, as2ReceiptHistory: [...history, receipt] };
+# With:
+#   +     const metadata = { as2: current.metadata.as2, dispatchBinding: current.metadata.dispatchBinding, as2Receipt: receipt, as2ReceiptHistory: [...history, receipt] };
+# Command: npx vitest run server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+# Exit code: 1 (non-zero = the test caught the mutation)
+# Restored byte for byte: sha256 a22720f666e6bf9fb3e9876c9a83d245c9c9f0d41b46c944183402af786e76d2 before and after
+# Run: 2026-11-02T01:26:20.415838Z
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim 117ms
+   → expected undefined to deeply equal [ { ctdSection: '3.2.S.1', …(4) } ]
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records a verified receipt while keeping a newer signature claim explicitly unreconciled 95ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > never guesses a legacy sequence binding by its number 61ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > uses a tied authenticated refusal only for rejected transport state, never center acknowledgement 68ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > reconciles a retained synchronous agency rejection without authorizing its signature again 107ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses a positive receipt that conflicts with a retained rejected transmittal 57ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > cannot resolve a newer attempt with the same signature using re-encoded original receipt bytes 99ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong message without changing receipt, sequence or audit 58ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong MIC without changing receipt, sequence or audit 53ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong tenant without changing receipt, sequence or audit 19ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong viewer without changing receipt, sequence or audit 51ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > rolls back receipt and sequence changes together if the canonical audit fails 57ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  01:26:13
+   Duration  6.88s (transform 1.23s, setup 97ms, import 1.92s, tests 4.63s, environment 0ms)
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+{
+  "timestamp": "2026-11-02T01:26:15.706Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim
+AssertionError: expected undefined to deeply equal [ { ctdSection: '3.2.S.1', …(4) } ]
+
+- Expected:
+[
+  {
+    "ctdSection": "3.2.S.1",
+    "fileName": "general.pdf",
+    "href": "m3/general.pdf",
+    "md5": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "operation": "new",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts:52:39
+     50|     expect((await state.pg!.query<any>('SELECT dispatch_status FROM ec…
+     51|     // The receipt merges into the row: what was sent, and the attempt…
+     52|     expect(row.metadata.leafManifest).toEqual(SENT_LEAVES);
+       |                                       ^
+     53|     expect(row.metadata.dispatchBinding).toMatchObject({ sequenceId: 8…
+     54|     expect((await state.pg!.query('SELECT * FROM receipt_audit')).rows…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

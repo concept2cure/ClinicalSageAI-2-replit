@@ -1524,8 +1524,10 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
 /* The current view of the application: every filed sequence of the spine's
    submission folded, by the fold compile and transmit already use
    (loadFiledStateBySubmission, prior-sequence-loader.ts). Only sent or
-   acknowledged sequences count; a preview or rehearsal compile never does.
-   An unreadable fold is 503, never an empty dossier. */
+   acknowledged sequences count, each read from what its transmit recorded it
+   sent; one sent before that record was kept is read from its compiles (never
+   a rehearsal), and each sequence's `basis` says which, passed through as is
+   (F1, 2026-11-01). An unreadable fold is 503, never an empty dossier. */
 router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;

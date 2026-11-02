@@ -1,0 +1,402 @@
+# Every npm script .husky/pre-push invokes, in the hook's order, plus the gates the task names (all but two are hook gates).
+# Runner: scratchpad f1-confirm/gates.sh. Summary (exit, gate):
+0	ci:ectd-stubs
+0	ci:risk-codes
+0	ci:migration-set-order
+0	ci:migration-guard-order:selftest
+0	ci:migration-guard-order
+0	ci:install-fresh-overlay-deps:selftest
+0	ci:install-fresh-overlay-deps
+0	ci:one-design-plan
+0	ci:one-design-plan:selftest
+0	ci:migration-drop-safety
+0	ci:one-product
+0	ci:class-vocabulary
+0	ci:migration-deploy-path
+0	ci:column-reachability
+0	ci:runtime-ddl
+0	ci:json-operator-types
+0	db:sync-manifest:check
+0	ci:drizzle-tenant-scope
+0	ci:undefined-css-classes
+0	ci:unauthenticated-fetch
+0	ci:session-scoped-rls-bypass
+0	ci:sql-interpolation
+0	ledger-check
+0	check:catalog-copy
+0	ci:fixture-fallback
+0	ci:no-mock-in-prod-routes
+0	ci:fabricated-identity
+0	ci:program-ownership-single-source:selftest
+0	ci:program-ownership-single-source
+0	ci:project-creation-owners:selftest
+0	ci:project-creation-owners
+0	ci:discarded-audit-write
+0	ci:client-ip-single-source
+0	ci:filing-exit-agreement:selftest
+0	ci:filing-exit-agreement
+0	ci:sign-ceremony
+0	ci:upload-guards
+0	ci:trivyignore-hygiene
+0	audit:repo-health:ceiling
+0	ci:server-error-leaks
+0	ci:untracked-imports
+0	ci:pushed-lint-errors
+0	ci:pushed-lint-warnings
+0	ci:pushed-typecheck --dry-run
+1	ci:internals-in-copy
+0	ci:migration-drop-safety:selftest
+
+# Reading the push-scoped gates: HEAD (609ef94c7) is an ancestor of origin/concept2cure-v2, and this build is uncommitted, so
+# ci:one-design-plan, ci:untracked-imports, ci:pushed-lint-errors and ci:pushed-typecheck compare committed history and find
+# nothing of this build to check. Their substance is covered here: plan-check.txt (the future commit through the gate's own
+# evaluateCommit), eslint.txt (errors and warnings on every changed file), typecheck.txt (full tsc). ci:pushed-lint-warnings
+# did read the 24 changed tracked files against 609ef94c7 and found no warning count changed.
+# ci:internals-in-copy exits 1 identically on a clean HEAD export: see internals-in-copy.head-export.txt.
+
+# Full output (last lines of each):
+date: 2026-11-02T02:10:37Z
+HEAD: 609ef94c7 branch concept2cure-v2; origin/concept2cure-v2: e194d3114
+working tree: 27 changed/untracked paths (this build, uncommitted)
+
+=== .husky/pre-push npm scripts, in the hook's order ===
+
+### ci:ectd-stubs
+$ npm run --silent ci:ectd-stubs
+exit=0
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+
+### ci:risk-codes
+$ npm run --silent ci:risk-codes
+exit=0
+OK: Generated risk code types are up to date.
+
+### ci:migration-set-order
+$ npm run --silent ci:migration-set-order
+exit=0
+[ci:migration-set-order] OK — 461 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+
+### ci:migration-guard-order:selftest
+$ npm run --silent ci:migration-guard-order:selftest
+exit=0
+[ci:migration-guard-order] selftest OK — reports public.qms_documents when the Part 11 triggers precede its CREATE, and nothing when they follow it.
+
+### ci:migration-guard-order
+$ npm run --silent ci:migration-guard-order
+exit=0
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+
+### ci:install-fresh-overlay-deps:selftest
+$ npm run --silent ci:install-fresh-overlay-deps:selftest
+exit=0
+  ✓ the exact named literal array, beside an unrelated inline array
+  ✓ a computed filename must not be mistaken for its literal prefix
+  ✓ a spread must not silently hide creator entries
+  ✓ duplicate declarations cannot choose a convenient first list
+  ✓ THE REAL CASE — an unguarded FK to a db/migrations-only table — expected 1, got 1
+  ✓ guarded — to_regclass IS NULL short-circuits, so it no-ops instead of deferring — expected 0, got 0
+  ✓ a non-public schema qualifier is not the table name — expected 0, got 0
+  ✓ reachable because step 2 pushed it — expected 0, got 0
+  ✓ a table nothing in the repo creates is another gate's question — expected 0, got 0
+  ✓ the file creating it itself is never its own missing dependency — expected 0, got 0
+
+[ci:install-fresh-overlay-deps] selftest passed: it fails on the unguarded case and only on that case.
+
+### ci:install-fresh-overlay-deps
+$ npm run --silent ci:install-fresh-overlay-deps
+exit=0
+[ci:install-fresh-overlay-deps] 388 overlay file(s) · 694 pushed table(s) · 7 pre-overlay creator(s) · 0 finding(s).
+[ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+
+### ci:one-design-plan
+$ npm run --silent ci:one-design-plan
+exit=0
+ci:one-design-plan: OK — 0 commit(s) inside the plan.
+
+### ci:one-design-plan:selftest
+$ npm run --silent ci:one-design-plan:selftest
+exit=0
+  ✓ git: commits inside the plan pass (the intro itself is not judged)
+  ✓ git: an untrailered commit is refused
+  ✓ git: a new UI_SURFACES id is read from history and refused
+  ✓ git: a new table in a new migration is refused
+  ✓ git: commits before RULE 6, and RULE 6 itself, are not asked to name what they complete
+  ✓ git: after RULE 6, a commit that names nothing it completes is refused
+  ✓ git: a Completes trailer naming a path that did not exist is refused
+  ✓ git: finishing an existing file, named, is accepted
+  ✓ git: a new file inside an existing service folder is accepted
+  ✓ git: a new route file is refused
+  ✓ git: a new service folder is refused
+  ✓ git: a new AnA tool in the inventory is refused
+
+ci:one-design-plan:selftest: every case behaves.
+
+### ci:migration-drop-safety
+$ npm run --silent ci:migration-drop-safety
+exit=0
+[ci:migration-drop-safety] OK — 461 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 20 dynamic DROP(s) in 20 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+
+### ci:one-product
+$ npm run --silent ci:one-product
+exit=0
+ci:one-product: 102 surfaces, 10 rail entries, none new.
+
+### ci:class-vocabulary
+$ npm run --silent ci:class-vocabulary
+exit=0
+[ci:class-vocabulary] OK — 5931 file(s) scanned, no restated class vocabulary.
+
+### ci:migration-deploy-path
+$ npm run --silent ci:migration-deploy-path
+exit=0
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+
+### ci:column-reachability
+$ npm run --silent ci:column-reachability
+exit=0
+[ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+
+### ci:runtime-ddl
+$ npm run --silent ci:runtime-ddl
+exit=0
+[ci:runtime-ddl] 75 DDL statement(s) in 11 runtime server file(s); 13 baselined
+[ci:runtime-ddl] ✅ 2 baselined file(s) now issue LESS DDL — lower or remove their entries:
+    • server/routes/c2c/context-intelligence.ts — 1 → 0
+    • server/services/integrations/credentialVault.ts — 2 → 0
+[ci:runtime-ddl] ✅ no new runtime DDL.
+
+### ci:json-operator-types
+$ npm run --silent ci:json-operator-types
+exit=0
+[ci:json-operator-types] 960 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3560 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+
+### db:sync-manifest:check
+$ npm run --silent db:sync-manifest:check
+exit=0
+Manifest is in sync.
+
+### ci:drizzle-tenant-scope
+$ npm run --silent ci:drizzle-tenant-scope
+exit=0
+[ci:drizzle-tenant-scope] OK — 90 site(s), all baselined.
+
+### ci:undefined-css-classes
+$ npm run --silent ci:undefined-css-classes
+exit=0
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+### ci:unauthenticated-fetch
+$ npm run --silent ci:unauthenticated-fetch
+exit=0
+✅ ci:unauthenticated-fetch — 72 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+
+### ci:session-scoped-rls-bypass
+$ npm run --silent ci:session-scoped-rls-bypass
+exit=0
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 0 baselined occurrence(s) remain in 0 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+[ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (791 migration file(s) and 4392 code file(s) read), and no script writes either (P-70).
+
+### ci:sql-interpolation
+$ npm run --silent ci:sql-interpolation
+exit=0
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-folder-export.ts:64:15 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-version-restore.ts:64:67 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+
+### ledger-check
+$ node scripts/ops/ledger-check.mjs
+exit=0
+
+ledger-check — docs/GA_COMPLETION_LEDGER_2026-08.md
+
+  rows parsed:       202
+  pending targets:   1
+    · L2 → docs/ANA_PERFORMANCE_ASSESSMENT_2026-08.md (not created yet)
+  failures:          0
+
+  Ledger is internally consistent.
+
+### check:catalog-copy
+$ npm run --silent check:catalog-copy
+exit=0
+[ci:catalog-copy] OK — 105 catalog description(s) across 3 migration(s) read as product copy.
+
+### ci:fixture-fallback
+$ npm run --silent ci:fixture-fallback
+exit=0
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+
+### ci:no-mock-in-prod-routes
+$ npm run --silent ci:no-mock-in-prod-routes
+exit=0
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+
+### ci:fabricated-identity
+$ npm run --silent ci:fabricated-identity
+exit=0
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+
+### ci:program-ownership-single-source:selftest
+$ npm run --silent ci:program-ownership-single-source:selftest
+exit=0
+[self-test] OK — 10 copies found, 6 reads passed.
+
+### ci:program-ownership-single-source
+$ npm run --silent ci:program-ownership-single-source
+exit=0
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+
+### ci:project-creation-owners:selftest
+$ npm run --silent ci:project-creation-owners:selftest
+exit=0
+[ci:project-creation-owners:selftest] OK { planted: 25, readsAndComments: 5, owners: 4 }
+
+### ci:project-creation-owners
+$ npm run --silent ci:project-creation-owners
+exit=0
+[ci:project-creation-owners] OK — one canonical program writer and three explicit, bounded PM writers (4 sites).
+
+### ci:discarded-audit-write
+$ npm run --silent ci:discarded-audit-write
+exit=0
+check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+
+### ci:client-ip-single-source
+$ npm run --silent ci:client-ip-single-source
+exit=0
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+
+### ci:filing-exit-agreement:selftest
+$ npm run --silent ci:filing-exit-agreement:selftest
+exit=0
+[ci:filing-exit-agreement:selftest] ✓ a new seal with no agreement check fails, naming the file and the kind
+[ci:filing-exit-agreement:selftest] ✓ the same seal passes once it asks the question
+[ci:filing-exit-agreement:selftest] ✓ a new device package built from the filing fails
+[ci:filing-exit-agreement:selftest] ✓ a baseline entry with no written reason fails, so it cannot be a snooze
+[ci:filing-exit-agreement:selftest] ✓ a baseline allowing more than exists fails, so freed allowance cannot absorb a new door
+[ci:filing-exit-agreement:selftest] ✓ a door baselined with a real reason passes, and the count is reported
+[ci:filing-exit-agreement:selftest] ✓ the module that defines the question is not read as a door
+[ci:filing-exit-agreement:selftest] ✓ an empty tree passes
+[ci:filing-exit-agreement:selftest] OK — the gate fails on every shape it exists to catch, and stays quiet on the rest.
+
+### ci:filing-exit-agreement
+$ npm run --silent ci:filing-exit-agreement
+exit=0
+[ci:filing-exit-agreement] OK — every seal and every filing-built package asks the agreement question, or is baselined with a reason. 5 baselined site(s) in 2 file(s), exactly as baselined.
+
+### ci:sign-ceremony
+$ npm run --silent ci:sign-ceremony
+exit=0
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+
+### ci:upload-guards
+$ npm run --silent ci:upload-guards
+exit=0
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 20 file(s) build uploads.
+
+### ci:trivyignore-hygiene
+$ npm run --silent ci:trivyignore-hygiene
+exit=0
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /home/user/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+
+### audit:repo-health:ceiling
+$ npm run --silent audit:repo-health:ceiling
+exit=0
+Repo health scan written: /tmp/repo-health-ceiling-probe.json
+- content-duplicate groups: 0 (0 files)   [gated]
+- duplicate basenames: 256   [reported, not gated]
+- files over byte threshold: 56
+- files over line threshold: 113
+
+✅ repo health strict gate passed.
+
+### ci:server-error-leaks
+$ npm run --silent ci:server-error-leaks
+exit=0
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+
+### ci:untracked-imports
+$ npm run --silent ci:untracked-imports
+exit=0
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+
+### ci:pushed-lint-errors
+$ npm run --silent ci:pushed-lint-errors
+exit=0
+[ci:pushed-lint-errors] no lintable files changed against origin/concept2cure-v2.
+
+### ci:pushed-lint-warnings
+$ npm run --silent ci:pushed-lint-warnings
+exit=0
+[ci:eslint-warning-ratchet] --since 609ef94c7bc400afe529201c74120ce2e1ec9cea (609ef94c7) -- 24 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since 609ef94c7bc400afe529201c74120ce2e1ec9cea.
+
+### ci:pushed-typecheck --dry-run
+$ npm run --silent ci:pushed-typecheck -- --dry-run
+exit=0
+[ci:pushed-typecheck] skipped — none of the 0 file(s) changed against origin/concept2cure-v2 can change a type.
+
+=== gates the task names that the hook does not run ===
+
+### ci:internals-in-copy
+$ npm run --silent ci:internals-in-copy
+exit=1
+
+❌ Internal identifiers in user-visible copy.
+
+   client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:745  [table name]
+     coauthor_documents
+
+   The reader of these surfaces is a regulatory director. A route name tells
+   them nothing they can act on, and the internal shape of a governed system is
+   an information-disclosure finding in a regulated product, not a cosmetic one.
+   (BIOPHARMA_WORK_ORDER.md guardrail 3; BP-W0-5.)
+
+   Name the CAPABILITY, not the endpoint:
+     "GET /api/cmc/stability-studies didn't respond."
+     → "The stability register didn't respond."
+
+### ci:migration-drop-safety:selftest
+$ npm run --silent ci:migration-drop-safety:selftest
+exit=0
+  ✓ REPEATED — dropper after creator (re-added and re-dropped every deploy)
+  ✓ UNDONE — dropper before creator (the drop reverts on the next deploy)
+  ✓ quiet — drop-and-re-add of the same name in one file
+  ✓ quiet — a DROP nothing in the set re-creates
+  ✓ quiet — a reviewed baseline exception suppresses a real pairing
+  ✓ NARROWED — an earlier file re-imposes a narrower CHECK a later file widened
+  ✓ quiet — the earlier replacement is conditional on the current definition
+  ✓ NARROWED — a guard that names a different constraint does not count
+  ✓ NARROWED — a guard that exists only in a comment does not count
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.

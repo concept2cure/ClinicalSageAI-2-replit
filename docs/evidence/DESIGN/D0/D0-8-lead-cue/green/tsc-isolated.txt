@@ -1,0 +1,3 @@
+# tsc on the two changed TSX files and their import graph, with the repo tsconfig (a temporary tsconfig in the session scratchpad extending ./tsconfig.json, files only)
+$ npx tsc -p <tmp tsconfig: files = client/src/types/global.d.ts, client/src/types/api.d.ts, AnswerLead.tsx, __tests__/answerLeadToneCue.test.tsx>
+exit 0

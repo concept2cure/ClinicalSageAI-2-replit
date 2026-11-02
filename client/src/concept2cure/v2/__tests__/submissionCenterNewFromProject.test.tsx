@@ -253,7 +253,11 @@ describe('New submission takes the open project\'s filing (F20)', () => {
     expect(optionText(/Primary region/, 'eu')).toContain('No outline, no channel');
     fireEvent.change(select(/Application type/), { target: { value: 'maa' } });
     await waitFor(() => expect(optionText(/Primary region/, 'eu')).toContain('Module 1 without the agency\'s headings, no channel'));
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/market-support?applicationType=maa');
+    // The read itself is what this pins: its method and path. Since c3794c8fe the
+    // screen's live read also hands the transport its headers and an AbortSignal,
+    // so the stalled read can be cancelled; those are transport detail, not the
+    // server's statement.
+    expect(apiRequest.mock.calls.some(([method, url]) => method === 'GET' && url === '/api/submissions/market-support?applicationType=maa')).toBe(true);
   });
 });
 

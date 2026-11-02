@@ -15,6 +15,7 @@
 import { consentElementsFor } from '../../../../../shared/regulatory/informed-consent-elements.js';
 import { EAST_ASIAN_COUNTRY_WORDS } from '../cross-node-context.js';
 import { BIOMARKER_SELECTION_OPTIONS } from './protocol-development-biomarker-selection.js';
+import { euOrphanDesignationField, orphanProgrammeLeaves, usOrphanDesignationField } from './ind-submission-orphan-designation.js';
 
 /** The 50.25(a) elements, in order, from the one record. */
 const FDA_REQUIRED_CONSENT = consentElementsFor('fda')
@@ -196,14 +197,18 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'phase_3b_4', label: 'Phase 3b / 4' },
             ],
           },
-          {
-            id: 'orphan_designation',
-            label: 'Orphan Drug Designation',
-            type: 'yes_no',
-            required: false,
+          /* 2026-11-02 (S4): a yes/no for "FDA or EMA", so a yes never said
+             which regulator, and its help said the designation changes the
+             study's size, which it does not. One question per regulator, with
+             the positions every interview offers. */
+          usOrphanDesignationField({
             helpText:
-              'Has FDA or EMA granted orphan drug designation? Per 21 CFR 316, orphan status affects study size, exclusivity, and fee waivers.',
-          },
+              "FDA's designation under FD&C Act §526 (21 USC 360bb) and 21 CFR part 316. It changes neither the evidence standard nor the size the study needs; it bears on the application fee, PREA and exclusivity once the drug is filed.",
+          }),
+          euOrphanDesignationField({
+            helpText:
+              "The European Commission's designation, on the opinion of EMA's Committee for Orphan Medicinal Products. Answer where the programme may seek an EU marketing authorisation; leave it blank otherwise.",
+          }),
         ],
         defaultNext: 'sponsor_info',
       },
@@ -320,13 +325,14 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
           /* 2026-11-02 (S4): xn_orphan_without_natural_history read
              `natural_history` / `disease_natural_history`, asked by no flow, and
              triggered on `expedited_designations` / `special_designations`, which
-             none of the four flows it applies to asks. Dead on both sides. */
+             none of the four flows it applies to asks. Dead on both sides. The
+             orphan leaves are the rule's own predicate (orphanProgrammeLeaves). */
           {
             id: 'natural_history',
             label: 'Natural-history evidence for this disease',
             type: 'select',
             required: true,
-            visibleWhen: { anyOf: [{ field: 'orphan_designation', operator: 'eq', value: true }, { field: 'therapeutic_area', operator: 'eq', value: 'rare_disease' }] },
+            visibleWhen: { anyOf: [...orphanProgrammeLeaves(), { field: 'therapeutic_area', operator: 'eq', value: 'rare_disease' }] },
             helpText:
               'Natural-history data describe the course of the disease without the investigational treatment. In a rare disease they inform the population, the endpoints and when to assess them, and they can supply an external control (FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development, March 2019). Choose the strongest source this protocol relies on. This is a different question from the real-world evidence question asked later, which asks how real-world data will be used.',
             options: [
@@ -1743,7 +1749,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'breakthrough_therapy', label: 'Breakthrough Therapy' },
               { value: 'fast_track', label: 'Fast Track' },
               { value: 'priority_review', label: 'Priority Review' },
-              { value: 'orphan_drug', label: 'Orphan Drug' },
+              /* 2026-11-02 (S4): 'orphan_drug' removed. The designation is
+                 asked once, with its positions, under study_basics. */
               {
                 value: 'rmat',
                 label: 'RMAT (Regenerative Medicine Advanced Therapy)',
@@ -1759,7 +1766,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'none', label: 'None' },
               { value: 'prime', label: 'PRIME (Priority Medicines)' },
               { value: 'conditional_ma', label: 'Conditional Marketing Authorization' },
-              { value: 'orphan', label: 'Orphan Medicinal Product' },
+              /* 2026-11-02 (S4): 'orphan' removed; eu_orphan_designation asks it. */
               { value: 'atmp', label: 'ATMP (Advanced Therapy Medicinal Product)' },
             ],
           },

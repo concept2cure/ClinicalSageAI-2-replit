@@ -1,0 +1,86 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Public Health Service
+Food and Drug Administration
+Silver Spring MD 20993
+PIND 160123
+MEETING PRELIMINARY COMMENTS
+Brightwave Therapeutics, Inc.
+Attention: Daniel Ortiz, PhD
+Head of Regulatory Affairs
+8 Harbor Point
+Boston, MA 02210
+Dear Dr. Ortiz:
+Please refer to your Pre-Investigational New Drug Application (PIND) file for BWT-417.
+We also refer to your submission dated August 4, 2026, containing a meeting request. The purpose
+of the requested meeting is to obtain the Agency's advice on the adequacy of the nonclinical and
+CMC programs to support initiation of the first-in-human study.
+Our preliminary responses to your meeting questions are enclosed.
+You should provide, to the Regulatory Project Manager, a hardcopy or electronic version of any
+materials (i.e., slides or handouts) to be presented and/or discussed at the meeting.
+If you have any questions, call Karen White, Regulatory Project Manager, at (301) 796-2222.
+Sincerely,
+{See appended electronic signature page}
+Thomas Green, MD
+Director
+Division of Oncology 3
+Office of Oncologic Diseases
+Center for Drug Evaluation and Research
+ENCLOSURE:
+Preliminary Meeting Comments
+Reference ID: 5701234
+
+-- 1 of 3 --
+
+PIND 160123
+Page 2
+FOOD AND DRUG ADMINISTRATION
+CENTER FOR DRUG EVALUATION AND RESEARCH
+PRELIMINARY MEETING COMMENTS
+Meeting Type: Type B
+Meeting Category: Pre-IND
+Meeting Date and Time: Thursday, October 29, 2026, 1:00 PM - 2:00 PM (ET)
+Meeting Location: Teleconference
+Application Number: PIND 160123
+Product Name: BWT-417
+Indication: Treatment of adult patients with relapsed or refractory solid tumors
+Sponsor Name: Brightwave Therapeutics, Inc.
+Introduction:
+This material consists of our preliminary responses to your questions and any additional comments
+in preparation for the discussion at the meeting scheduled for October 29, 2026. These preliminary
+comments are not final and may change based on the discussion at the meeting.
+2.0 DISCUSSION
+2.1. Chemistry, Manufacturing, and Controls
+Question 1: Does the Agency agree that the proposed drug substance specification is adequate to
+support the Phase 1 study?
+FDA Response to Question 1: We generally agree. However, include a test for residual solvents
+with acceptance criteria consistent with ICH Q3C(R8) and a test for bacterial endotoxins.
+Question 2: Does the Agency agree that the proposed stability program for the drug product is
+adequate to support the Phase 1 clinical study?
+FDA Response to Question 2: Yes, your proposal appears reasonable. Provide the following in the
+IND:
+1. the stability protocol, including tests, acceptance criteria and time points;
+2. the available stability data for the clinical batch.
+Reference ID: 5701234
+
+-- 2 of 3 --
+
+PIND 160123
+Page 3
+2.2. Nonclinical
+Question 3: Does the Agency agree that the completed GLP 28-day repeat-dose toxicology studies in
+rats and dogs are adequate to support the proposed starting dose and dose escalation in the
+first-in-human study?
+FDA Response to Question 3: No. The rationale for the starting dose based on the HNSTD in dogs is
+not adequate for a molecule with this mechanism. Provide a starting dose rationale based on the
+STD10 in rats and one-sixth of the HNSTD in dogs, whichever is lower.
+Question 4: Does the Agency agree that a separate embryo-fetal development study is not required
+prior to initiation of the Phase 1 study in patients with advanced cancer?
+FDA Response to Question 4: We agree, consistent with ICH S9.
+3.0 OTHER IMPORTANT INFORMATION
+PEDIATRIC PLANS
+Under the Pediatric Research Equity Act (PREA) (21 U.S.C. 355c), all applications for new active
+ingredients are required to contain an assessment of the safety and effectiveness of the product
+for the claimed indication in pediatric patients unless this requirement is waived or deferred.
+Reference ID: 5701234
+
+-- 3 of 3 --

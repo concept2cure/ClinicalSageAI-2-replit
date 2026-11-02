@@ -1,0 +1,30 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Food and Drug Administration
+IND 123456
+INFORMATION REQUEST
+Dear Dr. Example:
+We have the following requests for information:
+1. Your stability protocol lists a 6-month pull at the accelerated condition but
+the report omits it.
+Please clarify.
+Reference ID: 5123456
+
+-- 1 of 3 --
+
+IND 123456
+Page 2
+2. The impurity method validation report does not include robustness data for
+column temperature.
+Please clarify.
+Reference ID: 5123456
+
+-- 2 of 3 --
+
+IND 123456
+Page 3
+3. Provide the batch analysis for lot 3.
+Sincerely,
+Jane Reviewer
+Reference ID: 5123456
+
+-- 3 of 3 --

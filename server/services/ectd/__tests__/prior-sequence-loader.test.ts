@@ -24,7 +24,8 @@ function stubPool(rows: Array<Record<string, unknown>>, filedSubmissionIds: numb
       if (/SELECT DISTINCT c\.submission_id/.test(sql)) {
         return { rows: filedSubmissionIds.map((submission_id) => ({ submission_id })) };
       }
-      return { rows };
+      // Compile rows, as the fold's read names them (F1 review, 2026-11-01).
+      return { rows: rows.map((r) => ({ kind: 'compile', ...r })) };
     },
   };
 }

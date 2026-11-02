@@ -3705,6 +3705,13 @@
 .c2c-v2 .al-urgent .al-k { color: var(--warning); }
 .c2c-v2 .al-good .al-k { color: var(--success); }
 .c2c-v2 .al-k svg { width: 14px; height: 14px; }
+/* D0 review fix 9: with no eyebrow, an urgent or good lead puts the eyebrow's
+   icon before its headline (AnswerLead.tsx). 2px plus the space after it is
+   the eyebrow's 6px gap; -2px is the inline-icon offset .rd-chip svg uses. */
+.c2c-v2 .al-cue { display: inline-flex; vertical-align: -2px; margin-right: 2px; }
+.c2c-v2 .al-urgent .al-cue { color: var(--warning); }
+.c2c-v2 .al-good .al-cue { color: var(--success); }
+.c2c-v2 .al-cue svg { width: 14px; height: 14px; }
 .c2c-v2 .al-h { margin: 0 0 4px; font-family: var(--font-sans); font-size: var(--fs-section); font-weight: 600; line-height: 1.45; color: var(--text-100); }
 .c2c-v2 .al-h b { font-weight: 600; }
 .c2c-v2 .al-lead[data-emphasis="verdict"] .al-h { font-family: var(--font-serif); font-size: 20px; font-weight: 500; line-height: 1.35; }

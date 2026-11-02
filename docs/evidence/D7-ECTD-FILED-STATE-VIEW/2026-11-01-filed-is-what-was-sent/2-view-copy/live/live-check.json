@@ -1,0 +1,63 @@
+{
+ "login": {
+  "status": 200,
+  "success": true
+ },
+ "landedAt": "/concept2cure",
+ "runs": [
+  {
+   "project": "mixed",
+   "url": "/concept2cure/ectd-compile?program=d96883f3-d485-49ba-b93f-c3a077f2ed1a",
+   "filedStateStatus": 200,
+   "header": "On file at the agency\nthrough sequence 0001",
+   "lead": "2 documents are shown as on file, but that is not known in full: whether the agency received sequence 0002 is not yet known, so the agency may hold documents, or versions of them, that are not shown. Sequence 0001 is read from what it sent; sequence 0000 is read from its compiles, recorded before the platform kept what each send carried, so what is listed for it may differ from what it sent: a document may be listed that it did not carry, or be missing that it did. Includes 0000 (acknowledged by the agency), 0001 (sent to the agency). Not included: 0002 (a send of it is unresolved, so whether the agency holds it is not known; confirm at the agency).",
+   "tables": [
+    {
+     "label": "Module 3: 1 document on file",
+     "rows": [
+      [
+       "3.2.S.1",
+       "general v2 m3/general-v2.pdf Filed 0000 new (general.pdf), 0001 replaced (general-v2.pdf)",
+       "0001",
+       "replaced"
+      ]
+     ]
+    },
+    {
+     "label": "Module 5: 1 document on file",
+     "rows": [
+      [
+       "5.3.5.1",
+       "csr m3/csr.pdf",
+       "0000",
+       "new"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "project": "unrecorded",
+   "url": "/concept2cure/ectd-compile?program=ab8fda6b-12ff-45b8-b317-d30434bb1603",
+   "filedStateStatus": 200,
+   "header": "On file at the agency\nnot fully known",
+   "lead": "No document is shown as on file, but that is not known in full: nothing on record says what sequence 0000 carried, so the agency may hold documents, or versions of them, that are not shown. Not included: 0000 (acknowledged by the agency, but nothing on record says what it carried).",
+   "tables": []
+  }
+ ],
+ "errors": {
+  "console": [
+   "Failed to load resource: the server responded with a status of 409 (Conflict)",
+   "Failed to load resource: the server responded with a status of 409 (Conflict)",
+   "Failed to load resource: the server responded with a status of 409 (Conflict)",
+   "Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ],
+  "pageErrors": [],
+  "failed": [
+   "409 GET /api/c2c/projects/d96883f3-d485-49ba-b93f-c3a077f2ed1a",
+   "409 GET /api/c2c/projects/d96883f3-d485-49ba-b93f-c3a077f2ed1a",
+   "409 GET /api/c2c/projects/ab8fda6b-12ff-45b8-b317-d30434bb1603",
+   "409 GET /api/c2c/projects/ab8fda6b-12ff-45b8-b317-d30434bb1603"
+  ]
+ }
+}
