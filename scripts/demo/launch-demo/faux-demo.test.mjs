@@ -265,6 +265,36 @@ test.each([
   assert.ok(app.state.calls.every(c => c.method === 'GET'));
 });
 
+test('ambiguous same-title Data Room sources are not silently adopted', async () => {
+  const app = fakeApplication();
+  const name = '[Demo · Faux] FBT-201 clinical source JSON · synthetic v2';
+  app.state.vault.push(
+    { id: 'v-old-1', title: name, contentHash: 'f'.repeat(64) },
+    { id: 'v-old-2', title: name, contentHash: 'f'.repeat(64) },
+  );
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /duplicate current candidates/);
+  assert.equal(app.state.vault.length, 2);
+  assert.equal(app.state.calls.filter(x => x.method === 'POST' && x.url === '/api/vault/ingest').length, 0);
+  assert.equal(app.state.documents.length, 0);
+  assert.equal(app.state.tasks.length, 0);
+});
+
+test('ambiguous same-title editor documents are not silently adopted', async () => {
+  const app = fakeApplication();
+  const title = '[Demo · Faux] FBT-201 ICH E3 Clinical Study Report — working draft';
+  app.state.documents.push(
+    { id: 'e1929646-ed1e-43f8-bdce-34f49ceddbad', title,
+      template_id: '4331e7e3-7777-5c21-8c9b-0e2f56194e7e', program_id: 'p1', section_count: 16 },
+    { id: '6e6fd81a-c878-4b99-8e3b-ff53f215a860', title,
+      template_id: '4331e7e3-7777-5c21-8c9b-0e2f56194e7e', program_id: 'p1', section_count: 16 },
+  );
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /Multiple same-title CSR working documents/);
+  assert.equal(app.state.documents.length, 2);
+  assert.equal(app.state.tasks.length, 0);
+});
+
 test('a prior CSR working document with a non-canonical template is never adopted', async () => {
   const app = fakeApplication();
   app.state.documents.push({ id: 'bf544753-673f-4656-bbf0-156e48c85109',
