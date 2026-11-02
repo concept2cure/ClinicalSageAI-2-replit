@@ -39,7 +39,7 @@ import {
   type OrganizationArtifactRow,
 } from './VaultOrganizationArtifacts';
 import { downloadArtifactManifest } from '../artifactManifest';
-import { useLiveData, EmptyState } from '../dataConnect';
+import { useLiveData, EmptyState, ProjectBack } from '../dataConnect';
 import { RecordHistory } from '../RecordHistory';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
@@ -85,7 +85,7 @@ import {
   setEditorTarget,
   type EditorTargetDocType,
 } from '../editorTarget';
-import { readShellProject, useShellProject } from '../shellProject';
+import { readShellProject } from '../shellProject';
 import { useDialog } from '../useDialog';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
@@ -1278,8 +1278,6 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   /* Confirm N suggested (VR-11b): held here for the same reason. */
   const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
   const canWrite = useVaultCanWrite();
-  /* The back link's words (D5 §WA.4.2 rule 2): the same channel `projectId` is read from. */
-  const shellProject = useShellProject();
   /* The view on screen (D6 §C.4 step 5); the library first. */
   const [view, setView] = useState<VaultView>('library');
   const viewIds = useId();
@@ -2968,11 +2966,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const page = (
     <div className="page-inner vd vd-wrap" data-work-area="vault">
       {/* Back to the project (D5 §WA.4.2 rule 2); it replaces "Open project". */}
-      {projectId ? (
-        <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>
-          {I.left} {shellProject?.title ?? 'Project'}
-        </button>
-      ) : null}
+      <ProjectBack onNav={onNav} />
       <header className="ph">
         <div>
           <h1 className="ph-title">{getSurfaceMeta('vault').label}</h1>

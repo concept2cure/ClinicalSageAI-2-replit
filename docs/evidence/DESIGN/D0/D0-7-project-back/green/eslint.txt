@@ -1,0 +1,26 @@
+$ npx eslint client/src/concept2cure/v2/dataConnect.tsx client/src/concept2cure/v2/__tests__/projectBack.test.tsx tests/ops/ui-read-recovery.test.mjs
+
+/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs
+   43:7   warning  'slots' is never reassigned. Use 'const' instead  prefer-const
+   87:58  warning  'DOMException' is not defined                     no-undef
+  299:42  warning  'DOMException' is not defined                     no-undef
+  339:17  warning  'state' is assigned a value but never used        @typescript-eslint/no-unused-vars
+
+✖ 4 problems (0 errors, 4 warnings)
+
+exit 0
+
+# HEAD dataConnect.tsx, linted in place via --stdin with the same filename
+$ git show HEAD:client/src/concept2cure/v2/dataConnect.tsx | npx eslint --stdin --stdin-filename client/src/concept2cure/v2/dataConnect.tsx
+exit 0
+$ git show HEAD:tests/ops/ui-read-recovery.test.mjs | npx eslint --stdin --stdin-filename tests/ops/ui-read-recovery.test.mjs
+
+/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs
+   43:7   warning  'slots' is never reassigned. Use 'const' instead  prefer-const
+   87:58  warning  'DOMException' is not defined                     no-undef
+  297:42  warning  'DOMException' is not defined                     no-undef
+  337:17  warning  'state' is assigned a value but never used        @typescript-eslint/no-unused-vars
+
+✖ 4 problems (0 errors, 4 warnings)
+
+exit 0

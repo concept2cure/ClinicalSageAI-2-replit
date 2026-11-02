@@ -12,6 +12,7 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { usOrphanDesignationField } from './ind-submission-orphan-designation.js';
 
 export function createLabelingFlow(): FlowDefinition {
   return {
@@ -605,12 +606,15 @@ export function createLabelingFlow(): FlowDefinition {
             placeholder: 'e.g., Dako PD-L1 IHC 22C3 pharmDx',
             visibleWhen: { field: 'companion_diagnostic', operator: 'eq', value: 'yes' },
           },
-          {
-            id: 'orphan_designation',
-            label: 'Does the product have Orphan Drug designation?',
-            type: 'yes_no',
-            helpText: 'Orphan designation may affect labeling scope and market exclusivity claims.',
-          },
+          /* 2026-11-02 (S4): a yes/no asked of every product, devices and
+             diagnostics included, though FDA's orphan-drug designation is for
+             drugs and biologics. The positions every interview offers, asked
+             where the product is one. */
+          usOrphanDesignationField({
+            visibleWhen: { field: 'product_type', operator: 'in', value: ['rx_drug', 'biologic', 'biosimilar', 'combination'] },
+            helpText:
+              "The designation adds no labeling content for this applicant. For a biosimilar, the reference product's unexpired orphan exclusivity for an indication may require that indication to be carved out of the labeling (asked below). For a combination product whose primary mode of action is the device, say so in your own words.",
+          }),
           {
             id: 'accelerated_approval',
             label: 'Is this an accelerated approval based on a surrogate endpoint?',

@@ -1,0 +1,25 @@
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > exists, with one section for each meaning 2ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Device description files under B1 1ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Predicate device identification files under C1 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Substantial equivalence comparison files under C2 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Bench testing files under E5 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Biocompatibility files under E1 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Software documentation files under E2 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Labeling files under D2 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Clinical performance files under E7 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > no two sections file under the same heading 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > is stored in the order its codes belong in, which is the outline's order 1ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > the seed set knows when the store no longer matches it > reports drift when a stored section CODE differs from source — the 510(k) case 12ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > the seed set knows when the store no longer matches it > reports drift when a stored section TITLE differs from source 5ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > the seed set knows when the store no longer matches it > reports drift when a stored section ORDERING differs from source 5ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > the seed set knows when the store no longer matches it > reports drift when a section is missing from the store 4ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > the seed set knows when the store no longer matches it > reports drift when the store holds a section source does not have 4ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > the seed set knows when the store no longer matches it > reports drift when the template row is absent entirely 2ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > a store that matches source is left alone > reports no drift for a template stored exactly as source has it 4ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > a store that matches source is left alone > reports no drift across every seeded template at once 49ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > a store that matches source is left alone > ignores a template row at another version 6ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > the probe cannot fail the boot it runs in > answers "cannot tell" rather than throwing when the store is absent 6ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > a corrected source now reaches a store that already holds the old codes > re-seeds when a stored section code no longer matches source, and corrects it 119ms
+ ✓ server/services/intelligence/__tests__/template-seeds-correct-themselves.pglite.test.ts > a corrected source now reaches a store that already holds the old codes > leaves a matching store alone — no re-seed, no churn 42ms
+ Test Files  2 passed (2)
+      Tests  23 passed (23)

@@ -1,0 +1,244 @@
+# mutant m1-title-nullish: the copies' `?? 'Project'`: a blank title gives a button with no name
+# edits to client/src/concept2cure/v2/dataConnect.tsx (reverted after the run):
+#   - "{project.title?.trim() || 'Project'}"
+#   + "{project.title ?? 'Project'}"
+$ npx vitest run --config vitest.config.ts --maxWorkers=1 client/src/concept2cure/v2/__tests__/projectBack.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > renders nothing while no project is open 33ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > is a .pj-back button named by the open project, its arrow hidden from screen readers 350ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is missing, so the button always has a name 33ms
+ × client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is empty, so the button always has a name 58ms
+   → Unable to find an accessible element with the role "button" and name "Project"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "":
+  <button
+    class="pj-back"
+    type="button"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="pj-back"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-arrow-left"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.5"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12 19-7-7 7-7"
+        />
+        <path
+          d="M19 12H5"
+        />
+      </svg>
+       
+    </button>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is blank, so the button always has a name 70ms
+   → Unable to find an accessible element with the role "button" and name "Project"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "":
+  <button
+    class="pj-back"
+    type="button"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="pj-back"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-arrow-left"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.5"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12 19-7-7 7-7"
+        />
+        <path
+          d="M19 12H5"
+        />
+      </svg>
+       
+         
+    </button>
+  </div>
+</body>
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > goes to the project home on click 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > works from the keyboard: Tab reaches it, and Enter and Space each go back 79ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > follows the shell channel: it appears when a project opens after mount and goes when it closes 10ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > does nothing, and throws nothing, when the screen gives it no onNav 12ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  02:39:03
+   Duration  2.85s (transform 489ms, setup 270ms, import 700ms, tests 697ms, environment 812ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is empty, so the button always has a name
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Project"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "":
+  <button
+    class="pj-back"
+    type="button"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="pj-back"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-arrow-left"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.5"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12 19-7-7 7-7"
+        />
+        <path
+          d="M19 12H5"
+        />
+      </svg>
+       
+    </button>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectBack.test.tsx:58:19
+     56|     publishShellProject({ id: PID, ...(title === undefined ? {} : { ti…
+     57|     render(<ProjectBack onNav={vi.fn()} />);
+     58|     expect(screen.getByRole('button', { name: 'Project' }).className).…
+       |                   ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is blank, so the button always has a name
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Project"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "":
+  <button
+    class="pj-back"
+    type="button"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="pj-back"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-arrow-left"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.5"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12 19-7-7 7-7"
+        />
+        <path
+          d="M19 12H5"
+        />
+      </svg>
+       
+         
+    </button>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectBack.test.tsx:58:19
+     56|     publishShellProject({ id: PID, ...(title === undefined ? {} : { ti…
+     57|     render(<ProjectBack onNav={vi.fn()} />);
+     58|     expect(screen.getByRole('button', { name: 'Project' }).className).…
+       |                   ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit 1
