@@ -1,0 +1,8 @@
+# ci:surface-text-ramp at HEAD b391bfad2 WITHOUT this change, in a git archive export (a throwaway git index so the generator's git ls-files works)
+$ node scripts/design/generate-surface-text-ramp.mjs --check
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+  A stylesheet gained or lost a tinted-surface rule, so the re-based
+  text ramp no longer covers what the sources imply. Regenerate:
+    node scripts/design/generate-surface-text-ramp.mjs
+exit 1

@@ -1,0 +1,3 @@
+# HEAD b391bfad2 + this change; npm run --silent ci:design-system
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+exit 0

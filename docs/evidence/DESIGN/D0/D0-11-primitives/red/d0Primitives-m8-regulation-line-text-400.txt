@@ -1,0 +1,77 @@
+# mutant m8-regulation-line-text-400: in app-v2.css, replace
+#   '.c2c-empty-reg { margin-top: 6px; font-size: var(--fs-caption); color: var(--text-300); }'
+# with
+#   '.c2c-empty-reg { margin-top: 6px; font-size: var(--fs-caption); color: var(--text-400); }'
+# exit 1
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the regulation line is --text-300, in its one rule 60ms
+   → expected 'var(--text-400)' to be 'var(--text-300)' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > no v2 stylesheet has a rule whose subject is a tone class alone 31ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-ok from its own rule in app-v2.css 9ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-warn from its own rule in app-v2.css 11ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-err from its own rule in app-v2.css 12ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-ai from its own rule in app-v2.css 5ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-idle from its own rule in app-v2.css 10ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-dim from its own rule in app-v2.css 6ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-ok keeps what the bare rule showed, in misc-surfaces-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-warn keeps what the bare rule showed, in misc-surfaces-v2.css 3ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-idle keeps what the bare rule showed, in misc-surfaces-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-ai keeps what the bare rule showed, in misc-surfaces-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-mit.tone-ok keeps what the bare rule showed, in coverage-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-mit.tone-err keeps what the bare rule showed, in coverage-v2.css 3ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-mit.tone-idle keeps what the bare rule showed, in coverage-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-gate.tone-idle keeps what the bare rule showed, in coverage-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-el-dot.tone-idle keeps what the bare rule showed, in coverage-v2.css 3ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .rv-wf-tag.tone-err keeps what the bare rule showed, in coverage-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .dr2-find.tone-idle keeps what the bare rule showed, in coverage-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .eng-blocker-dot.tone-err keeps what the bare rule showed, in app-v2.css 5ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .eng-blocker-dot.tone-warn keeps what the bare rule showed, in app-v2.css 4ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the two the review names already have theirs: .sc-verdict.tone-warn and .pdev-sev-dot.tone-warn 2ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > nothing styles an error-toned empty state: a failure renders ErrorState 68ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the base (32px) lists .sp-primary 1ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the icon (16px) lists .sp-primary 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the fill lists .sp-primary 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the fill on hover lists .sp-primary 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the coarse-pointer height lists .sp-primary 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > no other sheet gives .sp-primary chrome: it keeps its row layout, and its grey disabled state 10ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > nothing moves it on hover, in any sheet 35ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the retired-name ratchet holds its uses 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > of its button rules, only the small size is left 1ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > it draws no segmented chrome: only the header row places the track 1ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the 28px item covers admin's .seg-btn, scoped to admin 5ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > hover covers admin's .seg-btn, scoped to admin 15ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the active item covers admin's .seg-btn, scoped to admin 6ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the dark active item covers admin's .seg-btn, scoped to admin 7ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the inset focus ring covers admin's .seg-btn, scoped to admin 7ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 11: a card header wraps, so a long subtitle drops below the title > .pj-card-h has flex-wrap: wrap, in its one rule 39ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > journey-v2.css .c2c-v2 .de-err (the form error line) is var(--fs-caption) 3ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > app-v2.css .c2c-v2 .c2c-error-ref (the support handle line) is var(--fs-caption) 7ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > app-v2.css .c2c-v2 .c2c-error-ref code (the support handle) is var(--fs-caption) 7ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > no stylesheet names .rd-chip.tone-flight 2ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 42 passed (43)
+   Start at  04:51:23
+   Duration  1.80s (transform 249ms, setup 185ms, import 324ms, tests 399ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the regulation line is --text-300, in its one rule
+AssertionError: expected 'var(--text-400)' to be 'var(--text-300)' // Object.is equality
+
+Expected: "var(--text-300)"
+Received: "var(--text-400)"
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:137:42
+    135|     const lines = BLOCKS.filter((b) => full(b.prelude).some((s) => cla…
+    136|     expect(lines.map((b) => `${b.sheet}: ${b.prelude}`)).toEqual(['app…
+    137|     expect(decl(lines[0].body, 'color')).toBe('var(--text-300)');
+       |                                          ^
+    138|   });
+    139|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

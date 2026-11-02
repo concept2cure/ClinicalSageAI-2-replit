@@ -1,0 +1,23 @@
+# Each element-and-tone pair's winning colour and fill: ../tone-cascade-b391bfad2.txt (HEAD) against tone-cascade-after.txt (this change).
+# 65 pairs. Every pair whose value changed is listed; every other pair's colour and fill are the same value as before.
+.cc-comm-dot.tone-ai color: var(--ai)  ->  (inherited / none)
+.cc-comm-dot.tone-err color: var(--error)  ->  (inherited / none)
+.cc-comm-dot.tone-idle color: var(--text-300)  ->  (inherited / none)
+.cc-comm-dot.tone-warn color: var(--warning)  ->  (inherited / none)
+.cro-lc-dot.tone-ai color: var(--ai)  ->  (inherited / none)
+.cro-lc-dot.tone-idle color: var(--text-300)  ->  (inherited / none)
+.cro-lc-dot.tone-ok color: var(--success)  ->  (inherited / none)
+.cro-lc-dot.tone-warn color: var(--warning)  ->  (inherited / none)
+.dc-cell.tone-err color: var(--error)  ->  (inherited / none)
+.dc-cell.tone-idle color: var(--text-300)  ->  (inherited / none)
+.dc-cell.tone-ok color: var(--success)  ->  (inherited / none)
+.dc-cell.tone-warn color: var(--warning)  ->  (inherited / none)
+.dl-node.tone-warn color: var(--warning)  ->  (inherited / none)
+.hf-gate.tone-err color: var(--error)  ->  (inherited / none)
+.hf-gate.tone-ok color: var(--success)  ->  (inherited / none)
+.pdev-sev-dot.tone-warn color: var(--warning)  ->  (inherited / none)
+.riskmx-cell.tone-err color: var(--error)  ->  (inherited / none)
+.riskmx-cell.tone-ok color: var(--success)  ->  (inherited / none)
+.riskmx-cell.tone-warn color: var(--warning)  ->  (inherited / none)
+.sr-finding.tone-idle color: var(--text-300)  ->  (inherited / none)
+# 20 changed, all a colour on an element where no colour shows (README, 'What changes', fix 1); 0 fills changed.

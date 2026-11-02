@@ -1,0 +1,9 @@
+# HEAD b391bfad2 + this change; npm run --silent ci:check-css-selector-shadowing
+[css-shadowing] 4 baseline entr(y/ies) no longer shadowed — delete these lines:
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .cmdk-list
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .reg-eyebrow
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .tb-cmdk .lbl
+  · client/src/concept2cure/v2/styles/journey-v2.css::.c2c-v2 .sp-primary
+
+[css-shadowing] OK — 49 stylesheets, 14 known shadowed selector(s), 0 new.
+exit 0

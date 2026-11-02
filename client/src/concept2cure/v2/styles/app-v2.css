@@ -186,8 +186,10 @@
 .c2c-v2 .pj-seclbl .s { font-weight: 400; }
 
 /* Buttons. Ghost by default; `.ghost` is the hairline secondary; `.primary` is
-   the view's one orange action. No transform on hover. */
-.c2c-v2 :is(.btn, .reg-cta, .landing-newproj) {
+   the view's one orange action. No transform on hover. `.sp-primary` is a retired
+   name for the primary (D0 review fix 5; foundationsRetiredRatchet holds its uses).
+   Its grey disabled state stays in journey-v2.css, so it is not in the opacity list. */
+.c2c-v2 :is(.btn, .reg-cta, .landing-newproj, .sp-primary) {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   height: 32px; padding: 0 12px; border: 1px solid transparent; border-radius: var(--radius-lg);
   background: transparent; color: var(--text-200);
@@ -195,19 +197,19 @@
   text-transform: none; letter-spacing: 0; cursor: pointer;
   transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.c2c-v2 :is(.btn, .reg-cta, .landing-newproj) :is(.ico, svg) { width: 16px; height: 16px; font-size: 16px; flex-shrink: 0; }
+.c2c-v2 :is(.btn, .reg-cta, .landing-newproj, .sp-primary) :is(.ico, svg) { width: 16px; height: 16px; font-size: 16px; flex-shrink: 0; }
 .c2c-v2 .btn:hover { background: var(--bg-200); color: var(--text-100); }
 /* ghost: the hairline secondary, the workhorse (364 uses) */
 .c2c-v2 .btn.ghost { border-color: var(--border); }
 .c2c-v2 .btn.ghost:hover { background: var(--bg-100); border-color: var(--border-strong); color: var(--text-100); }
 /* primary: the view's ONE orange action */
-.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj) { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--accent-on-strong); }
-.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj):hover { background: color-mix(in srgb, var(--accent-strong) 88%, var(--text-100)); border-color: transparent; color: var(--accent-on-strong); }
+.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj, .sp-primary) { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--accent-on-strong); }
+.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj, .sp-primary):hover { background: color-mix(in srgb, var(--accent-strong) 88%, var(--text-100)); border-color: transparent; color: var(--accent-on-strong); }
 /* small: canonical name `small` (≈150 uses); `sm` (14) aliased until 0 */
 .c2c-v2 :is(.btn.small, .btn.sm, .reg-cta.sm) { height: 28px; padding: 0 10px; gap: 5px; font-size: var(--fs-small); }
 .c2c-v2 :is(.btn.small, .btn.sm) :is(.ico, svg) { width: 14px; height: 14px; font-size: 14px; }
 .c2c-v2 :is(.btn, .reg-cta, .landing-newproj):disabled { opacity: .5; cursor: not-allowed; }
-@media (pointer: coarse) { .c2c-v2 :is(.btn, .reg-cta, .landing-newproj) { min-height: 44px; } }
+@media (pointer: coarse) { .c2c-v2 :is(.btn, .reg-cta, .landing-newproj, .sp-primary) { min-height: 44px; } }
 
 /* Inputs: 32px inline (`.c2c-input`, matches `.btn`), 36px in forms (`.de-input`,
    matches `.de-btn`), 14px text, radius 8, one focus ring. */
@@ -304,8 +306,9 @@
   cursor: pointer; transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .c2c-v2 :is(button.pj-card, a.pj-card, .pj-card[role="button"]):hover { background: var(--bg-050); border-color: var(--border-strong); }
-/* No header band: a title row inside the card's own padding. */
-.c2c-v2 .pj-card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 10px; padding: 0; border: 0; background: none; }
+/* No header band: a title row inside the card's own padding. It wraps, so a long subtitle drops
+   below the title rather than squeezing it (D0 review fix 11). */
+.c2c-v2 .pj-card-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 10px; padding: 0; border: 0; background: none; }
 .c2c-v2 .pj-card-h :is(.t, h3) { margin: 0; font-size: var(--fs-body); font-weight: 600; line-height: 1.4; color: var(--text-100); }
 .c2c-v2 .pj-card-h :is(.s, .sec-sub) { font-size: var(--fs-small); color: var(--text-300); }
 .c2c-v2 .pj-card-h-go { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-small); font-weight: 500; color: var(--text-300); white-space: nowrap; }
@@ -331,20 +334,24 @@
 .c2c-v2 :is(.reg-kpi[data-tone="ai"] .reg-kpi-v) { color: var(--text-100); }
 .c2c-v2 button.reg-kpi:hover .reg-kpi-l { color: var(--text-100); text-decoration: underline; text-underline-offset: 2px; }
 
-/* Segmented control: a --bg-100 track; the active item lifts onto --bg-000. */
+/* Segmented control: a --bg-100 track; the active item lifts onto --bg-000. Admin's `.seg-btn`
+   (AdminAccess.tsx) is an item too, aliased scoped to `.adm-access` (D0 review fix 10): an unscoped
+   `.seg-btn` would reach mdx's own segmented buttons, which render inside `.c2c-v2`. */
 .c2c-v2 :is(.seg, .ml-seg) { display: inline-flex; align-items: center; gap: 2px; padding: 2px; max-width: 100%; overflow-x: auto; scrollbar-width: none; border-radius: 10px; background: var(--bg-100); }
-.c2c-v2 :is(.seg-b, .ml-seg-btn) {
+.c2c-v2 :is(.seg-b, .ml-seg-btn), .c2c-v2 .adm-access .seg-btn {
   display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border: 0; border-radius: var(--radius-lg);
   background: none; font-size: var(--fs-small); font-weight: 500; color: var(--text-300); white-space: nowrap;
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.c2c-v2 :is(.seg-b, .ml-seg-btn):hover { color: var(--text-100); }
-.c2c-v2 :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) {
+.c2c-v2 :is(.seg-b, .ml-seg-btn):hover, .c2c-v2 .adm-access .seg-btn:hover { color: var(--text-100); }
+.c2c-v2 :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]),
+.c2c-v2 .adm-access .seg-btn:is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) {
   background: var(--bg-000); color: var(--text-100); box-shadow: 0 1px 2px rgb(20 20 19 / .06), 0 0 0 1px var(--border);
 }
 /* Dark keeps light's hairline ring (D0 §3; review fix 12): the --bg-200 fill alone is 1.21:1 on the
    track. --border-strong is 1.49:1 on the track, a ring but short of SC 1.4.11's 3:1 (D0-10 README). */
-.c2c-v2.dark :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) { background: var(--bg-200); box-shadow: 0 0 0 1px var(--border-strong); }
+.c2c-v2.dark :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]),
+.c2c-v2.dark .adm-access .seg-btn:is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) { background: var(--bg-200); box-shadow: 0 0 0 1px var(--border-strong); }
 
 /* Tabs: one scrollable row; the active tab is an ink underline, not orange. */
 .c2c-v2 :is(.tabs, .reg-tabs, .sc-wsbar, .cc-tabs) {
@@ -364,7 +371,7 @@
 }
 /* Focus inside the edge: the tab row and the segmented track scroll, and a scroller clips the global
    ring drawn 2px outside a button (D0 review fix 7; the inset form .crumb-proj uses). */
-.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab, .seg-b, .ml-seg-btn):focus-visible { outline-offset: -2px; }
+.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab, .seg-b, .ml-seg-btn):focus-visible, .c2c-v2 .adm-access .seg-btn:focus-visible { outline-offset: -2px; }
 .c2c-v2 .tab-body { padding: 20px 0 0; }
 
 /* Chips: 12px, sentence case; tone only where it means something. */
@@ -381,6 +388,9 @@
 .c2c-v2 .rd-chip.tone-ok   { background: var(--success-muted); color: var(--success); }
 .c2c-v2 .rd-chip.tone-warn { background: var(--warning-muted); color: var(--warning); }
 .c2c-v2 .rd-chip.tone-err  { background: var(--error-muted);   color: var(--error); }
+/* dim: a quiet "nothing yet" (no sources, no operation). It took these values from a bare
+   `.c2c-v2 .tone-dim`, deleted with the other bare tones (D0 review fix 1). */
+.c2c-v2 .rd-chip.tone-dim  { background: var(--bg-100);        color: var(--text-400); }
 /* tone-ai was orange for a neutral state ("active"): neutral now; orange is not a status. */
 .c2c-v2 .rd-chip:is(.tone-ai, .tone-idle) { background: var(--bg-100); color: var(--text-200); }
 .c2c-v2.dark .rd-chip:is(:not([class*="tone-"]), .tone-ai, .tone-idle) { background: var(--bg-200); }
@@ -415,7 +425,9 @@
 }
 .c2c-v2 .c2c-empty-state :is(.c2c-empty-action, .c2c-empty-retry):hover { background: var(--bg-100); border-color: var(--border-strong); color: var(--text-100); }
 @media (pointer: coarse) { .c2c-v2 .c2c-empty-state :is(.c2c-empty-action, .c2c-empty-retry) { min-height: 44px; } }
-.c2c-v2 .c2c-empty-state .c2c-empty-reg { margin-top: 6px; font-size: var(--fs-caption); color: var(--text-400); }
+/* --text-300: an empty state sits on any surface, and --text-400 holds 4.5:1 only on --bg-000
+   (D0.md §3; review fix 1). */
+.c2c-v2 .c2c-empty-state .c2c-empty-reg { margin-top: 6px; font-size: var(--fs-caption); color: var(--text-300); }
 
 /* Centered dialog (rare, for confirmations). Governed ceremonies keep their own. */
 .c2c-v2 :is(.cl-modal, .rbm-modal) { width: min(560px, calc(100vw - 32px)); max-height: 86vh; display: flex; flex-direction: column; background: var(--canvas-elevated); border: 1px solid var(--border); border-radius: var(--radius-2xl); box-shadow: var(--v2-shadow-lg); overflow: hidden; }
@@ -477,12 +489,9 @@
    fixture-free replacement for a "Sample data" card. A real backend returned
    nothing, or the fetch failed; either way the surface says so plainly rather
    than rendering a fabricated stand-in. */
-/* Its quiet form is in the D0 block above. The error tone stays here. */
-.c2c-v2 .c2c-empty-state.tone-error {
-  border-color: color-mix(in srgb, var(--warning) 34%, transparent);
-  background: color-mix(in srgb, var(--warning) 6%, transparent);
-}
-.c2c-v2 .c2c-empty-state.tone-error .c2c-empty-ic { color: var(--warning); opacity: 1; }
+/* Its quiet form is in the D0 block above. A failed load is not drawn here:
+   `tone="error"` renders ErrorState (below), and the panel carries no tone class
+   (D0 review fix 1 deleted the error tone's two dead rules). */
 /* The loading treatment, moved off the MDX lane's private `.data-gate-icon-pulse`
    when `<DataGate>` converged onto this component. `busy` previously set
    `aria-busy` and nothing else here, so a panel waiting on a fetch was
@@ -591,11 +600,12 @@
    measures 3.01:1 (light) / 3.77:1 (dark) on the tinted fill — worse again on
    the chip's own 10% wash, at 2.74:1 / 3.32:1. The id is the one string a
    support call depends on being read correctly, so it takes --text-200:
-   9.23:1 / 10.71:1 for the label, 8.40:1 / 9.42:1 for the chip. */
-.c2c-v2 .c2c-error-ref { font-size: 11px; color: var(--text-200); }
+   9.23:1 / 10.71:1 for the label, 8.40:1 / 9.42:1 for the chip. 12px, the
+   floor (D0.md §3; review fix 16): it was 11px, the handle and its label. */
+.c2c-v2 .c2c-error-ref { font-size: var(--fs-caption); color: var(--text-200); }
 .c2c-v2 .c2c-error-ref code {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: 11px; user-select: all; color: var(--text-200);
+  font-size: var(--fs-caption); user-select: all; color: var(--text-200);
   padding: 1px 4px; border-radius: 3px;
   background: color-mix(in srgb, var(--text-400) 10%, transparent);
 }
@@ -2336,14 +2346,13 @@
 .c2c-v2 .rd-card .n{font-size:30px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1;}
 .c2c-v2 .rd-card .l{font-size:12px;font-weight:500;margin-top:6px;display:flex;align-items:center;gap:7px;}
 .c2c-v2 .rd-card .b{font-size:11px;color:var(--text-400);margin-top:3px;line-height:1.4;}
-.c2c-v2 .tone-ok{background:var(--success-muted);color:var(--success);}
-.c2c-v2 .tone-ai{background:var(--ai-muted);color:var(--ai);}
-.c2c-v2 .tone-warn{background:var(--warning-muted);color:var(--warning);}
-.c2c-v2 .tone-idle{background:var(--idle-muted);color:var(--text-300);}
-/* `dim` and `err` are emitted by fifteen call sites (`rd-chip tone-` + tone) and had no rule: a
-   "no sources" or "failed" chip rendered as unstyled text. */
-.c2c-v2 .tone-dim{background:var(--bg-100);color:var(--text-400);}
-.c2c-v2 .tone-err{background:var(--error-muted);color:var(--error);}
+/* No bare `.c2c-v2 .tone-*` rule (D0 review fix 1). Six stood here and lent a chip's fill to any
+   element with a tone class, the empty state included. The chip's six tones are its own (D0 block),
+   and each element that showed a fill or colour only these gave keeps it in its own sheet
+   (docs/evidence/DESIGN/D0/D0-11-primitives/). This one's sheet, mdx/app.css, is outside D0's
+   paths: the blocker dot's fill is `currentColor`, so its tone is its colour. */
+.c2c-v2 .eng-blocker-dot.tone-err{color:var(--error);}
+.c2c-v2 .eng-blocker-dot.tone-warn{color:var(--warning);}
 
 /* ── Labeling / IFU workbench ── */
 .c2c-v2 .lbl-symgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
