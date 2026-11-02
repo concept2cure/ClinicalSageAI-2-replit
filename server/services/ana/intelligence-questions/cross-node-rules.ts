@@ -297,8 +297,10 @@ export const CROSS_NODE_RULES: CrossNodeRule[] = [
     /* 2026-11-02 (S4): the designation as each interview asks it. The rule
        triggered on `expedited_designations` / `special_designations`, which
        none of these four flows asks, and its mitigation was asked by none
-       either: dead on both sides in every flow it named. */
-    triggeredBy: ['orphan_designation', 'regulatory_pathway', 'ema_designations', 'exclusivity_claims', 'prea_applicable'],
+       either: dead on both sides in every flow it named. Then (S4, #7) the
+       designation's one question per regulator; the protocol alone asks the
+       EU one. */
+    triggeredBy: ['orphan_designation', 'eu_orphan_designation'],
     mitigatedBy: ['natural_history'],
     /* No negativeIsAnswer: 'none' IS the finding. */
     check(flat, _state, definition, ctx) {
@@ -318,10 +320,7 @@ export const CROSS_NODE_RULES: CrossNodeRule[] = [
         questionId: '_cross_node',
         triggerValues: {
           orphan_designation: flat['orphan_designation'],
-          regulatory_pathway: flat['regulatory_pathway'],
-          ema_designations: flat['ema_designations'],
-          exclusivity_claims: flat['exclusivity_claims'],
-          prea_applicable: flat['prea_applicable'],
+          eu_orphan_designation: flat['eu_orphan_designation'],
           natural_history: flat['natural_history'],
         },
       };

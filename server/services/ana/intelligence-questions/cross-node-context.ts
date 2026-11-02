@@ -13,6 +13,7 @@
 import type { FlowDefinition } from './types.js';
 import type { QuestionPredicate } from '../../../../shared/types/intelligence-questions.js';
 import { evaluatePredicate } from '../../../../shared/ana/question-predicate.js';
+import { orphanProgrammeLeaves } from './flows/ind-submission-orphan-designation.js';
 
 /* ─── Reading one answer ─────────────────────────────────────────────────── */
 
@@ -174,21 +175,20 @@ export function contextFor(
 /* ── Orphan designation and natural history (2026-11-02, S4) ─────────────── */
 
 /**
- * Orphan designation, under every question the four interviews state it by:
- * a yes_no in the protocol and the BLA (read with the shared predicate's own
- * coercion, so true, 'yes' and 'y' agree), a granted / applied select in the
- * IND and the NDA, and the orphan options of three multi_selects.
+ * Whether the answers make this an orphan programme: the predicate every
+ * natural-history gate carries (orphanProgrammeLeaves), so the rule counts
+ * exactly the answers that open the question it waits on.
+ *
+ * 2026-11-02 (S4): it also read `regulatory_pathway` and `ema_designations`
+ * (orphan checkboxes the protocol no longer offers, since the designation is
+ * asked once per regulator), `exclusivity_claims` 'orphan_7yr' (an exclusivity
+ * CLAIM, which is not a designation) and `prea_applicable` 'orphan_exempt' (a
+ * PREA position). None of them opens a gate, so they only made the rule wait
+ * on answers that could never let it fire; and the last two are claims the
+ * designation should be checked against, not evidence of it.
  */
 export function statesOrphanDesignation(flat: Record<string, unknown>): boolean {
-  const od = flat['orphan_designation'];
-  return (
-    evaluatePredicate({ field: 'orphan_designation', operator: 'eq', value: true }, flat) ||
-    ['granted', 'applied'].includes(strVal(od)) ||
-    mentions(flat['regulatory_pathway'], 'orphan') ||
-    mentions(flat['ema_designations'], 'orphan') ||
-    mentions(flat['exclusivity_claims'], 'orphan') ||
-    strVal(flat['prea_applicable']) === 'orphan_exempt'
-  );
+  return evaluatePredicate({ anyOf: orphanProgrammeLeaves() }, flat);
 }
 
 /**
