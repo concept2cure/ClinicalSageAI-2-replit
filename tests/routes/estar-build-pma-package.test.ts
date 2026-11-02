@@ -106,6 +106,13 @@ vi.mock('../../server/services/auditService', () => ({
 vi.mock('../../server/services/pathway-engines/estar/estar-content-leaves', () => ({
   loadDeviceContentLeaves: mockLoadContentLeaves,
   loadAuthoredDeviceSections: mockLoadAuthoredSections,
+  /* P-29.3: no editing document is bound to these programs' filings, so the
+     question is not applicable. Its refusal is pinned in
+     tests/routes/estar-export-governance.test.ts. */
+  governedDeviceFilingAgreement: async () => ({
+    documentId: 'doc-1', bound: [], diverged: [], rewritten: [], unfiled: [],
+    reason: 'No document in the editor is bound to this filing, so there is no editing text to compare.',
+  }),
   /* The seven intake device answers. These PMA cases assert the module scoring,
      not the conditional-section resolution, so the program here has none on
      file — which the route reads as "not asked" and leaves undetermined. */

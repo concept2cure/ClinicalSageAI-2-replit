@@ -47,6 +47,7 @@ import { tryAssessMarketReadiness } from '../../global-markets/market-readiness'
 import type { MarketId, MarketReadinessResult } from '../../global-markets/types';
 import type { DeviceContentClient, DeviceContentSource } from '../estar/estar-content-leaves';
 import { DEVICE_FLAGS } from '../../../../shared/constants/domain/device-classification';
+import { divergedSectionLabel, filedCopyDivergedSentence, type DivergedNode } from '../../c2c/filing-section-target';
 
 export type DeviceArtifactKind = 'official-estar' | 'content-package-draft' | 'none';
 
@@ -92,6 +93,15 @@ export interface AssembleDeviceSubmissionInput {
    * being scored as satisfied (W1-5).
    */
   deviceFlags?: DeviceFlags;
+  /**
+   * Sections whose FILED copy is not the text their document holds — the
+   * `rewritten` half of `governedDeviceFilingAgreement`, which the caller asks
+   * before reading the filing (P-29.3, docs/EXIT_ATTESTATION_DECISION_2026-10-18.md).
+   * The verdict is read from the filing and the submission is built from it, so
+   * a rewritten filed copy blocks. Absent or empty: the filing agrees, or was
+   * not compared (no governed document, or none bound to the editor).
+   */
+  filedCopyDiverged?: ReadonlyArray<DivergedNode>;
 }
 
 export interface AssembleDeviceSubmissionResult {
@@ -111,6 +121,8 @@ export interface AssembleDeviceSubmissionResult {
   market?: MarketReadinessResult;
   /** Aggregated, de-duplicated blockers preventing a submittable official eSTAR. */
   blockers: string[];
+  /** Sections whose filed copy is not the document's text, as a refusal names them. Empty when none. */
+  filedCopyDiverged: string[];
   provenance: {
     generatedAt: string;
     modules: string[];
@@ -204,13 +216,21 @@ export function assembleDeviceSubmission(
   // Market overlay blockers (honest about transmit/assemble gaps).
   if (market) for (const b of market.blockers) blockers.push(b);
 
+  // A filed copy that is not the document's text (P-29.3). /build refuses the
+  // package and the official eSTAR refuses the section's attachment, so neither
+  // artifact is producible until it is re-filed, whatever the sections score.
+  const diverged = input.filedCopyDiverged ?? [];
+  if (diverged.length > 0) blockers.push(`Nothing can be assembled yet. ${filedCopyDivergedSentence(diverged)}`);
+
   // The mapper's own verdict: no required section missing, no section
   // undetermined AND no contradicted answer. Never recomputed here from part of it.
   const sectionsComplete = estar.summary.ready;
-  const canProduceOfficialEstar = sectionsComplete && template.available;
+  const canProduceOfficialEstar = sectionsComplete && template.available && diverged.length === 0;
 
   let artifactKind: DeviceArtifactKind;
-  if (canProduceOfficialEstar) {
+  if (diverged.length > 0) {
+    artifactKind = 'none';
+  } else if (canProduceOfficialEstar) {
     artifactKind = 'official-estar';
   } else if (input.leaves.length > 0) {
     // We have content but cannot produce the official eSTAR — only the loose
@@ -232,6 +252,7 @@ export function assembleDeviceSubmission(
     template,
     market,
     blockers: dedupedBlockers,
+    filedCopyDiverged: Array.from(new Set(diverged.map(divergedSectionLabel))),
     provenance: {
       generatedAt: new Date().toISOString(),
       modules: [
@@ -291,7 +312,7 @@ export async function loadProgramDeviceAssemblyInput(
   organizationId: number,
   input: AssembleProgramDeviceSubmissionInput,
 ): Promise<ProgramDeviceAssemblyInput> {
-  const [{ resolveDeviceContentScope, loadDeviceContentLeaves }, { loadProgramDeviceFlags }, { listVendoredTemplates, isUsableEstarTemplate }] =
+  const [{ resolveDeviceContentScope, loadDeviceContentLeaves, governedDeviceFilingAgreement }, { loadProgramDeviceFlags }, { listVendoredTemplates, isUsableEstarTemplate }] =
     await Promise.all([
       import('../estar/estar-content-leaves'),
       import('../estar/program-device-flags'),
@@ -303,9 +324,15 @@ export async function loadProgramDeviceAssemblyInput(
     documentId: input.documentId,
     client: input.client,
   });
-  const [leaves, vendored] = await Promise.all([
+  const [leaves, vendored, filingAgreement] = await Promise.all([
     loadDeviceContentLeaves(organizationId, scope),
     listVendoredTemplates(),
+    /* P-29.3: the verdict is read from the filing; is it still the document's
+       text? Asked of the scope the leaves were read from. A legacy scope reads
+       cerv2_510k_sections, which is not the filing, so it is not asked. */
+    scope.programId
+      ? governedDeviceFilingAgreement(organizationId, scope.programId, { client: scope.client, docTypes: scope.docTypes })
+      : null,
   ]);
 
   // The device questions the program answered at intake. Without them every
@@ -330,6 +357,7 @@ export async function loadProgramDeviceAssemblyInput(
       presentTemplates: vendored.filter(isUsableEstarTemplate).map((t) => t.fileName),
       market: input.market,
       environment: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+      filedCopyDiverged: filingAgreement?.rewritten,
     },
     deviceContentSource: source,
   };
