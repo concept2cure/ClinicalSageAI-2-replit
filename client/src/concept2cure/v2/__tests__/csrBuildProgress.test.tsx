@@ -87,6 +87,71 @@ it('shows the server refusal as stated, never a silent empty or a queued build',
   expect(screen.queryByText(/is queued/)).toBeNull();
 });
 
+it('does not block the document CSR source picker when optional package-run history is unavailable', async () => {
+  apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) {
+      throw refusal(503, { code: 'PACKAGE_HISTORY_UNAVAILABLE',
+        message: 'Submission-package history is unavailable.' });
+    }
+    if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
+    if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1',
+      limitReached: false, sources: [] });
+    return ok({});
+  });
+  render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
+  expect((await screen.findByRole('alert')).textContent).toMatch(/Earlier submission-package history is unavailable/);
+  expect(screen.getByText(/Choose the study’s clinical source in this project’s Vault/)).toBeTruthy();
+  expect(apiRequest.mock.calls.some(([, path]) => String(path).includes('/csr/sources?'))).toBe(true);
+  expect(screen.queryByText(/Reading this document’s study data/)).toBeNull();
+});
+
+it('permits retained document study data to build even when older package-run history fails', async () => {
+  apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) throw new Error('Package history read failed');
+    if (path.includes('/csr/study-data?')) return ok({ studyData: [{
+      studyDataId: RUN, createdAt: '2026-11-02T08:00:00Z', sources: [receipt],
+    }] });
+    if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM,
+      historical: true, studies: [{ source: receipt, tables }] });
+    if (path === '/api/csr/jobs') return ok({ jobId: 42, status: 'queued' }, 202);
+    return ok({});
+  });
+  render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
+  expect((await screen.findByRole('alert')).textContent).toMatch(/Earlier submission-package history is unavailable/);
+  const build = await screen.findByRole('button', { name: /Build CSR draft · NCT05330182/ });
+  fireEvent.click(build);
+  await screen.findByText(/CSR build 42 is queued/);
+  expect(apiRequest).toHaveBeenCalledWith('POST', '/api/csr/jobs', {
+    programId: PROGRAM, studyInfo: receipt.studyInfo,
+    evidenceSource: { programId: PROGRAM, runId: RUN, studyId: 'LMN-201-201' },
+  });
+});
+
+it('tells the user when package history is malformed instead of pretending there are no runs', async () => {
+  apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: null });
+    if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
+    if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1',
+      limitReached: false, sources: [] });
+    return ok({});
+  });
+  render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
+  expect((await screen.findByRole('alert')).textContent).toMatch(/incomplete response/);
+  expect(screen.getByText(/Choose the study’s clinical source in this project’s Vault/)).toBeTruthy();
+});
+
+it('does not expose the source picker after the document study-data read itself fails', async () => {
+  apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: [] });
+    if (path.includes('/csr/study-data?')) throw refusal(503, { code: 'CSR_DATA_UNAVAILABLE',
+      message: 'Current document study data could not be read.' });
+    return ok({});
+  });
+  render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
+  expect((await screen.findByRole('alert')).textContent).toMatch(/Current document study data could not be read/);
+  expect(screen.queryByText(/Choose the study’s clinical source in this project’s Vault/)).toBeNull();
+});
+
 const headings: CsrBoardHeading[] = [
   { num: '11', label: 'Efficacy evaluation', depth: 1, manual: false, state: 'not_drafted' },
   { num: '11.4.1', label: 'Analysis of efficacy', depth: 3, manual: false, state: 'in_review', contentHash: HASH, reviewerId: 5 },
@@ -98,7 +163,7 @@ it('records a review decision on the exact text, and shows a refused decision', 
   const changed = vi.fn();
   const onImport = vi.fn();
   render(<CsrHeadingReview jobId={41} headings={headings} onChanged={changed} onImport={onImport} />);
-  expect(screen.getByText('2 of 4 ICH E3 headings drafted · 1 approved')).toBeTruthy();
+  expect(screen.getByText('2 of 4 ICH E3 headings with saved text free of data placeholders · 0 still contain placeholders · 1 approved')).toBeTruthy();
   expect(screen.getByText('Prepared from records, not drafted by the build')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: /Approve/ }));
   await vi.waitFor(() => expect(changed).toHaveBeenCalled());
