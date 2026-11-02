@@ -24,7 +24,7 @@ import {
 } from '@/services/portal/authService';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
-import { computeRedirect, parseSsoHandoff, parseSsoMfaHandoff } from '../../auth/redirectUtils';
+import { computeRedirect, parseSsoHandoff, parseSsoMfaHandoff, verifyDemoAccessReadiness } from '../../auth/redirectUtils';
 import { OrganizationSso } from './OrganizationSso';
 import { takeSignOutReason, type SessionEndReason } from '../../../utils/sessionEnd';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
@@ -278,6 +278,14 @@ export const Concept2CureLogin: React.FC = () => {
       });
       const data = await res.json();
       if (data.success && data.accessToken) {
+        // Demo Access means a usable, populated demonstration, not merely a
+        // valid JWT. Never persist this session until its current organization,
+        // accessible project and Tasking read are verified.
+        const readiness = await verifyDemoAccessReadiness(data.accessToken, data.user, devLoginEmail);
+        if (!readiness.ready) {
+          setError({ message: readiness.message || 'Demo environment is not ready.' });
+          return;
+        }
         const expiry = new Date(Date.now() + (data.expiresIn || 86400) * 1000).toISOString();
         localStorage.setItem('trialsage_access_token', data.accessToken);
         localStorage.setItem('trialsage_refresh_token', data.refreshToken || '');
