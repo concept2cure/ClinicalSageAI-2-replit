@@ -38,6 +38,7 @@ export interface CsrBoardHeading {
   label: string;
   depth: number;
   manual: boolean;
+  placeholder?: boolean;
   state: 'not_drafted' | 'draft' | 'in_review' | 'approved';
   staleApproval?: boolean;
   contentHash?: string;
@@ -109,7 +110,8 @@ export function CsrHeadingReview({ jobId, headings, onChanged, onImport }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const approved = headings.filter(h => h.state === 'approved').map(h => h.num);
-  const drafted = headings.filter(h => h.state !== 'not_drafted').length;
+  const drafted = headings.filter(h => h.state !== 'not_drafted' && !h.placeholder).length;
+  const incomplete = headings.filter(h => h.placeholder).length;
   const decide = async (heading: CsrBoardHeading, decision: Decision, reason?: string) => {
     if (busy || !heading.contentHash) return;
     setBusy(true); setError(null);
@@ -122,7 +124,7 @@ export function CsrHeadingReview({ jobId, headings, onChanged, onImport }: {
   return <section aria-label="Section review" style={{ marginTop: 16, maxWidth: 900 }}>
     <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
       <strong>Section review</strong>
-      <span>{drafted} of {headings.length} ICH E3 headings drafted · {approved.length} approved</span>
+      <span>{drafted} of {headings.length} ICH E3 headings with saved text free of data placeholders · {incomplete} still contain placeholders · {approved.length} approved</span>
       <button type="button" className="btn" disabled={busy || approved.length === 0} onClick={() => onImport(approved)}>
         {I.fileCheck} Import approved sections into Authoring
       </button>
@@ -142,7 +144,7 @@ function HeadingRow({ heading, busy, onDecide }: {
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
       <span className="mono" style={{ color: 'var(--accent-200)' }}>{heading.num}</span>
       <span>{heading.label}</span>
-      <span className={`rd-chip tone-${STATE_TONE[heading.state]}`}>{STATE_LABEL[heading.state]}</span>
+      <span className={`rd-chip tone-${STATE_TONE[heading.state]}`}>{heading.placeholder ? 'Template · data missing' : STATE_LABEL[heading.state]}</span>
       {heading.manual && heading.state === 'not_drafted' && <span>Prepared from records, not drafted by the build</span>}
       {heading.staleApproval && <span>Redrafted after approval; review again</span>}
       {heading.state === 'draft' && heading.reason && <span>Sent back: {heading.reason}</span>}
