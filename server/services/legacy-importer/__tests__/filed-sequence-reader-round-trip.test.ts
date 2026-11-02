@@ -24,7 +24,7 @@ import { packageEctdSubmission, type EctdLeaf } from '../../submission-gateways/
 import { goldenPdf } from '../../ectd/qualification/golden-fixtures';
 import { loadFiledStateBySubmission } from '../../ectd/prior-sequence-loader';
 import { readFiledSequenceArchive, type FiledSequence } from '../filed-sequence-reader';
-import { md5 } from './support/conformant-sequence';
+import { filedStatePool, md5 } from './support/conformant-sequence';
 
 type Manifest = Awaited<ReturnType<typeof packageEctdSubmission>>['leafManifest'];
 
@@ -153,8 +153,7 @@ describe('a filed sequence reads back as the manifest its filing recorded', () =
     // The real fold, through its public reader: a pool that answers the filed
     // manifests query with these rows, oldest first, as ectd_compilations would.
     const state = async (rows: { sequence_number: string; leaf_manifest: unknown }[]) => {
-      const pool = { query: async (sql: string) => ({ rows: /leaf_manifest/.test(sql) ? rows : [] }) };
-      return (await loadFiledStateBySubmission(pool, { organizationId: 1, submissionId: 1 })).leaves
+      return (await loadFiledStateBySubmission(filedStatePool(rows), { organizationId: 1, submissionId: 1 })).leaves
         .map((l) => ({ seq: l.sequenceNumber, section: l.ctdSection, file: l.fileName, md5: l.md5, leafId: l.leafId, backbone: l.backbone }))
         .sort((a, b) => `${a.seq}${a.backbone}${a.leafId}`.localeCompare(`${b.seq}${b.backbone}${b.leafId}`));
     };

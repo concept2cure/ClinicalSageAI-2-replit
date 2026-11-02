@@ -133,7 +133,7 @@ describe('every CMC destination says what it is and what to do on it', () => {
        halves — the tabs are BELOW the header, never above it. */
     const page = /<div className="page-inner cm" data-work-area="cmc">([\s\S]*?)<Surf /.exec(CMC_CODE);
     expect(page, 'the work-area root is not where this case can read it').not.toBeNull();
-    const order = ['<CmBack', '<h1 className="ph-title">', '<CmStarters', '<CmHalves'];
+    const order = ['<ProjectBack', '<h1 className="ph-title">', '<CmStarters', '<CmHalves'];
     let at = -1;
     for (const piece of order) {
       const next = page![1].indexOf(piece);

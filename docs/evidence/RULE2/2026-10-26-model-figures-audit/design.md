@@ -22,10 +22,11 @@
 > | S5a pharmacovigilance | done | `s5a-pharmacovigilance/` |
 > | S5a dose optimization | done | `s5a-dose-optimization/` |
 > | S5a RWE | done | `s5a-rwe/` |
+> | S5c GMP quality systems | done | `s5c-gmp-quality-systems/` |
 > | S6b | done; PMA withheld per P-55 R-7 | `s6b-generate-document-records/` |
 > | S6 | done, with its review | `s6-plan-ind-module-authoring-retired/` |
 > | `start_war_game` (found 2026-11-01) | done | `war-game-stored-session/` |
-> | S5b–S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
+> | S5b, S5c GCP, S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -628,6 +629,33 @@ clinical-notes or pharmacy capture trait that a stated flag contradicts.
   - `digitalHealthTools`, `medicalDeviceTools`, `assess_qms`, `assess_pathway_eligibility`.
   - For an IVD program, `assess_biomarker_clinical_validation` and `assess_biomarker_analytical_validation` also take an optional `study_id`. They then read `ivd_clinical_performance` / `ivd_analytical_performance` (P-A, scoped to the organization and program, through a `RECORD_SCOPES` entry), with the I-22 provenance line.
 - **S5c (quality):** `gcpOperationsTools`, `gmpQualitySystemsTools`.
+
+**S5c GMP quality systems — What already exists (execution audit):** the six functions in
+`gmp-quality-systems/gmp-quality-systems-knowledge.ts` are already reached by `gmpQualitySystemsTools.ts`,
+the executor's `runStatsTool` stated-input wrapper and the quality-systems skills. The 2026-10-15 sweep had
+already made CAPA severity, the deviation class, product impact and triggers, and the CSV approach and
+e-signature controls three-valued (`unstated`, `anyOf`, `allOf`, pinned by the engine's three tests). Extend
+that; reuse `statedBoolean`, `booleanInputStates`, `statedNumber`, `statedOneOf` and `refuseUnlessStated`,
+and converge the local `refuseUnknown` onto the last. The `advise_data_integrity` cue checker
+(`ana/data-integrity.ts`) is other code and is not touched. The local history is shallow with no GMP-name
+deletion matches. Evidence: `s5c-gmp-quality-systems/`.
+
+**GMP quality systems execution result:** the 32 true/false inputs (13 of data integrity, counting its 11
+controls, 3 of CAPA, 6 of deviation, 3 of API GMP, 3 of sterile controls, 4 of CSV) report their stated
+value or `not_stated`, and a malformed one is refused by field. Data criticality, the audit-trail review
+frequency and each lifecycle-stage risk are given only when the stated impact facts settle them, and the
+overall rating only when every answer to the unstated impact, control and audit-trail facts gives one band;
+an electronic record of unstated type is not called dynamic. An unstated extent, recurrence, factor count or,
+for a recall or OOS, severity leaves the root-cause method undetermined unless a stated fact or
+`preferredRootCauseMethod` settles it; the problem statement says when recurrence is not stated, and a
+severity inferred from product impact sets no target timeline. An unstated `usMarketed` leaves the field
+alert undetermined unless the other facts settle it. An unstated `electronicRecords` leaves three Part 11
+controls undetermined, and a GxP impact only inferred from direct impact picks no assurance approach. A missing or
+unknown API step is refused; below level 4 an unstated critical-step fact leaves the stringency not assessed
+and marks the controls it would add, and an unstated significance leaves the change classification not
+assessed unless a critical or level-4 step settles it. An unstated heat stability, or the filterability of a
+product that is not heat-stable, leaves the sterilisation approach not assessed. Every required text and
+enum is refused by name. No source reader, app or service was added.
 - **S5d:** `benefitRiskTools`, `biosimilarTools`, `immunogenicityTools`, `postApprovalTools`, `regulatoryStrategyTools`, `bioequivalenceTools`.
   - `assess_orphan_designation`: a prevalence with no stated source gives `fdaEligible: null`.
   - `assess_dissolution_similarity` instruction: "for recorded profiles use `compare_recorded_dissolution`."

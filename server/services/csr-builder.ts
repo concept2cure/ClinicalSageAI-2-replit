@@ -372,6 +372,8 @@ interface SectionReply {
   model?: string;
   resolvedModel?: string;
   usage?: { totalTokens?: number };
+  /** The gateway's fixed reply when no provider serves (demo mode, model 'demo-mode'): never a draft. */
+  deterministic?: boolean;
 }
 
 /** Whether a retained evidence pack actually carries tables for this section. */
@@ -419,11 +421,19 @@ function acceptsConductClaims(content: string, lineage?: Record<string, unknown>
 }
 
 /**
+ * Why no model can be said to have written a reply: nobody is named as serving it, or no provider served
+ * it. The gateway's fixed demo-mode reply was saved as an AI draft on 30 headings (CDISC pilot demo walk,
+ * 2026-11-02); it is refused as the MCP drafting tool refuses it (server/mcp/tools/drafting.ts).
+ */
+const unservedReply = (reply: SectionReply, model: string): 'model_unattributed' | 'no_model_provider' | null =>
+  !model ? 'model_unattributed' : reply.deterministic === true || model === 'demo-mode' ? 'no_model_provider' : null;
+
+/**
  * Accept a model reply as the section, or record on `lineage` why not.
  * Rule 2: an evidence-bound results section states only figures that
  * reconcile, cell by cell, to the retained engine tables; any other section
  * states no figure the study information does not carry. The model id is the
- * one the gateway reports serving — a reply nobody can attribute is refused.
+ * one the gateway reports serving — a reply nobody can attribute, or no provider served, is refused.
  */
 function acceptSectionReply(
   number: string, reply: SectionReply, info: CSRBuildRequest['studyInfo'],
@@ -431,10 +441,8 @@ function acceptSectionReply(
 ): { content: string; model: string; tokenCost: number } | null {
   const model = (reply.resolvedModel || reply.model || '').trim();
   if (!reply.content?.trim()) return null;
-  if (!model) {
-    lineage.rejectedModelDraft = { reason: 'model_unattributed' };
-    return null;
-  }
+  const unserved = unservedReply(reply, model);
+  if (unserved) { lineage.rejectedModelDraft = { reason: unserved }; return null; }
   if (!acceptsConductClaims(reply.content, lineage)) return null;
   let content = reply.content;
   if (usableEvidence(evidence)) {

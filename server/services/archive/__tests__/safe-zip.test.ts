@@ -5,6 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { PassThrough } from 'node:stream';
+import { crc32 } from 'node:zlib';
 import JSZip from 'jszip';
 import archiver from 'archiver';
 import { ArchiveLimitError, assertZipWithinLimits, DEFAULT_ZIP_LIMITS, inspectZip } from '../safeZip';
@@ -19,6 +20,45 @@ const zipOf = (files: Record<string, string>) => {
 const centralAt = (buf: Buffer) => buf.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02]));
 
 const refusal = (p: Promise<unknown>) => p.then(() => null, (e: unknown) => e);
+
+/** Where the first local header's name starts, and how long it is. */
+const localNameOf = (buf: Buffer) => {
+  const at = buf.indexOf(Buffer.from([0x50, 0x4b, 0x03, 0x04])) + 30;
+  return { at, length: buf.readUInt16LE(at - 4) };
+};
+
+/** A one-entry ZIP whose local header names the file otherwise (same length); its directory is untouched. */
+function withLocalName(buf: Buffer, name: string): Buffer {
+  const out = Buffer.from(buf);
+  const local = localNameOf(out);
+  if (local.length !== name.length) throw new Error('the fixture rewrites a name of the same length');
+  out.write(name, local.at, 'latin1');
+  return out;
+}
+
+/**
+ * A one-entry ZIP with an Info-ZIP Unicode Path extra field on its directory
+ * entry: version 1, the CRC-32 of the local name (JSZip ignores a field whose
+ * CRC does not match), then the UTF-8 name.
+ */
+function withUnicodePath(buf: Buffer, name: string): Buffer {
+  const cd = centralAt(buf);
+  const nameLength = buf.readUInt16LE(cd + 28);
+  const extraLength = buf.readUInt16LE(cd + 30);
+  const local = localNameOf(buf);
+  const head = Buffer.alloc(9);
+  head.writeUInt16LE(0x7075, 0);
+  head.writeUInt8(1, 4);
+  head.writeUInt32LE(crc32(buf.subarray(local.at, local.at + local.length)), 5);
+  const field = Buffer.concat([head, Buffer.from(name, 'utf8')]);
+  field.writeUInt16LE(field.length - 4, 2);
+  const at = cd + 46 + nameLength + extraLength;
+  const out = Buffer.concat([buf.subarray(0, at), field, buf.subarray(at)]);
+  out.writeUInt16LE(extraLength + field.length, cd + 30);
+  const eocd = out.length - 22;
+  out.writeUInt32LE(out.readUInt32LE(eocd + 12) + field.length, eocd + 12);
+  return out;
+}
 
 describe('what the directory declares', () => {
   it('admits an ordinary archive and lists its entries without inflating them', async () => {
@@ -89,11 +129,9 @@ describe('what each entry actually expands to', () => {
     const eocd = one.length - 22;
     const entry = one.subarray(cd, eocd);
     const copies = 8;
-    const names = Array.from({ length: copies }, (_, i) => {
-      const e = Buffer.from(entry);
-      e.write(`k${i}.txt`.slice(0, 5), 46, 'latin1'); // same length as "k.txt"
-      return e;
-    });
+    // Every copy keeps the local header's name: one named otherwise is refused
+    // for naming one file two ways (2026-11-02) before its size is counted.
+    const names = Array.from({ length: copies }, () => Buffer.from(entry));
     const tail = Buffer.from(one.subarray(eocd));
     tail.writeUInt16LE(copies, 8);
     tail.writeUInt16LE(copies, 10);
@@ -102,6 +140,49 @@ describe('what each entry actually expands to', () => {
     expect(inspectZip(bomb)).toHaveLength(copies);
     const err = await refusal(assertZipWithinLimits(bomb, { maxTotalUncompressedBytes: 100 * 1024 }));
     expect((err as ArchiveLimitError).reason).toMatch(/expands to more than 102400 bytes/);
+  });
+});
+
+describe('the name a reader uses is the name that was checked (2026-11-02)', () => {
+  // JSZip, and mammoth and exceljs through it, take an entry's name from its
+  // local header, and from a Unicode Path extra field when there is one.
+  const jszipNames = async (buf: Buffer) => Object.keys((await JSZip.loadAsync(buf)).files);
+  const reason = async (buf: Buffer) => ((await refusal(assertZipWithinLimits(buf))) as ArchiveLimitError | null)?.reason;
+
+  it('refuses a local header naming a file outside the archive that its directory names harmlessly', async () => {
+    const crafted = withLocalName(await zipOf({ ax: 'x' }), '/x');
+    expect(await jszipNames(crafted)).toEqual(['/x']);
+    expect(await reason(crafted)).toMatch(/names one file two ways, "ax" in its directory and "\/x" in the file's own header/);
+  });
+
+  it('refuses a local header naming another file, even a harmless one', async () => {
+    const crafted = withLocalName(await zipOf({ 'a.pdf': 'x' }), 'b.pdf');
+    expect(await jszipNames(crafted)).toEqual(['b.pdf']);
+    expect(await reason(crafted)).toMatch(/"a\.pdf" in its directory and "b\.pdf"/);
+  });
+
+  it('admits headers that differ only in the backslash a Windows tool wrote in one of them', async () => {
+    const buf = Buffer.from(await zipOf({ 'a/b.txt': 'x' }));
+    buf.write('a\\b.txt', centralAt(buf) + 46, 'latin1');
+    expect((await assertZipWithinLimits(buf)).map((e) => e.name)).toEqual(['a\\b.txt']);
+  });
+
+  it.each([
+    ['outside the archive', '/x', /names a file outside itself \("\/x"\)/],
+    ['naming another file', 'bx', /"ax" in its directory and "bx" in a Unicode path/],
+  ])('refuses a Unicode path %s', async (_, unicodePath, why) => {
+    const crafted = withUnicodePath(await zipOf({ ax: 'x' }), unicodePath);
+    expect(await jszipNames(crafted)).toEqual([unicodePath]);
+    expect(await reason(crafted)).toMatch(why);
+  });
+
+  it('refuses a Unicode path that climbs out, which JSZip would resolve and read', async () => {
+    expect(await reason(withUnicodePath(await zipOf({ ax: 'x' }), '../ax'))).toMatch(/names a file outside itself \("\.\.\/ax"\)/);
+  });
+
+  it('admits a Unicode path that names the file as its directory does', async () => {
+    const buf = withUnicodePath(await zipOf({ ax: 'x' }), 'ax');
+    expect((await assertZipWithinLimits(buf)).map((e) => e.name)).toEqual(['ax']);
   });
 });
 

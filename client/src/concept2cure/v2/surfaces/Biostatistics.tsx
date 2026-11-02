@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { getSurfaceMeta } from '../registryModel';
-import { useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveRows, EmptyState, ProjectBack } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -464,7 +464,7 @@ function BsStarters({ ask, isExample, docLabel, agency }: {
     },
   ];
   return (
-    <div className="sp-starters" data-layout="row" aria-label="Ask AnA">
+    <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
       {starters.map((st) => (
         <button key={st.label} type="button" className="sp-starter" onClick={() => ask(st.prompt)}>
           <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{st.label}</span>
@@ -898,11 +898,11 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="page-inner bs" data-work-area="biostatistics">
-      {program && (
-        <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>
-          {I.left} {program.title ?? 'Project'}
-        </button>
-      )}
+      {/* The one shared back link (D0-7, dataConnect). It reads the shell
+          rather than this screen's `program` prop, which also fixes a defect
+          of the copy it replaces: the link appears when a project is opened
+          AFTER the screen mounts. `program` stays — it is this screen's data. */}
+      <ProjectBack onNav={onNav} />
       <header className="ph">
         <div>
           <h1 className="ph-title">{getSurfaceMeta('biostatistics').label}</h1>
