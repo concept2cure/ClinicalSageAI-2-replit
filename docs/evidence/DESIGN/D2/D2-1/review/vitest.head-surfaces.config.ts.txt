@@ -1,0 +1,26 @@
+// Scratch config: runs the working-tree tests against HEAD's three Projects
+// surfaces, served through a load hook so their relative imports still resolve.
+import { execSync } from 'node:child_process';
+import { mergeConfig } from 'vitest/config';
+import base from '/home/user/ClinicalSageAI-2-replit/vitest.config.ts';
+
+const REPO = '/home/user/ClinicalSageAI-2-replit';
+const FILES = [
+  'client/src/concept2cure/v2/surfaces/Projects.tsx',
+  'client/src/concept2cure/v2/surfaces/ProjectPortfolioFilters.tsx',
+  'client/src/concept2cure/v2/surfaces/ProjectClientFilter.tsx',
+];
+const head = Object.fromEntries(FILES.map(f => [`${REPO}/${f}`, execSync(`git show HEAD:${f}`, { cwd: REPO, encoding: 'utf8' })]));
+
+export default mergeConfig(base, {
+  root: REPO,
+  plugins: [{
+    name: 'serve-head-surfaces',
+    enforce: 'pre',
+    load(id: string) {
+      const clean = id.split('?')[0];
+      if (head[clean] !== undefined) return head[clean];
+      return null;
+    },
+  }],
+});

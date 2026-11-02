@@ -1,0 +1,10 @@
+// Scratch config: serve HEAD's Vault*.tsx (another lane's uncommitted edits) so a suite
+// can be judged on HEAD + D2-1 alone. Same load-hook technique as vitest.head-surfaces.config.ts.
+import { execSync } from 'node:child_process';
+import { mergeConfig } from 'vitest/config';
+import base from '/home/user/ClinicalSageAI-2-replit/vitest.config.ts';
+const REPO = '/home/user/ClinicalSageAI-2-replit';
+const FILES = 'client/src/concept2cure/v2/surfaces/Vault.tsx client/src/concept2cure/v2/surfaces/VaultCatalogRecord.tsx client/src/concept2cure/v2/surfaces/VaultCoverage.tsx client/src/concept2cure/v2/surfaces/VaultFixityCheck.tsx client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx client/src/concept2cure/v2/surfaces/VaultOrganizationArtifacts.tsx client/src/concept2cure/v2/surfaces/VaultSeals.tsx client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx '.trim().split(/\s+/);
+const head = Object.fromEntries(FILES.map(f => [REPO + '/' + f, execSync('git show HEAD:' + f, { cwd: REPO, encoding: 'utf8' })]));
+export default mergeConfig(base, { root: REPO, plugins: [{ name: 'serve-head-vault', enforce: 'pre',
+  load(id: string) { const c = id.split('?')[0]; return head[c] !== undefined ? head[c] : null; } }] });

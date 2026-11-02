@@ -1314,7 +1314,8 @@ export function V2App() {
         onSearch={() => setCmdkOpen(true)}
       />
       {/* Phone-width scrim: at <=640px the EXPANDED rail paints over the
-          content (app-v2.css keeps the grid at the collapsed strip), and this
+          content (app-v2.css reserves no strip there, and the collapsed rail
+          is not drawn: the top bar's "Open the sidebar" opens it), and this
           scrim sits between them — tap collapses the rail; Escape is handled
           by the shell-level listener below, which is also gated to phone
           width. Display is entirely CSS-gated (.rail-scrim), so wider
@@ -1322,7 +1323,8 @@ export function V2App() {
       {!prefs.railCollapsed && (
         <div aria-hidden="true" className="rail-scrim" onClick={() => set('railCollapsed', true)} />
       )}
-      <main className="main">
+      {/* data-surface: Home's top bar drops its rule (app-v2.css; D1.md §D1.B step 5). */}
+      <main className="main" data-surface={activeId}>
         <TopBar
           surface={activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface}
           onPalette={() => setCmdkOpen(true)}
@@ -1330,6 +1332,9 @@ export function V2App() {
           onSegment={chooseSegment}
           onNav={nav}
           onAsk={ask}
+          /* At phone width the collapsed sidebar is not drawn; the top bar's
+             menu button opens it as the drawer (D1.md §D1.A step 5). */
+          onOpenRail={() => set('railCollapsed', false)}
         />
         <div id="c2c-page" tabIndex={-1} className={isFull ? 'page page-full' : 'page'}>
           <SurfaceBoundary resetKey={bodyKey}>

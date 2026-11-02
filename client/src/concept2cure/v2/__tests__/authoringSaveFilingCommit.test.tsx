@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -147,8 +147,8 @@ describe('the save confirmation carries whether the text reached the filing', ()
     canvasEditor().chain().focus().selectAll().insertContent('Revised substance description.').run();
     await waitFor(() => expect(canvasText()).toBe('Revised substance description.'));
     fireEvent.change(screen.getByTestId('change-reason'), { target: { value: 'Corrected the potency limit.' } });
-    const save = within(screen.getByRole('group', { name: 'Save and sign' }))
-      .getByRole('button', { name: /^Save(?:d)?$/i }) as HTMLButtonElement;
+    /* D4-2: Save is in the editor's one bar (D4.md §D4.B); the "Save and sign" group is gone. */
+    const save = screen.getByTestId('save-section') as HTMLButtonElement;
     await waitFor(() => expect(save.disabled).toBe(false));
     fireEvent.click(save);
     await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[0] === 'PATCH')).toBe(true));

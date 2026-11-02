@@ -55,6 +55,7 @@ import {
   describeGrounding,
   type PendingAiDraft,
 } from '../surfaces/AuthoringAiDraft';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const res = (status: number, payload: unknown) =>
   ({ ok: status >= 200 && status < 300, status, json: async () => payload }) as Response;
@@ -462,13 +463,15 @@ describe('DocumentAuthoring — the drafting panel is reachable', () => {
   it('opens the panel from the editor toolbar, and drafts nothing until asked', async () => {
     render(<DocumentAuthoring {...surfaceProps()} />);
 
-    const open = (await screen.findByTestId('ai-draft-open')) as HTMLButtonElement;
+    /* D4-2: "Draft from sources" is an item of the bar's AnA (✻) menu (D4.md §D4.G),
+       read here before any section read has answered. */
+    const open = () => openEditorControl('Draft from sources', 'ana');
     expect(screen.queryByTestId('ai-draft-panel')).toBeNull();
     // Disabled until a section is actually open — there is no section to draft
     // before then, and the endpoint is addressed by section id.
-    expect(open.disabled).toBe(true);
-    await waitFor(() => expect(open.disabled).toBe(false));
-    fireEvent.click(open);
+    expect(open().getAttribute('aria-disabled')).toBe('true');
+    await waitFor(() => expect(open().getAttribute('aria-disabled')).toBeNull());
+    fireEvent.click(open());
 
     const panel = await screen.findByTestId('ai-draft-panel');
     expect(panel.textContent).toMatch(/Draft 3\.2\.S\.1 from Data Room sources/);

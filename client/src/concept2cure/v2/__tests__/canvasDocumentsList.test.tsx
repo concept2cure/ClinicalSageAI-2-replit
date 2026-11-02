@@ -83,6 +83,7 @@ import { ConversationThread } from '../surfaces/ConversationThread';
 import { readDocumentList, rowsOf, useDocumentList } from '../editor/CanvasDocumentList';
 import { authService, type AuthUser } from '@/services/portal/authService';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const OWNED_PROPS: OwnedSurfaceViewProps = {
   surface: { id: 'conversation-thread', label: 'Conversation' } as OwnedSurfaceViewProps['surface'],
@@ -456,7 +457,8 @@ describe('At 1100px and narrower, closing a document the list opened shows the c
   it('an ask from the editor lands in the composer, on screen, not behind the list', async () => {
     const { container } = await openFromListNarrow();
     const region = await screen.findByTestId('dc-expanded');
-    fireEvent.click(await within(region).findByRole('button', { name: /Draft with AnA/ }, { timeout: 4000 }));
+    await within(region).findByTestId('ed-ana', {}, { timeout: 4000 });
+    fireEvent.click(openEditorControl('Draft with AnA', 'ana'));
     await waitFor(() => expect(pane().getAttribute('data-state')).toBe('closed'));
     expect(main(container).getAttribute('data-canvas-open')).toBeNull();
     const box = screen.getByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;

@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ui/one-shell.test.ts > one shell > no module outside v2 renders a rail 97ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no route mounts a second application 3ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface navigates out of the shell to reach a kit 2ms
+ ✓ tests/ui/one-shell.test.ts > one shell > the v2 shell root is the only one that lays out a rail column 567ms
+ ✓ tests/ui/one-shell.test.ts > one shell > every device surface the kit can render is one the shell can route to 4ms
+ ✓ tests/ui/one-shell.test.ts > one shell > only the shell and its named-thread surfaces start a conversation 514ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface takes the AnA rail column and still calls the shell onAsk 675ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface bypasses the ownsConversation union with a cast 3ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  22:09:14
+   Duration  3.48s (transform 484ms, setup 124ms, import 1.04s, tests 1.87s, environment 0ms)
+

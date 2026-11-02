@@ -57,6 +57,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { CanonicalAuthoringFlow, sendAuthoringPrefill, sentAuthoringTurns, clearAuthoringFlowScope } from './canonicalAuthoringFlow';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
@@ -147,7 +148,8 @@ async function openSourcesRail() {
   render(<DocumentAuthoring {...props()} />);
   // The section title appears in both the tree and the masthead.
   await screen.findAllByText('Composition');
-  fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
+  await screen.findByTestId('ed-more');
+  fireEvent.click(openEditorControl(/^Sources/));
   return screen.findByText('Drafted from');
 }
 
@@ -184,7 +186,8 @@ describe('DocumentAuthoring — the Sources rail', () => {
     mockApi({ sections: () => ok({ sources: [citation({ state: 'changed' })] }) });
     render(<CanonicalAuthoringFlow segment="biopharma" />);
     await screen.findAllByText('Composition');
-    fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
+    await screen.findByTestId('ed-more');
+    fireEvent.click(openEditorControl(/^Sources/));
     fireEvent.click(await screen.findByText(/Ask what changed/));
     const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
     expect(composer.value).toMatch(/no longer matches/);

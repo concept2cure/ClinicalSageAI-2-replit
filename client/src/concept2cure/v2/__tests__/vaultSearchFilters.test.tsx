@@ -142,7 +142,8 @@ describe('the find view filters by metadata on the server', () => {
     const libraryHit = { ...hit(), version: '1.0', current: true, snippet: null, program: { id: PID, name: 'BX-301' } };
     onSearch = (url) => ok({ success: true, data: { scope: 'verified-accessible-programs', query: params(url).get('q') ?? '', mode: 'browse', total: 1, limit: 50, offset: 0, results: [libraryHit] } });
     const row = await open();
-    fireEvent.click(screen.getByLabelText('Accessible projects'));
+    // D6-3: the scope toggle reads "All my projects" now, said for a person (D6 §C.4 step 7).
+    fireEvent.click(screen.getByLabelText('All my projects'));
     choose(row, 'Type', 'Clinical study report');
     const list = await screen.findByTestId('vault-library-results');
     expect((await within(list).findByRole('status')).textContent).toBe('1 document in projects you can access match the filters.');

@@ -24,6 +24,7 @@ import { DocumentAuthoring } from '../../surfaces/DocumentAuthoring';
 import { clearEditorTarget } from '../../editorTarget';
 import { oversightPrompt } from '../authoringOversight';
 import { readSavedTemplateContext, savedTemplateFacts } from '../savedTemplateContext';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const DOC = 'dddddddd-0000-4000-8000-000000000091';
 const SEC = 'aaaaaaaa-0000-4000-8000-000000000091';
@@ -75,8 +76,7 @@ async function ready() {
   await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('sponsor contact'));
 }
 function ask(label: string) {
-  fireEvent.click(screen.getByText('Review with AnA'));
-  fireEvent.click(screen.getByRole('button', { name: label }));
+  fireEvent.click(openEditorControl(label, 'ana'));
 }
 function expectScope(origin?: AskOrigin) {
   expect(origin?.moduleContext).toMatchObject({ documentId: DOC, templateId: TEMPLATE,

@@ -17,8 +17,12 @@ const sha = (s: string) => createHash('sha256').update(s).digest('hex');
   } else {
     const texts = JSON.parse(readFileSync(a, 'utf8')) as Record<string, string>;
     const out: Record<string, unknown> = {};
+    // Mode "chunks-injected": the same, with one table span injected into each text (the check's own red case).
+    const inject = (text: string) => (mode === 'chunks-injected' && text.length > 20
+      ? { tableSpans: [{ start: Math.floor(text.length / 3), end: Math.floor(text.length / 3) + Math.min(400, Math.floor(text.length / 4)) }] }
+      : {});
     for (const [file, text] of Object.entries(texts)) {
-      const chunks = chunkExtractedText(text);
+      const chunks = chunkExtractedText(text, inject(text));
       out[file] = { chunks: chunks.length, digest: sha(JSON.stringify(chunks)) };
     }
     writeFileSync(b, JSON.stringify(out, null, 1));

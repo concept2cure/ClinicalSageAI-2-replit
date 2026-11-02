@@ -22,6 +22,7 @@ import { DocumentWorkbench } from '../DocumentWorkbench';
 import { authService, type AuthUser } from '@/services/portal/authService';
 import type { OwnedSurfaceViewProps } from '../../surfaceViews';
 import type { Editor } from '@tiptap/core';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const DOC = '10000000-0000-4000-8000-000000000001';
 const SEC = '20000000-0000-4000-8000-000000000001';
@@ -66,7 +67,7 @@ describe('current authoring reads retain the server edit decision', () => {
     await waitFor(() => expect(document.querySelector('.tiptap')?.getAttribute('contenteditable')).toBe('false'));
     expect(document.querySelector('.tiptap')?.textContent).toContain('Current admitted prose.');
     expect(document.body.textContent).toContain(reason);
-    expect((screen.getByTestId('ai-draft-open') as HTMLButtonElement).disabled).toBe(true);
+    expect(openEditorControl('Draft from sources', 'ana').getAttribute('aria-disabled')).toBe('true');
     expect(apiRequest.mock.calls.some(([method]) => method !== 'GET')).toBe(false);
   });
 });
@@ -136,8 +137,11 @@ describe('current authoring reads restrict whole-document ceremonies', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Refresh sections' }));
     await waitFor(() => expect(document.querySelector('.tiptap')).toBeNull());
     expect(screen.queryByTestId('doc-provenance')).toBeNull();
-    for (const label of ['Freeze document', 'Sign document', 'Place document', 'Send for review', 'File to vault'])
+    for (const label of ['Freeze document', 'Sign document', 'Place document'])
       expect((screen.getByRole('button', { name: label }) as HTMLButtonElement).disabled).toBe(true);
+    /* D4-2: Send for review and File to vault are items of the bar's More menu, aria-disabled with the reason. */
+    for (const label of ['Send for review…', 'File to vault…'])
+      expect(openEditorControl(label).getAttribute('aria-disabled')).toBe('true');
   });
   it('keeps partial section editing/navigation while refusing optimistic whole-document hints', async () => {
     authService.setToken(`synthetic.${btoa(JSON.stringify({ userId: AUTHOR.id, organizationId: AUTHOR.organizationId }))}.synthetic`, AUTHOR, 'synthetic-current-partial-refresh');
@@ -154,8 +158,10 @@ describe('current authoring reads restrict whole-document ceremonies', () => {
     render(renderWorkbench());
     await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('Current admitted prose.'));
     expect(screen.getByTestId('workbench-read-scope').textContent).toMatch(/only.*sections|sections.*current access/i);
-    for (const label of ['Freeze document', 'Sign document', 'Place document', 'Send for review', 'File to vault'])
+    for (const label of ['Freeze document', 'Sign document', 'Place document'])
       expect((screen.getByRole('button', { name: label }) as HTMLButtonElement).disabled).toBe(true);
+    for (const label of ['Send for review…', 'File to vault…'])
+      expect(openEditorControl(label).getAttribute('aria-disabled')).toBe('true');
     expect(screen.queryByTestId('doc-provenance')).toBeNull();
     const assembly = within(screen.getByLabelText('Document assembly'));
     expect(assembly.getByText(/Whole-document actions require the full document/)).toBeTruthy();
@@ -257,7 +263,8 @@ describe('document access is reachable from the canonical authoring editor', () 
       return ok({ success: true, revisions: [], comments: [], sources: [], events: [], citations: [] });
     });
     render(<DocumentAuthoring {...({ surface: { id: 'document-authoring', label: 'Authoring' }, segment: 'biotech', onNav: vi.fn() } as unknown as OwnedSurfaceViewProps)} />);
-    fireEvent.click(await screen.findByTestId('access-rail-open'));
+    await screen.findByTestId('ed-more');
+    fireEvent.click(openEditorControl('Access'));
     const rail = within(screen.getByRole('complementary', { name: 'Document access' }));
     await rail.findByText('No explicit access grants recorded');
     await waitFor(() => expect((rail.getByRole('button', { name: 'Grant access' }) as HTMLButtonElement).disabled).toBe(false));
@@ -270,7 +277,8 @@ describe('document access is reachable from the canonical authoring editor', () 
     fireEvent.click(drawer.getByRole('button', { name: 'Cancel' }));
     fireEvent.click(rail.getByRole('button', { name: 'Close document access' }));
     expect(screen.queryByRole('complementary', { name: 'Document access' })).toBeNull();
-    expect(document.activeElement).toBe(screen.getByTestId('access-rail-open'));
+    /* Opened from the bar's More menu, the rail returns focus to More's button (D4-2). */
+    expect(document.activeElement).toBe(within(screen.getByTestId('ed-more')).getAllByRole('button')[0]);
   });
 });
 

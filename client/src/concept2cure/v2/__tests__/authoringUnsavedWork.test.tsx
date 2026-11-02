@@ -64,6 +64,7 @@ import type { Editor } from '@tiptap/core';
 import { deviceDraftKey } from '@/lib/deviceDraftCache';
 import { surfaceLeaveRefusal } from '../navParams';
 import { clearEditorTarget } from '../editorTarget';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
 
@@ -283,7 +284,7 @@ describe('the tab cannot be closed over unsaved work', () => {
     await waitFor(() => expect(canvasEl()?.getAttribute('contenteditable')).toBe('false'));
     expect(screen.getByText(reason)).toBeTruthy();
     expect(headerSave().disabled).toBe(true);
-    expect(screen.getByTestId('ai-draft-open').getAttribute('disabled')).not.toBeNull();
+    expect(openEditorControl('Draft from sources', 'ana').getAttribute('aria-disabled')).toBe('true');
     expect(contentPatches()).toHaveLength(0);
   });
 

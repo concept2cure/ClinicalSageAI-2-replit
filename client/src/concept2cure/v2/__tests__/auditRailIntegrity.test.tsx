@@ -50,6 +50,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { auditIntegrityNote, describeAuditMetadata } from '../editor/DocumentWorkbench';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const DOC = 'D1';
 const TOKEN = 'tok-reviewer-7c1e';
@@ -202,7 +203,7 @@ const props = () => ({
 async function openAuditRail(): Promise<HTMLElement> {
   render(<DocumentAuthoring {...props()} />);
   await screen.findAllByText('Stability');
-  fireEvent.click(screen.getByRole('button', { name: 'Audit' }));
+  fireEvent.click(openEditorControl('Audit trail'));
   await waitFor(() => expect(screen.getAllByTestId('audit-event')).toHaveLength(EVENTS.length));
   return screen.getByRole('button', { name: 'Download the record' }).closest('aside') as HTMLElement;
 }
@@ -337,7 +338,7 @@ describe('Download the record', () => {
       reply({ success: false, error: { code: 'AUDIT_TRAIL_NOT_PERMITTED', message: 'Reading this document’s record needs access.' } }, 403);
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('Stability');
-    fireEvent.click(screen.getByRole('button', { name: 'Audit' }));
+    fireEvent.click(openEditorControl('Audit trail'));
     await screen.findByText('No access to this document’s record');
     expect(screen.queryByText('Couldn’t load the audit trail')).toBeNull();
     expect(screen.queryAllByTestId('audit-event')).toHaveLength(0);

@@ -1,6 +1,6 @@
 /** Shared fixture data and UI actions for the one actual Workbench assembly host. */
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { expect, vi, type Mock } from 'vitest';
 import type { Editor } from '@tiptap/core';
 import type { AssemblyPlan, AssemblyPreviewInput } from '@shared/authoring/assembly';
@@ -54,6 +54,20 @@ export async function mounted(overrides: Partial<DocumentWorkbenchProps> = {}) {
   return { props, ...view };
 }
 export function localEdit() { act(() => { editorNode().editor.commands.insertContent('Unsaved local work. '); }); }
+
+/**
+ * The editor's bar keeps one row (D4.md §D4.B): a control that moved into one of its
+ * menus is reached by opening that menu first. Opens the bar's More (⋯) menu, or the
+ * AnA (✻) menu, unless it is already open, and returns the item with that name
+ * (a `menuitem`, or a `menuitemradio` for the view switch). D4.md §D4.L.
+ */
+export function openEditorControl(name: string | RegExp, menu: 'more' | 'ana' = 'more'): HTMLElement {
+  const wrap = screen.getByTestId(menu === 'ana' ? 'ed-ana' : 'ed-more');
+  const trigger = wrap.querySelector(':scope > button') as HTMLButtonElement;
+  if (trigger.getAttribute('aria-expanded') !== 'true') fireEvent.click(trigger);
+  const list = within(wrap).getByRole('menu');
+  return within(list).queryByRole('menuitem', { name }) ?? within(list).getByRole('menuitemradio', { name });
+}
 
 export function assemblyUi(apiRequest: Mock) {
   function aiCalls() { return apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && String(url).includes('/ai/draft')); }

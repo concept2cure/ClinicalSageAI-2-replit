@@ -1,0 +1,31 @@
+Baseline: the 133 suites that mount the editor or name a moved control, run at HEAD 378c7526e
+(a git-archive export of HEAD in the scratchpad, node_modules linked; vitest --maxWorkers=1).
+Four suites first failed only for directories the export lacked (db/, scripts/, design-system/, services/);
+re-run with those added, all four pass at HEAD.
+
+files 133 tests 1944 passed 1828 failed 19
+
+Failing at HEAD, before any D4-2 change (pre-existing):
+  client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx 1
+    - reads the route the Part 11 console read | AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]  Received:    1st vi.fn() call:    [    
+  client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx 14
+    - browses the returned catalog with a count and no additional reads | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds   pRoToCoL   in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds dose protocol in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds dose escalation in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds clinical master in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds Sponsor standards in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds FDA in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds M5 in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds ctis-form in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds registry:eu-cta in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds EMA in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds signed originals in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds manual in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+    - finds eCTD in returned titles and metadata | AssertionError: expected [ [ 'GET', …(4) ] ] to deeply equal [ [ 'GET', …(1) ] ]     at <scratchpad path>
+  client/src/concept2cure/v2/__tests__/draftClaimsLine.test.tsx 1
+    - is rendered by the workbench wherever the figure line is, from the same provenance read | AssertionError: expected '/**\n * DocumentWorkbench — THE docum…' to contain 'describeClaimsCheck(body.document.pro…'   
+  client/src/concept2cure/v2/editor/__tests__/authoringConversationScopeLive.test.tsx 3
+    - retains the same dirty TipTap buffer across a project switch and return, without saving or sending old-project | AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an 
+    - sends the confirmed saved version when the person saves in the canonical canvas before the first Enter | AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an 
+    - keeps a newer confirmed saved version when the canvas is closed before the first Enter | AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an 

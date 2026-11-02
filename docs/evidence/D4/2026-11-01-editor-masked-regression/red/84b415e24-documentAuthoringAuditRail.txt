@@ -1,0 +1,1170 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/old
+
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > renders the server’s events — actor, role, operation, reason, hashes, section link 1190ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > a failed read is a failure to READ — never "no governed acts occurred" 676ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > an empty trail says so honestly, as an empty — not an error 501ms
+ × client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > runs the scan on demand and renders the flags under the server’s own honest framing 5197ms
+   → expected "vi.fn()" to be called at least once
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed"
+      >
+        <aside
+          class="ed-tree"
+        >
+          <div
+            class="ed-tree-h"
+          >
+            <div
+              class="ed-tree-t"
+            >
+              Document tree
+            </div>
+            <div
+              class="ed-tree-m"
+            >
+              1 document · all
+            </div>
+            <div
+              style="display: flex; gap: 6px; margin-top: 8px;"
+            >
+              <select
+                aria-label="Filter documents by status"
+                class="c2c-input"
+                style="height: 28px; flex: 1 1 0%;"
+              >
+                <option
+                  value="all"
+                >
+                  all
+                </option>
+                <option
+                  value="draft"
+                >
+                  draft
+                </option>
+                <option
+                  value="in_review"
+                >
+                  in review
+                </option>
+                <option
+                  value="approved"
+                >
+                  approved
+                </option>
+                <option
+                  value="frozen"
+                >
+                  frozen
+                </option>
+              </select>
+            </div>
+          </div>
+          <div
+            class="ed-tree-scroll"
+          >
+            <div
+              class="ed-vol"
+            >
+              <button
+                class="ed-tree-row"
+                data-active="true"
+                style="font-weight: 600;"
+              >
+                <span
+                  class="ed-num"
+                >
+                  M3
+                </span>
+                <span
+                  class="ed-lbl"
+                >
+                  Nonclinical Overview
+                </span>
+                <span
+                  class="rd-chip tone-idle"
+                  style="margin-left: auto;"
+                >
+                  1
+                </span>
+              </button>
+              <button
+                class="ed-tree-row"
+                data-active="true"
+                style="padding-left: 22px;"
+              >
+                <span
+                  class="ed-num"
+                >
+                  3.2.S.1
+                </span>
+                <span
+                  class="ed-lbl"
+                >
+                  General Information
+                </span>
+              </button>
+            </div>
+          </div>
+        </aside>
+        <section
+          class="ed-doc"
+        >
+          <header
+            class="ed-doc-h"
+          >
+            <div
+              class="ed-crumbs"
+            >
+              <span
+                class="sep-first"
+              >
+                M3
+              </span>
+              <span
+                aria-hidden="true"
+                class="sep"
+              >
+                ›
+              </span>
+              <span
+                class="doc-title"
+                title="Nonclinical Overview"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                aria-hidden="true"
+                class="sep"
+              >
+                ›
+              </span>
+              <span
+                class="here"
+              >
+                3.2.S.1
+              </span>
+            </div>
+            <div
+              aria-label="Save and sign"
+              class="ed-doc-commit"
+              role="group"
+            >
+              <button
+                class="btn primary"
+                data-testid="save-section"
+                disabled=""
+                style="height: 30px;"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-check"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                  />
+                </svg>
+                 
+                Saved
+              </button>
+              <button
+                class="btn ghost"
+                style="height: 30px;"
+                title="Sign, snapshot and seal this document"
+              ...
+ × client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > zero flags reads as "passed mechanical checks" — never as compliant 5183ms
+   → Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+            <button
+              class="btn ghost"
+              style="height: 30px;"
+              title="Sign, snapshot and seal this document"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linec...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+            <button
+              class="btn ghost"
+              style="height: 30px;"
+              title="Sign, snapshot and seal this document"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linec...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > runs the scan on demand and renders the flags under the server’s own honest framing
+AssertionError: expected "vi.fn()" to be called at least once
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed"
+      >
+        <aside
+          class="ed-tree"
+        >
+          <div
+            class="ed-tree-h"
+          >
+            <div
+              class="ed-tree-t"
+            >
+              Document tree
+            </div>
+            <div
+              class="ed-tree-m"
+            >
+              1 document · all
+            </div>
+            <div
+              style="display: flex; gap: 6px; margin-top: 8px;"
+            >
+              <select
+                aria-label="Filter documents by status"
+                class="c2c-input"
+                style="height: 28px; flex: 1 1 0%;"
+              >
+                <option
+                  value="all"
+                >
+                  all
+                </option>
+                <option
+                  value="draft"
+                >
+                  draft
+                </option>
+                <option
+                  value="in_review"
+                >
+                  in review
+                </option>
+                <option
+                  value="approved"
+                >
+                  approved
+                </option>
+                <option
+                  value="frozen"
+                >
+                  frozen
+                </option>
+              </select>
+            </div>
+          </div>
+          <div
+            class="ed-tree-scroll"
+          >
+            <div
+              class="ed-vol"
+            >
+              <button
+                class="ed-tree-row"
+                data-active="true"
+                style="font-weight: 600;"
+              >
+                <span
+                  class="ed-num"
+                >
+                  M3
+                </span>
+                <span
+                  class="ed-lbl"
+                >
+                  Nonclinical Overview
+                </span>
+                <span
+                  class="rd-chip tone-idle"
+                  style="margin-left: auto;"
+                >
+                  1
+                </span>
+              </button>
+              <button
+                class="ed-tree-row"
+                data-active="true"
+                style="padding-left: 22px;"
+              >
+                <span
+                  class="ed-num"
+                >
+                  3.2.S.1
+                </span>
+                <span
+                  class="ed-lbl"
+                >
+                  General Information
+                </span>
+              </button>
+            </div>
+          </div>
+        </aside>
+        <section
+          class="ed-doc"
+        >
+          <header
+            class="ed-doc-h"
+          >
+            <div
+              class="ed-crumbs"
+            >
+              <span
+                class="sep-first"
+              >
+                M3
+              </span>
+              <span
+                aria-hidden="true"
+                class="sep"
+              >
+                ›
+              </span>
+              <span
+                class="doc-title"
+                title="Nonclinical Overview"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                aria-hidden="true"
+                class="sep"
+              >
+                ›
+              </span>
+              <span
+                class="here"
+              >
+                3.2.S.1
+              </span>
+            </div>
+            <div
+              aria-label="Save and sign"
+              class="ed-doc-commit"
+              role="group"
+            >
+              <button
+                class="btn primary"
+                data-testid="save-section"
+                disabled=""
+                style="height: 30px;"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-check"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                  />
+                </svg>
+                 
+                Saved
+              </button>
+              <button
+                class="btn ghost"
+                style="height: 30px;"
+                title="Sign, snapshot and seal this document"
+              ...
+ ❯ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx:167:38
+    165|     fireEvent.click(btn);
+    166|
+    167|     await waitFor(() => expect(scan).toHaveBeenCalled());
+       |                                      ^
+    168|     const panel = await screen.findByTestId('section-check');
+    169|     // The server's framing survives into the UI — signals, not compli…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > zero flags reads as "passed mechanical checks" — never as compliant
+TestingLibraryElementError: Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+            <button
+              class="btn ghost"
+              style="height: 30px;"
+              title="Sign, snapshot and seal this document"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linec...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+            <button
+              class="btn ghost"
+              style="height: 30px;"
+              title="Sign, snapshot and seal this document"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linec...
+ ❯ waitForWrapper ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx:190:32
+    188|     render(<DocumentAuthoring {...props()} />);
+    189|     fireEvent.click(await screen.findByRole('button', { name: /check/i…
+    190|     const panel = await screen.findByTestId('section-check');
+       |                                ^
+    191|     expect(panel.textContent).toContain('this is not a review');
+    192|     expect(panel.textContent).not.toMatch(/compliant/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  22:24:43
+   Duration  17.30s (transform 2.81s, setup 268ms, import 3.43s, tests 12.76s, environment 651ms)
+

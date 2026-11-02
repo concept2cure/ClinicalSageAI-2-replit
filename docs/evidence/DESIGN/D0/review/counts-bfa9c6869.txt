@@ -1,0 +1,58 @@
+# Counts at bfa9c6869, read from a git-archive export of that commit (client/src/concept2cure/v2/styles, 35 sheets, surface-text-ramp.css excluded).
+
+## font-size literals 9-11.5px (V5, DS-S5; D0.md §3 calls 12px the floor)
+declarations: 1219   sheets: 29   var(--fs-*) uses: 422
+
+## text-transform
+uppercase: app-v2.css:368:.c2c-v2 .rd-chip::first-letter { text-transform: uppercase; } 
+capitalize declarations: 25 in 12 sheets
+admin-access.css:157 ana-v2.css:189 ana-v2.css:238 app-v2.css:715 app-v2.css:800 app-v2.css:1102 app-v2.css:1401 app-v2.css:2655 app-v2.css:3499 app-v2.css:3523 authoring-v2.css:966 commcenter-v2.css:102 coverage-v2.css:77 coverage-v2.css:445 coverage-v2.css:500 coverage-v2.css:1123 coverage-v2.css:1427 coverage-v2.css:1519 device-v2.css:244 journey-v2.css:179 misc-surfaces-v2.css:197 misc-surfaces-v2.css:829 project-home-v2.css:439 research-v2.css:361 submission-v2.css:9 
+
+## transition declarations naming var(--dur) without var(--ease) (M6; README.md:115)
+116
+
+## :hover rules that declare a transform other than none (M2; README.md:104, :119)
+total: 39 in 15 sheets
+ana-v2.css: 27, 125
+app-v2.css: 634, 909, 1389, 2384, 2455, 2644, 3031, 3270
+auth-entry.css: 41
+authoring-v2.css: 618
+commcenter-v2.css: 68, 130
+coverage-v2.css: 347, 1109, 1376
+device-v2.css: 262
+ectd-v2.css: 33, 114, 159
+insights-v2.css: 25, 72, 157
+journey-v2.css: 124, 211, 272
+misc-surfaces-v2.css: 30, 65
+pyramid-v2.css: 25, 68
+rbm-v2.css: 23, 110, 123
+research-v2.css: 64, 226
+translation-v2.css: 120, 122, 177
+
+## backdrop-filter: blur (DS-S4)
+ana-v2.css:166 authoring-v2.css:1218 pyramid-v2.css:113 rbm-v2.css:408 research-v2.css:72 translation-v2.css:159 translation-v2.css:182 
+
+## .sp-primary uses in TSX/TS outside __tests__ (D0 defect 5)
+f2385372: 59 uses in 28 files
+bfa9c6869: 50 uses in 24 files (Vault.tsx: 0, converted by D6-3 `2e4a9fe67`)
+
+## A .reg-tbl inside a card (D0 defect 3)
+TSX files using both reg-tbl and pj-card-b: 23
+Files where a <table className="reg-tbl">'s nearest enclosing <div className> (within 15 lines) is pj-card, pj-card-b or reg-card, with the number of such tables:
+CmcModule.tsx: 4
+CmcModule3Build.tsx: 1
+CmcQuality.tsx: 2
+EctdCompile.tsx: 1
+EctdCompileDtdEvidence.tsx: 1
+GatewayTransmittals.tsx: 2
+IdentityConsole.tsx: 3
+MissionControl.tsx: 1
+NdaCockpit.tsx: 2
+PvCockpit.tsx: 1
+QmpWorkspace.tsx: 1
+ReportGovernance.tsx: 2
+SubmissionTwin.tsx: 3
+The only phone scroll rule for such a table is D5-0's, scoped to [data-work-area] .pj-sec (app-v2.css:3954-3955).
+
+## Elements still borrowing the unscoped .c2c-v2 .tone-* fills (app-v2.css:2334-2341) without a compound rule of their own
+sc-verdict tone-warn (SequenceAssembleTestPackage.tsx:94); pdev-sev-dot tone-warn (pdev/surfaces/Assembly.tsx:149). dc-cell and dc-820-dot have compound rules (coverage-v2.css:73-88).

@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > lists the record’s elements for 2.5, named as the record’s statement and as unverified, with its basis 1346ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > shows a parent code’s contained sections instead of an empty list 999ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > names the containing section when the answer came from an ancestor entry 794ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > reads a code the record does not index as not indexed — never as nothing required 882ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > says nothing about required content when the server sent no record statement 782ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  22:36:06
+   Duration  10.76s (transform 3.94s, setup 196ms, import 4.81s, tests 4.81s, environment 738ms)
+

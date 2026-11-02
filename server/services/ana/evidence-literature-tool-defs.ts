@@ -553,8 +553,10 @@ export const RUN_RBM_ASSESSMENT: AnaTool = {
   name: 'run_rbm_assessment',
   description:
     'Risk-Based Monitoring (ICH E6(R3)/E8(R1)) advisor: seeds a DRAFT or summarizes a study Risk Assessment ' +
-    '(RACT) for a program — Critical-to-Quality (CtQ) factors with likelihood × impact scores, the ' +
-    'critical factors, and the rolled-up overall risk level. Use when scoping risk-based quality ' +
+    '(RACT) for a program. The summary is the study\'s latest assessment version (the one the RACT screen ' +
+    'shows) with its status and version, and that version\'s own Critical-to-Quality (CtQ) factors with ' +
+    'likelihood × impact scores, the critical factors, and the rolled-up overall risk level. A version with ' +
+    'status "draft" is unsigned and governs nothing. Use when scoping risk-based quality ' +
     'management for a study. A seeded draft needs review and signed approval on the assessment before activation. Reads/writes the program\'s RBM risk assessment.',
   input_schema: {
     type: 'object',
@@ -600,9 +602,12 @@ export const EVALUATE_KRIS_QTLS: AnaTool = {
 export const GENERATE_RBM_PLAN: AnaTool = {
   name: 'generate_rbm_plan',
   description:
-    'Drafts an integrated risk-based monitoring plan for a program: recommends a monitoring strategy ' +
-    '(centralized / risk-based / hybrid) from the assessment\'s overall risk and proposes monitoring actions ' +
-    'from the critical CtQ factors. Advisory — must be reviewed and approved.',
+    'Proposes the risk-based monitoring plan a program\'s APPROVED risk assessment (RACT) derives, and saves ' +
+    'nothing: the monitoring strategy (centralized / risk-based / hybrid) from the overall risk that assessment ' +
+    'records, one action per open critical CtQ factor of that assessment, and one oversight visit per ' +
+    'enhanced-tier site — exactly what generating the plan would save as a draft. Refuses when the study has no ' +
+    'assessment, when it is not approved, or when the approved one records no overall risk. Also says when a ' +
+    'draft plan is already open.',
   input_schema: {
     type: 'object',
     properties: {
@@ -697,14 +702,19 @@ export const GET_RBM_ATTENTION: AnaTool = {
 export const ADD_CTQ_FACTOR: AnaTool = {
   name: 'add_ctq_factor',
   description:
-    'Adds a Critical-to-Quality (CtQ) factor to a program\'s risk assessment (RACT). Ask the user for the ' +
+    'Adds a Critical-to-Quality (CtQ) factor to a program\'s risk assessment (RACT): the draft assessment named ' +
+    'by assessmentId, or else the study\'s one open draft. Ask the user for the ' +
     'factor and its likelihood (1–5) and impact (1–5); infer the risk score (likelihood×impact) and, unless ' +
     'told otherwise, mark it critical when the score falls in the high band. Optionally capture category, a ' +
-    'risk description and the planned mitigation. Use when the user describes a new risk to the study.',
+    'risk description and the planned mitigation. Use when the user describes a new risk to the study. ' +
+    'Refuses, saving nothing, when the assessment is signed (an amendment must be opened), when the study ' +
+    'has no assessment (start one with run_rbm_assessment seed: true), when it has several drafts and none ' +
+    'is named, or when a rating is not a whole number from 1 to 5.',
   input_schema: {
     type: 'object',
     properties: {
       programId: { type: 'string', description: 'Program (project) UUID.' },
+      assessmentId: { type: 'number', description: 'The draft risk assessment to add the factor to, if known. Default: the study\'s one open draft.' },
       ctqFactor: { type: 'string', description: 'The critical-to-quality factor / risk name.' },
       likelihood: { type: 'number', description: 'Likelihood 1 (rare) – 5 (almost certain).' },
       impact: { type: 'number', description: 'Impact 1 (negligible) – 5 (critical).' },

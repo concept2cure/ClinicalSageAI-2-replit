@@ -73,8 +73,9 @@ describe('Vault coverage', () => {
       return ok({ success: true, filing: { folderId: 'module-2', folderLabel: 'Module 2', placementStatus: 'confirmed' } });
     });
     render(<Vault {...props()} />);
-    fireEvent.click(await screen.findByText('Show sections'));
-    const row = screen.getByTestId('vault-coverage-missing-2.5');
+    // D6-3: the Required documents view lists the sections open, so there is no "Show sections" to press (D6 §C.4 step 5).
+    fireEvent.click(await screen.findByRole('tab', { name: 'Required documents' }));
+    const row = await screen.findByTestId('vault-coverage-missing-2.5');
     expect(row.textContent).toContain('Upload');
     fireEvent.change(screen.getByLabelText('Document to file at 2.5'), { target: { value: DOC_ID } });
     fireEvent.click(row.querySelector('button:last-of-type') as HTMLButtonElement);
