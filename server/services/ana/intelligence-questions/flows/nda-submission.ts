@@ -19,6 +19,7 @@
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 import { orphanProgrammeLeaves, usOrphanDesignationField } from './ind-submission-orphan-designation.js';
+import { FEE_SETTLED, userFeeField } from './nda-submission-user-fee.js';
 
 export function createNdaSubmissionFlow(): FlowDefinition {
   return {
@@ -270,19 +271,20 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             type: 'text',
             placeholder: 'e.g., (617) 555-0100',
           },
-          {
-            id: 'user_fee_paid',
-            label: 'PDUFA User Fee Paid',
-            type: 'yes_no',
+          /* 2026-11-02 (S4): a yes/no, so an orphan-designated NDA, which is
+             exempt and correctly answered "no", drew a critical. The positions
+             (nda-submission-user-fee.ts). */
+          userFeeField({
+            label: 'PDUFA application fee',
             required: true,
             helpText:
-              'Per PDUFA (FD&C Act section 736, 21 USC 379h), the application fee must be paid at the time of NDA submission. FDA will not file an application without fee payment or a valid waiver/reduction.',
-          },
+              'Per PDUFA (FD&C Act section 736, 21 USC 379h), the application fee is due at the time of NDA submission, and an application is not accepted for filing until the fees owed are paid. An application for a drug FDA has designated an orphan drug is exempt unless it also includes an indication for other than a rare disease or condition; a waiver or reduction is a separate decision FDA makes on request.',
+          }),
           {
             id: 'pdufa_goal_date',
             label: 'PDUFA Goal Date (if known)',
             type: 'date',
-            visibleWhen: { field: 'user_fee_paid', operator: 'eq', value: true },
+            visibleWhen: FEE_SETTLED,
             helpText:
               'The PDUFA goal date is set by FDA after filing (Day 60). NME NDAs (PDUFA "Program"): standard review 10 months, priority review 6 months, from the 60-day filing date (about 12 or 8 months from receipt). Non-NME NDAs: standard review 10 months, priority review 6 months, from receipt.',
           },
@@ -291,11 +293,11 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         issueChecks: [
           {
             id: 'pdufa_fee_not_paid',
-            condition: { field: 'user_fee_paid', operator: 'eq', value: false },
+            condition: { field: 'user_fee_paid', operator: 'eq', value: 'not_paid' },
             severity: 'critical',
             title: 'PDUFA User Fee Required',
             message:
-              'The Prescription Drug User Fee must be paid at the time of NDA submission: an application is not accepted for filing until the fees owed are paid (FD&C Act section 736(e), 21 USC 379h). An application for a drug designated under section 526 is exempt from the application fee unless it also includes an indication for other than a rare disease or condition (section 736(a)(1)(F)); for such an application, "not paid" is correct and the exemption is claimed on the user fee cover sheet (Form FDA 3397). A waiver or reduction, for example for a small business submitting its first application, is a separate request under section 736(d).',
+              'The Prescription Drug User Fee must be paid at the time of NDA submission: an application is not accepted for filing until the fees owed are paid (FD&C Act section 736(e), 21 USC 379h). If FDA has designated the drug an orphan drug and the application includes no other indication, the application is exempt (section 736(a)(1)(F)): choose the exemption instead, and claim it on the user fee cover sheet (Form FDA 3397). A waiver or reduction, for example for a small business submitting its first application, is a separate request under section 736(d).',
             reference: 'FD&C Act section 736 (21 USC 379h), including 736(a)(1)(F), 736(d) and 736(e); PDUFA',
           },
         ],
