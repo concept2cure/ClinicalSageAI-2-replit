@@ -41,7 +41,20 @@ const tasks = [
 
 function sourceBytes() {
   const compressed = fs.readFileSync(path.join(DOC_ROOT, 'FBT201_CSR_SOURCE_SYNTHETIC_v2.json.gz'));
+  // The original revision's SHA-256 lives in the already-recorded provenance
+  // manifest. A file with plausible counts but altered observations must not
+  // silently become the next demonstration source.
+  const provenance = JSON.parse(fs.readFileSync(path.join(DOC_ROOT, 'REVISION_PROVENANCE_v2.json'), 'utf8'));
+  if (provenance.revision !== 2 || provenance.synthetic !== true ||
+      provenance.clinical_verification !== 'not-established' ||
+      sha256(compressed) !== provenance.source_gzip_sha256) {
+    throw new Error('The source archive does not match the recorded synthetic revision-2 provenance. Nothing was seeded.');
+  }
   const bytes = gunzipSync(compressed);
+  const digest = sha256(bytes);
+  if (digest !== provenance.revised_source_sha256) {
+    throw new Error('The decompressed FBT-201 source digest differs from the immutable revision-2 manifest. Nothing was seeded.');
+  }
   const source = JSON.parse(bytes.toString('utf8'));
   if (source.format !== 'concept2cure.csr-source.v1' ||
       source.studyInfo?.protocolNumber !== 'FBT-201-2026' ||
@@ -56,7 +69,7 @@ function sourceBytes() {
       throw new Error('Faux Biotech source and current revised statistical totals differ. Nothing was seeded.');
     }
   }
-  return { bytes, digest: sha256(bytes) };
+  return { bytes, digest };
 }
 
 function checkDemoOrg(identity) {
