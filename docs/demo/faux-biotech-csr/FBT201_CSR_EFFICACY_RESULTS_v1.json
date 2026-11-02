@@ -1,0 +1,24 @@
+{
+  "format": "concept2cure.csr-efficacy-results.v1",
+  "protocolNumber": "FBT-201-2026",
+  "results": [
+    {
+      "endpointName": "PASI 75 response at Week 12",
+      "endpointType": "primary",
+      "armId": "FBT201",
+      "value": 65,
+      "display": "52/80 (65.0%)",
+      "method": "Descriptive proportion; hypothetical study only",
+      "population": "ITT (synthetic participants)"
+    },
+    {
+      "endpointName": "PASI 75 response at Week 12",
+      "endpointType": "primary",
+      "armId": "PBO",
+      "value": 37.5,
+      "display": "30/80 (37.5%)",
+      "method": "Descriptive proportion; hypothetical study only",
+      "population": "ITT (synthetic participants)"
+    }
+  ]
+}
