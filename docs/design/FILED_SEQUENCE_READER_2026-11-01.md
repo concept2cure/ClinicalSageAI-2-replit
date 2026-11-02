@@ -82,6 +82,40 @@ searched:
    The detector's two consumers (the REST import and `start_legacy_import`) are
    unchanged.
 
+## Review round, 2026-11-02
+
+An independent five-lens review confirmed 35 findings. The evidence README's
+"Review round" maps each one to what changed. These changes alter the design
+above:
+
+- **A leaf may reuse a file from an earlier sequence of its application** (ICH
+  file reuse). If the archive holds that sequence, the file's checksum is
+  verified there. Otherwise the leaf waits on the filed state.
+- **A sequence is complete only when nothing waits on the filed state.** That
+  means no pointer and no reused file in a sequence the archive does not hold
+  (`outsideArchive`).
+- **Every bound pointer is recorded as `../<sequence>/<backbone>#<ID>`.** It
+  must name a leaf still on file, in an earlier sequence of the same
+  application. A withdrawal takes the withdrawn leaf's section, name and md5.
+- **Two leaves of one sequence under one heading with one file name are
+  refused** (`leaf_identity_ambiguous`). The fold would have kept one of them.
+- **An index.xml that fails its index-md5 check gives no leaves**, as a
+  regional backbone that fails its checksum already did.
+- **Two new modules, inside the same folder:**
+  - `filed-sequence-xml.ts`: decoding, linear entity/DOCTYPE checks, the
+    heading tree;
+  - `filed-sequence-pointers.ts`: binding pointers, and identity.
+
+A second review, before these were pushed, found more. Its fixes (evidence
+README, "Second review"):
+- A reused file must be one a kept leaf of the earlier sequence filed.
+- An archive zipped without its application folder is read as that folder's
+  contents.
+- Leaf and pointer IDs must be in the grammar the fold parses.
+- The on-file model follows the fold's supersession by section and file name.
+- Leaves filed directly in a heading that has sub-headings are read as filed,
+  as the ICH DTD allows.
+
 ## Known limits, written down
 
 - **Section precision is the backbone's.** A sequence written by this platform's
@@ -92,6 +126,12 @@ searched:
   pointer (sequence, backbone, ID). An imported leaf is therefore acted on through
   its backbone ID (P-42 lineage), never by matching a native section string. That
   binding is step 6 below.
+- **Within one sequence, a shared heading and file name is refused** (see the
+  review round). Across sequences it is not. A later leaf with the same heading
+  and file name as an earlier, different document supersedes it in the fold,
+  as a native leaf with the same precise section would. Only keying imported
+  leaves by backbone ID in the fold closes this. The fold is in
+  `prior-sequence-loader.ts`, held by RIM, and this is handed there.
 - **The decoded section is not checked against a list of CTD sections.** That
   list is the ICH DTD, which is not vendored (`assets/ectd-dtd/` holds none, and
   ich.org is unreachable from the build environment). A well-formed name such as

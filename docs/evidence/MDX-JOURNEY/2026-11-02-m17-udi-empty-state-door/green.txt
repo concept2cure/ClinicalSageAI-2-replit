@@ -1,0 +1,147 @@
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > a software item opens the Software screen 266ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > a governed artifact opens in the one editor 100ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > says where a row opens, not "the editor" for all of them 86ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > UDI: a labeling document opens Labeling > the label row opens the Labeling screen 66ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > DocumentsPanel draws no dead row control > with no handler a row is not a button 5ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > DocumentsPanel draws no dead row control > with a handler, a click passes the row's id and the row itself 17ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > what AnA is told about the device screens is true > names the screens' own controls, and does not claim they are absent 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > what AnA is told about the device screens is true > says that nothing here sends a filing to an agency 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > UDI with no labeling document opens Labeling > offers Open Labeling, and it opens the Labeling screen 37ms
+ ✓ client/src/concept2cure/mdx/__tests__/engineeringAnaContextSettles.test.tsx > device-engineering: the panels' context hand-off settles > stops re-rendering the host once the register and the trace have reported 665ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > 510(k) surface — the official eSTAR family follows the program > an IVD program on the 510(k) surface is produced on the IVD eSTAR 101ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > 510(k) surface — the official eSTAR family follows the program > a device program on the 510(k) surface is produced on the nIVD eSTAR 31ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the official eSTAR pathway follows the program, not the surface > a De Novo program on the 510(k) surface is produced as a De Novo, on its family 51ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the official eSTAR pathway follows the program, not the surface > a PMA program on the PMA surface is produced as a PMA, on its family 188ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the official eSTAR pathway follows the program, not the surface > an IVD PMA program on the PMA surface is produced as a PMA on the IVD eSTAR 24ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the PMA surface derives the pathway from the program, never from itself > a De Novo program open on the PMA surface is produced as a De Novo 38ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the PMA surface derives the pathway from the program, never from itself > a 510(k) program open on the PMA surface is produced as a 510(k) 21ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the diagnostics surface derives the eSTAR family from the program, never from itself > a non-IVD device program open on the diagnostics surface is produced on the nIVD eSTAR 48ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the diagnostics surface derives the eSTAR family from the program, never from itself > an IVD program open on the diagnostics surface is still produced on the IVD eSTAR 39ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > returns the identical set when every selected row survives 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > returns the identical set when the whole selection survives 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > drops a K-number the new list no longer offers 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > falls back to the top candidate when nothing survives 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > leaves an empty candidate list alone rather than clearing the selection 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > PUTs the claimed candidate to the governed device profile 141ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > claims a reduced openFDA clearance too — it is a real FDA record 103ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > states what is already on file, and withdraws it on request 60ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > says so when nothing is claimed, rather than leaving the form silent 40ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > reports stored entries it cannot read instead of naming the first it can 36ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > example rows are never claimable > offers no example K-number to claim 38ms
+ ✓ client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx > device-engineering: AnA sees the open project's risk register and design-control trace > carries the register's and the trace's facts, summaries and actions in the one context 145ms
+ ✓ client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx > device-engineering: AnA sees the open project's risk register and design-control trace > never carries the previous project's register or trace under the next project 179ms
+ ✓ client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx > device-engineering: AnA sees the open project's risk register and design-control trace > after leaving Engineering and coming back, carries nothing from the earlier visit while it reads again 121ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the 510(k) workspace hands the editor its section > "Open §11 in editor" writes the selected project, docType and section before navigating 272ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the 510(k) workspace hands the editor its section > with no selected project, offers Projects and creates no editor target 13ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the CER Generator rows hand the editor their section > a section row passes ITS OWN code and label through onOpenEditor 53ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the CER Generator rows hand the editor their section > without an onOpenEditor the affordance is not drawn — no dead buttons 39ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > opens a signature form instead of filing on the first click 104ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > sends the artifact, the reason, the meaning and the credential — and no filing date 64ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > will not offer an empty picker when nothing has been retained 23ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > keeps the form open with the server's reason when the credential is refused 62ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > the filing panel starts from the program's eSTAR variant > an IVD program's panel starts on the IVD form 95ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > the filing panel starts from the program's eSTAR variant > with no variant passed it reads as a device, as before 24ms
+ ✓ client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx > device-diagnostics: AnA sees the open project's IVDR readiness > carries the board's facts, summary and actions in the one context 137ms
+ ✓ client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx > device-diagnostics: AnA sees the open project's IVDR readiness > a failed read is told as a failure, never as 0% 52ms
+ ✓ client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx > device-diagnostics: AnA sees the open project's IVDR readiness > never carries the previous project's board under the next project 159ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > asks for the open project's Q-Subs only, and shows no other project's 38ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > is not called an organization-wide view under the project's title 112ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > never draws the previous project's Q-Subs under the next project 28ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > with no project, reads nothing and says a project is needed 5ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > asks for the open project's UDI summary only, and shows no other project's labels 18ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > is not called an organization-wide view under the project's title 18ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > never draws the previous project's labels under the next project 26ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > with no project, reads nothing and says a project is needed 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > retires engineering working state when the selected project changes 35ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > draws no portfolio and no creation door; with no project open it sends the person to Projects 106ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > says which postmarket panels are this project's, without changing the selected project 8ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > requires an explicit project selection before mounting a project feature 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > never substitutes another same-pathway project for an unavailable selection 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > software does not borrow the first project 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps the selected project and responds when the shell switches projects 14ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > withholds the leaf on a failed context read and offers a retry 14ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > routes an IVD away from MDR CER into performance evaluation 16ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > opens the CER document type for the selected project, preserving pathway-specific authoring 12ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps a secondary IVDR performance section out of the primary 510(k) document 10ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxKeyboardReachable.test.tsx > 510(k) predicate selection is operable without a mouse > exposes each predicate as a real checkbox control 122ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxKeyboardReachable.test.tsx > 510(k) predicate selection is operable without a mouse > reports the selection through aria-checked, not a data attribute alone 77ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > an SE attribute with no verdict is unassessed, not equivalent 67ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > an IVD with no Annex VIII class is not classified, not class B 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > a submitted program is in flight, not cleared 55ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > explains the mixed scope and keeps reporting-clock requests narrowed to the project 32ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > shows no count while the triage read has failed 17ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > counts MDRs due within 72h and open CAPAs from the server-computed queue 15ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with no program selected (sample mode off) > renders no fixture device, stage, clock or subject name 79ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with no program selected (sample mode off) > states no section or blocker count when no sections were read 30ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with a program whose predicate service is unreachable > shows its own stage and clock, and a banner that does not promise example rows 62ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx > MDX host — a failed programs load discloses nothing and offers a way out > does not render { label: 'a route and a status', status: 500, body: 'nope' } 153ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx > MDX host — a failed programs load discloses nothing and offers a way out > does not render { label: 'a driver error', status: 503, body: 'ECONNREFUSED' } 22ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx > MDX host — a failed programs load discloses nothing and offers a way out > offers a retry rather than a dead screen 24ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-510k renders inside the .mdx-shell scope root 26ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-pma renders inside the .mdx-shell scope root 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-cer renders inside the .mdx-shell scope root 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-diagnostics renders inside the .mdx-shell scope root 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-clinical-studies renders inside the .mdx-shell scope root 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-software renders inside the .mdx-shell scope root 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-engineering renders inside the .mdx-shell scope root 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-udi renders inside the .mdx-shell scope root 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-postmarket renders inside the .mdx-shell scope root 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-presub renders inside the .mdx-shell scope root 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > the scope root opts out of the shell grid 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > keeps the kit content measure around the surface 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > renders the docs-* classes this test is meant to cover 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-action-chip 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-actions 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-blocker-note 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-body 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-dhf 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-esig 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-esig- 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-flag 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-flags 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-framework 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-fw- 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-head 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-last 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-meta 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-open 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-owner 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-panel 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-panel-compact 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-pct 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-progress 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-progress-fill 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-rail 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-reviewer 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-reviewers 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-row 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-row-main 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-title 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-ver 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > names the stylesheet it actually lives in 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > covers the device screens 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-510k says nothing that reads as unfinished 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-cer says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-diagnostics says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-pma says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-clinical-studies says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-software says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-engineering says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-udi says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-postmarket says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-presub says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-cer names the one editor and the governed export its Generator reaches 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the CER screen describes no sample mode > its header names no sample-mode guard 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA phase list is a taxonomy, not a programme > names the ten phases 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA phase list is a taxonomy, not a programme > carries no position, and nothing supplies one 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA surface names nothing the program did not supply > carries no invented device name or filing date 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA surface names nothing the program did not supply > does not claim a current phase when no program is selected 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts > describeFilingRefusal — the second factor > asks for the authenticator code when the server requires it 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts > describeFilingRefusal — the second factor > says the factor could not be checked, not that the password was wrong 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts > describeFilingRefusal — the second factor > tells a signer with no authenticator to enrol one, where one is required (ADR-0014 P1-2b) 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts > describeFilingRefusal — the second factor > keeps the existing sentences 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/uploadedFileHasNoAuthoringState.test.ts > averageAssessedCompletion — one definition for every surface average > leaves unassessed documents out of both the sum and the count 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/uploadedFileHasNoAuthoringState.test.ts > averageAssessedCompletion — one definition for every surface average > is null — not 0 — when nothing was assessed 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/uploadedFileHasNoAuthoringState.test.ts > averageAssessedCompletion — one definition for every surface average > rounds the mean of assessed values 0ms
+ Test Files  20 passed (20)
+      Tests  145 passed (145)
