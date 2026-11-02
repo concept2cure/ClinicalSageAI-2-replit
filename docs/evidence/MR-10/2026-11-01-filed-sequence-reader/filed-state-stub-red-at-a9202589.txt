@@ -1,0 +1,10 @@
+# Trunk as pushed at a9202589, unchanged: the legacy-importer folder. 090f62af (F1, 02:56) made the fold's filed-manifest query return a
+# kind per row; this folder's stub pool returned rows without one, so the fold read nothing and two tests went red on trunk.
+# 2026-11-02T04:11:32Z  npx vitest run server/services/legacy-importer
+ × server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts > modified-file pointers > records a grouped-layout pointer in the form the fold binds, so the replaced leaf leaves the filed state 12ms
+ × server/services/legacy-importer/__tests__/filed-sequence-reader-round-trip.test.ts > a filed sequence reads back as the manifest its filing recorded > folds into the same filed state as the sequences the platform filed itself 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [] to deeply equal [ 'clinical-overview-v2.pdf', …(2) ]
+AssertionError: expected [] to deeply equal [ '0000 cover-0000.pdf', …(5) ]
+ Test Files  2 failed | 4 passed (6)
+      Tests  2 failed | 108 passed (110)

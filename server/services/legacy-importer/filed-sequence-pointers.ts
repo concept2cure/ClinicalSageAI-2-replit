@@ -15,11 +15,18 @@
  *     heading's section, so the fold also withdrew an unrelated leaf.
  *   - Two leaves of one sequence under one heading with one file name folded
  *     into one, so a filed document dropped off file.
+ *   - In an archive zipped without its application folder, a grouped-form
+ *     path climbed out and back in through a folder of any name. A pointer or
+ *     reused file in another application (`../../nda999999/0000/…`, which FDA's
+ *     grouped submissions write for a leaf filed under the application that
+ *     carried the files) was bound to this application's sequence of that
+ *     number. The folder must now be this application's own (climbRefusal).
  *
  * @module server/services/legacy-importer/filed-sequence-pointers
  */
 
 import * as path from 'path';
+import { fdaApplicationPrefix } from '../ectd/controlled-vocab';
 import type { FiledSequence, FiledSequenceLeaf } from './filed-sequence-reader';
 
 /** A sequence's backbone, from the sequence root. */
@@ -31,6 +38,9 @@ export const LEAF_ID = /^[A-Za-z_][A-Za-z0-9._-]*$/;
 /** The folder that holds a sequence's folder: 'app/' for 'app/0001/', '' for '0001/', '../' for the archive root. */
 export const parentOf = (root: string): string => (root === '' ? '../' : root.replace(/[^/]+\/$/, ''));
 
+/** Where a path lands among its application's sequences; `climbedThrough` is the folder a grouped-form path climbed out and back in through. */
+export interface Sibling { parent: string; number: string; rest: string; climbedThrough?: string }
+
 /**
  * Where a path, joined to a sequence's root, lands among the sequences of that
  * sequence's application: the sibling folder's number and the path inside it.
@@ -38,17 +48,38 @@ export const parentOf = (root: string): string => (root === '' ? '../' : root.re
  *
  * An archive zipped without its application folder (sequence folders at the
  * top, or one sequence at the root) is read as that folder's contents. So a
- * grouped-form path that climbs out and back in through a folder of any name
- * (`../../nda123456/0000/…` from `0001/`) lands on the sibling, too.
+ * grouped-form path that climbs out and back in through a folder
+ * (`../../ind123456/0000/…` from `0001/`) lands on the sibling too, and names
+ * the folder; whether it is this application's own is climbRefusal's to say.
  */
-export function intoSibling(target: string, root: string): { parent: string; number: string; rest: string } | null {
+export function intoSibling(target: string, root: string): Sibling | null {
   const parent = parentOf(root);
   const inside = target.startsWith(parent) ? target.slice(parent.length) : null;
   const direct = inside === null ? null : /^(\d{4})\/(.+)$/.exec(inside);
   if (direct) return { parent, number: direct[1], rest: direct[2] };
-  const climb = parent === '' ? /^\.\.\/[^/]+\/(\d{4})\/(.+)$/ : parent === '../' ? /^\.\.\/\.\.\/[^/]+\/(\d{4})\/(.+)$/ : null;
+  const climb = parent === '' ? /^\.\.\/([^/]+)\/(\d{4})\/(.+)$/ : parent === '../' ? /^\.\.\/\.\.\/([^/]+)\/(\d{4})\/(.+)$/ : null;
   const m = climb?.exec(target);
-  return m ? { parent, number: m[1], rest: m[2] } : null;
+  return m ? { parent, number: m[2], rest: m[3], climbedThrough: m[1] } : null;
+}
+
+/** The folder FDA files an application's sequences in (`ind123456`), from its regional backbone; null when it does not say. */
+export function applicationFolder(application: FiledSequence['application']): string | null {
+  const prefix = application.applicationType ? fdaApplicationPrefix(application.applicationType) : null;
+  return prefix && application.number ? `${prefix}${application.number}` : null;
+}
+
+/**
+ * Why a grouped-form path may not stand: the folder it climbs through must be
+ * this application's own, as its regional backbone names it. Another
+ * application's sequence is not in this application's filed state, and binding
+ * the pointer to this application's sequence of the same number would act on
+ * the wrong leaf. Null when the path does not climb, or climbs through its own.
+ */
+export function climbRefusal(into: Pick<Sibling, 'climbedThrough'>, application: FiledSequence['application']): string | null {
+  if (into.climbedThrough === undefined) return null;
+  const own = applicationFolder(application);
+  if (!own) return `climbs out through folder "${into.climbedThrough}", and this sequence's regional backbone names no FDA application whose folder that could be`;
+  return into.climbedThrough === own ? null : `leads into application folder "${into.climbedThrough}", not this application's "${own}"`;
 }
 
 /**
@@ -112,6 +143,8 @@ function bindPointer(s: FiledSequence, l: FiledSequenceLeaf, byRoot: Map<string,
   if (!into || !BACKBONE_PATH.test(into.rest)) {
     return { refusal: 'names no backbone of a sequence of its own application (another application, a path past its own, or no backbone at all)' };
   }
+  const climbed = climbRefusal(into, s.application);
+  if (climbed) return { refusal: climbed };
   const { parent, number, rest: backbone } = into;
   if (s.sequence === null || !(number < s.sequence)) return { refusal: `names sequence ${number}, which is not earlier than ${s.sequence ?? 'this one'}` };
   const canonical = `../${number}/${backbone}#${id}`;

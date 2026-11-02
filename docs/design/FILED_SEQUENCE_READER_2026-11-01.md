@@ -110,7 +110,12 @@ A second review, before these were pushed, found more. Its fixes (evidence
 README, "Second review"):
 - A reused file must be one a kept leaf of the earlier sequence filed.
 - An archive zipped without its application folder is read as that folder's
-  contents.
+  contents. A grouped-form path (`../../ind123456/0000/…`) must climb through
+  the application's own folder. That folder is named by its regional backbone:
+  the FDA prefix of the `application-type`, then the `application-number`. A
+  path into another application's folder is refused, as a pointer or as a
+  reused file: that application's filed state is not this one's (draft review,
+  2026-11-02).
 - Leaf and pointer IDs must be in the grammar the fold parses.
 - The on-file model follows the fold's supersession by section and file name.
 - Leaves filed directly in a heading that has sub-headings are read as filed,
