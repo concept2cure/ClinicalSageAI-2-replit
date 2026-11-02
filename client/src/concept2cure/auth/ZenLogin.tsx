@@ -16,7 +16,7 @@ import {
   type MfaMethod,
 } from '@/services/portal/authService';
 
-import { computeRedirect } from './redirectUtils';
+import { computeRedirect, verifyDemoAccessReadiness } from './redirectUtils';
 
 type View = 'sign-in' | 'mfa' | 'forgot-password' | 'reset-password' | 'reset-sent' | 'success';
 
@@ -202,6 +202,14 @@ export const ZenLogin: React.FC = () => {
       });
       const data = await res.json();
       if (data.success && data.accessToken) {
+        // Demo Access means a usable, populated demonstration, not merely a
+        // valid JWT. Never persist this session until its current organization,
+        // accessible project and Tasking read are verified.
+        const readiness = await verifyDemoAccessReadiness(data.accessToken, data.user, devLoginEmail);
+        if (!readiness.ready) {
+          setError({ message: readiness.message || 'Demo environment is not ready.' });
+          return;
+        }
         // Compute expiry matching the JWT (24h from now)
         const expiry = new Date(Date.now() + (data.expiresIn || 86400) * 1000).toISOString();
         // Store in both storages — authService.loadStoredAuth requires all 4 keys
