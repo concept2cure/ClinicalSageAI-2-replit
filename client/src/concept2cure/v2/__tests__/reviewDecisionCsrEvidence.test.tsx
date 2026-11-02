@@ -234,6 +234,14 @@ describe('the study data a CSR is reviewed against', () => {
     expect(preview[2]).toEqual({ runIds: [STUDY_DATA] });
   });
 
+  it('does not report an empty history when package-run discovery itself failed', async () => {
+    serve({ studyData: [], runsFails: true });
+    await openApproval();
+    expect((await screen.findByRole('alert')).textContent).toMatch(/Earlier package-run history is unavailable/);
+    expect(screen.queryByText(/No retained clinical tables are available for this document/)).toBeNull();
+    expect((screen.getByRole('button', { name: /Record approval/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it('names malformed package history without hiding the document’s saved study data', async () => {
     serve({ studyData: [entry('this-document')], runsMalformed: true });
     await openApproval();
