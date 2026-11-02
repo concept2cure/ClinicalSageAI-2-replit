@@ -1,0 +1,52 @@
+# Other gates run after D2-1 (working tree on 14dce5e38, 2026-11-01). Last lines of each.
+
+## npm run --silent ci:check-shell-css-collisions  (exit 0)
+[ci:shell-css-collisions] 22 class name(s) defined in more than one shell tree (baseline 22) — pdev+v2:22
+[ci:shell-css-collisions] OK — no new cross-shell collisions.
+
+## npm run --silent ci:check-css-selector-shadowing  (exit 0)
+
+[css-shadowing] OK — 49 stylesheets, 17 known shadowed selector(s), 0 new.
+
+## npm run --silent ci:check-chip-tones  (exit 0)
+[chip-tones] OK — 183 literal tone use(s), all 27 resolve to a CSS rule.
+
+## npm run --silent ci:token-cascade  (exit 0)
+
+[token-cascade] PASS — all 46 stylesheets resolve cleanly.
+
+## npm run --silent ci:ana-surface-context  (exit 0)
+  (70 surface file(s) hold a call).
+
+
+## npm run --silent check:microcopy  (exit 0)
+[ci:microcopy] OK — scanned 772 customer-facing files, no exclamations or pictographs.
+
+## npm run --silent ci:check-phantom-tokens  (exit 1, NOT D2-1's: see below)
+[ci:phantom-tokens] 9 phantom token(s) across 55 site(s) (baseline 9).
+
+  1 baseline token(s) now resolve: --accent-050
+  Regenerate so the ratchet holds:
+    node scripts/ci/check-phantom-tokens.mjs --write-baseline
+
+[ci:phantom-tokens] FAIL — new phantom token(s):
+
+  --danger-000  — declared nowhere, 1 use(s):
+      client/src/concept2cure/v2/styles/project-home-v2.css:496
+
+This renders the fallback every time — the var() is decoration, and the style is
+# The one new phantom is --danger-000 in '.c2c-v2 .pj-quality dd[data-tone="error"]', project-home-v2.css, which
+# is at HEAD line 460 (git show HEAD:client/src/concept2cure/v2/styles/project-home-v2.css | grep -n danger-000).
+# It moved to 496 only because the .pj-index block above it grew. It is D3's .pj-quality range, outside D2-1's lines.
+
+## npm run --silent ci:internals-in-copy  (exit 1, NOT D2-1's)
+4:   client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:745  [table name]
+# The only finding is SubmissionSeqWorkspaces.tsx (RIM's lane). None in Projects.tsx, ProjectPortfolioFilters.tsx or ProjectClientFilter.tsx.
+
+## Scoped type-check: tsc -p <scratch tsconfig extending tsconfig.json, files = the 3 surfaces, the 7 changed/new tests, the 2 e2e specs>
+# exit 2, with 4 errors, all outside D2-1's files and all from the scoped run lacking the project's ambient declarations
+# (CSS modules, import.meta.env). No error in any D2-1 file:
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/v2/surfaceActions.ts(305,19): error TS2339: Property 'env' does not exist on type 'ImportMeta'.

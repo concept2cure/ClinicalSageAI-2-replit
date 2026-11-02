@@ -1,0 +1,44 @@
+After D4-2, the same 133 suites plus workbenchBar.test.tsx (first run, tests not yet updated):
+  tests 1994 passed 1771 failed 223
+  new failures (not failing at HEAD): 204 in 34 suites: each a lookup of a control that moved (red, before the test updates):
+    client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx 7
+    client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx 1
+    client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx 7
+    client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx 8
+    client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx 2
+    client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx 4
+    client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx 2
+    client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx 2
+    client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx 3
+    client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx 1
+    client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx 3
+    client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx 14
+    client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx 1
+    client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx 1
+    client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx 1
+    client/src/concept2cure/v2/__tests__/sendForReview.test.tsx 10
+    client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx 2
+    client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx 20
+    client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx 7
+    client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx 17
+    client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx 6
+    client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx 8
+    client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx 9
+    client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx 1
+    client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx 15
+    client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx 1
+    client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx 1
+    client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx 5
+    client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx 4
+    client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx 2
+    client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx 14
+    client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx 8
+    client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx 2
+    client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx 15
+
+Second run, the 39 suites that failed plus authoringAnaMarkdown, workbenchBar and the three Save-and-sign suites, after the test updates:
+  tests 532 passed 530 failed 2
+   failed: client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx | opens the panel from the editor toolbar, and drafts nothing until asked
+   failed: client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx | an Escape the rename handled keeps the canonical conversation and its composer intact
+  The two failures were fixed (authoringAiDraft: read the item before the section read answers;
+  workbenchA11ySweep: the old "AnA" toggle is "Show the conversation"); both suites then 47/47.

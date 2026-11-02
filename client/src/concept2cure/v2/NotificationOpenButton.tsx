@@ -40,7 +40,7 @@ export function NotificationOpenButton({notice,navigate,beforeOpen}: {notice:Not
   };
   if (!(notice.resource_type && notice.resource_id) && !notice.action_url) return null;
   return <>
-    <button type="button" className="btn ghost" disabled={busy} onClick={()=>void open()}>{busy ? 'Checking linked record…' : error ? 'Retry linked record' : notificationTarget(notice)?.label ?? 'Open linked record'}</button>
+    <button type="button" className="btn ghost small" disabled={busy} onClick={()=>void open()}>{busy ? 'Checking linked record…' : error ? 'Retry linked record' : notificationTarget(notice)?.label ?? 'Open linked record'}</button>
     {error && <span className="tt-item-sub" role="alert">{error}</span>}
   </>;
 }

@@ -207,7 +207,8 @@ export function VaultLibraryResults({
           </span>
           {h.snippet ? <span className="vd-lib-snip">{h.snippet.replace(/<\/?b>/g, '')}</span> : null}
           <button
-            className="sp-ask"
+            type="button"
+            className="btn ghost small"
             disabled={downloadingId === h.id}
             onClick={() => onDownload(h.id, h.title, h.program.id)}
             aria-label={`Download ${h.title} from ${h.program.name ?? 'its project'}`}

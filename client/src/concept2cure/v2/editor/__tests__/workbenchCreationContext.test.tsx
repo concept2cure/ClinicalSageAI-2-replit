@@ -88,12 +88,12 @@ async function createdDocument() {
 }
 
 describe('creation stays in the existing editor host context', () => {
-  it('places creation notices outside the horizontally scrolling header actions', async () => {
+  it('places creation notices outside the bar and its acts', async () => {
     await mounted();
     const host = screen.getByTestId('authoring-creation-notices');
     expect(creation.current?.noticeContainer).toBe(host);
     expect(host.closest('header')).toBeNull();
-    expect(host.closest('.ed-doc-actions')).toBeNull();
+    expect(host.closest('.ed-bar-acts')).toBeNull();
   });
 
   it.each([PID, null])('passes the effective project %s and held-switch refusal to creation', async programId => {

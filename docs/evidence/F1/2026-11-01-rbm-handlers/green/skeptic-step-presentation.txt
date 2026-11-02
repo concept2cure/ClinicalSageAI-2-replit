@@ -1,0 +1,9 @@
+# Skeptic re-run, HEAD f0ade0abc + the uncommitted F1 fix with the skeptic's edits, 2026-11-02T00:34:03Z
+# npm run --silent ci:step-presentation
+ci:step-presentation OK — 674 in-scope tools each have a present entry (681 entries in all); 139 engine claims, none with a reachable model call.
+# exit 0
+# npm run --silent ci:step-presentation:selftest
+PASS  6. an empty in-scope list throws, never passes
+
+ci:step-presentation:selftest — 20/20 cases behaved.
+# exit 0

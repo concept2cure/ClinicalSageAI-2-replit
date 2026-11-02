@@ -1,0 +1,28 @@
+# npx eslint on the 19 changed files, after D1-2, 2026-11-02T00:20Z. Against red/eslint-head.txt: no new warning. Existing ones: Rail 254->253 lines; Shell.tsx 981->905 lines; TaskTrayOwner complexity 20->18; V2App 696->697 lines (one comment line); the e2e journey's 234 unchanged.
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/Shell.tsx
+  160:8  warning  Function 'Rail' has too many lines (253). Maximum allowed is 100         max-lines-per-function
+  160:8  warning  Function 'Rail' has a complexity of 39. Maximum allowed is 15            complexity
+  571:1  warning  Function 'AccountMenu' has too many lines (138). Maximum allowed is 100  max-lines-per-function
+  706:1  warning  File has too many lines (905). Maximum allowed is 500                    max-lines
+  914:8  warning  Function 'CmdK' has too many lines (267). Maximum allowed is 100         max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/TaskTray.tsx
+  107:1  warning  Function 'TaskTrayOwner' has a complexity of 18. Maximum allowed is 15  complexity
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/V2App.tsx
+   296:8   warning  Function 'V2App' has too many lines (697). Maximum allowed is 100                               max-lines-per-function
+   296:8   warning  Function 'V2App' has a complexity of 47. Maximum allowed is 15                                  complexity
+   553:55  warning  Arrow function has a complexity of 37. Maximum allowed is 15                                    complexity
+   878:1   warning  File has too many lines (853). Maximum allowed is 500                                           max-lines
+   889:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+   979:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1257:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+/home/user/ClinicalSageAI-2-replit/tests/e2e/golden-customer-journey.e2e.ts
+  91:14  warning  Async arrow function has too many lines (234). Maximum allowed is 100  max-lines-per-function
+
+✖ 14 problems (0 errors, 14 warnings)
+  0 errors and 3 warnings potentially fixable with the `--fix` option.
+
+# exit code: 0

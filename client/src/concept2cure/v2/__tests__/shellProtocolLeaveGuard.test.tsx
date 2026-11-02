@@ -63,7 +63,8 @@ async function pending() {
 }
 const rail = () => screen.getByRole('navigation', { name: 'Primary' });
 const palette = () => screen.getByRole('dialog', { name: 'Command palette' });
-const query = () => within(palette()).getByPlaceholderText(/Search surfaces/) as HTMLInputElement;
+// D1-3 (D1.md §D1.F step 1): the field's words name projects, conversations and pages.
+const query = () => within(palette()).getByPlaceholderText(/^Search projects, conversations and pages/) as HTMLInputElement;
 function result(label: string) {
   const button = within(palette()).getAllByRole('button').find(element => element.querySelector('.lbl')?.textContent === label);
   if (!button) throw new Error(`No palette result ${label}`);
@@ -102,10 +103,15 @@ describe('shell destinations preserve status-only protocol changes', () => {
     const callbacks = mount(); const canvas = await pending(); const before = channels();
     if (target === 'Vault' || target === 'Tasks') fireEvent.click(within(rail()).getByRole('button', { name: target }));
     else if (target === 'logo') fireEvent.click(within(rail()).getAllByRole('button', { name: 'Home' })[0]);
-    else if (target === 'project') fireEvent.click(screen.getByRole('button', { name: /Open project\s*BX-410/ }));
-    else if (target === 'help') fireEvent.click(screen.getByRole('button', { name: 'Get help' }));
-    else {
-      fireEvent.click(screen.getByTitle('Ada Rowe'));
+    // D1-2 (D1.md §D1.B steps 1 and 4): the chip is the top bar's project crumb, named by the
+    // project; Help is the account menu's "Get help" (the top bar's Help went).
+    else if (target === 'project') fireEvent.click(within(document.querySelector('header.topbar') as HTMLElement).getByRole('button', { name: 'BX-410' }));
+    else if (target === 'help') {
+      fireEvent.click(screen.getByTitle('Ada Rowe · Sponsor'));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Get help' }));
+    } else {
+      // The account button's title names the organisation too (D1-1, D1.md §D1.A step 2).
+      fireEvent.click(screen.getByTitle('Ada Rowe · Sponsor'));
       fireEvent.click(screen.getByRole(target === 'account' ? 'menuitem' : 'menuitemradio', { name: target === 'account' ? 'Usage & limits' : /Medical Device & IVD/ }));
     }
     expect(callbacks.onNav).not.toHaveBeenCalled(); expect(callbacks.setSegment).not.toHaveBeenCalled();

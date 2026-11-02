@@ -1,0 +1,134 @@
+
+== design-system/preview/_base.css
+  ok   client/src/concept2cure/v2/styles/app-v2.css:19 (subset of the block at 19)  :root {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:46 (subset of the block at 46)  .c2c-v2.dark {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:74 (subset of the block at 74)  .c2c-v2 {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:92 (line)  .c2c-v2 *, .c2c-v2 *::before, .c2c-v2 *::after { box-sizing: border-box; }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:97 (line)  :where(.c2c-v2) button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
+  ok   client/src/concept2cure/v2/styles/app-v2.css:103 (line)  .c2c-v2 button { font-family: inherit; }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:105 (line)  .c2c-v2 button:focus-visible { outline: 2px solid var(--accent-200); outline-offset: 2px; border
+  ok   client/src/concept2cure/v2/styles/app-v2.css:106 (line)  .c2c-v2 input, .c2c-v2 textarea, .c2c-v2 select { font: inherit; color: inherit; background: tra
+  ok   client/src/concept2cure/v2/styles/app-v2.css:433 (line)  .c2c-v2 svg { display: block; }
+
+== design-system/preview/components-buttons.html
+  ok   client/src/concept2cure/v2/styles/app-v2.css:187 (block 187-194)  .c2c-v2 :is(.btn, .reg-cta, .landing-newproj) {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:195 (line)  .c2c-v2 :is(.btn, .reg-cta, .landing-newproj) :is(.ico, svg) { width: 16px; height: 16px; font-s
+  ok   client/src/concept2cure/v2/styles/app-v2.css:196 (line)  .c2c-v2 .btn:hover { background: var(--bg-200); color: var(--text-100); }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:198 (line)  .c2c-v2 .btn.ghost { border-color: var(--border); }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:199 (line)  .c2c-v2 .btn.ghost:hover { background: var(--bg-100); border-color: var(--border-strong); color:
+  ok   client/src/concept2cure/v2/styles/app-v2.css:201 (line)  .c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj) { background: var(--accent-strong); border
+  ok   client/src/concept2cure/v2/styles/app-v2.css:202 (line)  .c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj):hover { background: color-mix(in srgb, var
+  ok   client/src/concept2cure/v2/styles/app-v2.css:204 (line)  .c2c-v2 :is(.btn.small, .btn.sm, .reg-cta.sm) { height: 28px; padding: 0 10px; gap: 5px; font-si
+  ok   client/src/concept2cure/v2/styles/app-v2.css:205 (line)  .c2c-v2 :is(.btn.small, .btn.sm) :is(.ico, svg) { width: 14px; height: 14px; font-size: 14px; }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:206 (line)  .c2c-v2 :is(.btn, .reg-cta, .landing-newproj):disabled { opacity: .5; cursor: not-allowed; }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:207 (line)  @media (pointer: coarse) { .c2c-v2 :is(.btn, .reg-cta, .landing-newproj) { min-height: 44px; } }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:417 (block 417-421)  .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send) {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:422 (line)  .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send) svg { width: 16px; height: 16px; }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:423 (line)  .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send):not(:disabled):hover { background: colo
+  ok   client/src/concept2cure/v2/styles/app-v2.css:424 (line)  .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send):disabled { opacity: .4; cursor: default
+  ok   client/src/concept2cure/v2/styles/journey-v2.css:514 (line)  .c2c-v2 .de-btn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:
+  ok   client/src/concept2cure/v2/styles/journey-v2.css:515 (line)  .c2c-v2 .de-btn.primary{background:var(--accent-strong);color:var(--accent-on-strong);}
+  ok   client/src/concept2cure/v2/styles/journey-v2.css:522 (line)  .c2c-v2 .de-btn.primary:hover{background:color-mix(in srgb,var(--accent-strong) 88%,var(--text-1
+  ok   client/src/concept2cure/v2/styles/journey-v2.css:524 (line)  .c2c-v2 .de-btn.ghost{border-color:var(--border);color:var(--text-200);}
+  ok   client/src/concept2cure/v2/styles/journey-v2.css:525 (line)  .c2c-v2 .de-btn.ghost:hover{background:var(--bg-100);color:var(--text-100);}
+  ok   client/src/concept2cure/v2/styles/journey-v2.css:526 (line)  .c2c-v2 .de-btn svg{width:15px;height:15px;}
+  ok   state at rest = client/src/concept2cure/v2/styles/app-v2.css:196  .c2c-v2 .btn.is-hover { background: var(--bg-200); color: var(--text-100); }
+  ok   state at rest = client/src/concept2cure/v2/styles/app-v2.css:199  .c2c-v2 .btn.ghost.is-hover { background: var(--bg-100); border-color: var(--bor
+  ok   state at rest = client/src/concept2cure/v2/styles/app-v2.css:202  .c2c-v2 .btn.primary.is-hover { background: color-mix(in srgb, var(--accent-stro
+
+== design-system/preview/components-cards.html
+  ok   client/src/concept2cure/v2/styles/app-v2.css:293 (block 293-296)  .c2c-v2 :is(.pj-card, .reg-card) {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:298 (block 298-300)  .c2c-v2 :is(button.pj-card, a.pj-card, .pj-card[role="button"]) {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:301 (line)  .c2c-v2 :is(button.pj-card, a.pj-card, .pj-card[role="button"]):hover { background: var(--bg-050
+  ok   client/src/concept2cure/v2/styles/app-v2.css:303 (line)  .c2c-v2 .pj-card-h { display: flex; align-items: center; justify-content: space-between; gap: 8p
+  ok   client/src/concept2cure/v2/styles/app-v2.css:304 (line)  .c2c-v2 .pj-card-h :is(.t, h3) { margin: 0; font-size: var(--fs-body); font-weight: 600; line-he
+  ok   client/src/concept2cure/v2/styles/app-v2.css:305 (line)  .c2c-v2 .pj-card-h :is(.s, .sec-sub) { font-size: var(--fs-small); color: var(--text-300); }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:306 (line)  .c2c-v2 .pj-card-h-go { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; 
+  ok   client/src/concept2cure/v2/styles/app-v2.css:307 (line)  .c2c-v2 .pj-card-h-go:hover { color: var(--text-100); }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:308 (line)  .c2c-v2 .pj-card-h-go svg { width: 14px; height: 14px; }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:311 (line)  .c2c-v2 .pj-card-t { font-size: var(--fs-body); font-weight: 600; line-height: 1.4; color: var(-
+  ok   client/src/concept2cure/v2/styles/app-v2.css:312 (line)  .c2c-v2 .pj-card-m, .c2c-v2 .pj-card-note, .c2c-v2 .pj-card-body { margin: 2px 0 0; font-size: v
+  ok   client/src/concept2cure/v2/styles/app-v2.css:313 (line)  .c2c-v2 .pj-card-r { display: flex; justify-content: space-between; gap: 8px; font-size: var(--f
+  ok   client/src/concept2cure/v2/styles/app-v2.css:314 (line)  .c2c-v2 .pj-card-f { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 
+  ok   client/src/concept2cure/v2/styles/app-v2.css:316 (line)  .c2c-v2 :is(.pj-card-blk, .pj-card-ok) { display: inline-flex; align-items: center; gap: 5px; fo
+  ok   client/src/concept2cure/v2/styles/app-v2.css:317 (line)  .c2c-v2 .pj-card-blk { color: var(--warning); } .c2c-v2 .pj-card-ok { color: var(--success); }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:361 (block 361-365)  .c2c-v2 .rd-chip {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:368 (line)  .c2c-v2 .rd-chip::first-letter { text-transform: uppercase; }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:371 (line)  .c2c-v2 .rd-chip.tone-ok   { background: var(--success-muted); color: var(--success); }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:372 (line)  .c2c-v2 .rd-chip.tone-warn { background: var(--warning-muted); color: var(--warning); }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:376 (line)  .c2c-v2.dark .rd-chip:is(:not([class*="tone-"]), .tone-ai, .tone-idle) { background: var(--bg-20
+  ok   state at rest = client/src/concept2cure/v2/styles/app-v2.css:301  .c2c-v2 .pj-card.is-hover { background: var(--bg-050); border-color: var(--borde
+
+== design-system/preview/components-inputs.html
+  ok   client/src/concept2cure/v2/styles/app-v2.css:113 (line)  .c2c-v2 input:focus-visible,
+  ok   client/src/concept2cure/v2/styles/app-v2.css:114 (line)  .c2c-v2 textarea:focus-visible,
+  ok   client/src/concept2cure/v2/styles/app-v2.css:115 (line)  .c2c-v2 select:focus-visible { outline: 2px solid var(--accent-200); outline-offset: 2px; border
+  ok   client/src/concept2cure/v2/styles/app-v2.css:258 (block 258-262)  .c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea) {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:263 (line)  .c2c-v2 .c2c-input { min-height: 32px; padding: 5px 10px; }                       /* inline: mat
+  ok   client/src/concept2cure/v2/styles/app-v2.css:264 (line)  .c2c-v2 :is(.de-input, .de-select) { min-height: 36px; padding: 7px 12px; }         /* form: mat
+  ok   client/src/concept2cure/v2/styles/app-v2.css:265 (line)  .c2c-v2 .de-textarea { min-height: 80px; padding: 8px 12px; resize: vertical; line-height: 1.5; 
+  ok   client/src/concept2cure/v2/styles/app-v2.css:267 (line)  .c2c-v2 :is(.c2c-input, .de-input, .de-textarea)::placeholder { color: var(--text-300); font-sty
+  ok   client/src/concept2cure/v2/styles/app-v2.css:269 (block 269-271)  .c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea):is(:focus, :focus-visible) {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:272 (block 272-275)  .c2c-v2 :is(select.c2c-input, .de-select) {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:277 (line)  .c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea)[readonly] { background: var(--bg-10
+  ok   client/src/concept2cure/v2/styles/app-v2.css:278 (line)  .c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea):disabled { opacity: .6; cursor: not
+  ok   client/src/concept2cure/v2/styles/app-v2.css:282 (line)  .c2c-v2 .de-label { display: block; margin: 0 0 6px; font-size: var(--fs-small); font-weight: 50
+  ok   client/src/concept2cure/v2/styles/app-v2.css:284 (line)  .c2c-v2 .de-label .req { color: var(--error); margin-left: 3px; }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:285 (line)  .c2c-v2 .de-desc { margin: 0 0 6px; font-size: var(--fs-caption); line-height: 1.45; color: var(
+  ok   client/src/concept2cure/v2/styles/app-v2.css:286 (block 286-288)  @media (pointer: coarse) {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:290 (line)  .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea, .cmdk-in input):focus-
+  ok   client/src/concept2cure/v2/styles/app-v2.css:407 (block 407-411)  .c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer) {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:412 (line)  .c2c-v2.dark :is(.landing-composer, .pj-composer, .ct-composer) { box-shadow: 0 1px 2px rgb(0 0 
+  ok   client/src/concept2cure/v2/styles/app-v2.css:414 (line)  .c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer):focus-within { border-color: var(--bo
+  ok   client/src/concept2cure/v2/styles/app-v2.css:415 (line)  .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea) { font-size: 15px; lin
+  ok   client/src/concept2cure/v2/styles/app-v2.css:416 (line)  .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea)::placeholder { color: 
+  ok   client/src/concept2cure/v2/styles/app-v2.css:417 (block 417-421)  .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send) {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:422 (line)  .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send) svg { width: 16px; height: 16px; }
+  ok   client/src/concept2cure/v2/styles/surfaces-v2.css:17 (line)  .c2c-v2 .landing-composer{width:100%;padding:0;display:flex;flex-direction:column;overflow:hidde
+  ok   client/src/concept2cure/v2/styles/surfaces-v2.css:18 (line)  .c2c-v2 .landing-input{width:100%;border:none;outline:none;background:transparent;resize:none;pa
+  ok   client/src/concept2cure/v2/styles/surfaces-v2.css:19 (line)  .c2c-v2 .landing-crow{display:flex;align-items:center;justify-content:space-between;padding:6px 
+  ok   client/src/concept2cure/v2/styles/surfaces-v2.css:20 (line)  .c2c-v2 .landing-crow-l{display:flex;align-items:center;gap:4px;position:relative;}
+  ok   client/src/concept2cure/v2/styles/surfaces-v2.css:21 (line)  .c2c-v2 .landing-crow-r{display:flex;align-items:center;gap:6px;position:relative;}
+  ok   client/src/concept2cure/v2/styles/surfaces-v2.css:22 (line)  .c2c-v2 .landing-tool{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-i
+  ok   state at rest = client/src/concept2cure/v2/styles/app-v2.css:269-270  .c2c-v2 .c2c-input.is-focus { outline: none; border-color: var(--border-focus); 
+  ok   state at rest = client/src/concept2cure/v2/styles/app-v2.css:414  .c2c-v2 .landing-composer.is-focus { border-color: var(--border-focus); }
+
+== design-system/preview/components-badges.html
+  ok   client/src/concept2cure/v2/styles/app-v2.css:361 (block 361-365)  .c2c-v2 .rd-chip {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:368 (line)  .c2c-v2 .rd-chip::first-letter { text-transform: uppercase; }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:369 (line)  .c2c-v2 .rd-chip svg { display: inline-block; width: 12px; height: 12px; vertical-align: -2px; m
+  ok   client/src/concept2cure/v2/styles/app-v2.css:370 (line)  .c2c-v2 .rd-chip.rd-chip-sentence { white-space: normal; }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:371 (line)  .c2c-v2 .rd-chip.tone-ok   { background: var(--success-muted); color: var(--success); }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:372 (line)  .c2c-v2 .rd-chip.tone-warn { background: var(--warning-muted); color: var(--warning); }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:373 (line)  .c2c-v2 .rd-chip.tone-err  { background: var(--error-muted);   color: var(--error); }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:375 (line)  .c2c-v2 .rd-chip:is(.tone-ai, .tone-idle) { background: var(--bg-100); color: var(--text-200); }
+  ok   client/src/concept2cure/v2/styles/app-v2.css:376 (line)  .c2c-v2.dark .rd-chip:is(:not([class*="tone-"]), .tone-ai, .tone-idle) { background: var(--bg-20
+
+== design-system/preview/type-body.html
+  ok   client/src/concept2cure/v2/styles/app-v2.css:164 (block 164-167)  .c2c-v2 :is(.ph-title, .sp-title, .reg-title, .cm-title, .adm-access .page-title) {
+  ok   client/src/concept2cure/v2/styles/app-v2.css:180 (line)  .c2c-v2 :is(.pj-sec-h h2, .sp-sec-h .t, .sec-title, .home-sec-h) { margin: 0; font-size: var(--f
+  ok   client/src/concept2cure/v2/styles/app-v2.css:312 (line)  .c2c-v2 .pj-card-m, .c2c-v2 .pj-card-note, .c2c-v2 .pj-card-body { margin: 2px 0 0; font-size: v
+  ok   client/src/concept2cure/v2/styles/app-v2.css:87 (line)  .c2c-v2 .small:not(.btn) { font-size: var(--fs-caption); color: var(--text-300); }
+
+  ok   flattened .c2c-v2 .dcv-bar .btn.ed-ico { width: 32px; padding: 0; } = authoring-v2.css:1584-1587
+
+== design-system/README.md type table against colors_and_type.css
+  ok   --fs-greeting: README 32px, colors_and_type.css:548 32px
+  ok   --fs-title: README 26px, colors_and_type.css:549 26px
+  ok   --fs-prose: README 16px, colors_and_type.css:554 16px
+  ok   --fs-section: README 15px, colors_and_type.css:550 15px
+  ok   --fs-body: README 14px, colors_and_type.css:551 14px
+  ok   --fs-small: README 13px, colors_and_type.css:552 13px
+  ok   --fs-caption: README 12px, colors_and_type.css:553 12px
+  app-v2.css declares no --fs-* token(s)
+
+== design-system/preview/type-body.html labels against colors_and_type.css
+  ok   --fs-greeting: label 32, colors_and_type.css:548 32px
+  ok   --fs-title: label 26, colors_and_type.css:549 26px
+  ok   --fs-section: label 15, colors_and_type.css:550 15px
+  ok   --fs-body: label 14, colors_and_type.css:551 14px
+  ok   --fs-small: label 13, colors_and_type.css:552 13px
+  ok   --fs-caption: label 12, colors_and_type.css:553 12px
+  ok   --fs-prose: label 16, colors_and_type.css:554 16px
+
+OK: 0 rule(s) not found in the source sheets

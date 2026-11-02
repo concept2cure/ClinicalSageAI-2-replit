@@ -62,6 +62,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 
 import { DocumentCanvas } from '../editor/DocumentCanvas';
 import { clearEditorTarget } from '../editorTarget';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const DOC = 'aaaaaaaa-0000-4000-8000-000000000003';
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
@@ -211,8 +212,7 @@ describe('DocumentCanvas — keyboard', () => {
     fireEvent.click(screen.getByTestId('dc-open-editor'));
     await screen.findByTestId('dc-expanded');
     await waitFor(() => expect(document.querySelector('.ed')).not.toBeNull());
-    const bar = document.querySelector('.ed-doc-actions') as HTMLElement;
-    fireEvent.click(within(bar).getByRole('button', { name: /^\s*History/ }));
+    fireEvent.click(openEditorControl('Versions'));
     await waitFor(() => expect(document.querySelector('aside.ed-comments')).not.toBeNull());
 
     (document.activeElement as HTMLElement | null)?.blur();

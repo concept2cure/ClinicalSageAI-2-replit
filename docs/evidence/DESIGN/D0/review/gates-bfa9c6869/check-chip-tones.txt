@@ -1,0 +1,3 @@
+$ node scripts/ci/check-chip-tones.mjs   # in a git-archive export of bfa9c6869
+[chip-tones] OK — 182 literal tone use(s), all 27 resolve to a CSS rule.
+exit 0

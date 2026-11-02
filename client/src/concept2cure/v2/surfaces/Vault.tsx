@@ -85,7 +85,8 @@ import {
   setEditorTarget,
   type EditorTargetDocType,
 } from '../editorTarget';
-import { readShellProject } from '../shellProject';
+import { readShellProject, useShellProject } from '../shellProject';
+import { useDialog } from '../useDialog';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import { VaultSourceBuildAction } from '../editor/VaultSourceBuildAction';
@@ -505,27 +506,42 @@ function DataRoomLane({
   filing: DataRoomFiling;
 }) {
   const [open, setOpen] = useState(false);
+  const headingId = useId();
+  /* A section of the Uploads view (D6 §C.4 step 11): heading, the stage counts
+     as its count, the toggle as its action. */
+  const head = (sub?: React.ReactNode, acts?: React.ReactNode) => (
+    <div className="pj-sec-h">
+      <h2 id={headingId}>Data room</h2>
+      {sub ? <span className="sec-sub">{sub}</span> : null}
+      {acts ? <div className="pj-sec-acts">{acts}</div> : null}
+    </div>
+  );
+  /* What the pipeline is, kept at the foot of the section and closed. */
+  const how = (
+    <details className="pj-more">
+      <summary>How files reach the Vault</summary>
+      <p>
+        Files attached in AnA chat or dropped on the project’s Evidence step pass through the data room;
+        files uploaded on this page go straight to the filing cabinet and are listed under Uploaded files.
+      </p>
+    </details>
+  );
   if (unavailableReason) {
     return (
-      <div className="vd-dr" data-testid="vault-data-room">
-        <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.inbox} Data room</span>
-        </div>
+      <section className="pj-sec" data-testid="vault-data-room" aria-labelledby={headingId}>
+        {head()}
         <div className="vd-dr-err" role="alert">
           {I.alertTriangle} Unavailable — showing nothing because the room could not be
           served, not because it is empty. {unavailableReason}
         </div>
-      </div>
+      </section>
     );
   }
   if (!block) {
     return (
-      <div className="vd-dr" data-testid="vault-data-room">
-        <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.inbox} Data room</span>
-          <span className="vd-dr-meta">No data room information for this project.</span>
-        </div>
-      </div>
+      <section className="pj-sec" data-testid="vault-data-room" aria-labelledby={headingId}>
+        {head('No data room information for this project.')}
+      </section>
     );
   }
   // Collapsed, the stage strip is the summary; expanding lists the sources.
@@ -533,29 +549,24 @@ function DataRoomLane({
   const unfiledIds = block.sources.filter((s) => s.stage !== 'filed').map((s) => s.id);
   const titleOf = (id: number) => block.sources.find((s) => s.id === id)?.title ?? `Source ${id}`;
   return (
-    <div className="vd-dr" data-testid="vault-data-room">
-      <div className="vd-dr-head">
-        <span className="vd-dr-title">{I.inbox} Data room</span>
+    <section className="pj-sec" data-testid="vault-data-room" aria-labelledby={headingId}>
+      {head(
         <span className="vd-dr-stages">
           <span className="vd-dr-stage">Captured <b>{roomCount(block.captured, block)}</b></span>
-          <span className="vd-dr-arrow">›</span>
+          <span className="vd-dr-arrow" aria-hidden="true">›</span>
           <span className="vd-dr-stage">Classified <b>{roomCount(block.classified, block)}</b></span>
-          <span className="vd-dr-arrow">›</span>
+          <span className="vd-dr-arrow" aria-hidden="true">›</span>
           <span className="vd-dr-stage">Filed to vault <b>{roomCount(block.filed, block)}</b></span>
-        </span>
-        <RoomNotes block={block} />
-        {block.sources.length > 0 && (
-          <button className="vd-dr-toggle" onClick={() => setOpen((o) => !o)}>
+        </span>,
+        block.sources.length > 0 ? (
+          <button type="button" className="btn ghost small" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
             {open ? 'Hide sources' : `Show ${block.sources.length} source${block.sources.length === 1 ? '' : 's'}`}
           </button>
-        )}
-      </div>
+        ) : null,
+      )}
+      <RoomNotes block={block} />
       {block.sources.length === 0 && (
-        <div className="vd-dr-empty">
-          Nothing captured for this project yet. Files attached in AnA chat or dropped on
-          the project’s Evidence step pass through the data room; files uploaded on this page go straight to
-          the filing cabinet and are listed under Uploaded files.
-        </div>
+        <div className="vd-dr-empty">Nothing captured for this project yet.</div>
       )}
       {(open && unfiledIds.length > 0) || filing.outcome || filing.error ? (
         <DataRoomFileBar filing={filing} unfiledIds={unfiledIds} titleOf={titleOf} />
@@ -582,7 +593,8 @@ function DataRoomLane({
           ))}
         </div>
       )}
-    </div>
+      {how}
+    </section>
   );
 }
 
@@ -618,6 +630,7 @@ function UploadsLane({
   onOpen: (folderId: string, docId: string | null) => void;
 }) {
   const [showAll, setShowAll] = useState(false);
+  const headingId = useId();
   if (!cabinet) return null;
   const rows: Array<{ doc: VaultDoc; folder: VaultFolder }> = [];
   for (const child of cabinet.children) {
@@ -631,16 +644,18 @@ function UploadsLane({
   const total = win?.total ?? rows.length;
   const visible = showAll ? rows : rows.slice(0, UPLOADS_LANE_ROWS);
   return (
-    <div className="vd-dr" data-testid="vault-uploads-lane">
-      <div className="vd-dr-head">
-        <span className="vd-dr-title">{I.folder} Uploaded files</span>
-        <span className="vd-dr-meta">
+    <section className="pj-sec" data-testid="vault-uploads-lane" aria-labelledby={headingId}>
+      <div className="pj-sec-h">
+        <h2 id={headingId}>Uploaded files</h2>
+        <span className="sec-sub">
           {total} uploaded file{total === 1 ? '' : 's'} in this project
           {win?.truncated ? ` · ${win.shown} in this window` : ''}
         </span>
-        <button className="vd-dr-toggle" onClick={() => onOpen(cabinet.id, null)}>
-          Open filing cabinet
-        </button>
+        <div className="pj-sec-acts">
+          <button type="button" className="btn ghost small" onClick={() => onOpen(cabinet.id, null)}>
+            Open filing cabinet
+          </button>
+        </div>
       </div>
       {rows.length === 0 && (
         <div className="vd-dr-empty">
@@ -661,13 +676,11 @@ function UploadsLane({
                   390 px the row's fixed parts left the name 0 px wide. */}
               <button
                 type="button"
-                className="vd-crumb vd-dr-open"
+                className="vd-dr-open"
                 title={doc.preview || doc.title}
                 onClick={() => onOpen(folder.id, doc.id)}
               >
-                <span className="vd-dr-name" style={{ maxWidth: 'none' }}>
-                  {doc.title}
-                </span>
+                <span className="vd-dr-name">{doc.title}</span>
               </button>
               <span className="vd-dr-detail">
                 {doc.sizeLabel ? `${doc.sizeLabel} · ` : ''}
@@ -683,11 +696,11 @@ function UploadsLane({
         </div>
       )}
       {rows.length > visible.length && (
-        <button className="vd-dr-toggle" onClick={() => setShowAll(true)}>
+        <button type="button" className="btn ghost small vd-dr-more" onClick={() => setShowAll(true)}>
           Show all {rows.length} in this window
         </button>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -715,8 +728,8 @@ function FindFilterSelect({ label, value, options, onChange, counts }: {
 }) {
   const countOf = (o: FilterOption) => (o.covers ?? [o.value]).reduce((n, v) => n + (counts?.get(v) ?? 0), 0);
   return (
-    <label className="vd-filter">
-      <span className="vd-filter-l">{label}</span>
+    <label className="vd-facet">
+      <span className="vd-facet-l">{label}</span>
       <select className="c2c-input" value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">Any</option>
         {options.map((o) => <option key={o.value} value={o.value}>{counts ? `${o.label} (${countOf(o)})` : o.label}</option>)}
@@ -792,7 +805,7 @@ function VaultFindFilterRow({ value, onChange, onClear, facets, folderLabel = (i
   };
   const active = Object.keys(value).length > 0;
   return (
-    <div className="vd-filters" role="group" aria-label="Filter documents">
+    <div className="vd-facets" role="group" aria-label="Filter documents">
       <FindFilterSelect label="Type" value={one('documentType')} options={TYPE_OPTIONS} counts={counts('documentType')} onChange={(v) => set('documentType', v ? [v] : null)} />
       <FindFilterSelect label="Filing" value={one('placementStatus')} options={FILING_OPTIONS} counts={counts('placementStatus')} onChange={(v) => set('placementStatus', v ? [v] : null)} />
       <FindFilterSelect label="Classification" value={one('classification')} options={CLASSIFICATION_OPTIONS} counts={counts('classification')} onChange={(v) => set('classification', v ? [v] : null)} />
@@ -804,8 +817,8 @@ function VaultFindFilterRow({ value, onChange, onClear, facets, folderLabel = (i
         counts={counts('lifecycleStage')}
         onChange={(v) => set('lifecycleStage', VAULT_STAGE_CHOICES.find((c) => c.value === v)?.stages ?? null)}
       />
-      <label className="vd-filter">
-        <span className="vd-filter-l">CTD section</span>
+      <label className="vd-facet">
+        <span className="vd-facet-l">CTD section</span>
         <input
           className="c2c-input"
           value={ctd}
@@ -817,18 +830,18 @@ function VaultFindFilterRow({ value, onChange, onClear, facets, folderLabel = (i
         />
       </label>
       {active && (
-        <button type="button" className="vd-crumb" onClick={onClear}>
+        <button type="button" className="btn ghost small" onClick={onClear}>
           Clear filters
         </button>
       )}
-      {hidden.length > 0 && <span className="vd-filter-note">Also filtering by:</span>}
+      {hidden.length > 0 && <span className="vd-find-note">Also filtering by:</span>}
       {hidden.map((h) => (
-        <button key={h.key} type="button" className="vd-crumb" aria-label={`Remove the filter ${h.text}`} onClick={() => set(h.key, null)}>
+        <button key={h.key} type="button" className="btn ghost small" aria-label={`Remove the filter ${h.text}`} onClick={() => set(h.key, null)}>
           {h.text} &times;
         </button>
       ))}
       {ctdRefused && (
-        <span id="vd-filter-ctd-note" className="vd-filter-note" role="status">
+        <span id="vd-filter-ctd-note" className="vd-find-note" role="status">
           &ldquo;{ctdRefused}&rdquo; is not a CTD section code (for example 3.2.P or 2.7.3), so it is not applied.
         </span>
       )}
@@ -913,25 +926,25 @@ function SaveViewForm({ defaultName, canWrite, busy, onSave, onCancel }: {
   const name = useId();
   const reasonId = useId();
   return (
-    <div className="vd-filters" role="group" aria-label="Save current search">
-      <label className="vd-filter">
-        <span className="vd-filter-l">Name</span>
+    <div className="vd-facets" role="group" aria-label="Save current search">
+      <label className="vd-facet">
+        <span className="vd-facet-l">Name</span>
         <input className="c2c-input" value={label} maxLength={120} onChange={(e) => setLabel(e.target.value)} />
       </label>
-      <label className="vd-filter">
+      <label className="vd-facet">
         <input type="radio" name={name} checked={visibility === 'private'} onChange={() => setVisibility('private')} /> Only me
       </label>
-      <label className="vd-filter">
+      <label className="vd-facet">
         <input
           type="radio" name={name} checked={visibility === 'org_public'} disabled={!canWrite} aria-describedby={reasonId}
           onChange={() => setVisibility('org_public')}
         /> Everyone in the organisation
       </label>
-      <span id={reasonId} className="vd-filter-note">
+      <span id={reasonId} className="vd-find-note">
         {canWrite ? 'Everyone in the organisation sees this view\'s name.' : 'Your role can save views for yourself only.'}
       </span>
-      <button type="button" className="vd-crumb" disabled={busy || !label.trim()} onClick={() => onSave(label.trim(), visibility)}>Save</button>
-      <button type="button" className="vd-crumb" onClick={onCancel}>Cancel</button>
+      <button type="button" className="btn ghost small" disabled={busy || !label.trim()} onClick={() => onSave(label.trim(), visibility)}>Save</button>
+      <button type="button" className="btn ghost small" onClick={onCancel}>Cancel</button>
     </div>
   );
 }
@@ -941,13 +954,13 @@ function RenameViewForm({ view, busy, onRename, onCancel }: {
 }) {
   const [label, setLabel] = useState(view.label);
   return (
-    <div className="vd-filters" role="group" aria-label="Rename view">
-      <label className="vd-filter">
-        <span className="vd-filter-l">New name</span>
+    <div className="vd-facets" role="group" aria-label="Rename view">
+      <label className="vd-facet">
+        <span className="vd-facet-l">New name</span>
         <input className="c2c-input" value={label} maxLength={120} onChange={(e) => setLabel(e.target.value)} />
       </label>
-      <button type="button" className="vd-crumb" disabled={busy || !label.trim()} onClick={() => onRename(label.trim())}>Save name</button>
-      <button type="button" className="vd-crumb" onClick={onCancel}>Cancel</button>
+      <button type="button" className="btn ghost small" disabled={busy || !label.trim()} onClick={() => onRename(label.trim())}>Save name</button>
+      <button type="button" className="btn ghost small" onClick={onCancel}>Cancel</button>
     </div>
   );
 }
@@ -959,10 +972,10 @@ function DeleteViewConfirm({ view, busy, onDelete, onCancel }: {
     ? `Delete “${view.label}” for everyone in the organisation? Documents are not affected.`
     : `Delete your view “${view.label}”? Documents are not affected.`;
   return (
-    <div className="vd-filters" role="group" aria-label="Delete view">
-      <span className="vd-filter-note">{question}</span>
-      <button type="button" className="vd-crumb" disabled={busy} onClick={onDelete}>Delete view</button>
-      <button type="button" className="vd-crumb" onClick={onCancel}>Cancel</button>
+    <div className="vd-facets" role="group" aria-label="Delete view">
+      <span className="vd-find-note">{question}</span>
+      <button type="button" className="btn ghost small" disabled={busy} onClick={onDelete}>Delete view</button>
+      <button type="button" className="btn ghost small" onClick={onCancel}>Cancel</button>
     </div>
   );
 }
@@ -976,19 +989,19 @@ function SavedViewActs({ view, applied, current, busy, onMode, onShare, onUpdate
   const blocker = view.canEdit ? updateViewBlocker(view, applied, current) : null;
   return (
     <>
-      {view.canRename && <button type="button" className="vd-crumb" disabled={busy} onClick={() => onMode('rename')}>Rename</button>}
+      {view.canRename && <button type="button" className="btn ghost small" disabled={busy} onClick={() => onMode('rename')}>Rename</button>}
       {view.canShare && (
-        <button type="button" className="vd-crumb" disabled={busy} onClick={onShare}>
+        <button type="button" className="btn ghost small" disabled={busy} onClick={onShare}>
           {view.visibility === 'private' ? 'Share with organisation' : 'Make personal'}
         </button>
       )}
       {view.canEdit && (
-        <button type="button" className="vd-crumb" disabled={busy || blocker !== null} aria-describedby={blocker ? blockerId : undefined} onClick={onUpdate}>
+        <button type="button" className="btn ghost small" disabled={busy || blocker !== null} aria-describedby={blocker ? blockerId : undefined} onClick={onUpdate}>
           Update view
         </button>
       )}
-      {blocker && <span id={blockerId} className="vd-filter-note">{blocker}</span>}
-      {view.canDelete && <button type="button" className="vd-crumb" disabled={busy} onClick={() => onMode('delete')}>Delete</button>}
+      {blocker && <span id={blockerId} className="vd-find-note">{blocker}</span>}
+      {view.canDelete && <button type="button" className="btn ghost small" disabled={busy} onClick={() => onMode('delete')}>Delete</button>}
     </>
   );
 }
@@ -1062,9 +1075,9 @@ function VaultSavedViews({ projectId, canWrite, current, searching, defaultName,
   const sharedNote = sharedByNote(selected);
   return (
     <div id="vd-saved-views" role="group" aria-label="Saved views">
-      <div className="vd-filters">
-        <label className="vd-filter">
-          <span className="vd-filter-l">Saved view</span>
+      <div className="vd-facets">
+        <label className="vd-facet">
+          <span className="vd-facet-l">Saved view</span>
           <select
             className="c2c-input" value={selected ? String(selected.id) : ''} disabled={!sv.views?.length}
             onChange={(e) => { setSelectedId(Number(e.target.value) || null); sv.setMode('idle'); sv.setNote(null); }}
@@ -1072,7 +1085,7 @@ function VaultSavedViews({ projectId, canWrite, current, searching, defaultName,
             <SavedViewOptions views={sv.views} loading={sv.loading} />
           </select>
         </label>
-        <button type="button" className="vd-crumb" disabled={!selected || sv.busy} onClick={apply}>Apply</button>
+        <button type="button" className="btn ghost small" disabled={!selected || sv.busy} onClick={apply}>Apply</button>
         {selected && (
           <SavedViewActs
             view={selected} applied={applied} current={current} busy={sv.busy}
@@ -1080,14 +1093,14 @@ function VaultSavedViews({ projectId, canWrite, current, searching, defaultName,
           />
         )}
         <button
-          type="button" className="vd-crumb" disabled={!searching || !sv.views || sv.busy}
+          type="button" className="btn ghost small" disabled={!searching || !sv.views || sv.busy}
           aria-describedby={searching ? undefined : saveReasonId}
           onClick={() => { sv.setNote(null); sv.setMode('save'); }}
         >
           Save current search…
         </button>
-        {!searching && <span id={saveReasonId} className="vd-filter-note">Type a search or choose a filter, then save it as a view.</span>}
-        {sharedNote && <span className="vd-filter-note">{sharedNote}</span>}
+        {!searching && <span id={saveReasonId} className="vd-find-note">Type a search or choose a filter, then save it as a view.</span>}
+        {sharedNote && <span className="vd-find-note">{sharedNote}</span>}
       </div>
       <SavedViewPanels sv={sv} selected={selected} defaultName={defaultName} canWrite={canWrite} onSave={save} onRename={rename} onDelete={remove} />
     </div>
@@ -1107,13 +1120,13 @@ function SavedViewPanels({ sv, selected, defaultName, canWrite, onSave, onRename
       {sv.failed && (
         <div className="vd-dr-err" role="alert">
           {I.alertTriangle} Saved views could not be loaded. This is not an empty list.{' '}
-          <button type="button" className="vd-crumb" onClick={sv.retry}>Try again</button>
+          <button type="button" className="btn ghost small" onClick={sv.retry}>Try again</button>
         </div>
       )}
       {sv.mode === 'save' && <SaveViewForm defaultName={defaultName} canWrite={canWrite} busy={sv.busy} onSave={onSave} onCancel={close} />}
       {sv.mode === 'rename' && selected && <RenameViewForm view={selected} busy={sv.busy} onRename={(l) => onRename(selected, l)} onCancel={close} />}
       {sv.mode === 'delete' && selected && <DeleteViewConfirm view={selected} busy={sv.busy} onDelete={() => onDelete(selected)} onCancel={close} />}
-      {sv.note && <div className="vd-filter-note" role={sv.note.tone}>{sv.note.text}</div>}
+      {sv.note && <div className="vd-find-note" role={sv.note.tone}>{sv.note.text}</div>}
     </>
   );
 }
@@ -1155,12 +1168,79 @@ export function findVaultArtifactLeaf(
 
 const NO_PROGRAM_OPEN = 'No project is open, so there is no vault here yet — open a project first.';
 
+/* ── The work area's views (D6 §C.3–C.4 step 5) ──
+   One Vault, its library first. What a DMS keeps beside the library (what came
+   in, what is required, the governed artifacts, the seals and fixity) is a view
+   of the same work area, one tab away, never a band above the library. Every
+   view stays mounted and the inactive ones are `hidden`: a fixity result, a
+   seal's verdict or a staged upload is not lost by looking at another view, and
+   the reads each panel makes on mount are the ones it always made. */
+type VaultView = 'library' | 'uploads' | 'required' | 'artifacts' | 'seals';
+const VAULT_VIEWS: ReadonlyArray<{ id: VaultView; label: string }> = [
+  { id: 'library', label: 'Library' },
+  { id: 'uploads', label: 'Uploads' },
+  { id: 'required', label: 'Required documents' },
+  { id: 'artifacts', label: 'Governed artifacts' },
+  { id: 'seals', label: 'Seals & fixity' },
+];
+
+/* AnA's entry on this page (D5 §WA.4.2 rule 4). The third is the connected-
+   repositories search the retired `.vd-coexist` band offered, prompt verbatim. */
+const VAULT_STARTERS = [
+  { label: 'What is missing for this filing?', prompt: 'Which required documents for this filing are missing or unconfirmed in the Vault?' },
+  { label: 'Which documents are not yet effective?', prompt: 'Which documents in this Vault are not yet effective, and what does each need?' },
+  { label: 'Search my connected repositories', prompt: 'Search my connected repositories for documents relevant to this project.' },
+] as const;
+
+/** The prompt the header's "Ask AnA to import" carried; now the Uploads view's action. */
+const IMPORT_ASK = 'Upload documents to the vault and index them for semantic search.';
+
+/* The record docks beside the list at 1280px and wider, and is the D0 drawer
+   below; the structure tree is a drawer below 1024px (D6 §C.3). Where the
+   browser has no matchMedia (a test DOM), the wide layout holds. */
+const RECORD_AS_DRAWER = '(max-width: 1279px)';
+const TREE_AS_DRAWER = '(max-width: 1023px)';
+function useViewportMatch(query: string): boolean {
+  const read = () => typeof window !== 'undefined' && !!window.matchMedia?.(query)?.matches;
+  const [on, setOn] = useState(read);
+  React.useEffect(() => {
+    const mql = typeof window !== 'undefined' ? window.matchMedia?.(query) : undefined;
+    if (!mql?.addEventListener) return undefined;
+    const sync = () => setOn(mql.matches);
+    sync();
+    mql.addEventListener('change', sync);
+    return () => mql.removeEventListener('change', sync);
+  }, [query]);
+  return on;
+}
+
+/** The D0 drawer (`.de-bd` > `.de`): focus held inside, Escape closes, focus returns to the opener.
+    A dialog opened from it keeps the keys while it is on screen: one drawn inside it (a review
+    route's form) takes Escape alone, and one the page draws over it (Place into filing, Work on
+    document) suspends this drawer's hold on focus until it closes, or Tab would pull focus out of
+    that dialog into this one behind it. */
+function VaultDrawer({ label, className, onClose, suspended = false, children }: {
+  label: string; className: string; onClose: () => void; suspended?: boolean; children: React.ReactNode;
+}) {
+  const panel = useDialog(() => {
+    if (panel.current?.querySelector('[role="dialog"]')) return;
+    onClose();
+  }, !suspended);
+  return (
+    <div className="de-bd" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div ref={panel} className={`de ${className}`} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /** Keep the recorded refusal with the action rather than only in a hover hint. */
 function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (source: VaultDoc) => void }) {
   const reasonId = useId();
   const unavailable = sourceImportUnavailableReason({ ...source, isCurrent: source.earlierVersion ? false : undefined });
   return <div className="source-work-action">
-    <button type="button" className="sp-primary" disabled={Boolean(unavailable)} title={unavailable ?? undefined}
+    <button type="button" className="btn ghost small" disabled={Boolean(unavailable)} title={unavailable ?? undefined}
       aria-describedby={unavailable ? reasonId : undefined} onClick={() => onPull(source)}>{I.penLine} Work on document</button>
     {unavailable && <p className="sec-sub" id={reasonId}>{unavailable}</p>}
   </div>;
@@ -1198,6 +1278,17 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   /* Confirm N suggested (VR-11b): held here for the same reason. */
   const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
   const canWrite = useVaultCanWrite();
+  /* The back link's words (D5 §WA.4.2 rule 2): the same channel `projectId` is read from. */
+  const shellProject = useShellProject();
+  /* The view on screen (D6 §C.4 step 5); the library first. */
+  const [view, setView] = useState<VaultView>('library');
+  const viewIds = useId();
+  /* Below 1280px the record is a drawer opened from a row; below 1024px the
+     structure tree is one too (D6 §C.3). */
+  const recordAsDrawer = useViewportMatch(RECORD_AS_DRAWER);
+  const treeAsDrawer = useViewportMatch(TREE_AS_DRAWER);
+  const [recordOpen, setRecordOpen] = useState(false);
+  const [treeOpen, setTreeOpen] = useState(false);
 
   /* Live document tree — real VaultFolder/VaultDoc from the read-model. Stable
      EMPTY_TREE reference while loading/absent so the memo below is loop-safe. */
@@ -1516,13 +1607,18 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      tree's own controls drive, so the list, breadcrumb and detail pane agree. */
   const openUpload = (folderId: string, docId: string | null) => {
     leaveFind();
+    setView('library');
     setActiveFolder(folderId);
     setExpanded((e) => ({ ...e, cabinet: true, [folderId]: true }));
-    if (docId) setSel(docId);
+    if (docId) {
+      setSel(docId);
+      setRecordOpen(true);
+    }
   };
   /* From the governed-artifacts lane: browse the branch in the tree. */
   const openArtifacts = () => {
     leaveFind();
+    setView('library');
     setActiveFolder('artifacts');
     setExpanded((e) => ({ ...e, artifacts: true }));
   };
@@ -1573,6 +1669,13 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         setActiveFolder(at.folderId);
         setExpanded((e) => ({ ...e, cabinet: true, [at.folderId]: true }));
         setSel(at.rowId);
+        /* A document named from another screen opens on its record. One just
+           uploaded is selected for the Library, and the Uploads view keeps its
+           receipts on screen. */
+        if (pendingTarget.kind !== 'uploaded') {
+          setView('library');
+          setRecordOpen(true);
+        }
       } else {
         setMissingTarget({ documentId: pendingTarget.documentId, act: pendingTarget.kind === 'uploaded' ? 'uploaded' : 'filed' });
       }
@@ -1651,6 +1754,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         return { ok: false, reason: 'The vault is still loading.', retry: true };
       if (allDocs.length === 0)
         return { ok: false, reason: 'This vault has no documents yet, so there is nothing to search.' };
+      // The search box and its results are the Library's (D6 §C.4 step 5).
+      setView('library');
       setQ(query);
       return { ok: true, detail: `Searching the vault for "${query}"` };
     },
@@ -1690,6 +1795,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       }
       const target = contains[0];
       leaveFind();
+      setView('library');
       setActiveFolder(target.folder.id);
       setExpanded((e) => {
         const next = { ...e };
@@ -1730,6 +1836,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         return { ok: false, reason: `"${params.document}" matches ${found.count} documents — name one exactly.` };
       }
       leaveFind();
+      setView('library');
       setActiveFolder(found.folder.id);
       setExpanded((e) => {
         const next = { ...e };
@@ -1738,6 +1845,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         return next;
       });
       setSel(found.doc.id);
+      // The record is what was asked for: below 1280px it is a drawer, opened here.
+      setRecordOpen(true);
       return { ok: true, detail: `Selected “${found.doc.title}” in ${found.folder.label}` };
     },
   });
@@ -2034,73 +2143,723 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     />
   );
 
-  return (
-    <div className="vd-wrap">
-      <div className="vd-top">
-        <div>
-          <div className="sp-eyebrow">Documents {I.dot} project vault</div>
-          <h1 className="vd-title">{getSurfaceMeta('vault').label}</h1>
-          <div className="vd-sub">
-            {/* Each part keeps its separator: the line wrapped on both sides of
-                a dot and left it alone on a line of its own (UI walk, 2026-10-31). */}
-            <span className="vd-sub-x">
-              {vaultHeaderParts(vault).map((part, i) => (
-                <React.Fragment key={part}>
-                  {i > 0 ? ' ' : null}
-                  <span className="vd-sub-part">{i > 0 ? <>{I.dot} </> : null}{part}</span>
-                </React.Fragment>
-              ))}
+  /* ── The work area (D6 §C.3–C.4; D5 §WA) ─────────────────────────────────
+     One page: the back link, the header with its one primary ("Add files"),
+     AnA's starters, the notes that qualify every view, then the views as tabs
+     with the library first. The drop zone is the whole page, so a file dropped
+     anywhere on it is staged in the Uploads view. */
+
+  /** "Add files" and "Add a folder" open the picker on the view where what is chosen is staged. */
+  const addFiles = () => { setView('uploads'); uploadControls.current?.chooseFiles(); };
+  const addFolder = () => { setView('uploads'); uploadControls.current?.chooseFolder(); };
+  const headerParts = vaultHeaderParts(vault);
+  /* The tab's count is the server's programme-wide uploads count, never the window shown. */
+  const uploadCount = vault?.documentCounts?.uploads ?? vault?.uploadsWindow?.total ?? null;
+  const viewLabel = (v: { id: VaultView; label: string }) =>
+    v.id === 'uploads' && uploadCount != null ? `${v.label} · ${uploadCount}` : v.label;
+  /* Arrow keys, Home and End move between the views (D5 §WA.6 9); one tab stop. */
+  const onViewKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const order = VAULT_VIEWS.map((v) => v.id);
+    const at = order.indexOf(view);
+    const next =
+      e.key === 'ArrowRight' ? order[(at + 1) % order.length]
+        : e.key === 'ArrowLeft' ? order[(at - 1 + order.length) % order.length]
+          : e.key === 'Home' ? order[0]
+            : e.key === 'End' ? order[order.length - 1]
+              : null;
+    if (!next) return;
+    e.preventDefault();
+    setView(next);
+    e.currentTarget.querySelector<HTMLElement>(`[data-view="${next}"]`)?.focus();
+  };
+  const panelProps = (id: VaultView) => ({
+    role: 'tabpanel' as const,
+    id: `${viewIds}-panel-${id}`,
+    'aria-labelledby': `${viewIds}-tab-${id}`,
+    hidden: view !== id,
+    className: 'vd-view',
+    'data-view': id,
+  });
+  /** Pick a row: it is the record's document; below 1280px the record opens as a drawer. */
+  const pickRow = (id: string) => {
+    setSel(id);
+    setRecordOpen(true);
+  };
+  /** The tree's root: the first folder, the find view left. */
+  const goRoot = () => {
+    setActiveFolder(tree[0] ? tree[0].id : null);
+    leaveFind();
+  };
+
+  const treeNav = (
+    <VaultTree
+      nodes={tree}
+      depth={0}
+      activeFolder={activeFolder}
+      onPick={(id) => {
+        setActiveFolder(id);
+        leaveFind();
+      }}
+      expanded={expanded}
+      toggle={toggle}
+    />
+  );
+  /* The project's line (program, filing type, spine) is the tree's caption,
+     and its root: it opens the first folder, as the old breadcrumb's root did. */
+  const treeCaption = (
+    <button type="button" className="vd-tree-root" onClick={goRoot} title="Open the first folder">
+      {I.folder} {(vault && vault.program) || 'Vault'}
+    </button>
+  );
+
+  /* ── The record: the D0 inspector (`.de`), docked at ≥1280px, a drawer below ──
+     Its header names the document, its filing and review state and version; its
+     actions follow; every part after that is a disclosure, the first open. */
+  const recordHead = sel ? (
+    <div className="de-h">
+      <div className="vd-d-head-b">
+        <div className="vd-d-title">
+          {sel.num && sel.num !== '—' ? `${sel.num} · ` : ''}
+          {sel.title}
+        </div>
+        <div className="vd-d-hdr">
+          <span className={'rd-chip tone-' + st(sel.status).tone}>{st(sel.status).label}</span>
+          {sel.src === 'upload' && sel.lifecycleStage !== undefined && (
+            <span
+              className={'rd-chip tone-' + stageTone(sel.lifecycleStage)}
+              title="Review and approval, apart from filing"
+              aria-label={`Review and approval: ${stageLabel(sel.lifecycleStage)}`}
+            >
+              {stageLabel(sel.lifecycleStage)}
+            </span>
+          )}
+          {sel.ver && sel.ver !== '—' && (
+            <span className="vd-d-ver">
+              {sel.ver}
+              {(sel.versionCount ?? 1) > 1 ? ` · ${sel.versionCount} versions` : ''}
+              {sel.earlierVersion ? ' · earlier version' : ''}
+            </span>
+          )}
+        </div>
+        <div className="vd-d-meta">
+          {[sel.type, sel.owner && sel.owner !== '—' ? sel.owner : null, `updated ${sel.updated}`].filter(Boolean).join(' · ')}
+        </div>
+      </div>
+      {recordAsDrawer ? (
+        <button type="button" className="de-x" aria-label="Close the record" onClick={() => setRecordOpen(false)}>
+          {I.close}
+        </button>
+      ) : null}
+    </div>
+  ) : null;
+
+  /** One part of the record as a disclosure: its existing heading is the summary. */
+  const part = (title: string, open: boolean, body: React.ReactNode, testId?: string) => (
+    <details className="pj-more vd-sec" open={open} data-testid={testId}>
+      <summary>{title}</summary>
+      {body}
+    </details>
+  );
+
+  const recordActions = sel ? (
+    <div className="vd-d-actions">
+      {sel.src === 'upload' && sel.docId && projectId && <VaultSourceWorkButton source={sel} onPull={setPullDoc} />}
+      {sel.src !== 'upload' && (
+        <button
+          type="button"
+          className="btn ghost small"
+          onClick={() => (sel.src === 'artifact' ? openArtifactInEditor(sel) : openDoc(sel))}
+        >
+          {I.penLine || I.fileText} Open in editor
+        </button>
+      )}
+      {/* Into a submission. Dossier filing decides where the document sits in
+          the ROOM; this decides whether it goes in a FILING. The vault copy is
+          filed as itself, no snapshot: the leaf points at it. */}
+      {sel.src === 'upload' && sel.filing && sel.docId && (
+        <button
+          type="button"
+          className="btn ghost small"
+          title="File into an eCTD sequence. The leaf points at the vault copy, so what is assembled is what is stored here."
+          onClick={() =>
+            setFilingIntoSubmission({
+              // `docId` is vault.documents.id — the bare uuid the download and
+              // filing actions already use. The tree id beside it is
+              // `up-<uuid>`, and a leaf carrying that prefix is refused
+              // server-side as a malformed uuid.
+              documentUuid: sel.docId!,
+              documentTitle: sel.title || sel.num || 'Vault document',
+              mimeType: sel.mimeType,
+              filing: sel.filing
+                ? { ctdSection: sel.filing.ctdSection ?? null, placementStatus: sel.filing.placementStatus ?? 'unfiled' }
+                : null,
+            })
+          }
+          data-testid="vault-place-into-submission"
+        >
+          {I.folder} Place into filing…
+        </button>
+      )}
+      {/* "Download" once typed a sentence into the chat. Only an uploaded
+          document HAS bytes; a governed artifact's governed export renders its
+          stored content; an authored section says there is nothing to download. */}
+      {sel.src === 'upload' && sel.docId ? (
+        <button
+          type="button"
+          className="btn ghost small"
+          onClick={() => void downloadVaultDoc(sel.docId!, sel.title)}
+          disabled={downloading === sel.docId || sel.originalFileAvailable === false}
+          title={sel.originalFileAvailable === false ? 'The original file is unavailable after the recorded retention decision' : undefined}
+        >
+          {I.download} {downloading === sel.docId ? 'Downloading…' : 'Download'}
+        </button>
+      ) : sel.src === 'artifact' && sel.artifact ? (
+        /* The governed export: rendered from the stored content, recorded
+           before it is delivered, and refused without a recorded review or
+           signature on the current version. A refusal says why, in the notes. */
+        <button
+          type="button"
+          className="btn ghost small"
+          onClick={() => void downloadArtifact(sel)}
+          disabled={downloading === sel.id}
+          title="The governed DOCX of the current version. Downloading it is recorded, and it needs a recorded human review or signature on that version."
+        >
+          {I.download} {downloading === sel.id ? 'Downloading…' : 'Download DOCX'}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="btn ghost small"
+          disabled
+          title="This is an authored record rather than an uploaded file, so there is nothing to download. Export it from the surface that owns it."
+        >
+          {I.download} No file to download
+        </button>
+      )}
+      <button
+        type="button"
+        className="btn ghost small"
+        onClick={() =>
+          onAsk(
+            sel.src === 'artifact' && sel.artifact
+              ? artifactAskPrompt(sel)
+              : 'Summarize ' + sel.title + ' and list the claims that still need evidence.',
+          )
+        }
+      >
+        {I.sparkles} Ask AnA
+      </button>
+      <VaultSourceBuildAction source={sel} programId={projectId} onNav={onNav} />
+    </div>
+  ) : null;
+
+  const dossierFiling = sel && sel.src === 'upload' && sel.filing ? (
+    /* The placement lifecycle. Everything here is a stored column: the
+       classifier's suggestion (with its confidence and rationale), or the
+       person's confirmed decision. A change posts to /file — governed,
+       audited — and the tree re-reads. */
+    <div className="vd-d-filing" data-testid="vault-filing-block">
+      <div className="vd-d-filing-row">
+        <span className="k">Folder</span>
+        <span className="v">{sel.filing.folderId ? sel.filing.folderLabel || sel.filing.folderId : 'Unfiled'}</span>
+      </div>
+      {filingDecisionLine(sel.filing) && (
+        <div className="vd-d-filing-row" data-testid="vault-filing-decided">
+          <span className="k">{sel.filing.placementStatus === 'unfiled' ? 'Unfiled by' : 'Filed by'}</span>
+          <span className="v">{filingDecisionLine(sel.filing)}</span>
+        </div>
+      )}
+      {sel.filing.evidenceKind && (
+        <div className="vd-d-filing-row">
+          <span className="k">Looks like</span>
+          <span className="v">{vaultDocKindLabel(sel.filing.evidenceKind)}</span>
+        </div>
+      )}
+      {sel.filing.ctdSection && (
+        <div className="vd-d-filing-row">
+          <span className="k">CTD section</span>
+          <span className="v mono">{sel.filing.ctdSection}</span>
+        </div>
+      )}
+      {sel.filing.rationale && (
+        <div className="vd-d-filing-why">
+          {/* "Classifier" only for the classifier's own proposal, which always
+              carries its confidence. A suggestion AnA made has none, and its
+              rationale already names her. */}
+          {sel.filing.placementStatus === 'suggested' && sel.filing.confidence
+            ? `Classifier (${sel.filing.confidence} confidence): `
+            : ''}
+          {sel.filing.rationale}
+        </div>
+      )}
+      {!canWrite ? <VaultViewOnly act="file, move or unfile it" testId="vault-filing-view-only" /> : null}
+      {canWrite ? (
+        <div className="vd-d-filing-acts">
+          {sel.docId && (sel.filing.placementStatus === 'suggested' || cabinetFolders.length > 0) && (
+            <input
+              className="vd-d-filing-reason"
+              value={filingReason}
+              onChange={(e) => setFilingReason(e.target.value)}
+              placeholder="Reason (optional, recorded with the placement)"
+              aria-label="Reason for this filing decision"
+              disabled={filing}
+              data-testid="vault-filing-reason"
+            />
+          )}
+          {sel.filing.placementStatus === 'suggested' && sel.docId && (
+            <button
+              type="button"
+              className="btn ghost small"
+              disabled={filing}
+              onClick={() => void fileDocument(sel.docId!, { confirm: true, ...(filingReason.trim() ? { note: filingReason.trim() } : {}) })}
+              data-testid="vault-confirm-filing"
+            >
+              {I.check || I.fileText} Confirm filing
+            </button>
+          )}
+          {sel.docId && cabinetFolders.length > 0 && (
+            <span className="vd-d-move">
+              <select
+                className="vd-d-move-sel"
+                value={moveTarget}
+                onChange={(e) => setMoveTarget(e.target.value)}
+                aria-label="Move this document to a dossier folder"
+              >
+                <option value="">Move to…</option>
+                {cabinetFolders.map((f) => (
+                  <option key={f.id} value={f.id}>{f.label}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="btn ghost small"
+                disabled={filing || !moveTarget}
+                onClick={() => {
+                  if (moveTarget) {
+                    void fileDocument(sel.docId!, { folderId: moveTarget, ...(filingReason.trim() ? { note: filingReason.trim() } : {}) });
+                    setMoveTarget('');
+                  }
+                }}
+              >
+                Move
+              </button>
+            </span>
+          )}
+          {sel.filing.placementStatus === 'confirmed' && sel.docId && (
+            <button
+              type="button"
+              className="btn ghost small"
+              disabled={filing}
+              onClick={() => void fileDocument(sel.docId!, { folderId: null })}
+            >
+              Unfile
+            </button>
+          )}
+        </div>
+      ) : null}
+    </div>
+  ) : null;
+
+  const versionsOf = (d: VaultDoc) =>
+    projectId && d.docId ? (
+      <VaultVersions
+        key={`versions-${d.docId}-${vaultEpoch}`}
+        projectId={projectId}
+        documentId={d.docId}
+        title={d.title}
+        onDownload={(docId, title) => void downloadVaultDoc(docId, title)}
+        downloadingId={downloading}
+        onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, d, currentId)}
+        uploading={uploading}
+        onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+        onOpenSection={(docId, code) => openImportedDocument(docId, projectId, onNav, code ?? undefined)}
+      />
+    ) : null;
+  const annotationsOf = (d: VaultDoc) =>
+    projectId && d.docId ? (
+      <VaultAnnotations
+        key={`annotations-${d.docId}`}
+        projectId={projectId}
+        documentId={d.docId}
+        refreshKey={vaultEpoch}
+        onChanged={() => setVaultEpoch((n) => n + 1)}
+      />
+    ) : null;
+  const relationshipsOf = (d: VaultDoc) =>
+    projectId && d.docId ? (
+      <VaultRelationships
+        key={`relationships-${d.docId}`}
+        projectId={projectId}
+        documentId={d.docId}
+        onChanged={() => setVaultEpoch((n) => n + 1)}
+      />
+    ) : null;
+  const historyOf = (d: VaultDoc) =>
+    projectId && d.docId ? (
+      <DocumentHistory key={`${d.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={d.docId} />
+    ) : null;
+
+  /* The record's parts for the document's kind, in their existing order; the first is open. */
+  const recordParts = !sel ? null : sel.src === 'upload' && sel.filing ? (
+    <>
+      {part('Dossier filing', true, dossierFiling)}
+      {projectId && sel.docId && sel.details
+        ? part('Details', false, (
+          /* Keyed by the document alone: keyed by the epoch too, it would
+             remount on every re-read and lose the confirmation of a save. */
+          <VaultEditDetails
+            key={`details-${sel.docId}`}
+            projectId={projectId}
+            documentId={sel.docId}
+            details={sel.details}
+            onSaved={() => setVaultEpoch((n) => n + 1)}
+          />
+        ))
+        : null}
+      {projectId && sel.docId
+        ? part('Catalog record', false, (
+          /* AnA's description of this version and a person's decision on it (S4). */
+          <VaultCatalogRecord
+            key={`catalog-${sel.docId}`}
+            projectId={projectId}
+            documentId={sel.docId}
+            onSaved={() => setVaultEpoch((n) => n + 1)}
+          />
+        ))
+        : null}
+      {part('File', false, (
+        <div className="vd-d-filing">
+          {sel.sizeLabel && (
+            <div className="vd-d-filing-row">
+              <span className="k">Size</span>
+              <span className="v">{sel.sizeLabel}</span>
+            </div>
+          )}
+          {sel.hash && (
+            <div className="vd-d-filing-row">
+              <span className="k">SHA-256</span>
+              <span className="v mono vd-d-hash" title={sel.hash}>
+                {sel.hash.slice(0, 16)}…
+              </span>
+            </div>
+          )}
+        </div>
+      ))}
+      {projectId && sel.docId ? part('Versions', false, versionsOf(sel)) : null}
+      {projectId && sel.docId ? part('Review annotations', false, annotationsOf(sel)) : null}
+      {projectId && sel.docId ? part('Related documents', false, relationshipsOf(sel)) : null}
+      {projectId && sel.docId ? part('History', false, historyOf(sel)) : null}
+    </>
+  ) : sel.src === 'upload' && sel.docId && projectId ? (
+    /* A search hit the tree does not list: an earlier version, or a document
+       outside the loaded window. Its versions and history are read as for any
+       upload; the filing is the current version's. */
+    <>
+      {sel.earlierVersion && (
+        <div className="vd-d-idx">
+          An earlier version. The tree lists the current one, which carries the document&apos;s filing.
+        </div>
+      )}
+      {part('Versions', true, versionsOf(sel))}
+      {part('Review annotations', false, annotationsOf(sel))}
+      {part('Related documents', false, relationshipsOf(sel))}
+      {part('History', false, historyOf(sel))}
+    </>
+  ) : sel.src === 'artifact' && sel.artifact ? (
+    /* A governed artifact: its governance as the registry records it, its
+       versions, and its audit report on request. */
+    <>
+      {part('Governed artifact', true, <ArtifactGovernanceDetail doc={sel} />)}
+      {projectId
+        ? part('Versions', false, (
+          <ArtifactVersions key={`artifact-versions-${sel.artifact.artifactId}-${vaultEpoch}`} projectId={projectId} doc={sel} />
+        ))
+        : null}
+      {projectId
+        ? part('Audit report', false, (
+          <ArtifactAuditReport key={`artifact-audit-${sel.artifact.artifactId}`} projectId={projectId} doc={sel} />
+        ))
+        : null}
+    </>
+  ) : (
+    /* An authored section: the read model returns each section's CURRENT
+       version only, not a history list, so that is what is shown. Corpus
+       indexing and linked evidence have no backing store in this read model:
+       each says so rather than showing a synthesized claim. */
+    <>
+      {part('Version', true, (
+        <div className="vd-vers">
+          <div className="vd-ver">
+            <span className="vd-ver-v">{sel.ver && sel.ver !== '—' ? sel.ver : '—'}</span>
+            <span className="vd-ver-m">
+              {[sel.updated, sel.owner && sel.owner !== '—' ? sel.owner : null, 'current version'].filter(Boolean).join(' · ')}
             </span>
           </div>
         </div>
-        {/* Only with a project open: without one it led to Project home's "No
-            project selected", beside the panel's own "Go to Projects". */}
-        {projectId && (
-          <button
-            className="sp-ask"
-            onClick={() => onNav && onNav('project-home')}
-            title="Open this project in Project management"
-          >
-            {I.folder} Open project
-          </button>
+      ))}
+      {part('Corpus indexing', false, (
+        <div className="vd-d-idx">
+          <span className="vd-idx-dot" aria-hidden="true" />
+          <span>Indexing status isn&apos;t reported for this document yet.</span>
+        </div>
+      ))}
+      {part('Linked evidence', false, (
+        <div className="vd-d-idx">No linked evidence recorded for this document yet.</div>
+      ))}
+    </>
+  );
+
+  /* The whole record of the selected document, docked or in the drawer (one of
+     the two at a time). Keyed by the document, so each opens fresh. */
+  const recordView = sel ? (
+    <React.Fragment key={sel.id}>
+      {recordHead}
+      <div className="de-body">
+        {sel.preview && <div className="vd-d-preview">{sel.preview}</div>}
+        {sel.flag && (
+          <div className="tl-warn-row">
+            {I.alertTriangle} {sel.flag}
+          </div>
         )}
-        {/* Offered only where the eTMF can be opened: outside this release it
-            led to the locked panel (FILING_SPINE.md F16). */}
-        {available('etmf') && (
-          <button
-            className="sp-ask"
-            onClick={() => onNav && onNav('etmf')}
-            title="TMF inspection-readiness — completeness, timeliness & QC"
-          >
-            {I.shieldCheck} Inspection readiness
-          </button>
+        {sel.src === 'upload' && sel.docId && (
+          <VaultHoldNotice holds={vault?.legalHolds} documentId={sel.docId}
+            unreadable={vault?.unavailable?.some((u) => u.branch === 'legalHolds')} />
         )}
-        {/* Uploading is an ingest, which admits the writing roles only (VaultViewOnly). */}
-        {canWrite ? (
-          <>
-        {/* What the file IS — the ingest schema's own vocabulary, so the
-            picker can never offer a type the server refuses. MODULE_3 is how
-            an uploaded CMC document declares itself and gets handled as one
-            downstream; the default stays OTHER rather than a guess from the
-            filename.
-            Options are NAMED by vaultIngestTypeLabel, the label map kept
-            beside the enum: the wire token ("OTHER", "MODULE 3") is not a
-            reader's vocabulary. The width is the content's, not the row's —
-            `.c2c-input` is `width:100%`, which in this wrapping header pushed
-            the picker onto a line of its own with the buttons below it. */}
-        {/* Named on screen: alone, the picker read as a stray "Other" box in
-            the header (UI walk, 2026-10-31). */}
+        {sel.src === 'upload' && sel.docId && projectId && (!sel.disposition || sel.disposition === 'keep_data') && <DocumentDisposition
+          key={`disposition-${sel.docId}`} projectId={projectId} targetType="vault_document" targetId={sel.docId}
+          title={sel.title} existingChoice={sel.disposition} onChanged={() => setVaultEpoch(n => n + 1)}
+        />}
+        {sel.originalFileAvailable === false && <p className="sec-sub" role="status">Original file unavailable. Retained extracted data and its lineage remain accessible.</p>}
+        {recordActions}
+        {recordParts}
+      </div>
+    </React.Fragment>
+  ) : null;
+
+  /* ── The views ── */
+  const libraryView = allDocs.length === 0 ? (
+    <EmptyState
+      icon={I.fileText}
+      title="No documents in this project's vault yet"
+      hint={
+        vault?.pendingStore
+          ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified."
+          : "Nothing has been filed into this project's vault yet. Add files — each one is recorded in the folder you choose for it, or classified and filed to a suggested folder for you to confirm — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
+      }
+    />
+  ) : (
+    <div className={recordAsDrawer ? 'vd-grid' : 'vd-grid wa-split'}>
+      <div className="vd-browse" data-tree={treeAsDrawer ? 'drawer' : undefined}>
+        {!treeAsDrawer && (
+          <aside className="vd-tree" aria-label="Document structure">
+            {treeCaption}
+            {treeNav}
+          </aside>
+        )}
+
+        <section className="vd-list" aria-label="Documents">
+          {/* One row: the search, saved views and the two scopes. THE SEARCH
+              BOX: `q` is driven by this field and by AnA's vault.search, the
+              same state. */}
+          <div className="vd-find">
+            {treeAsDrawer && (
+              <button type="button" className="btn ghost small" aria-expanded={treeOpen} onClick={() => setTreeOpen(true)}>
+                {I.folder} Structure
+              </button>
+            )}
+            <label className="vd-find-q">
+              <span className="vd-find-ic" aria-hidden="true">{I.search}</span>
+              <span className="sr-only">Search this vault</span>
+              <input
+                type="search"
+                className="c2c-input"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search titles and document text"
+                aria-label="Search this vault"
+              />
+            </label>
+            {projectId && (
+              <button
+                type="button"
+                className="btn ghost small"
+                aria-expanded={viewsOpen}
+                aria-controls={viewsOpen ? 'vd-saved-views' : undefined}
+                onClick={() => setViewsOpen((open) => !open)}
+              >
+                Saved views
+              </button>
+            )}
+            <label className="vd-toggle">
+              <input type="checkbox" checked={includeEarlier} onChange={(e) => setIncludeEarlier(e.target.checked)} />
+              Earlier versions
+            </label>
+            <label className="vd-toggle">
+              <input
+                type="checkbox"
+                checked={allProjects}
+                disabled={folderHeld}
+                aria-describedby={folderHeld ? 'vd-folder-held' : undefined}
+                onChange={(e) => setAllProjects(e.target.checked)}
+              />
+              All my projects
+            </label>
+          </div>
+          {folderHeld && (
+            <p id="vd-folder-held" className="vd-find-note">
+              A folder is one project&rsquo;s cabinet. Remove the folder filter to search all your projects.
+            </p>
+          )}
+          {viewsOpen && projectId && (
+            <VaultSavedViews
+              projectId={projectId}
+              canWrite={canWrite}
+              current={findState}
+              searching={searching}
+              defaultName={trimmedQ ? (filtering ? `${trimmedQ}, filtered` : trimmedQ) : 'Filtered documents'}
+              applied={appliedView}
+              onApply={applySavedView}
+              onChanged={(v, adopt) => { if (adopt || appliedView?.id === v.id) setAppliedView(v); }}
+              onDeleted={(id) => { if (appliedView?.id === id) setAppliedView(null); }}
+            />
+          )}
+          <VaultFindFilterRow
+            key={filterReset}
+            value={findFilters}
+            onChange={setFindFilters}
+            onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }}
+            facets={!libraryMode && verifiedSearch ? searchState.data?.facets ?? null : null}
+            folderLabel={(id) => (findFolder(tree, `cab-${id}`) ?? findFolder(tree, id))?.label ?? `the folder ${id}`}
+          />
+          {/* Where the list is: the folder, or what is narrowing it. */}
+          <div className="vd-breadcrumb">
+            {!searching && folder && (
+              <span className="vd-here">
+                {folder.code ? <b>{folder.code}</b> : null} {folder.label}
+              </span>
+            )}
+            {searching && (
+              <span className="vd-here">
+                {appliedView ? <>View &ldquo;{appliedView.label}&rdquo;{viewChanged ? ' (changed)' : ''} · </> : null}
+                {trimmedQ ? <>Search &quot;{q}&quot;{filtering ? ', filtered' : ''}</> : 'Filtered'}
+                {!libraryMode && verifiedSearch && searchState.data && searchState.data.total > results.length
+                  ? ` — ${results.length} of ${searchState.data.total}`
+                  : ''}
+              </span>
+            )}
+          </div>
+          {searchUnavailable && (
+            /* An error is not an empty result. Without this the screen reads
+               "no documents match your search", which is a different and
+               believable claim. */
+            <div className="scaf-note" role="alert" data-tone="error">
+              The vault search could not be verified — this is not a result of zero matches.
+              {' '}{redactInternals(searchState.error ?? '', 'The search did not complete.')}
+            </div>
+          )}
+          {searching && !libraryMode && verifiedSearch && pendingSearchNote(searchState.data?.pendingCount) && (
+            <div className="scaf-note" role="status" data-testid="vault-search-pending">
+              {pendingSearchNote(searchState.data?.pendingCount)}
+            </div>
+          )}
+          {searching && !libraryMode && searchState.loading && (
+            <div className="scaf-note" role="status">
+              Searching…
+            </div>
+          )}
+          {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
+          {!searching && projectId && folder ? (
+            <FolderExportButton projectId={projectId} treeFolderId={folder.id} label={folder.label}
+              documentCount={folderDocs.filter((d) => d.src === 'upload' && d.docId).length} />
+          ) : null}
+          {libraryMode ? (
+            <VaultLibraryResults
+              query={trimmedQ}
+              filterParams={filterParams}
+              includeEarlier={includeEarlier}
+              currentProjectId={projectId ?? null}
+              onDownload={(docId, title, programId) => void downloadVaultDoc(docId, title, programId)}
+              downloadingId={downloading}
+            />
+          ) : (
+            <div className="vd-rows">
+              {results.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  className="vd-row"
+                  data-on={selId === d.id || undefined}
+                  aria-current={selId === d.id ? 'true' : undefined}
+                  onClick={() => pickRow(d.id)}
+                >
+                  <span className="vd-col-name">
+                    <span className="vd-row-ic">{fileIcon(d)}</span>
+                    <span className="vd-row-t">
+                      {d.num && d.num !== '—' ? <span className="vd-num">{d.num}</span> : null}
+                      {d.title}
+                    </span>
+                    {d.blocker && (
+                      <span className="vd-blk" title="Blocks filing">
+                        {I.alertTriangle}
+                      </span>
+                    )}
+                  </span>
+                  <span className="vd-col-status">
+                    <span className={'rd-chip tone-' + st(d.status).tone}>{st(d.status).label}</span>
+                  </span>
+                  {/* Type, versions and review stage, then owner and date: the
+                      fields the five columns carried, on one quiet line. */}
+                  <span className="vd-row-s" title={`${d.type}${reviewText(d)}`}>
+                    {d.type}
+                    {(d.versionCount ?? 1) > 1 ? ` · ${d.ver}, ${d.versionCount} versions` : ''}
+                    {d.earlierVersion ? ` · ${d.ver}, earlier version` : ''}
+                    {reviewText(d)}
+                    {d.owner && d.owner !== '—' ? ` · ${d.owner}` : ''}
+                    {` · ${d.updated}`}
+                  </span>
+                </button>
+              ))}
+              {results.length === 0 && (!searching || verifiedSearch) && (
+                <div className="vd-empty">
+                  No documents
+                  {noMatchText(searching, Boolean(trimmedQ), filtering)}.
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      </div>
+
+      {!recordAsDrawer && (
+        <aside className="vd-detail de" data-docked="" aria-label="Document record">
+          {recordView ?? (
+            <div className="de-body">
+              <p className="vd-d-idx">Pick a document to see its record.</p>
+            </div>
+          )}
+        </aside>
+      )}
+    </div>
+  );
+
+  /* Uploading is an ingest, which admits the writing roles only (VaultViewOnly). */
+  const uploadBlock = canWrite ? (
+    <div className="vd-upload">
+      <div className="vd-upload-bar">
+        {/* What the file IS — the ingest schema's own vocabulary, named by
+            vaultIngestTypeLabel, so the picker never offers a type the
+            server refuses or a wire token for a label. The default stays
+            Other rather than a guess from the filename; each staged row
+            can change its own. */}
         <label className="vd-upload-type">
-          <span className="vd-upload-type-l">File type</span>
+          <span className="vd-upload-type-l">Type for files added next</span>
           <select
             className="c2c-input"
-            aria-label="Document type for files added next"
             value={docType}
             onChange={(e) => setDocType(e.target.value as VaultIngestDocumentType)}
             disabled={uploading}
             data-testid="vault-upload-type"
             title="Document type for files added next; each file's own row can change it"
-            style={{ width: 'auto', maxWidth: 260 }}
           >
             {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -2109,62 +2868,23 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             ))}
           </select>
         </label>
-        {/* The one drop zone (FileDropZone.tsx, shared with the Data Room):
-            files or a folder, chosen or dropped here. The pickers accept
-            exactly what POST /api/vault/ingest accepts; what was gathered goes
-            to the staging rows below, which list anything not uploaded. */}
-        <FileDropZone
-          className="vd-upload-zone"
-          accept={VAULT_UPLOAD_ACCEPT}
-          directory
-          activation="controls"
-          disabled={!projectId}
-          label="Add documents to the Vault"
-          testId="vault-upload-zone"
-          controlsRef={uploadControls}
-          onFiles={(picked) => setStaging((st) => stageFiles(picked, docType, st ?? undefined))}
-        >
-          {({ chooseFiles, chooseFolder }) => (
-            <>
-              <button
-                ref={addFilesButton}
-                className="sp-primary"
-                disabled={!projectId}
-                onClick={chooseFiles}
-                title={
-                  projectId
-                    ? 'Choose files to file into this project’s Vault'
-                    : 'Open a project first — a Vault document is filed against a project.'
-                }
-                data-testid="vault-upload-button"
-              >
-                {I.upload} Add files
-              </button>
-              <button className="sp-ask" disabled={!projectId} onClick={chooseFolder} data-testid="vault-upload-folder-button">
-                {I.folder} Add a folder
-              </button>
-              <span className="vd-upload-zone-t">or drop files or a folder here</span>
-            </>
-          )}
-        </FileDropZone>
-        {/* The conversational route is kept, but as what it is: a second way
-            in, not the thing the upload icon promises. */}
-        <button
-          className="sp-ask"
-          onClick={() =>
-            onAsk(
-              'Upload documents to the vault and index them for semantic search.',
-            )
-          }
-          title="Describe an import to AnA instead — e.g. bulk import from another system"
-        >
-          {I.sparkles || I.plus} Ask AnA to import
-        </button>
-          </>
-        ) : null}
+        {!staging && (
+          <p className="vd-upload-hint">
+            Drop files or a folder anywhere on this page, or use Add files.{' '}
+            {/* The conversational route: a second way in (an import from
+                another system), not the thing the upload button promises. */}
+            <button
+              type="button"
+              className="btn ghost small"
+              onClick={() => onAsk(IMPORT_ASK)}
+              title="Describe an import to AnA instead — for example, a bulk import from another system"
+            >
+              {I.sparkles} Ask AnA to import
+            </button>
+          </p>
+        )}
       </div>
-
-      {staging && canWrite ? (
+      {staging ? (
         <VaultUploadStaging
           staging={staging}
           folders={uploadFolders}
@@ -2175,40 +2895,280 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           onDone={() => { setStaging(null); setTimeout(() => addFilesButton.current?.focus(), 0); }}
         />
       ) : null}
-      {(uploadNote || downloadNote) && (
-        <div
-          className="scaf-note"
-          role="status"
-          style={{
-            margin: '0 0 12px',
-            color:
-              (downloadNote ?? uploadNote)!.tone === 'error' ? 'var(--error)' : undefined,
-          }}
-        >
-          {(downloadNote ?? uploadNote)!.text}
-        </div>
-      )}
-      {targetMissing && missingTarget && (
-        <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }} data-testid="vault-target-missing">
-          The document you just {missingTarget.act} is not in this list. Search for it by title.
-        </div>
-      )}
-      {otherProjectTarget && (
-        <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }} data-testid="vault-target-other-project">
-          The document you just filed belongs to another project. Open that project to see it in its Vault.
-        </div>
-      )}
       {checkInOffers.map(({ file, doc }) => (
-        <div key={`${file.name}-${doc.docId}`} className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
+        <div key={`${file.name}-${doc.docId}`} className="scaf-note" role="status">
           {file.name} was not uploaded: a different file is already recorded under this name as “{doc.title}”
           ({doc.ver}). Added as a new version, it is numbered by the server, keeps the document's filing, and the
           earlier versions stay in the Vault.{' '}
-          <button className="sp-ask" disabled={uploading} onClick={() => void uploadNewVersion(file, doc)}>
+          <button type="button" className="btn ghost small" disabled={uploading} onClick={() => void uploadNewVersion(file, doc)}>
             Upload as a new version of {doc.title}
           </button>
         </div>
       ))}
+    </div>
+  ) : null;
 
+  const uploadsView = (
+    <>
+      {uploadBlock}
+      <DataRoomLane
+        block={vault?.dataRoom}
+        filing={roomFiling}
+        unavailableReason={vault?.unavailable?.find((u) => u.branch === 'Data room')?.reason ?? null}
+      />
+      {/* Every upload in the programme, a projection of the same read. */}
+      <UploadsLane cabinet={cabinet} window={vault?.uploadsWindow} status={st} onOpen={openUpload} />
+    </>
+  );
+
+  const requiredView = (
+    <VaultCoverage
+      coverage={vault?.coverage}
+      documents={coverageDocuments}
+      onUpload={() => uploadControls.current?.chooseFiles()}
+      onFileHere={(docId, target) =>
+        void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
+      }
+      busy={filing}
+      defaultOpen
+    />
+  );
+
+  const artifactsView = (
+    <>
+      {/* The project's governed artifacts: a breakdown of the tree's branch, not a second list. */}
+      <GovernedArtifactsLane
+        block={vault?.artifacts}
+        unavailableReason={vault?.unavailable?.find((u) => u.branch === ARTIFACTS_BRANCH)?.reason ?? null}
+        onOpen={openArtifacts}
+        onExportManifest={exportArtifactManifest}
+      />
+      {organizationView}
+    </>
+  );
+
+  const sealsView = (
+    <>
+      {/* The Vault's seals (VR-19): an e-signed record of every current
+          document as it stood, and its verification. */}
+      {projectId ? <VaultSeals projectId={projectId} /> : null}
+      {/* Fixity: re-prove every stored version on demand. */}
+      {vault ? <VaultFixityCheck projectId={projectId ?? null} /> : null}
+    </>
+  );
+
+  const viewBodies: Record<VaultView, React.ReactNode> = {
+    library: libraryView,
+    uploads: uploadsView,
+    required: requiredView,
+    artifacts: artifactsView,
+    seals: sealsView,
+  };
+
+  const page = (
+    <div className="page-inner vd vd-wrap" data-work-area="vault">
+      {/* Back to the project (D5 §WA.4.2 rule 2); it replaces "Open project". */}
+      {projectId ? (
+        <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>
+          {I.left} {shellProject?.title ?? 'Project'}
+        </button>
+      ) : null}
+      <header className="ph">
+        <div>
+          <h1 className="ph-title">{getSurfaceMeta('vault').label}</h1>
+          {headerParts.length > 0 ? (
+            <p className="ph-sub">
+              {/* Each part keeps its separator: the line wrapped on both sides
+                  of a dot and left it alone on a line (UI walk, 2026-10-31). */}
+              {headerParts.map((piece, i) => (
+                <React.Fragment key={piece}>
+                  {i > 0 ? ' ' : null}
+                  <span className="vd-sub-part">{i > 0 ? <>{I.dot} </> : null}{piece}</span>
+                </React.Fragment>
+              ))}
+            </p>
+          ) : null}
+        </div>
+        <div className="ph-acts">
+          {/* Offered only where the eTMF can be opened: outside this release it
+              led to the locked panel (FILING_SPINE.md F16). */}
+          {available('etmf') && (
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => onNav && onNav('etmf')}
+              title="TMF inspection-readiness — completeness, timeliness & QC"
+            >
+              {I.shieldCheck} Inspection readiness
+            </button>
+          )}
+          {canWrite ? (
+            <>
+              <button
+                type="button"
+                className="btn ghost"
+                disabled={!projectId}
+                onClick={addFolder}
+                data-testid="vault-upload-folder-button"
+              >
+                {I.folder} Add a folder
+              </button>
+              <button
+                ref={addFilesButton}
+                type="button"
+                className="btn primary"
+                disabled={!projectId}
+                onClick={addFiles}
+                title={
+                  projectId
+                    ? 'Choose files to file into this project’s Vault'
+                    : 'Open a project first — a Vault document is filed against a project.'
+                }
+                data-testid="vault-upload-button"
+              >
+                {I.upload} Add files
+              </button>
+            </>
+          ) : null}
+        </div>
+      </header>
+      <div className="sp-starters" data-layout="row" aria-label="Ask AnA">
+        {VAULT_STARTERS.map((s) => (
+          <button key={s.label} type="button" className="sp-starter" onClick={() => onAsk(s.prompt)}>
+            <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{s.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* What qualifies every view: a transfer's outcome, a document that is
+          not where it was looked for, a filing decision's outcome, a cabinet
+          shown as a window, and each branch the server could not serve — said,
+          never silently omitted, because "no Uploaded files" and "no uploads"
+          would otherwise look identical. */}
+      <div className="vd-notes">
+        {(uploadNote || downloadNote) && (
+          <div className="scaf-note" role="status" data-tone={(downloadNote ?? uploadNote)!.tone === 'error' ? 'error' : undefined}>
+            {(downloadNote ?? uploadNote)!.text}
+          </div>
+        )}
+        {targetMissing && missingTarget && (
+          <div className="scaf-note" role="status" data-testid="vault-target-missing">
+            The document you just {missingTarget.act} is not in this list. Search for it by title.
+          </div>
+        )}
+        {otherProjectTarget && (
+          <div className="scaf-note" role="status" data-testid="vault-target-other-project">
+            The document you just filed belongs to another project. Open that project to see it in its Vault.
+          </div>
+        )}
+        {filingNote && (
+          <div className="scaf-note" role="status" data-tone={filingNote.tone === 'error' ? 'error' : undefined}>
+            {filingNote.text}
+          </div>
+        )}
+        {/* The filing cabinet is a WINDOW onto the vault, not the vault: a
+            reviewer who believes a partial cabinet is the whole one concludes a
+            document is absent, and in a regulated vault "absent" is a finding. */}
+        {vault?.uploadsWindow?.truncated ? (
+          <div className="scaf-note" role="status">
+            Uploaded files: showing the {vault.uploadsWindow.shown.toLocaleString()} most
+            recently updated of {vault.uploadsWindow.total.toLocaleString()} documents in
+            this project. Search to reach the rest.
+          </div>
+        ) : null}
+        {vault?.unavailable?.map((u) => (
+          <div key={u.branch} className="scaf-note" role="status">
+            {u.branch}: {u.reason}
+          </div>
+        ))}
+      </div>
+
+      {!projectId ? (
+        <>
+          <EmptyState
+            icon={I.folder}
+            title="Open a project to see its vault"
+            hint="The Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine. The governed artifacts of every project you can open are listed below."
+            action={onNav ? { label: 'Go to Projects', onAct: () => onNav('projects') } : undefined}
+          />
+          {organizationView}
+        </>
+      ) : vaultState.loading && !vault ? (
+        <div role="status" className="vd-loading">
+          Loading the project vault…
+        </div>
+      ) : vaultState.error ? (
+        /* A refusal is said as a refusal: a 403 answered and said no, a 404 is
+           a project not in this organization. Only a failure retry can fix
+           offers one. */
+        <>
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load the project vault"
+            hint={vaultReadFailure(vaultState.status).hint}
+            retry={vaultReadFailure(vaultState.status).retryable ? () => setVaultEpoch((n) => n + 1) : undefined}
+          />
+          {/* "Add files" stays in the header when the read fails, as it always did:
+              what it stages is listed here, since the views are not drawn. */}
+          {staging || checkInOffers.length > 0 ? uploadBlock : null}
+        </>
+      ) : (
+        <>
+          <div className="tabs" role="tablist" aria-label="Vault views" onKeyDown={onViewKey}>
+            {VAULT_VIEWS.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                role="tab"
+                className="tab"
+                id={`${viewIds}-tab-${v.id}`}
+                aria-selected={view === v.id}
+                aria-controls={`${viewIds}-panel-${v.id}`}
+                tabIndex={view === v.id ? 0 : -1}
+                data-view={v.id}
+                onClick={() => setView(v.id)}
+              >
+                {viewLabel(v)}
+              </button>
+            ))}
+          </div>
+          {VAULT_VIEWS.map((v) => (
+            <div key={v.id} {...panelProps(v.id)}>
+              {viewBodies[v.id]}
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* Drawers: the structure tree below 1024px, the record below 1280px.
+          Escape closes either, and focus returns to what opened it. */}
+      {projectId && view === 'library' && treeAsDrawer && treeOpen ? (
+        <VaultDrawer label="Document structure" className="vd-tree-drawer" onClose={() => setTreeOpen(false)}>
+          <div className="de-h">
+            <div className="de-h-t">Structure</div>
+            <button type="button" className="de-x" aria-label="Close the structure" onClick={() => setTreeOpen(false)}>
+              {I.close}
+            </button>
+          </div>
+          <div className="de-body">
+            {treeCaption}
+            {treeNav}
+          </div>
+        </VaultDrawer>
+      ) : null}
+      {projectId && view === 'library' && recordAsDrawer && recordOpen && sel ? (
+        <VaultDrawer
+          label={`Record: ${sel.title}`}
+          className="vd-detail"
+          onClose={() => setRecordOpen(false)}
+          suspended={Boolean(filingIntoSubmission) || Boolean(projectId && pullDoc?.docId)}
+        >
+          {recordView}
+        </VaultDrawer>
+      ) : null}
+
+      {/* Place into filing is its own drawer, over whichever view is on screen. */}
       {filingIntoSubmission && (
         <VaultPlaceIntoSubmission
           documentUuid={filingIntoSubmission.documentUuid}
@@ -2223,810 +3183,33 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           onClose={() => setFilingIntoSubmission(null)}
         />
       )}
-
-      {/* The filing cabinet is a WINDOW onto the vault, not the vault. Said
-          plainly for the same reason the unavailable branches below are: a
-          reviewer who believes a partial cabinet is the whole one concludes a
-          document is absent, and in a regulated vault "absent" is a finding.
-          The unfiled count beside the title is programme-wide, so it stays
-          correct here and is not re-stated. */}
-      {vault?.uploadsWindow?.truncated ? (
-        <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
-          Uploaded files: showing the {vault.uploadsWindow.shown.toLocaleString()} most
-          recently updated of {vault.uploadsWindow.total.toLocaleString()} documents in
-          this project. Search to reach the rest.
-        </div>
-      ) : null}
-
-      {/* A branch the server could not serve is said, not silently omitted —
-          otherwise "no Uploaded files folder" and "no uploads" look identical. */}
-      {vault?.unavailable?.map((u) => (
-        <div key={u.branch} className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
-          {u.branch}: {u.reason}
-        </div>
-      ))}
-
-      <div className="vd-coexist">
-        {/* It promised import with approval from Veeva Vault, SharePoint and
-            OneDrive, and its button only typed that request to AnA: no route
-            imports from a connector into the Vault (decision record
-            2026-10-08). What exists is AnA's search of connected
-            repositories, so that is what it offers. */}
-        <span className="vd-coexist-txt">
-          {I.link || I.plug} AnA can search your connected repositories (<b>Veeva Vault</b>,{' '}
-          <b>SharePoint</b>, <b>OneDrive</b>) in place. Importing from them into the
-          Vault comes in a later release; upload files here meanwhile.
-        </span>
-        <button
-          className="vd-coexist-cta"
-          onClick={() => onAsk('Search my connected repositories for documents relevant to this project.')}
-        >
-          Search connected sources
-        </button>
-      </div>
-
-      {/* The state panels sit on the header's 24px gutter. As bare children of
-          `.vd-wrap` they ran edge to edge, flush against the nav rail and out
-          of line with everything above them. */}
-      {!projectId ? (
-        <>
-          <div style={{ padding: '16px 24px' }}>
-            <EmptyState
-              icon={I.folder}
-              title="Open a project to see its vault"
-              hint="The Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine. The governed artifacts of every project you can open are listed below."
-              action={onNav ? { label: 'Go to Projects', onAct: () => onNav('projects') } : undefined}
-            />
-          </div>
-          {organizationView}
-        </>
-      ) : vaultState.loading && !vault ? (
-        <div role="status" className="scaf-note" style={{ padding: '18px 24px' }}>
-          Loading the project vault…
-        </div>
-      ) : vaultState.error ? (
-        <div style={{ padding: '16px 24px' }}>
-          {/* A refusal is said as a refusal. Every failure used to read "the
-              governed document store didn't respond" — false for a 403, where
-              it answered and said no, and for a 404, where the open project is
-              not in this organization. Only a failure retry can fix offers one. */}
-          <EmptyState
-            tone="error"
-            icon={I.alertTriangle}
-            title="Couldn't load the project vault"
-            hint={vaultReadFailure(vaultState.status).hint}
-            retry={vaultReadFailure(vaultState.status).retryable ? () => setVaultEpoch((n) => n + 1) : undefined}
-          />
-        </div>
-      ) : (
-        <>
-          <DataRoomLane
-            block={vault?.dataRoom}
-            filing={roomFiling}
-            unavailableReason={
-              vault?.unavailable?.find((u) => u.branch === 'Data room')?.reason ?? null
-            }
-          />
-          <VaultCoverage
-            coverage={vault?.coverage}
-            documents={coverageDocuments}
-            onUpload={() => uploadControls.current?.chooseFiles()}
-            onFileHere={(docId, target) =>
-              void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
-            }
-            busy={filing}
-          />
-          {/* The Vault's seals (VR-19): an e-signed record of every current
-              document as it stood, and its verification. */}
-          {projectId ? <VaultSeals projectId={projectId} /> : null}
-          {/* The lane is a BROWSE aid — every upload in the programme. While a
-              search is running it would sit above the results listing files the
-              search excluded, contradicting the very list the person asked for,
-              so it steps aside until the search is cleared. */}
-          {!searching && (
-            <UploadsLane
-              cabinet={cabinet}
-              window={vault?.uploadsWindow}
-              status={st}
-              onOpen={openUpload}
-            />
-          )}
-          {/* The project's governed artifacts (fold F3 slice A): a breakdown of
-              the tree's branch, not a second list. Steps aside while a search
-              runs, like the uploads lane. */}
-          {!searching && (
-            <GovernedArtifactsLane
-              block={vault?.artifacts}
-              unavailableReason={vault?.unavailable?.find((u) => u.branch === ARTIFACTS_BRANCH)?.reason ?? null}
-              onOpen={openArtifacts}
-              onExportManifest={exportArtifactManifest}
-            />
-          )}
-          {!searching && organizationView}
-          {/* Fixity (plan critique 15): re-prove every stored version on demand. */}
-          {!searching && vault ? <VaultFixityCheck projectId={projectId ?? null} /> : null}
-          {filingNote && (
-            <div
-              className="scaf-note"
-              role="status"
-              style={{ margin: '8px 24px 0', color: filingNote.tone === 'error' ? 'var(--error)' : undefined }}
-            >
-              {filingNote.text}
-            </div>
-          )}
-          {allDocs.length === 0 ? (
-            <div style={{ padding: '16px 24px' }}>
-              <EmptyState
-                icon={I.fileText}
-                title="No documents in this project's vault yet"
-                hint={
-                  vault?.pendingStore
-                    ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified."
-                    : "Nothing has been filed into this project's vault yet. Add files — each one is recorded in the folder you choose for it, or classified and filed to a suggested folder for you to confirm — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
-                }
-              />
-            </div>
-          ) : (
-        <div className="vd-grid">
-          <aside className="vd-tree">
-            <div className="vd-tree-lbl">Document structure</div>
-            <VaultTree
-              nodes={tree}
-              depth={0}
-              activeFolder={activeFolder}
-              onPick={(id) => {
-                setActiveFolder(id);
-                leaveFind();
-              }}
-              expanded={expanded}
-              toggle={toggle}
-            />
-          </aside>
-
-          <section className="vd-list">
-            <div className="vd-breadcrumb">
-              <button
-                className="vd-crumb"
-                onClick={() => {
-                  setActiveFolder(tree[0] ? tree[0].id : null);
-                  leaveFind();
-                }}
-              >
-                {I.folder} {(vault && vault.program) || 'Vault'}
-              </button>
-              {!searching && folder && (
-                <>
-                  <span className="vd-crumb-sep" aria-hidden="true">&rsaquo;</span>
-                  <span className="vd-crumb cur">
-                    {folder.code ? folder.code + ' - ' : ''}
-                    {folder.label}
-                  </span>
-                </>
-              )}
-              {searching && (
-                <>
-                  <span className="vd-crumb-sep" aria-hidden="true">&rsaquo;</span>
-                  <span className="vd-crumb cur">
-                    {appliedView ? <>View &ldquo;{appliedView.label}&rdquo;{viewChanged ? ' (changed)' : ''} · </> : null}
-                    {trimmedQ ? <>Search &quot;{q}&quot;{filtering ? ', filtered' : ''}</> : 'Filtered'}
-                    {!libraryMode && verifiedSearch && searchState.data && searchState.data.total > results.length
-                      ? ` — ${results.length} of ${searchState.data.total}`
-                      : ''}
-                  </span>
-                </>
-              )}
-              {/* THE SEARCH BOX.
-                  There was none. `q` existed and was driven only by AnA's
-                  vault.search action, so the assistant could search this surface
-                  and the person looking at it could not. Both now drive the same
-                  state, which was the original design intent. */}
-              <label className="vd-search">
-                <span className="sr-only">Search this vault</span>
-                <input
-                  type="search"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search titles and document text"
-                  aria-label="Search this vault"
-                />
-              </label>
-              <label className="vd-search">
-                <input
-                  type="checkbox"
-                  checked={includeEarlier}
-                  onChange={(e) => setIncludeEarlier(e.target.checked)}
-                />{' '}
-                Include earlier versions
-              </label>
-              <label className="vd-search">
-                <input
-                  type="checkbox"
-                  checked={allProjects}
-                  disabled={folderHeld}
-                  aria-describedby={folderHeld ? 'vd-folder-held' : undefined}
-                  onChange={(e) => setAllProjects(e.target.checked)}
-                />{' '}
-                Accessible projects
-              </label>
-              {folderHeld && (
-                <span id="vd-folder-held" className="vd-filter-note">
-                  A folder is one project&rsquo;s cabinet. Remove the folder filter to search accessible projects.
-                </span>
-              )}
-              {projectId && (
-                <button
-                  type="button"
-                  className="vd-crumb"
-                  aria-expanded={viewsOpen}
-                  aria-controls={viewsOpen ? 'vd-saved-views' : undefined}
-                  onClick={() => setViewsOpen((open) => !open)}
-                >
-                  Saved views
-                </button>
-              )}
-            </div>
-            {viewsOpen && projectId && (
-              <VaultSavedViews
-                projectId={projectId}
-                canWrite={canWrite}
-                current={findState}
-                searching={searching}
-                defaultName={trimmedQ ? (filtering ? `${trimmedQ}, filtered` : trimmedQ) : 'Filtered documents'}
-                applied={appliedView}
-                onApply={applySavedView}
-                onChanged={(v, adopt) => { if (adopt || appliedView?.id === v.id) setAppliedView(v); }}
-                onDeleted={(id) => { if (appliedView?.id === id) setAppliedView(null); }}
-              />
-            )}
-            <VaultFindFilterRow
-              key={filterReset}
-              value={findFilters}
-              onChange={setFindFilters}
-              onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }}
-              facets={!libraryMode && verifiedSearch ? searchState.data?.facets ?? null : null}
-              folderLabel={(id) => (findFolder(tree, `cab-${id}`) ?? findFolder(tree, id))?.label ?? `the folder ${id}`}
-            />
-            {searchUnavailable && (
-              /* An error is not an empty result. Without this the screen reads
-                 "no documents match your search", which is a different and
-                 believable claim. */
-              <div className="scaf-note" role="alert" style={{ margin: '8px 0 0', color: 'var(--error)' }}>
-                The vault search could not be verified — this is not a result of zero matches.
-                {' '}{redactInternals(searchState.error ?? '', 'The search did not complete.')}
-              </div>
-            )}
-            {searching && !libraryMode && verifiedSearch && pendingSearchNote(searchState.data?.pendingCount) && (
-              <div className="scaf-note" role="status" style={{ margin: '8px 0 0' }} data-testid="vault-search-pending">
-                {pendingSearchNote(searchState.data?.pendingCount)}
-              </div>
-            )}
-            {searching && !libraryMode && searchState.loading && (
-              <div className="scaf-note" role="status" style={{ margin: '8px 0 0' }}>
-                Searching…
-              </div>
-            )}
-            {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
-            {!searching && projectId && folder ? (
-              <FolderExportButton projectId={projectId} treeFolderId={folder.id} label={folder.label}
-                documentCount={folderDocs.filter((d) => d.src === 'upload' && d.docId).length} />
-            ) : null}
-            {libraryMode ? (
-              <VaultLibraryResults
-                query={trimmedQ}
-                filterParams={filterParams}
-                includeEarlier={includeEarlier}
-                currentProjectId={projectId ?? null}
-                onDownload={(docId, title, programId) => void downloadVaultDoc(docId, title, programId)}
-                downloadingId={downloading}
-              />
-            ) : (<>
-            <div className="vd-cols">
-              <span className="vd-col-name">Name</span>
-              <span className="vd-col-type">Type</span>
-              <span className="vd-col-owner">Owner</span>
-              <span className="vd-col-mod">Modified</span>
-              <span className="vd-col-status">Status</span>
-            </div>
-            <div className="vd-rows">
-              {results.map((d) => (
-                <button
-                  key={d.id}
-                  className="vd-row"
-                  data-on={selId === d.id || undefined}
-                  onClick={() => setSel(d.id)}
-                >
-                  <span className="vd-col-name">
-                    <span className="vd-row-ic">{fileIcon(d)}</span>
-                    <span className="vd-row-t">
-                      {d.num && d.num !== '—' ? (
-                        <span className="vd-num">{d.num}</span>
-                      ) : null}
-                      {d.title}
-                    </span>
-                    {d.blocker && (
-                      <span className="vd-blk" title="Blocks filing">
-                        {I.alertTriangle}
-                      </span>
-                    )}
-                  </span>
-                  <span className="vd-col-type" title={`${d.type}${reviewText(d)}`}>
-                    {d.type}
-                    {(d.versionCount ?? 1) > 1 ? ` · ${d.ver}, ${d.versionCount} versions` : ''}
-                    {d.earlierVersion ? ` · ${d.ver}, earlier version` : ''}
-                    {reviewText(d)}
-                  </span>
-                  <span className="vd-col-owner">{d.owner}</span>
-                  <span className="vd-col-mod">{d.updated}</span>
-                  <span className="vd-col-status">
-                    <span className={'rd-chip tone-' + st(d.status).tone}>
-                      {st(d.status).label}
-                    </span>
-                  </span>
-                </button>
-              ))}
-              {results.length === 0 && (!searching || verifiedSearch) && (
-                <div className="vd-empty">
-                  No documents
-                  {noMatchText(searching, Boolean(trimmedQ), filtering)}.
-                </div>
-              )}
-            </div>
-            </>)}
-          </section>
-
-          <aside className="vd-detail">
-            {sel && (
-              <>
-                <div className="vd-d-hdr">
-                  <span className={'rd-chip tone-' + st(sel.status).tone}>
-                    {st(sel.status).label}
-                  </span>
-                  {sel.ver && sel.ver !== '—' && (
-                    <span className="vd-d-ver">
-                      {sel.ver}
-                      {(sel.versionCount ?? 1) > 1 ? ` · ${sel.versionCount} versions` : ''}
-                      {sel.earlierVersion ? ' · earlier version' : ''}
-                    </span>
-                  )}
-                  {sel.src === 'upload' && sel.lifecycleStage !== undefined && (
-                    <span
-                      className={'rd-chip tone-' + stageTone(sel.lifecycleStage)}
-                      title="Review and approval, apart from filing"
-                      aria-label={`Review and approval: ${stageLabel(sel.lifecycleStage)}`}
-                    >
-                      {stageLabel(sel.lifecycleStage)}
-                    </span>
-                  )}
-                </div>
-                <div className="vd-d-title">
-                  {sel.num && sel.num !== '—' ? sel.num + ' - ' : ''}
-                  {sel.title}
-                </div>
-                <div className="vd-d-meta">
-                  {sel.type} - {sel.owner} - updated {sel.updated}
-                </div>
-                {sel.preview && (
-                  <div className="vd-d-preview">{sel.preview}</div>
-                )}
-                {sel.flag && (
-                  <div className="tl-warn-row">
-                    {I.alertTriangle} {sel.flag}
-                  </div>
-                )}
-                {sel.src === 'upload' && sel.docId && (
-                  <VaultHoldNotice holds={vault?.legalHolds} documentId={sel.docId}
-                    unreadable={vault?.unavailable?.some((u) => u.branch === 'legalHolds')} />
-                )}
-
-                {sel.src === 'upload' && sel.docId && projectId && (!sel.disposition || sel.disposition === 'keep_data') && <DocumentDisposition
-                  key={`disposition-${sel.docId}`} projectId={projectId} targetType="vault_document" targetId={sel.docId}
-                  title={sel.title} existingChoice={sel.disposition} onChanged={() => setVaultEpoch(n => n + 1)}
-                />}
-                {sel.originalFileAvailable === false && <p className="sec-sub" role="status">Original file unavailable. Retained extracted data and its lineage remain accessible.</p>}
-
-                {sel.src === 'upload' && sel.filing ? (
-                  <>
-                    {/* ── Dossier filing — the placement lifecycle ──
-                        Everything here is a stored column: the classifier's
-                        suggestion (with its confidence + rationale), or the
-                        person's confirmed decision. Committing a change posts
-                        to /file — governed, audited — and the tree re-reads. */}
-                    {/* ── Into a submission ──
-                        Dossier filing (below) decides where the document sits in
-                        the ROOM. This decides whether it goes in a FILING, which
-                        is a different question and used to have no answer at all:
-                        a customer could upload a CSR and then not put it in the
-                        NDA. The vault copy is filed as itself — no snapshot. */}
-                    <div className="vd-d-seclbl">Submission</div>
-                    <div className="vd-d-filing">
-                      <div className="vd-d-filing-row">
-                        <span className="k">Filing</span>
-                        <span className="v">
-                          File into an eCTD sequence. The leaf points at the vault copy, so
-                          what is assembled is what is stored here.
-                        </span>
-                      </div>
-                      {sel.docId && (
-                        <div className="vd-d-filing-acts">
-                          <button
-                            className="sp-primary"
-                            style={{ padding: '7px 11px' }}
-                            onClick={() =>
-                              setFilingIntoSubmission({
-                                // `docId` is vault.documents.id — the bare uuid the
-                                // download and filing actions already use. The tree id
-                                // beside it is `up-<uuid>`, and a leaf carrying that
-                                // prefix is refused server-side as a malformed uuid.
-                                documentUuid: sel.docId!,
-                                documentTitle: sel.title || sel.num || 'Vault document',
-                                mimeType: sel.mimeType,
-                                filing: sel.filing
-                                  ? { ctdSection: sel.filing.ctdSection ?? null, placementStatus: sel.filing.placementStatus ?? 'unfiled' }
-                                  : null,
-                              })
-                            }
-                            data-testid="vault-place-into-submission"
-                          >
-                            {I.folder} Place into filing…
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="vd-d-seclbl">Dossier filing</div>
-                    <div className="vd-d-filing" data-testid="vault-filing-block">
-                      <div className="vd-d-filing-row">
-                        <span className="k">Folder</span>
-                        <span className="v">
-                          {sel.filing.folderId
-                            ? sel.filing.folderLabel || sel.filing.folderId
-                            : 'Unfiled'}
-                        </span>
-                      </div>
-                      {filingDecisionLine(sel.filing) && (
-                        <div className="vd-d-filing-row" data-testid="vault-filing-decided">
-                          <span className="k">{sel.filing.placementStatus === 'unfiled' ? 'Unfiled by' : 'Filed by'}</span>
-                          <span className="v">{filingDecisionLine(sel.filing)}</span>
-                        </div>
-                      )}
-                      {sel.filing.evidenceKind && (
-                        <div className="vd-d-filing-row">
-                          <span className="k">Looks like</span>
-                          <span className="v">{vaultDocKindLabel(sel.filing.evidenceKind)}</span>
-                        </div>
-                      )}
-                      {sel.filing.ctdSection && (
-                        <div className="vd-d-filing-row">
-                          <span className="k">CTD section</span>
-                          <span className="v mono">{sel.filing.ctdSection}</span>
-                        </div>
-                      )}
-                      {sel.filing.rationale && (
-                        <div className="vd-d-filing-why">
-                          {/* "Classifier" only for the classifier's own proposal, which
-                              always carries its confidence. A suggestion AnA made has
-                              none, and its rationale already names her — labelling it
-                              "Classifier" would misattribute it all over again. */}
-                          {sel.filing.placementStatus === 'suggested' && sel.filing.confidence
-                            ? `Classifier (${sel.filing.confidence} confidence): `
-                            : ''}
-                          {sel.filing.rationale}
-                        </div>
-                      )}
-                      {!canWrite ? <VaultViewOnly act="file, move or unfile it" testId="vault-filing-view-only" /> : null}
-                      {canWrite ? <div className="vd-d-filing-acts">
-                        {sel.docId && (sel.filing.placementStatus === 'suggested' || cabinetFolders.length > 0) && (
-                          <input
-                            className="vd-d-filing-reason"
-                            value={filingReason}
-                            onChange={(e) => setFilingReason(e.target.value)}
-                            placeholder="Reason (optional, recorded with the placement)"
-                            aria-label="Reason for this filing decision"
-                            disabled={filing}
-                            data-testid="vault-filing-reason"
-                          />
-                        )}
-                        {sel.filing.placementStatus === 'suggested' && sel.docId && (
-                          <button
-                            className="sp-primary"
-                            style={{ padding: '7px 11px' }}
-                            disabled={filing}
-                            onClick={() => void fileDocument(sel.docId!, { confirm: true, ...(filingReason.trim() ? { note: filingReason.trim() } : {}) })}
-                            data-testid="vault-confirm-filing"
-                          >
-                            {I.check || I.fileText} Confirm filing
-                          </button>
-                        )}
-                        {sel.docId && cabinetFolders.length > 0 && (
-                          <span className="vd-d-move">
-                            <select
-                              className="vd-d-move-sel"
-                              value={moveTarget}
-                              onChange={(e) => setMoveTarget(e.target.value)}
-                              aria-label="Move this document to a dossier folder"
-                            >
-                              <option value="">Move to…</option>
-                              {cabinetFolders.map((f) => (
-                                <option key={f.id} value={f.id}>{f.label}</option>
-                              ))}
-                            </select>
-                            <button
-                              className="sp-ask"
-                              disabled={filing || !moveTarget}
-                              onClick={() => {
-                                if (moveTarget) {
-                                  void fileDocument(sel.docId!, { folderId: moveTarget, ...(filingReason.trim() ? { note: filingReason.trim() } : {}) });
-                                  setMoveTarget('');
-                                }
-                              }}
-                            >
-                              Move
-                            </button>
-                          </span>
-                        )}
-                        {sel.filing.placementStatus === 'confirmed' && sel.docId && (
-                          <button
-                            className="sp-ask"
-                            disabled={filing}
-                            onClick={() => void fileDocument(sel.docId!, { folderId: null })}
-                          >
-                            Unfile
-                          </button>
-                        )}
-                      </div> : null}
-                    </div>
-
-                    {projectId && sel.docId && sel.details ? (
-                      /* Keyed by the document alone. A sibling DocumentHistory below
-                         is keyed `${docId}-${vaultEpoch}`: the same string twice in one
-                         fragment is a duplicate key, and React then leaves the Details
-                         block it mounted for the previous document in the DOM. Keyed
-                         by the epoch too, the block also remounts on every re-read, and
-                         the confirmation of a save is lost in the same render. */
-                      <VaultEditDetails
-                        key={`details-${sel.docId}`}
-                        projectId={projectId}
-                        documentId={sel.docId}
-                        details={sel.details}
-                        onSaved={() => setVaultEpoch((n) => n + 1)}
-                      />
-                    ) : null}
-
-                    {projectId && sel.docId ? (
-                      /* AnA's description of this version and a person's decision on it
-                         (S4). Keyed by the document alone, for the reason above. */
-                      <VaultCatalogRecord
-                        key={`catalog-${sel.docId}`}
-                        projectId={projectId}
-                        documentId={sel.docId}
-                        onSaved={() => setVaultEpoch((n) => n + 1)}
-                      />
-                    ) : null}
-
-                    <div className="vd-d-seclbl">File</div>
-                    <div className="vd-d-filing">
-                      {sel.sizeLabel && (
-                        <div className="vd-d-filing-row">
-                          <span className="k">Size</span>
-                          <span className="v">{sel.sizeLabel}</span>
-                        </div>
-                      )}
-                      {sel.hash && (
-                        <div className="vd-d-filing-row">
-                          <span className="k">SHA-256</span>
-                          <span className="v mono vd-d-hash" title={sel.hash}>
-                            {sel.hash.slice(0, 16)}…
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    {projectId && sel.docId ? (
-                      <VaultVersions
-                        key={`versions-${sel.docId}-${vaultEpoch}`}
-                        projectId={projectId}
-                        documentId={sel.docId}
-                        title={sel.title}
-                        onDownload={(docId, title) => void downloadVaultDoc(docId, title)}
-                        downloadingId={downloading}
-                        onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
-                        uploading={uploading}
-                        onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
-                        onOpenSection={(docId, code) => openImportedDocument(docId, projectId, onNav, code ?? undefined)}
-                      />
-                    ) : null}
-                    {projectId && sel.docId ? (
-                      <VaultAnnotations
-                        key={`annotations-${sel.docId}`}
-                        projectId={projectId}
-                        documentId={sel.docId}
-                        refreshKey={vaultEpoch}
-                        onChanged={() => setVaultEpoch((n) => n + 1)}
-                      />
-                    ) : null}
-                    {projectId && sel.docId ? (
-                      <VaultRelationships
-                        key={`relationships-${sel.docId}`}
-                        projectId={projectId}
-                        documentId={sel.docId}
-                        onChanged={() => setVaultEpoch((n) => n + 1)}
-                      />
-                    ) : null}
-                    {projectId && sel.docId ? (
-                      <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
-                    ) : null}
-                  </>
-                ) : sel.src === 'upload' && sel.docId && projectId ? (
-                  /* A search hit the tree does not list: an earlier version, or a
-                     document outside the loaded window. Its versions and history
-                     are read as for any upload; the filing is the current version's. */
-                  <>
-                    {sel.earlierVersion && (
-                      <div className="vd-d-idx">
-                        An earlier version. The tree lists the current one, which carries the document's filing.
-                      </div>
-                    )}
-                    <VaultVersions
-                      key={`versions-${sel.docId}-${vaultEpoch}`}
-                      projectId={projectId}
-                      documentId={sel.docId}
-                      title={sel.title}
-                      onDownload={(docId, title) => void downloadVaultDoc(docId, title)}
-                      downloadingId={downloading}
-                      onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
-                      uploading={uploading}
-                      onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
-                        onOpenSection={(docId, code) => openImportedDocument(docId, projectId, onNav, code ?? undefined)}
-                    />
-                    <VaultAnnotations
-                      key={`annotations-${sel.docId}`}
-                      projectId={projectId}
-                      documentId={sel.docId}
-                      refreshKey={vaultEpoch}
-                      onChanged={() => setVaultEpoch((n) => n + 1)}
-                    />
-                    <VaultRelationships
-                      key={`relationships-${sel.docId}`}
-                      projectId={projectId}
-                      documentId={sel.docId}
-                      onChanged={() => setVaultEpoch((n) => n + 1)}
-                    />
-                    <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
-                  </>
-                ) : sel.src === 'artifact' && sel.artifact ? (
-                  /* A governed artifact: its governance as the registry records
-                     it, its versions, and its audit report on request (slice B:
-                     the reads c2c/artifacts.ts serves under the project). */
-                  <>
-                    <ArtifactGovernanceDetail doc={sel} />
-                    {projectId ? (
-                      <ArtifactVersions key={`artifact-versions-${sel.artifact.artifactId}-${vaultEpoch}`} projectId={projectId} doc={sel} />
-                    ) : null}
-                    {projectId ? (
-                      <ArtifactAuditReport key={`artifact-audit-${sel.artifact.artifactId}`} projectId={projectId} doc={sel} />
-                    ) : null}
-                  </>
-                ) : (
-                  <>
-                    {/* Corpus indexing / chunk counts are NOT part of the
-                        project-vault read model — there is no backing store for
-                        per-document embedding status (server/routes/c2c/project-vault.ts
-                        omits it deliberately). Honest note instead of a synthesized
-                        "Indexed — N chunks — semantic-search ready" claim. */}
-                    <div className="vd-d-seclbl">Corpus indexing</div>
-                    <div className="vd-d-idx">
-                      <span className="vd-idx-dot" />
-                      <span>Indexing status isn't reported for this document yet.</span>
-                    </div>
-
-                    {/* An authored section: the read model returns each section's
-                        CURRENT version only, not a history list. Show the real
-                        current version honestly — don't synthesize a "history".
-                        (Uploaded documents list every version: VaultVersions.) */}
-                    <div className="vd-d-seclbl">Version</div>
-                    <div className="vd-vers">
-                      <div className="vd-ver">
-                        <span className="vd-ver-v">
-                          {sel.ver && sel.ver !== '—' ? sel.ver : '—'}
-                        </span>
-                        <span className="vd-ver-m">
-                          {sel.updated}
-                          {sel.owner && sel.owner !== '—' ? ' - ' + sel.owner : ''} - current version
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Linked-evidence relationships (datasets / precedents / RIM
-                        matches) have no backing store in this read model. Honest
-                        empty, not a fabricated list. FOLLOW-UP: wire an
-                        evidence-links endpoint before restoring this panel. */}
-                    <div className="vd-d-seclbl">Linked evidence</div>
-                    <div className="vd-ev">
-                      <div className="vd-ev-row" style={{ opacity: 0.7 }}>
-                        No linked evidence recorded for this document yet.
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <div className="vd-d-actions">
-                  <VaultSourceBuildAction source={sel} programId={projectId} onNav={onNav} />
-                  {sel.src === 'upload' && sel.docId && projectId && <VaultSourceWorkButton source={sel} onPull={setPullDoc} />}
-                  {sel.src !== 'upload' && (
-                    <button
-                      className="sp-primary"
-                      style={{ padding: '8px 12px' }}
-                      onClick={() => (sel.src === 'artifact' ? openArtifactInEditor(sel) : openDoc(sel))}
-                    >
-                      {I.penLine || I.fileText} Open in editor
-                    </button>
-                  )}
-                  <button
-                    className="sp-ask"
-                    onClick={() =>
-                      onAsk(
-                        sel.src === 'artifact' && sel.artifact
-                          ? artifactAskPrompt(sel)
-                          : 'Summarize ' + sel.title + ' and list the claims that still need evidence.',
-                      )
-                    }
-                  >
-                    {I.sparkles} Ask AnA
-                  </button>
-                  {/* ── "Download" typed a sentence into the chat rail ────────
-                      `onAsk('Download ' + sel.title)`. On a document management
-                      system, on the control labelled Download, beside a
-                      download icon. No file ever left the vault through this
-                      surface — while the ingest path had been writing the bytes
-                      to disk all along, treating a failed write as FATAL
-                      precisely so a content hash never describes bytes nobody
-                      holds.
-
-                      Only an uploaded document HAS bytes. A governed artifact
-                      is a record whose governed export renders its stored
-                      content (slice B, below). An authored section says so
-                      instead of offering a download that could not produce one. */}
-                  {sel.src === 'upload' && sel.docId ? (
-                    <button
-                      className="sp-ask"
-                      onClick={() => void downloadVaultDoc(sel.docId!, sel.title)}
-                      disabled={downloading === sel.docId || sel.originalFileAvailable === false}
-                      title={sel.originalFileAvailable === false ? 'The original file is unavailable after the recorded retention decision' : undefined}
-                    >
-                      {I.download} {downloading === sel.docId ? 'Downloading…' : 'Download'}
-                    </button>
-                  ) : sel.src === 'artifact' && sel.artifact ? (
-                    /* The governed export (slice B): rendered from the stored
-                       content, recorded before it is delivered, and refused
-                       without a recorded review or signature on the current
-                       version. A refusal says why, in the banner above. */
-                    <button
-                      className="sp-ask"
-                      onClick={() => void downloadArtifact(sel)}
-                      disabled={downloading === sel.id}
-                      title="The governed DOCX of the current version. Downloading it is recorded, and it needs a recorded human review or signature on that version."
-                    >
-                      {I.download} {downloading === sel.id ? 'Downloading…' : 'Download DOCX'}
-                    </button>
-                  ) : (
-                    <button
-                      className="sp-ask"
-                      disabled
-                      title="This is an authored record rather than an uploaded file, so there is nothing to download. Export it from the surface that owns it."
-                    >
-                      {I.download} No file to download
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </aside>
-        </div>
-          )}
-        </>
-      )}
       {projectId && pullDoc?.docId && <SourceImportDialog programId={projectId}
         source={{ kind: 'vault', documentId: pullDoc.docId }} title={pullDoc.title}
         onClose={() => setPullDoc(null)} onOpenDocument={docId => openImportedDocument(docId, projectId, onNav)} />}
     </div>
+  );
+
+  /* Uploading is an ingest, which admits the writing roles only (VaultViewOnly):
+     for them the whole page is the one drop zone (FileDropZone.tsx, shared with
+     the Data Room). The pickers accept exactly what POST /api/vault/ingest
+     accepts; what is gathered goes to the staging rows of the Uploads view. */
+  if (!canWrite) return page;
+  return (
+    <FileDropZone
+      className="vd-drop"
+      accept={VAULT_UPLOAD_ACCEPT}
+      directory
+      activation="controls"
+      disabled={!projectId}
+      label="Vault: drop files or a folder here to add them"
+      testId="vault-upload-zone"
+      controlsRef={uploadControls}
+      onFiles={(picked) => {
+        setView('uploads');
+        setStaging((st) => stageFiles(picked, docType, st ?? undefined));
+      }}
+    >
+      {() => page}
+    </FileDropZone>
   );
 }

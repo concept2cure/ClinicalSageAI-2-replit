@@ -1,0 +1,4 @@
+$ node scripts/ci/check-orphaned-stylesheets.mjs   # in a git-archive export of bfa9c6869
+[ci:orphaned-stylesheets] 53 imported / 0 orphaned (0 lines, baseline 0).
+[ci:orphaned-stylesheets] OK — no new orphaned stylesheets.
+exit 0

@@ -899,6 +899,12 @@ with `ls` over the full list. Items to watch:
     **Decided by the lead, 2026-11-01:** D0-2 is not reopened. D7-C adds `.rbm-ana-composer`, and D7-D adds
     `.rc-input` (the single-line field, not the `.rc-composer` block), to D0's composer `:is()` lists in `app-v2.css`,
     each in its own lane's `app-v2.css` turn.
+    **Superseded for D7-D by the lead, 2026-11-01 (L11's owner, `011HLkY…`, raised it):** "Find a report" answers
+    through a fixed router (`roRouteReply`), not AnA, and FILING_SPINE §7.2 F6 (pinned by
+    `insightsNoChatLookalike.test.tsx`) says nothing but the conversation may look like talking to AnA. ONE_DESIGN_PLAN
+    §2 gives Projects "a search field", not a composer. So the field is D0's inline input, `.c2c-input`, with "Find" as
+    `btn ghost` beside it; neither `.rc-composer` nor `.rc-input` joins the composer list, and D7-D takes no
+    `app-v2.css` turn. D7-C's `.rbm-ana-composer` is unchanged: that one does talk to AnA.
 
 **Not checked here, and left to the builders:**
 - whether each spec's line ranges still match after D0 lands;

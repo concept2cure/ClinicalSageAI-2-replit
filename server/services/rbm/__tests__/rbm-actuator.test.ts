@@ -11,7 +11,8 @@ import { describe, it, expect } from 'vitest';
 import {
   addCtqFactor, defineKri, recordKriReading, setQtl, raiseSignal, triageSignal,
   draftPlan, generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment, approvePlan,
-  amendMonitoringPlan, nextPlanVersion, inferSecondaryLimit, governingPlanId, type Exec,
+  amendMonitoringPlan, nextPlanVersion, inferSecondaryLimit, governingPlanId, derivePlanFromAssessment,
+  RbmAssessmentEditError, type Exec,
 } from '../rbm-actuator';
 
 function mockExec(script: any[][]) {
@@ -56,6 +57,22 @@ describe('rbm-actuator — inference', () => {
     const { exec } = mockExec([[{ id: 3 }]]);
     const out = await addCtqFactor(exec, ORG, { programId: 'p', ctqFactor: 'x', likelihood: 1, impact: 1, isCritical: true });
     expect(out.inferred.isCritical).toBe(true);
+  });
+
+  // The route's own checks (mdx-rbm.ts createItemBody: SCALE_1_5, CATEGORY),
+  // so every caller of the one insert gets them. The table has no CHECK.
+  it.each([
+    ['likelihood 7', { likelihood: 7 }, /likelihood/],
+    ['impact 0', { impact: 0 }, /impact/],
+    ['likelihood 2.5', { likelihood: 2.5 }, /likelihood/],
+    ['detectability 6', { detectability: 6 }, /detectability/],
+    ['category "quality"', { category: 'quality' }, /category/],
+  ])('addCtqFactor refuses %s before any write', async (_label, bad, field) => {
+    const { exec, calls } = mockExec([[{ id: 1 }]]);
+    const refused = addCtqFactor(exec, ORG, { programId: 'p', ctqFactor: 'x', likelihood: 3, impact: 3, ...(bad as object) });
+    await expect(refused).rejects.toBeInstanceOf(RbmAssessmentEditError);
+    await expect(refused).rejects.toMatchObject({ status: 422, code: 'RBM_INVALID_FACTOR', message: expect.stringMatching(field) });
+    expect(calls).toHaveLength(0);
   });
 
   it('defineKri infers amber status from value vs thresholds (higher worse)', async () => {
@@ -319,6 +336,52 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
     expect(out.generated).toBe(false);
     expect(out.reason).toBe('assessment_not_approved');
     expect(calls).toHaveLength(1);
+  });
+});
+
+describe('derivePlanFromAssessment — the read-only half, shared with AnA', () => {
+  const script = () => [
+    [{ id: 7, title: 'RACT', overall_risk: 'high', status: 'active', version: 2 }],
+    [{ id: 21, ctq_factor: 'SAE reporting', risk_score: 20 }, { id: 22, ctq_factor: 'Consent', risk_score: 9 }],
+    [{ site_number: '5', site_name: 'Mercy' }],
+  ];
+
+  it('proposes exactly the actions generatePlanFromAssessment inserts, and writes nothing', async () => {
+    const read = mockExec(script());
+    const derived = await derivePlanFromAssessment(read.exec, ORG, 'p');
+    expect(read.calls).toHaveLength(3);
+    expect(read.calls.some(c => /^\s*(INSERT|UPDATE|DELETE)/.test(c.sql))).toBe(false);
+
+    const write = mockExec([...script(), [], [{ v: 0 }], [{ id: 3 }], [{ id: 41 }], [{ id: 42 }], [{ id: 43 }]]);
+    const generated = await generatePlanFromAssessment(write.exec, ORG, { programId: 'p' });
+    expect(derived.derived).toBe(true);
+    if (!derived.derived) return;
+    expect(derived.strategy).toBe('hybrid');
+    expect(write.calls[5].args).toContain(derived.strategy);
+    const inserted = write.calls.slice(6).map(c => ({ sql: c.sql, args: c.args }));
+    expect(inserted).toHaveLength(derived.actions.length);
+    derived.actions.forEach((a, i) => {
+      expect(inserted[i].sql).toContain(a.actionType === 'issue' ? "'issue'" : "'site_visit'");
+      expect(inserted[i].sql).toContain(`INTERVAL '${a.dueInDays} days'`);
+      expect(inserted[i].args).toContain(a.description);
+      if (a.actionType === 'issue') {
+        expect(inserted[i].args).toContain(a.riskItemId);
+        expect(inserted[i].args).toContain(a.priority);
+      } else expect(inserted[i].sql).toContain(`'${a.priority}'`);
+    });
+    expect(generated.derivedFrom).toMatchObject({ assessmentId: 7, overallRisk: 'high', criticalFactors: 2, enhancedSites: 1 });
+  });
+
+  it('reports an approved assessment that records no overall risk as unrecorded, not "medium"', async () => {
+    const { exec } = mockExec([[{ id: 7, title: 'RACT', overall_risk: null, status: 'active', version: 1 }], [], []]);
+    const derived = await derivePlanFromAssessment(exec, ORG, 'p');
+    expect(derived).toMatchObject({ derived: true, recordedOverallRisk: null, strategy: null });
+  });
+
+  it('refuses with the actuator\'s reasons: no assessment, and an unapproved one', async () => {
+    expect(await derivePlanFromAssessment(mockExec([[]]).exec, ORG, 'p')).toEqual({ derived: false, reason: 'no_assessment' });
+    expect(await derivePlanFromAssessment(mockExec([[{ id: 7, status: 'draft', overall_risk: 'high' }]]).exec, ORG, 'p'))
+      .toEqual({ derived: false, reason: 'assessment_not_approved' });
   });
 });
 

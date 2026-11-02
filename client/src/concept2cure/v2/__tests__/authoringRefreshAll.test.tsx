@@ -51,6 +51,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const ok = (payload: unknown) =>
   ({ ok: true, status: 200, json: async () => payload }) as Response;
@@ -85,7 +86,8 @@ function wire(refreshResult: unknown) {
 
 async function openSourcesAndRefresh() {
   render(<DocumentAuthoring {...props()} />);
-  fireEvent.click(await screen.findByTestId('sources-rail-open'));
+  await screen.findByTestId('ed-more');
+  fireEvent.click(openEditorControl(/^Sources/));
   const btn = (await screen.findByTestId('refresh-all-sources')) as HTMLButtonElement;
   await waitFor(() => expect(btn.disabled).toBe(false));
   fireEvent.click(btn);

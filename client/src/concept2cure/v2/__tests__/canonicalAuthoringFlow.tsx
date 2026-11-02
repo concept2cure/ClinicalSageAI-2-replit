@@ -4,6 +4,7 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { ConversationThread } from '../surfaces/ConversationThread';
 import { clearEditorTarget } from '../editorTarget';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 export const FLOW_PROGRAM = 'bbbbbbbb-0000-4000-8000-000000000001';
 export const FLOW_DOC = 'dddddddd-0000-4000-8000-000000000001';
@@ -48,8 +49,9 @@ export async function sendAuthoringPrefill(text?: string) {
   return screen.findByTestId('canonical-conversation');
 }
 
+/** "Draft with AnA" in the editor bar's AnA (✻) menu (D4-2, D4.md §D4.G): opens the menu and returns the item. */
 export function toolbarDraftButton() {
-  const button = screen.getAllByRole('button', { name: /Draft with AnA/ }).find(b => !b.closest('.rse-empty-cta'));
-  expect(button, 'the toolbar Draft with AnA button').toBeTruthy();
-  return button!;
+  const button = openEditorControl('Draft with AnA', 'ana');
+  expect(button, 'the bar’s Draft with AnA item').toBeTruthy();
+  return button;
 }

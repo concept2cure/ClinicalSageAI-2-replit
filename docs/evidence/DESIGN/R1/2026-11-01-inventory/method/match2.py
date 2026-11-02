@@ -9,7 +9,9 @@ srcs = {f: open(f, encoding='utf-8', errors='ignore').read() for f in files}
 def lits(p): return [s for s in p.split('/') if s and not s.startswith(':') and not s.startswith('*') and s != 'api']
 n = 0
 for r in data['rows']:
-    if r['caller']: r['confidence'] = 'exact'; continue
+    # a caller found by a pass keeps the confidence that pass gave it (the second pass of
+    # match.py can find a path whose method it cannot read: probable); otherwise it is exact
+    if r['caller']: r['confidence'] = r.get('confidence', 'exact'); continue
     L = lits(r['path'])
     if len(L) < 2: r['confidence'] = 'none'; continue
     root = '/api/' + L[0]

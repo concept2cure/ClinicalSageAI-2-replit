@@ -48,6 +48,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload } as Response);
 const fail = (status: number) =>
@@ -98,8 +99,9 @@ function wire(auditRes: Response) {
 
 async function openAuditRail() {
   render(<DocumentAuthoring {...props()} />);
-  const btn = await screen.findByRole('button', { name: /audit/i });
-  fireEvent.click(btn);
+  /* D4-2: the audit trail is opened from the bar's More menu (D4.md §D4.B). */
+  await screen.findByTestId('ed-more');
+  fireEvent.click(openEditorControl('Audit trail'));
 }
 
 beforeEach(() => {
