@@ -479,6 +479,70 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             helpText:
               'Per ICH Q1A(R2), NDA stability data should include at least 12 months long-term (25°C/60% RH) and 6 months accelerated (40°C/75% RH) data at the time of submission. Proposed shelf life may be up to twice the period covered by long-term data, but no more than 12 months beyond it, when the data support extrapolation (ICH Q1E).',
           },
+          /* 2026-11-02 (S4): the shelf-life claim, so xn_stability_insufficient_for_shelf_life
+             has a claim to hold against stability_data_duration. Not asked for a
+             supplement whose change cannot touch the dating period. */
+          {
+            id: 'proposed_shelf_life_months',
+            label: 'Proposed expiration dating period for the drug product',
+            type: 'select',
+            required: false,
+            visibleWhen: { field: 'supplement_type', operator: 'not_in', value: ['labeling_change', 'new_indication', 'efficacy_supplement'] },
+            helpText:
+              'The shelf life you will propose in 3.2.P.8. ICH Q1A(R2) expects at least 12 months of long-term data at submission. ICH Q1E allows a claim beyond the data only where the data support it: at most twice the long-term period and no more than 12 months beyond it. Refrigerated storage, or significant change at the accelerated condition, allows less, and frozen storage allows none.',
+            options: [
+              {
+                value: '12',
+                label: '12 months',
+                commits:
+                  'Supported by 12 months of long-term data without extrapolation.',
+                authority: 'ICH Q1A(R2) §2.2.7',
+              },
+              {
+                value: '18',
+                label: '18 months',
+                commits:
+                  'From 12 months of data this is within the 1.5x / +6-month limit of Q1E\u2019s less favourable cases. It is not available for frozen storage, or where significant change at accelerated leaves the data without statistical support.',
+                authority: 'ICH Q1E Appendix A',
+              },
+              {
+                value: '24',
+                label: '24 months',
+                commits:
+                  'From 12 months of data this needs Q1E\u2019s most favourable case: room-temperature storage, no significant change at accelerated, data with little change or statistical support. Or 24 months of data.',
+                authority: 'ICH Q1E Appendix A',
+              },
+              {
+                value: '30',
+                label: '30 months',
+                commits:
+                  'Needs at least 18 months of long-term data even in the most favourable case.',
+                authority: 'ICH Q1E Appendix A',
+              },
+              {
+                value: '36',
+                label: '36 months',
+                commits:
+                  'Needs at least 24 months of long-term data even in the most favourable case.',
+                authority: 'ICH Q1E Appendix A',
+              },
+              {
+                value: '48',
+                label: '48 months',
+                commits:
+                  'Needs at least 36 months of long-term data even in the most favourable case.',
+                authority: 'ICH Q1E Appendix A',
+              },
+              {
+                value: '60',
+                label: '60 months',
+                commits:
+                  'Needs at least 48 months of long-term data even in the most favourable case.',
+                authority: 'ICH Q1E Appendix A',
+              },
+            ],
+            allowOther: { prompt: 'State the proposed period, with its storage condition, in your own words (e.g., per strength or pack).' },
+          },
           {
             id: 'container_closure',
             label: 'Container Closure System Description',

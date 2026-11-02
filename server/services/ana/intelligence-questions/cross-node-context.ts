@@ -33,6 +33,15 @@ export function strVal(val: unknown): string {
 }
 
 /**
+ * The countries whose regulators the ethnic-factors rule speaks for, matched
+ * case-insensitively in the protocol's free-text country list. The question's
+ * gate in flows/protocol-development.ts and the rule's check both read this,
+ * so the question is asked exactly where its refusal is reported (2026-11-02,
+ * S4). This module has only type imports, so a flow importing it makes no cycle.
+ */
+export const EAST_ASIAN_COUNTRY_WORDS = ['japan', 'china', 'korea', 'taiwan'] as const;
+
+/**
  * Whether an answer MENTIONS any of these words — a string answer containing
  * one, or a multi_select array with one among its values.
  *

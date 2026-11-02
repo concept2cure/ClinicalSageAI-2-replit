@@ -21,6 +21,7 @@ import type { DetectedIssue, FlowCategory, FlowEngineContext, FlowState } from '
 import { runCrossNodeAnalysis, runIssueChecks } from '../issue-detector.js';
 import { getFlowDefinition } from '../flows/index.js';
 import { advanceFlow, evaluatePredicate } from '../engine.js';
+import { EAST_ASIAN_COUNTRY_WORDS } from '../cross-node-context.js';
 
 const CTX: FlowEngineContext = { organizationId: 7, userId: 3, projectId: null };
 const definitionOf = (category: FlowCategory) => getFlowDefinition(category, CTX)!;
@@ -337,5 +338,113 @@ describe('xn_rems_without_etasu, through the engine', () => {
     const refused = (result.event?.newIssues ?? []).filter(i => i.checkId.startsWith('validation_'));
     expect(refused.map(i => i.message), 'the answers must be accepted for this to mean anything').toEqual([]);
     expect((result.event?.newIssues ?? []).map(i => i.checkId)).toContain('xn_rems_without_etasu');
+  });
+});
+
+/* ── East Asian enrolment with no ethnic-factors position ────────────────── */
+describe('xn_global_trial_no_ethnic_bridging', () => {
+  const EB = 'xn_global_trial_no_ethnic_bridging';
+
+  it('fires on a free-text country list naming an East Asian country, with nothing stated', () => {
+    /* The old check needed an array of more than three; `countries` is free text. */
+    expect(ids(fired('protocol_development', { countries: 'United States, Germany, Japan' }))).toContain(EB);
+  });
+
+  it.each(['US, Japan', 'Japan'])('fires on "not yet assessed" for %s — a single region relying on foreign data is the E5 case', countries => {
+    expect(ids(fired('protocol_development', { countries, ethnicity_factors: 'not_defined' }))).toContain(EB);
+  });
+
+  it.each(['ethnic_pk_within_trial', 'low_ethnic_sensitivity_justified', 'no_foreign_data_relied_on', '__other__'])(
+    'is cleared by a stated position: %s',
+    position => {
+      expect(ids(fired('protocol_development', { countries: 'US, Japan', ethnicity_factors: position }))).not.toContain(EB);
+    },
+  );
+
+  it('is not asked, and does not fire, where no East Asian country is listed', () => {
+    expect(ids(fired('protocol_development', { countries: 'United States, Germany', ethnicity_factors: 'not_defined' }))).not.toContain(EB);
+  });
+
+  it('no longer applies to the IND, which asks no enrolment geography', () => {
+    expect(ids(fired('ind_submission', { countries: 'Japan' }))).not.toContain(EB);
+  });
+
+  it('gates the question on exactly the countries the rule reads', () => {
+    const field = definitionOf('protocol_development')
+      .nodes.flatMap(n => n.fields)
+      .find(f => f.id === 'ethnicity_factors')!;
+    const leaves = (field.visibleWhen as { anyOf: Array<{ value: string }> }).anyOf.map(l => l.value);
+    expect(leaves).toEqual([...EAST_ASIAN_COUNTRY_WORDS]);
+  });
+});
+
+/* ── A shelf-life claim past what the long-term data support ─────────────── */
+describe('xn_stability_insufficient_for_shelf_life', () => {
+  const SL = 'xn_stability_insufficient_for_shelf_life';
+  const finding = (category: FlowCategory, answers: Record<string, unknown>) =>
+    fired(category, answers).find(i => i.checkId === SL);
+
+  describe('the stability interview (exact months, ICH Q1E)', () => {
+    const at = (claim: number, data: number, stage = 'registration', extra: Record<string, unknown> = {}) =>
+      finding('stability_study', {
+        proposed_shelf_life_months: claim,
+        long_term_data_available_months: data,
+        development_stage: stage,
+        ...extra,
+      });
+
+    it('is CRITICAL for a registration claim past min(2x, x+12)', () => {
+      expect(at(48, 24)?.severity).toBe('critical');
+    });
+    it('is silent at the limit', () => {
+      expect(at(36, 24)).toBeUndefined();
+    });
+    it.each(['phase_1', 'post_approval'])('is a warning to justify, not a deficiency, at %s', stage => {
+      expect(at(48, 24, stage)?.severity).toBe('warning');
+    });
+    it('is silent for an intermediate, which has a holding time', () => {
+      expect(at(48, 24, 'registration', { product_type: 'intermediate' })).toBeUndefined();
+    });
+    it('holds a biologic to its real-time data under Q5C', () => {
+      const issue = at(30, 24, 'registration', { is_biologic: 'yes' });
+      expect(issue?.title).toMatch(/Real-Time Data/);
+      expect(issue?.severity).toBe('warning');
+    });
+  });
+
+  describe('the NDA (a banded data answer)', () => {
+    const at = (band: string, claim: string, extra: Record<string, unknown> = {}) =>
+      finding('nda_submission', { stability_data_duration: band, proposed_shelf_life_months: claim, ...extra });
+
+    it('is CRITICAL where the claim is past the limit for every value in the band', () => {
+      expect(at('12mo', '36')?.severity).toBe('critical');
+      expect(at('6mo', '24')).toBeDefined();
+    });
+    it('is silent where some value in the band would support the claim', () => {
+      /* 6 months of data could be 9, and Q1E allows 18 from 9. */
+      expect(at('6mo', '18')).toBeUndefined();
+      expect(at('12mo', '24')).toBeUndefined();
+    });
+    it('reads the open-ended band and an own position as unknown', () => {
+      expect(at('36mo', '60')).toBeUndefined();
+      expect(at('12mo', '__other__')).toBeUndefined();
+    });
+    it('is a warning, not CRITICAL, for a supplement', () => {
+      expect(at('12mo', '36', { nda_type: 'supplement' })?.severity).toBe('warning');
+    });
+  });
+
+  describe('the BLA (real-time data, ICH Q5C)', () => {
+    const at = (data: unknown, claim: string) =>
+      finding('bla_submission', { long_term_data_available_months: data, proposed_shelf_life_months: claim });
+
+    it('warns where the dating period runs past the real-time data', () => {
+      expect(at(12, '24')?.severity).toBe('warning');
+      expect(at(12, '12')).toBeUndefined();
+    });
+    it('is silent with no data answer, and notes Q5C\u2019s six-month expectation with none', () => {
+      expect(at('', '24')).toBeUndefined();
+      expect(at(0, '12')?.message).toMatch(/at least 6 months of real-time data/);
+    });
   });
 });

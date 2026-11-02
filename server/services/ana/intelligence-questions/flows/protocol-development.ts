@@ -13,6 +13,7 @@
  */
 
 import { consentElementsFor } from '../../../../../shared/regulatory/informed-consent-elements.js';
+import { EAST_ASIAN_COUNTRY_WORDS } from '../cross-node-context.js';
 
 /** The 50.25(a) elements, in order, from the one record. */
 const FDA_REQUIRED_CONSENT = consentElementsFor('fda')
@@ -742,6 +743,78 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             required: false,
             helpText:
               'ICH E17 requires a pre-specified strategy to evaluate consistency of treatment effects across regions in multi-regional clinical trials (MRCTs).',
+          },
+          /* 2026-11-02 (S4): the ethnic-factors position for East Asian sites.
+             xn_global_trial_no_ethnic_bridging read `ethnic_bridging` /
+             `ethnicity_factors`, asked by no flow, and required `countries` to be
+             an array of more than three — but `countries` is free text, so it
+             could never fire. Gated on `countries` in this same node: the engine
+             sends the field with its predicate and the card decides. A select,
+             not a multi_select: strVal of an array is '', so a multi_select
+             'not_defined' would read as an answer and silence the finding. Not
+             the same fact as the E17 consistency analysis above. */
+          {
+            id: 'ethnicity_factors',
+            label: 'How are ethnic factors addressed for the East Asian countries in this trial?',
+            type: 'select',
+            required: true,
+            visibleWhen: { anyOf: EAST_ASIAN_COUNTRY_WORDS.map(value => ({ field: 'countries', operator: 'contains' as const, value })) },
+            helpText:
+              'ICH E5(R1), Ethnic Factors in the Acceptability of Foreign Clinical Data (1998; Q&A R1 2006), decides whether foreign data can be relied on in a new region. It weighs how sensitive the medicine is to intrinsic factors (for example, polymorphic metabolism such as CYP2C19) and extrinsic factors (medical practice, diet), and how far the regions differ in those factors. Bridging data are needed case by case, not as a standing rule. ICH E17, General Principles for Planning and Design of Multi-Regional Clinical Trials (2017), expects this to be considered when a multi-regional trial is planned. This question is about exposure and dose; the regional consistency analysis is the separate question above.',
+            options: [
+              {
+                value: 'east_asian_pk_in_hand',
+                label: 'East Asian PK (and PD where relevant) is already characterised, for example in a Phase 1 in Japanese or Chinese participants',
+                commits:
+                  'The dose rationale and the IB cite those data for each East Asian country enrolled. If they show an exposure difference, the regional dose is justified before enrolment there.',
+                authority: 'ICH E5(R1) (1998), Appendix A (intrinsic and extrinsic ethnic factors)',
+              },
+              {
+                value: 'ethnic_pk_within_trial',
+                label:
+                  'Ethnic sensitivity is evaluated within this trial: PK sampling at the East Asian sites and in a comparator population, race and region as population-PK covariates, and an East Asian subgroup pre-specified',
+                commits:
+                  'The PK sampling plan, a population-PK analysis naming race and region covariates, and the East Asian subgroup are pre-specified in the protocol and SAP. A dose change this analysis prompts is a protocol amendment. For Japan, a December 2023 MHLW notice indicates a Japanese Phase 1 before joining an MRCT is in principle not required where safety at the MRCT dose can be judged from existing data (notice reference to be verified).',
+                authority: 'ICH E17 (2017); ICH E5(R1) (1998)',
+              },
+              {
+                value: 'low_ethnic_sensitivity_justified',
+                label:
+                  'Assessed as unlikely to be ethnically sensitive, with the reasons written down (for example linear PK, flat exposure-response, wide therapeutic range, little metabolism by polymorphic enzymes)',
+                commits:
+                  'A written E5 sensitivity assessment goes in the protocol rationale or the IB. A regional regulator may disagree and ask for regional PK or a bridging study.',
+                authority: 'ICH E5(R1) (1998), appendix on properties of a medicine affecting sensitivity to ethnic factors',
+              },
+              {
+                value: 'separate_bridging_study',
+                label: 'A separate bridging study is planned in the region',
+                commits:
+                  "A PK/PD or clinical bridging study runs outside this protocol before the filing in that region relies on the foreign data. This trial's East Asian participants may not be enough on their own.",
+                authority: 'ICH E5(R1) (1998), bridging study and bridging data package',
+              },
+              {
+                value: 'this_is_bridging_study',
+                label: 'This trial is itself the bridging study for the region',
+                commits:
+                  'The design answers the E5 bridging question: a pre-specified comparison of PK/PD, or of efficacy and safety, against the foreign data the region will rely on.',
+                authority: 'ICH E5(R1) (1998), bridging study',
+              },
+              {
+                value: 'no_foreign_data_relied_on',
+                label: "No foreign clinical data will be relied on in these countries: the filing there rests on data from that region's own population",
+                commits:
+                  'E5 bridging does not arise for that filing. A later filing elsewhere that relies on these data raises the question in that region.',
+                authority: 'ICH E5(R1) (1998), scope: acceptability of foreign clinical data',
+              },
+              {
+                value: 'not_defined',
+                label: 'Not yet assessed',
+                commits:
+                  'AnA raises the ethnic-factors finding. The protocol has no basis yet for its dose in the East Asian countries listed.',
+                authority: 'ICH E5(R1) (1998); ICH E17 (2017)',
+              },
+            ],
+            allowOther: { prompt: 'How does the programme address ethnic factors for these countries, in your own words?' },
           },
         ],
         issueChecks: [

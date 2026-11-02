@@ -23,6 +23,7 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { OTHER_POSITION } from '../../../../../shared/types/intelligence-questions.js';
 
 export function createBlaSubmissionFlow(): FlowDefinition {
   return {
@@ -825,9 +826,9 @@ export function createBlaSubmissionFlow(): FlowDefinition {
         id: 'process_validation_comparability',
         section: 'manufacturing',
         question:
-          'Describe the process validation status and any comparability studies conducted during development.',
+          'Describe the process validation status and any comparability studies conducted during development, and the dating period you will propose with the real-time stability data behind it.',
         guidance:
-          'Per FDA Process Validation Guidance (2011), ICH Q5E (Comparability of Biotechnological/Biological Products Subject to Changes in Their Manufacturing Process), and 21 CFR 601.2, the BLA must demonstrate that the manufacturing process consistently produces product meeting predefined quality attributes. Process validation should follow the lifecycle approach: Stage 1 (Process Design), Stage 2 (Process Qualification), Stage 3 (Continued Process Verification). Any manufacturing process changes during development require comparability assessment per ICH Q5E.',
+          'Per FDA Process Validation Guidance (2011), ICH Q5E (Comparability of Biotechnological/Biological Products Subject to Changes in Their Manufacturing Process), and 21 CFR 601.2, the BLA must demonstrate that the manufacturing process consistently produces product meeting predefined quality attributes. Process validation should follow the lifecycle approach: Stage 1 (Process Design), Stage 2 (Process Qualification), Stage 3 (Continued Process Verification). Any manufacturing process changes during development require comparability assessment per ICH Q5E. Per ICH Q5C the dating period rests on real-time, real-temperature data at the proposed storage condition.',
         fields: [
           {
             id: 'process_validation_status',
@@ -898,6 +899,75 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             type: 'textarea',
             visibleWhen: { field: 'lot_release_testing', operator: 'eq', value: true },
             placeholder: 'Summarize key lot release specifications: identity, purity, potency, safety tests, and acceptance criteria.',
+          },
+          /* 2026-11-02 (S4): the dating period and the real-time data behind it.
+             The BLA asked nothing on stability, so
+             xn_stability_insufficient_for_shelf_life could never trigger here.
+             Both are optional: dead-branches-are-alive drives this node with a
+             fixed answer set. */
+          {
+            id: 'proposed_shelf_life_months',
+            label: 'Proposed dating period (expiry) for the drug product',
+            type: 'select',
+            required: false,
+            helpText:
+              'ICH Q5C bases the dating period on real-time, real-temperature data at the proposed storage condition. Accelerated and stress data support it but do not replace it. Where more than 6 months is requested, Q5C expects at least 6 months of real-time data at submission, with updates during review. Q5C covers well-characterised proteins and polypeptides, including plasma-derived factors and protein vaccines. For live, cellular, gene-therapy and whole-blood products the dating rests on stability data under 21 CFR 211.166, and 21 CFR 610.53 sets the period for the products it lists.',
+            options: [
+              {
+                value: '6',
+                label: '6 months',
+                commits: 'Plan to support 6 months with real-time data at the proposed storage condition, filed or updated during review.',
+                authority: 'ICH Q5C',
+              },
+              {
+                value: '12',
+                label: '12 months',
+                commits: 'Plan to support 12 months with real-time data at the proposed storage condition, filed or updated during review.',
+                authority: 'ICH Q5C',
+              },
+              {
+                value: '18',
+                label: '18 months',
+                commits: 'Plan to support 18 months with real-time data at the proposed storage condition, filed or updated during review.',
+                authority: 'ICH Q5C',
+              },
+              {
+                value: '24',
+                label: '24 months',
+                commits: 'Plan to support 24 months with real-time data at the proposed storage condition, filed or updated during review.',
+                authority: 'ICH Q5C',
+              },
+              {
+                value: '36',
+                label: '36 months',
+                commits: 'Plan to support 36 months with real-time data at the proposed storage condition, filed or updated during review.',
+                authority: 'ICH Q5C',
+              },
+              {
+                value: '48',
+                label: '48 months',
+                commits: 'Plan to support 48 months with real-time data at the proposed storage condition, filed or updated during review.',
+                authority: 'ICH Q5C',
+              },
+              {
+                value: '60',
+                label: '60 months',
+                commits: 'Plan to support 60 months with real-time data at the proposed storage condition, filed or updated during review.',
+                authority: 'ICH Q5C',
+              },
+            ],
+            allowOther: {
+              prompt:
+                'State the dating period with its unit and storage condition (e.g., hours for a fresh cell product, or separate drug-substance and drug-product periods).',
+            },
+          },
+          {
+            id: 'long_term_data_available_months',
+            label: 'Months of real-time stability data at the proposed storage condition',
+            type: 'number',
+            required: false,
+            validation: { min: 0, max: 120 },
+            visibleWhen: { field: 'proposed_shelf_life_months', operator: 'neq', value: OTHER_POSITION },
           },
         ],
         branches: [

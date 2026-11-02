@@ -97,16 +97,10 @@ const NOT_ASKED_YET: Readonly<Record<string, string>> = {
     'asks none of: natural_history, disease_natural_history',
   'xn_orphan_without_natural_history/bla_submission':
     'asks none of: natural_history, disease_natural_history',
-  'xn_global_trial_no_ethnic_bridging/protocol_development':
-    'asks none of: ethnic_bridging, ethnicity_factors',
-  'xn_global_trial_no_ethnic_bridging/ind_submission':
-    'asks none of: ethnic_bridging, ethnicity_factors',
-  'xn_stability_insufficient_for_shelf_life/stability_study':
-    'asks none of: long_term_data_months, stability_data_months',
-  'xn_stability_insufficient_for_shelf_life/nda_submission':
-    'asks none of: long_term_data_months, stability_data_months',
-  'xn_stability_insufficient_for_shelf_life/bla_submission':
-    'asks none of: long_term_data_months, stability_data_months',
+  /* The CMC specification interview asks no shelf-life claim and no long-term
+     data. Dead before 2026-11-02 too, and hidden: the old ids were asked nowhere. */
+  'xn_stability_insufficient_for_shelf_life/cmc_specification':
+    'asks none of: proposed_shelf_life_months, long_term_data_available_months, stability_data_duration',
 };
 
 /**
