@@ -22,6 +22,7 @@ import { runCrossNodeAnalysis, runIssueChecks } from '../issue-detector.js';
 import { getFlowDefinition } from '../flows/index.js';
 import { advanceFlow, evaluatePredicate } from '../engine.js';
 import { EAST_ASIAN_COUNTRY_WORDS } from '../cross-node-context.js';
+import { BIOMARKER_SELECTION_OPTIONS } from '../flows/protocol-development-biomarker-selection.js';
 
 const CTX: FlowEngineContext = { organizationId: 7, userId: 3, projectId: null };
 const definitionOf = (category: FlowCategory) => getFlowDefinition(category, CTX)!;
@@ -446,5 +447,127 @@ describe('xn_stability_insufficient_for_shelf_life', () => {
       expect(at('', '24')).toBeUndefined();
       expect(at(0, '12')?.message).toMatch(/at least 6 months of real-time data/);
     });
+  });
+});
+
+/* ── An orphan programme with no natural-history data ────────────────────── */
+describe('xn_orphan_without_natural_history', () => {
+  const NH = 'xn_orphan_without_natural_history';
+  const ind = { ind_type_selection: 'commercial', orphan_designation: 'granted', study_population: 'patients' };
+
+  it('triggers on the designation as each interview asks it — not on ids none of them asks', () => {
+    expect(ids(fired('ind_submission', { ...ind, natural_history: 'none' }))).toContain(NH);
+    expect(ids(fired('protocol_development', { orphan_designation: 'yes', natural_history: 'none' }))).toContain(NH);
+  });
+
+  it('is silent for a healthy-volunteer study, which does not rest on the disease course', () => {
+    expect(ids(fired('ind_submission', { ...ind, study_population: 'healthy_volunteers', natural_history: 'none' }))).not.toContain(NH);
+  });
+
+  it('is not asked of an emergency-use IND', () => {
+    expect(ids(fired('ind_submission', { ...ind, ind_type_selection: 'emergency', natural_history: 'none' }))).not.toContain(NH);
+  });
+
+  it('waits where the trigger holds and the question\u2019s gate does not', () => {
+    /* prea 'orphan_exempt' states the designation; orphan_designation 'not_applicable' keeps the gate closed. */
+    expect(
+      ids(fired('ind_submission', { orphan_designation: 'not_applicable', prea_applicable: 'orphan_exempt' }, ['proposed_study'])),
+    ).not.toContain(NH);
+  });
+
+  it.each(['planned', '__other__', 'prospective_study'])('is cleared by a stated source: %s', answer => {
+    expect(ids(fired('ind_submission', { ...ind, natural_history: answer }))).not.toContain(NH);
+  });
+
+  it('fires in the NDA only where the comparison lacks a concurrent control', () => {
+    const nda = { orphan_designation: 'granted', natural_history: 'none' };
+    expect(ids(fired('nda_submission', { ...nda, pivotal_study_design: 'single_arm' }))).toContain(NH);
+    expect(
+      ids(fired('nda_submission', { ...nda, pivotal_study_design: 'randomized_controlled', control_type: 'placebo' })),
+      'with a randomized control, no natural-history data is not a deficiency',
+    ).not.toContain(NH);
+  });
+
+  it('is not asked for an NDA supplement that cannot touch the efficacy evidence', () => {
+    expect(
+      ids(fired('nda_submission', { orphan_designation: 'granted', supplement_type: 'manufacturing_change', pivotal_study_design: 'single_arm', natural_history: 'none' })),
+    ).not.toContain(NH);
+  });
+
+  it('fires in the BLA against a historical comparator, and not against placebo', () => {
+    expect(ids(fired('bla_submission', { orphan_designation: true, comparator_used: 'historical', natural_history: 'none' }))).toContain(NH);
+    expect(ids(fired('bla_submission', { orphan_designation: true, comparator_used: 'placebo', natural_history: 'none' }))).not.toContain(NH);
+  });
+
+  it('the NDA now asks the orphan designation it had no question for', () => {
+    expect(definitionOf('nda_submission').nodes.flatMap(n => n.fields).some(f => f.id === 'orphan_designation')).toBe(true);
+  });
+});
+
+/* ── An oncology programme with no patient-selection strategy ────────────── */
+describe('xn_oncology_no_biomarker_strategy', () => {
+  const BM = 'xn_oncology_no_biomarker_strategy';
+  const ind = { is_oncology: true, study_population: 'patients' };
+
+  it('fires in the protocol on "not yet decided"', () => {
+    expect(ids(fired('protocol_development', { therapeutic_area: 'oncology', biomarker_strategy: 'not_defined' }))).toContain(BM);
+  });
+
+  it('reads a haematologic malignancy filed under another therapeutic area', () => {
+    /* 'hematology' never contained 'oncology', so a CAR-T or a leukaemia never triggered. */
+    expect(
+      ids(fired('protocol_development', { therapeutic_area: 'hematology', is_oncology: true, biomarker_strategy: 'not_defined' })),
+    ).toContain(BM);
+  });
+
+  it('is silent for a non-cancer programme', () => {
+    expect(ids(fired('protocol_development', { therapeutic_area: 'cardiology' }, ['population_criteria']))).not.toContain(BM);
+  });
+
+  it('triggers in the IND, which asks neither therapeutic area nor indication', () => {
+    expect(ids(fired('ind_submission', { ...ind, biomarker_strategy: 'not_defined' }))).toContain(BM);
+  });
+
+  it('coerces the trigger and the gate alike — a "yes" from the tool surface', () => {
+    expect(ids(fired('ind_submission', { is_oncology: 'yes', study_population: 'patients' }, ['proposed_study']))).toContain(BM);
+  });
+
+  it('is not asked of a healthy-volunteer study, or of a non-oncology IND', () => {
+    expect(ids(fired('ind_submission', { is_oncology: true, study_population: 'healthy_volunteers' }, ['proposed_study']))).not.toContain(BM);
+    expect(ids(fired('ind_submission', { is_oncology: false }, ['proposed_study']))).not.toContain(BM);
+  });
+
+  it('fires where the oncology answer was given and the selection question left blank', () => {
+    /* `is_oncology` and `biomarker_strategy` share the IND's proposed_study
+       node, so answering the first reaches the second: this is "reached and
+       left blank", not "not yet asked". (Live, the validator would refuse the
+       blank, since the field is required once shown.) */
+    expect(ids(fired('ind_submission', { is_oncology: true }))).toContain(BM);
+  });
+
+  it('asks the NDA how the indicated population is identified', () => {
+    expect(
+      ids(fired('nda_submission', { therapeutic_area: 'rare_disease', is_oncology: true, companion_diagnostic_position: 'not_defined' })),
+    ).toContain(BM);
+    expect(ids(fired('nda_submission', { therapeutic_area: 'oncology', companion_diagnostic_position: 'not_biomarker_defined' }))).not.toContain(BM);
+    expect(ids(fired('nda_submission', { therapeutic_area: 'cardiology' }, ['efficacy_overview']))).not.toContain(BM);
+  });
+
+  it('is cleared by every stated position — only "not yet decided" is a refusal', () => {
+    /* A respelling into the refusal set ('none', 'not_applicable', 'na', 'no')
+       would silently turn a real position into the finding, and a respelling OF
+       'not_defined' out of it would mean the finding could never fire. */
+    for (const { value } of BIOMARKER_SELECTION_OPTIONS) {
+      const result = ids(fired('protocol_development', { therapeutic_area: 'oncology', biomarker_strategy: value }));
+      if (value === 'not_defined') expect(result, value).toContain(BM);
+      else expect(result, value).not.toContain(BM);
+    }
+    expect(ids(fired('protocol_development', { therapeutic_area: 'oncology', biomarker_strategy: '__other__' }))).not.toContain(BM);
+  });
+
+  it('no longer cites Project Optimus or ICH E16, neither of which is about patient selection', () => {
+    const issue = fired('protocol_development', { therapeutic_area: 'oncology', biomarker_strategy: 'not_defined' }).find(i => i.checkId === BM)!;
+    expect(issue.reference).not.toMatch(/Optimus|E16/);
+    expect(issue.message).toMatch(/FDA does not require biomarker selection/);
   });
 });

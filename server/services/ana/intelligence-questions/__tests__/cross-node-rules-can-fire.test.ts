@@ -83,20 +83,6 @@ const firedFor = (
  * new rule was written against a question nobody asks.
  */
 const NOT_ASKED_YET: Readonly<Record<string, string>> = {
-  'xn_oncology_no_biomarker_strategy/protocol_development':
-    'asks none of: biomarker_strategy, companion_diagnostic, biomarker_enrichment',
-  'xn_oncology_no_biomarker_strategy/ind_submission':
-    'asks none of: biomarker_strategy, companion_diagnostic, biomarker_enrichment',
-  'xn_oncology_no_biomarker_strategy/nda_submission':
-    'asks none of: biomarker_strategy, companion_diagnostic, biomarker_enrichment',
-  'xn_orphan_without_natural_history/protocol_development':
-    'asks none of: natural_history, disease_natural_history',
-  'xn_orphan_without_natural_history/ind_submission':
-    'asks none of: natural_history, disease_natural_history',
-  'xn_orphan_without_natural_history/nda_submission':
-    'asks none of: natural_history, disease_natural_history',
-  'xn_orphan_without_natural_history/bla_submission':
-    'asks none of: natural_history, disease_natural_history',
   /* The CMC specification interview asks no shelf-life claim and no long-term
      data. Dead before 2026-11-02 too, and hidden: the old ids were asked nowhere. */
   'xn_stability_insufficient_for_shelf_life/cmc_specification':
@@ -115,6 +101,28 @@ const NOT_ASKED_YET: Readonly<Record<string, string>> = {
  * So the form is fixed: `asks none of: a, b, c`, and this verifies that the
  * flow really asks none of them. A reason that becomes false fails here.
  */
+/**
+ * Whether a written reason accounts for EVERY side of the rule that is dead.
+ *
+ * A reason used to be accepted whenever the fields it named were unasked, so
+ * `xn_orphan_without_natural_history` stood here as "asks none of:
+ * natural_history, disease_natural_history" — true — while its TRIGGERS were
+ * asked by none of the four flows it applies to either. A true but incomplete
+ * reason hid half of a dead rule, and 14 of the list's 21 entries were like it
+ * (2026-11-02). A dead trigger side must now be named as well as a dead
+ * mitigation side.
+ */
+function reasonExplains(
+  reason: string,
+  asked: Set<string>,
+  sides: { triggers: string[]; mitigations: string[]; triggerable: boolean; mitigable: boolean },
+): boolean {
+  const named = namedIn(reason);
+  const coversTriggers = sides.triggerable || sides.triggers.every(id => named.has(id));
+  const coversMitigations = sides.mitigable || sides.mitigations.every(id => named.has(id));
+  return reasonHolds(reason, asked) && coversTriggers && coversMitigations;
+}
+
 /** The field ids a written reason names. */
 function namedIn(reason: string): Set<string> {
   const match = /^asks none of: (.+)$/.exec(reason.trim());
@@ -151,19 +159,8 @@ function unreachableIn(rule: Declared, flow: string, askedBy: Map<string, Set<st
   const triggerable = triggers.length === 0 || triggers.some(id => asked.has(id));
   const mitigable = mitigations.length === 0 || mitigations.some(id => asked.has(id));
   if (triggerable && mitigable) return [];
-  /* A reason must account for EVERY side that is missing, not only one of them.
-     It used to be accepted whenever the fields it named were unasked, so
-     `xn_orphan_without_natural_history` stood here as "asks none of:
-     natural_history, disease_natural_history" — true — while its TRIGGERS
-     (`expedited_designations`, `special_designations`) were asked by none of
-     the four flows it applies to either. A true but incomplete reason hid half
-     of a dead rule (2026-11-01). Now a dead trigger side must be named in the
-     reason as well as a dead mitigation side. */
   const reason = NOT_ASKED_YET[`${rule.id}/${flow}`];
-  const named = reason ? namedIn(reason) : new Set<string>();
-  const coversTriggers = triggerable || triggers.every(id => named.has(id));
-  const coversMitigations = mitigable || mitigations.every(id => named.has(id));
-  if (reason && reasonHolds(reason, asked) && coversTriggers && coversMitigations) return [];
+  if (reason && reasonExplains(reason, asked, { triggers, mitigations, triggerable, mitigable })) return [];
   const which = !triggerable
     ? `none of its triggers (${triggers.join(', ')})`
     : `none of its mitigations (${mitigations.join(', ')})`;
@@ -445,7 +442,7 @@ describe('the findings that were asserted at a sponsor who was never asked', () 
     expect(firedFor('ind_submission', { therapeutic_area: 'oncology' })).not.toContain(
       'xn_oncology_no_biomarker_strategy',
     );
-    expect(firedFor('ind_submission', { expedited_designations: 'orphan drug' })).not.toContain(
+    expect(firedFor('ind_submission', { orphan_designation: 'granted' })).not.toContain(
       'xn_orphan_without_natural_history',
     );
     expect(firedFor('ind_submission', { product_type: 'biologic' })).not.toContain(

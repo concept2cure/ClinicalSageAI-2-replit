@@ -12,6 +12,7 @@
 
 import type { FlowDefinition } from './types.js';
 import type { QuestionPredicate } from '../../../../shared/types/intelligence-questions.js';
+import { evaluatePredicate } from '../../../../shared/ana/question-predicate.js';
 
 /* ─── Reading one answer ─────────────────────────────────────────────────── */
 
@@ -168,4 +169,41 @@ export function contextFor(
     return ids.some(reached) ? 'blank' : 'pending';
   };
   return { asks: id => asked.has(id), mitigation, mitigationAbsent: () => mitigation() === 'blank' };
+}
+
+/* ── Orphan designation and natural history (2026-11-02, S4) ─────────────── */
+
+/**
+ * Orphan designation, under every question the four interviews state it by:
+ * a yes_no in the protocol and the BLA (read with the shared predicate's own
+ * coercion, so true, 'yes' and 'y' agree), a granted / applied select in the
+ * IND and the NDA, and the orphan options of three multi_selects.
+ */
+export function statesOrphanDesignation(flat: Record<string, unknown>): boolean {
+  const od = flat['orphan_designation'];
+  return (
+    evaluatePredicate({ field: 'orphan_designation', operator: 'eq', value: true }, flat) ||
+    ['granted', 'applied'].includes(strVal(od)) ||
+    mentions(flat['regulatory_pathway'], 'orphan') ||
+    mentions(flat['ema_designations'], 'orphan') ||
+    mentions(flat['exclusivity_claims'], 'orphan') ||
+    strVal(flat['prea_applicable']) === 'orphan_exempt'
+  );
+}
+
+/**
+ * Whether the design rests on the disease course: any protocol; an IND study in
+ * patients (a healthy-volunteer PK study does not); an NDA or BLA comparison
+ * without a concurrent control — with a randomized control, no natural-history
+ * data is not a deficiency under any authority the finding cites.
+ */
+export function naturalHistoryBearsOnDesign(flat: Record<string, unknown>, category: string): boolean {
+  if (category === 'ind_submission') return strVal(flat['study_population']) !== 'healthy_volunteers';
+  if (category === 'nda_submission') {
+    return strVal(flat['pivotal_study_design']) === 'single_arm' || strVal(flat['control_type']) === 'historical';
+  }
+  if (category === 'bla_submission') {
+    return ['historical', 'none'].includes(strVal(flat['comparator_used'])) || strVal(flat['pivotal_design']) === 'single_arm';
+  }
+  return true;
 }

@@ -166,6 +166,22 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             ],
             allowOther: {},
           },
+          /* 2026-11-02 (S4): the NDA asked no orphan designation at all, so no
+             rule could know a marketing application was for a designated drug.
+             The IND's vocabulary; converging the designation vocabularies
+             across flows is its own change (S4, #7). */
+          {
+            id: 'orphan_designation',
+            label: 'Orphan-drug designation for this indication',
+            type: 'select',
+            options: [
+              { value: 'granted', label: 'Yes — orphan designation granted' },
+              { value: 'applied', label: 'Requested — pending FDA decision' },
+              { value: 'not_applicable', label: 'No / not applicable' },
+            ],
+            helpText:
+              'Orphan-drug designation is granted under FD&C Act §526 (21 USC 360bb) and 21 CFR part 316 for a drug for a rare disease or condition (in general, fewer than 200,000 persons in the US). The request must be made before the marketing application is submitted (FD&C Act §526(a)(1)). Approval of a designated drug for the designated use may carry 7-year orphan exclusivity (FD&C Act §527; 21 USC 360cc).',
+          },
           {
             id: 'accelerated_pathway',
             label: 'Expedited Program Designations',
@@ -1141,6 +1157,62 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'multiple', label: 'Multiple Tumor Types (tissue-agnostic)' },
             ],
           },
+          /* 2026-11-02 (S4): xn_oncology_no_biomarker_strategy read biomarker
+             ids no flow asked, and in the IND its triggers were not asked
+             either; so it never fired. */
+          {
+            id: 'companion_diagnostic_position',
+            label: 'How the indicated population is identified, and the test the label will name',
+            type: 'select',
+            required: true,
+            visibleWhen: { anyOf: [{ field: 'therapeutic_area', operator: 'eq', value: 'oncology' }, { field: 'is_oncology', operator: 'eq', value: true }] },
+            helpText:
+              "Where the drug is safe and effective only in patients a test identifies, FDA generally will not approve it unless the in vitro companion diagnostic is approved or cleared contemporaneously, and the drug's labeling specifies use of that test. The guidance describes an exception for a serious or life-threatening condition with no satisfactory alternative (FDA Guidance: In Vitro Companion Diagnostic Devices, 2014).",
+            options: [
+              {
+                value: 'cdx_new_contemporaneous',
+                label: 'Biomarker-defined indication; a new companion diagnostic is submitted for contemporaneous approval',
+                commits:
+                  "The test's own marketing submission (generally a PMA under 21 CFR Part 814; a 510(k) or De Novo only where FDA agrees that route applies) is reviewed alongside this NDA; a bridging study if the clinical-trial assay differs from the final test; and an indication worded to the FDA-approved or cleared test.",
+                authority: 'FDA Guidance: In Vitro Companion Diagnostic Devices (2014); 21 CFR Part 814; FDA Draft Guidance: Principles for Codevelopment of an In Vitro Companion Diagnostic Device with a Therapeutic Product (2016)',
+              },
+              {
+                value: 'cdx_existing_supplement',
+                label: "Biomarker-defined indication; an already-approved companion diagnostic adds this drug's claim",
+                commits:
+                  "The test's holder files a PMA supplement for the new therapeutic claim, with evidence that the test identifies the population studied.",
+                authority: '21 CFR 814.39; FDA Guidance: In Vitro Companion Diagnostic Devices (2014)',
+              },
+              {
+                value: 'cdx_group_claim',
+                label: 'Biomarker-defined indication; a companion diagnostic with a group or class oncology claim covers it',
+                commits:
+                  'Reliance on a test whose labeling names the oncology group or class, and confirmation that this drug falls within it.',
+                authority: 'FDA Guidance: Developing and Labeling In vitro Companion Diagnostic Devices for a Specific Group or Class of Oncology Therapeutic Products (2020)',
+              },
+              {
+                value: 'complementary_diagnostic',
+                label: 'A test informs use but is not required (complementary diagnostic)',
+                commits:
+                  'The label may describe marker-defined results without restricting use to tested patients; the test is not a condition of safe and effective use.',
+                authority: 'Unverified: "complementary diagnostic" is FDA usage, not defined in regulation or in a guidance cited here.',
+              },
+              {
+                value: 'not_biomarker_defined',
+                label: 'The indication is not biomarker-defined (efficacy shown in an unselected population)',
+                commits:
+                  'An unselected labelled population. If the pivotal data show a marker-dependent effect, FDA may restrict the indication.',
+                authority: 'FDA Guidance: Enrichment Strategies (2019)',
+              },
+              {
+                value: 'not_defined',
+                label: 'Not yet determined',
+                commits:
+                  'AnA raises the finding: the device route, the test the label names and its timing relative to the NDA are open.',
+              },
+            ],
+            allowOther: { prompt: 'How is the indicated population identified, in your own words?' },
+          },
           {
             id: 'uses_surrogate_endpoint',
             label: 'Is approval sought based on a surrogate endpoint?',
@@ -1199,6 +1271,50 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'historical', label: 'Historical Control' },
               { value: 'none', label: 'No Control (add-on design)' },
             ],
+          },
+          /* 2026-11-02 (S4): xn_orphan_without_natural_history read
+             `natural_history` / `disease_natural_history`, asked by no flow, and
+             triggered on `expedited_designations` / `special_designations`, which
+             none of the four flows it applies to asks. Dead on both sides. */
+          {
+            id: 'natural_history',
+            label: 'How natural-history data enter the efficacy evidence',
+            type: 'select',
+            required: true,
+            visibleWhen: { allOf: [{ anyOf: [{ field: 'orphan_designation', operator: 'in', value: ['granted', 'applied'] }, { field: 'therapeutic_area', operator: 'eq', value: 'rare_disease' }] }, { field: 'supplement_type', operator: 'not_in', value: ['new_strength', 'labeling_change', 'manufacturing_change'] }] },
+            helpText:
+              'What role natural-history data play in the evidence of effectiveness. A historical control is one of the designs 21 CFR 314.126(b)(2)(v) recognises: a comparison with the adequately documented natural history of the disease or condition.',
+            options: [
+              {
+                value: 'external_control',
+                label: 'Natural-history data are the external control for the pivotal comparison',
+                commits:
+                  'Patient-level data, a pre-specified comparison, comparable eligibility and outcome ascertainment, and bias analyses. Historical control designs are usually reserved for special circumstances, such as a disease with high and predictable mortality or an effect that is self-evident.',
+                authority: '21 CFR 314.126(b)(2)(v); ICH E10 (2000) §2.5; FDA draft guidance, Considerations for the Design and Conduct of Externally Controlled Trials for Drug and Biological Products (February 2023)',
+              },
+              {
+                value: 'endpoint_development',
+                label: 'Natural-history data supported endpoint selection, timing or clinical meaningfulness, with a concurrent control',
+                commits:
+                  'The application shows how the natural-history data justify the endpoint, its timing and the change judged meaningful.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019)',
+              },
+              {
+                value: 'disease_context',
+                label: 'Registry or published data describe the disease course, as context only',
+                commits:
+                  'No efficacy inference rests on them, and their sources are documented.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019)',
+              },
+              {
+                value: 'none',
+                label: 'No natural-history data in the application',
+                commits:
+                  'A single-arm or historical-control pivotal result has no documented disease course to compare against. With a concurrent randomized control, this is not a finding.',
+                authority: '21 CFR 314.126(b)(2)(v); ICH E10 (2000) §2.5',
+              },
+            ],
+            allowOther: { prompt: 'What role do natural-history data play in this application, in your own words?' },
           },
           {
             id: 'blinding',

@@ -14,6 +14,7 @@
 
 import { consentElementsFor } from '../../../../../shared/regulatory/informed-consent-elements.js';
 import { EAST_ASIAN_COUNTRY_WORDS } from '../cross-node-context.js';
+import { BIOMARKER_SELECTION_OPTIONS } from './protocol-development-biomarker-selection.js';
 
 /** The 50.25(a) elements, in order, from the one record. */
 const FDA_REQUIRED_CONSENT = consentElementsFor('fda')
@@ -159,6 +160,18 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             ],
             allowOther: {},
           },
+          /* 2026-11-02 (S4): xn_oncology_no_biomarker_strategy read biomarker
+             ids no flow asked, and in the IND its triggers were not asked
+             either; so it never fired. */
+          {
+            id: 'is_oncology',
+            label: 'Is this a cancer indication?',
+            type: 'yes_no',
+            required: true,
+            visibleWhen: { field: 'therapeutic_area', operator: 'in', value: ['hematology', 'gene_cell_therapy', 'rare_disease'] },
+            helpText:
+              'Asked because this therapeutic area holds malignant and non-malignant programmes alike, for example a haematologic malignancy or a CAR-T. It decides whether AnA asks how patients are selected by biomarker.',
+          },
           {
             id: 'indication',
             label: 'Indication',
@@ -303,6 +316,57 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'historical', label: 'Historical Control' },
               { value: 'dose_comparison', label: 'Dose-Comparison' },
             ],
+          },
+          /* 2026-11-02 (S4): xn_orphan_without_natural_history read
+             `natural_history` / `disease_natural_history`, asked by no flow, and
+             triggered on `expedited_designations` / `special_designations`, which
+             none of the four flows it applies to asks. Dead on both sides. */
+          {
+            id: 'natural_history',
+            label: 'Natural-history evidence for this disease',
+            type: 'select',
+            required: true,
+            visibleWhen: { anyOf: [{ field: 'orphan_designation', operator: 'eq', value: true }, { field: 'therapeutic_area', operator: 'eq', value: 'rare_disease' }] },
+            helpText:
+              'Natural-history data describe the course of the disease without the investigational treatment. In a rare disease they inform the population, the endpoints and when to assess them, and they can supply an external control (FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development, March 2019). Choose the strongest source this protocol relies on. This is a different question from the real-world evidence question asked later, which asks how real-world data will be used.',
+            options: [
+              {
+                value: 'prospective_study',
+                label: 'A prospective natural-history study, ongoing or completed',
+                commits:
+                  'Endpoints, timepoints and population are justified against its data. If it serves as a comparator, patient-level data collected with comparable eligibility, assessments and timing are needed.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (March 2019)',
+              },
+              {
+                value: 'retrospective_data',
+                label: "Retrospective data: a disease registry, chart review or earlier studies' patient-level data",
+                commits:
+                  "The data's relevance and reliability (provenance, completeness, variable and diagnostic definitions over the collection period) must be shown before they support design choices or a comparison.",
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019); FDA guidance, Real-World Data: Assessing Registries to Support Regulatory Decision-Making for Drug and Biological Products (2023; date to be verified)',
+              },
+              {
+                value: 'published_literature',
+                label: 'Published literature only (aggregate data)',
+                commits:
+                  'Endpoint and effect-size assumptions rest on aggregate published data, with no patient-level comparison available.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019)',
+              },
+              {
+                value: 'planned',
+                label: 'A natural-history study is planned but has not started',
+                commits:
+                  'Endpoint, timepoint and sample-size assumptions stay provisional until its data exist.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019)',
+              },
+              {
+                value: 'none',
+                label: 'No natural-history data identified',
+                commits:
+                  'Endpoint selection, assessment timing and any uncontrolled or historical comparison have no characterised disease course behind them. AnA records this as a finding.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019); ICH E10 (2000) §2.5',
+              },
+            ],
+            allowOther: { prompt: 'What natural-history evidence does this protocol rely on, in your own words?' },
           },
           {
             id: 'study_objective_type',
@@ -637,6 +701,17 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             label: 'Key Exclusion Criteria',
             type: 'textarea',
             required: true,
+          },
+          {
+            id: 'biomarker_strategy',
+            label: 'Patient selection by biomarker',
+            type: 'select',
+            required: true,
+            visibleWhen: { anyOf: [{ field: 'therapeutic_area', operator: 'eq', value: 'oncology' }, { field: 'is_oncology', operator: 'eq', value: true }] },
+            helpText:
+              'How the study population is defined with respect to a predictive biomarker (a gene alteration, protein expression or an imaging target). It decides whether the assay that selects or assigns patients is an investigational device study under 21 CFR 812, whether a companion diagnostic is co-developed, and what population the label can carry (FDA Enrichment Strategies guidance, 2019; In Vitro Companion Diagnostic Devices guidance, 2014).',
+            options: [...BIOMARKER_SELECTION_OPTIONS],
+            allowOther: { prompt: 'How is the population defined with respect to a biomarker, in your own words?' },
           },
           {
             id: 'includes_vulnerable_populations',

@@ -1553,6 +1553,50 @@ export function createBlaSubmissionFlow(): FlowDefinition {
               { value: 'none', label: 'None (Single-Arm Study)' },
             ],
           },
+          /* 2026-11-02 (S4): xn_orphan_without_natural_history read
+             `natural_history` / `disease_natural_history`, asked by no flow, and
+             triggered on `expedited_designations` / `special_designations`, which
+             none of the four flows it applies to asks. Dead on both sides. */
+          {
+            id: 'natural_history',
+            label: 'How natural-history data enter the efficacy evidence',
+            type: 'select',
+            required: true,
+            visibleWhen: { anyOf: [{ field: 'orphan_designation', operator: 'eq', value: true }, { field: 'therapeutic_area', operator: 'eq', value: 'rare_disease' }] },
+            helpText:
+              'What role natural-history data play in the evidence of effectiveness for this licence.',
+            options: [
+              {
+                value: 'external_control',
+                label: 'Natural-history data are the external control for the pivotal comparison',
+                commits:
+                  'Patient-level data, a pre-specified comparison, comparable eligibility and outcome ascertainment, and bias analyses. Historical control designs are usually reserved for special circumstances, such as a disease with high and predictable mortality or an effect that is self-evident.',
+                authority: 'ICH E10 (2000) §2.5; FDA draft guidance, Considerations for the Design and Conduct of Externally Controlled Trials for Drug and Biological Products (February 2023); FDA draft guidance, Demonstrating Substantial Evidence of Effectiveness for Human Drug and Biological Products (December 2019)',
+              },
+              {
+                value: 'endpoint_development',
+                label: 'Natural-history data supported endpoint selection, timing or clinical meaningfulness, with a concurrent control',
+                commits:
+                  'The application shows how the natural-history data justify the endpoint, its timing and the change judged meaningful.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019); FDA guidance, Human Gene Therapy for Rare Diseases (January 2020)',
+              },
+              {
+                value: 'disease_context',
+                label: 'Registry or published data describe the disease course, as context only',
+                commits:
+                  'No efficacy inference rests on them, and their sources are documented.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019)',
+              },
+              {
+                value: 'none',
+                label: 'No natural-history data in the application',
+                commits:
+                  'A single-arm or historical-control pivotal result has no documented disease course to compare against. With a concurrent randomized control, this is not a finding.',
+                authority: '21 CFR 314.126(b)(2)(v); ICH E10 (2000) §2.5',
+              },
+            ],
+            allowOther: { prompt: 'What role do natural-history data play in this application, in your own words?' },
+          },
           {
             id: 'regulatory_endpoint_type',
             label: 'Regulatory Endpoint Type',
