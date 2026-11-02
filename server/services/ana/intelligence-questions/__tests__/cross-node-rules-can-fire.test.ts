@@ -103,20 +103,12 @@ const NOT_ASKED_YET: Readonly<Record<string, string>> = {
     'asks none of: ethnic_bridging, ethnicity_factors',
   'xn_phase3_no_interim/protocol_development':
     'asks none of: interim_analysis, planned_interim',
-  'xn_iso_14971_no_post_production/risk_management':
-    'asks none of: risk_management_process, rm_standard',
-  'xn_iso_14971_no_post_production/device_510k':
-    'asks none of: risk_management_process, rm_standard',
-  'xn_iso_14971_no_post_production/device_pma':
-    'asks none of: risk_management_process, rm_standard',
   'xn_stability_insufficient_for_shelf_life/stability_study':
     'asks none of: long_term_data_months, stability_data_months',
   'xn_stability_insufficient_for_shelf_life/nda_submission':
     'asks none of: long_term_data_months, stability_data_months',
   'xn_stability_insufficient_for_shelf_life/bla_submission':
     'asks none of: long_term_data_months, stability_data_months',
-  'xn_accelerated_approval_no_confirmatory/nda_submission':
-    'asks none of: regulatory_pathway, approval_pathway, accelerated_approval_basis',
   'xn_rems_without_etasu/labeling':
     'asks none of: etasu, rems_elements',
 };
@@ -457,7 +449,7 @@ describe('the findings that were asserted at a sponsor who was never asked', () 
   it('no longer fire on the trigger alone', () => {
     /* Each of these was an answer a real interview takes, and each used to
        produce the finding by itself. */
-    expect(firedFor('nda_submission', { regulatory_pathway: 'accelerated approval' })).not.toContain(
+    expect(firedFor('nda_submission', { accelerated_pathway: ['accelerated_approval'] })).not.toContain(
       'xn_accelerated_approval_no_confirmatory',
     );
     expect(firedFor('ind_submission', { therapeutic_area: 'oncology' })).not.toContain(

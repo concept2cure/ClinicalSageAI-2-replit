@@ -325,37 +325,49 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_accelerated_approval_no_confirmatory',
     appliesTo: ['nda_submission', 'bla_submission'],
-    /* `accelerated_approval_basis` is the BLA interview's own question — the
-       surrogate endpoint the accelerated claim rests on. The rule read two ids
-       neither applicable flow asks, so a CRITICAL finding about the
-       confirmatory trial FDORA §3210 requires could never fire (F1). */
-    triggeredBy: ['regulatory_pathway', 'approval_pathway', 'accelerated_approval_basis'],
-    /* The BLA interview asks both of the last two in its post-marketing plan. */
+    /* 2026-11-02 (S4): both interviews ask `accelerated_pathway` (a
+       multi_select offering 'accelerated_approval') on their first node, and
+       the BLA also asks the basis of the accelerated claim. The rule read
+       `regulatory_pathway` / `approval_pathway`, which neither applicable flow
+       asks, so in the NDA it could never trigger. */
+    triggeredBy: ['accelerated_pathway', 'accelerated_approval_basis'],
+    /* NDA: confirmatory_study_planned / _design (pmc_pme). BLA:
+       confirmatory_study_needed / _protocol (post_marketing_plan). A "no" is the
+       finding, never an answer, so none is in negativeIsAnswer.
+       This rule REPLACES the node checks `accelerated_approval_no_confirmatory`
+       (NDA pmc_pme) and `accelerated_no_confirmatory` (BLA post_marketing_plan),
+       deleted 2026-11-02: as field predicates they could not test the pathway,
+       so each fired a CRITICAL at every traditional-approval programme that
+       answered no. */
     mitigatedBy: [
-      'confirmatory_trial',
-      'post_marketing_commitment',
+      'confirmatory_study_planned',
+      'confirmatory_study_design',
       'confirmatory_study_needed',
       'confirmatory_study_protocol',
     ],
     check(flat, _state, _definition, ctx) {
-      /* Either the pathway answer names it (a multi_select in the one flow
-         that asks it) or the BLA stated the basis the accelerated claim rests
-         on. Both are the sponsor saying they are on that route. */
       const accelerated =
-        mentions(flat['regulatory_pathway'] ?? flat['approval_pathway'], 'accelerated') ||
-        strVal(flat['accelerated_approval_basis']) !== '';
-      if (accelerated && ctx.mitigationAbsent()) {
-        return {
-          checkId: 'xn_accelerated_approval_no_confirmatory',
-          severity: 'critical',
-          title: 'Accelerated Approval Without Confirmatory Trial Plan',
-          message: 'Accelerated approval requires a post-marketing confirmatory trial per FDORA §3210. FDA has increased enforcement of confirmatory study requirements and can initiate withdrawal proceedings if not met.',
-          reference: 'FDORA §3210; 21 CFR 314.530 (NDAs) / 21 CFR 601.43 (BLAs); FDA Guidance \'Expedited Programs for Serious Conditions — Drugs and Biologics\' (2014); FDA draft guidance on accelerated approval of drugs and biologics (2024)',
-          questionId: '_cross_node',
-          triggerValues: { regulatory_pathway: flat['regulatory_pathway'] },
-        };
-      }
-      return null;
+        mentions(flat['accelerated_pathway'], 'accelerated_approval') || strVal(flat['accelerated_approval_basis']) !== '';
+      if (!accelerated || !ctx.mitigationAbsent()) return null;
+      return {
+        checkId: 'xn_accelerated_approval_no_confirmatory',
+        severity: 'critical',
+        title: 'Accelerated Approval Without Confirmatory Trial Plan',
+        message:
+          'This application seeks accelerated approval, and the interview records no planned confirmatory trial: the ' +
+          'question was answered no or left unanswered. Accelerated approval is subject to the requirement to study the ' +
+          'product further, with due diligence, to verify and describe its clinical benefit (21 CFR 314.510 for NDAs; ' +
+          '21 CFR 601.41 for BLAs; FD&C Act 506(c)). Since FDORA (2022), FDA may require the confirmatory trial to be ' +
+          'underway before approval, and may withdraw approval through expedited procedures if the trial is not ' +
+          'conducted with due diligence or does not verify clinical benefit.',
+        reference:
+          "21 CFR 314.510 (NDAs) / 21 CFR 601.41 (BLAs); FD&C Act 506(c), as amended by FDORA (Consolidated Appropriations Act, 2023, Div. FF) §3210; withdrawal: 21 CFR 314.530 / 21 CFR 601.43; FDA Guidance 'Expedited Programs for Serious Conditions — Drugs and Biologics' (May 2014)",
+        questionId: '_cross_node',
+        triggerValues: {
+          accelerated_pathway: flat['accelerated_pathway'],
+          accelerated_approval_basis: flat['accelerated_approval_basis'],
+        },
+      };
     },
   },
   {
@@ -635,23 +647,54 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   },
   {
     id: 'xn_iso_14971_no_post_production',
-    appliesTo: ['risk_management', 'device_510k', 'device_pma'],
-    triggeredBy: ['risk_management_process', 'rm_standard'],
-    mitigatedBy: ['post_production_monitoring', 'post_market_surveillance'],
+    /* 2026-11-02 (S4): dead in all three flows it named. No flow asked its
+       triggers (`risk_management_process`, `rm_standard`), and its two
+       mitigations were NODE ids, which never reach the flattened answers.
+       risk_management is no longer listed: that flow's own node check
+       no_post_production makes this finding at CRITICAL on the same field and
+       clause, and the field is required, so this rule could never fire there. */
+    appliesTo: ['device_510k', 'device_pma'],
+    triggeredBy: ['iso_14971_applied'],
+    /* Alternatives: the system is absent only when neither a surveillance plan
+       nor complaint handling — the main channel for user-generated
+       post-production information (ISO 14971:2019 10.2) — is in place. The
+       510(k)'s ids, then the PMA's; contextFor uses only those the flow asks. */
+    mitigatedBy: [
+      'post_market_surveillance_plan',
+      'complaint_handling_process',
+      'post_market_plan_developed',
+      'complaint_handling_system',
+    ],
+    /* No negativeIsAnswer: a 'no' to both IS the finding, and both are required. */
     check(flat, _state, _definition, ctx) {
-      const rmProcess = strVal(flat['risk_management_process'] ?? flat['rm_standard']);
-      if (rmProcess.includes('14971') && ctx.mitigationAbsent()) {
-        return {
-          checkId: 'xn_iso_14971_no_post_production',
-          severity: 'warning',
-          title: 'ISO 14971 Risk Management Without Post-Production Monitoring',
-          message: 'ISO 14971:2019 §10 requires post-production monitoring as an integral part of risk management. The risk management process is incomplete without information collection and review during the production and post-production phases.',
-          reference: 'ISO 14971:2019 §10; MDR Article 83',
-          questionId: '_cross_node',
-          triggerValues: { risk_management_process: flat['risk_management_process'] },
-        };
-      }
-      return null;
+      const applied = evaluatePredicate({ field: 'iso_14971_applied', operator: 'eq', value: true }, flat);
+      if (!applied || !ctx.mitigationAbsent()) return null;
+      return {
+        checkId: 'xn_iso_14971_no_post_production',
+        severity: 'warning',
+        title: 'ISO 14971 Applied Without a Post-Production Information System',
+        message:
+          'ISO 14971 is applied, but no post-market surveillance plan has been developed and no complaint handling ' +
+          'process is established, so nothing is in place to collect production and post-production information. ' +
+          'ISO 14971:2019 clause 10.1 requires the manufacturer to establish, document and maintain a system to ' +
+          'actively collect and review information relevant to the device in the production and post-production ' +
+          'phases, and ISO 13485:2016 clauses 8.2.1 and 8.2.2, as incorporated by 21 CFR 820.10 (QMSR), require the ' +
+          'feedback and complaint-handling processes that feed it, with feedback as an input to risk management.',
+        reference: 'ISO 14971:2019 clause 10; ISO 13485:2016 clauses 8.2.1 and 8.2.2, as incorporated by 21 CFR 820.10 (QMSR)',
+        questionId: '_cross_node',
+        triggerValues: {
+          iso_14971_applied: flat['iso_14971_applied'],
+          ...(ctx.asks('post_market_surveillance_plan')
+            ? {
+                post_market_surveillance_plan: flat['post_market_surveillance_plan'],
+                complaint_handling_process: flat['complaint_handling_process'],
+              }
+            : {
+                post_market_plan_developed: flat['post_market_plan_developed'],
+                complaint_handling_system: flat['complaint_handling_system'],
+              }),
+        },
+      };
     },
   },
 ];

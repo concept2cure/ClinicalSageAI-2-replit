@@ -1848,7 +1848,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             id: 'confirmatory_study_needed',
             label: 'Post-Marketing Confirmatory Study Needed',
             type: 'yes_no',
-            helpText: 'Required for all products receiving accelerated approval per 21 CFR 601.41.',
+            helpText: 'Required for all products receiving accelerated approval per 21 CFR 601.41. Answer No if this BLA does not seek accelerated approval.',
           },
           {
             id: 'confirmatory_study_protocol',
@@ -1914,17 +1914,6 @@ export function createBlaSubmissionFlow(): FlowDefinition {
           },
         ],
         defaultNext: 'rems_evaluation',
-        issueChecks: [
-          {
-            id: 'accelerated_no_confirmatory',
-            condition: { field: 'confirmatory_study_needed', operator: 'eq', value: false },
-            severity: 'critical',
-            title: 'Confirmatory Study Required',
-            message:
-              'For products receiving accelerated approval, a confirmatory post-marketing study verifying clinical benefit is mandatory per 21 CFR 601.41. Under the Food and Drug Omnibus Reform Act of 2022 (FDORA), which amended FDCA section 506(c), FDA has expedited authority to withdraw approval if the sponsor fails to conduct required confirmatory studies with due diligence.',
-            reference: '21 CFR 601.41',
-          },
-        ],
       },
 
       /* ── REMS Evaluation ─────────────────────────────────────────────── */

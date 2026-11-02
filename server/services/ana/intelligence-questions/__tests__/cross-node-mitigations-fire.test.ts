@@ -18,7 +18,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { DetectedIssue, FlowCategory, FlowEngineContext, FlowState } from '../types.js';
-import { runCrossNodeAnalysis } from '../issue-detector.js';
+import { runCrossNodeAnalysis, runIssueChecks } from '../issue-detector.js';
 import { getFlowDefinition } from '../flows/index.js';
 
 const CTX: FlowEngineContext = { organizationId: 7, userId: 3, projectId: null };
@@ -159,5 +159,99 @@ describe('xn_biologic_no_immunogenicity', () => {
     const node = definitionOf('ind_submission').nodes.find(n => n.fields.some(f => f.id === 'immunogenicity_assessment_planned'))!;
     expect(ids(fired('ind_submission', { product_type: 'biosimilar', is_biologic: true }, [node.id]))).toContain(IG);
     expect(ids(fired('ind_submission', { product_type: 'biosimilar', is_biologic: true, immunogenicity_assessment_planned: true }))).not.toContain(IG);
+  });
+});
+
+/* ── ISO 14971 applied, with no post-production information system ───────── */
+describe('xn_iso_14971_no_post_production', () => {
+  const PP = 'xn_iso_14971_no_post_production';
+
+  it('fires in the 510(k) when neither a surveillance plan nor complaint handling exists', () => {
+    expect(
+      ids(fired('device_510k', { iso_14971_applied: true, post_market_surveillance_plan: false, complaint_handling_process: false })),
+    ).toContain(PP);
+  });
+
+  it('is cleared by either channel — complaint handling alone is a post-production system', () => {
+    expect(
+      ids(fired('device_510k', { iso_14971_applied: true, post_market_surveillance_plan: false, complaint_handling_process: true })),
+    ).not.toContain(PP);
+    expect(
+      ids(fired('device_510k', { iso_14971_applied: true, post_market_surveillance_plan: true, complaint_handling_process: false })),
+    ).not.toContain(PP);
+  });
+
+  it('is silent when ISO 14971 is not applied — that has its own critical node check', () => {
+    expect(
+      ids(fired('device_510k', { iso_14971_applied: false, post_market_surveillance_plan: false, complaint_handling_process: false })),
+    ).not.toContain(PP);
+  });
+
+  it('waits while the surveillance node has not been reached', () => {
+    expect(ids(fired('device_510k', { iso_14971_applied: true }))).not.toContain(PP);
+  });
+
+  it('reads the PMA flow\u2019s own ids, including tool-surface strings', () => {
+    expect(
+      ids(fired('device_pma', { iso_14971_applied: 'yes', post_market_plan_developed: 'no', complaint_handling_system: 'no' })),
+    ).toContain(PP);
+    expect(
+      ids(fired('device_pma', { iso_14971_applied: true, post_market_plan_developed: false, complaint_handling_system: true })),
+    ).not.toContain(PP);
+  });
+
+  it('no longer runs in the risk-management flow, whose own node check makes this finding', () => {
+    expect(
+      ids(fired('risk_management', { applicable_standards: ['iso_14971'], post_production_process_established: false })),
+    ).not.toContain(PP);
+  });
+});
+
+/* ── Accelerated approval with no confirmatory trial ─────────────────────── */
+describe('xn_accelerated_approval_no_confirmatory', () => {
+  const AA = 'xn_accelerated_approval_no_confirmatory';
+  const nodeHolding = (category: FlowCategory, field: string) =>
+    definitionOf(category).nodes.find(n => n.fields.some(f => f.id === field))!;
+
+  it.each([false, 'no'])('fires in the NDA on the route the interview asks, with confirmatory %s', answer => {
+    /* The NDA asks `accelerated_pathway`; the rule read `regulatory_pathway`, asked by neither flow. */
+    expect(
+      ids(fired('nda_submission', { accelerated_pathway: ['priority_review', 'accelerated_approval'], confirmatory_study_planned: answer })),
+    ).toContain(AA);
+  });
+
+  it('fires where the post-marketing node was reached and left blank', () => {
+    const pmc = nodeHolding('nda_submission', 'confirmatory_study_planned');
+    expect(ids(fired('nda_submission', { accelerated_pathway: ['accelerated_approval'] }, [pmc.id]))).toContain(AA);
+  });
+
+  it.each([true, 'yes'])('is cleared by a planned confirmatory trial (%s)', answer => {
+    expect(ids(fired('nda_submission', { accelerated_pathway: ['accelerated_approval'], confirmatory_study_planned: answer }))).not.toContain(AA);
+  });
+
+  it('is silent for a programme not on the accelerated route, and waits while the node is unreached', () => {
+    expect(
+      ids(fired('nda_submission', { accelerated_pathway: ['priority_review', 'breakthrough'], confirmatory_study_planned: false })),
+    ).not.toContain(AA);
+    expect(ids(fired('nda_submission', { accelerated_pathway: ['accelerated_approval'] }))).not.toContain(AA);
+  });
+
+  it('triggers in the BLA on its first-node pathway answer too', () => {
+    expect(
+      ids(fired('bla_submission', { accelerated_pathway: ['accelerated_approval'], surrogate_endpoint_used: false, confirmatory_study_needed: false })),
+    ).toContain(AA);
+    expect(ids(fired('bla_submission', { accelerated_pathway: ['fast_track'], confirmatory_study_needed: false }))).not.toContain(AA);
+  });
+
+  it('no longer raises a CRITICAL at a traditional-approval programme from the node checks it replaced', () => {
+    /* The deleted node checks fired on a bare "no", whatever the pathway. */
+    const confirmatoryCritical = (issues: DetectedIssue[]) =>
+      issues.filter(i => i.severity === 'critical' && /confirmatory/i.test(`${i.checkId} ${i.title}`));
+    expect(
+      confirmatoryCritical(runIssueChecks(nodeHolding('nda_submission', 'confirmatory_study_planned'), { confirmatory_study_planned: false })),
+    ).toEqual([]);
+    expect(
+      confirmatoryCritical(runIssueChecks(nodeHolding('bla_submission', 'confirmatory_study_needed'), { confirmatory_study_needed: false })),
+    ).toEqual([]);
   });
 });

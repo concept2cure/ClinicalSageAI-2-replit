@@ -1962,6 +1962,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             id: 'confirmatory_study_planned',
             label: 'Confirmatory Post-Approval Study Planned',
             type: 'yes_no',
+            helpText:
+              'Applies to an application seeking accelerated approval (21 CFR 314.510; FD&C Act 506(c)). Answer Yes if the confirmatory trial is planned, underway or complete. If this NDA does not seek accelerated approval, answer No.',
           },
           {
             id: 'confirmatory_study_design',
@@ -2024,17 +2026,6 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         ],
         defaultNext: 'pediatric_commitments',
         provideExpertFeedback: true,
-        issueChecks: [
-          {
-            id: 'accelerated_approval_no_confirmatory',
-            condition: { field: 'confirmatory_study_planned', operator: 'eq', value: false },
-            severity: 'critical',
-            title: 'Confirmatory Study Required for Accelerated Approval',
-            message:
-              'If this NDA seeks accelerated approval (21 CFR 314.510), a confirmatory post-marketing study demonstrating clinical benefit is mandatory per 21 CFR 314.510 and FD&C Act 506(c); approval may be withdrawn under 21 CFR 314.530 if it fails to verify benefit. Per FDORA 2022 amendments, FDA has enhanced authority to require that confirmatory studies are underway prior to accelerated approval and to withdraw approval on an expedited timeline if studies fail to verify clinical benefit. The confirmatory study protocol should be agreed upon with FDA before NDA submission.',
-            reference: '21 CFR 314.510; FD&C Act 506(c); 21 CFR 314.530 (withdrawal); FDORA 2022',
-          },
-        ],
       },
 
       {
