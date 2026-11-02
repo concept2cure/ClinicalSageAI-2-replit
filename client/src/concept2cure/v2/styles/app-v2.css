@@ -3909,6 +3909,9 @@
 .c2c-v2 [data-work-area] > .ph{margin:0 0 16px;}
 .c2c-v2 [data-work-area] > .sp-starters[data-layout="row"]{justify-content:flex-start;margin:0 0 24px;}
 .c2c-v2 [data-work-area] > .seg{margin:0 0 16px;}
+/* A pressed row in a work area's own list (Biostatistics' method list, D5 §B.4 item 5): a quiet fill and a
+   hairline, never orange (§WA.3 "Colour"). Carried here, in D5-0's block, so D5-3 needs no app-v2.css turn. */
+.c2c-v2 [data-work-area] .sp-row[aria-pressed="true"]{background:var(--bg-100);box-shadow:inset 0 0 0 1px var(--border-strong);}
 .c2c-v2 [data-work-area] .tabs{margin:0 0 24px;}
 /* A tab body that brought its own page padding drops it: the page provides the
    gutters. `.cm-body` is shared with twelve surfaces outside D5's packages
