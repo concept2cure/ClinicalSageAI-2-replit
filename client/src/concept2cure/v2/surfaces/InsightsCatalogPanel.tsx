@@ -173,16 +173,7 @@ function PredictionAvailability({ types }: { types: LibraryReportType[] }) {
   </section>;
 }
 
-export function CatalogPanel({
-  types,
-  onRun,
-  canRun,
-  runUnavailableReason,
-  programLabel,
-  busy = false,
-  projectId,
-  planControl,
-}: {
+interface CatalogPanelProps {
   types: LibraryReportType[];
   onRun: (t: LibraryReportType) => void;
   canRun: boolean;
@@ -192,7 +183,9 @@ export function CatalogPanel({
   projectId?: number;
   /** The canvas's "Preview plan" switch, shown with the filters (D7 §D.4 step 6). */
   planControl?: React.ReactNode;
-}) {
+}
+
+export function CatalogPanel({ types, onRun, canRun, runUnavailableReason, programLabel, busy = false, projectId, planControl }: CatalogPanelProps) {
   const [q, setQ] = useState('');
   const [region, setRegion] = useState('');
   const [scope, setScope] = useState('');
