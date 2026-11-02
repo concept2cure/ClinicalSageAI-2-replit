@@ -154,7 +154,7 @@ const APP_PHASES: Record<WorkspaceAppId, ProjectPhase[]> = {
   cer: ['clinical'],
   etmf: ['clinical'],
   risk: ['clinical', 'post_market'],
-  human_factors: ['clinical', 'post_market'],
+  human_factors: ['clinical'],
   cybersecurity: ['clinical', 'post_market'],
   substantial_equiv: ['clinical'],
   labeling: ['authoring'],
@@ -226,7 +226,7 @@ const DOMAIN_PHASES: Record<StandardDomain, ProjectPhase[]> = {
   quality_system: ['quality'],
   risk: ['clinical', 'post_market'],
   software: ['quality', 'clinical'],
-  human_factors: ['clinical', 'post_market'],
+  human_factors: ['clinical'],
   cybersecurity: ['clinical', 'post_market'],
   analytical_performance: ['quality'],
   cmc_biologic: ['quality'],
@@ -448,7 +448,7 @@ function buildInventory(cfg: WorkspaceConfig, emitted: Set<ProjectPhase>): Capab
       const phases = APP_PHASES[a.id].filter((p) => emitted.has(p));
       const ordered = PHASE_ORDER.filter((p) => phases.includes(p));
       return ordered.length
-        ? { id: a.id, label: a.label, neededAtPhases: ordered, firstNeededPhase: ordered[0] }
+        ? { id: a.id, label: getApp(a.id).label, neededAtPhases: ordered, firstNeededPhase: ordered[0] }
         : null;
     })
     .filter((x): x is InventoryItem<WorkspaceAppId> => x !== null);
