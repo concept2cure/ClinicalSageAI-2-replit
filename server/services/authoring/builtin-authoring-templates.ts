@@ -143,7 +143,12 @@ function authoringComponents(): DocumentTemplateStructure[] {
 }
 
 export async function getBuiltinAuthoringTemplates(): Promise<BuiltinAuthoringTemplate[]> {
-  return [...getIndAuthoringTemplates(), ...await Promise.all(regionalEntries().map(registryTemplate)),
+  // ICH_CSR and component:clinical_study_report describe the same ICH E3
+  // document. Keep the component entry in the picker: the CSR editor's
+  // study-data build action is tied to its canonical component identity.
+  // Historical registry:ICH_CSR references remain resolvable by ID below.
+  const catalogEntries = regionalEntries().filter(entry => entry.id !== 'ICH_CSR');
+  return [...getIndAuthoringTemplates(), ...await Promise.all(catalogEntries.map(registryTemplate)),
     ...authoringComponents().map(componentTemplate), leafletPreparation()];
 }
 
