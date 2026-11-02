@@ -35,6 +35,19 @@ vi.mock('../../utils/document-file-roots', async (importOriginal) => ({
 }));
 
 import importsRouter from '../mdx-imports';
+import { handSequenceFiles } from '../../services/legacy-importer/__tests__/support/conformant-sequence';
+
+/**
+ * A sequence as a publisher writes it: index.xml at the root pointing at
+ * m1/us/us-regional.xml, whose hrefs are relative to m1/us/, with every
+ * checksum right. Until 2026-11-02 this was a bare us-regional.xml with a
+ * root-relative href and no index.xml, the one shape the regex reader then in
+ * the detector could map (MR-10 Stage 9, docs/design/FILED_SEQUENCE_READER_2026-11-01.md).
+ */
+const DECLARED = handSequenceFiles({
+  m1: [{ headings: ['m1-2-cover-letters'], href: '1-2/cover-letter.pdf', id: 'L1', title: 'Cover letter', bytes: 'letter' }],
+});
+
 
 const ORG = 99;
 const USER = 777;
@@ -120,18 +133,18 @@ describe('POST /api/mdx/imports — what a detected file is stored as', () => {
 
   it('maps only the leaves the backbone declares, and counts only those as mapped', async () => {
     const archive = await zipOf('ectd.zip', {
-      'm1/us/us-regional.xml': `<fda-regional><leaf ID="L1" operation="new" xlink:href="m1/us/1-1/cover-letter.pdf"><title>Cover letter</title></leaf></fda-regional>`,
-      'm1/us/1-1/cover-letter.pdf': 'letter',
+      ...DECLARED,
       'util/dtd/us-regional.dtd': '<!ELEMENT x ANY>',
     });
     const res = await request(app()).post('/api/mdx/imports').send({ sourcePath: archive });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
 
     const files = await storedFiles(Number(res.body.data.id));
-    expect(files.get('m1/us/1-1/cover-letter.pdf')).toMatchObject({ status: 'mapped', mapping_confidence: '1.00', mapping_source: 'backbone_xml' });
-    expect(files.get('m1/us/us-regional.xml')?.status).toBe('skipped');
-    expect(files.get('util/dtd/us-regional.dtd')?.status).toBe('skipped');
+    expect(files.get('m1/us/1-2/cover-letter.pdf')).toMatchObject({ status: 'mapped', mapping_confidence: '1.00', mapping_source: 'backbone_xml' });
+    for (const structure of ['m1/us/us-regional.xml', 'index.xml', 'index-md5.txt', 'util/dtd/us-regional.dtd']) {
+      expect(files.get(structure)?.status, structure).toBe('skipped');
+    }
     expect(res.body.data.mapped_count, 'structure files were counted as mapped').toBe(1);
-    expect(res.body.data.skipped_count).toBe(2);
+    expect(res.body.data.skipped_count).toBe(4);
   });
 });
