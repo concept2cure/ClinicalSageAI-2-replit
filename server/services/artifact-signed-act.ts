@@ -40,7 +40,12 @@ import {
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { recordGovernedAction } from '../routes/c2c/actions';
 import { resolveSignerIdentity, type SignerIdentity } from './part11/resolve-signer-identity';
-import { ARTIFACT_ACT_MEANING, artifactStatusUpdate, reviewQuorumVerdict } from './artifact-approval-act';
+import {
+  ARTIFACT_ACT_MEANING,
+  artifactStatusUpdate,
+  assertArtifactSignerIndependent,
+  reviewQuorumVerdict,
+} from './artifact-approval-act';
 
 export type ArtifactTx = Parameters<Parameters<(typeof db)['transaction']>[0]>[0];
 type ArtifactRow = typeof concept2cureArtifacts.$inferSelect;
@@ -137,8 +142,11 @@ export class ArtifactActContractError extends Error {
 /**
  * Commit the act on `tx`. The caller has already refused a wrong meaning and
  * re-authenticated the signer. Throws ArtifactActConflictError when the
- * artifact is no longer in the state the caller read, and
- * ArtifactActContractError when the caller's column set is not the canonical one.
+ * artifact is no longer in the state the caller read,
+ * ArtifactActContractError when the caller's column set is not the canonical
+ * one, and the separation-of-duties errors (services/governance/
+ * separation-of-duties.ts) when the signer is an author or that cannot be
+ * shown; the caller answers those through separationOfDutiesRefusal.
  */
 export async function commitSignedArtifactAct(
   tx: ArtifactTx,
@@ -150,6 +158,15 @@ export async function commitSignedArtifactAct(
   const artifact = await lockCurrentSignedTarget(tx, input);
   const storedVersion = await lockCurrentSignedVersion(tx, input, artifact);
   const q = queryableFromDrizzle(tx);
+  // 2026-11-01 (F1, P-18): the signer is not an author, re-read on this
+  // transaction under the row lock, as the quorum is below. The preflight both
+  // doors share asked first; this refuses an authorship it could not see.
+  await assertArtifactSignerIndependent(q, {
+    organizationId: input.organizationId,
+    signerId: input.userId,
+    artifactId: artifact.artifactId,
+    status: input.status,
+  });
   if (input.status === 'approved') {
     const quorum = await reviewQuorumVerdict(q, artifact.id, input.organizationId, artifact.version);
     if (!quorum.met) throw new ArtifactActConflictError(`${quorum.message} Nothing was signed.`);

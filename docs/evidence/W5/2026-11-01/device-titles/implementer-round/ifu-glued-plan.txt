@@ -1,0 +1,6 @@
+# an IFU glued to PLAN: the IFU split (previous patch, unchanged) exposes the plan word, as the separated spelling reads at HEAD; script <scratch>/ifuplan.mts
+"IfUPLAN2Biocompatibility"     head=[preclinical-clinical] prev=[manufacturer-information] repair=[manufacturer-information]
+"IFUPLANBiocompatibility"      head=[manufacturer-information,preclinical-clinical] prev=[manufacturer-information] repair=[manufacturer-information]
+"IFUPLAN_Biocompatibility"     head=[manufacturer-information,preclinical-clinical] prev=[manufacturer-information] repair=[manufacturer-information]
+"IFU_PLAN_Biocompatibility"    head=[manufacturer-information] prev=[manufacturer-information] repair=[manufacturer-information]
+"IFU PLAN Biocompatibility"    head=[manufacturer-information] prev=[manufacturer-information] repair=[manufacturer-information]

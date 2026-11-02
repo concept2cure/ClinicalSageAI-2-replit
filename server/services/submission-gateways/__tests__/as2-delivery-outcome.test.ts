@@ -111,7 +111,8 @@ import { makeMtlsPki, startMtlsServer, startTcpProxy, type TcpProxy } from './su
 import { busyLoop, startSeparateProcessServer } from './support/separate-process-tls-server';
 import { FdaEsgGateway } from '../fda-esg';
 import {
-  RequestSentTransportError, classifyAs2Delivery, httpsPost, peerRefusalAlert, requestReachedServer, TLS13_CLIENT_AUTH_SETTLE_MS,
+  RequestSentTransportError, classifyVerifiedAs2Delivery, httpsPost, peerRefusalAlert, requestReachedServer, TLS13_CLIENT_AUTH_SETTLE_MS,
+  type DeliveryAttempt,
 } from '../as2-transport';
 import { GatewayError, TransportError } from '../types';
 
@@ -356,11 +357,18 @@ describe('FDA ESG — an authenticated server that took the whole bundle and the
   }, 15_000);
 });
 
-describe('classifyAs2Delivery / peerRefusalAlert — the rule itself', () => {
+/* 2026-11-01 (F1): these cases called classifyAs2Delivery, the syntax-only
+   twin that is deleted; they now call the one AS2 verdict. Each attempt here is
+   failed or non-2xx, so classifyDelivery answers before any 2xx judge and the
+   receipt proof (empty below) is never read — the assertions are unchanged. */
+const NO_RECEIPT_PROOF = { agencyCertPem: '', expectedMic: '' };
+const as2Verdict = (attempt: DeliveryAttempt, messageId: string) => classifyVerifiedAs2Delivery(attempt, messageId, NO_RECEIPT_PROOF);
+
+describe('the AS2 verdict / peerRefusalAlert — the rule itself', () => {
   const response = (httpStatus: number, body = '') => ({ ok: true as const, response: { httpStatus, headers: {}, body: Buffer.from(body) } });
 
-  it.each([301, 302, 307, 100])('HTTP %i neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id', (code) => {
-    const out = classifyAs2Delivery(response(code), '<ours@SPONSOR>');
+  it.each([301, 302, 307, 100])('HTTP %i neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id', async (code) => {
+    const out = await as2Verdict(response(code), '<ours@SPONSOR>');
     expect(out.kind).toBe('DELIVERED_UNCONFIRMED');
     expect(out.kind === 'DELIVERED_UNCONFIRMED' && out.trackingId).toBe('<ours@SPONSOR>');
   });
@@ -370,17 +378,17 @@ describe('classifyAs2Delivery / peerRefusalAlert — the rule itself', () => {
      carries a "written before the answer" flag (the withdrawn
      requestWrittenBeforeAnswer) changes nothing: the order of Node's 'finish'
      against the answer is not evidence of what the server holds. */
-  it.each([500, 502, 503, 504, 302, 307])('HTTP %i is DELIVERED_UNCONFIRMED whatever a timing flag on the response says', (code) => {
+  it.each([500, 502, 503, 504, 302, 307])('HTTP %i is DELIVERED_UNCONFIRMED whatever a timing flag on the response says', async (code) => {
     for (const flag of [false, true, undefined]) {
       const response = { httpStatus: code, headers: {}, body: Buffer.from('x'), requestWrittenBeforeAnswer: flag };
-      expect(classifyAs2Delivery({ ok: true, response }, '<ours@SPONSOR>').kind).toBe('DELIVERED_UNCONFIRMED');
+      expect((await as2Verdict({ ok: true, response }, '<ours@SPONSOR>')).kind).toBe('DELIVERED_UNCONFIRMED');
     }
   });
 
-  it('a RequestSentTransportError is DELIVERED_UNCONFIRMED; any other thrown error is NOT_DELIVERED', () => {
-    expect(classifyAs2Delivery({ ok: false, error: new RequestSentTransportError('x timeout') }, '<m@x>').kind).toBe('DELIVERED_UNCONFIRMED');
-    expect(classifyAs2Delivery({ ok: false, error: new TransportError('connect ECONNREFUSED') }, '<m@x>').kind).toBe('NOT_DELIVERED');
-    expect(classifyAs2Delivery({ ok: false, error: new TypeError('Invalid URL') }, '<m@x>').kind).toBe('NOT_DELIVERED');
+  it('a RequestSentTransportError is DELIVERED_UNCONFIRMED; any other thrown error is NOT_DELIVERED', async () => {
+    expect((await as2Verdict({ ok: false, error: new RequestSentTransportError('x timeout') }, '<m@x>')).kind).toBe('DELIVERED_UNCONFIRMED');
+    expect((await as2Verdict({ ok: false, error: new TransportError('connect ECONNREFUSED') }, '<m@x>')).kind).toBe('NOT_DELIVERED');
+    expect((await as2Verdict({ ok: false, error: new TypeError('Invalid URL') }, '<m@x>')).kind).toBe('NOT_DELIVERED');
   });
 
   /* 2026-09-23 (MDN final pass, repair): isTlsFailure ("any TLS-shaped
@@ -515,7 +523,7 @@ describe('a separate-process server that read the whole body, answered while thi
     const kinds: string[] = [];
     try {
       for (const size of ATTEMPTS) {
-        const outcome = classifyAs2Delivery(await post(srv.port, size).then(
+        const outcome = await as2Verdict(await post(srv.port, size).then(
           (response) => ({ ok: true as const, response }), (error: unknown) => ({ ok: false as const, error })), '<busy@SPONSOR>');
         const seen = await srv.nextClose();
         expect(seen.bodyRead).toBe(size);
@@ -537,7 +545,7 @@ describe('a separate-process server that read the whole body, answered while thi
         const err = await post(srv.port, size).then(() => null, (e: unknown) => e);
         const seen = await srv.nextClose();
         expect(seen.bodyRead).toBe(size);
-        errors.push(`${(err as Error | null)?.name} ${classifyAs2Delivery({ ok: false, error: err }, '<busy@SPONSOR>').kind}`);
+        errors.push(`${(err as Error | null)?.name} ${(await as2Verdict({ ok: false, error: err }, '<busy@SPONSOR>')).kind}`);
       }
     } finally {
       stop();

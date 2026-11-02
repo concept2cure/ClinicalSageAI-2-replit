@@ -242,15 +242,16 @@ describe('Promotion Authority Chain', () => {
     expect(authority.requiresHumanConfirmation).toBe(true);
   });
 
-  it('approve-artifact requires reviewer approval', () => {
+  // 2026-11-01 (F1): approve and lock are decided only by the signed act (server/services/artifact-approval-act.ts); the map's entries admit no role.
+  it('approve-artifact is not decided by this map', () => {
     const authority = getAuthorityForAction('approve-artifact');
-    expect(authority.level).toBe('requires-reviewer-approval');
+    expect(authority.level).toBe('forbidden');
     expect(authority.requiresReviewerApproval).toBe(true);
   });
 
-  it('lock-artifact requires reviewer approval', () => {
+  it('lock-artifact is not decided by this map', () => {
     const authority = getAuthorityForAction('lock-artifact');
-    expect(authority.level).toBe('requires-reviewer-approval');
+    expect(authority.level).toBe('forbidden');
   });
 
   it('judge-module-ready requires escalation', () => {

@@ -5,17 +5,19 @@
    Scoped under .c2c-v2
    ════════════════════════════════════════════════════════════════════ */
 .c2c-v2 {
-.rc{ height:100%; display:grid; grid-template-columns:390px 1fr; background:var(--bg-000); overflow:hidden; }
+/* One column (D7 §D.4 step 1): `.page-inner` gives the width and gutters. The
+   surface is `full` (surfaceViews.ts), so this is the flex child of
+   `.page-full`; it claims the row and keeps its content height, and `.page`
+   scrolls. It was a 390px | 1fr grid of two scroll boxes. */
+.rc{ flex:1 1 auto; min-width:0; align-self:flex-start; }
 
-/* ── Left: AnA intelligence ── */
-.rc-ana{ display:flex; flex-direction:column; min-height:0; background:var(--bg-050); border-right:1px solid var(--border); }
-.rc-ana-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:13px 16px; border-bottom:1px solid var(--border); }
-.rc-ana-id{ display:flex; align-items:center; gap:10px; }
+/* The find block. It was the left column's framed pane; the frame went with
+   the column. `display:flex` is also what the visual-qa harness's self-check
+   reads (scripts/visual-qa/check-surface-styling.mjs). */
+.rc-ana{ display:flex; flex-direction:column; }
 .rc-ana-mark{ color:var(--ai,#6a9bcc); font-size:17px; line-height:1; }
 .rc-ana-mark.sm{ font-size:14px; flex-shrink:0; margin-top:2px; }
-.rc-ana-id .nm{ font-size:13px; font-weight:600; color:var(--text-100); }
-.rc-ana-id .sub{ font-size:11px; color:var(--text-400); margin-top:1px; }
-.rc-ana-scroll{ flex:1; min-height:0; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; }
+.rc-ana-scroll{ display:flex; flex-direction:column; gap:12px; }
 
 .rc-opener{ background:var(--bg-000); border:1px solid var(--border); border-radius:var(--radius-md,12px); padding:14px; }
 .rc-op-head{ display:flex; align-items:center; gap:7px; font-size:var(--fs-caption); font-weight:600; color:var(--ai,#6a9bcc); margin-bottom:8px; }
@@ -47,22 +49,27 @@
 .rc-typing span{ width:6px; height:6px; border-radius:50%; background:var(--ai,#6a9bcc); opacity:.5; animation:rcpulse 1.4s ease-in-out infinite; }
 .rc-typing span:nth-child(2){ animation-delay:.2s; } .rc-typing span:nth-child(3){ animation-delay:.4s; }
 
-.rc-composer{ border-top:1px solid var(--border); padding:11px 14px 13px; background:var(--bg-050); }
+.rc-composer{ margin:12px 0 24px; }
 .rc-tier{ display:flex; align-items:center; gap:5px; margin-bottom:9px; }
 .rc-tier-lbl{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin-right:3px; }
 .rc-tier-b{ background:var(--bg-000); border:1px solid var(--border); color:var(--text-300); font-size:11px; font-weight:600; padding:4px 9px; border-radius:7px; cursor:pointer; }
 .rc-tier-b.on{ background:var(--accent-strong); color:var(--accent-on-strong); border-color:var(--accent-strong); }
-.rc-input{ display:flex; align-items:flex-end; gap:8px; background:var(--bg-000); border:1px solid var(--border-control); border-radius:13px; padding:8px 8px 8px 12px; transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
-.rc-input:focus-within{ border-color:var(--accent-200); box-shadow:0 0 0 3px var(--accent-000); }
-.rc-input textarea{ flex:1; border:none; outline:none; resize:none; background:transparent; font:inherit; font-size:13px; color:var(--text-100); line-height:1.5; max-height:120px; padding:3px 0; }
+/* Find a report (D7 §D.4 step 3): label, field and Find on one line. The
+   field is D0's `.c2c-input`; nothing here restyles it. */
+.rc-find{ display:flex; align-items:center; gap:8px; margin:0 0 16px; }
+.rc-find-l{ flex:0 0 auto; font-size:var(--fs-small); color:var(--text-300); }
+.rc-find-i{ flex:1 1 auto; min-width:0; }
+@media (max-width:640px){ .rc-find{ flex-wrap:wrap; } .rc-find-l{ flex-basis:100%; } }
+/* The last search's result (step 5): quiet text, replaced by the next find. */
+.rc-result .rc-op-body{ font-size:var(--fs-small); color:var(--text-200); }
+.rc-result .sp-starters{ justify-content:flex-start; margin:0 0 8px; }
 .rc-send{ flex-shrink:0; width:30px; height:30px; border:none; border-radius:var(--radius-lg); background:var(--accent-strong); color:var(--accent-on-strong); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
 .rc-send:disabled{ opacity:.5; cursor:default; }
 .rc-send svg{ width:15px; height:15px; }
-.rc-guardrail{ display:flex; align-items:flex-start; gap:6px; font-size:10.5px; color:var(--text-400); line-height:1.45; margin-top:8px; }
-.rc-guardrail svg{ width:12px; height:12px; flex-shrink:0; margin-top:1px; }
+.rc-guardrail{ margin:0; max-width:68ch; }
 
 /* ── Right: artifact canvas ── */
-.rc-canvas{ min-height:0; overflow-y:auto; padding:26px 30px 40px; }
+.rc-canvas{ min-width:0; }
 .rc-empty{ max-width:640px; margin:6vh auto 0; text-align:center; }
 .rc-empty-mark{ font-size:34px; color:var(--ai,#6a9bcc); margin-bottom:14px; }
 .rc-empty-h{ font-size:20px; font-weight:600; color:var(--text-100); margin:0 0 8px; }
@@ -177,7 +184,7 @@
 /* ── Reporting library: catalog / run history / schedules / bundles ──
    The screens for the routes the 2026-10-01 reporting review left with no
    caller (ui-surface-registry.ui-v2.ts, the `insights` row). They live in the
-   artifact pane, so they inherit .rc-canvas padding and scrolling. All colour
+   views' column (`.rc-canvas`), under the page's own gutters. All colour
    comes from tokens so both themes and the contrast floor hold. */
 .rl-tabs{ display:flex; gap:6px; flex-wrap:wrap; border-bottom:1px solid var(--border); margin:0 0 18px; padding-bottom:12px; }
 .rl-tab{ display:inline-flex; align-items:center; gap:6px; background:var(--bg-000); border:1px solid var(--border); color:var(--text-300); font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px; cursor:pointer; transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease); }
@@ -259,7 +266,7 @@
 .rl-ev-dl dd{ color:var(--text-200); margin:0; }
 .rl-ev-hash{ font-family:var(--font-mono); font-size:11px; word-break:break-all; }
 
-@media (max-width:1000px){ .rc{ grid-template-columns:340px 1fr; } .rl-head{ flex-direction:column; } }
+@media (max-width:1000px){ .rl-head{ flex-direction:column; } }
 }
 
 @keyframes rcpulse{ 0%,60%,100%{ opacity:.3; } 30%{ opacity:1; } }
