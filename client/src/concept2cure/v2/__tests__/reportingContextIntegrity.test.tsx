@@ -33,7 +33,7 @@ describe('reporting context integrity', () => {
       return ok({ data: [] });
     });
     render(<InsightsCanvas {...props} />);
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     expect(await screen.findByText('Organization-wide records')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /^Run$/ }));
     await screen.findByText('Organization saved evidence');
@@ -52,7 +52,7 @@ describe('reporting context integrity', () => {
     });
     publishShellProject({ id: A, code: 'A-101' });
     render(<InsightsCanvas {...props} />);
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
     await waitFor(() => expect(finish).toBeDefined());
     act(() => publishShellProject({ id: B, code: 'B-202' }));
@@ -69,7 +69,7 @@ describe('reporting context integrity', () => {
       return ok({ data: { ...rendered.data, sections: [{ id: 'forecast', title: 'Forecast', blocks: [{ kind: 'chart', chartType: 'forecast_band', spec: { anchor: 80 } }] }] } });
     });
     render(<InsightsCanvas {...props} />);
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
     expect(await screen.findByText(/no measured forecast series is recorded/)).toBeTruthy();
     expect(document.querySelector('.ro-svgwrap polyline')).toBeNull();

@@ -53,7 +53,7 @@ function renderCanvas() {
   return render(<QueryClientProvider client={client}><InsightsCanvas {...props} /></QueryClientProvider>);
 }
 async function run() {
-  fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+  fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
   fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
   await screen.findByText('Original private report');
 }
@@ -84,7 +84,7 @@ describe('reporting current session — private canvas reads', () => {
     renderCanvas(); await run();
     await act(async () => replace({ ...ACTOR, permissions: [] }));
     await waitFor(() => expect(screen.queryByText('Original private report')).toBeNull());
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     expect((screen.getByRole('button', { name: /^Run$/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -95,7 +95,7 @@ describe('reporting current session — private canvas reads', () => {
     await act(async () => { expect((await authService.refreshUser()).success).toBe(true); });
     expect(session.sameRevision()).toBe(true);
     expect(screen.queryByText('Original private report')).toBeNull();
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     expect((screen.getByRole('button', { name: /^Run$/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -115,7 +115,7 @@ describe('reporting current session — private canvas reads', () => {
     const creation = deferred<Response>();
     wire((method, url) => method === 'POST' && url === '/api/report-os/runs' ? creation.promise : undefined);
     renderCanvas();
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
     await waitFor(() => expect(calls('POST', '/api/report-os/runs')).toHaveLength(1));
     await act(async () => replace());
@@ -128,7 +128,7 @@ describe('reporting current session — private canvas reads', () => {
 
   it('refuses a stale Run click in the same frame that the current actor changes', async () => {
     renderCanvas();
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     const oldRun = await screen.findByRole('button', { name: /^Run$/ });
     act(() => { replace(); fireEvent.click(oldRun); });
     expect(calls('POST', '/api/report-os/runs')).toHaveLength(0);
@@ -139,7 +139,7 @@ describe('reporting current session — private canvas reads', () => {
     const readBody = vi.fn(() => body.promise);
     wire((_method, url) => url === '/api/report-os/runs/41/rendered' ? { ok: true, status: 200, json: readBody } as unknown as Response : undefined);
     renderCanvas();
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
     await waitFor(() => expect(readBody).toHaveBeenCalledOnce());
     await act(async () => authService.endSession(null));
@@ -200,7 +200,7 @@ describe('old reporting forms and signature callbacks', () => {
       return undefined;
     });
     renderCanvas();
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
     expect((await screen.findByRole('alert')).textContent).toMatch(/may have completed.*Check Run history/i);
     expect(calls('POST', '/api/report-os/runs')).toHaveLength(1);
@@ -212,7 +212,7 @@ describe('old reporting forms and signature callbacks', () => {
     const payload = placement === 'nested' ? { error: { code: 'REPORT_RUN_NOT_RECORDED', message } } : { code: 'REPORT_RUN_NOT_RECORDED', message };
     wire((method, url) => method === 'POST' && url === '/api/report-os/runs' ? { ok: false, status: 503, json: async () => payload } as Response : undefined);
     renderCanvas();
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain(message);

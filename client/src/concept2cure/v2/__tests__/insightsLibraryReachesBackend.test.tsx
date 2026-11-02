@@ -49,7 +49,7 @@ const calls = (method: string, prefix: string) => requestCalls(apiRequest, metho
 describe('the reporting library', () => {
   it('lands on the Report pane, so the surface a reader already knew is unchanged', async () => {
     await renderCanvas();
-    expect(screen.getByRole('tab', { name: /Report$/ }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tab', { name: 'Reports' }).getAttribute('aria-selected')).toBe('true');
     // The landing pane's packs are still what the artifact pane shows.
     expect(document.querySelector('.rc-empty')).not.toBeNull();
     // And nothing has been read from the library's routes yet.
@@ -58,7 +58,7 @@ describe('the reporting library', () => {
 
   it('offers a tab for each route family that had no screen', async () => {
     await renderCanvas();
-    for (const name of [/Report catalog/, /Run history/, /Schedules/, /Bundles/]) {
+    for (const name of [/^Catalog$/, /Run history/, /Schedules/, /Bundles/]) {
       expect(screen.getByRole('tab', { name })).toBeTruthy();
     }
   });
@@ -282,7 +282,7 @@ describe('Bundles — GET/POST /api/report-os/bundles', () => {
 describe('Report catalog', () => {
   it('offers every type an engine computes as a run control', async () => {
     await renderCanvas();
-    await openTab(/Report catalog/);
+    await openTab(/^Catalog$/);
     const runnable = CANVAS_REPORT_TYPES.filter((t) => t.runnable);
     expect(runnable.length).toBeGreaterThan(5);
     for (const t of runnable.slice(0, 6)) {
@@ -293,7 +293,7 @@ describe('Report catalog', () => {
 
   it('lists a type no engine computes by name, and never as a control', async () => {
     await renderCanvas();
-    await openTab(/Report catalog/);
+    await openTab(/^Catalog$/);
     const notComputed = await screen.findByTestId('rl-not-computed');
     // The fixture's un-runnable types appear here...
     expect(notComputed.textContent).toMatch(/Compliance & Audit Assurance Pack/);
@@ -320,7 +320,7 @@ describe('Report catalog', () => {
       return route(url);
     });
     await renderCanvas();
-    await openTab(/Report catalog/);
+    await openTab(/^Catalog$/);
     fireEvent.click((await screen.findAllByRole('button', { name: /Run/ }))[0]);
     await waitFor(() => expect(calls('POST', '/api/report-os/runs').length).toBe(1));
   });

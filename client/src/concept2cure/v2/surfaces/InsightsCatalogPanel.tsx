@@ -181,6 +181,7 @@ export function CatalogPanel({
   programLabel,
   busy = false,
   projectId,
+  planControl,
 }: {
   types: LibraryReportType[];
   onRun: (t: LibraryReportType) => void;
@@ -189,6 +190,8 @@ export function CatalogPanel({
   programLabel: string | null;
   busy?: boolean;
   projectId?: number;
+  /** The canvas's "Preview plan" switch, shown with the filters (D7 §D.4 step 6). */
+  planControl?: React.ReactNode;
 }) {
   const [q, setQ] = useState('');
   const [region, setRegion] = useState('');
@@ -250,6 +253,7 @@ export function CatalogPanel({
         <CatalogFilter label="Reporting role" value={persona} onChange={choosePersona} options={personas} />
         <CatalogFilter label="Data scope" value={scope} onChange={setScope} options={scopes} />
         <CatalogFilter label="Availability" value={state} onChange={setState} options={['available', 'locked', 'scope-required', 'filing-context-required', 'not-applicable', 'context-unavailable', 'disabled', 'unregistered', 'not-computed', 'prediction-unavailable']} />
+        {planControl}
       </div>
       <ReportingPersonaError profile={profile} />
 

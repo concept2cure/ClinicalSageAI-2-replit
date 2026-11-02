@@ -2029,7 +2029,19 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     onNav?.('project-home');
   };
   const libraryTabs = <ReportingTabs value={paneView} id={tabsId} onChange={view => { setPaneView(view); pushCanvasTop(); }} />;
-  const libraryPane = paneView === 'catalog' ? <CatalogPanel key={contextKey} types={libraryCatalog} onRun={runFromCatalog} canRun={canExecute} runUnavailableReason={unavailableRunReason} busy={busy} programLabel={program?.code ?? null} projectId={data?.leadProgram?.projectId} />
+  /* Preview plan (D7 §D.4 step 6): which plan the locks are read against, for
+     looking only. It sits with the Catalog's filters because that is where
+     the locks it changes are listed; the active item is the seg's quiet
+     raised state, never orange. */
+  const planControl = (
+    <div className="rl-filter">
+      <span className="gov-label" id={`${tabsId}-plan`}>Preview plan</span>
+      <div className="seg" role="group" aria-labelledby={`${tabsId}-plan`}>
+        {RO_TIERS.map(t => (<button key={t.id} type="button" className="seg-b" aria-pressed={tier === t.id} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
+      </div>
+    </div>
+  );
+  const libraryPane = paneView === 'catalog' ? <CatalogPanel key={contextKey} planControl={planControl} types={libraryCatalog} onRun={runFromCatalog} canRun={canExecute} runUnavailableReason={unavailableRunReason} busy={busy} programLabel={program?.code ?? null} projectId={data?.leadProgram?.projectId} />
     : paneView === 'runs' ? <RunsPanel types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} onOpen={row => void openRunFromHistory(row)} onBundle={ids => { if (!reportAccessCurrent() || libraryActions.get(contextKey, 'bundle:create')) return; setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }} canBundle={canWrite && !libraryActions.get(contextKey, 'bundle:create')} />
     : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} />
     : paneView === 'bundles' ? <BundlesPanel key={contextKey} pendingRunIds={bundlePicks} canWrite={canWrite} pendingExports={pendingBundleExports} onExport={(id, name, content) => void exportBundle(id, name, content)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} onClearPending={() => { if (reportAccessCurrent()) setBundlePicks(now => now === bundlePicks ? [] : now); }} /> : null;
@@ -2248,29 +2260,6 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
           {runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}
         </div>
 
-        {/* The plan the reports are read against */}
-        <div className="rc-composer">
-          <div className="rc-tier" role="group" aria-label="Subscription tier">
-            <span className="rc-tier-lbl">Plan</span>
-            {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} aria-pressed={tier === t.id} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
-          </div>
-          {/* A preview looked exactly like the organisation's plan (reporting
-              review 2026-10-01). It says it is one, and names the real plan. */}
-          {previewing && (
-            <div className="ro-dash-note" role="status" data-testid="rc-tier-preview">
-              {I.info} Previewing {tierLabel(tier)}.{' '}
-              {tierResolved
-                ? <>Your organization's plan is {tierLabel(realTier)}.{' '}</>
-                : <>Your organization's plan could not be verified, so it is not named here.{' '}</>}
-              <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>
-                {tierResolved ? <>Back to {tierLabel(realTier)}</> : <>Stop previewing</>}
-              </button>
-            </div>
-          )}
-          {/* Not previewing, and the plan was never read: say so where the plan
-              is shown, so a wall of locks is not read as the plan's doing. */}
-          {!previewing && planNotice}
-        </div>
       </div>
 
       {/* -- Right: the report / dashboard artifact, and the library beside it --
@@ -2281,6 +2270,23 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
            this surface has always shown and remains the default, so a reader
            who never opens a tab sees exactly what they saw before. -- */}
       <div className="rc-canvas" ref={canvasRef}>
+        {/* A preview looked exactly like the organisation's plan (reporting
+            review 2026-10-01). It says it is one, and names the real plan, on
+            every view: a preview started from a locked result is still a
+            preview on the Reports view. Not previewing and the plan never
+            read: said above the views, so a wall of locks is not read as the
+            plan's doing. */}
+        {previewing ? (
+          <div className="ro-dash-note" role="status" data-testid="rc-tier-preview">
+            {I.info} Previewing {tierLabel(tier)}.{' '}
+            {tierResolved
+              ? <>Your organization's plan is {tierLabel(realTier)}.{' '}</>
+              : <>Your organization's plan could not be verified, so it is not named here.{' '}</>}
+            <button type="button" className="btn ghost" onClick={() => setTierOverride(null)}>
+              {tierResolved ? <>Back to {tierLabel(realTier)}</> : <>Stop previewing</>}
+            </button>
+          </div>
+        ) : planNotice}
         {libraryTabs}
         {recoveryNotice}
         <div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>
@@ -2334,7 +2340,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
 }
 
 function ReportingTabs({ id, value, onChange }: { id: string; value: 'report' | LibraryView; onChange: (view: 'report' | LibraryView) => void }) {
-  const views = [{ id: 'report' as const, label: 'Report', icon: I.fileText }, ...LIBRARY_VIEWS];
+  const views = [{ id: 'report' as const, label: 'Reports' }, ...LIBRARY_VIEWS];
   const move = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     const positions: Record<string, number> = { ArrowRight: (index + 1) % views.length, ArrowLeft: (index + views.length - 1) % views.length, Home: 0, End: views.length - 1 };
     const next = positions[event.key];
@@ -2343,5 +2349,5 @@ function ReportingTabs({ id, value, onChange }: { id: string; value: 'report' | 
     onChange(views[next].id);
     document.getElementById(`${id}-${views[next].id}`)?.focus();
   };
-  return <div className="rl-tabs" role="tablist" aria-label="Reporting views">{views.map((view, index) => <button key={view.id} id={`${id}-${view.id}`} type="button" role="tab" aria-selected={value === view.id} aria-controls={`${id}-panel`} tabIndex={value === view.id ? 0 : -1} className={'rl-tab' + (value === view.id ? ' on' : '')} onClick={() => onChange(view.id)} onKeyDown={event => move(event, index)}>{view.icon} {view.label}</button>)}</div>;
+  return <div className="tabs" role="tablist" aria-label="Reporting views">{views.map((view, index) => <button key={view.id} id={`${id}-${view.id}`} type="button" role="tab" aria-selected={value === view.id} aria-controls={`${id}-panel`} tabIndex={value === view.id ? 0 : -1} className="tab" onClick={() => onChange(view.id)} onKeyDown={event => move(event, index)}>{view.label}</button>)}</div>;
 }
