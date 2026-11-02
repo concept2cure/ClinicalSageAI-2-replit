@@ -71,7 +71,7 @@ import {
   postAs2,
   type DeliveryOutcome,
 } from '../submission-gateways/as2-transport';
-import { buildAs2CmsEnvelope } from '../submission-gateways/as2-cms';
+import { AS2_ENVELOPE_FILENAME, buildAs2CmsEnvelope } from '../submission-gateways/as2-cms';
 
 /** Gateway transport configuration, resolved from the environment. */
 export interface IcsrGatewayConfig {
@@ -397,7 +397,7 @@ async function transmitViaAs2(
     to: config.as2To!,
     contentType: envelope.contentType,
     body: envelope.body,
-    filename: 'smime.p7m',
+    filename: AS2_ENVELOPE_FILENAME,
     userAgent: 'concept2cure-icsr/1.0',
   });
 
@@ -410,7 +410,8 @@ async function transmitViaAs2(
      tied to this message (none named, another message, empty or `<>`, no
      readable disposition) is 'receipt-unproven', not 'gateway-rejected'; only
      an explicit refusal naming this message is. 2026-09-23 (W5/D7, MDN final
-     pass): the whole decision is classifyAs2Delivery's, shared with FDA ESG. */
+     pass): the whole decision is the AS2 verdict's, shared with FDA ESG
+     (classifyVerifiedAs2Delivery; its unverified twin was deleted 2026-11-01). */
   return receiptOrRefusal(built.gateway, outcome, 'AS2', as2MessageId);
 }
 

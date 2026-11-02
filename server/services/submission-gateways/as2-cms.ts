@@ -54,6 +54,14 @@ export function as2PayloadEntity(body: Buffer, contentType: string, filename: st
   return Buffer.concat([Buffer.from(`Content-Type: ${contentType}\r\nContent-Transfer-Encoding: binary\r\nContent-Disposition: attachment; filename="${filename}"\r\n\r\n`, 'ascii'), body]);
 }
 
+/** What an AS2 transmit names its encrypted body on the wire: the Content-Type
+ *  of buildAs2CmsEnvelope's result and the Content-Disposition filename beside
+ *  it. One definition, read by the gateways and by the UAT pre-flight
+ *  (scripts/fda-esg-uat-smoke.ts), which printed a hand-copied envelope of its
+ *  own until 2026-11-01 (F1). */
+export const AS2_ENVELOPE_CONTENT_TYPE = 'application/pkcs7-mime; smime-type=enveloped-data; name="smime.p7m"';
+export const AS2_ENVELOPE_FILENAME = 'smime.p7m';
+
 /** Detached CMS SignedData inside recipient-encrypted EnvelopedData; payload bytes remain exact. */
 export async function buildAs2CmsEnvelope(args: { body: Buffer; contentType: string; filename: string; clientCertPem: string; clientKeyPem: string; agencyCertPem: string }): Promise<As2CmsEnvelope> {
   validateAs2CmsCredentials(args.clientCertPem, args.clientKeyPem, args.agencyCertPem);
@@ -73,7 +81,7 @@ export async function buildAs2CmsEnvelope(args: { body: Buffer; contentType: str
       entity, Buffer.from(`\r\n--${boundary}\r\nContent-Type: application/pkcs7-signature; name="smime.p7s"\r\nContent-Transfer-Encoding: base64\r\n\r\n${encoded}\r\n--${boundary}--\r\n`, 'ascii'),
     ]), { mode: 0o600 });
     await cms(['-encrypt', '-binary', '-aes-256-cbc', '-in', signed, '-outform', 'DER', '-out', encrypted, recipient]);
-    return { body: await fs.readFile(encrypted), contentType: 'application/pkcs7-mime; smime-type=enveloped-data; name="smime.p7m"',
+    return { body: await fs.readFile(encrypted), contentType: AS2_ENVELOPE_CONTENT_TYPE,
       mic: createHash('sha256').update(entity).digest('base64'), micAlgorithm: 'sha-256' };
   });
 }
