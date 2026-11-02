@@ -197,7 +197,7 @@ describe('independent actual caller recovery admission', () => {
     const pending = deferred<Response>(); createReply = () => pending.promise;
     render(<Biostatistics {...props('biostatistics')} />);
     await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
-    const open = screen.getByRole('button', { name: 'Copy the example to the editor' });
+    const open = screen.getByRole('button', { name: 'Copy example to editor' });
     const attach = screen.getByRole('button', { name: 'Save the example as a working document' });
     act(() => { fireEvent.click(open); fireEvent.click(attach); });
     expect(authoringCalls()).toHaveLength(1);

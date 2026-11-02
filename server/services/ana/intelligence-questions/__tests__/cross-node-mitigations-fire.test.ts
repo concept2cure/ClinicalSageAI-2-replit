@@ -468,8 +468,26 @@ describe('xn_orphan_without_natural_history', () => {
     expect(ids(fired('ind_submission', { ...ind, ind_type_selection: 'emergency', natural_history: 'none' }))).not.toContain(NH);
   });
 
-  it('waits where the trigger holds and the question\u2019s gate does not', () => {
-    /* prea 'orphan_exempt' states the designation; orphan_designation 'not_applicable' keeps the gate closed. */
+  /* 2026-11-02 (S4, #7): one vocabulary, and every answer ever saved to it. */
+  it.each(['granted', 'applied', 'planned', '__other__', 'yes', true])(
+    'fires for an orphan programme stated as %s',
+    value => {
+      expect(ids(fired('ind_submission', { ...ind, orphan_designation: value, natural_history: 'none' }))).toContain(NH);
+    },
+  );
+
+  it.each(['refused', 'not_requested', 'not_applicable', 'no', false])('is silent where the answer is %s', value => {
+    expect(ids(fired('ind_submission', { ...ind, orphan_designation: value, natural_history: 'none' }))).not.toContain(NH);
+  });
+
+  it('fires on the EU designation alone, which only the protocol asks', () => {
+    expect(ids(fired('protocol_development', { eu_orphan_designation: 'granted', natural_history: 'none' }))).toContain(NH);
+    expect(ids(fired('protocol_development', { eu_orphan_designation: 'not_requested', natural_history: 'none' }))).not.toContain(NH);
+  });
+
+  it('silent: prea is not a natural-history trigger', () => {
+    /* It once made the rule wait; it opens no natural-history gate
+       (one-orphan-vocabulary.test.ts holds the reader). */
     expect(
       ids(fired('ind_submission', { orphan_designation: 'not_applicable', prea_applicable: 'orphan_exempt' }, ['proposed_study'])),
     ).not.toContain(NH);
