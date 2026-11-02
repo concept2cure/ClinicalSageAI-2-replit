@@ -1,0 +1,84 @@
+# Green: server/services/archive, server/services/legacy-importer, and every test file that imports a caller of safeZip
+# (uploadSafety, templateExtractor, extractDocumentText, ectd-structural-validator, the legacy-import detector,
+# validateEctdPackage), 49 files found by name. 2026-11-02T04:23:54Z
+# run-pdf.test.ts matched only through a comment; its 15 cases fail identically with trunk's safeZip: this container has
+# no NotoSans (503 REPORT_PDF_FONTS_UNAVAILABLE), unrelated to this change.
+
+## Files
+  server/services/archive/__tests__/archive-limit-call-sites.test.ts
+  server/services/archive/__tests__/safe-zip.test.ts
+  server/services/legacy-importer/__tests__/detector-filename-match-is-a-suggestion.test.ts
+  server/services/legacy-importer/__tests__/detector-reads-a-filed-sequence.test.ts
+  server/services/legacy-importer/__tests__/filed-sequence-reader-absolute-entry.test.ts
+  server/services/legacy-importer/__tests__/filed-sequence-reader-real-archives.test.ts
+  server/services/legacy-importer/__tests__/filed-sequence-reader-refuses.test.ts
+  server/services/legacy-importer/__tests__/filed-sequence-reader-round-trip.test.ts
+  server/startup/__tests__/security-self-test-no-production-optout.test.ts
+  server/startup/__tests__/readyz-virus-scan.test.ts
+  server/middleware/__tests__/uploadSafety.test.ts
+  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts
+  server/services/ana/__tests__/verify-docx-claim-scope.test.ts
+  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts
+  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts
+  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts
+  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts
+  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts
+  server/services/__tests__/conversion-capacity-http.test.ts
+  server/services/__tests__/securityHealth.test.ts
+  server/services/ectd/__tests__/orchestrator-real-package.test.ts
+  server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts
+  server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts
+  server/services/ectd/__tests__/regional-rules-say-what-was-not-assessed.test.ts
+  server/services/ectd/__tests__/unencoded-region-is-not-gateway-ready.test.ts
+  server/services/ectd/qualification/__tests__/qualification-package-integrity.test.ts
+  server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts
+  server/services/vault/__tests__/vault-inline-extraction.test.ts
+  server/services/vault/__tests__/vault-ingest-storage.test.ts
+  server/services/submission-gateways/__tests__/ectd-package-file-names.test.ts
+  server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts
+  server/services/report-os/pdf/__tests__/run-pdf.test.ts
+  server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts
+  server/services/company-documents/__tests__/legacy-adoption.pglite.test.ts
+  server/services/company-documents/__tests__/profile.test.ts
+  server/services/preclinical/__tests__/preclinical-extractor.test.ts
+  server/services/ocr/__tests__/extracted-text-nul.test.ts
+  server/services/ocr/__tests__/documentIntake.test.ts
+  server/services/ocr/__tests__/ocr-budget.test.ts
+  server/services/ocr/__tests__/extractDocumentTextLayout.test.ts
+  server/services/documentIntelligence/__tests__/spreadsheetService.test.ts
+  server/__tests__/security/document-attachments-routes.contract.test.ts
+  server/routes/__tests__/mdx-imports-structure-files-recognized-by-path.pglite.test.ts
+  server/routes/__tests__/chat-upload-extraction-coverage.test.ts
+  server/routes/__tests__/protocol_routes.precedent-analysis.test.ts
+  server/routes/__tests__/ectd-export-records-the-review-assertion.test.ts
+  server/routes/__tests__/chat-upload-safety.test.ts
+  server/routes/__tests__/company-documents.test.ts
+  server/routes/__tests__/vault-ingest-type-binding.test.ts
+  server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts
+  server/routes/__tests__/ectd-export-refuses-an-unidentified-user.test.ts
+  server/routes/__tests__/evidence-management-review-records-the-real-reviewer.test.ts
+  server/routes/__tests__/chat-upload-durability.test.ts
+  server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+  server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts
+  server/routes/c2c/__tests__/templates-list.test.ts
+  server/routes/c2c/__tests__/exports-recorded.test.ts
+
+## Result
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints every section and block of the report, with the run facts and who ran it 17ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > discloses the actual organization data scope independently of the selected program and retains recorded calculation evidence 7ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > marks a run that is not final on every page, and states the export on every page 5ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > cuts nothing: a long body runs onto further pages, every line present, a long word broken not lost 8ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints the signature, reason, prior status, seal and verdict of a final run, and no NOT FINAL mark 3ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > states missing signature name, meaning and execution time without substituting the chain finalization time 3ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > says so when the seal does not verify, with the failing check 3ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves recorded symbols and Chinese, Japanese and Korean text with embedded fonts 5ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses an unsupported glyph rather than changing governed content 8ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves Arabic, Hebrew and mixed-direction recorded text through font shaping and bidi layout 3ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves mirrored bidi punctuation in copied dates without changing Arabic or Hebrew words 3ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses export when embedded fonts are unavailable and keeps recorded metadata deterministic 9ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > prints a missing time as not recorded, never the moment of export 3ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > prints disclosures and the actual series alongside drawn charts 3ms
+ × report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > retains supplied stacked segments and discloses an unsupported visualization without asserting they are absent 5ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 56 passed (57)
+      Tests  15 failed | 938 passed (953)
