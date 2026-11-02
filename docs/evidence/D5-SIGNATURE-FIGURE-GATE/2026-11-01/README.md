@@ -114,10 +114,55 @@ All red runs are from the same tests, against the code before this change.
 - **Lint:** no new warnings on any changed file. The filing bar's component was split (`FreezeDialogs`,
   `useFigureQuestion`) to keep it under the limits.
 
+## In the running app (`live/`), 2026-11-02
+
+RULE 4: a screen is not done until it was opened in the running app and used.
+
+**The install.** A local install was provisioned from empty: PostgreSQL 16 with pgvector,
+`scripts/db/provision-test-db.sh` (`install-fresh` then `deploy-migrate`), 1,281 tables, and the `app_service` role
+checked. The server ran in development on `:5000`.
+- **Accounts.** `scripts/seed-admin.mjs` created two accounts in the same organisation: JM Smith, who authors, and Ava
+  Approver, who signs.
+- **Setup.** It went through the real routes with real sessions. The author created an IND project, filed a CSR excerpt
+  into its Vault (`POST /api/vault/ingest`, extracted inline), and saved a drafted Clinical Overview section citing it
+  (`POST /api/authoring/docs/from-draft`). The section states 212 patients and 47%, which the excerpt holds, and
+  HR 0.71, which it does not.
+- **The browser.** Playwright, as Ava Approver, used the real sign-in page, the project, the document's **Open**, and
+  **E-sign → Approval**. No model was called.
+
+**What happened** (`browser-run-1-before-fix.json`, `shots/before-fix-*`):
+1. The first approval answered **409 `FIGURES_UNVERIFIED`**, naming one figure: `HR 0.71`, section 2.5.4 Overview of
+   efficacy, `not_in_cited_source`. 212 patients and 47% were found in the source, so neither was listed.
+2. The bar asked: "A figure is not in its cited source", then "HR 0.71 · 2.5.4 Overview of efficacy — Not found in the
+   excerpts this section cites", with **Go back and correct it** selected (`before-fix-12-figure-question.png`).
+3. Ava set it to **Keep it as written** and continued. The signature dialog reopened, saying "You kept 1 figure not
+   found in its cited sources. Your signature records each one."
+4. The second approval carried `acknowledgedFigures: ["<section>#1:HR 0.71"]` and answered **200**. The document is
+   APPROVED and frozen, and the toast read "Document signed (approver) — approved and frozen".
+5. **The record** (`db-rows.txt`):
+   - `authoring_signatures` has Ava's APPROVER signature, re-verified by password.
+   - `authoring_audit_trail` has `UNVERIFIED_FIGURES_ACKNOWLEDGED`, naming HR 0.71, with the document hash the
+     signature binds.
+   - The chained `audit_logs` carries the acknowledgement at seq 18 and the approval at seq 19, with
+     `figuresAcknowledged: { digest: ff48e02c…, count: 1 }` beside its `signatureId`.
+   - No HMAC seal was written: this local install has no seal key, which is D5's owed KMS item.
+
+**A defect only the running app showed, and its fix.** After the approval succeeded, the dialog went back to a blank
+Review form instead of showing "Signature applied" (`before-fix-15-approved.png`).
+- **The cause.** `doSign` cleared the question state on success. That turned `EsignModal`'s `defaultMeaning` from
+  approval back to review, and the dialog's reset effect is keyed on it.
+- **Not new.** The older "not settled" approval (2026-10-30, `setUnresolved(null)`) had the same flaw.
+- **The fix.** The question state is now cleared when the dialog closes (`closeAll`, which **Done** calls), not on
+  success.
+- **The tests.** Two tests now hold it, one for each path, and both failed first (`red-confirmation-reset.txt`; the
+  "not settled" case was red the same way before the fix).
+- **The rerun.** On a second draft, after the fix (`browser-run-2-after-fix.json`, `after-fix-15-approved.png`):
+  "Signature applied", with Ava Approver, Approval, the reason, the time and the chain hash, still on screen 5
+  seconds later. The ledger again holds the acknowledgement and the approval, at seq 23 and 24.
+
 ## Owed
 
-- **Opening it in the running app** (RULE 4). The dialog is proven in jsdom against the real `EsignModal`, not in a
-  browser against a live server. Until that is done, the screen is not done.
+- **A deployed run.** The live run below is a local install. A run on staging is D1's, with the rest of the product.
 - **Unchecked sections.** Sections that cite no sources are outside the check. Covering them is a founder decision.
 - **A refreshed display.** The editor's `DraftFigureLine` still shows the save's check, labelled "when the draft was
   saved". Showing the current check in the editor before signing is a reach for D4's editor lane, not this one.

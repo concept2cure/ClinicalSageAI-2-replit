@@ -550,7 +550,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       throw new Error('Not frozen — figures are not in their cited sources. Nothing was sealed.');
     }
     fireToast('Document frozen and sealed' + (out.hash ? ' · ' + String(out.hash).slice(0, 12) + '…' : '') + '.');
-    setUnresolved(null); setFigures(null);
+    // The questions are cleared when the dialog closes (closeAll), not here (see doSign).
     onChanged();
     return signedManifest(input, out.frozenAt, out.hash);
   };
@@ -581,7 +581,10 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       }
       throw e;
     }
-    setUnresolved(null); setFigures(null);
+    /* Not cleared here: the dialog is still showing the signed confirmation, and
+       clearing flips its default meaning back to review, which resets it to a
+       blank form (found in the running app, 2026-11-02). closeAll clears them
+       when the dialog closes. */
     setNotApprovedKeys(signed.notApproved);
     fireToast(signedToast(signed));
     onChanged();
