@@ -297,6 +297,12 @@
 .c2c-v2 .sp-list{display:flex;flex-direction:column;}
 .c2c-v2 .sp-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--border);}
 .c2c-v2 .sp-row:last-child{border-bottom:0;}
+/* A row that opens something is a <button>, which is content-width and
+   centre-aligned by default. Nine surfaces each carried
+   `style={{ width: '100%', textAlign: 'left' }}` to undo that, one copy per
+   list, and a tenth would have carried a tenth. The row's own rule says it
+   once. */
+.c2c-v2 button.sp-row{width:100%;text-align:left;}
 .c2c-v2 .sp-tag{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--text-300);background:var(--bg-100);border-radius:var(--radius-sm);padding:2px 7px;flex-shrink:0;white-space:nowrap;}
 .c2c-v2 .sp-tag2{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);background:var(--bg-100);border-radius:var(--radius-sm);padding:2px 7px;flex-shrink:0;}
 .c2c-v2 .sp-row-b{flex:1;min-width:0;display:flex;flex-direction:column;}
