@@ -164,6 +164,9 @@ interface TaskBoardItem {
   comments: number;
   attachments: number;
   source: string;
+  /** Exact authoring document linked to this task, when its stored source is an
+   * authoring_document UUID. The editor independently verifies document access. */
+  sourceDocumentId?: string;
   due: string;
   /**
    * Machine-readable due date (ISO 8601) or null. The humanised `due` string
@@ -431,6 +434,10 @@ async function readOwnBoard(
       comments: jsonArrayLength(row.comments),
       attachments: jsonArrayLength(row.attachments),
       source: mapSource(row.sourceEntityType),
+      ...(row.sourceEntityType === 'authoring_document' &&
+        typeof row.sourceEntityId === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.sourceEntityId)
+        ? { sourceDocumentId: row.sourceEntityId } : {}),
       due: humanizeDue(row.dueDate, status),
       dueDateIso: row.dueDate ? new Date(row.dueDate).toISOString() : null,
       phase: row.lifecyclePhase ?? null,
