@@ -1,0 +1,57 @@
+# mutant m10-the-reviews-literal-text-area-change: [('app-v2.css', '.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea, .cmdk-in input):focus-visible { outline: none; }', '.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea, .cmdk-in input):focus-visible { outline: 2px solid transparent; }')]
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > reads the items from the tab and segmented primitives: the six the review names, all still in use 3ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .tab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 15ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .reg-tab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 18ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .sc-ws:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 11ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .cc-tab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 15ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .seg-b:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 8ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .ml-seg-btn:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 13ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > moves the global ring inward and keeps it: one rule, offset only, outranking the global ring 2ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > no other rule, in any v2 stylesheet, sets an outline on these items in focus 6ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > light: --bg-000 with the hairline ring (unchanged) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > dark: --bg-200 with a 1px --border-strong ring, not box-shadow: none 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > dark covers every item and active state light does 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > no other rule, in any v2 stylesheet, sets a shadow on an active segment 18ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .c2c-input in focus: the border and halo, and a transparent outline in place of outline: none 11ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .de-input in focus: the border and halo, and a transparent outline in place of outline: none 14ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .de-select in focus: the border and halo, and a transparent outline in place of outline: none 5ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .de-textarea in focus: the border and halo, and a transparent outline in place of outline: none 6ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > no other rule, in any v2 stylesheet, sets these fields’ outline in focus 4ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > a composer in focus: its border, and a transparent outline; no halo 6ms
+ × client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .landing-input keeps no outline of its own in focus, so its composer shows one ring, not two 16ms
+   → expected '2px solid transparent' to be 'none' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .pj-composer textarea keeps no outline of its own in focus, so its composer shows one ring, not two 14ms
+   → expected '2px solid transparent' to be 'none' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .ct-composer textarea keeps no outline of its own in focus, so its composer shows one ring, not two 7ms
+   → expected '2px solid transparent' to be 'none' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > no other rule, in any v2 stylesheet, sets a composer’s outline 5ms
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 20 passed (23)
+   Start at  04:09:14
+   Duration  1.36s (transform 185ms, setup 173ms, import 259ms, tests 204ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .landing-input keeps no outline of its own in focus, so its composer shows one ring, not two
+ FAIL  client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .pj-composer textarea keeps no outline of its own in focus, so its composer shows one ring, not two
+ FAIL  client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .ct-composer textarea keeps no outline of its own in focus, so its composer shows one ring, not two
+AssertionError: expected '2px solid transparent' to be 'none' // Object.is equality
+
+Expected: "none"
+Received: "2px solid transparent"
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Focus.test.ts:235:44
+    233|     const focus = APP.filter((r) => subjects(r.selector).includes(`${t…
+    234|     expect(focus.map((r) => r.selector)).toHaveLength(1);
+    235|     expect(decl(focus[0].body, 'outline')).toBe('none');
+       |                                            ^
+    236|   });
+    237|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+

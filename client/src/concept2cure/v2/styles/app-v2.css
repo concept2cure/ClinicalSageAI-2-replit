@@ -268,9 +268,11 @@
 .c2c-v2 .de-textarea { min-height: 80px; padding: 8px 12px; resize: vertical; line-height: 1.5; }
 /* Italic stays: "an example, not your number" must not ride on colour alone (WCAG 1.4.1, app-v2.css note). */
 .c2c-v2 :is(.c2c-input, .de-input, .de-textarea)::placeholder { color: var(--text-300); font-style: italic; }
-/* ONE ring: the field's own border + halo, so the global outline (app-v2.css:95–103) steps aside. */
+/* ONE ring: the field's own border + halo, so the global outline (above) steps aside. The outline is
+   transparent, not none: it paints nothing here, and forced colours, which repaint the border in one
+   system colour and drop the halo, show it as the field's ring (D0 review fix 13). */
 .c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea):is(:focus, :focus-visible) {
-  outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-000);
+  outline: 2px solid transparent; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-000);
 }
 .c2c-v2 :is(select.c2c-input, .de-select) {
   appearance: none; padding-right: 32px; background-repeat: no-repeat; background-position: right 10px center;
@@ -340,7 +342,9 @@
 .c2c-v2 :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) {
   background: var(--bg-000); color: var(--text-100); box-shadow: 0 1px 2px rgb(20 20 19 / .06), 0 0 0 1px var(--border);
 }
-.c2c-v2.dark :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) { background: var(--bg-200); box-shadow: none; }
+/* Dark keeps light's hairline ring (D0 §3; review fix 12): the --bg-200 fill alone is 1.21:1 on the
+   track. --border-strong is 1.49:1 on the track, a ring but short of SC 1.4.11's 3:1 (D0-10 README). */
+.c2c-v2.dark :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) { background: var(--bg-200); box-shadow: 0 0 0 1px var(--border-strong); }
 
 /* Tabs: one scrollable row; the active tab is an ink underline, not orange. */
 .c2c-v2 :is(.tabs, .reg-tabs, .sc-wsbar, .cc-tabs) {
@@ -358,6 +362,9 @@
 .c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab):is(.on, [data-on], [aria-selected="true"], [aria-current="page"]) {
   color: var(--text-100); border-bottom-color: var(--text-100);
 }
+/* Focus inside the edge: the tab row and the segmented track scroll, and a scroller clips the global
+   ring drawn 2px outside a button (D0 review fix 7; the inset form .crumb-proj uses). */
+.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab, .seg-b, .ml-seg-btn):focus-visible { outline-offset: -2px; }
 .c2c-v2 .tab-body { padding: 20px 0 0; }
 
 /* Chips: 12px, sentence case; tone only where it means something. */
@@ -420,8 +427,10 @@
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .c2c-v2.dark :is(.landing-composer, .pj-composer, .ct-composer) { box-shadow: 0 1px 2px rgb(0 0 0 / .30), 0 6px 20px -8px rgb(0 0 0 / .45); }
-/* Focus: one quiet orange edge (plan §2: orange for focus), no 3px halo. --border-focus clears 3:1. */
-.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer):focus-within { border-color: var(--border-focus); }
+/* Focus: one quiet orange edge (plan §2: orange for focus), no 3px halo. --border-focus clears 3:1.
+   The transparent outline is the composer's ring in forced colours, which repaint the border (D0
+   review fix 13). Its text area keeps no outline of its own (the inputs block), so there is one ring. */
+.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer):focus-within { border-color: var(--border-focus); outline: 2px solid transparent; }
 .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea) { font-size: 15px; line-height: 1.5; color: var(--text-100); }
 .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea)::placeholder { color: var(--text-300); }
 /* On a touch screen every text area is 16px, so iOS does not zoom when it takes focus (D0 review

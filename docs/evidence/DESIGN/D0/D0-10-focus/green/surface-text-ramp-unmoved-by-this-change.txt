@@ -1,0 +1,25 @@
+# the ramp generator's output in the same export, once with HEAD's app-v2.css and once with this change's
+$ cmp ramp-gen-head.css ramp-gen-change.css
+identical (51bde51c6e14): this change moves nothing in the ramp; the staleness is HEAD's
+
+# what HEAD's committed ramp lacks against a fresh generation (diff committed generated)
+59c59
+< /* ── --bg-050 · 312 selector(s) ── */
+---
+> /* ── --bg-050 · 301 selector(s) ── */
+89d88
+< .c2c-v2 .bs-doc-bar,
+175d173
+< .c2c-v2 .npw-review,
+220d217
+< .c2c-v2 .tb-cmdk,
+262c259
+< .ed-viewtoggle,
+---
+> .ed-reason,
+335,336d331
+< .rc-ana,
+< .rc-composer,
+362d356
+< .vd-coexist,
+365,370c359

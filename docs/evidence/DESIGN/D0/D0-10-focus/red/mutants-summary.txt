@@ -1,0 +1,24 @@
+m1-an-item-leaves-the-tab-primitive exit 1 failed 1
+    reads the items from the tab and segmented primitives: the six the review names, all still in use 12ms
+m2-an-item-joins-without-the-ring exit 1 failed 1
+    .cm-subtab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 16ms
+m3-the-inset-rule-removes-the-ring exit 1 failed 1
+    moves the global ring inward and keeps it: one rule, offset only, outranking the global ring 19ms
+m4-the-inset-rule-is-outranked exit 1 failed 1
+    moves the global ring inward and keeps it: one rule, offset only, outranking the global ring 13ms
+m5-an-owner-sets-the-offset-back exit 1 failed 1
+    no other rule, in any v2 stylesheet, sets an outline on these items in focus 18ms
+m6-light-loses-its-ring exit 1 failed 1
+    light: --bg-000 with the hairline ring (unchanged) 20ms
+m7-dark-misses-a-state exit 1 failed 1
+    dark covers every item and active state light does 12ms
+m8-an-owner-drops-the-dark-ring exit 1 failed 1
+    no other rule, in any v2 stylesheet, sets a shadow on an active segment 21ms
+m9-an-owner-removes-a-field-outline exit 1 failed 1
+    no other rule, in any v2 stylesheet, sets these fields’ outline in focus 14ms
+m10-the-reviews-literal-text-area-change exit 1 failed 3
+    .landing-input keeps no outline of its own in focus, so its composer shows one ring, not two 16ms
+    .pj-composer textarea keeps no outline of its own in focus, so its composer shows one ring, not two 14ms
+    .ct-composer textarea keeps no outline of its own in focus, so its composer shows one ring, not two 7ms
+m11-an-owner-removes-the-composer-outline exit 1 failed 1
+    no other rule, in any v2 stylesheet, sets a composer’s outline 16ms

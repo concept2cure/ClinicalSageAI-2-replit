@@ -1,0 +1,57 @@
+# mutant m2-an-item-joins-without-the-ring: [('app-v2.css', '.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab) {\n', '.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab, .cm-subtab) {\n')]
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > reads the items from the tab and segmented primitives: the six the review names, all still in use 3ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .tab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 6ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .reg-tab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 13ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .sc-ws:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 12ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .cc-tab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 6ms
+ × client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .cm-subtab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 16ms
+   → rules that set .cm-subtab's focus offset: expected [] to have a length of 1 but got +0
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .seg-b:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 9ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .ml-seg-btn:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 7ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > moves the global ring inward and keeps it: one rule, offset only, outranking the global ring 2ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > no other rule, in any v2 stylesheet, sets an outline on these items in focus 6ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > light: --bg-000 with the hairline ring (unchanged) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > dark: --bg-200 with a 1px --border-strong ring, not box-shadow: none 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > dark covers every item and active state light does 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > no other rule, in any v2 stylesheet, sets a shadow on an active segment 17ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .c2c-input in focus: the border and halo, and a transparent outline in place of outline: none 9ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .de-input in focus: the border and halo, and a transparent outline in place of outline: none 11ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .de-select in focus: the border and halo, and a transparent outline in place of outline: none 14ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .de-textarea in focus: the border and halo, and a transparent outline in place of outline: none 7ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > no other rule, in any v2 stylesheet, sets these fields’ outline in focus 4ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > a composer in focus: its border, and a transparent outline; no halo 6ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .landing-input keeps no outline of its own in focus, so its composer shows one ring, not two 5ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .pj-composer textarea keeps no outline of its own in focus, so its composer shows one ring, not two 8ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .ct-composer textarea keeps no outline of its own in focus, so its composer shows one ring, not two 10ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > no other rule, in any v2 stylesheet, sets a composer’s outline 5ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 23 passed (24)
+   Start at  04:08:51
+   Duration  1.41s (transform 268ms, setup 199ms, import 279ms, tests 179ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .cm-subtab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it
+AssertionError: rules that set .cm-subtab's focus offset: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Focus.test.ts:147:82
+    145|   it.each(ITEMS)('%s:focus-visible draws the ring 2px inside its edge,…
+    146|     const rule = APP.filter((r) => subjects(r.selector).includes(`${it…
+    147|     expect(rule.map((r) => r.selector), `rules that set ${item}'s focu…
+       |                                                                                  ^
+    148|     expect(decl(rule[0].body, 'outline-offset')).toBe('-2px');
+    149|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
