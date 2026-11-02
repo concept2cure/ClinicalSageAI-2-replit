@@ -70,9 +70,10 @@ export type ReviewQuorumVerdict = { met: true } | { met: false; message: string 
  * P12 review quorum: when reviewers are assigned, every active reviewer of the
  * latest round must have completed and have exactly one decision attributed
  * to that assignment's reviewer, approving the current version. Withdrawn
- * assignments and their decisions are excluded; a round whose assignments were
- * all withdrawn, or no assignments at all, has no quorum to enforce. This
- * policy is not scientific source qualification or evidence of source review.
+ * assignments and their decisions are excluded; no assignments at all has no
+ * quorum to enforce. A latest round whose assignments were all withdrawn is
+ * refused (2026-11-02, F1, P-95: it holds no review). This policy is not
+ * scientific source qualification or evidence of source review.
  *
  * `artifactPk` is concept2cure_artifacts.id (the serial key the review tables
  * reference), not artifact_id. A read error propagates: the caller must not
@@ -115,7 +116,19 @@ export async function reviewQuorumVerdict(
   const active = assignments.filter(
     a => Number(a.review_round) === latestRound && a.status !== 'withdrawn'
   );
-  if (active.length === 0) return { met: true };
+  // 2026-11-02 (F1, P-95; the review round advances): a round whose every
+  // reviewer was withdrawn holds no review, so it does not meet the quorum.
+  // Once a closed round opens the next one, assigning a reviewer and then
+  // withdrawing them would otherwise approve over an earlier round's request
+  // for changes with no approval on record. No assignment at all (above)
+  // still meets it until the editor's Review panel reaches the reviewer route
+  // (docs/evidence/W5/2026-11-01/p95/README.md, the sequencing hazard).
+  if (active.length === 0) {
+    return {
+      met: false,
+      message: 'Cannot approve: every reviewer in the latest review round was withdrawn. Assign a reviewer; once they approve this version, it can be approved.',
+    };
+  }
 
   const pending = active.filter(a => a.status !== 'completed');
   if (pending.length > 0) {
