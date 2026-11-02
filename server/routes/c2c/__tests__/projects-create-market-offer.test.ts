@@ -147,6 +147,25 @@ const BEFORE_SQL: Array<{ name: string; send: Record<string, unknown>; reason: R
     // Wording amended 2026-10-08 (filing-spine design review): the agency's limit reads "Not offered".
     reason: /^Not offered: A Notified Body assesses EU MDR and IVDR technical documentation/,
   },
+  // Added 2026-11-01 (D2 3b Slice 4; P-55 row 5, F-D). ICH takes no filing, and the QOS,
+  // a drug substance and a drug product each say where they are written. Before, all
+  // of these read "Not supported: the platform has no filing outline or channel for
+  // ICH / Global". The wizard sends every such row as an NDA (Projects.tsx programTypeFor).
+  {
+    name: 'Module 3.2.S at "ICH / Global", sent as the wizard sends it (an NDA)',
+    send: { programType: 'nda', primaryAgency: 'ICH / Global', submissionTypeId: 'ich_m3_ds' },
+    reason: /^Not offered as its own project: drug substance quality is Module 3\.2\.S of its application/,
+  },
+  {
+    name: 'the Quality Overall Summary at "ICH / Global", by its legacy id',
+    send: { programType: 'nda', primaryAgency: 'ICH / Global', submissionTypeId: 'qos_23' },
+    reason: /^Not offered as its own project: the Quality Overall Summary is Module 2\.3 of its application/,
+  },
+  {
+    name: 'any other filing at "ICH / Global" (a comparability protocol)',
+    send: { programType: 'nda', primaryAgency: 'ICH / Global', submissionTypeId: 'ich_comparability' },
+    reason: /^Not offered: ICH is no jurisdiction and takes no filing, and this filing is not authored here as a project of its own\.$/,
+  },
 ];
 
 const NO_OUTLINE: Array<{ name: string; send: Record<string, unknown>; reason: RegExp }> = [
