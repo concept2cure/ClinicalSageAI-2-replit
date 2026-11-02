@@ -54,8 +54,16 @@ if (clientWorkspaceId !== undefined && list.some(pack => pack !== 'biotech')) {
   console.error('--client-workspace-id is currently supported by the biotech pack only; no packs were run.');
   process.exit(2);
 }
+// This pack is for a separately created fictional organization; its explicit
+// numeric id is required in addition to the recorded organization-name check.
+// Never guess the target from whichever account a token happened to sign in.
+const targetOrganizationId = opt('organization-id', process.env.DEMO_EXPECTED_ORGANIZATION_ID);
+if (list.includes('faux') && !targetOrganizationId) {
+  console.error('--pack faux requires --organization-id or DEMO_EXPECTED_ORGANIZATION_ID. No demo records were written.');
+  process.exit(2);
+}
 const ctx = await connect({ baseUrl: opt('base-url'), email: opt('email'),
-  expectedOrganizationId: opt('organization-id', process.env.DEMO_EXPECTED_ORGANIZATION_ID), clientWorkspaceId });
+  expectedOrganizationId: targetOrganizationId, clientWorkspaceId });
 console.info(`Signed in as ${ctx.identity.email} (user ${ctx.identity.userId}, organisation ${ctx.identity.organizationId}) at ${ctx.baseUrl}`);
 
 /* The demo's work areas must be open to the organisation it runs in
