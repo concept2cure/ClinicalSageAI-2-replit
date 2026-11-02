@@ -463,34 +463,61 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_biologic_no_immunogenicity',
     appliesTo: ['bla_submission', 'ind_submission'],
-    triggeredBy: ['product_type', 'molecule_type'],
-    /* `immunogenicity_assessment_planned` (IND) and
-       `immunogenicity_risk_factors` (BLA) are the questions those interviews
-       ask. The risk factors ARE the assessment FDA's 2019 guidance asks for —
-       it is risk-based — so a sponsor who has enumerated them has answered. */
+    /* 2026-11-02 (S4): the BLA asks the product's modality as `product_class`
+       (node app_type, on both routes) and asks neither product_type nor
+       molecule_type, so in the BLA this rule could never trigger. */
+    triggeredBy: ['product_type', 'molecule_type', 'product_class'],
+    /* IND: immunogenicity_assessment_planned. BLA 351(a): ada_assay_strategy
+       (required) and immunogenicity_risk_factors. BLA 351(k):
+       immunogenicity_comparison (required) — the immunogenicity element of
+       42 USC 262(k)(2)(A)(i)(I)(cc).
+       Removed: `immunogenicity_assessment`, a NODE id, which never reaches the
+       flattened answers, and `immunogenicity_strategy`, asked nowhere. The risk
+       factors are not the BLA's only mitigation: they are optional and offer no
+       'none', so an empty list would fire a CRITICAL at a sponsor who answered
+       the required ADA strategy. */
     mitigatedBy: [
-      'immunogenicity_assessment',
-      'immunogenicity_strategy',
       'immunogenicity_assessment_planned',
       'immunogenicity_risk_factors',
+      'ada_assay_strategy',
+      'immunogenicity_comparison',
     ],
-    check(flat, _state, _definition, ctx) {
-      const productType = strVal(flat['product_type'] ?? flat['molecule_type']);
-      const isBiologic = productType.includes('biologic') || productType.includes('antibod') ||
-                         productType.includes('protein') || productType.includes('cell') ||
-                         productType.includes('gene');
-      if (isBiologic && ctx.mitigationAbsent()) {
-        return {
-          checkId: 'xn_biologic_no_immunogenicity',
-          severity: 'critical',
-          title: 'Biologic Product Without Immunogenicity Assessment',
-          message: 'All biologic products require a risk-based immunogenicity assessment strategy. FDA expects anti-drug antibody (ADA) testing and neutralizing antibody assays.',
-          reference: 'FDA Immunogenicity Guidance (2019); ICH S6(R1); 21 CFR 601.2',
-          questionId: '_cross_node',
-          triggerValues: { product_type: flat['product_type'] },
-        };
-      }
-      return null;
+    check(flat, _state, definition, ctx) {
+      const productType = strVal(flat['product_type'] ?? flat['molecule_type'] ?? flat['product_class']);
+      /* Codes with no class word in them: 'adc' and 'biosimilar' (exact), and
+         'enzyme_replacement' (a therapeutic protein). 'vaccine',
+         'blood_product' and '__other__' stay silent on purpose. */
+      const isBiologic =
+        ['biologic', 'antibod', 'protein', 'cell', 'gene', 'enzyme'].some(w => productType.includes(w)) ||
+        productType === 'adc' ||
+        productType === 'biosimilar';
+      if (!isBiologic || !ctx.mitigationAbsent()) return null;
+      const biosimilar = definition.category === 'bla_submission' && flat['bla_pathway'] === '351k_biosimilar';
+      const ind = definition.category === 'ind_submission';
+      return {
+        checkId: 'xn_biologic_no_immunogenicity',
+        severity: 'critical',
+        title: 'Biologic Product Without Immunogenicity Assessment',
+        message: biosimilar
+          ? "A biosimilar application's clinical data include an assessment of immunogenicity, unless FDA determines it " +
+            'unnecessary (42 USC 262(k)(2)(A)(i)(I)(cc) and (k)(2)(A)(ii)). This is generally a comparative assessment of ' +
+            'ADA and neutralizing antibody incidence, and their impact, against the reference product. None is recorded.'
+          : 'This product type calls for an immunogenicity assessment, and none is recorded. For a therapeutic protein, ' +
+            'FDA guidance describes a risk-based assessment and a multi-tiered anti-drug antibody (ADA) testing strategy: ' +
+            'screening, confirmatory, titer and, generally, neutralizing antibody assays. For a cell or gene therapy, the ' +
+            'immune responses to assess include those to the vector, the transgene product or the construct.',
+        reference: biosimilar
+          ? '42 USC 262(k)(2)(A)(i)(I)(cc); FDA Guidance: Scientific Considerations in Demonstrating Biosimilarity to a Reference Product (2015)'
+          : ind
+            ? 'FDA Guidance: Immunogenicity Assessment for Therapeutic Protein Products (2014); FDA Guidance: Immunogenicity Testing of Therapeutic Protein Products — Developing and Validating Assays for Anti-Drug Antibody Detection (2019); ICH S6(R1)'
+            : 'FDA Guidance: Immunogenicity Assessment for Therapeutic Protein Products (2014); FDA Guidance: Immunogenicity Testing of Therapeutic Protein Products — Developing and Validating Assays for Anti-Drug Antibody Detection (2019); 21 CFR 601.2',
+        questionId: '_cross_node',
+        triggerValues: {
+          product_type: flat['product_type'],
+          product_class: flat['product_class'],
+          bla_pathway: flat['bla_pathway'],
+        },
+      };
     },
   },
   {
@@ -544,25 +571,48 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_high_risk_device_no_human_factors',
     appliesTo: ['device_510k', 'device_pma'],
-    triggeredBy: ['risk_level', 'device_class'],
-    mitigatedBy: ['human_factors_study', 'hfe_study'],
-    check(flat, _state, _definition, ctx) {
-      const riskLevel = strVal(flat['risk_level'] ?? flat['device_class']);
-      const humanFactors = strVal(flat['human_factors_study'] ?? flat['hfe_study']);
-      const isHighRisk = riskLevel.includes('iii') || riskLevel.includes('high') || riskLevel.includes('life-sustaining');
-      const declined = humanFactors === 'no';
-      if (isHighRisk && (declined || ctx.mitigationAbsent())) {
-        return {
-          checkId: 'xn_high_risk_device_no_human_factors',
-          severity: 'warning',
-          title: 'High-Risk Device Without Human Factors Validation',
-          message: 'FDA expects human factors validation testing for high-risk and life-sustaining devices to ensure safe and effective use by intended users.',
-          reference: 'FDA Human Factors Guidance (2016); IEC 62366-1',
-          questionId: '_cross_node',
-          triggerValues: { risk_level: flat['risk_level'], human_factors_study: flat['human_factors_study'] },
-        };
+    /* 2026-11-02 (S4): `device_class` is the only trigger any applicable flow
+       asks. `risk_level` was asked by no flow, and its substrings 'high' and
+       'life-sustaining' matched no device_class value, so the rule was dead on
+       both sides. Exact equality, because 'class_ii_pma' contains no 'iii'. */
+    triggeredBy: ['device_class'],
+    /* The same fact under each flow's own id — "Summative (HFE Validation)
+       Testing Completed": device-510k's usability_human_factors node and
+       device-pma's human_factors_engineering node. `human_factors_study` and
+       `hfe_study` were asked by no flow. */
+    mitigatedBy: ['summative_testing_completed', 'summative_testing'],
+    /* No negativeIsAnswer: 'no' to "summative testing completed" IS the finding. */
+    check(flat, state, _definition, ctx) {
+      const deviceClass = strVal(flat['device_class']);
+      /* class_ii_pma is the PMA flow's 520(l) transitional device, deemed Class III. */
+      if (deviceClass !== 'class_iii' && deviceClass !== 'class_ii_pma') return null;
+      /* One fact, one finding. Each flow's own node check already reports a 'no'
+         on this field, and runCrossNodeAnalysis dedupes only by rule id, so this
+         rule speaking too would count the fact twice in the risk score. It
+         speaks only where the node check could not read the answer: a refusal
+         that is not a boolean ('none', 'na', 'not_applicable'), or a blank. */
+      if (state.issues.some(i => i.checkId === 'no_usability_patient_use_check' || i.checkId === 'no_summative_testing_check')) {
+        return null;
       }
-      return null;
+      const id = ctx.asks('summative_testing_completed') ? 'summative_testing_completed' : 'summative_testing';
+      /* The node checks' own predicate, so 'no', 'n', '0' and false agree. */
+      const declined = evaluatePredicate({ field: id, operator: 'eq', value: false }, flat);
+      if (!declined && !ctx.mitigationAbsent()) return null;
+      return {
+        checkId: 'xn_high_risk_device_no_human_factors',
+        severity: 'warning',
+        title: 'Class III Device Without Human Factors Validation Testing',
+        message:
+          'This is a Class III device, and summative (human factors validation) testing is not recorded as completed. ' +
+          "FDA's 2016 guidance recommends human factors validation testing where the use-related risk analysis identifies " +
+          'critical tasks, meaning tasks where a use error could cause serious harm. The guidance ties it to those tasks, ' +
+          'not to device class. If the analysis found no critical tasks, record that and why; otherwise plan the ' +
+          'validation test with representative users, the critical tasks and the intended use environment.',
+        reference:
+          'FDA guidance: Applying Human Factors and Usability Engineering to Medical Devices (February 2016); IEC 62366-1:2015+AMD1:2020',
+        questionId: '_cross_node',
+        triggerValues: { device_class: flat['device_class'], [id]: flat[id] },
+      };
     },
   },
   {

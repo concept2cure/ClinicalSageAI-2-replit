@@ -103,10 +103,6 @@ const NOT_ASKED_YET: Readonly<Record<string, string>> = {
     'asks none of: ethnic_bridging, ethnicity_factors',
   'xn_phase3_no_interim/protocol_development':
     'asks none of: interim_analysis, planned_interim',
-  'xn_high_risk_device_no_human_factors/device_510k':
-    'asks none of: human_factors_study, hfe_study',
-  'xn_high_risk_device_no_human_factors/device_pma':
-    'asks none of: human_factors_study, hfe_study',
   'xn_iso_14971_no_post_production/risk_management':
     'asks none of: risk_management_process, rm_standard',
   'xn_iso_14971_no_post_production/device_510k':
@@ -119,8 +115,6 @@ const NOT_ASKED_YET: Readonly<Record<string, string>> = {
     'asks none of: long_term_data_months, stability_data_months',
   'xn_stability_insufficient_for_shelf_life/bla_submission':
     'asks none of: long_term_data_months, stability_data_months',
-  'xn_biologic_no_immunogenicity/bla_submission':
-    'asks none of: product_type, molecule_type',
   'xn_accelerated_approval_no_confirmatory/nda_submission':
     'asks none of: regulatory_pathway, approval_pathway, accelerated_approval_basis',
   'xn_rems_without_etasu/labeling':
@@ -139,6 +133,12 @@ const NOT_ASKED_YET: Readonly<Record<string, string>> = {
  * So the form is fixed: `asks none of: a, b, c`, and this verifies that the
  * flow really asks none of them. A reason that becomes false fails here.
  */
+/** The field ids a written reason names. */
+function namedIn(reason: string): Set<string> {
+  const match = /^asks none of: (.+)$/.exec(reason.trim());
+  return new Set(match ? match[1].split(',').map(f => f.trim()).filter(Boolean) : []);
+}
+
 function reasonHolds(reason: string, asked: Set<string>): boolean {
   const match = /^asks none of: (.+)$/.exec(reason.trim());
   if (!match) return false;
@@ -169,8 +169,19 @@ function unreachableIn(rule: Declared, flow: string, askedBy: Map<string, Set<st
   const triggerable = triggers.length === 0 || triggers.some(id => asked.has(id));
   const mitigable = mitigations.length === 0 || mitigations.some(id => asked.has(id));
   if (triggerable && mitigable) return [];
+  /* A reason must account for EVERY side that is missing, not only one of them.
+     It used to be accepted whenever the fields it named were unasked, so
+     `xn_orphan_without_natural_history` stood here as "asks none of:
+     natural_history, disease_natural_history" — true — while its TRIGGERS
+     (`expedited_designations`, `special_designations`) were asked by none of
+     the four flows it applies to either. A true but incomplete reason hid half
+     of a dead rule (2026-11-01). Now a dead trigger side must be named in the
+     reason as well as a dead mitigation side. */
   const reason = NOT_ASKED_YET[`${rule.id}/${flow}`];
-  if (reason && reasonHolds(reason, asked)) return [];
+  const named = reason ? namedIn(reason) : new Set<string>();
+  const coversTriggers = triggerable || triggers.every(id => named.has(id));
+  const coversMitigations = mitigable || mitigations.every(id => named.has(id));
+  if (reason && reasonHolds(reason, asked) && coversTriggers && coversMitigations) return [];
   const which = !triggerable
     ? `none of its triggers (${triggers.join(', ')})`
     : `none of its mitigations (${mitigations.join(', ')})`;
