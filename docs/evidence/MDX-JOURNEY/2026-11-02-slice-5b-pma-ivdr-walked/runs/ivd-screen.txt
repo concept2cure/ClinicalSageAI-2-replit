@@ -1,0 +1,194 @@
+IVDR evidence
+Return to project workflow
+Veritas assay
+Workspace
+Class · validation · GSPR
+Audit trail
+1
+21 CFR Part 11
+NB / GSPR
+0
+Agency / NB queries
+Approvals
+Your pending e-sign · all projects
+Files
+Full filesystem
+IVDR pathway · Veritas assay
+Project phase: Planning · No target set
+Assemble technical file
+1
+Intake
+Biomarker · intended purpose
+2
+Classification
+Annex VIII rule engine
+3
+Analytical validation
+LoD · LoQ · precision
+4
+Clinical evidence
+2×2 · sensitivity · specificity
+5
+GSPR compliance
+Annex I · 20 requirements
+6
+Assemble dossier
+Technical file · declaration
+7
+Submit
+EUDAMED · NB review
+The IVDR pathway's 7 stages. None is marked: a project records its project phase, stated above, not an IVDR stage.
+IVDR readiness · technical file
+GSPR · analytical and clinical performance · scientific validity · PER · classification · PMPF
+No IVDR technical-file records for this project yet
+Record an Annex VIII classification, analytical or clinical performance studies, a GSPR checklist or a Performance Evaluation Report for this project, and the IVDR requirement families (GSPR, analytical and clinical performance, scientific validity, PER, PMPF) will show their completeness here.
+Assess, save and review IVD evidence
+
+Classification and generated documents are saved snapshots. A verified working copy opens the existing Authoring review and signature workflow; its approval does not transfer from the source.
+
+Assess IVDR classification
+Draft Field Safety Notice
+Refresh saved IVD records
+Saved IVD record
+Choose saved evidence
+
+No IVD records are saved for this project.
+
+Classification · Annex VIII
+0 devices · class A–D risk rules
+No device classifications yet
+Classify this device under Annex VIII to populate the table.
+Check again
+Serves the IVDR Annex VIII classification record
+Clinical performance · 2×2 contingency
+0 studies · sensitivity · specificity · PPV · NPV
+No clinical performance studies yet
+Record a clinical performance study to populate the contingency table.
+Check again
+Serves the IVDR Annex XIII performance evaluation
+Analytical validation
+LoD · LoQ · precision (CV) · pass/fail
+No analytical validations yet
+Log an analytical performance study (LoD, precision, interference) to populate this table.
+Check again
+Serves the IVDR Annex XIII analytical performance record
+GSPR compliance · Annex I
+Not yet assessed
+Could not load GSPR chapters
+Try again
+Companion diagnostics
+Drug–diagnostic pairings · FDA/EMA approval · biomarker
+No companion diagnostic pairings yet
+Pair this diagnostic with a drug programme to coordinate CDx co-development.
+Check again
+CLIA categorization
+Complexity · CLIA waiver lifecycle · CMS letter
+No CLIA categorizations yet
+Categorize this test's CLIA complexity to plan a waiver strategy.
+Check again
+Serves the CLIA complexity categorization
+Official eSTAR · 510(k) · IVD eSTAR
+4 of 19 fields have a governed source
+Generate official eSTAR (PDF)
+Optional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.
+
+No Vault attachments selected.
+
+Add Vault attachment
+Fields the template carries
+Governed values are read-only and written as held. A value entered here is written to this export only and is not stored.
+FIELD	VALUE	SOURCE
+Device Trade Name	Veritas assay	Device profile · product name
+Common Name		
+Not set — Device profile · common name
+Entered for this export only · not stored
+Classification Name		
+Not set — Device profile · classification name
+Entered for this export only · not stored
+Regulation Number		
+Not set — Device profile · regulation number
+Entered for this export only · not stored
+Product Code(s)		
+Not set — Device profile · product code
+Entered for this export only · not stored
+Associated Product Code(s)		
+Not set — Device profile · associated product codes
+Entered for this export only · not stored
+Company Name	Concept2Cure Therapeutics	Client workspace · name
+Email		
+Not set — Client workspace · contact email
+Entered for this export only · not stored
+Applicant Contact Telephone		
+Not set — Client workspace · contact phone
+Entered for this export only · not stored
+Applicant Contact Email		
+Not set — Client workspace · contact email
+Entered for this export only · not stored
+Company Name		
+Not set — eSTAR registration · correspondent company name
+Entered for this export only · not stored
+Email		
+Not set — eSTAR registration · correspondent contact email
+Entered for this export only · not stored
+Correspondent Contact Telephone		
+Not set — eSTAR registration · correspondent telephone
+Entered for this export only · not stored
+Correspondent Contact Email		
+Not set — eSTAR registration · correspondent contact email
+Entered for this export only · not stored
+Predicate Submission Number (e.g., K210001)		
+Not set — Device profile · first predicate · K-number
+Entered for this export only · not stored
+Predicate Device Trade Name		
+Not set — Device profile · first predicate · name
+Entered for this export only · not stored
+Company Name	Concept2Cure Therapeutics	Client workspace · name
+Company Address		
+Not set — eSTAR registration · declaration company address
+Entered for this export only · not stored
+Device Trade Name	Veritas assay	Device profile · product name
+eSTAR filing readiness
+Not yet registered — toggle the prerequisites you hold
+FDA ESG account
+Mark held
+CDRH Portal account
+Mark held
+Org identity (DUNS/FEI)
+Mark held
+MDUFA fee account
+Mark held
+Correspondent and declaration
+Held on the org's eSTAR registration and written into the official eSTAR's correspondent and Declaration of Conformity fields. The declaration's company name and address are one legal entity, so both are held here. A blank field stays blank in the eSTAR.
+Correspondent company name
+Correspondent contact email
+Correspondent telephone
+Declaration of Conformity company name
+Declaration of Conformity company address
+Save
+Assess a submission
+Filing-readiness against your authored content
+Device (nIVD)
+IVD
+Select a submission…
+510(k) Premarket Notification
+De Novo Classification Request
+Original PMA
+PMA Panel-Track Supplement (PTS)
+PMA 180-Day Supplement
+PMA Real-Time (RT) Supplement
+PMA 30-Day Notice
+PMA 135-Day Supplement
+Pre-Submission (Pre-Sub)
+Submission Issue Request (SIR)
+Informational Meeting
+Study Risk Determination (SRD)
+PMA Day 100 Meeting
+Accessory Classification Request
+Investigational Device Exemption (IDE)
+513(g) Request for Information
+Start tracking
+Tracked submissions
+No tracked filings yet
+No tracked filings yet
+Select a submission type and run a filing-readiness assessment; tracking becomes available once it has one.
+Serves the eSTAR submission record (FDA 510(k) / De Novo)
