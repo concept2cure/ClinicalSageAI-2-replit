@@ -1,0 +1,11 @@
+{
+ "dlg": "GOVERNED ACTION · AUDIT-LOGGED\nRe-file saved text\nB1 Device description and principles of operation · Aurora pump — 510(k) × FDA · eSTAR (nIVD/IVD v7.0) · 21 CFR Part 807 → Aurora pump — 510(k) × FDA · eSTAR (nIVD/IVD v7.0) · 21 CFR Part 807 (doc_8672da1da35f4a088c89d44328dba424). This replaces the filing copy with saved text and creates no Authoring content revision. Where sections are combined, their saved text is filed together.\nReason for this action\n0 / 8 min\nType refile to confirm\nCancel\nConfirm and log",
+ "api": [
+  {
+   "m": "PATCH",
+   "u": "/api/authoring/sections/f60e5d62-ac8d-4bbb-9f2c-b5585e9caa1e",
+   "s": 200,
+   "got": "{\"success\":true,\"refiled\":true,\"revision_created\":false,\"source\":{\"documentId\":\"d6005c76-f699-4d1f-a459-07bc83e84fcc\",\"sectionId\":\"f60e5d62-ac8d-4bbb-9f2c-b5585e9caa1e\",\"programId\":\"57ea2bb6-6e6b-4ace-9e09-ba12e60f5abd\",\"filingDocumentId\":\"doc_8672da1da35f4a088c89d44328dba424\",\"updatedAt\":\"2026-11-0"
+  }
+ ]
+}
