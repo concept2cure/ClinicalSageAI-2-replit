@@ -262,6 +262,32 @@ describe('POST /programs/:programId/technical-file/export', () => {
 
  });
 
+/* P-29.3 (docs/EXIT_ATTESTATION_DECISION_2026-10-18.md): the assembler refuses
+   a filed copy that is not the document's text, with code FILING_DIVERGED, and
+   the route answers it as the client's 409, not as a server failure. */
+describe('POST /programs/:programId/technical-file/export — a filed copy that is not the document\'s text', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockProgramRows.mockReturnValue([{ id: PROGRAM_UUID, name: 'AcmeScope MDR', organizationId: 2 }]);
+    mockAnchor.mockResolvedValue(4242);
+  });
+
+  it('(c2) a filed copy that is not the document\'s text: 409 FILING_DIVERGED, nothing delivered (P-29.3)', async () => {
+    mockFromProgram.mockImplementation(async () => {
+      const err = new Error('The technical file was not assembled. The filed copy of section II.6.1.a is not the document\'s text.') as Error & { code: string };
+      err.code = 'FILING_DIVERGED';
+      throw err;
+    });
+    const res = createMockResponse() as any;
+    await getHandler('/programs/:programId/technical-file/export')(makeReq(), res);
+
+    expect(res.status, 'a refusal over a rewritten filed copy answered as a server failure').toHaveBeenCalledWith(409);
+    expect(jsonBody(res)).toMatchObject({ error: { code: 'FILING_DIVERGED', message: expect.stringMatching(/^The technical file was not assembled\./) } });
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+    expect(mockLogAction).not.toHaveBeenCalledWith(expect.objectContaining({ action: 'EXPORT_GENERATED' }));
+  });
+});
+
 describe('technical-file assembly and final audit outcomes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
