@@ -77,8 +77,9 @@ All red runs are from the same tests, against the code before this change.
 - **The mapping, on real Docling output.** Two DoclingDocuments copied unchanged from Docling's own test data (MIT;
   `server/integrations/docling/__tests__/fixtures/README.md`).
   - **Five pages:** every page span verifies, and the eleven headings are the eleven sections, on their own pages.
-  - **Three tables:** every cell's text stands in its own row's line, at its own column; every rendering is a
-    `TABLE` chunk; the header rows are marked; the page header is left out.
+  - **Three tables:** every cell's text stands in its own row's line, at its own column; each table's own span reads
+    as a table (`chunkTypeOf` on that span; see the correction below for the chunker's real cuts); the header rows
+    are marked; the page header is left out.
 - **The transport** (`server/integrations/docling/__tests__/docling-client.test.ts`), against a stand-in that
   answers only what docling-serve's v1 file endpoint answers.
   - **The request:** the multipart form and its fields, the file part, the key header, and no header without a key.
@@ -86,7 +87,7 @@ All red runs are from the same tests, against the code before this change.
   - **`parse()`:** returns the document's text.
 - **The reach** (`server/services/ocr/__tests__/extractDocumentTextLayout.test.ts`). The PDF is a real PDF in this
   repository (`csrs/A0081186_Synopsis.pdf`), read by the real pdf-parse when the reader is not used.
-  - With the flag on, the PDF is the reader's reading (`pdf-layout`), and its tables are `TABLE` chunks.
+  - With the flag on, the PDF is the reader's reading (`pdf-layout`), and each table's span reads as a table.
   - The upload request asks too.
   - A refusing or unreachable reader leaves pdf-parse's reading, and says why.
   - With the flag off, or for a caller that does not ask, nothing is sent.
@@ -128,6 +129,44 @@ The results above are identical to before and carry neither, so with the flag of
 keys and values as before.
 
 **How to run it.** The script is `identity.ts`, run from the repository root; its header gives the command.
+
+## Correction, found in the running app (2026-11-02, `live/`)
+
+**What was overstated.** The proof above showed that each table's own span reads as a table. It did not show that
+the Vault chunker cuts there, and it does not: `chunkExtractedText` cuts by size, 4,000 characters at a paragraph
+break. A table becomes a `TABLE` chunk only when a chunk happens to be mostly table.
+
+**How it was found.** The app ran locally on a database provisioned from empty, with the reader turned on and
+pointed at the docling-serve stand-in (`stand-in-requests.txt`). A real PDF from this repository was filed through
+`POST /api/vault/ingest`.
+- The catalog recorded `pdf-layout`, 1,660 characters: the reader's reading.
+- But the three tables and the text around them became **one `TEXT` chunk** (`chunks-in-the-running-app.txt`, the
+  first document).
+
+**The fix** (`server/services/vault/document-chunking.service.ts`):
+- `chunkExtractedText` takes the layout's table spans (`tableSpans`). It cuts at each table's edges, so every table
+  starts and ends its own chunks.
+- A table longer than a chunk is cut between rows, never inside a cell.
+- Whitespace between runs joins the run before it, so every character is still in a chunk.
+- Vault's upload request and its sweep pass `layout.tables`. The upload passes them on its existing call line;
+  `vault-ingest.service.ts` sits at its line limit.
+
+**After the fix, in the running app.** A second real PDF read the same way gives **seven chunks**. Three are
+`TABLE` chunks whose spans are exactly the reader's tables (360–503, 1054–1119, 1160–1269), with `TEXT` chunks
+between them (`chunks-in-the-running-app.txt`, the second document). The stand-in's log also shows the first PDF
+sent a second time: Vault read it, then refused the bytes as a duplicate (409 `DUPLICATE_CONTENT`), as it should.
+
+**Tests** (`server/services/vault/__tests__/document-chunking-tables.test.ts`).
+- **Red first** (`red/tables-not-own-chunks.txt`): 3 of 5 fail.
+  - The tables are not their own chunks.
+  - A captioned table is not named by its caption.
+  - A long table is cut mid-row.
+- **The two controls passed** before and after: full coverage, and unchanged chunking without spans.
+- **Green:** 5 of 5. The 38 existing chunking, section, Vault ingest and layout suites pass (503 tests).
+
+**Flag off, chunks are unchanged** (`flag-off-identity/chunks-*.json`, `chunk-identity.ts`). The texts of the same
+40 PDFs, read with the flag off, were chunked by the chunker at `HEAD` before this change and by the new one. 209
+chunks, 0 differences.
 
 ## Owed
 
