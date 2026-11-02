@@ -12,7 +12,7 @@ import {
   addCtqFactor, defineKri, recordKriReading, setQtl, raiseSignal, triageSignal,
   draftPlan, generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment, approvePlan,
   amendMonitoringPlan, nextPlanVersion, inferSecondaryLimit, governingPlanId, derivePlanFromAssessment,
-  RbmAssessmentEditError, type Exec,
+  RbmAssessmentEditError, RBM_PLAN_REFUSAL, type Exec,
 } from '../rbm-actuator';
 
 function mockExec(script: any[][]) {
@@ -336,6 +336,30 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
     expect(out.generated).toBe(false);
     expect(out.reason).toBe('assessment_not_approved');
     expect(calls).toHaveLength(1);
+  });
+
+  it('refuses an approved RACT that records no overall risk, and writes nothing', async () => {
+    // It used to be given 'medium', so the saved plan's strategy rested on a
+    // risk basis nobody recorded or signed for.
+    const { exec, calls } = mockExec([
+      [{ id: 7, title: 'RACT', overall_risk: null, status: 'active', version: 1 }],
+      [{ id: 21, ctq_factor: 'SAE reporting', risk_score: 20 }],
+      [],
+      [], [{ v: 0 }], [{ id: 3 }], [{ id: 41 }],   // what a write would have read back
+    ]);
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    expect(out.generated).toBe(false);
+    expect(out.reason).toBe('overall_risk_unrecorded');
+    expect(calls.some(c => /^\s*(INSERT|UPDATE|DELETE)/.test(c.sql))).toBe(false);
+  });
+
+  it('has its own sentence for every reason it refuses with', () => {
+    const reasons: Array<NonNullable<Awaited<ReturnType<typeof generatePlanFromAssessment>>['reason']>> =
+      ['no_assessment', 'assessment_not_approved', 'overall_risk_unrecorded', 'draft_already_open'];
+    const sentences = reasons.map(r => RBM_PLAN_REFUSAL[r]);
+    for (const s of sentences) expect(s).toMatch(/\S/);
+    expect(new Set(sentences).size).toBe(reasons.length);
+    expect(RBM_PLAN_REFUSAL.overall_risk_unrecorded).toMatch(/records no overall risk/);
   });
 });
 

@@ -71,7 +71,7 @@ import {
   type KriDirection, type QtlDirection,
 } from '../services/rbm/rbm-engine';
 import {
-  generatePlanFromAssessment, amendAssessment, approveAssessment, approvePlan,
+  generatePlanFromAssessment, RBM_PLAN_REFUSAL, amendAssessment, approveAssessment, approvePlan,
   amendMonitoringPlan, nextPlanVersion, createAction, requireDraftAssessment, RbmAssessmentEditError,
 } from '../services/rbm/rbm-actuator';
 import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services/part11/signing-authority-gate';
@@ -1350,13 +1350,10 @@ router.post('/rbm-monitoring-plans/generate', async (req, res) => {
     const result = await generatePlanFromAssessment(client, orgId, parsed.data);
     if (!result.generated) {
       await client.query('ROLLBACK');
-      if (result.reason === 'draft_already_open') {
-        return clientError(res, 409,
-          'A draft monitoring plan version is already open for this study — approve or archive it before generating another.');
-      }
-      return clientError(res, 409, result.reason === 'assessment_not_approved'
-        ? 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.'
-        : 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan');
+      // Each refusal answers with its own sentence; a reason with none is a defect, not "no assessment".
+      const reason = result.reason;
+      if (!reason) throw new Error('generatePlanFromAssessment saved nothing and gave no reason.');
+      return clientError(res, 409, RBM_PLAN_REFUSAL[reason]);
     }
     await client.query('COMMIT');
     return created(res, { ...result.plan, actions: result.actions }, {

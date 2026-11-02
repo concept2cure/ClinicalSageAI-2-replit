@@ -472,10 +472,26 @@ export async function amendAssessment(
   return { amended: true, assessment: draft, items, supersedes: current.version };
 }
 
+/** Why generatePlanFromAssessment saved nothing. */
+export type GeneratePlanRefusal = 'no_assessment' | 'assessment_not_approved' | 'overall_risk_unrecorded' | 'draft_already_open';
+
+/**
+ * The one sentence for each refusal. POST /api/mdx/rbm-monitoring-plans/generate
+ * answers with it, and AnA's generate_rbm_plan relays it, so the two never word
+ * the same refusal differently.
+ */
+export const RBM_PLAN_REFUSAL: Readonly<Record<GeneratePlanRefusal, string>> = {
+  no_assessment: 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan',
+  assessment_not_approved: 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.',
+  overall_risk_unrecorded: 'The approved risk assessment records no overall risk, so no monitoring strategy can be derived from it. ' +
+    'Record the overall risk in an amendment and approve it, then generate the plan again.',
+  draft_already_open: 'A draft monitoring plan version is already open for this study — approve or archive it before generating another.',
+};
+
 export interface GeneratePlanResult {
   generated: boolean;
   /** Why nothing was generated, when `generated` is false. */
-  reason?: 'no_assessment' | 'assessment_not_approved' | 'draft_already_open';
+  reason?: GeneratePlanRefusal;
   plan?: any;
   actions?: any[];
   derivedFrom?: { assessmentId: number; overallRisk: string; criticalFactors: number; enhancedSites: number };
@@ -626,12 +642,12 @@ export async function generatePlanFromAssessment(
   if (!derivation.derived) return { generated: false, reason: derivation.reason };
   const { assessment } = derivation;
 
-  // OPEN DEFECT (docs/evidence/F1/2026-11-01-rbm-handlers/README.md, (b)): an
-  // approved assessment that records no overall risk still gets 'medium' here.
-  // Refusing it needs the route (mdx-rbm.ts) to give the new reason a true
-  // message — today it turns every other reason into "No risk assessment
-  // exists". AnA's generate_rbm_plan refuses that case instead of guessing.
-  const overall = derivation.recordedOverallRisk ?? 'medium';
+  // An approved assessment that records no overall risk gives no basis for a
+  // strategy. It was given 'medium' until 2026-11-02
+  // (docs/evidence/F1/2026-11-01-rbm-handlers/README.md, (b)); now it is
+  // refused, as AnA's generate_rbm_plan already refused it.
+  const overall = derivation.recordedOverallRisk;
+  if (!overall) return { generated: false, reason: 'overall_risk_unrecorded' };
   const strategy = defaultPlanStrategy(overall);
 
   // Generating lands a new plan VERSION, so it cannot silently sit alongside an
