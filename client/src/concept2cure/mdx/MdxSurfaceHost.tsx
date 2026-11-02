@@ -446,7 +446,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     case 'device-udi':
       /* Keyed by the project, so a switch starts the read afresh and never
          draws the previous project's labels while the next project's read is in flight. */
-      surface = <UdiSurface key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} onOpenEditor={openDocumentRow} />;
+      surface = <UdiSurface key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} onOpenEditor={openDocumentRow} onOpenLabeling={() => onNav('labeling')} />;
       break;
     case 'device-postmarket':
       surface = <PostmarketSurface program={programForContext} onAskAna={onAsk} />;

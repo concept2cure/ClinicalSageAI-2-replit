@@ -141,7 +141,7 @@ Each is a repair of shipped behaviour (F1): no screen, mount or table.
 | M14 | Found in the running app, 2026-11-02: a working document's advice, "place the document into a filing", leads to the eCTD placement dialog, which on a device project has no submission and refuses "B1" as "not a CTD section code". The home filing's own editing copy is now offered beside it (`bda1d5aed1`). | `editor/DocumentWorkbench.tsx` (the unbound working copy note), the Place into filing dialog | walk |
 | M15 | Found in the running app: a device 510(k)'s Author tab offers "Write the protocol in the protocol workspace", and its work areas list Biostatistics. | Project home, Author tab and work areas | walk |
 | M16 | Found in the running app: Engineering's "What's blocking your documents" tags every eSTAR node "DHF", the cover letter included, and its zero "Open risks" card is red. | `mdx/surfaces/EngineeringSurface.tsx` | walk |
-| M17 | Found in the running app: UDI's empty state is the passive instruction M8 fixed on Labeling ("appear here once labeling documents are created", with only "Check again"). | `mdx/surfaces/UdiSurface.tsx` | walk |
+| M17 | **Fixed 2026-11-02** (`docs/evidence/MDX-JOURNEY/2026-11-02-m17-udi-empty-state-door/`): the action is Open Labeling. Found in the running app: UDI's empty state is the passive instruction M8 fixed on Labeling ("appear here once labeling documents are created", with only "Check again"). | `mdx/surfaces/UdiSurface.tsx` | walk |
 
 ## The order of work
 
