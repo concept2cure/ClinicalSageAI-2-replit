@@ -1,0 +1,18 @@
+=== vault document afb3c97c-784b-4472-a95b-0e8cdb8668fb
+title=A0081186 synopsis (layout reader on) | file=A0081186_Synopsis.pdf
+catalog: status=extracted extraction_method=pdf-layout char_count=1660
+--- chunks (index | type | span | section | first characters, tabs shown as <TAB>, newlines as /)
+0 | TEXT | 0-1660 | - | K Medical Corp. /  / aaaaaaaaas$ /  / aaaa aaaaaaa aaaaaa aaaaaaaaa aaa aaaaa aAaaaAaAAa
+
+=== vault document 04ad178b-ebe5-4a95-a996-4c63e65dfa99
+title=A0221045 synopsis (layout reader on, tables chunked) | file=A0221045_Synopsis.pdf
+catalog: status=extracted extraction_method=pdf-layout char_count=1660
+--- chunks (index | type | span | section | first characters, tabs shown as <TAB>, newlines as /)
+0 | TEXT | 0-360 | - | K Medical Corp. /  / aaaaaaaaas$ /  / aaaa aaaaaaa aaaaaa aaaaaaaaa aaa aaaaa aAaaaAaAAa
+1 | TABLE | 360-503 | - |  <TAB> aaaaa aaaaaa <TAB> aaa aaaaaa <TAB> aaa aaaaaa / aaaaaaaa aaaaaa: 00 aa <TAB> 000.0 <TAB> 000 <TAB> 000.0 / aaaaa
+2 | TEXT | 503-1054 | - |  /  / 23 | aaaaaa aaaa aaa aaaaaaaa aaaa aaaaaaa aaaaaaa 00.00, 00.00, aaa 00.00 00 
+3 | TABLE | 1054-1119 | - |  <TAB> aaaaa aaaaaa <TAB> aaa aaaaaa <TAB> aaa aaaaaa / aaaaaaaa aaaaaa: 00 aa <TAB> 0 <TAB> a) <TAB> 0
+4 | TEXT | 1119-1160 | - |  /  / 29 | aaaaa aaa aaaaaaaaa aaaaaaaaaaa: /  / 
+5 | TABLE | 1160-1269 | - |  <TAB> aaaaa aaaaaa <TAB> aaa aaaaaa <TAB> aaa aaaaaa / aaaaaaaa aaaaaa: 00 aa <TAB> 000 <TAB> 000 <TAB> 000 / aaaaaaaa 
+6 | TEXT | 1269-1660 | - |  /  / 30 | aaaaaa aaaa aaa aaaaaaaaa aaaaaaaa aaaaaa aaaaa aaa aaaaaaaaaa aaa aaaaaa
+
