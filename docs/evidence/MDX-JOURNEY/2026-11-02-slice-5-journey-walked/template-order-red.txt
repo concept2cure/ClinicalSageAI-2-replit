@@ -1,0 +1,15 @@
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > exists, with one section for each meaning 2ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Device description files under B1 1ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Predicate device identification files under C1 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Substantial equivalence comparison files under C2 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Bench testing files under E5 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Biocompatibility files under E1 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Software documentation files under E2 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Labeling files under D2 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Clinical performance files under E7 0ms
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > no two sections file under the same heading 0ms
+ × server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > is stored in the order its codes belong in, which is the outline's order 5ms
+   → stored B1, C1, C2, E5, E1, E2, D2, E7; belongs B1, C1, C2, D2, E1, E2, E5, E7: expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
