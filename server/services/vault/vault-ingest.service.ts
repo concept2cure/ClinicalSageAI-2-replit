@@ -720,7 +720,7 @@ async function admitVaultDocument(
        recorded as chunk_failed with its reason, never thrown. */
     if (extractedText) {
       const textForChunks: string = extractedText;
-      await chunkDocumentForIngest(String(doc.id), orgId, textForChunks, pageSpans, { embed: embedPassages });
+      await chunkDocumentForIngest(String(doc.id), orgId, textForChunks, pageSpans, { embed: embedPassages, tableSpans: inline.kind === 'read' ? inline.extracted.layout?.tables : undefined });
     }
 
     logger.info('Vault document ingested', {

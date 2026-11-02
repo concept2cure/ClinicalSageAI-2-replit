@@ -1,0 +1,162 @@
+{
+ "server/tests/fixtures/testdoc.pdf": {
+  "chunks": 0,
+  "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+ },
+ "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-dark/manifest.pdf": {
+  "chunks": 1,
+  "digest": "4c5f04f6d2e78ad05441f8c87afd0549a150ef08136f8bfeadb42745e9b78010"
+ },
+ "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-mobile/manifest.pdf": {
+  "chunks": 1,
+  "digest": "ca8e301ab3838448926682fbfd459ff537331965650aa474cbeee64b7692ac5c"
+ },
+ "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-light/manifest.pdf": {
+  "chunks": 1,
+  "digest": "c0d60c23a62365e0e9e2b4c40246c23fd799a52b76325f6994cfaf7d65c7be7a"
+ },
+ "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/integration/account-inspection.pdf": {
+  "chunks": 1,
+  "digest": "244ae1b81fb8450cd0cc9bbf4c68ad5d413a7a7b6f32b2b8d8d701bf5ee233f9"
+ },
+ "docs/evidence/COMPANY-DOCUMENTS/gap-closure/correspondence/2026-10-23-updated/historical-correspondence.pdf": {
+  "chunks": 5,
+  "digest": "903a71575634d0e346e680a2021c957937394632c01952c9c8f9268e3160258c"
+ },
+ "docs/evidence/COMPANY-DOCUMENTS/gap-closure/correspondence/historical-correspondence.pdf": {
+  "chunks": 5,
+  "digest": "903a71575634d0e346e680a2021c957937394632c01952c9c8f9268e3160258c"
+ },
+ "docs/evidence/D2-AUTHORING-PDF/2026-10-23/artifacts/historical-company/historical-correspondence.pdf": {
+  "chunks": 5,
+  "digest": "903a71575634d0e346e680a2021c957937394632c01952c9c8f9268e3160258c"
+ },
+ "docs/investor/INVESTOR_ONE_PAGER_2026-09-08.pdf": {
+  "chunks": 1,
+  "digest": "6ae8ad4959ee182f6ace1134c108432dfe82123f18f80e831ab2ef5ddfa586ae"
+ },
+ "dev_ops/Project Cortex/Automated Data Harvester Design for the Concept2Cure Platform.pdf": {
+  "chunks": 8,
+  "digest": "da02ff17383fc8f384fca9cf05c2019ed0522f382e6a9335d255514aaa751646"
+ },
+ "docs/evidence/D2-AUTHORING-PDF/2026-10-23/artifacts/ordinary-review.pdf": {
+  "chunks": 5,
+  "digest": "fa7d3cd225de0d1cea1d808d0d91de2d52db8933ffac0dac3e15a47fa93f7440"
+ },
+ "docs/evidence/D2-AUTHORING-PDF/2026-10-23/artifacts/ordinary-stale-signature.pdf": {
+  "chunks": 5,
+  "digest": "150343d31c4e459f353799b64cc4dcf9346d21a0789b52ed77c4b088385eadd2"
+ },
+ "docs/evidence/D2-AUTHORING-PDF/2026-10-23/artifacts/ordinary-working-copy.pdf": {
+  "chunks": 5,
+  "digest": "7b30f5ae91a3896fc0c68e587feae9130eaf689c557b3f4f78468901a7c34840"
+ },
+ "docs/publications/data-room-2026-10-14/exports/Concept2Cure-enhancement-delivery-plan-2026-10-14.pdf": {
+  "chunks": 10,
+  "digest": "f748fbf58b4b62dcaff076d8aad206f433c6798a855cd32ccb237367ad252084"
+ },
+ "docs/publications/data-room-2026-10-14/exports/rebuilt/Concept2Cure-enhancement-delivery-plan-2026-10-14.pdf": {
+  "chunks": 10,
+  "digest": "f748fbf58b4b62dcaff076d8aad206f433c6798a855cd32ccb237367ad252084"
+ },
+ "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/exports/multilingual-charts.pdf": {
+  "chunks": 1,
+  "digest": "e498902c8e0ba2f999875e25f8a5c927cd7204e355640f170c195bb4591c7f61"
+ },
+ "templates/authoring/Bioanalytical_Methods_Template_v1.pdf": {
+  "chunks": 4,
+  "digest": "0c51fcb035e6dad6aaf8496cb878bb166904c6013bbf53bce6415c204fefb53b"
+ },
+ "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525.pdf": {
+  "chunks": 1,
+  "digest": "dde5682421dc3723ad524561d4d221064dff0cb73adc445cdc2b0e8a1dda5f82"
+ },
+ "server/data/public-csr-reference/originals/0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525.pdf": {
+  "chunks": 1,
+  "digest": "dde5682421dc3723ad524561d4d221064dff0cb73adc445cdc2b0e8a1dda5f82"
+ },
+ "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-mobile/reports.pdf": {
+  "chunks": 13,
+  "digest": "3307b5f5560d7066b4b78b56a864c401bae87eeda13e09ebc46598fa12c50697"
+ },
+ "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/synthetic-native-packet.pdf": {
+  "chunks": 13,
+  "digest": "83394603eee225c127ab1ac204e0d683c7147607ef742e097a837867e41cdb52"
+ },
+ "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-dark/reports.pdf": {
+  "chunks": 13,
+  "digest": "a0d410d5f7dc09546f9b640a3f175955fc6cc5a2280dfcd92224b8a4eac4ae37"
+ },
+ "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-light/reports.pdf": {
+  "chunks": 13,
+  "digest": "a41b76ed1f58fcb357ebc8ddb6c53d681469514763194f74c075b0b4dfc77c5b"
+ },
+ "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14.pdf": {
+  "chunks": 13,
+  "digest": "51eede036c855a3e6e4641d9b11418df3b8e5ea35f20355c676b700165ea323e"
+ },
+ "docs/publications/data-room-2026-10-14/exports/rebuilt/Concept2Cure-data-room-study-2026-10-14.pdf": {
+  "chunks": 13,
+  "digest": "51eede036c855a3e6e4641d9b11418df3b8e5ea35f20355c676b700165ea323e"
+ },
+ "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8.pdf": {
+  "chunks": 1,
+  "digest": "40bf76c69228f3c156d9dd8cfe6f923023f6e43e5eaf7e706cf3382f801f3e82"
+ },
+ "server/data/public-csr-reference/originals/c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8.pdf": {
+  "chunks": 1,
+  "digest": "40bf76c69228f3c156d9dd8cfe6f923023f6e43e5eaf7e706cf3382f801f3e82"
+ },
+ "docs/Convergent Portal Build Protocol – Concept2Cure Platform.pdf": {
+  "chunks": 23,
+  "digest": "6b358ee0898ff34e61248aa151754d91936dcdbcedfd096283dec3dd675ddf38"
+ },
+ "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263.pdf": {
+  "chunks": 2,
+  "digest": "d7104d40d8ff21604c93d8778852aa0d380a79b061e9c763a9c2bf78c8f53c33"
+ },
+ "server/data/public-csr-reference/originals/a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263.pdf": {
+  "chunks": 2,
+  "digest": "d7104d40d8ff21604c93d8778852aa0d380a79b061e9c763a9c2bf78c8f53c33"
+ },
+ "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe.pdf": {
+  "chunks": 1,
+  "digest": "321294adc9b98642a90f6e38d15493c4f2a8d22828fd6d3077fcf7bc3c525f77"
+ },
+ "server/data/public-csr-reference/originals/90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe.pdf": {
+  "chunks": 1,
+  "digest": "321294adc9b98642a90f6e38d15493c4f2a8d22828fd6d3077fcf7bc3c525f77"
+ },
+ "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604.pdf": {
+  "chunks": 3,
+  "digest": "0f5a692b8c013dfb042243bbe19676252eb9d8359942e125973eeff5978bc978"
+ },
+ "server/data/public-csr-reference/originals/37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604.pdf": {
+  "chunks": 3,
+  "digest": "0f5a692b8c013dfb042243bbe19676252eb9d8359942e125973eeff5978bc978"
+ },
+ "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474.pdf": {
+  "chunks": 3,
+  "digest": "47693b57bde8feb558f4c1fb15eff4075e75603ff6f8d967770f8b99f02bb66e"
+ },
+ "server/data/public-csr-reference/originals/d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474.pdf": {
+  "chunks": 3,
+  "digest": "47693b57bde8feb558f4c1fb15eff4075e75603ff6f8d967770f8b99f02bb66e"
+ },
+ "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e.pdf": {
+  "chunks": 6,
+  "digest": "e3fbbe874f4a995a0923bd86d38b015ddfcaf9536f07968d24f1e306e9a128ef"
+ },
+ "server/data/public-csr-reference/originals/11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e.pdf": {
+  "chunks": 6,
+  "digest": "e3fbbe874f4a995a0923bd86d38b015ddfcaf9536f07968d24f1e306e9a128ef"
+ },
+ "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3.pdf": {
+  "chunks": 3,
+  "digest": "2ca7f01557c818422eee7d2462de2e140116745e39886d283dca7323c0987fa5"
+ },
+ "server/data/public-csr-reference/originals/8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3.pdf": {
+  "chunks": 3,
+  "digest": "2ca7f01557c818422eee7d2462de2e140116745e39886d283dca7323c0987fa5"
+ }
+}
