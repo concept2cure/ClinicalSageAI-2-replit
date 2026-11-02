@@ -1,0 +1,4128 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > asks for the scientific review before an approval, and sends the completed map with it 469ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the label does not name is caught by the server's refusal, and the panel opens instead of a reload 80ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the server names (made from a CSR template, or renamed) opens the scientific review before any approval is sent 60ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a document that is not a CSR approves as before, with no map 46ms
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > offers the study data frozen for this document when the program has no package run, and reads its tables 5042ms
+   → Unable to find a label with the text of: /Study data frozen for this document/
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > names the study data an imported CSR build was drafted from as that 5039ms
+   → Unable to find a label with the text of: /Study data the imported CSR build was drafted from/
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > lists package runs and study data together 5039ms
+   → Unable to find a label with the text of: /Study data frozen for this document/
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"rv-csr-run"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0mRun [0m
+                [0m0b6f2f5e[0m
+                [0m · [0m
+                [0mcompleted[0m
+                [0m · started [0m
+                [0m2026-10-28 09:00[0m
+                [0m UTC[0m
+              [36m</label>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"rv-csr-run"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0mRun [0m
+                [0m0b6f2f5e[0m
+                [0m · [0m
+                [0mcompleted[0m
+                [0m · started [0m
+                [0m2026-10-28 09:00[0m
+                [0m UTC[0m
+              [36m</label>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > with neither, says where the study data is frozen, not a package run it cannot start 5034ms
+   → Unable to find an element with the text: /Build from the study’s data/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > a failed read of the study data is said, never shown as nothing to choose 5036ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"rv-csr-run"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0mRun [0m
+                [0m0b6f2f5e[0m
+                [0m · [0m
+                [0mcompleted[0m
+                [0m · started [0m
+                [0m2026-10-28 09:00[0m
+                [0m UTC[0m
+              [36m</label>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"rv-csr-run"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0mRun [0m
+                [0m0b6f2f5e[0m
+                [0m · [0m
+                [0mcompleted[0m
+                [0m · started [0m
+                [0m2026-10-28 09:00[0m
+                [0m UTC[0m
+              [36m</label>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > offers the study data frozen for this document when the program has no package run, and reads its tables
+TestingLibraryElementError: Unable to find a label with the text of: /Study data frozen for this document/
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx:185:33
+    183|     serve({ studyData: [entry('this-document')] });
+    184|     await openApproval();
+    185|     const choice = await screen.findByLabelText(/Study data frozen for…
+       |                                 ^
+    186|     expect(screen.queryByText(/no saved package run/)).toBeNull();
+    187|     fireEvent.click(choice);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > names the study data an imported CSR build was drafted from as that
+TestingLibraryElementError: Unable to find a label with the text of: /Study data the imported CSR build was drafted from/
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx:200:25
+    198|     serve({ studyData: [entry('imported-build')] });
+    199|     await openApproval();
+    200|     expect(await screen.findByLabelText(/Study data the imported CSR b…
+       |                         ^
+    201|   });
+    202|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > lists package runs and study data together
+TestingLibraryElementError: Unable to find a label with the text of: /Study data frozen for this document/
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"rv-csr-run"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0mRun [0m
+                [0m0b6f2f5e[0m
+                [0m · [0m
+                [0mcompleted[0m
+                [0m · started [0m
+                [0m2026-10-28 09:00[0m
+                [0m UTC[0m
+              [36m</label>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"rv-csr-run"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0mRun [0m
+                [0m0b6f2f5e[0m
+                [0m · [0m
+                [0mcompleted[0m
+                [0m · started [0m
+                [0m2026-10-28 09:00[0m
+                [0m UTC[0m
+              [36m</label>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx:206:25
+    204|     serve({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026…
+    205|     await openApproval();
+    206|     expect(await screen.findByLabelText(/Study data frozen for this do…
+       |                         ^
+    207|     expect(screen.getByLabelText(/Run 0b6f2f5e/)).toBeTruthy();
+    208|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > with neither, says where the study data is frozen, not a package run it cannot start
+TestingLibraryElementError: Unable to find an element with the text: /Build from the study’s data/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<p[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mThis program has no saved package run. Start one from eCTD compile with the approved clinical source tables, then return here.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx:213:25
+    211|     serve({});
+    212|     await openApproval();
+    213|     expect(await screen.findByText(/Build from the study’s data/)).toB…
+       |                         ^
+    214|     expect(screen.queryByText(/eCTD compile/)).toBeNull();
+    215|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > a failed read of the study data is said, never shown as nothing to choose
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"rv-csr-run"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0mRun [0m
+                [0m0b6f2f5e[0m
+                [0m · [0m
+                [0mcompleted[0m
+                [0m · started [0m
+                [0m2026-10-28 09:00[0m
+                [0m UTC[0m
+              [36m</label>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"esign-bd"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-labelledby[39m=[32m"rv-decision-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"esign-modal rv-decision-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-h"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"rv-decision-title"[39m
+          [36m>[39m
+            [0mRecord review decision[0m
+          [36m</h2>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-b rv-decision-body"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Complete saved document"[39m
+            [33mclass[39m=[32m"rv-decision-read"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mLMN-201 RePreve Clinical Study Report[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mRevision [0m
+              [0m2[0m
+              [0m · M5[0m
+              [0m · en[0m
+              [0m · LMN-201[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview requested [0m
+              [36m<time[39m
+                [33mdatetime[39m=[32m"2026-09-20T10:00:00.000Z"[39m
+                [33mstyle[39m=[32m"display: inline-flex; flex-direction: column; gap: 2px;"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m2026-09-20 10:00:00 UTC[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mstyle[39m=[32m"opacity: 0.65; font-size: 0.85em;"[39m
+                [36m>[39m
+                  [0mSep 20, 2026, 10:00[0m
+                  [0m · [0m
+                  [0mUTC[0m
+                [36m</span>[39m
+              [36m</time>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m11.4[0m
+                [0m · Efficacy results[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mGlobal cure occurred in 10/12 LMN-201 participants and 4/11 on placebo.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"rv-decision-section"[39m
+            [36m>[39m
+              [36m<h4>[39m
+                [0m5[0m
+                [0m · Ethics[0m
+              [36m</h4>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ed-full-sec-body"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0mThe protocol was approved by each IRB.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [0mDecision[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mid[39m=[32m"rv-decision"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mApprove[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"changes_requested"[39m
+              [36m>[39m
+                [0mRequest changes — send it back with a reason[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"rejected"[39m
+              [36m>[39m
+                [0mDecline — reject this document[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"esign-field"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"rv-reason"[39m
+            [36m>[39m
+              [0mNote for the thread (optional)[0m
+            [36m</label>[39m
+            [36m<textarea[39m
+              [33mid[39m=[32m"rv-reason"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"Anything the author or the next reviewer should know"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"CSR scientific review"[39m
+            [33mclass[39m=[32m"rv-csr-evidence"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mCSR scientific review[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mThis document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.[0m
+            [36m</p>[39m
+            [36m<fieldset>[39m
+              [36m<legend>[39m
+                [0m1. The retained analysis run[0m
+              [36m</legend>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"rv-csr-run"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0mRun [0m
+                [0m0b6f2f5e[0m
+                [0m · [0m
+                [0mcompleted[0m
+                [0m · started [0m
+                [0m2026-10-28 09:00[0m
+                [0m UTC[0m
+              [36m</label>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mRead the retained tables[0m
+              [36m</button>[39m
+            [36m</fieldset>[39m
+          [36m</section>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"esign-manifest"[39m
+          [36m>[39m
+            [0mYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"esign-f rv-decision-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReload review record[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord approval[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx:220:26
+    218|     serve({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026…
+    219|     await openApproval();
+    220|     expect((await screen.findByRole('alert')).textContent).toMatch(/st…
+       |                          ^
+    221|     expect(screen.queryByLabelText(/Run 0b6f2f5e/)).toBeNull();
+    222|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 4 passed (9)
+   Start at  03:22:32
+   Duration  27.59s (transform 392ms, setup 219ms, import 513ms, tests 25.85s, environment 818ms)
+
