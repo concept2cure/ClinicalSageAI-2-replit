@@ -8,6 +8,7 @@ import { readTaskNavigationTarget, taskActorScope, type TaskActorScope } from '.
 import { registerSurfaceLeaveGuard, surfaceLeaveRefusal } from '../navParams';
 import type { ListState } from '../dataConnect';
 import { I } from '../icons';
+import { setEditorTarget } from '../editorTarget';
 import { useDialog } from '../useDialog';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, EmptyState, ErrorState } from '../dataConnect';
 import { taskAnalyticsScope } from './taskBoardAnalyticsScope';
@@ -107,6 +108,8 @@ interface TaskItem {
   comments: number;
   attachments: number;
   source: string;
+  /** Exact UUID of an authoring document linked by the task's persisted source. */
+  sourceDocumentId?: string;
   /** Humanised label for display only — never parsed for overdue state. */
   due: string;
   /**
@@ -1534,6 +1537,14 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           byId={byId}
           projLabel={projLabel}
           onClose={() => setSel(null)}
+          onOpenDocument={(documentId) => {
+            // The existing editor verifies project/document access after navigation.
+            if (!currentTaskActor(taskActorScope(user), isCurrent)) return;
+            if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId)) return;
+            setEditorTarget({ docType: null, docId: documentId });
+            setSel(null);
+            onNav('document-authoring');
+          }}
           onAsk={onAsk}
           onMove={move}
           nameOf={nameOf}
@@ -1571,6 +1582,7 @@ interface TaskDetailProps {
   byId: (id: string) => TaskItem | undefined;
   projLabel: (id: string) => string;
   onClose: () => void;
+  onOpenDocument?: (documentId: string) => void;
   onAsk: (text: string) => void;
   onMove: (t: TaskItem, dir: number) => void;
   onAssign: (meta: TaskAssignmentMeta, headers: () => Record<string, string> | null) => Promise<AutomaticAssignmentAnswer>;
@@ -1642,7 +1654,7 @@ function OtherStoreTaskDetail({ t, projName, onClose, onOpenHome, opening, error
   );
 }
 
-function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification,
+function TaskDetail({ t, byId, projLabel, onClose, onOpenDocument, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification,
   actorScope, isCurrent, onAssignmentSaved }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = nameOf(t.assignee) || 'Unassigned';
@@ -1738,6 +1750,13 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
           <div><label>Came from</label><span>{src.t}</span></div>
           <div><label>Progress</label><span>{t.progress}%</span></div>
         </div>
+        {t.sourceDocumentId && onOpenDocument && (
+          <div className="tb-detail-sec">
+            <button type="button" className="btn primary" onClick={() => onOpenDocument(t.sourceDocumentId!)}>
+              {I.fileText} Open linked document in editor
+            </button>
+          </div>
+        )}
         {canWrite && <TaskAssignmentControls key={t.taskId} taskId={t.taskId} status={t.status}
           projectId={/^[1-9]\d*$/.test(t.project) ? Number(t.project) : null} actorScope={actorScope} isCurrent={isCurrent}
           disabled={confirmArchive || archiving} onAutomatic={onAssign} onSaved={onAssignmentSaved} onBlockedChange={setAssignmentBlocked} />}
