@@ -1,4 +1,4 @@
-/** One canonical seed body; transaction ownership is explicit, never inferred from connect(). */
+/** One canonical seed body, and the one owned RBM write transaction; ownership is explicit, never inferred from connect(). */
 import type { RequestSqlClient } from '../../db/requestDb';
 import { requireRbmProgram, type RbmActor } from './rbm-access';
 import { DEFAULT_CTQ_FACTORS, scoreRisk, overallRiskFromScores } from './rbm-engine';
@@ -19,26 +19,39 @@ async function writeSeed(client: RequestSqlClient, actor: RbmActor, input: SeedI
   const items = await client.query('SELECT * FROM rbm_risk_items WHERE organization_id=$1 AND assessment_id=$2 ORDER BY risk_score DESC,id', [actor.organizationId, assessment.id]);
   return { ...assessment, items: items.rows };
 }
-/** A caller-owned transaction is never opened, committed or rolled back here. */
-export async function seedRbmAssessment(client: RequestSqlClient, actor: RbmActor, input: SeedInput, ownership: 'owned' | 'caller-owned') {
-  if (ownership === 'caller-owned') return writeSeed(client, actor, input);
-  if (ownership !== 'owned') throw new Error('Explicit seed transaction ownership is required');
+/**
+ * One RBM write in a transaction this module owns on `client`: BEGIN, the work,
+ * COMMIT, and ROLLBACK on any failure. A rollback that cannot be verified is
+ * handed to the client's owner (discard) so the connection is not reused. The
+ * seed and AnA's add_ctq_factor both write through it.
+ */
+export async function inOwnedRbmTransaction<T>(client: RequestSqlClient, work: (tx: RequestSqlClient) => Promise<T>): Promise<T> {
   await client.query('BEGIN');
   try {
-    const result = await writeSeed(client, actor, input);
+    const result = await work(client);
     await client.query('COMMIT');
     return result;
   } catch (error) {
     try { await client.query('ROLLBACK'); }
-    catch (rollbackError) { await client.discard?.(rollbackError instanceof Error ? rollbackError : new Error('Seed rollback could not be verified')); }
+    catch (rollbackError) { await client.discard?.(rollbackError instanceof Error ? rollbackError : new Error('RBM write rollback could not be verified')); }
     throw error;
   }
 }
-/** Explicit lease boundary for the existing pool-backed AnA dispatch path. */
-export async function seedRbmAssessmentFromPool(pool: RbmSeedPool, actor: RbmActor, input: SeedInput) {
+/** The same on one explicitly owned lease of the pool, released afterwards. */
+export async function inOwnedRbmTransactionFromPool<T>(pool: RbmSeedPool, work: (tx: RequestSqlClient) => Promise<T>): Promise<T> {
   const lease = await pool.connect();
   let discard: Error | undefined;
   const client: RequestSqlClient = { query: (text, params) => lease.query(text, params), discard: async error => { discard = error; } };
-  try { return await seedRbmAssessment(client, actor, input, 'owned'); }
+  try { return await inOwnedRbmTransaction(client, work); }
   finally { lease.release(discard); }
+}
+/** A caller-owned transaction is never opened, committed or rolled back here. */
+export async function seedRbmAssessment(client: RequestSqlClient, actor: RbmActor, input: SeedInput, ownership: 'owned' | 'caller-owned') {
+  if (ownership === 'caller-owned') return writeSeed(client, actor, input);
+  if (ownership !== 'owned') throw new Error('Explicit seed transaction ownership is required');
+  return inOwnedRbmTransaction(client, tx => writeSeed(tx, actor, input));
+}
+/** Explicit lease boundary for the existing pool-backed AnA dispatch path. */
+export async function seedRbmAssessmentFromPool(pool: RbmSeedPool, actor: RbmActor, input: SeedInput) {
+  return inOwnedRbmTransactionFromPool(pool, tx => writeSeed(tx, actor, input));
 }
