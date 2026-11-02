@@ -1,3 +1,9 @@
+/* eslint-disable complexity, max-depth, max-lines, no-control-regex --
+   An evidence method, not product code: a one-off static analysis that resolves client call sites into the R1
+   inventory (README.md here). Its tooling twins under scripts/** are outside the lint scope altogether
+   (eslint.config.js). Its long branching readers are deliberate and are pinned by the self-test and the
+   byte-for-byte rebuild of inventory.json; splitting them only to satisfy a size rule would put that at risk.
+   Only these four size and style rules are off; every correctness rule still applies. */
 // R1 inventory, step 2b (added 2026-11-01, see CHANGELOG-template-callers.md).
 //
 // The literal pass (match.py) reads each string or template literal on its own, so a URL that is
@@ -953,7 +959,7 @@ function fanOut(root, vals, ctx) {
     for (const c of combos) for (const o of os) if (next.length < MAX_OBJ) next.push([...c, [b, o]]);
     combos = next;
   }
-  let out = [...vals];
+  const out = [...vals];
   for (const c of combos) {
     const objEnv = new Map();
     for (const [b, o] of c) { if (!objEnv.has(b.param)) objEnv.set(b.param, new Map()); objEnv.get(b.param).set(b.name, o); }
