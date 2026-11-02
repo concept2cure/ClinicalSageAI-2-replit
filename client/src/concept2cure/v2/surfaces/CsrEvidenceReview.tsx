@@ -180,7 +180,7 @@ function RunPicker({ m, runs, runError, disabled }: { m: EvidenceMap; runs: RunC
     <legend>1. The retained analysis run</legend>
     {runError && <p className="esign-err" role="alert">{runError}</p>}
     {!runError && runs === null && <p role="status">Reading the saved runs for this program…</p>}
-    {runs?.length === 0 && <p role="status">No retained clinical tables are available for this document: no study data is frozen for it, and its program has no saved package run. A CSR’s study data is frozen in its editor, under “Build from the study’s data”.</p>}
+    {!runError && runs?.length === 0 && <p role="status">No retained clinical tables are available for this document: no study data is frozen for it, and its program has no saved package run. A CSR’s study data is frozen in its editor, under “Build from the study’s data”.</p>}
     {runs?.map((r) => <label key={r.runId} className="rv-csr-run">
       <input type="checkbox" checked={m.selected.includes(r.runId)} onChange={(e) => toggle(r.runId, e.target.checked)} />
       {r.label}
