@@ -148,8 +148,8 @@ function HeadingRow({ heading, busy, onDecide }: {
       {heading.manual && heading.state === 'not_drafted' && <span>Prepared from records, not drafted by the build</span>}
       {heading.staleApproval && <span>Redrafted after approval; review again</span>}
       {heading.state === 'draft' && heading.reason && <span>Sent back: {heading.reason}</span>}
-      {heading.state === 'draft' && <button type="button" className="btn" disabled={busy} onClick={() => onDecide('submit')}>{I.send} Send for review</button>}
-      {heading.state === 'in_review' && <button type="button" className="btn" disabled={busy} onClick={() => onDecide('approve')}>{I.check} Approve</button>}
+      {heading.state === 'draft' && <button type="button" className="btn" disabled={busy || heading.placeholder === true} title={heading.placeholder ? 'Complete source-data placeholders before review.' : undefined} onClick={() => onDecide('submit')}>{I.send} Send for review</button>}
+      {heading.state === 'in_review' && <button type="button" className="btn" disabled={busy || heading.placeholder === true} title={heading.placeholder ? 'Complete source-data placeholders before approval.' : undefined} onClick={() => onDecide('approve')}>{I.check} Approve</button>}
       {(heading.state === 'in_review' || heading.state === 'approved') && reason === null &&
         <button type="button" className="btn" disabled={busy} onClick={() => setReason('')}>{I.undo} Send back</button>}
     </div>
