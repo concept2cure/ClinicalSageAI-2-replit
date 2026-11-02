@@ -6,21 +6,21 @@
  *
  * Extracted from `fda-esg.ts` on 2026-09-20 (W5, runbook B7/B16) so the ICSR
  * transport could reuse the ONE AS2 implementation instead of growing a second
- * one. Everything here is envelope framing, body signing, the mTLS POST, MDN
+ * one. Everything here is envelope framing, the mTLS POST, MDN
  * interpretation and the one delivery classification (classifyDelivery, added
  * 2026-09-23 W5/D7, MDN final pass) — no database, no transmittal rows; each
  * caller maps the four outcomes onto its own records.
  *
  * Production callers build CMS-signed, recipient-encrypted MIME through
  * as2-cms.ts and use classifyVerifiedAs2Delivery to verify the pinned agency
- * signature and content MIC. The pure MDN syntax parser is not delivery proof.
+ * signature and content MIC. The pure MDN syntax parser is not delivery proof,
+ * and since 2026-11-01 (F1) no exported verdict judges a 2xx by syntax alone.
  * OpenSSL is a required runtime dependency. Agency/account UAT remains a
  * separate qualification requirement; offline engineering is not agency approval.
  *
  * @module server/services/submission-gateways/as2-transport
  */
 
-import { createSign } from 'crypto';
 import * as https from 'node:https';
 import type { Socket } from 'node:net';
 import type { TLSSocket } from 'node:tls';
@@ -39,8 +39,6 @@ export interface As2Message {
   /** MIME type of `body`. */
   contentType: string;
   body: Buffer;
-  /** @deprecated Detached bare RSA signatures are not an AS2 S/MIME envelope. */
-  signaturePem?: string;
   /** `Content-Disposition` filename — the name the agency files the payload under. */
   filename?: string;
   /** `User-Agent` header value. */
@@ -457,7 +455,11 @@ export function mdnRefusal(mdn: ParsedMdn, messageId: string): MdnRefusal | null
      Every one is now `unconfirmed`, and a comment no longer defeats a match.
      2026-09-23 (W5/D7, round-3 review, second pass): the refusal check ran
      before this tie, so a refusal naming another message (or none) was a
-     rejection. The tie now applies to refusals and acceptances alike. */
+     rejection. The tie now applies to refusals and acceptances alike.
+     Since e1f3fd425 (2026-10-17) classifyVerifiedAs2Delivery verifies the
+     MDN's signature against the pinned agency certificate before this
+     function reads it, and its Received-Content-MIC before an acceptance
+     counts; the "still not verified" note above is history (2026-11-01, F1). */
   const untied = untiedReason(mdn.originalMessageId, messageId);
   if (untied !== null) return unconfirmed(untied);
   if (mdn.failed) return { kind: 'rejected', reason: `Agency MDN did not accept the message: ${mdn.disposition}` };
@@ -478,16 +480,6 @@ export function buildAs2Headers(msg: As2Message): Record<string, string> {
     'Content-Length':            String(msg.body.length),
     'User-Agent':                msg.userAgent ?? 'concept2cure-mdx/1.0',
   };
-}
-
-export function signAs2Body(body: Buffer, privateKeyPem: string): string {
-  /* Detached SHA-256 signature over the body. The agency's MDN signing
-     verification expects the signature in the MDN; the request-side
-     signature is the sponsor's proof of origin. Production uses CMS
-     SignedData; this scaffolds the path. */
-  const signer = createSign('RSA-SHA256');
-  signer.update(body);
-  return signer.sign(privateKeyPem, 'base64');
 }
 
 /**
@@ -919,23 +911,23 @@ export function classifyDelivery(
 }
 
 /**
- * classifyDelivery for an AS2 POST: a 2xx is judged by its synchronous MDN
- * (parseMdn + mdnRefusal, tied to `messageId`). A RECEIVED receipt id is the
- * MDN's own Message-ID, else the AS2 Message-ID the MDN acknowledges.
+ * The one AS2 verdict: classifyDelivery for an AS2 POST, whose 2xx is judged by
+ * its synchronous MDN only after the MDN's CMS signature verifies against the
+ * pinned agency certificate, it names `messageId` (mdnRefusal) and its
+ * Received-Content-MIC identifies the exact content sent. A RECEIVED receipt id
+ * is the MDN's own Message-ID, else the AS2 Message-ID it acknowledges.
+ *
+ * 2026-11-01 (F1, DP-81 follow-up): classifyAs2Delivery, the syntax-only twin
+ * this delegated to for non-2xx answers, is deleted. It was exported and called
+ * an unsigned, tied, accepting MDN RECEIVED; nothing in production reached that
+ * judge, but the next caller would have. classifyDelivery answers a failed or
+ * non-2xx attempt before any 2xx judge runs, so `verdict` is read only for a
+ * 2xx, as before.
  */
-export function classifyAs2Delivery(attempt: DeliveryAttempt, messageId: string): DeliveryOutcome {
-  return classifyDelivery(attempt, messageId, (response, raw) => {
-    const refusal = mdnRefusal(parseMdn(raw, response.headers['content-type']), messageId);
-    if (refusal === null) return { kind: 'RECEIVED', receiptId: headerValue(response.headers['message-id']) ?? messageId };
-    return { kind: refusal.kind === 'rejected' ? 'REFUSED_BY_AGENCY' : 'DELIVERED_UNCONFIRMED', reason: refusal.reason };
-  });
-}
-
-/** Production AS2 acceptance requires a pinned CMS signature plus the original payload MIC.
- * The synchronous syntax classifier above is retained for pure MDN parsing tests. */
 export async function classifyVerifiedAs2Delivery(attempt: DeliveryAttempt, messageId: string, proof: { agencyCertPem: string; expectedMic: string }): Promise<DeliveryOutcome> {
-  if (!attempt.ok || attempt.response.httpStatus < 200 || attempt.response.httpStatus >= 300) return classifyAs2Delivery(attempt, messageId);
-  let verdict: TwoXxVerdict;
+  const unverified: TwoXxVerdict = { kind: 'DELIVERED_UNCONFIRMED', reason: 'The agency MDN signature could not be verified against its pinned certificate.' };
+  let verdict: TwoXxVerdict = unverified;
+  if (!attempt.ok || attempt.response.httpStatus < 200 || attempt.response.httpStatus >= 300) return classifyDelivery(attempt, messageId, () => verdict);
   try {
     const header = attempt.response.headers['content-type'];
     if (typeof header !== 'string') throw new Error('ambiguous or missing MIME type');
@@ -946,7 +938,7 @@ export async function classifyVerifiedAs2Delivery(attempt: DeliveryAttempt, mess
     else if (!as2MicMatches(mdn.receivedContentMic, proof.expectedMic)) verdict = { kind: 'DELIVERED_UNCONFIRMED', reason: 'Agency-signed MDN MIC does not identify the exact message content sent.' };
     else verdict = { kind: 'RECEIVED', receiptId: headerValue(attempt.response.headers['message-id']) ?? messageId };
   } catch {
-    verdict = { kind: 'DELIVERED_UNCONFIRMED', reason: 'The agency MDN signature could not be verified against its pinned certificate.' };
+    verdict = unverified;
   }
   return classifyDelivery(attempt, messageId, () => verdict);
 }

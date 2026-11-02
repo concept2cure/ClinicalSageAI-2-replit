@@ -74,7 +74,7 @@
  */
 
 import { promises as fs } from 'fs';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { createRequire } from 'node:module';
 import { pool } from '../../db';
 import { resolveGatewayAccount, type ResolvedGatewayAccount } from './gateway-accounts';
@@ -84,7 +84,7 @@ import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import {
   attemptDelivery, buildAs2Headers, classifyVerifiedAs2Delivery, postAs2, type DeliveryOutcome, type DeliveryAttempt, type As2Response,
 } from './as2-transport';
-import { as2CmsAvailable, buildAs2CmsEnvelope } from './as2-cms';
+import { AS2_ENVELOPE_FILENAME, as2CmsAvailable, buildAs2CmsEnvelope } from './as2-cms';
 import {
   CredentialError, GatewayError, NOTHING_TRANSMITTED, TransportError, UnverifiedTransportError,
   resolveToRegistryEntry,
@@ -422,9 +422,10 @@ async function updateTransmittal(
 
 /**
  * Record an AS2 attempt that did not end RECEIVED, and return the error the
- * transmit throws. The outcome comes from classifyAs2Delivery
+ * transmit throws. The outcome comes from classifyVerifiedAs2Delivery
  * (./as2-transport.ts) — the one delivery rule FDA ESG and the ICSR transport
- * share; nothing here re-derives it.
+ * share; nothing here re-derives it. (Its syntax-only twin, classifyAs2Delivery,
+ * was deleted 2026-11-01, F1.)
  *
  *   REFUSED_BY_AGENCY     'rejected' (errorClass 'gateway'), the HTTP status and
  *                         the agency's body kept. FDA answered and refused.
@@ -527,6 +528,25 @@ function as2ReceiptMetadata(response: As2Response, outcome: DeliveryOutcome) {
 }
 
 /**
+ * The platform record's line for an endpoint answer nothing verified: what it
+ * was, by HTTP status, size and digest, so an auditor can match it to the bytes
+ * kept on the row without the record serving them as FDA's receipt. Null when
+ * no answer was kept. 2026-11-01 (F1, DP-81).
+ */
+function keptEndpointResponse(
+  captured: { bodyBase64?: unknown; verified?: unknown } | undefined,
+  row: { http_status: number | null; mdn_raw: string | null },
+): string | null {
+  if (captured?.verified === true) return null;
+  const bytes = typeof captured?.bodyBase64 === 'string' && captured.bodyBase64 ? Buffer.from(captured.bodyBase64, 'base64')
+    : row.mdn_raw ? Buffer.from(row.mdn_raw, 'utf8') : null;
+  if (!bytes) return null;
+  const status = row.http_status === null || row.http_status === undefined ? 'HTTP status not recorded' : `HTTP ${row.http_status}`;
+  return `${status}, ${bytes.length} bytes, SHA-256 ${createHash('sha256').update(bytes).digest('hex')}. ` +
+    "It was not verified against FDA's pinned certificate and the MIC of what was sent, so it is not FDA's receipt.";
+}
+
+/**
  * Record a send FDA may hold as 'in_transit' — delivered, receipt unconfirmed,
  * inside the duplicate-send lock — and return the error the transmit throws.
  *
@@ -535,7 +555,8 @@ function as2ReceiptMetadata(response: As2Response, outcome: DeliveryOutcome) {
  * answered 2xx went through transmit's catch and was written 'rejected' —
  * outside findActiveTransmittal and sub_trans_active_lock_idx — so the same
  * bundle could be sent again at once. (Which transport failures count as
- * "after the bytes left" is classifyAs2Delivery's call — MDN final pass.)
+ * "after the bytes left" is the AS2 verdict's call — MDN final pass;
+ * classifyVerifiedAs2Delivery since 2026-11-01.)
  * If this write fails too, the row keeps the 'in_transit' written before the
  * send (still inside the lock), and the error says so.
  */
@@ -794,7 +815,7 @@ export class FdaEsgGateway implements SubmissionGateway {
       catch (err) { throw new TransportError('AS2 signing/encryption preparation failed. Nothing was transmitted.', err, NOTHING_TRANSMITTED); }
       const headers = buildAs2Headers({
         messageId, from: creds.as2From, to: creds.as2To,
-        contentType: envelope.contentType, body: envelope.body, filename: 'smime.p7m',
+        contentType: envelope.contentType, body: envelope.body, filename: AS2_ENVELOPE_FILENAME,
       });
       // Persist the exact public receipt binding before any byte leaves this process.
       await writeAs2Metadata(transmittalId, req.organizationId, 'as2', { messageId, mic: envelope.mic, micAlgorithm: envelope.micAlgorithm, environment: req.environment });
@@ -822,10 +843,10 @@ export class FdaEsgGateway implements SubmissionGateway {
       /* Persist the raw MDN body verbatim alongside the message-id. The
          §11.10(e) audit trail needs the agency's response as it arrived on
          the wire, not a kit-side reconstruction (per FDA ESG production UAT
-         §11). downloadAcknowledgment() returns this string when present and
-         falls back to synthesised text for pre-migration rows. The MDN's own
-         Message-ID when FDA sends one; otherwise the AS2 message it was
-         verified to acknowledge. */
+         §11). downloadAcknowledgment() serves the verified as2Receipt kept
+         above as the agency's, and the platform record otherwise (2026-11-01,
+         DP-81). The MDN's own Message-ID when FDA sends one; otherwise the AS2
+         message it was verified to acknowledge. */
       const mdnRaw = outcome.responseRaw;
       const mdnId = outcome.receiptId;
       sent = {
@@ -883,10 +904,11 @@ export class FdaEsgGateway implements SubmissionGateway {
        MDN arrived asynchronously. */
     const { rows } = await pool.query<{
       transmission_id: string; status: string; ack_received_at: Date | null;
+      http_status: number | null;
       mdn_raw: string | null;
       metadata: Record<string, unknown> | null;
     }>(
-      `SELECT transmission_id, status, ack_received_at, mdn_raw, metadata
+      `SELECT transmission_id, status, ack_received_at, http_status, mdn_raw, metadata
          FROM submission_transmittals
         WHERE id = $1 AND region = 'fda' AND gateway = 'esg'`,
       [transmittalId],
@@ -895,33 +917,22 @@ export class FdaEsgGateway implements SubmissionGateway {
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     }
     const r = rows[0];
-    const captured = r.metadata?.as2Receipt as { bodyBase64?: unknown; contentType?: unknown; receivedAt?: unknown } | undefined;
-    if (typeof captured?.bodyBase64 === 'string' && captured.bodyBase64) {
+    const captured = r.metadata?.as2Receipt as { bodyBase64?: unknown; contentType?: unknown; receivedAt?: unknown; verified?: unknown } | undefined;
+    /* 2026-11-01 (F1, DP-81 of docs/evidence/reviews/2026-10-19/security.md):
+       only a receipt verified against FDA's pinned certificate and the MIC of
+       what was sent is the agency's — `verified` is written true only by
+       classifyVerifiedAs2Delivery's RECEIVED or tied refusal (as2ReceiptMetadata)
+       and by an uploaded signed MDN (ingestFdaAs2Receipt). Any other answer on
+       the pinned URL (a proxy's 502 page, an unsigned MDN) and an mdn_raw kept
+       by the syntax-only judge before 2026-10-17 were served as 'agency' and
+       named agency-acknowledgement-<id>.txt. They are kept as they arrived and
+       described in the platform record below, never served as FDA's. */
+    if (captured?.verified === true && typeof captured.bodyBase64 === 'string' && captured.bodyBase64) {
       const observed = typeof captured.receivedAt === 'string' ? new Date(captured.receivedAt) : null;
       return { transmittalId, transmissionId: r.transmission_id,
         contentType: typeof captured.contentType === 'string' ? captured.contentType : 'application/octet-stream',
         buffer: Buffer.from(captured.bodyBase64, 'base64'),
         receivedAt: observed && Number.isFinite(observed.getTime()) ? observed : r.ack_received_at ?? null,
-        provenance: 'agency',
-      };
-    }
-    if (r.mdn_raw && r.mdn_raw.length > 0) {
-      // Legacy rows retain verbatim bytes without their original MIME header.
-      // Keep the type unspecified rather than inventing a multipart boundary.
-      return {
-        transmittalId,
-        transmissionId: r.transmission_id,
-        contentType: 'application/octet-stream',
-        buffer: Buffer.from(r.mdn_raw, 'utf8'),
-        /* A row that is not 'received' (an explicit rejection, or an
-           in_transit row whose MDN could not be tied to the message) has no
-           ack_received_at. This fell back to the download time — the residual
-           the 2026-09-23 round-3 review left open because the type was `Date`.
-           It is null now (2026-10-15). */
-        receivedAt: r.ack_received_at ?? null,
-        // The only genuine agency artefact the platform holds: FDA's own MDN,
-        // stored verbatim at transmit time. Everything else served from this
-        // method is a platform record and is labelled as one.
         provenance: 'agency',
       };
     }
@@ -933,7 +944,7 @@ export class FdaEsgGateway implements SubmissionGateway {
       gatewayLabel: 'FDA ESG (esg)',
       status: r.status,
       ackReceivedAt: r.ack_received_at,
-      extra: { 'Transmission': r.transmission_id },
+      extra: { 'Transmission': r.transmission_id, 'Endpoint response kept on this transmittal': keptEndpointResponse(captured, r) },
     });
   }
 }

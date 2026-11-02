@@ -1,0 +1,711 @@
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete that carries a sourcePath, naming the leaf (the AnA tool mapping) 43ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete in a follow-up sequence that names no modified-file 11ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > packages a backbone-only delete with a modified-file: no file, no checksum line, no href, no checksum 82ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses any delete in sequence 0000, where nothing is on file to withdraw 9ms
+ × server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "0" before any leaf is read 64ms
+   → promise resolved "{ …(9) }" instead of rejecting
+ × server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "1" before any leaf is read 34ms
+   → promise resolved "{ …(9) }" instead of rejecting
+ × server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "00001" before any leaf is read 32ms
+   → promise resolved "{ …(9) }" instead of rejecting
+ × server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "0x01" before any leaf is read 30ms
+   → promise resolved "{ …(9) }" instead of rejecting
+ × server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence " 0000" before any leaf is read 7ms
+   → expected ValidationError: Leaf 'old-manufacture.pd… { …(2) } to match object { findings: [ ObjectContaining{…} ] }
+(5 matching properties omitted from actual)
+ × server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "" before any leaf is read 26ms
+   → expected ValidationError: The application id and t… { …(2) } to match object { findings: [ ObjectContaining{…} ] }
+(5 matching properties omitted from actual)
+ × server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence undefined before any leaf is read 7ms
+   → expected TypeError: Cannot read properties of unde… to match object { findings: [ ObjectContaining{…} ] }
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > still packages a four-digit sequence 27ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "0" before any leaf is read
+AssertionError: promise resolved "{ …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "displayName": "P · FDA original #0",
++   "dtdStatus": {
++     "missing": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "missingStylesheets": [
++       "ectd-2-0.xsl",
++       "us-regional.xsl",
++     ],
++     "present": [],
++     "presentStylesheets": [],
++     "required": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "requiredStylesheets": [
++       "ectd-2-0.xsl",
++       "us-regional.xsl",
++     ],
++     "selfContained": false,
++     "validation": {
++       "expectedFiles": [
++         "index.xml",
++         "m1/us/us-regional.xml",
++       ],
++       "files": [
++         {
++           "doctype": {
++             "errors": [],
++             "valid": true,
++           },
++           "dtd": {
++             "errors": [
++               "Declared DTD ich-ectd-3-2.dtd is missing from the package.",
++             ],
++             "mode": "dtd",
++             "ran": false,
++             "valid": false,
++           },
++           "relPath": "index.xml",
++           "wellFormed": {
++             "errors": [],
++             "mode": "well-formed",
++             "ran": true,
++             "valid": true,
++           },
++         },
++         {
++           "doctype": {
++             "errors": [],
++             "valid": true,
++           },
++           "dtd": {
++             "errors": [
++               "Declared DTD us-regional-v3-3.dtd is missing from the package.",
++             ],
++             "mode": "dtd",
++             "ran": false,
++             "valid": false,
++           },
++           "relPath": "m1/us/us-regional.xml",
++           "wellFormed": {
++             "errors": [],
++             "mode": "well-formed",
++             "ran": true,
++             "valid": true,
++           },
++         },
++       ],
++       "integrity": {
++         "mismatched": [],
++         "missingFiles": [],
++         "ok": true,
++         "unlistedFiles": [],
++         "verified": [],
++       },
++       "passed": false,
++       "version": 1,
++     },
++   },
++   "format": "ectd",
++   "leafManifest": [
++     {
++       "backbone": "m1/us/us-regional.xml",
++       "ctdSection": "1.2",
++       "fileName": "cover.pdf",
++       "href": "m1/us/1-2/cover.pdf",
++       "leafId": "leaf-1-2-cover",
++       "md5": "b92c9774faf59a676e6bc7bab0073346",
++       "operation": "new",
++       "title": "Cover",
++     },
++     {
++       "backbone": "index.xml",
++       "ctdSection": "3.2.S.2",
++       "fileName": "old-manufacture.pdf",
++       "href": "../0000/index.xml#leaf-3-2-S-2-old-manufacture",
++       "leafId": "leaf-3-2-S-2-old-manufacture",
++       "md5": "",
++       "modifiedFile": "../0000/index.xml#leaf-3-2-S-2-old-manufacture",
++       "operation": "delete",
++       "title": "Old Manufacture",
++     },
++   ],
++   "path": "/tmp/del-sink-PraJCS/out/123456-0-fda.zip",
++   "regionalBackbone": {
++     "conformanceGap": "<applicant-info> has no <applicant-contacts>: no applicant contact was supplied",
++     "file": "m1/us/us-regional.xml",
++     "region": "fda",
++     "regionConformant": false,
++   },
++   "sha256": "f8912a4fde5f3ddcc6d9ccc9545f28b3fa3bedc5b16d67170fffc6f5a6603be8",
++   "sizeBytes": 2807,
++   "submissionGrade": {
++     "agencyFormsAsIssued": [],
++     "allPdfA": false,
++     "notConverted": [
++       "cover.pdf",
++     ],
++     "pdfLeaves": 1,
++     "pdfaConverted": 0,
++     "total": 1,
++   },
+  }
+
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:148:23
+    146|         { ctdSection: '1.2', operation: 'new', sourcePath: cover, file…
+    147|       ]);
+    148|       await expect(run).rejects.toMatchObject({
+       |                       ^
+    149|         findings: [expect.objectContaining({ ruleId: 'PACKAGE-SEQUENCE…
+    150|       });
+ ❯ withWork server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:50:18
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:142:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "1" before any leaf is read
+AssertionError: promise resolved "{ …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "displayName": "P · FDA original #1",
++   "dtdStatus": {
++     "missing": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "missingStylesheets": [
++       "ectd-2-0.xsl",
++       "us-regional.xsl",
++     ],
++     "present": [],
++     "presentStylesheets": [],
++     "required": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "requiredStylesheets": [
++       "ectd-2-0.xsl",
++       "us-regional.xsl",
++     ],
++     "selfContained": false,
++     "validation": {
++       "expectedFiles": [
++         "index.xml",
++         "m1/us/us-regional.xml",
++       ],
++       "files": [
++         {
++           "doctype": {
++             "errors": [],
++             "valid": true,
++           },
++           "dtd": {
++             "errors": [
++               "Declared DTD ich-ectd-3-2.dtd is missing from the package.",
++             ],
++             "mode": "dtd",
++             "ran": false,
++             "valid": false,
++           },
++           "relPath": "index.xml",
++           "wellFormed": {
++             "errors": [],
++             "mode": "well-formed",
++             "ran": true,
++             "valid": true,
++           },
++         },
++         {
++           "doctype": {
++             "errors": [],
++             "valid": true,
++           },
++           "dtd": {
++             "errors": [
++               "Declared DTD us-regional-v3-3.dtd is missing from the package.",
++             ],
++             "mode": "dtd",
++             "ran": false,
++             "valid": false,
++           },
++           "relPath": "m1/us/us-regional.xml",
++           "wellFormed": {
++             "errors": [],
++             "mode": "well-formed",
++             "ran": true,
++             "valid": true,
++           },
++         },
++       ],
++       "integrity": {
++         "mismatched": [],
++         "missingFiles": [],
++         "ok": true,
++         "unlistedFiles": [],
++         "verified": [],
++       },
++       "passed": false,
++       "version": 1,
++     },
++   },
++   "format": "ectd",
++   "leafManifest": [
++     {
++       "backbone": "m1/us/us-regional.xml",
++       "ctdSection": "1.2",
++       "fileName": "cover.pdf",
++       "href": "m1/us/1-2/cover.pdf",
++       "leafId": "leaf-1-2-cover",
++       "md5": "b92c9774faf59a676e6bc7bab0073346",
++       "operation": "new",
++       "title": "Cover",
++     },
++     {
++       "backbone": "index.xml",
++       "ctdSection": "3.2.S.2",
++       "fileName": "old-manufacture.pdf",
++       "href": "../0000/index.xml#leaf-3-2-S-2-old-manufacture",
++       "leafId": "leaf-3-2-S-2-old-manufacture",
++       "md5": "",
++       "modifiedFile": "../0000/index.xml#leaf-3-2-S-2-old-manufacture",
++       "operation": "delete",
++       "title": "Old Manufacture",
++     },
++   ],
++   "path": "/tmp/del-sink-Uhy1by/out/123456-1-fda.zip",
++   "regionalBackbone": {
++     "conformanceGap": "<applicant-info> has no <applicant-contacts>: no applicant contact was supplied",
++     "file": "m1/us/us-regional.xml",
++     "region": "fda",
++     "regionConformant": false,
++   },
++   "sha256": "3acccf21b128fa12aeb34ef14906489d6ef13416dbfb7e755831ac8bdeb0b225",
++   "sizeBytes": 2808,
++   "submissionGrade": {
++     "agencyFormsAsIssued": [],
++     "allPdfA": false,
++     "notConverted": [
++       "cover.pdf",
++     ],
++     "pdfLeaves": 1,
++     "pdfaConverted": 0,
++     "total": 1,
++   },
+  }
+
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:148:23
+    146|         { ctdSection: '1.2', operation: 'new', sourcePath: cover, file…
+    147|       ]);
+    148|       await expect(run).rejects.toMatchObject({
+       |                       ^
+    149|         findings: [expect.objectContaining({ ruleId: 'PACKAGE-SEQUENCE…
+    150|       });
+ ❯ withWork server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:50:18
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:142:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "00001" before any leaf is read
+AssertionError: promise resolved "{ …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "displayName": "P · FDA original #00001",
++   "dtdStatus": {
++     "missing": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "missingStylesheets": [
++       "ectd-2-0.xsl",
++       "us-regional.xsl",
++     ],
++     "present": [],
++     "presentStylesheets": [],
++     "required": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "requiredStylesheets": [
++       "ectd-2-0.xsl",
++       "us-regional.xsl",
++     ],
++     "selfContained": false,
++     "validation": {
++       "expectedFiles": [
++         "index.xml",
++         "m1/us/us-regional.xml",
++       ],
++       "files": [
++         {
++           "doctype": {
++             "errors": [],
++             "valid": true,
++           },
++           "dtd": {
++             "errors": [
++               "Declared DTD ich-ectd-3-2.dtd is missing from the package.",
++             ],
++             "mode": "dtd",
++             "ran": false,
++             "valid": false,
++           },
++           "relPath": "index.xml",
++           "wellFormed": {
++             "errors": [],
++             "mode": "well-formed",
++             "ran": true,
++             "valid": true,
++           },
++         },
++         {
++           "doctype": {
++             "errors": [],
++             "valid": true,
++           },
++           "dtd": {
++             "errors": [
++               "Declared DTD us-regional-v3-3.dtd is missing from the package.",
++             ],
++             "mode": "dtd",
++             "ran": false,
++             "valid": false,
++           },
++           "relPath": "m1/us/us-regional.xml",
++           "wellFormed": {
++             "errors": [],
++             "mode": "well-formed",
++             "ran": true,
++             "valid": true,
++           },
++         },
++       ],
++       "integrity": {
++         "mismatched": [],
++         "missingFiles": [],
++         "ok": true,
++         "unlistedFiles": [],
++         "verified": [],
++       },
++       "passed": false,
++       "version": 1,
++     },
++   },
++   "format": "ectd",
++   "leafManifest": [
++     {
++       "backbone": "m1/us/us-regional.xml",
++       "ctdSection": "1.2",
++       "fileName": "cover.pdf",
++       "href": "m1/us/1-2/cover.pdf",
++       "leafId": "leaf-1-2-cover",
++       "md5": "b92c9774faf59a676e6bc7bab0073346",
++       "operation": "new",
++       "title": "Cover",
++     },
++     {
++       "backbone": "index.xml",
++       "ctdSection": "3.2.S.2",
++       "fileName": "old-manufacture.pdf",
++       "href": "../0000/index.xml#leaf-3-2-S-2-old-manufacture",
++       "leafId": "leaf-3-2-S-2-old-manufacture",
++       "md5": "",
++       "modifiedFile": "../0000/index.xml#leaf-3-2-S-2-old-manufacture",
++       "operation": "delete",
++       "title": "Old Manufacture",
++     },
++   ],
++   "path": "/tmp/del-sink-SuXJu7/out/123456-00001-fda.zip",
++   "regionalBackbone": {
++     "conformanceGap": "<applicant-info> has no <applicant-contacts>: no applicant contact was supplied",
++     "file": "m1/us/us-regional.xml",
++     "region": "fda",
++     "regionConformant": false,
++   },
++   "sha256": "0272d70f83fee1e0717dd871c08354d01dabea9a3797e03feb3a3479f6825fce",
++   "sizeBytes": 2811,
++   "submissionGrade": {
++     "agencyFormsAsIssued": [],
++     "allPdfA": false,
++     "notConverted": [
++       "cover.pdf",
++     ],
++     "pdfLeaves": 1,
++     "pdfaConverted": 0,
++     "total": 1,
++   },
+  }
+
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:148:23
+    146|         { ctdSection: '1.2', operation: 'new', sourcePath: cover, file…
+    147|       ]);
+    148|       await expect(run).rejects.toMatchObject({
+       |                       ^
+    149|         findings: [expect.objectContaining({ ruleId: 'PACKAGE-SEQUENCE…
+    150|       });
+ ❯ withWork server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:50:18
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:142:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "0x01" before any leaf is read
+AssertionError: promise resolved "{ …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "displayName": "P · FDA original #0x01",
++   "dtdStatus": {
++     "missing": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "missingStylesheets": [
++       "ectd-2-0.xsl",
++       "us-regional.xsl",
++     ],
++     "present": [],
++     "presentStylesheets": [],
++     "required": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "requiredStylesheets": [
++       "ectd-2-0.xsl",
++       "us-regional.xsl",
++     ],
++     "selfContained": false,
++     "validation": {
++       "expectedFiles": [
++         "index.xml",
++         "m1/us/us-regional.xml",
++       ],
++       "files": [
++         {
++           "doctype": {
++             "errors": [],
++             "valid": true,
++           },
++           "dtd": {
++             "errors": [
++               "Declared DTD ich-ectd-3-2.dtd is missing from the package.",
++             ],
++             "mode": "dtd",
++             "ran": false,
++             "valid": false,
++           },
++           "relPath": "index.xml",
++           "wellFormed": {
++             "errors": [],
++             "mode": "well-formed",
++             "ran": true,
++             "valid": true,
++           },
++         },
++         {
++           "doctype": {
++             "errors": [],
++             "valid": true,
++           },
++           "dtd": {
++             "errors": [
++               "Declared DTD us-regional-v3-3.dtd is missing from the package.",
++             ],
++             "mode": "dtd",
++             "ran": false,
++             "valid": false,
++           },
++           "relPath": "m1/us/us-regional.xml",
++           "wellFormed": {
++             "errors": [],
++             "mode": "well-formed",
++             "ran": true,
++             "valid": true,
++           },
++         },
++       ],
++       "integrity": {
++         "mismatched": [],
++         "missingFiles": [],
++         "ok": true,
++         "unlistedFiles": [],
++         "verified": [],
++       },
++       "passed": false,
++       "version": 1,
++     },
++   },
++   "format": "ectd",
++   "leafManifest": [
++     {
++       "backbone": "m1/us/us-regional.xml",
++       "ctdSection": "1.2",
++       "fileName": "cover.pdf",
++       "href": "m1/us/1-2/cover.pdf",
++       "leafId": "leaf-1-2-cover",
++       "md5": "b92c9774faf59a676e6bc7bab0073346",
++       "operation": "new",
++       "title": "Cover",
++     },
++     {
++       "backbone": "index.xml",
++       "ctdSection": "3.2.S.2",
++       "fileName": "old-manufacture.pdf",
++       "href": "../0000/index.xml#leaf-3-2-S-2-old-manufacture",
++       "leafId": "leaf-3-2-S-2-old-manufacture",
++       "md5": "",
++       "modifiedFile": "../0000/index.xml#leaf-3-2-S-2-old-manufacture",
++       "operation": "delete",
++       "title": "Old Manufacture",
++     },
++   ],
++   "path": "/tmp/del-sink-Akjfl8/out/123456-0x01-fda.zip",
++   "regionalBackbone": {
++     "conformanceGap": "<applicant-info> has no <applicant-contacts>: no applicant contact was supplied",
++     "file": "m1/us/us-regional.xml",
++     "region": "fda",
++     "regionConformant": false,
++   },
++   "sha256": "b153af589c0e10d7a4611ec8eadc8562c8a0ffe7fa2a550e6dd5df96243fde64",
++   "sizeBytes": 2810,
++   "submissionGrade": {
++     "agencyFormsAsIssued": [],
++     "allPdfA": false,
++     "notConverted": [
++       "cover.pdf",
++     ],
++     "pdfLeaves": 1,
++     "pdfaConverted": 0,
++     "total": 1,
++   },
+  }
+
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:148:23
+    146|         { ctdSection: '1.2', operation: 'new', sourcePath: cover, file…
+    147|       ]);
+    148|       await expect(run).rejects.toMatchObject({
+       |                       ^
+    149|         findings: [expect.objectContaining({ ruleId: 'PACKAGE-SEQUENCE…
+    150|       });
+ ❯ withWork server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:50:18
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:142:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence " 0000" before any leaf is read
+AssertionError: expected ValidationError: Leaf 'old-manufacture.pd… { …(2) } to match object { findings: [ ObjectContaining{…} ] }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
++ ValidationError {
+    "findings": [
+      {
+-       "ruleId": "PACKAGE-SEQUENCE-NOT-FOUR-DIGITS",
++       "filePath": "old-manufacture.pdf",
++       "ruleId": "LEAF-DELETE-IN-FIRST-SEQUENCE",
++       "severity": "error",
+      },
+    ],
+  }
+
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:148:23
+    146|         { ctdSection: '1.2', operation: 'new', sourcePath: cover, file…
+    147|       ]);
+    148|       await expect(run).rejects.toMatchObject({
+       |                       ^
+    149|         findings: [expect.objectContaining({ ruleId: 'PACKAGE-SEQUENCE…
+    150|       });
+ ❯ withWork server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:50:18
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:142:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "" before any leaf is read
+AssertionError: expected ValidationError: The application id and t… { …(2) } to match object { findings: [ ObjectContaining{…} ] }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
++ ValidationError {
+    "findings": [
+      {
+-       "ruleId": "PACKAGE-SEQUENCE-NOT-FOUR-DIGITS",
++       "filePath": "123456-",
++       "ruleId": "PACKAGE-NAME-NOT-PLAIN",
++       "severity": "error",
+      },
+    ],
+  }
+
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:148:23
+    146|         { ctdSection: '1.2', operation: 'new', sourcePath: cover, file…
+    147|       ]);
+    148|       await expect(run).rejects.toMatchObject({
+       |                       ^
+    149|         findings: [expect.objectContaining({ ruleId: 'PACKAGE-SEQUENCE…
+    150|       });
+ ❯ withWork server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:50:18
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:142:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence undefined before any leaf is read
+AssertionError: expected TypeError: Cannot read properties of unde… to match object { findings: [ ObjectContaining{…} ] }
+
+- Expected
++ Received
+
+- {
+-   "findings": [
+-     ObjectContaining {
+-       "ruleId": "PACKAGE-SEQUENCE-NOT-FOUR-DIGITS",
+-     },
+-   ],
++ TypeError {
++   "message": "Cannot read properties of undefined (reading 'trim')",
+  }
+
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:148:23
+    146|         { ctdSection: '1.2', operation: 'new', sourcePath: cover, file…
+    147|       ]);
+    148|       await expect(run).rejects.toMatchObject({
+       |                       ^
+    149|         findings: [expect.objectContaining({ ruleId: 'PACKAGE-SEQUENCE…
+    150|       });
+ ❯ withWork server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:50:18
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:142:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 5 passed (12)
+   Start at  22:35:56
+   Duration  1.75s (transform 641ms, setup 105ms, import 822ms, tests 375ms, environment 0ms)
+
