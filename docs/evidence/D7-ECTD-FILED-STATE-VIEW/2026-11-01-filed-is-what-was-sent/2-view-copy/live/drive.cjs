@@ -32,7 +32,7 @@ const BASE = 'http://127.0.0.1:5077';
     await page.goto(BASE + url, { waitUntil: 'domcontentloaded' });
     const resp = await filed;
     const card = page.getByTestId('ectd-filed-state');
-    try { await card.waitFor({ timeout: 45000 }); } catch (e) { await page.screenshot({ path: `${L}/debug-${name}.png` }); console.log('URL', page.url(), 'filed-state resp', resp && resp.status()); console.log((await page.locator('body').innerText()).slice(0, 2500)); console.log(JSON.stringify(errors)); throw e; }
+    try { await card.waitFor({ timeout: 45000 }); } catch (e) { await page.screenshot({ path: `${L}/debug-${name}.png` }); console.info('URL', page.url(), 'filed-state resp', resp && resp.status()); console.info((await page.locator('body').innerText()).slice(0, 2500)); console.info(JSON.stringify(errors)); throw e; }
     await page.waitForFunction(() => { const t = document.querySelector('[data-testid="ectd-filed-state"]')?.textContent ?? ''; return !t.includes('Loading what is on file') && !/On file at the agency…/.test(t); }, null, { timeout: 30000 });
     await card.scrollIntoViewIfNeeded();
     const header = await card.locator('.pj-card-h').innerText();
@@ -43,6 +43,6 @@ const BASE = 'http://127.0.0.1:5077';
   }
   out.errors = errors;
   fs.writeFileSync(L + '/live-check.json', JSON.stringify(out, null, 1));
-  console.log(JSON.stringify(out, null, 1));
+  console.info(JSON.stringify(out, null, 1));
   await browser.close();
 })().catch((e) => { console.error(e); process.exit(1); });
