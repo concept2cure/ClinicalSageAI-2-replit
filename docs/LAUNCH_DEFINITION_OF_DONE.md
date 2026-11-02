@@ -544,6 +544,8 @@ checked and the assessor did not, and how each is carried:
 
 The IND routes keep their paths and answer from the one assessor. A dispatch snapshot records which gate
 produced it, so cockpit drift does not report every old row as drifted.
+*(2026-11-02: superseded by P-100. The uncalled IND lifecycle routes are retired, and Submission Readiness is the one
+place a sequence's verdict is read.)*
 
 ### P-34 — Shadow Review stays a dispatch gate, with a signed human waiver for a provider outage
 
@@ -1929,3 +1931,50 @@ slice 1 (`090f62af1`, its evidence README, "Owed, not built here").
   Vault and linked to the act. Neither path invents a leaf the bytes or the statement do not name.
 - **What is not decided.** A re-filing is not required. Nothing restores a sequence silently.
 - **Owner.** RIM, under F1, after slice 2.
+
+### P-100 — The uncalled IND lifecycle routes are retired; a sequence's verdict is read per project
+
+The founder, 2026-11-02, answered two questions.
+
+The first: "Eight IND lifecycle routes have never had a caller. Three are a second dispatch verdict beside Submission
+Readiness: dispatch-gate, dispatch-gate/snapshot plus snapshots, and validate. Five give the same verdict in other
+forms: cockpit, submission drift, portfolio drift plus its CSV, and the uncalled dashboard and overview. The drift
+routes only work on a snapshot table that deployed databases don't create. P-33 said 'The IND routes keep their
+paths.' Retire them, overriding that sentence?" The answer: **"Retire all."**
+
+The second: "Should Reporting & analytics carry one organisation-wide list of every sequence's live verdict, across all
+application types?" The answer: **"No, per project only."**
+
+RIM raised it, re-checking the IND routes against the corrected R1 inventory (`d8f559377`). The coordinating session's
+mapping pass found:
+- none of the routes has ever had a client, AnA or MCP caller;
+- each answers from the one assessor and writes nothing;
+- the only writer of `ind_dispatch_snapshots` is the snapshot route itself;
+- `migrations/20260610_ind_dispatch_snapshots.sql` is not in `C2C_MIGRATION_FILES`, so on a database built by
+  deploy-migrate alone the snapshot read fails.
+
+- **What is decided.** These routes under `/api/ind-lifecycle` are retired:
+  - `POST /sequence/:seqId/dispatch-gate`;
+  - `POST /sequence/:seqId/dispatch-gate/snapshot` and `GET /sequence/:seqId/snapshots`;
+  - `GET /sequence/:seqId/validate`;
+  - `POST /submission/:id/cockpit` and `POST /submission/:id/drift`;
+  - `GET /portfolio/drift` and `GET /portfolio/drift/csv`;
+  - `POST /submission/:id/dashboard` and `GET /submission/:id/overview`.
+
+  Their OpenAPI entries, route tests and the services only they use go in the same change. A service another caller
+  still reads stays. The reachable replacement is Submission Readiness (P-33):
+  - `GET /api/submissions/sequences/:seqId/dispatch-readiness`;
+  - shown in Submission Center's Validation and Dispatch tabs (`SubmissionSeqWorkspaces.tsx`);
+  - shown in the project's Submit step (`ProjectMarkets.tsx`, `DispatchReadiness.tsx`);
+  - a stored Validated stage that no longer holds is reported by `validatedStage`
+    (`assess-dispatch-readiness.ts`).
+
+  P-33's sentence "The IND routes keep their paths" is superseded. Its rule that every verdict answers from the one
+  assessor stands.
+- **What is not decided.** Nothing is dropped from the database. `ind_dispatch_snapshots` and its rows stay, under
+  RULE 1, and existing rows remain readable through the audit trail. No organisation-wide verdict list is built, in
+  Reporting or anywhere else. The other IND routes (letters, reports, P-87's diff and manifest) are not touched by
+  this decision.
+- **Owner.** RIM, under F1, after slice 2. The retirement commit names its replacement by path and shows the
+  dispatch-readiness route still reached (working agreement). `tests/schema-contract/one-dispatch-verdict.contract.test.ts`
+  changes with it, so it no longer requires the retired routes.
