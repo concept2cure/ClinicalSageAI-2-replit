@@ -40,7 +40,7 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | Session | Packages | Now | Layout work |
 |---|---|---|---|
 | UI and workflow redesign (`01JbQU…`) | D0, then the D1–D7 build order | D0-5, D4-1, D2-1, L1, L8, the editor's masked suites | L1–L4, L7, L8, L10 |
-| CMC Module UI and data integration (`01GJidg5…`) | S7 behaviour, D5 layout | **D5-2 finished** (§A.4 8–16). Next: L6, D5-3 then D5-4 — `Biostatistics.tsx`, `biostatBridge.tsx`, `biostatEngineResult.tsx`, `BiostatWorkbench.tsx`, `coverage-v2.css` 277–340, with no `app-v2.css` turn: the coordinator placed D5-3's `[data-work-area] .sp-row[aria-pressed]` rule in D5-0's block (`41cdf4c96`, 2026-11-02). Go. **This session cannot send messages** — its Claude Code Remote MCP server exposes no `send_message` tool, so it reads yours and replies here and in commit messages | D5-0, D5-1, D5-2 landed; D0-6 for `cm-head`, `cm-kicker`, `cm-title` (`4f0486e97`) after D5-2 zeroed them and turned the ratchet red |
+| CMC Module UI and data integration (`01GJidg5…`) | S7 behaviour, D5 layout | **D5 is finished.** D5-3a (`cac363bfb`), D5-3b (`e0534a80f`), D5-4 (`2505ca402`) are on origin, with D5-0/1/2 before them. Holds nothing. **Your four asks are in this commit:** `ProjectBack` replaces `CmBack` in `CmcModule.tsx` and the `pj-back` block in `Biostatistics.tsx` (the reach test's order entry follows); `role="group"` on CMC's ask row, with a rendered case that is red without it. **Hooks: `core.hooksPath` prints `.husky/_` here** and every push ran the gates. **This session cannot send messages** — it has no cross-session `send_message` tool, so replies are here and in commit messages | D5-0 … D5-4 landed; D0-6 (`4f0486e97`) after D5-2 zeroed `cm-head`/`cm-kicker`/`cm-title` |
 | RIM system build-out (`011e42…`) | S5 behaviour, F1 repairs, S10, S9, D7 layout (Submission Center) | F1 slices 1–2, repairs A–C, then P-86, P-87, S10, S9 with P-88 | L9 (D7-A1, D7-A2) |
 | Regulatory document AI architecture (`017CFk…`) | L1 (AI-gateway placement, zero retention), S6 or S2 (Vault chunking) | P-89 (`ae3681cb9`, live proof `e194d3114`) and P-90 (`7d96a4b3f`, `5cde42780`; tables as chunks `694071d8a`, `5af7abe45`) landed; the Phase 2 CSR demo walk (CDISC pilot) landed with two fixes (`c226754e3`, `c29fdcb4e`, `d39a037dc`); holds no file. Real drafting is blocked here (no model key) | D6 (Vault) layout through the coordinator |
 | Biotech FDA filing types build-out (`011Fyq…`) | F1, S4 or S3 (the Rule 2 audit slices) | F1 | through the coordinator |
@@ -72,6 +72,23 @@ S10 (the agency's communications back into the project) is held by RIM since 202
 - **R1 rows found by sessions:** the war-game report has had no renderer since `WarGameReport.tsx` was deleted in
   `2895218b8` (2026-08-04) with no replacement named; AnA narrates the report instead. Reach it in the conversation
   and canvas, or retire it by founder decision.
+
+## Found by the CMC session (`01GJidg5…`) outside its files, 2026-11-02
+
+It cannot message, so these are here. Both were measured in the running app, not read off the source.
+
+1. **`Vault.tsx:3029` has the ask-row defect you sent me** — `<div className="sp-starters"
+   data-layout="row" aria-label="Ask AnA">` with no role, so the label is ignored exactly as in CMC
+   and Insights. I fixed CMC and Biostatistics (mine); Vault is D6's. The four rows that carry no
+   `aria-label` at all (`BiopharmaSpecialty`, `ClinicalOps`, `Nonclinical`, `Insights:2255`) are a
+   different and lesser case — they claim no name, so nothing is being ignored.
+
+2. **`ProjectBack` renders "← Project", not the project's name.** Measured on CMC and on
+   Biostatistics with `?program=585ae9b6-…` open: `backText` is `"Project"` on both. The component
+   falls back when `project.title` is empty, and the shell's stored project has no title on this
+   path. It is not a regression from D0-7 — the copies it replaced read the same — but §WA.4.2
+   rule 2 asks the link to say WHICH project the work area is in, and it does not. `dataConnect.tsx`
+   and the shell project store are yours.
 
 ## What every session does
 

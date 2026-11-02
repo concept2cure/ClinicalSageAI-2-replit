@@ -2,14 +2,13 @@ import { serverMessage } from '@/lib/queryClient';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { useShellProject } from '../shellProject';
 import { getSurfaceMeta } from '../registryModel';
 import { assessmentState } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { EmptyState, liveGetOrNull, useLiveData, useLiveRows } from '../dataConnect';
+import { EmptyState, ProjectBack, liveGetOrNull, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import {
   specRowsFromApi,
@@ -630,21 +629,6 @@ function cmStarters(tab: string, label: string): Array<{ label: string; prompt: 
   return [first, ...(CMC_SUGGEST[tab] ?? []).slice(0, 2).map((t) => ({ label: t, prompt: t }))];
 }
 
-/* The page's back link (§WA.4.2 rule 2). It says which project this work area
-   is in — the job CMC's uppercase eyebrow and its "Project" destination chip
-   used to share between them — and it is the way back. Nothing renders when no
-   project is open: CMC's Portfolio and its org-scoped registers are readable
-   without one, and a dead link would be worse than no link. */
-function CmBack({ nav }: { nav?: (id: string) => void }) {
-  const project = useShellProject();
-  if (!project) return null;
-  return (
-    <button type="button" className="pj-back" onClick={() => nav?.('project-home')}>
-      {I.left} {project.title ?? 'Project'}
-    </button>
-  );
-}
-
 /** Which half of the work area a tab belongs to; `module3` for an unknown id. */
 function halfOf(tab: string): 'module3' | 'records' {
   return CMC_NAV.find((n) => n.id === tab)?.half ?? 'module3';
@@ -697,7 +681,7 @@ function CmHalves({ tab, onTab }: { tab: string; onTab: (id: string) => void }) 
 
 function CmStarters({ tab, label, ask }: { tab: string; label: string; ask: (text: string) => void }) {
   return (
-    <div className="sp-starters" data-layout="row" aria-label="Ask AnA">
+    <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
       {cmStarters(tab, label).map((s) => (
         <button key={s.label} type="button" className="sp-starter" onClick={() => ask(s.prompt)}>
           <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{s.label}</span>
@@ -3322,7 +3306,7 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
   return (
     <CmcQuestionsContextProvider value={questionsRead}>
       <div className="page-inner cm" data-work-area="cmc">
-        <CmBack nav={onNav} />
+        <ProjectBack onNav={onNav} />
         <header className="ph">
           <div>
             <h1 className="ph-title">{getSurfaceMeta('cmc').label}</h1>

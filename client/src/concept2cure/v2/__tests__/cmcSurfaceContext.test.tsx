@@ -322,3 +322,30 @@ describe('CMC tells AnA the Module 3 question figures it shows, and only those',
   });
 });
 
+
+/**
+ * The ask row carries a name a screen reader can reach (coordinator, 2026-11-02).
+ *
+ * `CmStarters` rendered `<div className="sp-starters" data-layout="row"
+ * aria-label="Ask AnA">`. An `aria-label` on a `<div>` with no role is ignored
+ * by assistive technology — the element has no accessible name at all, so the
+ * row of starters is an unlabelled group of buttons. The Reporting session
+ * found the identical shape on the Insights canvas, where
+ * `insightsCanvasAccessible.test.tsx` catches it; CMC had no such case, which
+ * is why the same defect could be written here and not be noticed.
+ *
+ * `getByRole('group', { name: 'Ask AnA' })` is the assertion rather than a
+ * class query precisely because it resolves the name the way a reader's
+ * software does: with the role absent, the query cannot find the element even
+ * though the attribute is on it.
+ */
+describe('CMC — the ask row is named for a screen reader', () => {
+  it('exposes the starters as a group with an accessible name', async () => {
+    wire({ success: true, data: {} });
+    renderCmc();
+    const row = await screen.findByRole('group', { name: 'Ask AnA' });
+    expect(row.classList.contains('sp-starters')).toBe(true);
+    // And it is the row of starters, not an empty landmark.
+    expect(row.querySelectorAll('button.sp-starter').length).toBeGreaterThan(0);
+  });
+});
