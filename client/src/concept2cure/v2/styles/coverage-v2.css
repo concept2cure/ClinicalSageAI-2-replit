@@ -310,6 +310,30 @@
 /* 48px, transparent, a hairline under it — no grey band (D0 §4.2.17). */
 .c2c-v2 .bs-doc-bar{ display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; padding:0 8px 0 16px; background:transparent; border-bottom:1px solid var(--border); }
 .c2c-v2 .bs-doc-meta{ font-size:var(--fs-small); line-height:1.5; color:var(--text-300); }
+/* ── D5-4: the design calculators (BiostatWorkbench) ──────────────────────
+   The workbench was four stacked `.pj-card`s with the metrics in `style`
+   props. It is a work area now, so its sections are D5-0's and its controls
+   carry no fill: the page's one primary is "Assess defensibility". */
+.c2c-v2 .wb-fields{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin-bottom:14px; }
+.c2c-v2 .wb-calc-fields{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-bottom:14px; }
+.c2c-v2 :is(.wb-f){ display:flex; flex-direction:column; gap:4px; min-width:0; font-size:var(--fs-small); color:var(--text-300); }
+.c2c-v2 .wb-f > span:first-child{ color:var(--text-200); }
+.c2c-v2 .wb-f-rows{ font-family:var(--font-mono,ui-monospace,monospace); font-size:var(--fs-small); resize:vertical; }
+/* Twenty-nine engines, one chosen. The chosen one was `.btn primary`: a wall
+   of orange that said every engine was the next thing to do. */
+.c2c-v2 .wb-engines{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:20px; }
+.c2c-v2 .wb-engines .btn[aria-pressed="true"]{ background:var(--bg-200); color:var(--text-100); border-color:var(--border-strong); }
+.c2c-v2 .wb-calc{ padding-top:16px; border-top:1px solid var(--border); }
+.c2c-v2 .wb-calc-t{ margin:0 0 4px; font-size:var(--fs-body); font-weight:600; color:var(--text-100); }
+.c2c-v2 .wb-calc-t .sec-sub{ font-weight:400; }
+.c2c-v2 .wb-calc-about{ margin:0 0 14px; font-size:var(--fs-small); line-height:1.55; color:var(--text-300); }
+.c2c-v2 .wb-calc-acts{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.c2c-v2 .wb-prov{ margin-top:10px; font-size:var(--fs-small); color:var(--text-400); }
+/* The two stored-state panels (adaptive monitoring, method precedent) are
+   sections of this work area now, so they keep their own vertical rhythm
+   without the card body that used to supply it. */
+.c2c-v2 .wb-panel-b{ display:grid; gap:12px; }
+
 /* The assessment and the governed-document list are the page's two full-width
    sections under the document. `.pj-sec + .pj-sec` (D5-0) spaces them from each
    other; this is the gap from the document layout above, for whichever of the
