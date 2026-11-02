@@ -260,3 +260,34 @@ describe('ANA_ADVISORY_TOOL_SPECS', () => {
     }
   });
 });
+
+/* P-29.3 (docs/EXIT_ATTESTATION_DECISION_2026-10-18.md): the advisor composes
+   assembleDeviceSubmission, which refuses "producible" for a filed copy that
+   is not the document's text. The advice must say so, for that reason — not
+   "Ready", and not "required content is missing". */
+describe('adviseDeviceReadiness — a filed copy that is not the document\'s text', () => {
+  const ready = {
+    pathway: '510k' as const,
+    variant: 'device' as const,
+    leaves: COMPLETE_510K_LEAVES,
+    deviceFlags: PLAIN_DEVICE,
+    presentTemplates: [OFFICIAL_510K_DEVICE_TEMPLATE],
+    environment: 'production' as const,
+    requireTemplate: true,
+  };
+
+  it('is not ready, and names the section and the remedy instead of missing content', () => {
+    const advice = adviseDeviceReadiness({ ...ready, filedCopyDiverged: [{ key: 'E1', section: { code: 'E1' } }] });
+    expect(advice.canProduceOfficialEstar, 'the advisor said Ready over a rewritten filed copy').toBe(false);
+    expect(advice.artifactKind).toBe('none');
+    expect(advice.headline).toMatch(/^Not yet assemblable for this 510\(k\) \(device\)\. The filed copy of section E1 is not the document's text\./);
+    expect(advice.headline).not.toMatch(/required content is missing/);
+    expect(advice.findings.find((f) => f.key === 'artifact-kind')?.detail).toMatch(/Re-file saved text/);
+  });
+
+  it('is unchanged when the filing agrees', () => {
+    const advice = adviseDeviceReadiness({ ...ready, filedCopyDiverged: [] });
+    expect(advice.canProduceOfficialEstar).toBe(true);
+    expect(advice.headline.toLowerCase()).toContain('ready');
+  });
+});

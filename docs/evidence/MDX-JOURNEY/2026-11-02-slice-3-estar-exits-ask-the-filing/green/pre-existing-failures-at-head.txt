@@ -1,0 +1,16 @@
+Failures in the wide run that are NOT this slice's: the same 42 cases in the same 12 files fail with HEAD's sources (2026-11-02, this slice's six source files checked out at HEAD, then restored).
+      2 server/middleware/__tests__/launch-scope-api-gate.test.ts
+      1 server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts
+      1 server/services/ana/__tests__/submission-center-tools.test.ts
+      1 server/services/ana/__tests__/tool-record-scope.test.ts
+      1 server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts
+      1 server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts
+      1 server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts
+      4 server/services/report-os/pdf/__tests__/bundle-pdf.test.ts
+      5 server/services/report-os/pdf/__tests__/company-branding.test.ts
+      6 server/services/report-os/pdf/__tests__/export-identity.test.ts
+      4 server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts
+     15 server/services/report-os/pdf/__tests__/run-pdf.test.ts
+⎯⎯⎯⎯⎯⎯ Failed Tests 42 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  12 failed (12)
+      Tests  42 failed | 150 passed (192)
