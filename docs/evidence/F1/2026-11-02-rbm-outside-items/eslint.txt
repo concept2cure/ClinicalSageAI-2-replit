@@ -1,0 +1,38 @@
+# ESLint warnings per changed file. HEAD: git show HEAD:<file> | npx eslint --stdin --stdin-filename <file> -f json. After: npx eslint <file> -f json.
+# rbmBoard.ts was baselined but not changed.
+
+## HEAD
+server/services/rbm/rbm-actuator.ts: 10 warnings, 0 errors: @typescript-eslint/no-unused-vars@42 @typescript-eslint/no-unused-vars@43 @typescript-eslint/no-unused-vars@44 @typescript-eslint/no-unused-vars@45 @typescript-eslint/no-unused-vars@46 @typescript-eslint/no-unused-vars@47 max-lines@721 complexity@879 max-params@982 max-params@1045
+server/routes/mdx-rbm.ts: 7 warnings, 0 errors: @typescript-eslint/no-unused-vars@78 @typescript-eslint/no-unused-vars@80 @typescript-eslint/no-unused-vars@80 @typescript-eslint/no-unused-vars@81 @typescript-eslint/no-unused-vars@81 max-lines@637 complexity@676
+server/services/rbm/rbm-assessment-seed.ts: 0 warnings, 0 errors: 
+server/services/rbm/rbm-engine.ts: 1 warnings, 0 errors: complexity@121
+client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx: 3 warnings, 0 errors: max-lines-per-function@230 complexity@230 max-lines@616
+server/services/rbm/__tests__/rbm-actuator.test.ts: 1 warnings, 0 errors: max-lines-per-function@34
+server/services/rbm/__tests__/rbm-actuator-plan.test.ts: 0 warnings, 0 errors: 
+server/services/rbm/__tests__/rbm-assessment-seed.test.ts: 0 warnings, 0 errors: 
+server/routes/__tests__/rbm-assessment-integrity.test.ts: 0 warnings, 0 errors: 
+client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx: 2 warnings, 0 errors: max-lines-per-function@77 @typescript-eslint/no-unused-vars@278
+
+## After
+client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx: 2 warnings, 0 errors: max-lines-per-function@77 @typescript-eslint/no-unused-vars@278
+client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx: 3 warnings, 0 errors: max-lines-per-function@239 complexity@239 max-lines@621
+server/routes/__tests__/rbm-assessment-integrity.test.ts: 0 warnings, 0 errors: 
+server/routes/mdx-rbm.ts: 7 warnings, 0 errors: @typescript-eslint/no-unused-vars@79 @typescript-eslint/no-unused-vars@81 @typescript-eslint/no-unused-vars@81 @typescript-eslint/no-unused-vars@82 @typescript-eslint/no-unused-vars@82 max-lines@649 complexity@688
+server/services/rbm/__tests__/rbm-actuator-plan.test.ts: 0 warnings, 0 errors: 
+server/services/rbm/__tests__/rbm-actuator.test.ts: 1 warnings, 0 errors: max-lines-per-function@34
+server/services/rbm/__tests__/rbm-assessment-seed.test.ts: 0 warnings, 0 errors: 
+server/services/rbm/rbm-actuator.ts: 10 warnings, 0 errors: @typescript-eslint/no-unused-vars@45 @typescript-eslint/no-unused-vars@46 @typescript-eslint/no-unused-vars@47 @typescript-eslint/no-unused-vars@48 @typescript-eslint/no-unused-vars@49 @typescript-eslint/no-unused-vars@50 max-lines@749 complexity@962 max-params@1065 max-params@1128
+server/services/rbm/rbm-assessment-seed.ts: 0 warnings, 0 errors: 
+server/services/rbm/rbm-engine.ts: 1 warnings, 0 errors: complexity@121
+
+## Complexity and function length of the functions already over the limit (unchanged values)
+RbmSurfacesA.tsx RbmRact: complexity 29 at HEAD, 29 after; 169 counted lines at HEAD, 170 after (limit 100; one line added).
+mdx-rbm.ts line 676 at HEAD (688 after): complexity 20 at HEAD, 20 after; not a function this change touches.
+rbm-actuator.ts createAction: complexity 17 at HEAD, 17 after; not changed.
+
+## After the review fix (seed mark kept unless a rating changes), 2026-11-02
+server/routes/mdx-rbm.ts: 7 warnings, 0 errors: @typescript-eslint/no-unused-vars@79 @typescript-eslint/no-unused-vars@81 @typescript-eslint/no-unused-vars@81 @typescript-eslint/no-unused-vars@82 @typescript-eslint/no-unused-vars@82 max-lines@653 complexity@697
+server/services/rbm/rbm-engine.ts: 1 warnings, 0 errors: complexity@121
+server/routes/__tests__/rbm-assessment-integrity.test.ts: 0 warnings, 0 errors: 
+client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx: 2 warnings, 0 errors: max-lines-per-function@77 @typescript-eslint/no-unused-vars@282
+No count changed. deriveItemPatch is under every limit. mdx-rbm.ts's two existing warnings only moved down (max-lines 649 to 653, which counts code lines only; complexity 688 to 697, the same handler as before).

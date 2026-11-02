@@ -1,0 +1,160 @@
+# red: draftplan-any-status. Tests written, rbm-actuator.ts's draftPlan as at HEAD b391bfad2 (item 1's change to addCtqFactor is in the tree; draftPlan is untouched).
+# npx vitest run server/services/rbm/__tests__/rbm-actuator-plan.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > derives strategy from the overall risk and seeds actions from the critical CtQs and enhanced sites 5ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > scopes the seeded actions to the governing assessment, not the program 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > generates nothing when the study has no risk assessment to derive from 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > refuses to derive a plan from an unapproved RACT 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > refuses an approved RACT that records no overall risk, and writes nothing 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > has its own sentence for every reason it refuses with 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > proposes exactly the actions generatePlanFromAssessment inserts, and writes nothing 2ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > reports an approved assessment that records no overall risk as unrecorded, not "medium" 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > refuses with the actuator's reasons: no assessment, and an unapproved one 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — the plan shell > draftPlan infers strategy from the assessment overall risk 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — the plan shell > draftPlan falls back to risk_based when no assessment exists, and takes the next version 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — the plan shell > draftPlan reports an open draft rather than opening a second one 0ms
+ × server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses to infer from an unsigned draft RACT, and writes nothing 10ms
+   → expected { id: 99, strategy: 'hybrid' } to be null
+ × server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > reads the governing (active-first) version and binds the plan to it 1ms
+   → expected 'SELECT overall_risk FROM rbm_risk_ass…' to match /\(status = 'active'\) DESC/
+ × server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses when the study has no assessment, and writes nothing 4ms
+   → expected { Object (plan, inferred) } to match object { plan: null, …(2) }
+(3 matching properties omitted from actual)
+ × server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses an approved RACT that records no overall risk, and writes nothing 2ms
+   → expected { Object (plan, inferred) } to match object { plan: null, …(1) }
+(3 matching properties omitted from actual)
+ × server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses to bind the plan to an assessment other than the one its strategy came from 2ms
+   → expected { Object (plan, inferred) } to match object { plan: null, …(2) }
+(3 matching properties omitted from actual)
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > (guard) with a strategy given, reads no assessment and drafts the shell 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses to infer from an unsigned draft RACT, and writes nothing
+AssertionError: expected { id: 99, strategy: 'hybrid' } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "id": 99,
+  "strategy": "hybrid",
+}
+
+ ❯ server/services/rbm/__tests__/rbm-actuator-plan.test.ts:204:22
+    202|     const { exec, calls } = mockExec([[{ id: 7, title: 'RACT', overall…
+    203|     const out = await draftPlan(exec, ORG, { programId: 'p' });
+    204|     expect(out.plan).toBeNull();
+       |                      ^
+    205|     expect(out).toMatchObject({ refused: 'assessment_not_approved', me…
+    206|     expect(inserts(calls)).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > reads the governing (active-first) version and binds the plan to it
+AssertionError: expected 'SELECT overall_risk FROM rbm_risk_ass…' to match /\(status = 'active'\) DESC/
+
+- Expected:
+/\(status = 'active'\) DESC/
+
++ Received:
+"SELECT overall_risk FROM rbm_risk_assessments
+        WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+        ORDER BY updated_at DESC LIMIT 1"
+
+ ❯ server/services/rbm/__tests__/rbm-actuator-plan.test.ts:212:26
+    210|     const { exec, calls } = mockExec([[{ id: 1, title: 'RACT', overall…
+    211|     const out = await draftPlan(exec, ORG, { programId: 'p' });
+    212|     expect(calls[0].sql).toMatch(/\(status = 'active'\) DESC/);
+       |                          ^
+    213|     expect(out.inferred).toMatchObject({ strategy: 'hybrid', fromOvera…
+    214|     expect(inserts(calls)[0].args[2]).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses when the study has no assessment, and writes nothing
+AssertionError: expected { Object (plan, inferred) } to match object { plan: null, …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "message": "No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan",
+-   "plan": null,
+-   "refused": "no_assessment",
++   "plan": {
++     "id": 12,
++   },
+  }
+
+ ❯ server/services/rbm/__tests__/rbm-actuator-plan.test.ts:220:17
+    218|     const { exec, calls } = mockExec([[], [], [{ v: 0 }], [{ id: 12 }]…
+    219|     const out = await draftPlan(exec, ORG, { programId: 'p' });
+    220|     expect(out).toMatchObject({ plan: null, refused: 'no_assessment', …
+       |                 ^
+    221|     expect(inserts(calls)).toHaveLength(0);
+    222|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses an approved RACT that records no overall risk, and writes nothing
+AssertionError: expected { Object (plan, inferred) } to match object { plan: null, …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "plan": null,
+-   "refused": "overall_risk_unrecorded",
++   "plan": {
++     "id": 12,
++   },
+  }
+
+ ❯ server/services/rbm/__tests__/rbm-actuator-plan.test.ts:227:17
+    225|     const { exec, calls } = mockExec([[{ id: 1, title: 'RACT', overall…
+    226|     const out = await draftPlan(exec, ORG, { programId: 'p' });
+    227|     expect(out).toMatchObject({ plan: null, refused: 'overall_risk_unr…
+       |                 ^
+    228|     expect(inserts(calls)).toHaveLength(0);
+    229|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses to bind the plan to an assessment other than the one its strategy came from
+AssertionError: expected { Object (plan, inferred) } to match object { plan: null, …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "message": StringMatching /version 1 \(id 1\)/,
+-   "plan": null,
+-   "refused": "assessment_not_governing",
++   "plan": {
++     "id": 12,
++   },
+  }
+
+ ❯ server/services/rbm/__tests__/rbm-actuator-plan.test.ts:234:17
+    232|     const { exec, calls } = mockExec([[{ id: 1, title: 'RACT', overall…
+    233|     const out = await draftPlan(exec, ORG, { programId: 'p', assessmen…
+    234|     expect(out).toMatchObject({ plan: null, refused: 'assessment_not_g…
+       |                 ^
+    235|     expect(inserts(calls)).toHaveLength(0);
+    236|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 13 passed (18)
+   Start at  04:28:21
+   Duration  749ms (transform 239ms, setup 142ms, import 135ms, tests 37ms, environment 0ms)
+

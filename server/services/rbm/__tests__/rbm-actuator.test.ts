@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   addCtqFactor, defineKri, recordKriReading, setQtl, raiseSignal, triageSignal,
-  draftPlan, generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment, approvePlan,
+  generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment, approvePlan,
   amendMonitoringPlan, nextPlanVersion, inferSecondaryLimit, governingPlanId,
   RbmAssessmentEditError, type Exec,
 } from '../rbm-actuator';
@@ -67,12 +67,23 @@ describe('rbm-actuator — inference', () => {
     ['likelihood 2.5', { likelihood: 2.5 }, /likelihood/],
     ['detectability 6', { detectability: 6 }, /detectability/],
     ['category "quality"', { category: 'quality' }, /category/],
+    ['status "pending"', { status: 'pending' }, /status/],
   ])('addCtqFactor refuses %s before any write', async (_label, bad, field) => {
     const { exec, calls } = mockExec([[{ id: 1 }]]);
     const refused = addCtqFactor(exec, ORG, { programId: 'p', ctqFactor: 'x', likelihood: 3, impact: 3, ...(bad as object) });
     await expect(refused).rejects.toBeInstanceOf(RbmAssessmentEditError);
     await expect(refused).rejects.toMatchObject({ status: 422, code: 'RBM_INVALID_FACTOR', message: expect.stringMatching(field) });
     expect(calls).toHaveLength(0);
+  });
+
+  // POST /rbm-risk-items saves through addCtqFactor, so nothing the RACT form
+  // posts on create (ref code, status, owner) may be dropped (F1 2026-11-02).
+  it('addCtqFactor stores the ref code, status and owner it is given', async () => {
+    const { exec, calls } = mockExec([[{ id: 4 }]]);
+    await addCtqFactor(exec, ORG, { programId: 'p', ctqFactor: 'x', likelihood: 2, impact: 2, refCode: 'CTQ-9', status: 'mitigating', assignedTo: 3 });
+    expect(calls[0].args).toEqual(expect.arrayContaining(['CTQ-9', 'mitigating', 3]));
+    expect(calls[0].sql).not.toContain("'open'");
+    expect(calls[0].args[1]).toBeNull(); // assessment_id stays the second bound value
   });
 
   it('defineKri infers amber status from value vs thresholds (higher worse)', async () => {
@@ -130,36 +141,6 @@ describe('rbm-actuator — inference', () => {
     const { exec } = mockExec([[]]);
     const out = await recordKriReading(exec, ORG, { kriId: 999, value: 1 });
     expect(out.resolved).toBe(false);
-  });
-
-  it('draftPlan infers strategy from the assessment overall risk', async () => {
-    const { exec } = mockExec([
-      [{ overall_risk: 'high' }], // SELECT assessment
-      [],                         // no open draft
-      [{ v: 1 }],                 // max version on file
-      [{ id: 11, strategy: 'hybrid' }], // INSERT plan
-    ]);
-    const out = await draftPlan(exec, ORG, { programId: 'p' });
-    // defaultPlanStrategy('high') → 'hybrid'
-    expect(out.inferred.strategy).toBe('hybrid');
-    expect(out.inferred.fromOverallRisk).toBe('high');
-    expect(out.plan).toMatchObject({ id: 11 });
-  });
-
-  it('draftPlan falls back to risk_based when no assessment exists, and takes the next version', async () => {
-    const { exec, calls } = mockExec([[], [], [{ v: 0 }], [{ id: 12 }]]);
-    const out = await draftPlan(exec, ORG, { programId: 'p' });
-    expect(out.inferred.strategy).toBe('risk_based');
-    expect(out.plan).toMatchObject({ id: 12 });
-    expect(calls[3].args).toContain(1);
-  });
-
-  it('draftPlan reports an open draft rather than opening a second one', async () => {
-    const { exec, calls } = mockExec([[], [{ id: 4, version: 2 }]]);
-    const out = await draftPlan(exec, ORG, { programId: 'p' });
-    expect(out.plan).toBeNull();
-    expect(out).toMatchObject({ refused: 'draft_already_open' });
-    expect(calls.some(c => c.sql.includes('INSERT'))).toBe(false);
   });
 
   it('raiseSignal defaults source=manual, severity=medium and scopes to tenant', async () => {

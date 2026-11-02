@@ -1,0 +1,158 @@
+# red: seed-untailored-mark. Tests written (and the test tables given the metadata column the real tables have, migrations/20260629_rbm_surfaces.sql:63); rbm-assessment-seed.ts, the PATCH in mdx-rbm.ts and amendAssessment in rbm-actuator.ts as at HEAD b391bfad2 (items 1-3 are in the tree).
+# npx vitest run server/services/rbm/__tests__/rbm-assessment-seed.test.ts server/routes/__tests__/rbm-assessment-integrity.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T04:32:58.620Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T04:32:58.863Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T04:32:58.864Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T04:32:58.864Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > refuses a title change on the 'active' signed version 58ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > refuses a title change on the 'archived' signed version 20ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > cannot reopen the 'active' signed version with status=draft 17ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > cannot reopen the 'archived' signed version with status=draft 19ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > continues to edit an unsigned draft 21ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses editing a factor linked to the 'active' assessment 22ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses editing a factor linked to the 'archived' assessment 15ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses adding a factor under the 'active' signed assessment 14ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses adding a factor under the 'archived' signed assessment 16ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > continues to edit a factor linked to a draft 13ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses a factor whose assessment is 'omitted', and writes nothing 8ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses a factor whose assessment is 'null', and writes nothing 8ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > continues to add a factor to a draft 11ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > infers criticality from the band when isCritical is omitted, as addCtqFactor does 21ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > keeps the status, owner and ref code the RACT form posts 13ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > calls addCtqFactor once, for the tenant and the named assessment 14ms
+ × server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person re-rates the factor, and kept by an edit that does not 26ms
+   → expected { ratingFrom: { …(2) }, …(1) } to not have property "ratingSource"
+ × server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is carried into an amendment, so the copy does not read as tailored 14ms
+   → expected { id: 1, organization_id: 7, …(21) } to match object { …(2) }
+(21 matching properties omitted from actual)
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > does not disclose another project or tenant child through the public assessment 10ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > does not copy or return a private-project retained child in a public amendment 10ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > records the amendment creator independently of the prior version author 16ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > requires a second person to approve the amendment opened by this actor 16ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > commits a draft and its default factors together, with the actor and no signature 34ms
+ × server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > marks every seeded factor's rating as an untailored library default 26ms
+   → expected {} to deeply equal { ratingSource: 'default_seed', …(1) }
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rolls back the assessment and already-written factors when a later factor fails 13ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rechecks current write authority inside the transaction before any record is inserted 9ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > leaves a caller-owned transaction open so the caller can roll the seed back 17ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > uses an already-connected client as supplied instead of inferring ownership from its connect method 22ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > uses one explicitly owned pool lease and releases it after its atomic seed 17ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > does not roll back a caller’s earlier work when a caller-owned seed fails 7ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rolls back another RBM write through the shared owned transaction when its work fails 5ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > commits another RBM write on one released pool lease 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person re-rates the factor, and kept by an edit that does not
+AssertionError: expected { ratingFrom: { …(2) }, …(1) } to not have property "ratingSource"
+
+- Expected:
+undefined
+
++ Received:
+"default_seed"
+
+ ❯ server/routes/__tests__/rbm-assessment-integrity.test.ts:208:43
+    206|     expect((await item(22)).metadata).toEqual(MARK);
+    207|     expect((await request(app()).patch('/api/mdx/rbm-risk-items/22').s…
+    208|     expect((await item(22)).metadata).not.toHaveProperty('ratingSource…
+       |                                           ^
+    209|     expect((await item(22)).metadata).not.toHaveProperty('ratingFrom');
+    210|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is carried into an amendment, so the copy does not read as tailored
+AssertionError: expected { id: 1, organization_id: 7, …(21) } to match object { …(2) }
+(21 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ctq_factor": "Signed public factor",
+-   "metadata": {
+-     "ratingFrom": {
+-       "ctqFactor": "Seeded factor",
+-       "table": "DEFAULT_CTQ_FACTORS",
+-     },
+-     "ratingSource": "default_seed",
+-   },
++   "metadata": {},
+  }
+
+ ❯ server/routes/__tests__/rbm-assessment-integrity.test.ts:216:28
+    214|     const out = await openAmendment();
+    215|     expect(out.amended).toBe(true);
+    216|     expect(out.items?.[0]).toMatchObject({ ctq_factor: 'Signed public …
+       |                            ^
+    217|   });
+    218| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > marks every seeded factor's rating as an untailored library default
+AssertionError: expected {} to deeply equal { ratingSource: 'default_seed', …(1) }
+
+- Expected
++ Received
+
+- {
+-   "ratingFrom": {
+-     "ctqFactor": "Serious adverse event identification and reporting",
+-     "table": "DEFAULT_CTQ_FACTORS",
+-   },
+-   "ratingSource": "default_seed",
+- }
++ {}
+
+ ❯ server/services/rbm/__tests__/rbm-assessment-seed.test.ts:24:53
+     22|  it('marks every seeded factor\'s rating as an untailored library defa…
+     23|   const out = await seedRbmAssessment(q(), { organizationId: 7, userId…
+     24|   for (const row of out.items) expect(row.metadata).toEqual({ ratingSo…
+       |                                                     ^
+     25|  });
+     26|  it('rolls back the assessment and already-written factors when a late…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 29 passed (32)
+   Start at  04:32:54
+   Duration  15.08s (transform 2.63s, setup 147ms, import 5.07s, tests 9.27s, environment 0ms)
+

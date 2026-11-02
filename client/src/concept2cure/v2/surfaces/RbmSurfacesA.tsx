@@ -226,6 +226,15 @@ export function RbmReport({ board, onAsk }: SubProps) {
   );
 }
 
+/** Why a CtQ factor cannot be added on the RACT screen, or null when it can.
+    A factor belongs to the assessment shown, which must be an unsigned draft;
+    the server refuses a factor with no assessment (RBM_ASSESSMENT_REQUIRED). */
+function factorAddRefusal(asmt: RbmBoard['assessment']): string | null {
+  if (!asmt) return 'This study has no risk assessment yet. A factor must belong to one, so start the assessment first.';
+  if (asmt.status === 'active') return 'This assessment is approved — its CtQ content is fixed under the signature';
+  return null;
+}
+
 /* 3 -- RACT */
 export function RbmRact({ board, onReload }: SubProps) {
   const [sel, setSel] = useState<{ l: number; i: number } | null>(null);
@@ -259,6 +268,7 @@ export function RbmRact({ board, onReload }: SubProps) {
    * the revision is approved in its own right.
    */
   const locked = asmt?.status === 'active';
+  const addRefusal = factorAddRefusal(asmt);
 
   /**
    * Persist a CtQ factor. The inherent score and the residual score are both
@@ -310,10 +320,11 @@ export function RbmRact({ board, onReload }: SubProps) {
       if (isEdit) {
         await rbmWrite('PATCH', `/rbm-risk-items/${edit!.item!.id}`, body);
       } else {
+        // Add is offered only when an assessment is shown (factorAddRefusal).
         await rbmWrite('POST', '/rbm-risk-items', {
           ...body,
           programId: board.programId,
-          assessmentId: board.assessment?.id ?? null,
+          assessmentId: asmt!.id,
         });
       }
     });
@@ -371,7 +382,7 @@ export function RbmRact({ board, onReload }: SubProps) {
           </div>
         </div>
       ) : (
-        <div className="rbm-note">{I.info}No formal risk-assessment record exists for this study yet — the critical-to-quality register below reflects the live risk items; create and approve a framework version to govern it.</div>
+        <div className="rbm-note">{I.info}This study has no risk assessment yet. A critical-to-quality factor must belong to one, so start the assessment first: ask AnA to seed a default ICH E6(R3) assessment for this study. Any factors listed below belong to no assessment, and a new assessment does not include them.</div>
       )}
       <div className="rbm-ract-cols">
         <div className="rbm-card">
@@ -381,8 +392,8 @@ export function RbmRact({ board, onReload }: SubProps) {
         </div>
         <div className="rbm-card grow">
           <div className="rbm-card-h">Critical-to-quality register — {shown.length} of {items.length}
-            <button className="rbm-add" disabled={locked || mut.busy}
-              title={locked ? 'This assessment is approved — its CtQ content is fixed under the signature' : undefined}
+            <button className="rbm-add" disabled={addRefusal !== null || mut.busy}
+              title={addRefusal ?? undefined}
               onClick={() => setEdit({ mode: 'new' })}>{I.zap}Add CtQ factor</button></div>
           <table className="rbm-tbl"><thead><tr><th>Category</th><th>CtQ factor</th><th>L x I</th><th>Inherent</th><th>Detect.</th><th>Mitigation</th><th>Residual</th><th>Status</th><th></th></tr></thead>
             <tbody>{shown.map(it => (

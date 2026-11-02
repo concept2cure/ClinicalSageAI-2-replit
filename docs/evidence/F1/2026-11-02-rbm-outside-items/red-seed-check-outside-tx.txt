@@ -1,0 +1,549 @@
+# red: seed-check-outside-tx. Tests written (and the seed suite's own table given the version and deleted_at columns the real table has); rbm-assessment-seed.ts's check and the seed route's catch as at HEAD b391bfad2 (items 1-4 are in the tree, including item 4's metadata mark in the seed's factor insert).
+# npx vitest run server/services/rbm/__tests__/rbm-assessment-seed.test.ts server/routes/__tests__/rbm-assessment-integrity.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > commits a draft and its default factors together, with the actor and no signature 42ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > marks every seeded factor's rating as an untailored library default 24ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rolls back the assessment and already-written factors when a later factor fails 16ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rechecks current write authority inside the transaction before any record is inserted 6ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > leaves a caller-owned transaction open so the caller can roll the seed back 12ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > uses an already-connected client as supplied instead of inferring ownership from its connect method 10ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > uses one explicitly owned pool lease and releases it after its atomic seed 13ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > does not roll back a caller’s earlier work when a caller-owned seed fails 8ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rolls back another RBM write through the shared owned transaction when its work fails 6ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > commits another RBM write on one released pool lease 10ms
+ × server/services/rbm/__tests__/rbm-assessment-seed.test.ts > the seed refuses a study that already has an assessment > refuses a second seed of the same study inside its transaction, and writes nothing 30ms
+   → promise resolved "{ id: 10, organization_id: 7, …(11) }" instead of rejecting
+ × server/services/rbm/__tests__/rbm-assessment-seed.test.ts > the seed refuses a study that already has an assessment > refuses a study that already has an approved version 13ms
+   → promise resolved "{ id: 12, organization_id: 7, …(11) }" instead of rejecting
+ × server/services/rbm/__tests__/rbm-assessment-seed.test.ts > the seed refuses a study that already has an assessment > takes the per-study lock, then reads existing versions, after BEGIN and before the INSERT 37ms
+   → expected [ false, false, true ] to deeply equal [ true, true, true ]
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T04:35:15.570Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T04:35:15.739Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T04:35:15.740Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T04:35:15.740Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > refuses a title change on the 'active' signed version 52ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > refuses a title change on the 'archived' signed version 21ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > cannot reopen the 'active' signed version with status=draft 15ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > cannot reopen the 'archived' signed version with status=draft 12ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > continues to edit an unsigned draft 24ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses editing a factor linked to the 'active' assessment 27ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses editing a factor linked to the 'archived' assessment 23ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses adding a factor under the 'active' signed assessment 14ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses adding a factor under the 'archived' signed assessment 14ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > continues to edit a factor linked to a draft 13ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses a factor whose assessment is 'omitted', and writes nothing 9ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses a factor whose assessment is 'null', and writes nothing 7ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > continues to add a factor to a draft 11ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > infers criticality from the band when isCritical is omitted, as addCtqFactor does 15ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > keeps the status, owner and ref code the RACT form posts 11ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > calls addCtqFactor once, for the tenant and the named assessment 19ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person re-rates the factor, and kept by an edit that does not 37ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is carried into an amendment, so the copy does not read as tailored 14ms
+ × server/routes/__tests__/rbm-assessment-integrity.test.ts > the seed route on a study that already has an assessment > answers 409 and writes nothing 32ms
+   → expected 201 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > does not disclose another project or tenant child through the public assessment 15ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > does not copy or return a private-project retained child in a public amendment 10ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > records the amendment creator independently of the prior version author 10ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > requires a second person to approve the amendment opened by this actor 18ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/rbm-assessment-integrity.test.ts > the seed route on a study that already has an assessment > answers 409 and writes nothing
+AssertionError: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/rbm-assessment-integrity.test.ts:225:24
+    223|     const before = (await db.query('SELECT id FROM rbm_risk_assessment…
+    224|     const out = await request(app()).post('/api/mdx/rbm-assessments/se…
+    225|     expect(out.status).toBe(409);
+       |                        ^
+    226|     expect(out.body.details).toMatchObject({ code: 'RBM_ASSESSMENT_EXI…
+    227|     expect((await db.query('SELECT id FROM rbm_risk_assessments ORDER …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/rbm/__tests__/rbm-assessment-seed.test.ts > the seed refuses a study that already has an assessment > refuses a second seed of the same study inside its transaction, and writes nothing
+AssertionError: promise resolved "{ id: 10, organization_id: 7, …(11) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "created_by": 3,
++   "deleted_at": null,
++   "framework": "ich_e6r3",
++   "id": 10,
++   "items": [
++     {
++       "assessment_id": 10,
++       "category": "safety",
++       "ctq_factor": "Serious adverse event identification and reporting",
++       "id": 53,
++       "impact": 5,
++       "is_critical": true,
++       "likelihood": 3,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Serious adverse event identification and reporting",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Central safety review; expedited-reporting KRI; site SAE-timeliness monitoring.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "SAEs missed, mis-graded, or reported outside the required timeline.",
++       "risk_score": 15,
++       "status": "open",
++     },
++     {
++       "assessment_id": 10,
++       "category": "safety",
++       "ctq_factor": "Informed consent process and documentation",
++       "id": 54,
++       "impact": 5,
++       "is_critical": true,
++       "likelihood": 3,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Informed consent process and documentation",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Consent-version control; first-subject consent review; reconsent tracking KRI.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Consent obtained late, with a superseded version, or undocumented.",
++       "risk_score": 15,
++       "status": "open",
++     },
++     {
++       "assessment_id": 10,
++       "category": "efficacy",
++       "ctq_factor": "Primary endpoint data collection",
++       "id": 55,
++       "impact": 5,
++       "is_critical": true,
++       "likelihood": 3,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Primary endpoint data collection",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Endpoint-specific training; central read where applicable; visit-window KRI.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Primary endpoint measured off-window, by untrained staff, or with uncalibrated equipment.",
++       "risk_score": 15,
++       "status": "open",
++     },
++     {
++       "assessment_id": 10,
++       "category": "data_integrity",
++       "ctq_factor": "Eligibility / inclusion-exclusion verification",
++       "id": 56,
++       "impact": 4,
++       "is_critical": true,
++       "likelihood": 3,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Eligibility / inclusion-exclusion verification",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Eligibility KRI by site; targeted SDV of eligibility criteria; central screening review.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Ineligible subjects enrolled; eligibility not source-verifiable.",
++       "risk_score": 12,
++       "status": "open",
++     },
++     {
++       "assessment_id": 10,
++       "category": "compliance",
++       "ctq_factor": "Protocol deviation identification and management",
++       "id": 58,
++       "impact": 3,
++       "is_critical": false,
++       "likelihood": 4,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Protocol deviation identification and management",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Deviation-rate KRI; central deviation review; QTL on important deviations.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Important deviations not detected, classified, or actioned.",
++       "risk_score": 12,
++       "status": "open",
++     },
++     {
++       "assessment_id": 10,
++       "category": "data_integrity",
++       "ctq_factor": "Data entry timeliness and query resolution",
++       "id": 59,
++       "impact": 3,
++       "is_critical": false,
++       "likelihood": 4,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Data entry timeliness and query resolution",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "CRF-lag KRI; open-query-aging KRI; query-rate central monitoring.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Stale data and aged queries delay risk detection and lock.",
++       "risk_score": 12,
++       "status": "open",
++     },
++     {
++       "assessment_id": 10,
++       "category": "operational",
++       "ctq_factor": "Enrollment and retention performance",
++       "id": 60,
++       "impact": 3,
++       "is_critical": false,
++       "likelihood": 4,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Enrollment and retention performance",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Enrollment-vs-target KRI; screen-failure-rate KRI; dropout QTL.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Under-enrollment or excess dropout threatens study power.",
++       "risk_score": 12,
++       "status": "open",
++     },
++     {
++       "assessment_id": 10,
++       "category": "data_integrity",
++       "ctq_factor": "Investigational product accountability and compliance",
++       "id": 57,
++       "impact": 4,
++       "is_critical": true,
++       "likelihood": 2,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Investigational product accountability and compliance",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "IP accountability KRI; dosing-error signal; temperature-excursion alerts.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "IP dosing errors, accountability gaps, temperature excursions.",
++       "risk_score": 8,
++       "status": "open",
++     },
++   ],
++   "organization_id": 7,
++   "overall_risk": "high",
++   "program_id": "11111111-1111-4111-8111-111111111111",
++   "status": "draft",
++   "title": "Risk assessment (RACT)",
++   "version": 1,
+  }
+
+ ❯ server/services/rbm/__tests__/rbm-assessment-seed.test.ts:99:105
+     97|  it('refuses a second seed of the same study inside its transaction, a…
+     98|   await seedRbmAssessment(q(), { organizationId: 7, userId: 3 }, { pro…
+     99|   await expect(seedRbmAssessment(q(), { organizationId: 7, userId: 3 }…
+       |                                                                                                         ^
+    100|   expect(await count('rbm_risk_assessments')).toBe(1);
+    101|   expect(await count('rbm_risk_items')).toBe(DEFAULT_CTQ_FACTORS.lengt…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/rbm/__tests__/rbm-assessment-seed.test.ts > the seed refuses a study that already has an assessment > refuses a study that already has an approved version
+AssertionError: promise resolved "{ id: 12, organization_id: 7, …(11) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "created_by": 3,
++   "deleted_at": null,
++   "framework": "ich_e6r3",
++   "id": 12,
++   "items": [
++     {
++       "assessment_id": 12,
++       "category": "safety",
++       "ctq_factor": "Serious adverse event identification and reporting",
++       "id": 61,
++       "impact": 5,
++       "is_critical": true,
++       "likelihood": 3,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Serious adverse event identification and reporting",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Central safety review; expedited-reporting KRI; site SAE-timeliness monitoring.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "SAEs missed, mis-graded, or reported outside the required timeline.",
++       "risk_score": 15,
++       "status": "open",
++     },
++     {
++       "assessment_id": 12,
++       "category": "safety",
++       "ctq_factor": "Informed consent process and documentation",
++       "id": 62,
++       "impact": 5,
++       "is_critical": true,
++       "likelihood": 3,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Informed consent process and documentation",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Consent-version control; first-subject consent review; reconsent tracking KRI.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Consent obtained late, with a superseded version, or undocumented.",
++       "risk_score": 15,
++       "status": "open",
++     },
++     {
++       "assessment_id": 12,
++       "category": "efficacy",
++       "ctq_factor": "Primary endpoint data collection",
++       "id": 63,
++       "impact": 5,
++       "is_critical": true,
++       "likelihood": 3,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Primary endpoint data collection",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Endpoint-specific training; central read where applicable; visit-window KRI.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Primary endpoint measured off-window, by untrained staff, or with uncalibrated equipment.",
++       "risk_score": 15,
++       "status": "open",
++     },
++     {
++       "assessment_id": 12,
++       "category": "data_integrity",
++       "ctq_factor": "Eligibility / inclusion-exclusion verification",
++       "id": 64,
++       "impact": 4,
++       "is_critical": true,
++       "likelihood": 3,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Eligibility / inclusion-exclusion verification",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Eligibility KRI by site; targeted SDV of eligibility criteria; central screening review.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Ineligible subjects enrolled; eligibility not source-verifiable.",
++       "risk_score": 12,
++       "status": "open",
++     },
++     {
++       "assessment_id": 12,
++       "category": "compliance",
++       "ctq_factor": "Protocol deviation identification and management",
++       "id": 66,
++       "impact": 3,
++       "is_critical": false,
++       "likelihood": 4,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Protocol deviation identification and management",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Deviation-rate KRI; central deviation review; QTL on important deviations.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Important deviations not detected, classified, or actioned.",
++       "risk_score": 12,
++       "status": "open",
++     },
++     {
++       "assessment_id": 12,
++       "category": "data_integrity",
++       "ctq_factor": "Data entry timeliness and query resolution",
++       "id": 67,
++       "impact": 3,
++       "is_critical": false,
++       "likelihood": 4,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Data entry timeliness and query resolution",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "CRF-lag KRI; open-query-aging KRI; query-rate central monitoring.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Stale data and aged queries delay risk detection and lock.",
++       "risk_score": 12,
++       "status": "open",
++     },
++     {
++       "assessment_id": 12,
++       "category": "operational",
++       "ctq_factor": "Enrollment and retention performance",
++       "id": 68,
++       "impact": 3,
++       "is_critical": false,
++       "likelihood": 4,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Enrollment and retention performance",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "Enrollment-vs-target KRI; screen-failure-rate KRI; dropout QTL.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "Under-enrollment or excess dropout threatens study power.",
++       "risk_score": 12,
++       "status": "open",
++     },
++     {
++       "assessment_id": 12,
++       "category": "data_integrity",
++       "ctq_factor": "Investigational product accountability and compliance",
++       "id": 65,
++       "impact": 4,
++       "is_critical": true,
++       "likelihood": 2,
++       "metadata": {
++         "ratingFrom": {
++           "ctqFactor": "Investigational product accountability and compliance",
++           "table": "DEFAULT_CTQ_FACTORS",
++         },
++         "ratingSource": "default_seed",
++       },
++       "mitigation": "IP accountability KRI; dosing-error signal; temperature-excursion alerts.",
++       "organization_id": 7,
++       "program_id": "11111111-1111-4111-8111-111111111111",
++       "risk_description": "IP dosing errors, accountability gaps, temperature excursions.",
++       "risk_score": 8,
++       "status": "open",
++     },
++   ],
++   "organization_id": 7,
++   "overall_risk": "high",
++   "program_id": "11111111-1111-4111-8111-111111111111",
++   "status": "draft",
++   "title": "Risk assessment (RACT)",
++   "version": 1,
+  }
+
+ ❯ server/services/rbm/__tests__/rbm-assessment-seed.test.ts:105:105
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/rbm/__tests__/rbm-assessment-seed.test.ts > the seed refuses a study that already has an assessment > takes the per-study lock, then reads existing versions, after BEGIN and before the INSERT
+AssertionError: expected [ false, false, true ] to deeply equal [ true, true, true ]
+
+- Expected
++ Received
+
+  [
+-   true,
+-   true,
++   false,
++   false,
+    true,
+  ]
+
+ ❯ server/services/rbm/__tests__/rbm-assessment-seed.test.ts:115:54
+    113|   const [begin, lock, read, insert] = [at(/^BEGIN$/), at(/pg_advisory_…
+    114|   expect(begin).toBeGreaterThanOrEqual(0);
+    115|   expect([begin < lock, lock < read, read < insert]).toEqual([true, tr…
+       |                                                      ^
+    116|  });
+    117| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 32 passed (36)
+   Start at  04:35:06
+   Duration  13.98s (transform 2.49s, setup 158ms, import 4.86s, tests 8.43s, environment 0ms)
+

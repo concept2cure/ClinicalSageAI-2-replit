@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { generatePlanFromAssessment, derivePlanFromAssessment, RBM_PLAN_REFUSAL, type Exec } from '../rbm-actuator';
+import { generatePlanFromAssessment, derivePlanFromAssessment, draftPlan, RBM_PLAN_REFUSAL, type Exec } from '../rbm-actuator';
 
 function mockExec(script: any[][]) {
   const calls: { sql: string; args: unknown[] }[] = [];
@@ -157,5 +157,83 @@ describe('derivePlanFromAssessment — the read-only half, shared with AnA', () 
     expect(await derivePlanFromAssessment(mockExec([[]]).exec, ORG, 'p')).toEqual({ derived: false, reason: 'no_assessment' });
     expect(await derivePlanFromAssessment(mockExec([[{ id: 7, status: 'draft', overall_risk: 'high' }]]).exec, ORG, 'p'))
       .toEqual({ derived: false, reason: 'assessment_not_approved' });
+  });
+});
+
+// Moved from rbm-actuator.test.ts (2026-11-02), which is at its 500-line limit.
+// Each scripts an approved assessment since draftPlan infers only from one; the
+// old "falls back to risk_based with no assessment" case is now the refusal below.
+describe('draftPlan — the plan shell', () => {
+  it('draftPlan infers strategy from the approved assessment\'s overall risk, and takes the next version', async () => {
+    const { exec, calls } = mockExec([
+      [{ id: 7, title: 'RACT', overall_risk: 'high', status: 'active', version: 1 }], // governing assessment
+      [],                         // no open draft
+      [{ v: 1 }],                 // max version on file
+      [{ id: 11, strategy: 'hybrid' }], // INSERT plan
+    ]);
+    const out = await draftPlan(exec, ORG, { programId: 'p' });
+    // defaultPlanStrategy('high') → 'hybrid'
+    expect(out.inferred).toEqual({ strategy: 'hybrid', fromOverallRisk: 'high', fromAssessment: { id: 7, version: 1 } });
+    expect(out.plan).toMatchObject({ id: 11 });
+    expect(calls[3].args[5]).toBe(2);
+  });
+
+  it('draftPlan reports an open draft rather than opening a second one', async () => {
+    const { exec, calls } = mockExec([[{ id: 7, title: 'RACT', overall_risk: 'low', status: 'active', version: 1 }], [{ id: 4, version: 2 }]]);
+    const out = await draftPlan(exec, ORG, { programId: 'p' });
+    expect(out.plan).toBeNull();
+    expect(out).toMatchObject({ refused: 'draft_already_open' });
+    expect(calls.some(c => c.sql.includes('INSERT'))).toBe(false);
+  });
+});
+
+// draftPlan chooses its basis as generatePlanFromAssessment does: the approved
+// (active) RACT, or nothing (docs/evidence/F1/2026-11-02-rbm-outside-items/README.md).
+describe('draftPlan — infers the strategy only from the approved RACT', () => {
+  const inserts = (calls: { sql: string; args: unknown[] }[]) => calls.filter(c => c.sql.includes('INSERT'));
+
+  it('refuses to infer from an unsigned draft RACT, and writes nothing', async () => {
+    const { exec, calls } = mockExec([[{ id: 7, title: 'RACT', overall_risk: 'high', status: 'draft', version: 1 }], [], [{ v: 0 }], [{ id: 99, strategy: 'hybrid' }]]);
+    const out = await draftPlan(exec, ORG, { programId: 'p' });
+    expect(out.plan).toBeNull();
+    expect(out).toMatchObject({ refused: 'assessment_not_approved', message: RBM_PLAN_REFUSAL.assessment_not_approved });
+    expect(inserts(calls)).toHaveLength(0);
+  });
+
+  it('reads the governing (active-first) version and binds the plan to it', async () => {
+    const { exec, calls } = mockExec([[{ id: 1, title: 'RACT', overall_risk: 'high', status: 'active', version: 2 }], [], [{ v: 0 }], [{ id: 11 }]]);
+    const out = await draftPlan(exec, ORG, { programId: 'p' });
+    expect(calls[0].sql).toMatch(/\(status = 'active'\) DESC/);
+    expect(out.inferred).toMatchObject({ strategy: 'hybrid', fromOverallRisk: 'high' });
+    expect(inserts(calls)[0].args[2]).toBe(1);
+  });
+
+  it('refuses when the study has no assessment, and writes nothing', async () => {
+    const { exec, calls } = mockExec([[], [], [{ v: 0 }], [{ id: 12 }]]);
+    const out = await draftPlan(exec, ORG, { programId: 'p' });
+    expect(out).toMatchObject({ plan: null, refused: 'no_assessment', message: RBM_PLAN_REFUSAL.no_assessment });
+    expect(inserts(calls)).toHaveLength(0);
+  });
+
+  it('refuses an approved RACT that records no overall risk, and writes nothing', async () => {
+    const { exec, calls } = mockExec([[{ id: 1, title: 'RACT', overall_risk: null, status: 'active', version: 1 }], [], [{ v: 0 }], [{ id: 12 }]]);
+    const out = await draftPlan(exec, ORG, { programId: 'p' });
+    expect(out).toMatchObject({ plan: null, refused: 'overall_risk_unrecorded' });
+    expect(inserts(calls)).toHaveLength(0);
+  });
+
+  it('refuses to bind the plan to an assessment other than the one its strategy came from', async () => {
+    const { exec, calls } = mockExec([[{ id: 1, title: 'RACT', overall_risk: 'high', status: 'active', version: 1 }], [], [{ v: 0 }], [{ id: 12 }]]);
+    const out = await draftPlan(exec, ORG, { programId: 'p', assessmentId: 2 });
+    expect(out).toMatchObject({ plan: null, refused: 'assessment_not_governing', message: expect.stringMatching(/version 1 \(id 1\)/) });
+    expect(inserts(calls)).toHaveLength(0);
+  });
+
+  it('(guard) with a strategy given, reads no assessment and drafts the shell', async () => {
+    const { exec, calls } = mockExec([[], [{ v: 0 }], [{ id: 5 }]]);
+    const out = await draftPlan(exec, ORG, { programId: 'p', strategy: 'on_site' });
+    expect(calls.some(c => c.sql.includes('rbm_risk_assessments'))).toBe(false);
+    expect(out.plan).toMatchObject({ id: 5 });
+    expect(inserts(calls)[0].args).toContain('on_site');
   });
 });
