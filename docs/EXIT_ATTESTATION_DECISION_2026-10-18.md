@@ -176,9 +176,10 @@ section's attachment, and asks again at delivery. The filing-readiness and
 assembly verdicts stop saying "can file" and "producible". Only `different`
 refuses, as at the seals. The gate learned the two device section loaders it
 could not see, and found the EU technical file
-(`assemble-technical-file-from-core.ts`), baselined as a DEFECT for the IVDR
-door's work. Evidence:
-`docs/evidence/MDX-JOURNEY/2026-11-02-slice-3-estar-exits-ask-the-filing/`.
+(`assemble-technical-file-from-core.ts`). Later the same day it asked too, and
+refuses 409 `FILING_DIVERGED` through `submissions.ts`. Evidence:
+`docs/evidence/MDX-JOURNEY/2026-11-02-slice-3-estar-exits-ask-the-filing/` and
+`docs/evidence/MDX-JOURNEY/2026-11-02-m3-technical-file-asks-the-filing/`.
 
 ## P-29.4 — there is no mirror write-back from the filing into the editing layer. Ever.
 

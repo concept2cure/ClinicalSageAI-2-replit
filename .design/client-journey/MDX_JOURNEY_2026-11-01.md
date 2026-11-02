@@ -159,9 +159,9 @@ on, not raced.
      not see. Evidence: `docs/evidence/MDX-JOURNEY/2026-11-02-slice-3-estar-exits-ask-the-filing/`.
 3. **Each pathway's door opens its own filing** (F1 and R1): M3 (the IVDR door reaches the existing MDR/IVDR
    technical-file assembler, after its placeholder identity is fixed) and M7 (De Novo). This is done with the R1
-   lane (`01QoxbL`) because it reaches an endpoint no client calls. M3 also takes the technical file's own
-   agreement check. It is baselined as a DEFECT in `scripts/ci/filing-exit-agreement-baseline.json`, and it needs
-   `FILING_DIVERGED: 409` in `server/routes/submissions.ts`.
+   lane (`01QoxbL`) because it reaches an endpoint no client calls. M3's server half landed on 2026-11-02: the
+   technical file asks whether the filing holds the document's text, and refuses 409 `FILING_DIVERGED`
+   (`docs/evidence/MDX-JOURNEY/2026-11-02-m3-technical-file-asks-the-filing/`). The door is what remains.
 4. **Dead ends** (F1): M8 (Labeling create, through the existing labeling route) and M9 (Respond's device wording,
    in `ProjectRespond.tsx`, which is under D3 and S10. RIM holds S10, so this goes through the coordinator).
 5. **The journey walked in the running app** (L1 and RULE 4: "a screen is not done until it was opened in the
