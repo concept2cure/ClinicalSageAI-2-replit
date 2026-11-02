@@ -91,7 +91,10 @@ describe('the top bar shows no client type (FILING_SPINE F8)', () => {
 
   it('with no program open, it shows no client type either', () => {
     renderBar('medtech');
-    expect(barText()).toContain('No project open');
+    // D1-2 (D1.md §D1.B step 4): the "No project open" chip went; with none open the bar
+    // names no project at all (Projects is the sidebar's).
+    expect(document.querySelector('header.topbar .crumb-proj')).toBeNull();
+    expect(barText()).not.toContain('No project open');
     expect(barText()).not.toMatch(/Biotech & Pharma|In Vitro Diagnostics|Medical Device/);
   });
 

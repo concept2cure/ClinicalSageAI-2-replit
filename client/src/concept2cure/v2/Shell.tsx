@@ -1,7 +1,7 @@
 /**
  * ui-v2 shell chrome, first ported from kit app/Shell.jsx:
  * Rail (the places, then the work areas · account menu with the client type)
- * · TopBar (breadcrumb · the open project · org · ⌘K · task/collab/bell/help)
+ * · TopBar (the open project and where you are · collaborate, new task, your work)
  * · CmdK palette. The rail's list is decided in docs/design/ONE_ANA_ONE_CANVAS.md
  * §5, not ported from the kit (registryModel.ts, RAIL_CORE).
  *
@@ -70,9 +70,18 @@ export interface ShellSurfaceRef {
 }
 
 
-/** Where "Get help" goes, from the account menu and the header alike: AnA, which answers
- *  questions about the product in the governed conversation. */
+/** Where the account menu's "Get help" goes: AnA, which answers questions about the
+ *  product in the governed conversation. The top bar's own Help button went in D1-2
+ *  (D1.md §D1.B step 4); this is its one place now. */
 const HELP_SURFACE = 'conversation-thread';
+
+/** New conversation: Home's composer, where a question starts one (C2C_CONVO =
+ *  { id: 'new', seed }). The sidebar's action and the top bar's phone button share
+ *  it (D1.md §D1.A step 1, §D1.B step 3); each asks its own leave guard first. */
+function openNewConversation(onNav: (id: string) => void) {
+  onNav('home');
+  requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>('.landing-input')?.focus());
+}
 
 /** Preflight chrome requests before dispatch; surface-owned saved handoffs keep their own controls. */
 function useShellLeaveGuard(onNav?: (id: string) => void) {
@@ -327,8 +336,7 @@ export function Rail({
         <button type="button" className="nav-item rail-new" title="New conversation" onClick={() => {
           if (!canLeave()) return;
           closeOnPhone();
-          onNav('home');
-          requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>('.landing-input')?.focus());
+          openNewConversation(onNav);
         }}>
           <span className="ico" aria-hidden="true">{I.plus}</span>
           <span className="lbl">New conversation</span>
@@ -758,57 +766,37 @@ function shellProjectName(project: ShellProject | null): string {
   return String(project?.code ?? '').trim() || String(project?.title ?? '').trim();
 }
 
-/**
- * The open project, named (FILING_SPINE F8). No screen said which filing a
- * person was in, and the top bar's control here was "Switch client domain": a
- * second place to set the client type, which the account menu already sets
- * (FILING_SPINE §6 row 10). The project is the filing, so the chip names it by
- * code, or by title when it has none, and opens its page. With none open it
- * says so and opens Projects, where one is chosen. It reads the shell's one
- * project channel, so it changes the moment a surface opens another project.
- */
-function ProjectChip({ here, onNav }: { here: string; onNav?: (id: string) => void }) {
-  const openProject = useShellProject();
-  if (!openProject) {
-    return (
-      <button type="button" className="tb-proj" data-empty="true" onClick={() => onNav?.('projects')} title="Choose a project in Projects">
-        <span className="ico" aria-hidden="true">{I.folder}</span>
-        <span className="tb-proj-lbl">No project open</span>
-        {/* The label is a state; this says what the button does, for a screen
-            reader, where the title tooltip is not reliably read. */}
-        <span className="sr-only">. Choose one in Projects</span>
-      </button>
-    );
-  }
-  const code = String(openProject.code ?? '').trim();
-  const title = String(openProject.title ?? '').trim();
-  const name = shellProjectName(openProject);
-  return (
-    <button
-      type="button"
-      className="tb-proj"
-      onClick={() => onNav?.('project-home')}
-      title={[code, title].filter(Boolean).join(' — ') || 'The open project'}
-      aria-current={here === 'project-home' ? 'page' : undefined}
-    >
-      <span className="ico" aria-hidden="true">{I.folder}</span>
-      {/* A project opened by id alone (a deep link) has no name in the channel
-          yet; the chip says what it does rather than invent one. */}
-      {name && <span className="sr-only">Open project </span>}
-      <span className="tb-proj-lbl">{name || 'Open project'}</span>
-    </button>
-  );
+/** Screens that name themselves in their own body (Home's greeting, the conversation's
+ *  header), so the bar adds no page crumb there (D1.md §D1.B step 1). */
+const SELF_NAMED_SURFACES: ReadonlySet<string> = new Set(['home', 'conversation-thread']);
+
+/** The launcher (surfaces/CollabLauncher.tsx) with this screen's context: New task or Collaborate. */
+function openLauncher(mode: 'task' | 'collab') {
+  try { (window as any).C2C?.open?.(mode); } catch { /* launcher not mounted */ }
 }
 
+/**
+ * Claude's top bar: where you are, in one quiet line, and a few quiet icons
+ * (D1.md §D1.B). The open project is the first crumb on every screen while one is
+ * open (FILING_SPINE F8): a button, named by its code (or title), that opens its
+ * page and is the current page there. It took over from the project chip
+ * (`ProjectChip`, deleted in D1-2), which named the project a second time beside the
+ * crumbs. A project opened by id alone has no name in the channel yet, and the crumb
+ * does not invent one. The brand is the sidebar's wordmark and the place is its
+ * active row, so there is no root or category crumb. The search box, the
+ * organisation label and Help left the bar for the sidebar's Search and ⌘K, the
+ * account's second line, and the account menu's "Get help" (D1-1).
+ */
 export function TopBar({
   surface,
-  onPalette,
   onNav,
   onAsk,
   onOpenRail,
 }: {
   surface: ShellSurfaceRef;
-  onPalette: () => void;
+  /** Not read since the top bar's search box went (D1.md §D1.B step 4): the
+   *  sidebar's Search and ⌘K open the palette. Kept so call sites are unchanged. */
+  onPalette?: () => void;
   /** Not read here since the top bar stopped setting the client type
    *  (FILING_SPINE F8): it is chosen in the account menu, which the rail
    *  renders. Kept so the shell's call site is unchanged by that slice. */
@@ -821,102 +809,41 @@ export function TopBar({
    *  (D1.md §D1.A step 5, §D1.B step 2). */
   onOpenRail?: () => void;
 }) {
-  const tenant = useTenant();
-  const { go, leaveNotice } = useShellLeaveGuard(onNav);
-  // The organisation's name, or none: an unknown organisation is not labelled
-  // "Organization" (P-25, 2026-10-08). The label only: choosing a membership and
-  // answering invitations is OrganizationAccess, in the sidebar's foot beside the
-  // account (D1.md §D1.A step 2).
-  const orgName: string | null = tenant?.currentOrganization?.name?.trim() || null;
-  const orgMark = (orgName ?? '')
-    .split(/\s+/)
-    .map((w: string) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-  const tier = breadcrumbTierOf(surface);
-  /* The project's page is named by the project, not by "Project home" (section
-     9 of .design/client-journey/INFORMATION_ARCHITECTURE.md): a registry label
-     cannot hold a project's name, so the breadcrumb reads the shell's one
-     project channel, as the project chip beside it does. With no project open,
-     or one opened by id alone, it keeps the registry label. */
+  const { canLeave, go, leaveNotice } = useShellLeaveGuard(onNav);
+  /* The shell's one project channel: the crumb changes the moment a screen opens
+     another project. */
   const openProject = useShellProject();
   const projectName = shellProjectName(openProject);
-  const here = (surface.id === 'project-home' && projectName) || surface.label;
-  /* A project feature (a device discipline or pathway, under the Projects app
-     since 2026-10-23) reads as a feature of the open project: Projects › the
-     project › the feature, the project named as the chip and the project page
-     name it. With none open, or one opened by id alone, it reads Projects ›
-     the feature: the crumb never invents a name. */
-  const projectCrumb = tier?.id === PROJECTS_CRUMB.id ? projectName : '';
+  const projectTitle = [openProject?.code, openProject?.title].map((v) => String(v ?? '').trim()).filter(Boolean).join(' — ');
+  const onProjectPage = surface.id === 'project-home';
+  /* The page's own name follows the project, except where the project crumb already
+     names the page (the project's page) or the screen names itself. */
+  const here = SELF_NAMED_SURFACES.has(surface.id) || (onProjectPage && projectName) ? '' : surface.label;
   return (
     <header className="topbar">
       {onOpenRail && <button type="button" className="tb-btn tb-rail" aria-label="Open the sidebar" onClick={onOpenRail}>{I.panelLeft}</button>}
       <div className="crumbs">
-        <span className="crumb-root">Concept2Cure.RI</span>
-        <span className="sep crumb-root-sep" aria-hidden="true">›</span>
-        {/* A surface in both client categories has no tier crumb; this drew an
-            empty one between two separators ("Concept2Cure.RI › › Quality"),
-            launch sweep finding 129. */}
-        {tier && (
-          <>
-            <span className="crumb-tier">{tier.label}</span>
-            <span className="sep" aria-hidden="true">›</span>
-          </>
+        {projectName && (
+          <button type="button" className="crumb-proj" onClick={() => go('project-home')} title={projectTitle}
+            aria-current={onProjectPage ? 'page' : undefined}>
+            <span className="ico" aria-hidden="true">{I.folder}</span>
+            <span className="lbl">{projectName}</span>
+          </button>
         )}
-        {projectCrumb && (
-          <>
-            <span className="crumb-tier">{projectCrumb}</span>
-            <span className="sep" aria-hidden="true">›</span>
-          </>
-        )}
-        <span className="here">{here}</span>
+        {projectName && here && <span className="sep" aria-hidden="true">›</span>}
+        {here && <span className="here">{here}</span>}
       </div>
       <div className="tb-spacer" />
-      <ProjectChip here={surface.id} onNav={go} />
-      {orgName && (
-        <div className="tb-org" title={orgName}>
-          <span className="tb-org-mark" aria-hidden="true">{orgMark}</span>
-          <span className="tb-org-name">{orgName}</span>
-        </div>
-      )}
-      <button type="button" className="tb-cmdk" onClick={onPalette} aria-label="Search, jump, or run a command" title="Search, jump, or run a command (⌘K)">
-        <span className="ico">{I.search}</span>
-        <span className="lbl">Search, jump, or run a command</span>
-        <span className="kbd">⌘K</span>
-      </button>
-      {/* New task / Collaborate open the universal launcher with the current
-          surface's context; the tray is the live "what needs me" slide-over. */}
-      <button
-        type="button"
-        className="tb-task"
-        title="New task — assign & track from this screen"
-        onClick={() => { try { (window as any).C2C?.open?.('task'); } catch { /* launcher not mounted */ } }}
-      >
-        <span className="ico">{I.checkSquare ?? I.plus}</span>
-        <span className="tb-task-lbl">Task</span>
-      </button>
-      <button
-        type="button"
-        className="tb-btn"
-        title="Collaborate — message a colleague about this screen"
-        aria-label="Collaborate"
-        onClick={() => { try { (window as any).C2C?.open?.('collab'); } catch { /* launcher not mounted */ } }}
-      >
-        {I.messageSquare}
-      </button>
+      {/* Collaborate and New task open the launcher with this screen's context (at
+          phone width they are in ⌘K); Your work is the live "what needs me" panel. */}
+      <button type="button" className="tb-btn tb-collab" aria-label="Collaborate on this screen" title="Collaborate on this screen"
+        onClick={() => openLauncher('collab')}>{I.messageSquare}</button>
+      <button type="button" className="tb-btn tb-newtask" aria-label="New task from this screen" title="New task from this screen"
+        onClick={() => openLauncher('task')}>{I.checkSquare}</button>
       <TaskTray onNav={onNav} onAsk={onAsk} />
-      {/* Where the account menu's "Get help" goes. It had no handler at all
-          (launch sweep finding 132). */}
-      <button
-        type="button"
-        className="tb-btn"
-        title="Get help"
-        aria-label="Get help"
-        onClick={() => go(HELP_SURFACE)}
-      >
-        {I.help}
-      </button>
+      {/* At phone width (only there, app-v2.css): the sidebar's New conversation. */}
+      <button type="button" className="tb-btn tb-new" aria-label="New conversation" title="New conversation"
+        onClick={() => { if (onNav && canLeave()) openNewConversation(onNav); }}>{I.plus}</button>
       {leaveNotice}
     </header>
   );

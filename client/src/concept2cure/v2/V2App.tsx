@@ -1323,7 +1323,8 @@ export function V2App() {
       {!prefs.railCollapsed && (
         <div aria-hidden="true" className="rail-scrim" onClick={() => set('railCollapsed', true)} />
       )}
-      <main className="main">
+      {/* data-surface: Home's top bar drops its rule (app-v2.css; D1.md §D1.B step 5). */}
+      <main className="main" data-surface={activeId}>
         <TopBar
           surface={activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface}
           onPalette={() => setCmdkOpen(true)}

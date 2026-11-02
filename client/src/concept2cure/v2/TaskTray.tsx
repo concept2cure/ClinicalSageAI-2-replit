@@ -58,6 +58,16 @@ export const TRIAGE_ASK = 'Triage everything assigned to me across all projects 
 
 type TaskTrayProps = { onNav?: (id: string) => void; onAsk?: (text: string) => void };
 
+/** The bell's accessible name: what is waiting, or that a count failed, and what is late
+ *  (", 2 overdue" when anything is; D1 §D1.B step 6). */
+function trayTriggerLabel(countsIncomplete: boolean, badge: number, overdue: number): string {
+  const waiting = `${badge} item${badge === 1 ? '' : 's'} waiting`;
+  const late = overdue > 0 ? `, ${overdue} overdue` : '';
+  return countsIncomplete
+    ? `Your work — couldn't load every count${badge ? `; at least ${waiting}` : ''}${late}`
+    : `Your work${badge ? ` — ${waiting}` : ''}${late}`;
+}
+
 function useTaskTrayOwnership(scope: TaskActorScope | null, onNav: TaskTrayProps['onNav']) {
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -126,9 +136,10 @@ function TaskTrayOwner({ onNav, onAsk, scope }: TaskTrayProps & { scope: TaskAct
      meant "we don't know" — the failure the comment above exists to rule out.
      A failed count shows as unknown, never as a smaller or zero total. */
   const countsIncomplete = Boolean(myWork.error || unread.error);
-  const triggerLabel = countsIncomplete
-    ? `Your work — couldn't load every count${badge ? `; at least ${badge} item${badge === 1 ? '' : 's'} waiting` : ''}`
-    : `Your work${badge ? ` — ${badge} item${badge === 1 ? '' : 's'} waiting` : ''}`;
+  /* What is late, from the same read (0 when it failed): the badge turns red and the
+     name says how many, so the closed bell tells lateness apart (D1 §D1.B step 6). */
+  const overdue = work?.overdue ?? 0;
+  const triggerLabel = trayTriggerLabel(countsIncomplete, badge, overdue);
 
   const markRead = async (id: number) => {
     if (!stillOwned()) { setNavigationError('Your signed-in account or organization changed. Reopen Your work.'); return; }
@@ -168,6 +179,7 @@ function TaskTrayOwner({ onNav, onAsk, scope }: TaskTrayProps & { scope: TaskAct
         title={countsIncomplete ? "Your tasks, approvals and messages — some counts couldn't be loaded" : 'Your tasks, approvals and messages'}
         aria-label={triggerLabel}
         aria-expanded={open}
+        data-overdue={overdue > 0 || undefined}
       >
         {I.bell}
         {countsIncomplete ? (

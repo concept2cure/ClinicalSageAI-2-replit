@@ -27,11 +27,22 @@
  *     12px sentence case, nothing under 12px, no brand fill, the avatar in ink;
  *     at ≤640px no strip is reserved and the collapsed rail is not drawn.
  *
- * The top bar's own quiet checks (no `.tb-cmdk`, `.tb-org`, `.tb-proj`,
- * `.tb-task`, no "Get help", the `.crumb-proj` button) are D1-2's (§D1.B), and join
- * this file with that step.
+ * The top bar (D1-2, §D1.B). Claude's top bar is near-empty: where you are in one
+ * quiet line, a few quiet icons. Ours carried "Concept2Cure.RI ›", a tier crumb, a
+ * project chip that named the open project a second time, the organisation with an
+ * orange mark, a 230px search box, an orange-tinted "Task", Help, and an orange
+ * badge. Pinned here:
+ *   - no `.tb-cmdk`, `.tb-org`, `.tb-proj`, `.tb-task`, no "Get help" in the bar;
+ *     the open project is the first crumb, a `.crumb-proj` button that opens its
+ *     page, on every screen while one is open; no root or tier crumb;
+ *   - on Home with no project open, exactly Collaborate, New task and Your work,
+ *     and no text; at phone width "New conversation" sits last;
+ *   - in the bar's rules: no orange, nothing under 12px, Home's bar drops its rule,
+ *     the badge is ink and turns red when something is overdue; the lazy fallback
+ *     is a quiet line ("Loading…"), not a box.
  *
  * Red at b854c54c2b (before D1-1): docs/evidence/DESIGN/D1/D1-1/red/.
+ * The top bar's cases, red at 16df5ed4b7 (before D1-2): docs/evidence/DESIGN/D1/D1-2/red/.
  */
 import React from 'react';
 import { readFileSync } from 'node:fs';
@@ -55,8 +66,12 @@ vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => tenant.current,
 }));
 
+import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
 import { NavEntitlementsProvider } from '../navEntitlements';
+import { registerSurfaceLeaveGuard } from '../navParams';
 import { Rail, TopBar } from '../Shell';
+import { clearShellProject, publishShellProject } from '../shellProject';
+import { SURFACE_VIEWS } from '../surfaceViews';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
 const NAV = { organizationId: 7, tier: 'enterprise', industryMode: 'biotech', masterAdmin: false, resolved: true, surfaces: [] };
@@ -64,15 +79,19 @@ const NAV = { organizationId: 7, tier: 'enterprise', industryMode: 'biotech', ma
 beforeEach(() => {
   viewer.roles = ['admin'];
   tenant.current = { currentOrganization: { name: 'Concept2Cure Therapeutics' } };
+  clearShellProject();
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, url: string) => {
     if (url === '/api/module-subscriptions/navigation') return ok(NAV);
     if (url.startsWith('/api/chat/threads')) return ok({ threads: [] });
+    if (url === '/api/task-management/my-work') return ok({ data: { items: [], total: 0, overdue: 0, dueSoon: 0, blocked: 0, approvalsPending: 0 } });
+    if (url.startsWith('/api/mdx/notifications/unread-count')) return ok({ data: { unread: 0 } });
     return ok({ data: [] });
   });
 });
 afterEach(() => {
   cleanup();
+  clearShellProject();
   vi.unstubAllGlobals();
 });
 
@@ -266,6 +285,163 @@ describe('at phone width, choosing an item closes the drawer (§D1.A step 7)', (
   });
 });
 
+/* ── The top bar (D1-2, §D1.B) ────────────────────────────────────────────── */
+
+const C2C_101 = { id: '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d', code: 'C2C-101', title: 'Brexolimab IND' };
+const registry = (id: string): UiSurface => getSurface(id) ?? (() => { throw new Error(`no surface ${id}`); })();
+
+function mountBar(surface: { id: string; label: string }, props: { onOpenRail?: () => void } = {}) {
+  const onNav = vi.fn();
+  render(<TopBar surface={surface} onPalette={() => {}} segment="biopharma" onSegment={() => {}} onNav={onNav} {...props} />);
+  return { onNav, bar: document.querySelector('header.topbar') as HTMLElement };
+}
+/** The crumbs as a person reads them, separators included. */
+const crumbText = (bar: HTMLElement) =>
+  Array.from((bar.querySelector('.crumbs') as HTMLElement).children).map((el) => el.textContent?.trim() ?? '');
+/** The bar's controls that show above 640px (`.tb-rail` and `.tb-new` are phone-only, by CSS). */
+const wideControls = (bar: HTMLElement) =>
+  Array.from(bar.querySelectorAll('button')).filter((b) => !b.matches('.tb-rail, .tb-new, .crumb-proj'));
+/** What the bar says in visible words: the badge's count and screen-reader text left out. */
+const visibleWords = (el: HTMLElement) => {
+  const copy = el.cloneNode(true) as HTMLElement;
+  copy.querySelectorAll('.tt-badge, .sr-only').forEach((n) => n.remove());
+  return copy.textContent?.trim() ?? '';
+};
+
+describe('the top bar: where you are, in one quiet line (§D1.B steps 1 and 4)', () => {
+  it('draws no search box, organisation label, project chip, Task chip or Help; the open project is a crumb button', () => {
+    publishShellProject(C2C_101);
+    const { bar } = mountBar(registry('vault'));
+    for (const gone of ['.tb-cmdk', '.tb-org', '.tb-proj', '.tb-task', '.crumb-root', '.crumb-tier']) {
+      expect(bar.querySelector(gone), gone).toBeNull();
+    }
+    expect(within(bar).queryByRole('button', { name: 'Get help' }) ?? within(bar).queryByText('Get help')).toBeNull();
+    expect(bar.textContent).not.toContain('Concept2Cure');
+    const crumb = bar.querySelector('.crumbs > .crumb-proj') as HTMLElement;
+    expect(crumb.tagName).toBe('BUTTON');
+    expect((bar.querySelector('.crumbs') as HTMLElement).firstElementChild).toBe(crumb);
+    expect(crumb.textContent).toBe('C2C-101');
+    expect(crumb.getAttribute('title')).toBe('C2C-101 — Brexolimab IND');
+  });
+
+  it('on Vault with C2C-101 open it reads "C2C-101 › Vault", and the project crumb opens the project page', () => {
+    publishShellProject(C2C_101);
+    const { bar, onNav } = mountBar(registry('vault'));
+    expect(crumbText(bar)).toEqual(['C2C-101', '›', 'Vault']);
+    const crumb = within(bar).getByRole('button', { name: 'C2C-101' });
+    expect(crumb.getAttribute('aria-current')).toBeNull();
+    fireEvent.click(crumb);
+    expect(onNav.mock.calls).toEqual([['project-home']]);
+  });
+
+  it('on the project page it reads "C2C-101" once, as the current page', () => {
+    publishShellProject(C2C_101);
+    const { bar } = mountBar(registry('project-home'));
+    expect(crumbText(bar)).toEqual(['C2C-101']);
+    expect(within(bar).getByRole('button', { name: 'C2C-101' }).getAttribute('aria-current')).toBe('page');
+    expect(bar.querySelector('.crumbs .here')).toBeNull();
+  });
+
+  it('a project feature reads "the project › the feature"; a one-category or admin page names only itself', () => {
+    publishShellProject(C2C_101);
+    const { bar } = mountBar(registry('device-engineering'));
+    expect(crumbText(bar)).toEqual(['C2C-101', '›', registry('device-engineering').label]);
+    cleanup();
+    clearShellProject();
+    for (const id of ['cmc', 'identity-console']) {
+      const again = mountBar(registry(id));
+      expect(crumbText(again.bar), id).toEqual([registry(id).label]);
+      expect(again.bar.textContent, id).not.toMatch(/Biotech & Pharma|Admin ›|Projects ›/);
+      cleanup();
+    }
+  });
+
+  it('on Home with no project open: exactly Collaborate, New task and Your work, and no text', () => {
+    const { bar } = mountBar({ id: 'home', label: 'Home' }, { onOpenRail: () => {} });
+    expect(wideControls(bar).map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Collaborate on this screen', 'New task from this screen', 'Your work',
+    ]);
+    expect(crumbText(bar)).toEqual([]);
+    expect(visibleWords(bar)).toBe('');
+  });
+
+  it('on Home and in a conversation with a project open, the project crumb is the bar’s one text', () => {
+    publishShellProject(C2C_101);
+    for (const surface of [{ id: 'home', label: 'Home' }, registry('conversation-thread')]) {
+      const { bar } = mountBar(surface);
+      expect(crumbText(bar), surface.id).toEqual(['C2C-101']);
+      expect(visibleWords(bar), surface.id).toBe('C2C-101');
+      cleanup();
+    }
+  });
+
+  it('with no project open there is no project button (Projects is the sidebar’s), and none is invented for an id alone', () => {
+    const { bar } = mountBar(registry('vault'));
+    expect(bar.querySelector('.crumb-proj')).toBeNull();
+    expect(bar.textContent).not.toMatch(/No project open|Open project/);
+    expect(crumbText(bar)).toEqual(['Vault']);
+    cleanup();
+    publishShellProject({ id: C2C_101.id });
+    const again = mountBar(registry('project-home'));
+    expect(again.bar.querySelector('.crumb-proj')).toBeNull();
+    expect(crumbText(again.bar)).toEqual([registry('project-home').label]);
+  });
+});
+
+describe('the top bar’s controls (§D1.B steps 2 and 3)', () => {
+  afterEach(() => {
+    delete (window as { C2C?: unknown }).C2C;
+  });
+
+  it('Collaborate, New task and Your work are icon buttons, in that order, that keep their handlers', () => {
+    const open = vi.fn();
+    (window as { C2C?: unknown }).C2C = { open };
+    const { bar } = mountBar(registry('vault'));
+    const [collab, task, work] = wideControls(bar);
+    expect(collab.classList.contains('tb-collab') && collab.classList.contains('tb-btn')).toBe(true);
+    expect(task.classList.contains('tb-newtask') && task.classList.contains('tb-btn')).toBe(true);
+    expect(work.classList.contains('tt-trigger')).toBe(true);
+    for (const b of [collab, task]) expect(visibleWords(b)).toBe('');
+    fireEvent.click(task);
+    expect(open).toHaveBeenLastCalledWith('task');
+    fireEvent.click(collab);
+    expect(open).toHaveBeenLastCalledWith('collab');
+  });
+
+  it('at phone width: the sidebar button first, New conversation last, and it opens Home', () => {
+    const { bar, onNav } = mountBar(registry('vault'), { onOpenRail: () => {} });
+    const buttons = Array.from(bar.querySelectorAll('button'));
+    const last = buttons[buttons.length - 1];
+    expect([buttons[0].className, last.className, last.getAttribute('aria-label')]).toEqual(['tb-btn tb-rail', 'tb-btn tb-new', 'New conversation']);
+    fireEvent.click(last);
+    expect(onNav).toHaveBeenCalledWith('home');
+  });
+
+  it('New conversation waits for unsaved work, as the sidebar’s does', () => {
+    const release = registerSurfaceLeaveGuard(() => 'Save the pending section changes before switching work.');
+    try {
+      const { bar, onNav } = mountBar(registry('vault'));
+      fireEvent.click(bar.querySelector('.tb-new') as HTMLElement);
+      expect(onNav).not.toHaveBeenCalled();
+    } finally {
+      release();
+    }
+  });
+});
+
+describe('the lazy fallback says "Loading…" (§D1.B step 8)', () => {
+  it('a screen still loading shows one quiet status line, still busy for the probes that wait on it', () => {
+    const View = SURFACE_VIEWS['access-requests'].component as React.ComponentType<Record<string, unknown>>;
+    render(<View surface={registry('access-requests')} onNav={() => {}} onAsk={() => {}} />);
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('Loading…');
+    expect(status.getAttribute('aria-busy')).toBe('true');
+    expect(status.classList.contains('scaf-note')).toBe(true);
+    // The look is the sheet's (.scaf-note[aria-busy="true"]), not an inline box.
+    expect(status.getAttribute('style')).toBeNull();
+  });
+});
+
 /* ── The sidebar's rules (app-v2.css) ─────────────────────────────────────── */
 
 const CSS = readFileSync(resolve(__dirname, '../styles/app-v2.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -376,8 +552,81 @@ describe('the sidebar’s rules (app-v2.css, §D1.A step 6)', () => {
     expect(sel('.c2c-v2.shell:not([data-collapsed="true"]) .rail')).toMatch(/position:fixed/);
     expect(sel('.c2c-v2.shell:not([data-collapsed="true"]) .rail')).toMatch(/box-shadow:var\(--v2-shadow-lg\)/);
     expect(sel('.c2c-v2.shell:not([data-collapsed="true"]) .rail-scrim')).toMatch(/display:block/);
-    // The top bar's button shows only there.
-    expect(unconditional('.c2c-v2 .topbar .tb-rail')[0]?.body).toMatch(/display:none/);
-    expect(sel('.c2c-v2 .topbar .tb-rail')).toMatch(/display:(inline-)?flex/);
+    // The top bar's button shows only there. D1-2 folded D1-1's interim `.topbar .tb-rail`
+    // rules into the bar's own `:is(.tb-rail, .tb-new)` pair (§D1.B step 7).
+    expect(unconditional('.c2c-v2 :is(.tb-rail, .tb-new)')[0]?.body).toMatch(/display:none/);
+    expect(sel('.c2c-v2 :is(.tb-rail, .tb-new)')).toMatch(/display:inline-flex/);
+  });
+});
+
+/* ── The top bar's rules (app-v2.css, §D1.B steps 7 and 8) ───────────────── */
+
+/** The bar's own rules: its box, the crumbs, its icon buttons and the Your work badge. */
+const BAR = /\.(topbar|crumbs|crumb-proj|tb-btn|tb-rail|tb-new|tb-collab|tb-newtask|tt-badge|tt-trigger)(?![\w-])/;
+/** `.tb-btn.on` is the MDX filters' engaged state (K510Surface, cer/SignalsTab), which the spec keeps. */
+const bar = ALL.filter((r) => BAR.test(r.selector) && !/\.tb-btn\.on/.test(r.selector));
+const body = (sel: string, media: 'none' | 'phone' = 'none') =>
+  (media === 'none' ? unconditional(sel) : phone.filter((r) => r.selector === sel)).map((r) => r.body).join(';');
+
+describe('the top bar’s rules (app-v2.css, §D1.B step 7)', () => {
+  it('finds the bar’s rules', () => {
+    expect(bar.length).toBeGreaterThan(10);
+  });
+
+  it('the bar: 4px between controls, a hairline under it that Home drops', () => {
+    expect(body('.c2c-v2 .topbar')).toMatch(/gap:4px;.*border-bottom:1px solid var\(--border\)/);
+    expect(body('.c2c-v2 .main[data-surface="home"] .topbar')).toMatch(/border-bottom-color:transparent/);
+  });
+
+  it('the crumbs: 13px --text-300, the page --text-100 at 500, the project a quiet button that hovers --bg-100, unclipped', () => {
+    expect(body('.c2c-v2 .crumbs')).toMatch(/font-size:var\(--fs-small,\s*13px\);color:var\(--text-300\)/);
+    expect(body('.c2c-v2 .crumbs .here')).toMatch(/color:var\(--text-100\);font-weight:500/);
+    expect(body('.c2c-v2 .crumb-proj')).toMatch(/color:var\(--text-200\)/);
+    expect(body('.c2c-v2 .crumb-proj:hover')).toMatch(/background:var\(--bg-100\)/);
+    expect(body('.c2c-v2 .crumb-proj .ico')).toMatch(/color:var\(--text-300\)/);
+    /* Review: .crumbs clips and is as tall as the crumb, which sits 8px left of its text. Unpadded,
+       the clip cut its hover fill and the shell's 2px-outset focus ring; at phone width it sits flush. */
+    expect([body('.c2c-v2 .crumbs').match(/overflow:hidden|padding-left:\s*\d+px/g), body('.c2c-v2 .crumb-proj:focus-visible'), body('.c2c-v2 .topbar .crumbs', 'phone')])
+      .toEqual([['overflow:hidden', `padding-left:${/margin-left:\s*-(\d+)px/.exec(body('.c2c-v2 .crumb-proj'))?.[1]}px`], 'outline-offset:-2px;', 'margin-left:0;padding-left:0;']);
+  });
+
+  it('icon buttons: 32px, --text-300, hover --bg-100; 44px at phone width', () => {
+    expect(body('.c2c-v2 .tb-btn')).toMatch(/width:32px;height:32px/);
+    expect(body('.c2c-v2 .tb-btn')).toMatch(/color:var\(--text-300\)/);
+    expect(body('.c2c-v2 .tb-btn:hover')).toMatch(/background:var\(--bg-100\)/);
+    expect(body('.c2c-v2 :is(.tb-btn)', 'phone')).toMatch(/width:44px;height:44px/);
+  });
+
+  it('at phone width the menu and New conversation show, and Collaborate and New task go to ⌘K', () => {
+    expect(body('.c2c-v2 :is(.tb-rail, .tb-new)')).toMatch(/display:none/);
+    expect(body('.c2c-v2 :is(.tb-rail, .tb-new)', 'phone')).toMatch(/display:inline-flex/);
+    expect(body('.c2c-v2 .topbar .tb-collab, .c2c-v2 .topbar .tb-newtask', 'phone')).toMatch(/display:none/);
+  });
+
+  it('the badge is ink at 12px, and red when something is overdue', () => {
+    expect(body('.c2c-v2 .tt-badge')).toMatch(/background:var\(--text-100\);color:var\(--bg-000\)/);
+    expect(body('.c2c-v2 .tt-badge')).toMatch(/font-size:var\(--fs-caption,\s*12px\)/);
+    expect(body('.c2c-v2 .tt-trigger[data-overdue] .tt-badge')).toMatch(/background:var\(--error\)/);
+  });
+
+  it('no orange and nothing under 12px in the bar’s rules', () => {
+    const orange = bar.filter((r) => /var\(--accent-(strong|100|200|000|muted|main)/.test(r.body)).map((r) => r.selector);
+    expect(orange).toEqual([]);
+    const small = bar.flatMap((r) =>
+      Array.from(r.body.matchAll(/font-size\s*:\s*(?:var\(--fs-[\w-]+,\s*)?([\d.]+)px/g))
+        .filter((m) => Number(m[1]) < 12).map((m) => `${r.selector} ${m[0]}`));
+    expect(small).toEqual([]);
+  });
+
+  it('the retired bar classes have no rule left', () => {
+    // Each name and every `-suffix` of it (`.tb-task-lbl`, `.tb-org-mark`, `.tb-proj[data-empty]`).
+    for (const gone of ['tb-cmdk', 'tb-org', 'tb-task', 'tb-proj', 'crumb-root', 'crumb-tier']) {
+      expect(CSS.includes(`.${gone}`), gone).toBe(false);
+    }
+  });
+
+  it('the lazy fallback is a quiet line, not a box (§D1.B step 8)', () => {
+    expect(body('.c2c-v2 .scaf-note[aria-busy="true"]'))
+      .toMatch(/border:0;background:none;.*text-align:center;font-size:var\(--fs-small,\s*13px\);color:var\(--text-300\)/);
   });
 });

@@ -207,3 +207,15 @@ describe('the top bar opens the sidebar', () => {
     expect(shell.getAttribute('data-collapsed')).toBe('false');
   });
 });
+
+/* D1-2 (.design/claude-convergence/D1.md §D1.B step 5): the page root names the screen
+   it holds, so Home's top bar can drop its rule (.main[data-surface="home"] .topbar). */
+describe('the page root names its screen', () => {
+  it('data-surface follows the screen the shell shows', async () => {
+    await mountShell('vault');
+    const main = document.querySelector('main.main') as HTMLElement;
+    expect(main.getAttribute('data-surface')).toBe('vault');
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: 'New conversation' }));
+    await waitFor(() => expect(main.getAttribute('data-surface')).toBe('home'));
+  });
+});

@@ -1,0 +1,35 @@
+# Review: the project-doors contract, which the builder's runs did not include (it reads v2/Shell.tsx by path, it does not import it). 2026-11-02T01:00:43Z
+
+## 1. HEAD's contract test against HEAD f0ade0abc + D1-2's sources (scratch export): red, the chip's onNav?.('projects') went
+ × client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/Shell.tsx retains its Projects index door
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+
+## 2. The rewritten contract case and shellNav's new rendered case, against the same sources: green
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/Shell.tsx keeps its Projects index door: the sidebar’s Projects place
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/LaunchScopeGate.tsx retains its Projects index door
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > mdx/MdxSurfaceHost.tsx retains its Projects index door
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/Vault.tsx retains its Projects index door
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/CommunicationCenter.tsx retains its Projects index door
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/CroPortfolio.tsx retains its Projects index door
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/ProjectHome.tsx retains its Projects index door
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/HomeSections.tsx retains its Projects index door
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/Surfaces.tsx retains its Projects index door
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/WorkflowCatalog.tsx retains its Projects index door
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > quality/ControlledDocumentDialogs.tsx retains its Projects index door
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > the MDX catalog door is passed from the existing Projects index navigation
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Projects is on the rail, and opens the Projects index
+ Test Files  2 passed (2)
+      Tests  13 passed | 40 skipped (53)
+
+## 3. The same two cases with the sidebar's Projects place pointed somewhere else (scratch only: target: 'projects-new' on RAIL_CORE's projects entry): red
+1
+ × client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/Shell.tsx keeps its Projects index door: the sidebar’s Projects place
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Projects is on the rail, and opens the Projects index
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected false to be true // Object.is equality
+AssertionError: expected [ [ 'projects-new' ] ] to deeply equal [ [ 'projects' ] ]
+ Test Files  2 failed (2)
+      Tests  2 failed | 11 passed | 40 skipped (53)

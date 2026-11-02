@@ -109,10 +109,12 @@ async function walkRail(page: Page, visits: Visit[]) {
   }
 }
 
-/** The top bar's search button, as a person opens it; ⌘K is the same toggle. */
+/** The sidebar's Search, as a person opens it; ⌘K is the same toggle. The top bar's
+ *  search box went in D1-2 (.design/claude-convergence/D1.md §D1.B step 4). Collapsed,
+ *  the button is named by its title ("Search (⌘K)"). */
 async function openPalette(page: Page) {
   if (await page.locator('.cmdk-list').isVisible().catch(() => false)) return;
-  await page.getByRole('button', { name: 'Search, jump, or run a command' }).first().click();
+  await page.locator('nav[aria-label="Primary"]').getByRole('button', { name: /^Search/ }).first().click();
   await expect(page.locator('.cmdk-list')).toBeVisible({ timeout: 10_000 });
 }
 

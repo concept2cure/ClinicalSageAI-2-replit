@@ -48,7 +48,7 @@ vi.mock('@/contexts/TenantContext', () => ({
 }));
 
 import { NavEntitlementsProvider } from '../navEntitlements';
-import { CmdK, Rail, TopBar } from '../Shell';
+import { CmdK, Rail } from '../Shell';
 import { CLIENT_CATEGORIES, SEGMENTS, getSurfaceMeta } from '../registryModel';
 import { resolveSurfaceIdForTarget } from '../navParams';
 import { __resetSurfaceActionBus } from '../surfaceActions';
@@ -187,6 +187,15 @@ describe('the rail lists the places, then the work areas', () => {
     expect(onNav).toHaveBeenCalledWith('quality');
   });
 
+  /* Added in D1-2's review: the top bar's "No project open" chip, the shell's other door to
+     the Projects index, went (D1.md §D1.B step 4), so the sidebar's Projects is the shell's
+     door there (projectCreationDoors.contract.test.ts). It opens the index, not a wizard. */
+  it('Projects is on the rail, and opens the Projects index', async () => {
+    const { scroll, onNav } = await mountRail();
+    fireEvent.click(within(scroll).getByRole('button', { name: 'Projects' }));
+    expect(onNav.mock.calls).toEqual([['projects']]);
+  });
+
   /* Found in the running app, 2026-10-31: with no project open, Vault, Tasks, Communication and
      Quality are project screens, so the router lands on Projects, and from Projects the click
      looked dead. The rail now says why. */
@@ -321,24 +330,27 @@ describe('the governed artifacts across projects, once the Artifacts center, are
      screen folded into the Vault (D2, fold F3 slice C, 2026-10-29), whose
      organization view lists the same rows. This is the path the journey takes
      now, by the same accessible names. ⌘K no longer lists the retired screen. */
-  it('the top bar’s search opens the palette, and the result opens the Vault, not a retired screen', async () => {
+  /* D1-2 (D1.md §D1.B step 4): the top bar's search box went; the sidebar's Search
+     (D1-1) and ⌘K open the same palette, so the path starts there. */
+  it('the sidebar’s Search opens the palette, and the result opens the Vault, not a retired screen', async () => {
     const onNav = vi.fn();
     function Harness() {
       const [open, setOpen] = React.useState(false);
       return (
         <NavEntitlementsProvider>
-          <TopBar surface={{ id: 'projects', label: 'Projects' }} onPalette={() => setOpen(true)} segment="biopharma" onSegment={vi.fn()} onNav={onNav} />
+          <Rail activeId="projects" onNav={onNav} collapsed={false} setCollapsed={vi.fn()} segment="biopharma" setSegment={vi.fn()} onSearch={() => setOpen(true)} />
           <CmdK open={open} onClose={() => setOpen(false)} onNav={onNav} onAsk={vi.fn()} onAct={vi.fn()} />
         </NavEntitlementsProvider>
       );
     }
     render(<Harness />);
     await settle();
-    fireEvent.click(screen.getByRole('button', { name: 'Search, jump, or run a command' }));
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: 'Search' }));
     fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: 'Artifacts' } });
     expect(screen.queryAllByRole('button', { name: /Artifacts center/i })).toEqual([]);
     fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: 'Vault' } });
-    fireEvent.click(screen.getAllByRole('button', { name: /^Vault/ })[0]);
+    // The palette's own row: the sidebar beside it has a Vault place too.
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Command palette' })).getAllByRole('button', { name: /^Vault/ })[0]);
     expect(onNav).toHaveBeenCalledWith('vault');
   });
 });

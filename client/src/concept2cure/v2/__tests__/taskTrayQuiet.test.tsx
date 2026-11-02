@@ -27,8 +27,8 @@
  *   - in the tray's rules: no orange except the ✻, no text under 12px, the
  *     group heads in sentence case, a quiet dot hidden.
  *
- * `.tt-badge` is excluded from the CSS checks: it is D1-2's (§D1.B step 7), and
- * stays orange and 10px until that step lands.
+ * `.tt-badge` was excluded from the CSS checks until D1-2 (§D1.B step 7) re-valued it:
+ * ink at 12px, red when something is overdue. It meets them now, so it is checked too.
  *
  * Red at 9bf83a8f0f (before D1-4): docs/evidence/DESIGN/D1/D1-4/red/.
  */
@@ -200,8 +200,8 @@ const APP = readFileSync(resolve(__dirname, '../styles/app-v2.css'), 'utf8').rep
 const TRAY_RULES = [...APP.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
   .map((m) => ({ sel: m[1].trim().replace(/\s+/g, ' '), decls: m[2] }))
   .filter((r) => /\.tt-/.test(r.sel));
-/** D1-2 owns the badge (§D1.B step 7). A rule that names only the badge is left to it. */
-const OWN = TRAY_RULES.filter((r) => !r.sel.split(',').every((s) => /\.tt-badge|\.tt-trigger/.test(s)));
+/** Every tray rule, the badge's included: D1-2 (§D1.B step 7) took it off orange and 10px. */
+const OWN = TRAY_RULES;
 const decl = (sel: string, prop: string) =>
   TRAY_RULES.filter((r) => r.sel.split(',').map((s) => s.trim()).includes(sel))
     .map((r) => new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`).exec(r.decls)?.[1]?.trim())
