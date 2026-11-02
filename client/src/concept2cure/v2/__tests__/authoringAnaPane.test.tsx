@@ -6,6 +6,9 @@
  * These preserve drafting, evidence, follow-up, answer visibility and focus
  * capabilities while refusing a second editor conversation.
  */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -128,7 +131,9 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
     });
     render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-    await waitFor(() => expect(screen.getAllByRole('button', { name: /Draft with AnA/ })).toHaveLength(2));
+    /* The empty section's own "Draft with AnA" stays on the page; the bar's is an item of its AnA (✻) menu (D4-2). */
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /Draft with AnA/ })).toHaveLength(1));
+    expect(screen.getByRole('button', { name: /Draft with AnA/ }).closest('.rse-empty-cta')).not.toBeNull();
     fireEvent.click(toolbarDraftButton());
     await sendAuthoringPrefill();
     await waitFor(() => expect(sentAuthoringTurns()[0]?.message).toMatch(/Draft 3\.2\.S\.1/));
@@ -137,7 +142,7 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
   it('the canonical composer sends the person’s edited question in the same saved document context', async () => {
     render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show the conversation' }));
     const pane = await sendAuthoringPrefill('Is this claim supported by the linked evidence?');
     await waitFor(() => expect(pane.textContent).toMatch(/Is this claim supported/));
     expect(sentAuthoringTurns()[0].message).toBe('Is this claim supported by the linked evidence?');
@@ -155,7 +160,7 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
     ]));
     render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show the conversation' }));
     const pane = await sendAuthoringPrefill('Check the citation chain.');
     expect((await within(pane).findAllByText('Checking dossier consistency')).length).toBeGreaterThan(0);
     expect(await within(pane).findByText(/All 2 specific claims found in this turn's sources/)).toBeTruthy();
@@ -172,7 +177,7 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
     expect(screen.queryByRole('textbox', { name: 'Reply to AnA' })).toBeNull();
     expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull();
     expect(sentAuthoringTurns()).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show the conversation' }));
     const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
     expect(composer.value).toBe('');
     expect((screen.getByRole('button', { name: 'Send message to AnA' }) as HTMLButtonElement).disabled).toBe(true);
@@ -254,14 +259,19 @@ describe('DocumentAuthoring — the answer is on screen after a turn', () => {
 
 /* QA 2026-10-08, walk 2, j5 (c): Save, the reason field, E-sign and Place
    into filing were inside the header's horizontal scroller (.ed-doc-actions,
-   overflow-x:auto), past its right edge at 1440px and at 390px. The governed
-   acts are their own group, which wraps and is never clipped. */
+   overflow-x:auto), past its right edge at 1440px and at 390px. D4-2: they
+   are in the one bar (D4.md §D4.B), whose acts wrap at phone width and never
+   scroll sideways, and the reason field is the strip under it. */
 describe('DocumentAuthoring — the governed acts are never scrolled out of the header', () => {
-  it('Save is in the commit group, outside the panel scroller', async () => {
+  it('Save is in the bar, and no rule makes the bar scroll sideways', async () => {
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('General Information');
     const save = await screen.findByTestId('save-section');
-    expect(save.closest('.ed-doc-commit')).not.toBeNull();
-    expect(save.closest('.ed-doc-actions')).toBeNull();
+    expect(save.closest('[data-testid="ed-bar"] .ed-bar-acts')).not.toBeNull();
+    const css = fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'styles', 'authoring-v2.css'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '');
+    const barRules = [...css.matchAll(/\.ed-bar(?:-acts)?\s*\{([^}]*)\}/g)].map(m => m[1]);
+    expect(barRules.length).toBeGreaterThan(0);
+    for (const body of barRules) expect(body, body).not.toMatch(/overflow-x\s*:\s*(auto|scroll)/);
   });
 });

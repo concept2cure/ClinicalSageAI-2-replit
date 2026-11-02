@@ -26,14 +26,19 @@
  * `aria-expanded`); the arrow keys, Home and End move through the items;
  * Escape and Tab close it; focus returns to the button.
  *
- * Where it opens: the editor's toolbar (`.ed-doc-actions`) scrolls sideways,
- * which makes it a scroll box on both axes, and a list row sits in a list that
- * scrolls. A menu laid out inside either was cut off at the toolbar's height,
+ * Where it opens: the editor's old header scrolled sideways, which made it a
+ * scroll box on both axes, and a list row sits in a list that scrolls. A menu
+ * laid out inside either was cut off at the toolbar's height,
  * so in a browser none of its items could be seen or clicked. The menu
  * therefore opens in the top layer (a manual popover) where the browser has
  * one, and is placed in fixed coordinates from its button either way, by the
  * one placement every clipped menu uses (menuPlacement.ts), and moved with the
  * button when anything scrolls.
+ *
+ * The menu button itself is `MenuButton` (exported here with `useMenu` and
+ * `MenuItem`): the one menu-button pattern, which the editor's bar also draws
+ * its AnA (✻) and More (⋯) menus with (D4.md §D4.B step 1). In the bar the
+ * trigger is the download glyph alone (`compact`).
  *
  * Its state belongs to one document. A refusal, or a working copy still being
  * prepared, is shown only beside the document it was for: the host may hand
@@ -139,11 +144,23 @@ export interface DownloadMenuProps {
   /** The button's accessible name when the visible words need context (a list row). */
   ariaLabel?: string;
   testId?: string;
+  /** The editor's bar: the download glyph alone (`btn ed-ico`), named "Download" unless `ariaLabel` says otherwise. */
+  compact?: boolean;
+}
+
+/** Shown: neither the item nor a box between it and the menu is `display: none`
+ *  (the bar's More menu draws its view items only on a narrow panel). */
+function shown(item: HTMLElement, menu: HTMLElement): boolean {
+  for (let el: HTMLElement | null = item; el && el !== menu; el = el.parentElement) {
+    if (window.getComputedStyle(el).display === 'none') return false;
+  }
+  return true;
 }
 
 /** Focus the menu item `delta` away from the focused one, wrapping (Home/End pass ±Infinity). */
 function moveFocus(menu: HTMLElement | null, delta: number, preventScroll = false) {
-  const items = Array.from(menu?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+  if (!menu) return;
+  const items = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemradio"]')).filter(item => shown(item, menu));
   if (items.length === 0) return;
   const at = items.indexOf(document.activeElement as HTMLElement);
   const next = delta === Infinity ? items.length - 1 : delta === -Infinity ? 0 : (at + delta + items.length) % items.length;
@@ -191,10 +208,10 @@ export function placeMenu(btn: HTMLElement, menu: HTMLElement) {
 }
 
 /** Open/close, outside click, placement, and the menu's keys. Escape returns focus to the button. */
-function useMenu() {
+export function useMenu() {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const close = useCallback((refocus: boolean) => {
     setOpen(false);
@@ -246,32 +263,118 @@ function useMenu() {
   return { open, setOpen, close, wrapRef, btnRef, menuRef, onMenuKey };
 }
 
-interface ItemProps {
+export interface MenuItemProps {
   label: string;
   /** The item's own line under its label; omitted when the group says it once. */
   note?: string;
-  noteId: string;
+  /** The element that describes the item to a screen reader: the group's shared
+   *  note, or (without one) the item's own `note`. */
+  noteId?: string;
   /** Shown, not offered: aria-disabled keeps it reachable so its reason is read. */
   disabled?: boolean;
   onChoose: () => void;
   testId?: string;
+  /** `menuitemradio` for one choice of several (the bar's view switch), with `checked`. */
+  role?: 'menuitem' | 'menuitemradio';
+  checked?: boolean;
 }
 
-function MenuItem({ label, note, noteId, disabled, onChoose, testId }: ItemProps) {
+export function MenuItem({ label, note, noteId, disabled, onChoose, testId, role = 'menuitem', checked }: MenuItemProps) {
+  const ownNoteId = useId();
+  /* With no shared note, the item's own line is its description: a disabled
+     item's reason is then read, not only seen. */
+  const describedBy = noteId ?? (note ? ownNoteId : undefined);
   return (
     <button
       type="button"
-      role="menuitem"
+      role={role}
       className="dlm-item"
       aria-label={label}
-      aria-describedby={noteId}
+      aria-describedby={describedBy}
       aria-disabled={disabled || undefined}
+      aria-checked={role === 'menuitemradio' ? !!checked : undefined}
       onClick={() => { if (!disabled) onChoose(); }}
       data-testid={testId}
     >
       <span className="dlm-item-t">{label}</span>
-      {note && <span className="dlm-item-d" aria-hidden="true">{note}</span>}
+      {note && <span className="dlm-item-d" id={noteId ? undefined : ownNoteId} aria-hidden="true">{note}</span>}
     </button>
+  );
+}
+
+export interface MenuButtonProps {
+  /** The trigger's glyph. Alone, the trigger is an icon button (`btn ed-ico`) named by `ariaLabel`. */
+  icon: React.ReactNode;
+  /** Visible words beside the icon, with the menu chevron (`btn ghost`). */
+  label?: string;
+  ariaLabel?: string;
+  /** Test id on the wrapper (`.dlm`), as DownloadMenu's `ed-download`. */
+  testId?: string;
+  /** The menu's accessible name; defaults to the trigger's. */
+  menuLabel?: string;
+  menuTestId?: string;
+  className?: string;
+  title?: string;
+  busy?: boolean;
+  /** The host's handle on the trigger: a panel opened from the menu returns focus here. */
+  buttonRef?: React.Ref<HTMLButtonElement>;
+  /** Drawn inside the wrapper after the menu: a live region, a refusal kept beside the control. */
+  after?: React.ReactNode;
+  /** The items. `close()` shuts the menu and returns focus to the trigger. */
+  children: (close: () => void) => React.ReactNode;
+}
+
+function assignRef<T>(ref: React.Ref<T> | undefined, value: T | null) {
+  if (typeof ref === 'function') ref(value);
+  else if (ref) (ref as React.MutableRefObject<T | null>).current = value;
+}
+
+/**
+ * The one menu button (D4.md §2 "Menus", §D4.B step 1): `useMenu`'s keys, top
+ * layer and placement behind any trigger. The editor's bar draws AnA (✻) and
+ * More (⋯) with it, and DownloadMenu is one.
+ */
+export function MenuButton({ icon, label, ariaLabel, testId, menuLabel, menuTestId, className, title, busy, buttonRef, after, children }: MenuButtonProps) {
+  const menu = useMenu();
+  const menuId = useId();
+  const setButton = useCallback((el: HTMLButtonElement | null) => {
+    menu.btnRef.current = el;
+    assignRef(buttonRef, el);
+  }, [menu.btnRef, buttonRef]);
+  const { close: closeMenu } = menu;
+  const close = useCallback(() => closeMenu(true), [closeMenu]);
+  return (
+    <span className="dlm" ref={menu.wrapRef} data-testid={testId}>
+      <button
+        ref={setButton}
+        type="button"
+        className={className ?? (label ? 'btn ghost' : 'btn ed-ico')}
+        aria-haspopup="menu"
+        aria-expanded={menu.open}
+        aria-controls={menu.open ? menuId : undefined}
+        aria-label={ariaLabel}
+        title={title}
+        onClick={() => menu.setOpen(o => !o)}
+        onKeyDown={(e) => { if (e.key === 'ArrowDown' && !menu.open) { e.preventDefault(); menu.setOpen(true); } }}
+        aria-busy={busy || undefined}
+      >
+        {label ? <>{icon} {label} {I.chevDown}</> : icon}
+      </button>
+      {menu.open && (
+        <div
+          ref={menu.menuRef}
+          className="dlm-menu"
+          role="menu"
+          id={menuId}
+          aria-label={menuLabel ?? ariaLabel ?? label}
+          onKeyDown={menu.onMenuKey}
+          data-testid={menuTestId}
+        >
+          {children(close)}
+        </div>
+      )}
+      {after}
+    </span>
   );
 }
 
@@ -325,62 +428,39 @@ function useWorkingCopy(docId: string, docTitle: string | null, fireToast: Downl
   return { busyFormat, refusal: refusal?.docId === docId ? refusal.text : null, request };
 }
 
-export function DownloadMenu({ docId, docTitle, fireToast, controlled, label = 'Download', ariaLabel, testId }: DownloadMenuProps) {
-  const menu = useMenu();
-  const menuId = useId();
+export function DownloadMenu({ docId, docTitle, fireToast, controlled, label = 'Download', ariaLabel, testId, compact = false }: DownloadMenuProps) {
   const wcNoteId = useId();
   const ctlNoteId = useId();
   const { busyFormat, refusal, request } = useWorkingCopy(docId, docTitle, fireToast);
-
-  const workingCopy = (format: WorkingCopyFormat) => {
-    menu.close(true);
-    void request(format);
-  };
-  const controlledExport = (format: ControlledFormat) => {
-    menu.close(true);
-    controlled?.run(format);
-  };
   const reason = controlled?.blockedReason ?? null;
 
   return (
-    <span className="dlm" ref={menu.wrapRef} data-testid={testId}>
-      <button
-        ref={menu.btnRef}
-        type="button"
-        className="btn ghost"
-        aria-haspopup="menu"
-        aria-expanded={menu.open}
-        aria-controls={menu.open ? menuId : undefined}
-        aria-label={ariaLabel}
-        onClick={() => menu.setOpen(o => !o)}
-        onKeyDown={(e) => { if (e.key === 'ArrowDown' && !menu.open) { e.preventDefault(); menu.setOpen(true); } }}
-        aria-busy={busyFormat !== null || undefined}
-      >
-        {I.download} {busyFormat ? 'Preparing…' : label} {I.chevDown}
-      </button>
-      {menu.open && (
-        <div
-          ref={menu.menuRef}
-          className="dlm-menu"
-          role="menu"
-          id={menuId}
-          aria-label={`Download ${docTitle || 'this document'}`}
-          onKeyDown={menu.onMenuKey}
-          data-testid="dlm-menu"
-        >
+    <MenuButton
+      icon={I.download}
+      label={compact ? undefined : busyFormat ? 'Preparing…' : label}
+      ariaLabel={compact ? ariaLabel ?? 'Download' : ariaLabel}
+      menuLabel={`Download ${docTitle || 'this document'}`}
+      menuTestId="dlm-menu"
+      testId={testId}
+      busy={busyFormat !== null}
+      after={<>
+        <span className="sr-only" aria-live="polite">{busyFormat ? `Preparing a working copy (${FORMAT_LABEL[busyFormat]})…` : ''}</span>
+        {/* Stays beside the control after the toast has gone; the toast is
+            what announces it, so this is not a second alert. */}
+        {refusal && <span className="dlm-err" data-testid="dlm-refusal">{refusal}</span>}
+      </>}
+    >
+      {close => (
+        <>
           <div role="group" aria-label="Working copy" className="dlm-group">
             <div className="dlm-sec" aria-hidden="true">Working copy</div>
             <span id={wcNoteId} hidden>{`${WORKING_COPY_NOTE}. Not a controlled record. Any status.`}</span>
-            <MenuItem label="Working copy (Word)" note={WORKING_COPY_NOTE} noteId={wcNoteId} disabled={busyFormat !== null} onChoose={() => workingCopy('docx')} testId="dlm-wc-docx" />
-            <MenuItem label="Working copy (PDF)" note={WORKING_COPY_NOTE} noteId={wcNoteId} disabled={busyFormat !== null} onChoose={() => workingCopy('pdf')} testId="dlm-wc-pdf" />
+            <MenuItem label="Working copy (Word)" note={WORKING_COPY_NOTE} noteId={wcNoteId} disabled={busyFormat !== null} onChoose={() => { close(); void request('docx'); }} testId="dlm-wc-docx" />
+            <MenuItem label="Working copy (PDF)" note={WORKING_COPY_NOTE} noteId={wcNoteId} disabled={busyFormat !== null} onChoose={() => { close(); void request('pdf'); }} testId="dlm-wc-pdf" />
           </div>
-          {controlled && <ControlledGroup reason={reason} noteId={ctlNoteId} onChoose={controlledExport} />}
-        </div>
+          {controlled && <ControlledGroup reason={reason} noteId={ctlNoteId} onChoose={f => { close(); controlled.run(f); }} />}
+        </>
       )}
-      <span className="sr-only" aria-live="polite">{busyFormat ? `Preparing a working copy (${FORMAT_LABEL[busyFormat]})…` : ''}</span>
-      {/* Stays beside the control after the toast has gone; the toast is
-          what announces it, so this is not a second alert. */}
-      {refusal && <span className="dlm-err" data-testid="dlm-refusal">{refusal}</span>}
-    </span>
+    </MenuButton>
   );
 }

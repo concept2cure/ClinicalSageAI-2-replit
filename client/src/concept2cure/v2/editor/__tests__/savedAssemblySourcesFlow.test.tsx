@@ -20,6 +20,7 @@ import { authService } from '@/services/portal/authService';
 import { clearEditorTarget, setEditorTarget } from '../../editorTarget';
 import { publishShellProject } from '../../shellProject';
 import { __resetCeremonies, registerCeremonyOpen } from '../../ceremony';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111381';
 const DOC = '22222222-2222-4222-8222-222222222381';
@@ -281,7 +282,7 @@ describe('manual draft review retains its buffer during a saved-source reuse', (
     await mounted(); const reuse = await inspectSaved();
     const pending = deferred<Response>(); savedReply = () => pending.promise;
     fireEvent.click(reuse); await waitFor(() => expect(savedReads()).toHaveLength(2));
-    fireEvent.click(screen.getByTestId('ai-draft-open'));
+    fireEvent.click(openEditorControl('Draft from sources', 'ana'));
     const generate = await screen.findByTestId('ai-draft-generate') as HTMLButtonElement;
     /* No receiving agency is recorded, so the pane assumes none: Region is blank and Draft section waits for an
        explicit choice (8013c9457; docs/evidence/D4/2026-10-30-ind-development/region-ui.md). */

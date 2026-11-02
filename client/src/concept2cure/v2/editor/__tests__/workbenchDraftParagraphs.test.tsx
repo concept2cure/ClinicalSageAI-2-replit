@@ -19,6 +19,7 @@ vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: 
 vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFiling: () => null }));
 
 import { DocumentAuthoring } from '../../surfaces/DocumentAuthoring';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const DOC = 'dddddddd-0000-4000-8000-000000000011';
 const SEC = 'aaaaaaaa-0000-4000-8000-000000000011';
@@ -67,9 +68,10 @@ async function openAlternatives(expectEmpty = false) {
     if (expectEmpty) expect(canvas?.textContent).toBe('');
     else expect(canvas?.textContent).toContain('primary endpoint');
   });
-  const open = screen.getByTestId('ai-draft-open') as HTMLButtonElement;
-  await waitFor(() => expect(open.disabled).toBe(false));
-  fireEvent.click(open);
+  /* D4-2: "Draft from sources" is an item of the bar's AnA (✻) menu (D4.md §D4.G). */
+  const open = () => openEditorControl('Draft from sources', 'ana');
+  await waitFor(() => expect(open().getAttribute('aria-disabled')).toBeNull());
+  fireEvent.click(open());
   /* No receiving agency is recorded, so none is assumed: the person chooses one before drafting
      (8013c9457; docs/evidence/D4/2026-10-30-ind-development/region-ui.md). */
   const three = await screen.findByRole('button', { name: 'Draft three alternatives' }) as HTMLButtonElement;

@@ -1,0 +1,27 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > draws one bar with the title and its state, and no crumbs or "Save and sign" group 706ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > makes Save the one primary and opens the reason strip only while there is something to save 253ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > holds every panel and act in More, by name and test id, with arrows, Escape and focus return 559ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > opens a panel chosen from More, and its close returns focus to More 452ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > opens Review tasks from the status word and the versions from "v{n}" 538ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > puts Draft with AnA, Draft from sources and Review with AnA in the ✻ menu, and an ask lands in the conversation 286ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > opens the existing New document and New section drawers from More 628ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > keeps Download in the bar as an icon, the same menu 160ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > keeps Freeze, E-sign and Place into filing in the bar until D4-3 moves their mounts 151ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > shows the conversation from the page placement where the AnA button stood 170ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > MenuButton is a menu button that skips items it does not show 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > DownloadMenu compact draws the icon only, named Download 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > AuthoringOversightActions as a menu: the four asks as items, the same note, each ask closes the menu 31ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > AuthoringCreateExport with triggers="download" draws Download only and opens its drawers on request 48ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > AuthoringCreateExport says a refused request in a toast and opens no drawer 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the bar and menu CSS (§D4.K) > a focused menu item keeps a visible ring, not outline: none alone 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the bar and menu CSS (§D4.K) > retires the header rules no surface draws any more, and the editor draws none of the old header 8ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  00:43:42
+   Duration  11.72s (transform 5.16s, setup 285ms, import 6.20s, tests 4.07s, environment 942ms)
+
+exit 0

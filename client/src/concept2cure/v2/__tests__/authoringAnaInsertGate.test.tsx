@@ -99,7 +99,7 @@ async function answeredWith(turnRecord: unknown, done?: Record<string, unknown>)
   serveAuthoringStream(() => anaStream(turnRecord, done));
   render(<CanonicalAuthoringFlow />);
   await screen.findAllByText('General Information');
-  fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Show the conversation' }));
   const pane = await sendAuthoringPrefill('Describe the drug substance.');
   const insert = (await within(pane).findByRole('button', { name: 'Insert into 3.2.S.1 as tracked suggestion' }, { timeout: 4000 })) as HTMLButtonElement;
   return { pane, insert };

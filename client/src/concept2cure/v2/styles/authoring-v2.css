@@ -80,6 +80,15 @@
     padding: 14px 16px;
     border-bottom: 1px solid var(--border);
   }
+  /* The project and the module, which the crumbs carried until D4-2 (§D4.K "Outline"). */
+  .ed-tree-p {
+    font-size: var(--fs-caption, 12px);
+    color: var(--text-300);
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .ed-tree-t {
     font-size: var(--fs-body, 14px);
     font-weight: 600;
@@ -248,6 +257,9 @@
     min-height: 0;
     background: var(--bg-000);
   }
+  /* The editor's old header: the editor no longer draws it (D4-2 replaced it
+     with the bar below), but BiopharmaProject.tsx's regulatory workspace
+     still does, so its rules stay until that surface converges. */
   .ed-doc-h {
     --ed-crumbs-floor: 180px;
     --ed-doc-h-gap: 12px;
@@ -293,29 +305,175 @@
     color: var(--text-400);
     flex-shrink: 0;
   }
-  /* The header (.ed-doc-h wraps) has two parts (QA 2026-10-08, walk 2, j5):
-     the trail and the governed acts, then the panels and tools. Nothing in it
-     is clipped.
-     Until then one nowrap scroller held twenty-three controls, and Save,
-     E-sign and Place into filing sat past its edge at 1440px (x 2362–3269 in
-     a box ending at 1076) and at 390px. */
-  .ed-doc-commit {
+  /* ── The bar (D4-2, D4.md §D4.B, §D4.K "Bar") ──
+     One row where the 25-control header (`.ed-doc-h`: crumbs, the "Save and
+     sign" group, the action wall) wrapped into three to seven. It wears D0's
+     artifact-shell `.dcv-bar` (48px, a hairline under it); these rules are the
+     editor's contents. The title and its state on the left; the acts on the
+     right, icons 32px, ghost, `--text-300`, with one primary: Save, while
+     there is something to save.
+     `.dcv-bar.ed-bar`, not `.ed-bar`: D0's `.dcv-bar` rule sits later in this
+     file with the same weight, and its gap, padding and background won.
+     It wraps, at every width, when the acts do not fit beside the title: the
+     title truncates to 260px first, then the acts take a row of their own and
+     wrap inside it. Nothing in it is clipped or scrolled out of reach. Until
+     D4-3 moves Freeze, E-sign (with their refusal notes), Place into filing
+     and Re-file saved text into the inspector, those are in this row, and at
+     1440 with a rail open they are wider than the page column (the header
+     they came from wrapped for the same reason: QA 2026-10-08, walk 2, j5). */
+  .dcv-bar.ed-bar {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--bg-000);
+  }
+  .ed-bar-id {
+    flex: 1 1 260px;
+    min-width: 0;
     display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 0 6px;
+  }
+  .ed-bar .dcv-bar-p {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    overflow: visible;
+  }
+  .ed-bar-acts {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 6px;
+    gap: 2px;
     flex: 0 1 auto;
     min-width: 0;
-    max-width: 100%;
+    margin-left: auto;
   }
-  .ed-doc-actions {
+  .ed .btn.ed-ico {
+    width: 32px;
+    padding: 0;
+    justify-content: center;
+    color: var(--text-300);
+  }
+  .ed .btn.ed-ico:hover,
+  .ed .btn.ed-ico[aria-pressed='true'],
+  .ed .btn.ed-ico[aria-expanded='true'] {
+    color: var(--text-100);
+    background: var(--bg-100);
+  }
+  .ed .btn.ed-ico.small {
+    width: 28px;
+  }
+  .ed-n {
+    margin-left: 2px;
+    font-size: var(--fs-caption, 12px);
+    font-variant-numeric: tabular-nums;
+  }
+  .ed-status,
+  .ed-ver {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 4px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    transition: background-color var(--dur) var(--ease);
+  }
+  .ed-status:hover,
+  .ed-ver:hover {
+    background: var(--bg-100);
+    color: var(--text-100);
+  }
+  .ed-saved[data-dirty] {
+    color: var(--warning);
+  }
+  .ed-spark {
+    color: var(--accent-100);
+    font-size: 15px;
+    line-height: 1;
+  }
+  .ed-bar .ed-view {
+    margin-right: 6px;
+  }
+  .ed-save.btn:not(.primary) {
+    color: var(--text-300);
+  }
+  /* The reason for change, under the bar, only while there is something to save. */
+  .ed-reason {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-050);
+    flex-shrink: 0;
+  }
+  .ed-reason .de-input {
+    flex: 1 1 260px;
+    max-width: 480px;
+  }
+  .ed-reason-note {
+    font-size: var(--fs-small, 13px);
+    color: var(--text-300);
+  }
+  /* Presence and the section lock (`AuthoringCollab`), in the bar. */
+  .ed-collab {
     display: flex;
     align-items: center;
-    gap: 6px;
-    flex: 1 1 100%;
-    flex-wrap: wrap;
-    max-width: 100%;
+    gap: 4px;
+  }
+  .ed-collab-peers {
+    display: flex;
+    gap: 2px;
+  }
+  .ed-collab .cmt-av {
+    width: 24px;
+    height: 24px;
+    font-size: var(--fs-caption, 12px);
+  }
+  .ed-collab-more {
+    font-size: var(--fs-caption, 12px);
+    color: var(--text-300);
+  }
+  .ed-collab-reason {
+    min-width: 240px;
+  }
+  .ed-collab .btn[data-confirm] {
+    color: var(--error);
+    border-color: var(--error);
+  }
+  .ed-collab .btn.ed-ico[data-locked='mine'] {
+    color: var(--text-100);
+    background: var(--bg-100);
+  }
+  /* What a phone-width bar does not draw is in More's "View" group
+     (`.ed-more-narrow`); the dirty state also shows on Save.
+     Only what More holds whole is hidden. §D4.K also hides presence and the
+     lock (`.ed-collab`: Lock section, Unlock, "locked by …" and Take over),
+     the Download menu (the controlled export and the PDF working copy are
+     not in More) and "Show the conversation" (the page placement's only way
+     back until D4-5's close). None of those has a phone home yet, so they
+     stay in the wrapped bar rather than go out of reach. */
+  .ed-more-narrow {
+    display: none;
+  }
+  @media (max-width: 640px) {
+    .ed-bar .ed-view,
+    .ed-bar [data-testid='ed-comments-open'],
+    .ed-bar .dcv-bar-p .ed-saved {
+      display: none;
+    }
+    .ed-more-narrow {
+      display: block;
+    }
   }
   .ed-doc-scroll {
     flex: 1;
@@ -335,22 +493,6 @@
      is part of. Prose keeps the same measure as the editor so the read does
      not change shape between the two views, while tables stay free to use
      the column. */
-  .ed-viewtoggle {
-    display: inline-flex;
-    gap: 2px;
-    padding: 2px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--bg-050);
-  }
-  .ed-viewtoggle .btn {
-    border-color: transparent;
-    background: transparent;
-  }
-  .ed-viewtoggle .btn[data-active] {
-    background: var(--bg-000);
-    border-color: var(--border);
-  }
   .ed-full { min-width: 0; }
   .ed-full-mast {
     padding-bottom: 8px;
@@ -1929,16 +2071,18 @@
     flex-shrink: 0;
     font-size: 12px;
   }
-  /* ── The Download menu (editor/DownloadMenu.tsx, §4.5) ──
-     A working copy, marked as one, and the controlled export, offered only
-     for a sealed document. Never wider than the screen.
-     The menu is NOT laid out inside its button's box: the editor's toolbar
-     (`.ed-doc-actions`, overflow-x:auto) is a scroll box on both axes and cut
-     an absolutely placed menu off at its own height, so no item could be seen.
-     It opens in the top layer (a manual popover) where the browser has one,
-     fixed either way, placed from its button by menuPlacement.ts (through
-     DownloadMenu.tsx's `placeMenu`). `inset`, `margin` and `color` undo the
-     browser's own popover box. */
+  /* ── The menu (editor/DownloadMenu.tsx: MenuButton, useMenu, MenuItem) ──
+     The one menu-button pattern (D4.md §2 "Menus", §D4.K "Menus"): the
+     Download menu, and the editor bar's AnA (✻) and More (⋯) menus. A
+     `--canvas-elevated` popover, radius 12, 13px items 32px tall (44px on a
+     touch screen). A disabled item keeps its reason as its note.
+     The menu is NOT laid out inside its button's box: a button can sit in a
+     box that scrolls (a list row; the editor's old header did, sideways),
+     which cuts an absolutely placed menu off at its own height, so no item
+     could be seen. It opens in the top layer (a manual popover)
+     where the browser has one, fixed either way, placed from its button by
+     menuPlacement.ts (through DownloadMenu.tsx's `placeMenu`). `inset`,
+     `margin` and `color` undo the browser's own popover box. */
   .dlm {
     display: inline-flex;
     align-items: center;
@@ -1959,62 +2103,83 @@
     overflow-y: auto;
     padding: 6px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--bg-000);
+    border-radius: var(--radius-xl, 12px);
+    background: var(--canvas-elevated, var(--bg-000));
     color: var(--text-100);
-    box-shadow: 0 8px 24px color-mix(in oklab, var(--black) 14%, transparent);
+    box-shadow: var(--v2-shadow-lg, 0 8px 24px color-mix(in oklab, var(--black) 14%, transparent));
+    animation: de-fade var(--dur, 200ms) var(--ease, ease-out);
   }
   .dlm-group + .dlm-group {
     margin-top: 4px;
     padding-top: 4px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border-subtle, var(--border));
   }
   .dlm-sec {
-    padding: 6px 8px 2px;
-    font-size: var(--fs-caption);
-    font-weight: 600;
+    padding: 8px 10px 4px;
+    font-size: var(--fs-caption, 12px);
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
     color: var(--text-300);
   }
   .dlm-reason {
     display: block;
-    padding: 0 8px 4px;
-    font-size: 12px;
-    color: var(--text-200);
+    padding: 0 10px 4px;
+    font-size: var(--fs-caption, 12px);
+    color: var(--text-300);
   }
   .dlm-item {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 1px;
+    gap: 2px;
     width: 100%;
+    min-height: 32px;
+    padding: 6px 10px;
     border: 0;
+    border-radius: var(--radius-lg, 8px);
     background: none;
     text-align: left;
-    padding: 7px 8px;
-    border-radius: var(--radius-md);
+    font-size: var(--fs-small, 13px);
+    color: var(--text-100);
     cursor: pointer;
   }
   .dlm-item:hover,
   .dlm-item:focus-visible {
     background: var(--bg-100);
   }
+  /* The keyboard's place in the menu stays visible: an inset --accent-200
+     ring, which the item's own radius follows (D0-5 review). */
   .dlm-item:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--accent-200);
   }
   .dlm-item[aria-disabled='true'] {
-    cursor: not-allowed;
+    cursor: default;
   }
   .dlm-item[aria-disabled='true'] .dlm-item-t {
     color: var(--text-300);
   }
+  .dlm-item[aria-checked='true'] .dlm-item-t {
+    font-weight: 600;
+  }
   .dlm-item-t {
-    font-size: 13px;
+    font-size: var(--fs-small, 13px);
     color: var(--text-100);
   }
   .dlm-item-d {
-    font-size: 12px;
+    font-size: var(--fs-caption, 12px);
     color: var(--text-300);
+  }
+  @media (pointer: coarse) {
+    .dlm-item {
+      min-height: 44px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dlm-menu {
+      animation: none;
+    }
   }
   .dlm-err {
     flex-basis: 100%;
@@ -2216,39 +2381,36 @@
        inside the canvas at 390px because that is the state this change was
        asked to prove, and they hold wherever `.ed` is mounted.
 
-       The header's panel and tool row is a horizontal scroller here. Wrapping
-       it was tried and measured: eighteen controls became a ten-row header
-       470px tall, which pushed the document off the screen and left the rail
-       overlaying the rows below it. A scroller keeps the document where it
-       is, and every control in it is still reached by Tab. The governed acts
-       (.ed-doc-commit) are not in it: they wrap above it and stay on screen
-       (QA 2026-10-08, walk 2, j5).
+       The bar wraps here: the title takes its own row and the acts wrap
+       under it. None of them is scrolled out of reach. A sideways scroller
+       held Save, E-sign and Place into filing past its edge at 390px once
+       already (QA 2026-10-08, walk 2, j5); until D4-3 moves Freeze, E-sign,
+       Place into filing and Re-file saved text into the inspector, they are
+       in this row too (D4-2), so the row wraps rather than scrolls.
 
-       `position: relative` makes the scroller the containing block of what
-       it scrolls (RR5 phone acceptance, 2026-10-30). A scroll box clips only
-       the absolutely placed boxes it contains. The Download menu's live
-       region is one (`.sr-only`, 1px); it was placed by an ancestor outside
-       the scroller, so it sat unclipped at its place in the unscrolled row,
-       484px from the left of a 390px screen. The page was 485px wide, a
-       phone browser laid every fixed layer out on a 485 x 1048 viewport, and
-       Send for review's footer, with Send, opened off the bottom right of
-       the screen. The menu itself is fixed (`.dlm-menu`) and is not cut. */
-    .ed-doc-h {
-      --ed-crumbs-floor: 0px;
-      padding: 8px 12px;
+       The acts' `position: relative` (above) keeps the row the containing
+       block of what it holds (RR5 phone acceptance, 2026-10-30). The
+       Download menu's live region (`.sr-only`, 1px, absolutely placed) was
+       once placed by an ancestor outside the row and sat 484px from the left
+       of a 390px screen; the page was 485px wide, and Send for review's
+       footer opened off the screen. The menu itself is fixed (`.dlm-menu`)
+       and is not cut. */
+    .ed-bar-id {
+      flex: 1 1 100%;
     }
-    .ed-doc-actions {
-      position: relative;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-    }
-    .ed-doc-commit {
+    .ed-bar-acts {
+      flex: 1 1 100%;
       justify-content: flex-start;
+      row-gap: 4px;
     }
-    .ed-doc-actions .btn,
-    .ed-doc-h .btn,
-    .ed-viewtoggle .btn {
+    .ed-bar .btn,
+    .ed-bar .ed-status,
+    .ed-bar .ed-ver {
       min-height: 44px;
+    }
+    .ed .btn.ed-ico {
+      width: 44px;
+      flex-shrink: 0;
     }
     /* The outline tree: 96 rows at 26px each. */
     .ed-tree-row {
@@ -2312,15 +2474,6 @@
   .ed-back svg {
     width: 14px;
     height: 14px;
-  }
-  .ed-program {
-    color: var(--text-200);
-    font-weight: 500;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 34ch;
   }
   .ed-provline {
     font-size: var(--fs-small, 13px);

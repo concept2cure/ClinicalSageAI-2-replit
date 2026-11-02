@@ -315,5 +315,6 @@ it('a saved copy with no assigned module is labelled as an unbound draft', async
     ? Promise.resolve(ok({ documents: [{ ...DOCS.documents[1], module: null, c2c_document_id: null }] })) : baseline(method, url));
   setEditorTarget({ docId: 'D2', docType: null }); render(<DocumentAuthoring {...props()} />);
   await waitFor(() => expect(canvasText()).toBe('SE discussion body.'));
-  expect(document.querySelector('.ed-h .sep-first')?.textContent ?? document.querySelector('.sep-first')?.textContent).toBe('Unbound draft');
+  /* D4-2: the crumbs' module word is in the outline's header (D4.md §D4.B, §D4.C). */
+  expect(screen.getByTestId('ed-tree-p').textContent).toContain('Unbound draft');
 });

@@ -21,6 +21,7 @@ vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFi
 
 import { authService, type AuthUser } from '@/services/portal/authService';
 import { DocumentWorkbench } from '../DocumentWorkbench';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const DOC = '10000000-0000-4000-8000-000000000001';
 const SEC = '20000000-0000-4000-8000-000000000001';
@@ -75,7 +76,7 @@ function renderWorkbench() {
 }
 async function openSourcePicker() {
   await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('Current admitted prose.'));
-  fireEvent.click(screen.getByTestId('sources-rail-open'));
+  fireEvent.click(openEditorControl(/^Sources/));
   fireEvent.click(await screen.findByRole('button', { name: 'Record a source' }));
 }
 afterEach(() => {
