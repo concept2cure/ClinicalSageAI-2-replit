@@ -253,6 +253,44 @@ describe('Biostatistics — study design bridge', () => {
     expect(alphaField().value).toBe('0.05');
   });
 
+  /* D5 §B.4 steps 3 and 6: `ResultLead`'s headline facts moved into the
+     assessment section's heading. Measured in the running app on 2026-11-02,
+     the first build of it printed "137 subjects · 90% power · Inadequate"
+     twice, thirty pixels apart — once in the heading and once on the engine's
+     own line below it. Both halves are pinned: the heading says them, and the
+     section says them once. */
+  it('summarises the engine\'s figures in the section heading, once', async () => {
+    route();
+    mount();
+    await waitFor(() => expect(designRow('BX-204 pivotal in T2D')).toBeTruthy());
+    fireEvent.click(designRow('BX-204 pivotal in T2D'));
+    await waitFor(() => expect(alphaField().value).toBe('0.04'));
+
+    const assess = document.querySelector('.bs-assess')!;
+    const summary = assess.querySelector('.pj-sec-h .sec-sub')!;
+    expect(summary.textContent).toBe('526 subjects \u00b7 90% power \u00b7 Adequate \u00b7 1 of 1 checks pass');
+
+    const body = (assess.querySelector('.bs-assess-b')!.textContent || '');
+    expect(body, 'the heading\'s figures are printed again in the section body').not.toMatch(/526 subjects/);
+    // The method and the engine are NOT the heading's, so they stay on the line.
+    expect(body).toMatch(/Two-sample t-test/);
+    expect(body).toMatch(/c2c-stats 1\.0\.0/);
+  });
+
+  it('says "Not sized" in that heading for a design the engine could not size', async () => {
+    /* The honesty rule the lead carried comes with its figures: no dash where
+       a number belongs, and the heading agrees with the disabled write. */
+    route();
+    mount();
+    await waitFor(() => expect(designRow('BX-204 OS study')).toBeTruthy());
+    fireEvent.click(designRow('BX-204 OS study'));
+    await screen.findByText(/Not sized\./);
+
+    const summary = document.querySelector('.bs-assess .pj-sec-h .sec-sub')!;
+    expect(summary.textContent).toBe('Not sized \u00b7 1 of 1 checks pass');
+    expect(summary.textContent).not.toMatch(/\u2014|subjects|power/);
+  });
+
   it('files the document under the module the placement catalog names, and says where', async () => {
     route();
     mount();
@@ -331,7 +369,7 @@ describe('Biostatistics — study design bridge', () => {
     expect(await screen.findByText(/1 task raised on the board/)).toBeTruthy();
   });
 
-  it('renders the statistical review as a risk table with the verdict and the gate codes', async () => {
+  it('renders the statistical review as a risk table with the verdict and each row\'s finding', async () => {
     route();
     mount();
     await waitFor(() => expect(designRow('BX-204 pivotal in T2D')).toBeTruthy());
@@ -340,11 +378,33 @@ describe('Biostatistics — study design bridge', () => {
     expect(screen.getByText(/high statistical risk/)).toBeTruthy();
     expect(screen.getByText(/Regulatory challenge likelihood/).textContent).toMatch(/moderate.*Missing data/);
     const table = screen.getByRole('table', { name: /Statistical risk summary/ });
-    expect(within(table).getByText('MIS-002')).toBeTruthy();
     expect(within(table).getByText(/LOCF as the primary/)).toBeTruthy();
     expect(within(table).getByText(/Make MMRM or multiple imputation/)).toBeTruthy();
     // A clean row is still a row — it says which standard it meets.
     expect(within(table).getByText(/complete ICH E9\(R1\) estimand/)).toBeTruthy();
+  });
+
+  /* D5 §B.4 step 6. `PWR-003 MIS-002` was printed in monospace under each
+     element's name — a second line of gate codes down the first column of
+     every row, which is the "ids and enums on screen" pattern §WA.4.2 rule 10
+     retires, and which a reader cannot look up anywhere in this product.
+     Moving them must not LOSE them: a finding is traced back to the gate that
+     raised it, so the codes are the row's own hover text. Both halves are
+     asserted here, because only the second one is the easy mistake. */
+  it('traces each finding to its gates in the row\'s title, and prints no gate code on screen', async () => {
+    route();
+    mount();
+    await waitFor(() => expect(designRow('BX-204 pivotal in T2D')).toBeTruthy());
+    fireEvent.click(designRow('BX-204 pivotal in T2D'));
+    await waitFor(() => expect(alphaField().value).toBe('0.04'));
+    const table = screen.getByRole('table', { name: /Statistical risk summary/ });
+
+    const cell = within(table).getByText('Missing data').closest('td')!;
+    const title = cell.getAttribute('title') ?? '';
+    expect(title, 'the gates the finding rests on are not reachable at all').toMatch(/MIS-002/);
+    expect(title).toMatch(/raised by gate MIS-002/);
+
+    expect(table.textContent, 'a gate code is still printed as visible text').not.toMatch(/[A-Z]{3}-\d{3}/);
   });
 });
 
@@ -383,9 +443,13 @@ describe('Biostatistics — study design bridge, cross-links', () => {
     await waitFor(() => expect(designRow('BX-204 pivotal in T2D')).toBeTruthy());
     fireEvent.click(designRow('BX-204 pivotal in T2D'));
     await waitFor(() => expect(alphaField().value).toBe('0.04'));
-    fireEvent.click(screen.getByRole('button', { name: /Open protocol workspace/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Open task board/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Open submission center/ }));
+    /* The three doors are named for where they go, not for the kind of thing
+       that is there: "Open the protocol", not "Open protocol workspace"
+       (D5 §B.4 step 6 — the product has no workspaces, RULE 4). What they do
+       is unchanged, which is what this case is for. */
+    fireEvent.click(screen.getByRole('button', { name: /Open the protocol/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Open Tasks/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Open Submission Center/ }));
     expect(onNav.mock.calls.map((c) => c[0])).toEqual(['protocol-dev', 'tasks', 'submission-center']);
   });
 });
