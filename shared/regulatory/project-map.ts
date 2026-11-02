@@ -228,7 +228,7 @@ const SERVICE_PHASES: Record<WorkspaceServiceId, ProjectPhase[]> = {
 const CLAIM_PHASES: Record<string, ProjectPhase> = {
   quality: 'quality',
   device_description: 'quality',
-  analytical_performance: 'clinical',
+  analytical_performance: 'quality',
   quality_similarity: 'quality',
   nonclinical_safety: 'nonclinical',
   efficacy: 'clinical',
