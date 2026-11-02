@@ -8,6 +8,10 @@
  * existed. The two selection worksheets fell through to a default branch, and an omitted enum or number
  * was either written up as a default or crashed the tool (studyQuestion, authority). The tool definitions
  * made all 21 booleans schema-required and said nothing of an omitted one.
+ *
+ * Review follow-up (2026-11-02): the acceptability grade counted a sensitivity-analysis requirement fixed at
+ * partially_met, with no input behind it, and the data-source profile asserted lab, notes and pharmacy capture
+ * whatever the flags said.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -15,7 +19,12 @@ import {
   assessBiasRisk, assessRegulatoryAcceptability,
 } from '../../rwe/rwe-methodology-knowledge';
 import { getToolHandler } from '../AnaToolExecutor';
-import { ASSESS_RWE_BIAS_RISK, ASSESS_RWE_REGULATORY_ACCEPTABILITY, SCORE_RWE_DATA_SOURCE } from '../rweMethodologyTools';
+import {
+  ASSESS_RWE_BIAS_RISK, ASSESS_RWE_REGULATORY_ACCEPTABILITY, DESIGN_TARGET_TRIAL, SCORE_RWE_DATA_SOURCE,
+} from '../rweMethodologyTools';
+
+/** ai-gateway/gateway.ts trims a longer tool description to this many characters for OpenAI-compatible providers. */
+const OPENAI_MAX_TOOL_DESCRIPTION_CHARS = 1024;
 
 const trial = {
   indication: 'type 2 diabetes mellitus', treatmentStrategy: 'sustained_use', comparator: 'sitagliptin',
@@ -40,12 +49,12 @@ const bias = {
 } satisfies Parameters<typeof assessBiasRisk>[0];
 const acceptability = {
   purpose: 'label_expansion', authority: 'fda', studyDesign: 'new_user_active_comparator', dataSource: 'linked_claims_ehr',
-  preRegistered: true, validatedOutcomes: true, existingTrialData: true, sampleSize: 5000,
+  preRegistered: true, validatedOutcomes: true, existingTrialData: true, sensitivityAnalysesPlanned: true, sampleSize: 5000,
 } satisfies Parameters<typeof assessRegulatoryAcceptability>[0];
 
 const SOURCE_FLAGS = ['deathLinkage', 'hasLabResults', 'hasClinicalNotes', 'hasPharmacyDispensing', 'hasProcedures', 'hasValidationStudy'];
 const BIAS_FLAGS = ['selfReportedOutcome', 'differentialSurveillance', 'hasActiveComparator'];
-const ACCEPTABILITY_FLAGS = ['preRegistered', 'validatedOutcomes', 'existingTrialData'];
+const ACCEPTABILITY_FLAGS = ['preRegistered', 'validatedOutcomes', 'existingTrialData', 'sensitivityAnalysesPlanned'];
 
 function changed(input: object, overrides: Record<string, unknown>): never {
   return { ...input, ...overrides } as never;
@@ -94,6 +103,16 @@ describe('the tool definitions leave the optional facts optional and say what om
       expect(def.input_schema.properties[field]).toMatchObject({
         type: 'boolean', description: expect.stringMatching(/Omitted or null stays not_stated/) });
     }
+  });
+
+  it.each([SCORE_RWE_DATA_SOURCE, ASSESS_RWE_BIAS_RISK, ASSESS_RWE_REGULATORY_ACCEPTABILITY])(
+    '$name names its not_assessed result within the trimmed length', def => {
+      expect(def.description.slice(0, OPENAI_MAX_TOOL_DESCRIPTION_CHARS - 1)).toMatch(/not_assessed/);
+    });
+
+  it('design_target_trial says therapeuticArea is not read', () => {
+    expect(DESIGN_TARGET_TRIAL.input_schema.properties.therapeuticArea).toMatchObject({
+      description: expect.stringMatching(/Not read: it does not change the protocol/) });
   });
 });
 
@@ -188,6 +207,29 @@ describe('data-source scoring derives no score, gap or reliability finding from 
     expect(JSON.stringify(out.dimensions)).toMatch(/No death linkage/);
     expect(out.regulatoryAcceptability.fdaReliability).toMatch(/^No validation study is available/);
   });
+
+  it('labels the source-type profile typical, and leaves out a trait a stated capture fact contradicts', () => {
+    const claims = { ...source, sourceType: 'claims' as const };
+    const unstated = scoreDataSource(changed(claims, Object.fromEntries(SOURCE_FLAGS.map(field => [field, undefined]))));
+    expect(unstated.strengthsAndLimitations.note).toMatch(/^Typical of claims sources, not established for the stated source/);
+    const contradicted = scoreDataSource({ ...claims, hasLabResults: true, hasPharmacyDispensing: false });
+    expect(JSON.stringify(contradicted.dimensions)).toMatch(/Pharmacy dispensing data not available/);
+    expect(contradicted.strengthsAndLimitations.strengths).not.toContain('Complete pharmacy dispensing capture');
+    expect(contradicted.strengthsAndLimitations.limitations).not.toContain('No lab results or clinical notes');
+    expect(scoreDataSource({ ...claims, hasLabResults: false, hasClinicalNotes: false }).strengthsAndLimitations).toMatchObject({
+      strengths: expect.arrayContaining(['Complete pharmacy dispensing capture']),
+      limitations: expect.arrayContaining(['No lab results or clinical notes']) });
+  });
+
+  it.each(['claims', 'ehr', 'registry', 'biobank', 'linked_claims_ehr', 'integrated_delivery_network'] as const)(
+    '%s: no profile trait contradicts a stated capture fact', sourceType => {
+      const none = scoreDataSource({ ...source, sourceType, hasLabResults: false, hasClinicalNotes: false, hasPharmacyDispensing: false });
+      expect(none.strengthsAndLimitations.strengths.join(' | ')).not.toMatch(/pharmacy|\blabs?\b|lab values|notes|biomarker/i);
+      expect(none.strengthsAndLimitations.limitations.join(' | ')).not.toMatch(/NLP|unstructured/i);
+      const all = scoreDataSource({ ...source, sourceType });
+      expect(all.strengthsAndLimitations.limitations.join(' | ')).not.toMatch(/No lab results|PBM/);
+      expect(all.strengthsAndLimitations.note).toMatch(/not established for the stated source/);
+    });
 });
 
 describe('bias assessment grades no bias from an unstated fact', () => {
@@ -240,7 +282,8 @@ describe('regulatory acceptability grades no requirement from an unstated fact',
   });
 
   it('does not grade unstated outcome validation as not met', () => {
-    const out = assessRegulatoryAcceptability(changed(acceptability, { validatedOutcomes: undefined }));
+    // 5.5 or 6.5 of 7 credits: moderate or high, so the grade waits for the answer.
+    const out = assessRegulatoryAcceptability(changed(acceptability, { validatedOutcomes: undefined, dataSource: 'claims' }));
     expect(status(out, /^Validated outcome/)).toBe('not_assessed');
     expect(out.overallAcceptability).toBe('not_assessed');
     expect(out.recommendations).not.toContain(
@@ -254,9 +297,37 @@ describe('regulatory acceptability grades no requirement from an unstated fact',
   });
 
   it('gives a grade the unstated fact cannot change', () => {
-    const out = assessRegulatoryAcceptability(changed(acceptability,
-      { studyDesign: 'nested_case_control', sampleSize: 200, validatedOutcomes: undefined }));
-    expect(out).toMatchObject({ overallAcceptability: 'moderate', inputStates: { validatedOutcomes: 'not_stated' } });
+    // 6 or 7 of 7 credits: high either way. With the fixed half credit it was 5.5 or 6.5 of 7: not_assessed.
+    const out = assessRegulatoryAcceptability(changed(acceptability, { validatedOutcomes: undefined }));
+    expect(out).toMatchObject({ overallAcceptability: 'high', inputStates: { validatedOutcomes: 'not_stated' } });
+  });
+
+  it('grades the sensitivity-analysis requirement from the stated plan, and withholds a grade it decides', () => {
+    const plan = {
+      ...acceptability, purpose: 'post_marketing_safety', studyDesign: 'nested_case_control', dataSource: 'claims',
+    } satisfies Parameters<typeof assessRegulatoryAcceptability>[0];
+    const sensitivity = (out: ReturnType<typeof assessRegulatoryAcceptability>) =>
+      out.evidenceRequirements.find(r => r.requirement.startsWith('Sensitivity analyses'));
+    // The other six earn 5 credits. The fixed half credit made it 5.5 of 7 (0.79): moderate, a grade no input decided.
+    for (const absent of [undefined, null]) {
+      const unstated = assessRegulatoryAcceptability(changed(plan, { sensitivityAnalysesPlanned: absent }));
+      expect(sensitivity(unstated)).toMatchObject({ status: 'not_assessed', recommendation: expect.stringMatching(/was not stated/) });
+      expect(sensitivity(unstated)?.recommendation).not.toMatch(/Include E-value/);
+      // 5 or 6 of 7 (0.71 or 0.86): moderate or high, so the grade waits for the answer.
+      expect(unstated).toMatchObject({ overallAcceptability: 'not_assessed', inputStates: { sensitivityAnalysesPlanned: 'not_stated' } });
+      expect(unstated.recommendations.join(' ')).toMatch(/State sensitivityAnalysesPlanned/);
+    }
+    const planned = assessRegulatoryAcceptability({ ...plan, sensitivityAnalysesPlanned: true });
+    expect([sensitivity(planned)?.status, planned.overallAcceptability]).toEqual(['met', 'high']);
+    const unplanned = assessRegulatoryAcceptability({ ...plan, sensitivityAnalysesPlanned: false });
+    expect([sensitivity(unplanned)?.status, unplanned.overallAcceptability]).toEqual(['not_met', 'moderate']);
+    expect(sensitivity(unplanned)?.recommendation).toMatch(/^Include E-value analysis/);
+    // The review's plan, with a new-user active-comparator design: the other six earn 5.5, and the half credit made it
+    // 6 of 7, high. Planned it is 6.5 of 7 (high), not planned 5.5 of 7 (moderate).
+    const review = { ...plan, studyDesign: 'new_user_active_comparator' } satisfies Parameters<typeof assessRegulatoryAcceptability>[0];
+    expect([undefined, true, false].map(answer =>
+      assessRegulatoryAcceptability(changed(review, { sensitivityAnalysesPlanned: answer })).overallAcceptability))
+      .toEqual(['not_assessed', 'high', 'moderate']);
   });
 
   it('keeps explicit answers', () => {

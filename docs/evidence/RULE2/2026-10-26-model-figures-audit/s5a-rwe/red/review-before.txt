@@ -1,0 +1,96 @@
+# S5a RWE review follow-up, red: server/services/ana/__tests__/rwe-unstated-inputs.test.ts with the follow-up's cases, on trunk f59b1df04 (the engine as b513cde6a left it). 15 of 77 fail; 62 pass.
+
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'design_target_trial' reaches its canonical engine with a stated basis 9ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'score_rwe_data_source' reaches its canonical engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'design_propensity_analysis' reaches its canonical engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'select_rwe_design' reaches its canonical engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'assess_rwe_bias_risk' reaches its canonical engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'assess_rwe_regulatory_acceptability' reaches its canonical engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > the tool definitions leave the optional facts optional and say what omission means > 'score_rwe_data_source' 2ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > the tool definitions leave the optional facts optional and say what omission means > 'assess_rwe_bias_risk' 1ms
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > the tool definitions leave the optional facts optional and say what omission means > 'assess_rwe_regulatory_acceptability' 11ms
+   → expected undefined to match object { type: 'boolean', …(1) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > the tool definitions leave the optional facts optional and say what omission means > 'score_rwe_data_source' names its not_assessed result within the trimmed length 2ms
+   → expected 'Score a real-world data source across…' to match /not_assessed/
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > the tool definitions leave the optional facts optional and say what omission means > 'assess_rwe_bias_risk' names its not_assessed result within the trimmed length 1ms
+   → expected 'Assess the bias risk profile of an RW…' to match /not_assessed/
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > the tool definitions leave the optional facts optional and say what omission means > 'assess_rwe_regulatory_acceptability' names its not_assessed result within the trimmed length 0ms
+   → expected 'Assess the regulatory acceptability o…' to match /not_assessed/
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > the tool definitions leave the optional facts optional and say what omission means > design_target_trial says therapeuticArea is not read 3ms
+   → expected { type: 'string', …(1) } to match object { description: StringMatching{…} }
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > deathLinkage distinguishes absence, true, false and malformed input 3ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > hasLabResults distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > hasClinicalNotes distinguishes absence, true, false and malformed input 2ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > hasPharmacyDispensing distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > hasProcedures distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > hasValidationStudy distinguishes absence, true, false and malformed input 6ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_bias_risk' preserves boolean answers > selfReportedOutcome distinguishes absence, true, false and malformed input 2ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_bias_risk' preserves boolean answers > differentialSurveillance distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_bias_risk' preserves boolean answers > hasActiveComparator distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_regulatory_acceptability' preserves boolean answers > preRegistered distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_regulatory_acceptability' preserves boolean answers > validatedOutcomes distinguishes absence, true, false and malformed input 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_regulatory_acceptability' preserves boolean answers > existingTrialData distinguishes absence, true, false and malformed input 1ms
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_regulatory_acceptability' preserves boolean answers > sensitivityAnalysesPlanned distinguishes absence, true, false and malformed input 1ms
+   → expected { overallAcceptability: 'high', …(8) } to match object { inputStates: { …(1) } }
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'design_propensity_analysis' chooses no branch from an unstated fact > rareOutcome left out is refused by name; malformed is invalid 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'design_propensity_analysis' chooses no branch from an unstated fact > clinicalEquipoise left out is refused by name; malformed is invalid 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'design_propensity_analysis' chooses no branch from an unstated fact > timeVaryingConfounding left out is refused by name; malformed is invalid 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > timeVaryingExposure left out is refused by name; malformed is invalid 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > rareOutcome left out is refused by name; malformed is invalid 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > acuteOutcome left out is refused by name; malformed is invalid 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > naturalExperiment left out is refused by name; malformed is invalid 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > withinPersonComparison left out is refused by name; malformed is invalid 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > strongConfoundingConcern left out is refused by name; malformed is invalid 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'design_target_trial' refuses an omitted 'causalContrast' 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'design_target_trial' refuses an omitted 'treatmentStrategy' 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'design_target_trial' refuses an omitted 'maxFollowUpMonths' 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'score_rwe_data_source' refuses an omitted 'sourceType' 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'score_rwe_data_source' refuses an omitted 'studyQuestion' 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'design_propensity_analysis' refuses an omitted 'targetEstimand' 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'select_rwe_design' refuses an omitted 'questionType' 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'assess_rwe_bias_risk' refuses an omitted 'studyDesign' 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'assess_rwe_bias_risk' refuses an omitted 'nUnmeasuredConfounders' 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'assess_rwe_regulatory_acceptability' refuses an omitted 'authority' 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'assess_rwe_regulatory_acceptability' refuses an omitted 'sampleSize' 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'score_rwe_data_source' refuses 'geographicCoverage' = 'global' 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'score_rwe_data_source' refuses 'continuousEnrollmentPct' = 140 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'assess_rwe_regulatory_acceptability' refuses 'authority' = 'FDA' 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'design_target_trial' refuses 'causalContrast' = 'itt' 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > deathLinkage left out: the dimensions reading it and the overall score are not assessed 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > hasLabResults left out: the dimensions reading it and the overall score are not assessed 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > hasClinicalNotes left out: the dimensions reading it and the overall score are not assessed 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > hasPharmacyDispensing left out: the dimensions reading it and the overall score are not assessed 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > hasProcedures left out: the dimensions reading it and the overall score are not assessed 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > hasValidationStudy left out: the dimensions reading it and the overall score are not assessed 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > does not report an unstated validation study as missing 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > still scores and reports an explicit false 1ms
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > labels the source-type profile typical, and leaves out a trait a stated capture fact contradicts 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > claims: no profile trait contradicts a stated capture fact 1ms
+   → expected 'Large, representative populations | L…' not to match /pharmacy|\blabs?\b|lab values|notes|…/i
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > ehr: no profile trait contradicts a stated capture fact 1ms
+   → expected 'Rich clinical detail (labs, vitals, n…' not to match /pharmacy|\blabs?\b|lab values|notes|…/i
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > registry: no profile trait contradicts a stated capture fact 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > biobank: no profile trait contradicts a stated capture fact 1ms
+   → expected 'Genomic/biomarker data linked to clin…' not to match /pharmacy|\blabs?\b|lab values|notes|…/i
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > linked_claims_ehr: no profile trait contradicts a stated capture fact 1ms
+   → expected 'Combines claims completeness with EHR…' not to match /pharmacy|\blabs?\b|lab values|notes|…/i
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > integrated_delivery_network: no profile trait contradicts a stated capture fact 1ms
+   → expected 'Closed system captures near-complete …' not to match /pharmacy|\blabs?\b|lab values|notes|…/i
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > lists confounding by indication, ungraded, when the comparator is not stated 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > keeps the bias differentialSurveillance would raise, ungraded 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > keeps the bias selfReportedOutcome would raise, ungraded 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > gives a grade the unstated facts cannot change 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > leaves quantitative bias analysis undetermined when an unstated fact decides the grade 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > keeps the explicit no-comparator finding 0ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > regulatory acceptability grades no requirement from an unstated fact > does not grade an unstated pre-registration as not met 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > regulatory acceptability grades no requirement from an unstated fact > does not grade unstated outcome validation as not met 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > regulatory acceptability grades no requirement from an unstated fact > does not say no trial data exists when that was not stated 0ms
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > regulatory acceptability grades no requirement from an unstated fact > gives a grade the unstated fact cannot change 2ms
+   → expected { …(9) } to match object { overallAcceptability: 'high', …(1) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > regulatory acceptability grades no requirement from an unstated fact > grades the sensitivity-analysis requirement from the stated plan, and withholds a grade it decides 3ms
+   → expected { …(3) } to match object { status: 'not_assessed', …(1) }
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > regulatory acceptability grades no requirement from an unstated fact > keeps explicit answers 1ms
+ Test Files  1 failed (1)
+      Tests  15 failed | 62 passed (77)
