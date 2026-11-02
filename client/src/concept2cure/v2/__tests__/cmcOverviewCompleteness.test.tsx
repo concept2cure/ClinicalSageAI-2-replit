@@ -199,8 +199,11 @@ describe('CmOverview — completeness on the section-approval table', () => {
     const p8 = row('3.2.P.8');
     expect(within(p8).getByText('60%')).toBeTruthy();
     expect(within(p8).getByText(/shelfLifeJustification/)).toBeTruthy();
-    expect(within(p8).getByText('approved', { selector: '.rd-chip' })).toBeTruthy();
-    expect(within(p8).getByText(/incomplete/i, { selector: '.rd-chip' })).toBeTruthy();
+    /* The chip says the WORD, not the stored token (D5 §A.4.8/16,
+       §WA.4.2 rule 10): `approval_status` holds "approved" and a screen that
+       files to an agency does not show a reader an enum. */
+    expect(within(p8).getByText('Approved', { selector: '.rd-chip' })).toBeTruthy();
+    expect(within(p8).getByText('Incomplete', { selector: '.rd-chip' })).toBeTruthy();
 
     // A record the compiler never scored is "not established", not a number —
     // and not approvable either (the gate reads it as incomplete).
@@ -224,7 +227,7 @@ describe('CmOverview — completeness on the section-approval table', () => {
     expect(screen.queryByText(/resolve the critical contradictions first/)).toBeNull();
     // The refusal was the server's: one POST went out, and nothing flipped locally.
     expect(approvePosts()).toHaveLength(1);
-    expect(within(row('3.2.P.5')).getByText('draft', { selector: '.rd-chip' })).toBeTruthy();
+    expect(within(row('3.2.P.5')).getByText('Draft', { selector: '.rd-chip' })).toBeTruthy();
   });
 });
 
@@ -468,5 +471,25 @@ describe('CmOverview — counts its submissions in words', () => {
        itself. */
     expect(await screen.findByText('2 submissions — preparedness 82 average, lowest BLA 761234 at 80')).toBeTruthy();
     expect(screen.queryByText(/\b2 submission\b(?! )/)).toBeNull();
+  });
+});
+
+/* The raw token must not reach the reader on ANY of these chips. Asserted over
+   the rendered chips rather than one row, because the two registers that show
+   a state (the §3.2 sections and the specification table) read it from
+   different stores and used to spell it two ways. */
+describe('CmOverview — a stored state is shown as a word, never as its token', () => {
+  it('renders no lower-case enum in a state chip', async () => {
+    wire(board({ sections: [section('3.2.S.1', 'approved', 100), section('3.2.P.5', 'draft', 40), section('3.2.P.8', 'review', 80)] }));
+    renderOverview();
+    await screen.findByText('3.2.P.5', { selector: 'td' });
+
+    const chips = [...document.querySelectorAll('.rd-chip')].map((c) => (c.textContent ?? '').trim());
+    expect(chips.length, 'no state chip rendered — the matcher is broken').toBeGreaterThan(0);
+    for (const text of chips) {
+      expect(text, `"${text}" is a stored token, not a word`).not.toMatch(/^[a-z][a-z_]*$/);
+      expect(text, `"${text}" carries an underscore`).not.toMatch(/_/);
+    }
+    expect(chips).toEqual(expect.arrayContaining(['Approved', 'Draft', 'In review']));
   });
 });

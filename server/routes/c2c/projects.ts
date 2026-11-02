@@ -111,8 +111,13 @@ class FilingNotOfferedError extends Error {
   }
 }
 
-function sendFilingNotOffered(res: Response, offer: FilingOffer) {
-  return res.status(422).json({ error: 'FILING_NOT_OFFERED', message: offer.reason, marketSupport: offer });
+/** The refusal says the filing's own reason where the verdict states one for it
+ *  (offer.reasonByFiling: the QOS, a drug substance or a drug product at ICH /
+ *  Global; D2 3b Slice 4, 2026-11-01). `marketSupport` is the verdict's offer as
+ *  stated. */
+function sendFilingNotOffered(res: Response, offer: FilingOffer, submissionTypeId: string | null) {
+  const own = offer.reasonByFiling?.[resolveFilingCatalogEntry(submissionTypeId)?.registryId ?? ''];
+  return res.status(422).json({ error: 'FILING_NOT_OFFERED', message: own ?? offer.reason, marketSupport: offer });
 }
 
 // People are named through public.actor_name, not a join on users: since users
@@ -764,7 +769,7 @@ router.post('/', async (req: Request, res: Response) => {
     continuingLifecycle: applicationNumber != null,
   };
   const offer = marketOfferGivenOutline(marketInput, true);
-  if (offer.tier === 'not_offered') return sendFilingNotOffered(res, offer);
+  if (offer.tier === 'not_offered') return sendFilingNotOffered(res, offer, submissionTypeId);
   // The product class: the filing type's when it fixes one (a 510(k) is a
   // device, a BLA a biologic), the person's when it does not (an IND, CTA, MAA,
   // J-NDA or DMF covers drugs and biologics alike — P-21). A device filing may
@@ -1165,7 +1170,7 @@ router.post('/', async (req: Request, res: Response) => {
           clientWorkspaceName: projectAnchor?.clientWorkspaceName } : {}),
       });
     }
-    if (err instanceof FilingNotOfferedError) return sendFilingNotOffered(res, err.offer);
+    if (err instanceof FilingNotOfferedError) return sendFilingNotOffered(res, err.offer, submissionTypeId);
     if (err instanceof CharterObjectivesRefusal) return res.status(err.status).json({ error: err.code, message: err.message });
     if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
     if (err instanceof ProgramAnchorUnavailableError) {

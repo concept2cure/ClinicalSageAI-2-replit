@@ -77,7 +77,7 @@ afterEach(() => cleanup());
 
 async function renderCanvas() {
   render(<InsightsCanvas {...PROPS} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 describe('Insights — a plan that could not be read', () => {
@@ -142,7 +142,7 @@ describe('Insights — unverified plan execution', () => {
 
   it('keeps packs readable but removes runnable tiles and fallback plan locks', async () => {
     await renderCanvas();
-    fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
+    fireEvent.click(document.querySelector('[data-work-area="insights"] .ph-acts .btn.primary') as HTMLElement);
     await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
     expect(document.querySelectorAll('button.ro-pack-card')).toHaveLength(0);
     expect(document.querySelector('.ro-pack-grid')?.textContent).toMatch(/plan could not be verified/);

@@ -1789,3 +1789,38 @@ two.
 
 The work, under `Plan: L1` (row D2): the client speaks the reader's real interface, and Vault ingestion reaches it.
 Evidence: `docs/evidence/D2-LAYOUT-READER/2026-11-01/`.
+
+### P-91 — The report-pack register gets its own tables
+
+The founder, 2026-11-01: "And I give you founder approval based on the questions you asked and the suggestion you
+offered. Proceed". The reporting session had said that the open `report_bundles` table (coverage review C-3)
+"now needs a **founder `approvedAdditions` entry** under RULE 6 before anyone can build it … it isn't a session's
+decision". The question and the shape it proposes are in
+`docs/evidence/reviews/2026-10-11-reporting-coverage/C3-BUNDLE-REGISTER.md`, "Still open: the table".
+
+- **Why.** A report pack is stored today as one `project_memory_entries` row per covered project, titled
+  `bundle:<uuid>`, with its run ids inside a JSON string.
+  - The record is duplicated once per project and reconciled in JavaScript (`dedupeByLatest`). Two copies that
+    disagree look like one.
+  - "List the packs" is `count(distinct title)` over a free-text column, not a count of packs.
+  - "Which packs contain this run?" is a scan.
+- **What is admitted.** Three tables, listed in `docs/design/one-design-plan.json` `approvedAdditions` under L1:
+  - `public.report_bundles`: one row per pack;
+  - `public.report_bundle_runs`: the runs a pack contains, one row each;
+  - `public.report_bundle_projects`: the projects a pack covers, in place of the row-per-project copies.
+- **The terms.**
+  - Each table is in `public` with `organization_id INTEGER NOT NULL`, so the tenant sweep gives it a policy.
+  - The migration goes into `C2C_MIGRATION_FILES` before the final sweep pair. It is `IF NOT EXISTS`-guarded and
+    replays on every deploy (RULE 1).
+  - The existing packs are backfilled with `INSERT … ON CONFLICT DO NOTHING`, with a row-count assertion. No DROP:
+    the old `project_memory_entries` rows stay where they are.
+  - **Replace, not add.** The `project_memory_entries` `bundle:<uuid>` path is moved onto the tables and its code is
+    deleted in the same change. No second register is left beside the first.
+- **What is not admitted.** No new screen, route file or mount. The register is read and written by the routes and
+  the panel that exist.
+- **The same answer confirms one design point, which is not a plan change.** In D7-D, "Find a report" is a plain
+  search field. It never takes the composer's look, because nothing but the conversation may look like talking to
+  AnA (`docs/design/FILING_SPINE.md` §7.2 F6).
+
+The work, under `Plan: L1` (row D2, the launch catalog's Reporting & analytics): the register moves onto its own
+tables. Evidence: `docs/evidence/reviews/2026-10-11-reporting-coverage/` (C-3).

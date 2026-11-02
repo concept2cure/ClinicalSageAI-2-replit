@@ -85,3 +85,32 @@ describe('computeInitialRun — one readiness verdict', () => {
     expect(run.confidence).toBeNull();
   });
 });
+
+/* A filing document class (a clinical study report, a supplement, a meeting
+   package) is a document, not an application, and has no submission
+   readiness. The digest judged its registry entry as an application's: a
+   submission_readiness row of gaps, a package manifest and a score the
+   portfolio showed as the member's readiness (3b slice 3, 2026-11-01). */
+describe('computeInitialRun — a document is not judged as an application', () => {
+  it.each([
+    { registryId: 'ICH_CSR', words: 'a clinical study report' },
+    { registryId: 'US_NDA_SUPP', words: 'a Prior Approval Supplement' },
+  ])('$registryId: submission readiness is not computed, and the digest says why', async ({ registryId, words }) => {
+    q.results.push([{ status: 'approved', count: 2 }], [{ metadata: { registryId } }]);
+    const run = await computeInitialRun(1, 'project', '1');
+    const readiness = run.providers.filter((p) => p.provider === 'submission_readiness');
+    expect(readiness).toHaveLength(1);
+    expect(readiness[0].status).toBe('missing');
+    expect(readiness[0].blocker).toBe(
+      `Submission readiness not computed: ${words} is a document rather than an application; its completion is the approved or locked share of its governed outline, on its project's dossier.`,
+    );
+    expect(run.providers.map((p) => p.provider)).not.toContain('regional_package_manifest');
+    expect(run.summary.regulatory).toBeUndefined();
+  });
+
+  it('an IND project is still evaluated against its registry entry', async () => {
+    q.results.push([], [{ metadata: { registryId: 'US_IND' } }], [], []);
+    const run = await computeInitialRun(1, 'project', '1');
+    expect(run.summary.regulatory).toMatchObject({ registryId: 'US_IND' });
+  });
+});

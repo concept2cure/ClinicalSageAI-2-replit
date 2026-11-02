@@ -17,6 +17,11 @@
  * route's own checks and commits through commitSignedArtifactAct, the act the
  * status route commits through. These cases drive the handler with the
  * sign-off that route produces, and judge it by what the act writes.
+ *
+ * 2026-11-01 (F1, decision P-18): the seeded artifact names its author
+ * (AUTHOR, a second user), so the signer is not its author unless a case says
+ * so. Before this it named none, and nothing compared the signer with the
+ * author: the separation-of-duties cases are at the end.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
@@ -40,6 +45,18 @@ vi.mock('../../ectd/package-content-change', () => ({
     packagesAffected: 0, bundlesInvalidated: 0, failed: false, ledgerWriteFailed: false,
   })),
 }));
+/* The shared preflight, passed through unchanged. One case (P-18, at the end)
+   stands in for a preflight that passed before the signer became an author,
+   so what the signing transaction itself decides can be seen. */
+const preflight = vi.hoisted(() => ({ passed: false }));
+vi.mock('../../artifact-approval-act', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../artifact-approval-act')>();
+  return {
+    ...actual,
+    refuseSignedArtifactAct: (input: Parameters<typeof actual.refuseSignedArtifactAct>[0]) =>
+      preflight.passed ? Promise.resolve(null) : actual.refuseSignedArtifactAct(input),
+  };
+});
 vi.mock('../../contradiction-engine-service', () => ({
   contradictionEngineService: {
     checkPromotionBlocked: vi.fn(async () => ({ blocked: false, blockingFindings: [], warningFindings: [] })),
@@ -68,6 +85,8 @@ const DDL = [
 
 const ORG = 99;
 const USER = 777;
+/** Who wrote the seeded artifact and its version: not the signer. */
+const AUTHOR = 778;
 const PROJECT = 3;
 const ARTIFACT = 'artifact_abc';
 
@@ -110,16 +129,16 @@ const ledger = async () => (await run(`SELECT command, target FROM c2c_ana_actio
 const snapshots = async () => (await run(`SELECT version_id, signature_meaning FROM concept2cure_submission_snapshots`)).rows;
 const versions = async () => (await run(`SELECT version FROM concept2cure_artifact_versions`)).rows;
 
-async function seed(status: 'review' | 'approved') {
+async function seed(status: 'review' | 'approved', author: number = AUTHOR) {
   await run(
     `INSERT INTO concept2cure_artifacts
-       (artifact_id, organization_id, project_id, type, category, title, content, content_hash, version, status, approved_version_id)
-     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', 2, $4, $5)`,
-    [ARTIFACT, ORG, PROJECT, status, status === 'approved' ? 2 : null],
+       (artifact_id, organization_id, project_id, type, category, title, content, content_hash, version, status, approved_version_id, created_by_id)
+     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', 2, $4, $5, $6)`,
+    [ARTIFACT, ORG, PROJECT, status, status === 'approved' ? 2 : null, author],
   );
   await run(
-    `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash)
-     SELECT id, organization_id, 2, 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5' FROM concept2cure_artifacts WHERE artifact_id = $1`,
+    `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, created_by_id)
+     SELECT id, organization_id, 2, 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', created_by_id FROM concept2cure_artifacts WHERE artifact_id = $1`,
     [ARTIFACT],
   );
 }
@@ -133,7 +152,8 @@ beforeAll(async () => {
   await holder.pg.exec(GOVERNED_ACTION_LEDGER_PGLITE_DDL);
   await holder.pg.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'Sponsor')`);
   await holder.pg.exec(
-    `INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'signer@example.com', 'Dana Reviewer', 'x')`,
+    `INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'signer@example.com', 'Dana Reviewer', 'x'),
+       (${AUTHOR}, 'author@example.com', 'Ari Author', 'x')`,
   );
   await holder.pg.exec(`INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'admin')`);
 }, 60_000);
@@ -141,6 +161,7 @@ afterAll(async () => {
   await holder.pg?.close();
 });
 beforeEach(async () => {
+  preflight.passed = false;
   await setRole('admin');
   await holder.pg.exec(`
     DELETE FROM concept2cure_signatures; DELETE FROM concept2cure_submission_snapshots;
@@ -380,6 +401,91 @@ describe('AnA locking an approved artifact is an electronic signature', () => {
 
     expect(result.success, result.message).toBe(false);
     expect(await artifactRow()).toMatchObject({ status: 'approved', published_version_id: null });
+    expect(await signatures()).toEqual([]);
+  });
+});
+
+/**
+ * 2026-11-01 (F1, decision P-18): "An author still cannot approve their own
+ * document." A user with signing authority drafted an artifact through AnA
+ * (AnA records the user it drafts for as the artifact's and the version's
+ * creator, ana/artifactVersionStore.ts), sent it to review with no reviewer
+ * assigned, and approved it with their own password: the quorum was met by
+ * having no assignments, and nothing compared the signer with the author.
+ */
+describe('P-18: the author cannot approve or release their own artifact through AnA', () => {
+  it.each([['approver'], ['admin']])('an %s who drafted it, no reviewer assigned: refused SEPARATION_OF_DUTIES, nothing written', async role => {
+    await seed('review', USER);
+    await setRole(role);
+    const result = await updateArtifactStatus(signed('approval'), params('approved'));
+
+    expect(result.success, result.message).toBe(false);
+    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
+    expect(result.message).toMatch(/you are an author of this record/);
+    expect(result.message).toMatch(/Nothing was signed\.$/);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+    expect(await ledger()).toEqual([]);
+  });
+
+  it('the author, with a reviewer still pending: told they are the author, before the open review', async () => {
+    await seed('review', USER);
+    await run(
+      `INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, status)
+       SELECT 'asg_1', id, organization_id, $2, $2, 'pending' FROM concept2cure_artifacts WHERE artifact_id = $1`,
+      [ARTIFACT, AUTHOR],
+    );
+    const result = await updateArtifactStatus(signed('approval'), params('approved'));
+
+    expect(result.success, result.message).toBe(false);
+    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
+    expect(result.message).not.toMatch(/have not yet submitted/);
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('a user who wrote a later version is an author too: refused, nothing written', async () => {
+    await seed('review');
+    await run(`UPDATE concept2cure_artifact_versions SET created_by_id = $1`, [USER]);
+    const result = await updateArtifactStatus(signed('approval'), params('approved'));
+
+    expect(result.success, result.message).toBe(false);
+    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('the author locking (release) their approved artifact: refused, not locked, no snapshot', async () => {
+    await seed('approved', USER);
+    const result = await updateArtifactStatus(signed('release'), params('locked'));
+
+    expect(result.success, result.message).toBe(false);
+    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
+    expect(await artifactRow()).toMatchObject({ status: 'approved', published_version_id: null });
+    expect(await snapshots()).toEqual([]);
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('the signer became an author after the preflight passed: refused on the signing transaction, nothing written', async () => {
+    await seed('review', USER);
+    preflight.passed = true;
+    const result = await updateArtifactStatus(signed('approval'), params('approved'));
+
+    expect(result.success, result.message).toBe(false);
+    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
+    expect(result.message).toMatch(/you are an author of this record/);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+    expect(await ledger()).toEqual([]);
+  });
+
+  it('an artifact that names no author: refused as unresolved, never signed on the assumption', async () => {
+    await seed('review');
+    await run(`UPDATE concept2cure_artifacts SET created_by_id = NULL`);
+    await run(`UPDATE concept2cure_artifact_versions SET created_by_id = NULL`);
+    const result = await updateArtifactStatus(signed('approval'), params('approved'));
+
+    expect(result.success, result.message).toBe(false);
+    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES_AUTHOR_UNRESOLVED' });
+    expect(result.message.match(/nothing was signed/gi), 'said once, not twice').toHaveLength(1);
     expect(await signatures()).toEqual([]);
   });
 });

@@ -102,7 +102,7 @@ afterEach(() => cleanup());
  *  what it checks, not on the label the first test checks. */
 async function renderCanvas() {
   render(<InsightsCanvas {...PROPS} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
   return screen.getByRole('textbox');
 }
 

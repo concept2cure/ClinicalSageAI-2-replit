@@ -1,0 +1,1412 @@
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 40ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.7 spine 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no template serves both eu_mdr and eu_ivdr under one Annex I numbering 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > shares blank_crf across MDR and IVDR without claiming their Annex I numbering 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > shares crf_annotation_worksheet across MDR and IVDR without claiming their Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no eu_ivdr template cites MDR Annex I numbering 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4) 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR checklist's Chapter III and the IVD labelling record cite the same section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > each EU device submission type points its GSPR row at its own regulation's checklist 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the MDR technical-file assembler does not take the IVDR checklist as its GSPR by type 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_substance reads the record's 3.2.S subtree, not a project blueprint copy 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_product reads the record's 3.2.P subtree, not a project blueprint copy 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > statistical_analysis_plan reads the existing ICH_SAP project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > informed_consent reads the existing ICH_ICF project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > clinical overview and summary registry ids share their existing component sections 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > aliases for existing IB and RMP resolve the very same template and never add a second outline 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > DSUR reads the corrected E2F record including all 20 numbered sections and the unnumbered front/back matter 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > registry requests reuse the named canonical clinical and quality outlines 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > a registry outline prefers the dedicated existing regional blueprint and labels its required flags as platform scaffolding 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > unknown or missing blueprints never fall back to a full CTD dossier 5ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact EU_CTA scaffold with its scope limitations 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact CA_CTA scaffold with its scope limitations 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact CA_CTA_A scaffold with its scope limitations 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact JP_CTN scaffold with its scope limitations 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact ICH_NONCLIN_SUMMARY scaffold with its scope limitations 4ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact US_IND_AMENDMENT scaffold with its scope limitations 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > coverage lists active medicinal, device, diagnostics and the four shared planning entries once with explicit outline gaps 12ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — current canonical M11 protocol > the protocol projects the current M11 retained headings including estimands, immunogenicity and quality management 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — current canonical M11 protocol > named, registry and project protocols share one current tree without a CTD module placement claim 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — current canonical M11 protocol > the existing outline renderer explains heading retention, applicable content and deeper unmodelled fields 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — subtype-scoped IND safety scaffold > keeps numeric compatibility keys without assigning all safety reports to Module 5 or requiring every case component 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > current protocol registry authority > identifies the current M11 structure and keeps the separate SAP discoverable 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the scan reads what it claims to read > finds the record itself, and the copies the registry already declares 2ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the scan reads what it claims to read > does not read a bare "1" as a CTD code 1ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the scan reads what it claims to read > pairs a code with the nearest title, not the first one in the file 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > every FDA Module 1 placement in the repository agrees with the record > names each file, line, code and title that does not 5ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the region heuristic places the real cases > an agency-keyed table: the FDA block is US, the EMA and PMDA blocks are not 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the region heuristic places the real cases > the record’s own three trees 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the region heuristic places the real cases > a 510(k) / eSTAR attachment number is not a CTD code at all 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the region heuristic places the real cases > an EU or JP marker does NOT skip a Module 2–5 pair, because those are harmonised 1ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the region heuristic places the real cases > a file with no regional marker at all is read as US 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the region heuristic places the real cases > the nearest marker wins, so a US block after an EU block is still US 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > a code pairs with its own object’s title, which three real files decided > templateCatalog.ts: a row that writes its title BEFORE its code still pairs with it 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > a code pairs with its own object’s title, which three real files decided > filing-placement.ts: a row does not borrow the heading of the row above it 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > a code pairs with its own object’s title, which three real files decided > regional-module1-requirements.ts: an id-bearing `code` key is not the section code 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > a code pairs with its own object’s title, which three real files decided > a row with no title of its own yields no pair, rather than borrowing one 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the baseline cannot become a parking space > every entry carries a written reason 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the baseline cannot become a parking space > no entry is stale — each still matches a pair the scan finds 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > the baseline cannot become a parking space > no entry exempts a pair the contract is happy with anyway 0ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts > why this gate does NOT hold Module 2–5 titles repository-wide > states the reason rather than leaving the absence to be rediscovered 0ms
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-11-02T00:17:10.209Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "44444444-4444-4444-8444-444444444444",
+        "reason": "vault document not found in this organization"
+      }
+    ]
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-11-02T00:17:10.211Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-11-02T00:17:10.211Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ × server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it 127ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,33333333-3333-4333-8333-333333333333
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP 105ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > marks every required MDR Annex II/III section present for a complete file 3ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > reports missing GSPR and CER as gaps, never invents them 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > requires analytical + clinical performance and the PER (not a CER) 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > is ready when IVDR performance evidence is supplied 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — each slot names the leaves it matched > two leaves with one section code: the CER slot holds the CER, not the first leaf with that code 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — each slot names the leaves it matched > an unmatched slot names no leaf 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > stability is a required slot after the PER; software/cybersecurity and usability are optional 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > an IVDR file without II.6.3 stability is not ready; with it, it is 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > claims II.6.3 / II.6.4 / II.6.5 keys (and the stability document type) and nothing next to them 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > the MDR registry is unchanged: stability evidence stays under Annex II 6 verification and validation 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > MDR: a II.6.1.a report titled "Preclinical evaluation ..." is verification and validation, not the CER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > IVDR: a II.6.1.a "Analytical performance evaluation report" is analytical performance, not the PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > IVDR: the II.6.2.a scientific-validity section does not stand in for the II.6.2.c PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > a group IV leaf is claimed by no slot through its title (IVDR IV.4 SSP names "clinical performance") 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > a document type still places a keyed leaf (the CER at II.6.1.b), and the key still places it too 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a title matcher matches the phrase as words, not inside another word > "preclinical", "pre-clinical" and "non-clinical" evaluation are not a clinical evaluation 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a title matcher matches the phrase as words, not inside another word > an analytical or clinical performance evaluation is not the performance evaluation report 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > underscore- and hyphen-joined file-name titles fill the IFU, GSPR and risk slots (the HEAD result) 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > the electronic IFU: "eIFU" (case transition) and "eifu" / "EIFU" / "e-IFU" (the eIFU token) fill the IFU slot 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > a phrase starts a token: "ifu" / "gspr" at the end of a longer word does not match 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > file-name titles of the CER and the PER fill their slots 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > pre-/non-clinical evaluation, in any spelling, is not the CER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > a plan is not the report: the CEP is not the CER and a performance evaluation plan is not the PER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > plural acronyms fill the IFU and GSPR slots 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > an acronym glued to a lower-case word is still the acronym; a capital run before a capitalised word still splits 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > plural and glued nouns at the end of a phrase fill their slots 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > the qualifiers still apply: a glued or plural plan is not the report, and a preclinical evaluation is not the CER 4ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the outline key is read trimmed and case-insensitively > " II.6.1.a" and "ii.6.1.a" are the outline key: placed by key, never by title 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the outline key is read trimmed and case-insensitively > a group IV leaf is claimed by no slot, by title or by document type (IV.4 SSCP with documentType "cer") 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a CTD-coded "Clinical_Evaluation_Report_v2" with no document type is a title-only CER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a leaf matched by its outline key or its document type is not title-only 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > 'Preclinical bench testing' at CTD 4.2.1 is a title-only V&V match (no code-prefix match) 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a slot with a keyed and a title-only leaf names only the title-only one 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > file-name stability and shelf-life titles fill the stability slot 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > specimen or sample stability is not the device stability of Annex II 6.3 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > software verification, cybersecurity and usability titles fill their optional slots 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > a complete Vault-built IVDR set (CTD codes, no document type) is ready, and without its stability report it is not 5ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > a drug CSR at 5.3.5.1 leaves 'preclinical-clinical' missing 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > drug leaves 4.2.3.2 and 5.3.6 fill no V&V slot 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > a Vault V&V file named for its test still fills the slot, by title 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a V&V plan or protocol is not V&V evidence > plans and protocols leave the slot missing 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a V&V plan or protocol is not V&V evidence > a report that names its plan or protocol still fills it 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a CER or PER title on a plantar, planar or plane device fills the CER / PER slot 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a V&V report on a plantar, planar or plane subject fills the V&V slot; planned changes do not 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a plan in any of its word forms is still not the CER or the PER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a plan with a file-name tail glued on ('Planv2', 'planrev3', 'plandraft') is still a plan, in the CER, PER and V&V slots 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > the plan for a plantar, planar or plane device is still not the CER or the PER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a Vault-built MDR set whose CER and V&V titles are glued plans is not ready 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a mixed-case IFU fills the IFU slot 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > i-f-u inside a word, or an 'If' before a camel-case 'U…' word, is not the IFU 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a capitalised word glued after an IFU keeps its own slot, as before this change 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a plan glued to an IFU is read as a plan, as when it is spelt apart 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a Vault-built MDR set with a mixed-case IFU and a plantar-device CER is ready 1ms
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them
+{
+  "timestamp": "2026-11-02T00:17:15.914Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c"
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them
+{
+  "timestamp": "2026-11-02T00:17:15.916Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 11,
+    "skipped": 3,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-11-02T00:17:16.005Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 9999,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-11-02T00:17:16.005Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-11-02T00:17:16.005Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them 179ms
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > a slot holding two documents with one section code places both, once each, and names neither unmapped
+{
+  "timestamp": "2026-11-02T00:17:16.062Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > a slot holding two documents with one section code places both, once each, and names neither unmapped
+{
+  "timestamp": "2026-11-02T00:17:16.063Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 9,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present 79ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > a slot holding two documents with one section code places both, once each, and names neither unmapped 57ms
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program with the mandatory II.6.3.a places it in the stability slot and is ready, in the result, the ZIP and the audit row
+{
+  "timestamp": "2026-11-02T00:17:16.120Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "regulatory_program",
+    "resourceId": "6b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c"
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program with the mandatory II.6.3.a places it in the stability slot and is ready, in the result, the ZIP and the audit row
+{
+  "timestamp": "2026-11-02T00:17:16.120Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "6b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "ivdr",
+    "materialized": 12,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program without the mandatory II.6.3 stability group is not ready, and says the stability slot is missing
+{
+  "timestamp": "2026-11-02T00:17:16.169Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "regulatory_program",
+    "resourceId": "8b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c"
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program without the mandatory II.6.3 stability group is not ready, and says the stability slot is missing
+{
+  "timestamp": "2026-11-02T00:17:16.170Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "8b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "ivdr",
+    "materialized": 9,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 3 (bench first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER
+{
+  "timestamp": "2026-11-02T00:17:16.218Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 3
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 3 (bench first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER
+{
+  "timestamp": "2026-11-02T00:17:16.218Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 3,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 9,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program with the mandatory II.6.3.a places it in the stability slot and is ready, in the result, the ZIP and the audit row 57ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program without the mandatory II.6.3 stability group is not ready, and says the stability slot is missing 48ms
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 4 (CER first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER
+{
+  "timestamp": "2026-11-02T00:17:16.264Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 4 (CER first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER
+{
+  "timestamp": "2026-11-02T00:17:16.264Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 4,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 9,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 3 (bench first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER 54ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 4 (CER first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER 43ms
+stderr | tests/routes/technical-file-export-governance.test.ts > technical-file assembly and final audit outcomes > a refused final audit does not deliver bytes or report the assembly as completed delivery
+{
+  "timestamp": "2026-11-02T00:17:20.498Z",
+  "level": "error",
+  "message": "[submissions-routes] submissions route error",
+  "context": {
+    "err": "UNAUDITED_EXPORT_REFUSED: the export was not delivered because its audit row did not persist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (a) anchored program: hands the ZIP bytes to the governed export consequence 7ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (b) unanchored program: audited-unplaced delivery with the sha256, bytes still returned 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (c) no authored content: 422 NO_AUTHORED_CONTENT, no consequence, no export audit 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (d) program from another organization: 404 and the assembler is never invoked 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (e) size cap: the consequence refusing the bytes is an honest 413, never a 200 with empty data 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > technical-file assembly and final audit outcomes > a successful governed delivery retains the actual failed assembly-audit outcome 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > technical-file assembly and final audit outcomes > a refused final audit does not deliver bytes or report the assembly as completed delivery 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /sequences/:seqId/technical-file/assemble > (f) reads the bundle bytes before cleanup and delivers them through the export path 8ms
+stderr | server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-02T00:17:21.320Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts > artifactWriteback records span lineage with the document it creates > attributes the text to the acting user, in the write transaction 41ms
+ ✓ server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts > artifactWriteback records span lineage with the document it creates > attributes a proposal_accept writeback the same way — the caller does not change who asserted it 18ms
+ ✓ server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts > artifactWriteback records span lineage with the document it creates > FAILS CLOSED — a broken lineage write rolls the artifact and its version back 14ms
+ ✓ server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts > artifactWriteback records span lineage with the document it creates > records nothing rather than inventing a span when there is no content 10ms
+ ✓ server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts > artifactWriteback records who acted, as the record says > names the member who acted, with their organization role, and says when no address was captured 18ms
+ ✓ server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts > artifactWriteback records who acted, as the record says > records the request's address when the caller has it 15ms
+ ✓ server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts > artifactWriteback records who acted, as the record says > describes an export and an accepted proposal as what they are 21ms
+ ✓ server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts > artifactWriteback records who acted, as the record says > refuses a user who is not a member, and writes nothing 4ms
+ ✓ server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts > artifactWriteback records who acted, as the record says > refuses a writeback that does not name its route 2ms
+stderr | server/middleware/__tests__/ivd-board-under-diagnostics.test.ts > the IVDR readiness panel of device-diagnostics, under module enforcement > refuses them to an organization entitled to neither
+{
+  "timestamp": "2026-11-02T00:17:25.479Z",
+  "level": "warn",
+  "message": "[module-entitlement-gate] module access denied",
+  "context": {
+    "path": "/api/ivd-completeness/completeness",
+    "organizationId": 103,
+    "modules": [
+      "device-diagnostics"
+    ],
+    "reasons": [
+      "device-diagnostics: Module 'device-diagnostics' requires standard tier or higher (current: free)"
+    ]
+  }
+}
+{
+  "timestamp": "2026-11-02T00:17:25.480Z",
+  "level": "warn",
+  "message": "[module-entitlement-gate] module access denied",
+  "context": {
+    "path": "/api/ivd-assessments",
+    "organizationId": 103,
+    "modules": [
+      "device-diagnostics"
+    ],
+    "reasons": [
+      "device-diagnostics: Module 'device-diagnostics' requires standard tier or higher (current: free)"
+    ]
+  }
+}
+{
+  "timestamp": "2026-11-02T00:17:25.481Z",
+  "level": "warn",
+  "message": "[module-entitlement-gate] module access denied",
+  "context": {
+    "path": "/api/ivd-assessments/documents",
+    "organizationId": 103,
+    "modules": [
+      "device-diagnostics"
+    ],
+    "reasons": [
+      "device-diagnostics: Module 'device-diagnostics' requires standard tier or higher (current: free)"
+    ]
+  }
+}
+{
+  "timestamp": "2026-11-02T00:17:25.481Z",
+  "level": "warn",
+  "message": "[module-entitlement-gate] module access denied",
+  "context": {
+    "path": "/api/ivd-assessments/classification",
+    "organizationId": 103,
+    "modules": [
+      "device-diagnostics"
+    ],
+    "reasons": [
+      "device-diagnostics: Module 'device-diagnostics' requires standard tier or higher (current: free)"
+    ]
+  }
+}
+{
+  "timestamp": "2026-11-02T00:17:25.481Z",
+  "level": "warn",
+  "message": "[module-entitlement-gate] module access denied",
+  "context": {
+    "path": "/api/ivd-assessments/documents/fsn",
+    "organizationId": 103,
+    "modules": [
+      "device-diagnostics"
+    ],
+    "reasons": [
+      "device-diagnostics: Module 'device-diagnostics' requires standard tier or higher (current: free)"
+    ]
+  }
+}
+
+ ✓ server/middleware/__tests__/ivd-board-under-diagnostics.test.ts > the IVDR readiness panel of device-diagnostics, under module enforcement > reads the panel's calls from the screen that mounts it 3ms
+ ✓ server/middleware/__tests__/ivd-board-under-diagnostics.test.ts > the IVDR readiness panel of device-diagnostics, under module enforcement > serves them to an organization entitled to device-diagnostics only 5ms
+ ✓ server/middleware/__tests__/ivd-board-under-diagnostics.test.ts > the IVDR readiness panel of device-diagnostics, under module enforcement > asks the gate for device-diagnostics alone: a folded module is no claimant 1ms
+ ✓ server/middleware/__tests__/ivd-board-under-diagnostics.test.ts > the IVDR readiness panel of device-diagnostics, under module enforcement > refuses them to an organization entitled to neither 5ms
+ ✓ server/middleware/__tests__/ivd-board-under-diagnostics.test.ts > the IVDR readiness panel of device-diagnostics, under module enforcement > the fold moved the claims: no ivd-completeness entry, and device-diagnostics holds its four IVD claims 0ms
+stdout | server/routes/__tests__/ivd-completeness-denominator.test.ts
+{
+  "timestamp": "2026-11-02T00:17:26.586Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T00:17:26.587Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ivd-completeness-denominator.test.ts
+{
+  "timestamp": "2026-11-02T00:17:26.587Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ivd-completeness-denominator.test.ts
+[database] Database connection successful
+
+ ✓ server/routes/__tests__/ivd-completeness-denominator.test.ts > IVDR completeness — a family with no evidence counts as zero > one Annex VIII classification is not a complete technical file 20ms
+ ✓ server/routes/__tests__/ivd-completeness-denominator.test.ts > IVDR completeness — a family with no evidence counts as zero > an empty file is 0%, and says seven families are not started 10ms
+ ✓ server/routes/__tests__/ivd-completeness-denominator.test.ts > IVDR completeness — a family with no evidence counts as zero > flags is a count of flagged evidence, not a hardcoded zero 11ms
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying only Modules 1-3 is no_go, with 5.2 and 5.3.5 among the blockers
+{
+  "timestamp": "2026-11-02T00:17:27.005Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 18 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying every profiled section is go, 100% complete
+{
+  "timestamp": "2026-11-02T00:17:27.008Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 23 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > the NDA checklist is exactly the canonical profile — no hand table
+{
+  "timestamp": "2026-11-02T00:17:27.010Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '3.2.S.1.1' satisfies 3.2.S and does NOT satisfy 1.1
+{
+  "timestamp": "2026-11-02T00:17:27.011Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 1 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '1.10' does NOT satisfy 1.1
+{
+  "timestamp": "2026-11-02T00:17:27.012Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 1 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > an 'm'-prefixed leaf ('m5.3.5.1') satisfies 5.3.5
+{
+  "timestamp": "2026-11-02T00:17:27.012Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 1 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an EU MAA has no FDA 356h item and requires the EU risk-management system (1.8.2)
+{
+  "timestamp": "2026-11-02T00:17:27.013Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: MAA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an IND is judged against the IND profile, not the NDA table
+{
+  "timestamp": "2026-11-02T00:17:27.014Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IND, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an NDA filed with a non-FDA agency is not assessed (no borrowed region)
+{
+  "timestamp": "2026-11-02T00:17:27.015Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency " " is assessed and reported as 'FDA'
+{
+  "timestamp": "2026-11-02T00:17:27.016Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency "" is assessed and reported as 'FDA'
+{
+  "timestamp": "2026-11-02T00:17:27.016Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency "fda" is assessed and reported as 'FDA'
+{
+  "timestamp": "2026-11-02T00:17:27.017Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency " FDA " is assessed and reported as 'FDA'
+{
+  "timestamp": "2026-11-02T00:17:27.017Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 510(k) points at the eSTAR filing-readiness engine
+{
+  "timestamp": "2026-11-02T00:17:27.018Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: 510(k), 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > De Novo points at the eSTAR filing-readiness engine
+{
+  "timestamp": "2026-11-02T00:17:27.018Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: De Novo, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > PMA points at the eSTAR filing-readiness engine
+{
+  "timestamp": "2026-11-02T00:17:27.018Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: PMA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > an empty IVDR technical file is not_assessed and points at the MDR/IVDR tech-doc engine
+{
+  "timestamp": "2026-11-02T00:17:27.019Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_510K points at eSTAR, which assesses it
+{
+  "timestamp": "2026-11-02T00:17:27.019Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_510K, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_DE_NOVO points at eSTAR, which assesses it
+{
+  "timestamp": "2026-11-02T00:17:27.019Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_DE_NOVO, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_PMA points at eSTAR, which assesses it
+{
+  "timestamp": "2026-11-02T00:17:27.019Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_PMA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_IDE points at eSTAR, which assesses it
+{
+  "timestamp": "2026-11-02T00:17:27.020Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_IDE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_PMA_SUPP points at eSTAR, which assesses it
+{
+  "timestamp": "2026-11-02T00:17:27.020Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_PMA_SUPP, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_TECHDOC points at the tech-doc engine with regulation=mdr
+{
+  "timestamp": "2026-11-02T00:17:27.020Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_MDR_TECHDOC, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > mdr_td points at the tech-doc engine with regulation=mdr
+{
+  "timestamp": "2026-11-02T00:17:27.020Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: mdr_td, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_CLASS_I points at the tech-doc engine with regulation=mdr
+{
+  "timestamp": "2026-11-02T00:17:27.021Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_MDR_CLASS_I, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_CLASS_III points at the tech-doc engine with regulation=mdr
+{
+  "timestamp": "2026-11-02T00:17:27.021Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_MDR_CLASS_III, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > IVDR_TD points at the tech-doc engine with regulation=ivdr
+{
+  "timestamp": "2026-11-02T00:17:27.021Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR_TD, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVDR_CLASS_A points at the tech-doc engine with regulation=ivdr
+{
+  "timestamp": "2026-11-02T00:17:27.022Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_IVDR_CLASS_A, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVDR_CLASS_CD points at the tech-doc engine with regulation=ivdr
+{
+  "timestamp": "2026-11-02T00:17:27.029Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_IVDR_CLASS_CD, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_EUA is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-11-02T00:17:27.029Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_EUA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_HDE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-11-02T00:17:27.030Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_HDE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MIR is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-11-02T00:17:27.030Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_MIR, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_FSCA is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-11-02T00:17:27.030Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_FSCA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_CLIN_INVESTIGATION is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-11-02T00:17:27.031Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_CLIN_INVESTIGATION, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_PSUR_DEVICE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-11-02T00:17:27.031Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_PSUR_DEVICE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVD_VIGILANCE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-11-02T00:17:27.031Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_IVD_VIGILANCE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_NB_CONSULT is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-11-02T00:17:27.031Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_NB_CONSULT, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_CER is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-11-02T00:17:27.032Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_CER, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_DOC is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-11-02T00:17:27.032Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_DOC, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_SIG_CHANGE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-11-02T00:17:27.033Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_SIG_CHANGE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > ANDA has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-11-02T00:17:27.033Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: ANDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 505(b)(2) has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-11-02T00:17:27.034Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: 505(b)(2), 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > CTA has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-11-02T00:17:27.034Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: CTA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > NOT-A-TYPE has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-11-02T00:17:27.034Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NOT-A-TYPE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > PMA: rejects with COMPLETENESS_NOT_ASSESSED (422) and never reaches the risk model or the prediction store
+{
+  "timestamp": "2026-11-02T00:17:27.035Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: PMA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > NDA with no Module 5: the missing efficacy reports reach the model as missing-critical
+{
+  "timestamp": "2026-11-02T00:17:27.037Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 21 sections",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying only Modules 1-3 is no_go, with 5.2 and 5.3.5 among the blockers 4ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying every profiled section is go, 100% complete 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > the NDA checklist is exactly the canonical profile — no hand table 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '3.2.S.1.1' satisfies 3.2.S and does NOT satisfy 1.1 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '1.10' does NOT satisfy 1.1 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > an 'm'-prefixed leaf ('m5.3.5.1') satisfies 5.3.5 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an EU MAA has no FDA 356h item and requires the EU risk-management system (1.8.2) 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an IND is judged against the IND profile, not the NDA table 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an NDA filed with a non-FDA agency is not assessed (no borrowed region) 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency " " is assessed and reported as 'FDA' 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency "" is assessed and reported as 'FDA' 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency "fda" is assessed and reported as 'FDA' 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency " FDA " is assessed and reported as 'FDA' 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 510(k) points at the eSTAR filing-readiness engine 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > De Novo points at the eSTAR filing-readiness engine 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > PMA points at the eSTAR filing-readiness engine 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > an empty IVDR technical file is not_assessed and points at the MDR/IVDR tech-doc engine 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_510K points at eSTAR, which assesses it 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_DE_NOVO points at eSTAR, which assesses it 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_PMA points at eSTAR, which assesses it 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_IDE points at eSTAR, which assesses it 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_PMA_SUPP points at eSTAR, which assesses it 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_TECHDOC points at the tech-doc engine with regulation=mdr 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > mdr_td points at the tech-doc engine with regulation=mdr 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_CLASS_I points at the tech-doc engine with regulation=mdr 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_CLASS_III points at the tech-doc engine with regulation=mdr 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > IVDR_TD points at the tech-doc engine with regulation=ivdr 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVDR_CLASS_A points at the tech-doc engine with regulation=ivdr 7ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVDR_CLASS_CD points at the tech-doc engine with regulation=ivdr 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_EUA is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_HDE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MIR is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_FSCA is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_CLIN_INVESTIGATION is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_PSUR_DEVICE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVD_VIGILANCE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_NB_CONSULT is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_CER is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_DOC is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_SIG_CHANGE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > ANDA has no profile: not_assessed, no checklist, no NaN 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 505(b)(2) has no profile: not_assessed, no checklist, no NaN 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > CTA has no profile: not_assessed, no checklist, no NaN 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > NOT-A-TYPE has no profile: not_assessed, no checklist, no NaN 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > PMA: rejects with COMPLETENESS_NOT_ASSESSED (422) and never reaches the risk model or the prediction store 2ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > NDA with no Module 5: the missing efficacy reports reach the model as missing-critical 3ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > answers for an EU MAA instead of returning null 2ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > answers for a J-NDA from the JP region profile 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > infers the home region of a region-specific type when none is given 1ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > keeps the IND, NDA and BLA profiles the validator already enforced 2ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > does not tell an MAA or J-NDA that a conditional appendix (3.2.A) is missing 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > does not demand an EU 1.1 table of contents of an eCTD MAA 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > is null — not another region’s set — where no profile exists 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > hands out a profile no caller can edit for everyone else 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > assesses an EU MAA package against the EU profile 3ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > cites each profile’s own basis, not the IND regulation, on a missing NDA section 1ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > does not lend the FDA NDA set to an NDA validated for another region 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > no longer carries its own copy of the profile 1ms
+ ✓ server/services/nda/__tests__/nda-modules-measured-against-required-sections.pglite.integration.test.ts > assembleOrgNdaModules — the denominator is the required-section profile > one approved Module 1 section is 1 of the NDA's required Module 1 sections, not a complete module 15ms
+ ✓ server/services/nda/__tests__/nda-modules-measured-against-required-sections.pglite.integration.test.ts > assembleOrgNdaModules — the denominator is the required-section profile > returns all five modules — a module nobody has started reads 0 of N, it is not omitted 7ms
+ ✓ server/services/nda/__tests__/nda-modules-measured-against-required-sections.pglite.integration.test.ts > assembleOrgNdaModules — the denominator is the required-section profile > the overall over the rows is required-complete / required across the whole profile — never 100 from one section 5ms
+ ✓ server/services/nda/__tests__/nda-modules-measured-against-required-sections.pglite.integration.test.ts > assembleOrgNdaModules — the denominator is the required-section profile > one approved Module 3 section satisfies 3.2.S only — Module 3 is not complete 5ms
+ ✓ server/services/nda/__tests__/nda-modules-measured-against-required-sections.pglite.integration.test.ts > assembleOrgNdaModules — the denominator is the required-section profile > a required heading is complete only when every section authored beneath it is 5ms
+ ✓ server/services/nda/__tests__/nda-modules-measured-against-required-sections.pglite.integration.test.ts > assembleOrgNdaModules — the denominator is the required-section profile > a BLA is measured against the BLA profile, not the NDA one 5ms
+ ✓ server/services/nda/__tests__/nda-modules-measured-against-required-sections.pglite.integration.test.ts > assembleOrgNdaModules — the denominator is the required-section profile > reads 100% with no gate only when every required section is complete 27ms
+ ✓ server/services/nda/__tests__/nda-modules-measured-against-required-sections.pglite.integration.test.ts > assembleOrgNdaModules — the denominator is the required-section profile > an application with no canonical required-section profile is not assessed — no percentage, and it says why 5ms
+stderr | server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > retains the completed ZIP and reports a refused ancillary audit without changing readiness
+{
+  "timestamp": "2026-11-02T00:17:34.626Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "reason": "Private database failure."
+  }
+}
+
+stdout | server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > retains the completed ZIP and reports a refused ancillary audit without changing readiness
+{
+  "timestamp": "2026-11-02T00:17:34.628Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 4,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > retains the completed ZIP and reports a thrown ancillary audit without changing readiness
+{
+  "timestamp": "2026-11-02T00:17:34.660Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "reason": "Private database failure."
+  }
+}
+
+stdout | server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > retains the completed ZIP and reports a thrown ancillary audit without changing readiness
+{
+  "timestamp": "2026-11-02T00:17:34.660Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 4,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > packages the authored MDR sections into a real ZIP and returns the bytes
+{
+  "timestamp": "2026-11-02T00:17:34.684Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 4,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > retains the completed ZIP and reports a refused ancillary audit without changing readiness 118ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > retains the completed ZIP and reports a thrown ancillary audit without changing readiness 26ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > packages the authored MDR sections into a real ZIP and returns the bytes 29ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > refuses honestly when the program has no authored content in the caller organization 2ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > filters by the requested regulation — an mdr-only program has no ivdr technical file 1ms
+stderr | server/services/pathway-engines/__tests__/assemble-technical-file-multisource.test.ts > assembleTechnicalFileFromCore multi-source resolution > materializes coauthor + unified leaves and surfaces the ctd_onboarding leaf as unresolved
+{
+  "timestamp": "2026-11-02T00:17:39.265Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "ctd_onboarding_documents",
+        "documentId": 500,
+        "documentUuid": null,
+        "reason": "ctd_onboarding_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/pathway-engines/__tests__/assemble-technical-file-multisource.test.ts > assembleTechnicalFileFromCore multi-source resolution > materializes coauthor + unified leaves and surfaces the ctd_onboarding leaf as unresolved
+{
+  "timestamp": "2026-11-02T00:17:39.267Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-multisource.test.ts > assembleTechnicalFileFromCore multi-source resolution > materializes coauthor + unified leaves and surfaces the ctd_onboarding leaf as unresolved 111ms
+stdout | server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts
+{
+  "timestamp": "2026-11-02T00:17:40.401Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T00:17:40.402Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts
+{
+  "timestamp": "2026-11-02T00:17:40.403Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts
+[database] Database connection successful
+
+stdout | server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > canTransmit is read from market-support.ts, never set by hand > asks market-support for each market's device filing (a Notified Body's MDR file for the EU)
+{
+  "timestamp": "2026-11-02T00:17:41.148Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T00:17:41.148Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > canTransmit is read from market-support.ts, never set by hand > asks market-support for each market's device filing (a Notified Body's MDR file for the EU)
+{
+  "timestamp": "2026-11-02T00:17:41.148Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > canTransmit is read from market-support.ts, never set by hand > asks market-support for each market's device filing (a Notified Body's MDR file for the EU)
+[database] Database connection successful
+
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > us-fda: canTransmit is false 3ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > eu-mdr-ivdr: canTransmit is false 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > uk-mhra: canTransmit is false 1ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > cn-nmpa: canTransmit is false 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > ca-health-canada: canTransmit is false 1ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > au-tga: canTransmit is false 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > br-anvisa: canTransmit is false 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > kr-mfds: canTransmit is false 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > ch-swissmedic: canTransmit is false 1ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > in-cdsco: canTransmit is false 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > sg-hsa: canTransmit is false 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > no market in the registry is listed transmit-capable 1ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > us-fda: readiness carries the blocker naming the authority it cannot transmit to 1ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > eu-mdr-ivdr: readiness carries the blocker naming the authority it cannot transmit to 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > uk-mhra: readiness carries the blocker naming the authority it cannot transmit to 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > cn-nmpa: readiness carries the blocker naming the authority it cannot transmit to 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > ca-health-canada: readiness carries the blocker naming the authority it cannot transmit to 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > au-tga: readiness carries the blocker naming the authority it cannot transmit to 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > br-anvisa: readiness carries the blocker naming the authority it cannot transmit to 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > kr-mfds: readiness carries the blocker naming the authority it cannot transmit to 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > ch-swissmedic: readiness carries the blocker naming the authority it cannot transmit to 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > in-cdsco: readiness carries the blocker naming the authority it cannot transmit to 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > sg-hsa: readiness carries the blocker naming the authority it cannot transmit to 0ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > no market reads transmit-capable while market-support states no channel the platform sends through > eu-mdr-ivdr names no EMA gateway: its dossier goes to a Notified Body, not EMA 0ms
+stdout | server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > canTransmit is read from market-support.ts, never set by hand > a wired gateway nothing has been accepted through ('unproven', as FDA ESG is) makes no market transmit-capable
+{
+  "timestamp": "2026-11-02T00:17:41.331Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T00:17:41.331Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > canTransmit is read from market-support.ts, never set by hand > a wired gateway nothing has been accepted through ('unproven', as FDA ESG is) makes no market transmit-capable
+{
+  "timestamp": "2026-11-02T00:17:41.331Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > canTransmit is read from market-support.ts, never set by hand > a wired gateway nothing has been accepted through ('unproven', as FDA ESG is) makes no market transmit-capable
+[database] Database connection successful
+
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > canTransmit is read from market-support.ts, never set by hand > asks market-support for each market's device filing (a Notified Body's MDR file for the EU) 226ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > canTransmit is read from market-support.ts, never set by hand > a wired gateway nothing has been accepted through ('unproven', as FDA ESG is) makes no market transmit-capable 166ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > every consumer carries the same answer > the MDX planner (POST /api/global-markets/plan): no transmit-capable market, and a blocker for each 2ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > every consumer carries the same answer > AnA advise_global_market_strategy: the structured fields agree with its prose 2ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > every consumer carries the same answer > the device assembly and cockpit market overlay (POST /api/device-cockpit/assess) say FDA cannot be transmitted to 2ms
+ ✓ server/services/global-markets/__tests__/transmit-capability-is-stated-by-market-support.test.ts > every consumer carries the same answer > no header or field note claims a live gateway 12ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > plans, writes a real ZIP, and the ZIP round-trips with manifest + files + checksums 28ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > is content-addressed: identical input yields the same sha256 15ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > pins every entry (files AND implicit folders) to a fixed epoch — no wall-clock timestamps 8ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > reports skipped sources for leaves with no resolvable file 13ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > an entry whose every source was skipped is not present, and the plan is not ready 6ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf no slot claims is reported as unmapped and does not make a complete file not ready 4ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf whose source did not materialize makes the plan not ready, even when every slot is filled 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > two leaves with one section code in one slot are both placed, once each, and neither is unmapped 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > when the second of two same-code leaves does not resolve, the slot lost a source and the plan is not ready 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > an authored Annex II/III leaf no slot claims makes the plan not ready; an IV.* leaf does not 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > only the Annex II and III key trees count: III is not II, and IV / IIa are neither 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > bench report and CER both at II.6.1.b, in either order: the CER slot holds the CER 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > IFU and CER share a non-Annex code (1.11): each lands in its own slot and the CER is not unmapped 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > a manifest entry whose sources are not the leaves its slot matches places nothing by string, and the plan is not ready 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > two same-named files in one slot are de-collided (the leaves are distinct, so both are placed) 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > no CER, and a II.6.1.a report titled "Preclinical evaluation ...": clinical-evaluation is missing and the plan is not ready 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > a real CER at II.6.1.g and a II.6.1.b "Pre-clinical evaluation ..." bench report: Annex XIV holds only the CER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > IVDR with no II.6.2.c PER and a II.6.1.a "Analytical performance evaluation report": the PER is missing, not filled 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > an IVDR program with II.6.3 / II.6.4 / II.6.5 places them in their slots and nothing is unmapped 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > "IFU_EN_rev3" + "GSPR_Checklist_v2", and "eIFU" + "GSPR-Checklist": the IFU and GSPR are filed and the plan is ready 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > plural and glued acronym file names ("IFUs_all_languages", "GSPRs_checklist", "eIFUs", "GSPRchecklist", "IFUen"): filed, and ready as at HEAD 6ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > the Annex II/III test reads the key trimmed and case-insensitively: " ii.9" counts, "iii.9" is the PMS plan, " IV.1" does not count 5ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > a CER placed by its title alone is reported as matchedByTitleOnly in the manifest; ready is unchanged 2ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan > places a matched leaf at its Annex section path and reports nothing skipped for it 5ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan > reports a source as skipped when the file cannot be resolved 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan > de-collides duplicate file names within the package 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > materializeTechnicalFile > writes a real ZIP with the manifest, the placed file, and a checksum index 28ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — unmapped leaves are reported, never dropped > reports a resolvable leaf that no manifest entry lists as a source under sectionId "unmapped" 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — unmapped leaves are reported, never dropped > does not double-report a leaf that a section lists but whose file cannot be resolved 1ms
+stderr | server/routes/__tests__/validate-completeness-error-containment.test.ts > POST /api/validate-completeness/validate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-11-02T00:17:42.302Z",
+  "level": "error",
+  "message": "[validate-completeness-routes] validating submission completeness failed",
+  "context": {
+    "err": "SENTINEL-ENGINE-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/validate-completeness-error-containment.test.ts > POST /api/validate-completeness/validate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text 25ms
+ ✓ server/routes/__tests__/validate-completeness-error-containment.test.ts > POST /api/validate-completeness/validate: the 500 body is contained > leaves the validation 400 exactly as it was 5ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > ctis keeps an unavailable matched source undetermined instead of trusting its label 5ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > mdr keeps an unavailable matched source undetermined instead of trusting its label 3ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > ivdr keeps an unavailable matched source undetermined instead of trusting its label 1ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > estar_510k keeps an unavailable matched source undetermined instead of trusting its label 2ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > estar_de_novo keeps an unavailable matched source undetermined instead of trusting its label 1ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > pmda_shonin keeps an unavailable matched source undetermined instead of trusting its label 2ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > pma keeps an unavailable matched source undetermined instead of trusting its label 1ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > prestar_q_sub keeps an unavailable matched source undetermined instead of trusting its label 4ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > prestar_ide keeps an unavailable matched source undetermined instead of trusting its label 1ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > prestar_513g keeps an unavailable matched source undetermined instead of trusting its label 1ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > retains both actual matched identities when duplicate filing codes name different sources 2ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > a pin mismatch cannot be promoted by a caller substantive flag 1ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > known non-substantive evidence is a missing required slot, not undetermined content 0ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > keeps known not-applicable and manual applicability distinct from required source unknown 1ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > retains actual contradictions even when all missing totals are independent of them 0ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > technical-file output uses exact indices and exposes content-undetermined totals 1ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > ctis retains optional matched source unknown instead of optional absence 1ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > ivdr retains optional matched source unknown instead of optional absence 0ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > prestar_q_sub retains optional matched source unknown instead of optional absence 0ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > pmda_shonin retains optional matched source unknown instead of optional absence 0ms
+ ✓ server/services/pathway-engines/__tests__/source-aware-manifest.test.ts > retained-source coverage uses canonical matchers across all ten pathways > known not-applicable survives an unavailable source without creating a false contradiction 1ms
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > an empty IVDR file is not_assessed — never conditional_go or go
+{
+  "timestamp": "2026-11-02T00:17:42.845Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > points at the MDR/IVDR tech-doc engine, the one IVDR annex record
+{
+  "timestamp": "2026-11-02T00:17:42.848Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > does not borrow the pharma CTD checklist
+{
+  "timestamp": "2026-11-02T00:17:42.850Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > device types in the completeness engine > 510(k) is not_assessed and points at eSTAR filing readiness, not invented CTD modules
+{
+  "timestamp": "2026-11-02T00:17:42.850Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: 510(k), 0 sections",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > an empty IVDR file is not_assessed — never conditional_go or go 3ms
+ ✓ server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > points at the MDR/IVDR tech-doc engine, the one IVDR annex record 1ms
+ ✓ server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > does not borrow the pharma CTD checklist 1ms
+ ✓ server/services/__tests__/validate-completeness-ivd.test.ts > device types in the completeness engine > 510(k) is not_assessed and points at eSTAR filing readiness, not invented CTD modules 1ms
+ ✓ server/services/ana-advisory/__tests__/eu-techdoc-advisor.test.ts > adviseEuTechnicalFileReadiness > advises NB-ready for a complete MDR file 3ms
+ ✓ server/services/ana-advisory/__tests__/eu-techdoc-advisor.test.ts > adviseEuTechnicalFileReadiness > advises not NB-ready with missing Annex sections for IVDR 1ms
+ ✓ server/services/ana-advisory/__tests__/eu-techdoc-advisor.test.ts > adviseEuTechnicalFileReadiness > each missing section carries its Annex reference 0ms
+ ✓ server/services/ana-advisory/__tests__/eu-techdoc-advisor.test.ts > adviseEuTechnicalFileReadiness > exposes a well-formed tool spec 0ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-manifest.test.ts > buildTechnicalFileManifest > produces one ordered, deterministic entry per tech-doc section 3ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-manifest.test.ts > buildTechnicalFileManifest > marks an empty file as not ready with required sections missing 0ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-manifest.test.ts > buildTechnicalFileManifest > marks a section present (with its sources) once a matching leaf exists 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-manifest.test.ts > buildTechnicalFileManifest > threads product + manufacturer metadata through 0ms
+stdout | server/services/ectd/__tests__/core-leaf-projection.test.ts
+{
+  "timestamp": "2026-11-02T00:17:44.052Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T00:17:44.053Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/core-leaf-projection.test.ts
+{
+  "timestamp": "2026-11-02T00:17:44.053Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/core-leaf-projection.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > carries the uuid half of the document reference 2ms
+ ✓ server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > carries every CoreLeaf field and nothing else from the row 1ms
+ ✓ server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > is the projection both submission_leaves packagers use — neither builds a CoreLeaf by hand 1ms
+ ✓ server/services/pathway-engines/__tests__/tech-doc-assembler-pack-keys.test.ts > assembleTechDoc — 20260810b rule-pack section keys > maps the MDR Annex II/III pack keys onto the technical-file slots 4ms
+ ✓ server/services/pathway-engines/__tests__/tech-doc-assembler-pack-keys.test.ts > assembleTechDoc — 20260810b rule-pack section keys > maps the IVDR Annex II/III pack keys onto the analytical / clinical / PER slots 1ms
+ ✓ server/services/pathway-engines/__tests__/tech-doc-assembler-pack-keys.test.ts > assembleTechDoc — 20260810b rule-pack section keys > does not treat a key prefix as a dotted-path ancestor (II.1 must not claim II.10-style codes) 0ms
+stdout | server/routes/__tests__/validate-completeness-predictive-refuses-an-unprofiled-type.test.ts > POST /api/validate-completeness/validate — withPredictive > answers a type with no required-section profile with 422 naming the type, not 500
+{
+  "timestamp": "2026-11-02T00:17:45.142Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: ANDA, 2 sections",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/validate-completeness-predictive-refuses-an-unprofiled-type.test.ts > POST /api/validate-completeness/validate — withPredictive > still answers the rule-based not-assessed result (200) when no prediction was asked for
+{
+  "timestamp": "2026-11-02T00:17:45.152Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: ANDA, 2 sections",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/validate-completeness-predictive-refuses-an-unprofiled-type.test.ts > POST /api/validate-completeness/validate — withPredictive > answers a type with no required-section profile with 422 naming the type, not 500 39ms
+ ✓ server/routes/__tests__/validate-completeness-predictive-refuses-an-unprofiled-type.test.ts > POST /api/validate-completeness/validate — withPredictive > still answers the rule-based not-assessed result (200) when no prediction was asked for 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+Error: Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,33333333-3333-4333-8333-333333333333
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ readCompanyLegalRegistryForVault server/services/company-documents/legal-registry.ts:46:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:710:30
+ ❯ Module.assembleTechnicalFileFromCore server/services/pathway-engines/mdr-ivdr/assemble-technical-file-from-core.ts:298:7
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts:121:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, '33333333-3333-4333-8333-333333333333' ] }
+Caused by: error: relation "public.company_legal_registry" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 128, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '25', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, '33333333-3333-4333-8333-333333333333' ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 24 passed (25)
+      Tests  1 failed | 319 passed (320)
+   Start at  00:17:00
+   Duration  45.13s (transform 6.62s, setup 429ms, import 22.53s, tests 18.37s, environment 2ms)
+

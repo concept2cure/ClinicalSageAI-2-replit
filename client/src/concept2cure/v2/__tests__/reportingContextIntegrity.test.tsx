@@ -132,7 +132,10 @@ describe('catalog applicability and local cadence', () => {
     fireEvent.change(await screen.findByLabelText('Document'), { target: { value: 'artifact-owned' } });
     fireEvent.click(screen.getByRole('button', { name: 'Run document trace' }));
     expect(onRun).toHaveBeenCalledWith(expect.objectContaining({ runScopeType: 'document', runScopeId: 'artifact-owned' }));
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/concept2cure/projects/11/artifacts');
+    // The read is the project's own artifacts. useLiveData also passes an
+    // AbortSignal (c3794c8fef: stalled reads recover); the method and URL are
+    // what this test pins.
+    expect(apiRequest.mock.calls.map(c => c.slice(0, 2))).toContainEqual(['GET', '/api/concept2cure/projects/11/artifacts']);
   });
   it('keeps a disabled document trace unavailable even when its engine supports document scope', () => {
     render(<CatalogPanel types={[{ typeId: 'provenance.evidence_trace_report', label: 'Document evidence trace', family: 'evidence_provenance', scopes: ['document'], computedScopes: ['document'], segments: [], runnable: false, availabilityState: 'disabled', availabilityReason: 'This report is disabled in the organization registry.' }]} projectId={11} programLabel="A-101" canRun onRun={vi.fn()} />);

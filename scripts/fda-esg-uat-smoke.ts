@@ -12,11 +12,16 @@
  *
  *   2. Validates the cert-pair modulus match without shelling out to openssl.
  *
- *   3. Builds the AS2 envelope headers exactly the way buildAs2Headers does
- *      (fda-esg.ts:142–156) — same Message-ID shape, same AS2-To (FDA's AS2
- *      identifier for the environment, never defaulted),
- *      same Disposition-Notification-To — and pretty-prints them. NO network
- *      call. This is the closest thing to a "dry run" the gateway supports.
+ *   3. Builds the AS2 envelope headers with buildAs2Headers itself
+ *      (server/services/submission-gateways/as2-transport.ts), over the
+ *      encrypted-body Content-Type and filename transmit sends (as2-cms.ts) —
+ *      same Message-ID shape, same AS2-To (FDA's AS2 identifier for the
+ *      environment, never defaulted), same Disposition-Notification-To — and
+ *      pretty-prints them. NO network call. This is the closest thing to a
+ *      "dry run" the gateway supports. (2026-11-01, F1: it used to print a
+ *      hand-copied map — signed receipts 'optional', Receipt-Delivery-Option
+ *      'sync', an unencrypted octet-stream named ectd.zip — none of which
+ *      transmit sends.)
  *
  *   4. Optionally (--transmit) instantiates the real FdaEsgGateway and runs a
  *      transmit against the configured staging endpoint. THIS HITS THE
@@ -59,6 +64,8 @@
 import { promises as fs } from 'fs';
 import { createPublicKey, createPrivateKey, randomUUID } from 'crypto';
 import { URL } from 'url';
+import { buildAs2Headers } from '../server/services/submission-gateways/as2-transport';
+import { AS2_ENVELOPE_CONTENT_TYPE, AS2_ENVELOPE_FILENAME } from '../server/services/submission-gateways/as2-cms';
 
 /* ─── CLI parsing ──────────────────────────────────────────────────── */
 
@@ -249,23 +256,18 @@ async function validateCertPair(
   }
 }
 
-/* ─── AS2 envelope preview (mirrors fda-esg.ts:142–156) ────────────── */
+/* ─── AS2 envelope preview (buildAs2Headers, as transmit calls it) ──── */
 
 function buildAs2HeadersPreview(env: EnvSet): Record<string, string> {
-  const messageId = `<${randomUUID()}@${env.as2From}>`;
-  return {
-    'Message-ID':                       messageId,
-    'AS2-From':                         env.as2From ?? '<missing>',
-    'AS2-To':                           env.as2To ?? '<missing>',
-    'AS2-Version':                      '1.2',
-    'Disposition-Notification-To':      env.as2From ?? '<missing>',
-    'Disposition-Notification-Options': 'signed-receipt-protocol=optional, pkcs7-signature; signed-receipt-micalg=optional, sha-256',
-    'Receipt-Delivery-Option':          'sync',
-    'Content-Type':                     'application/octet-stream',
-    'Content-Disposition':              'attachment; filename="ectd.zip"',
-    'Content-Length':                   '<set at transmit time>',
-    'User-Agent':                       'concept2cure-mdx/1.0',
-  };
+  const headers = buildAs2Headers({
+    messageId: `<${randomUUID()}@${env.as2From}>`,
+    from: env.as2From ?? '<missing>',
+    to: env.as2To ?? '<missing>',
+    contentType: AS2_ENVELOPE_CONTENT_TYPE,
+    body: Buffer.alloc(0),
+    filename: AS2_ENVELOPE_FILENAME,
+  });
+  return { ...headers, 'Content-Length': '<set at transmit time>' };
 }
 
 /* ─── Main ─────────────────────────────────────────────────────────── */
@@ -350,7 +352,7 @@ async function main(): Promise<void> {
 
   /* ─── 5. AS2 envelope preview ─── */
   if (args.printEnvelope || !args.transmit) {
-    section('5 — AS2 envelope preview (mirrors fda-esg.ts:142–156)');
+    section('5 — AS2 envelope preview (the headers transmit sends)');
     const headers = buildAs2HeadersPreview(envSet);
     for (const [k, v] of Object.entries(headers)) {
       row(k, v);

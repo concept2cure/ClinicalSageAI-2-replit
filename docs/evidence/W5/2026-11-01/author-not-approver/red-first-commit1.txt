@@ -1,0 +1,1061 @@
+
+ RUN  v4.1.7 <repo>
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-02T00:40:51.401Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-02T00:40:53.641Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T00:40:53.642Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-02T00:40:53.643Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > no re-authentication: refused 401, and the artifact, the signatures and the ledger are untouched 50ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > a wrong password: refused 401, and the artifact, the signatures and the ledger are untouched 14ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > no meaning: refused 400 before the password is checked, nothing written 7ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > free text: refused 400 before the password is checked, nothing written 7ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > another act’s meaning: refused 400 before the password is checked, nothing written 9ms
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a provenance event that cannot be written takes the whole act back
+{
+  "timestamp": "2026-11-02T00:40:56.339Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, $10, $11, $12, $13, default)\nparams: evt_1793580056336_eef3e2585cd3,9,99,approval,status_approved,777,Dana Reviewer,s***@example.com,{\"previousStatus\":\"review\",\"newStatus\":\"approved\",\"reason\":\"Reviewed against the protocol; approved for filing.\",\"attestation\":{\"meaning\":\"approval\",\"attestationText\":\"I approve this document as reviewed.\",\"signerName\":\"Dana Reviewer\",\"signerRole\":\"admin\"},\"signatureId\":\"sig_1793580056331_115ee62f8488\",\"snapshotId\":null},Status changed from review to approved (approval),/projects/3/artifacts/artifact_abc/status,concept2cure-api,127.0.0.xxx",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a signature that cannot be written takes the approval back with it
+{
+  "timestamp": "2026-11-02T00:40:56.363Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_signatures\" (\"id\", \"signature_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"signature_type\", \"signature_purpose\", \"signature_meaning\", \"signer_id\", \"signer_name\", \"signer_email\", \"signer_role\", \"authentication_method\", \"authentication_timestamp\", \"second_factor_verified\", \"signature_hash\", \"signature_manifest\", \"ip_address\", \"device_info\", \"status\", \"signed_at\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, default, default) returning \"id\", \"signature_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"signature_type\", \"signature_purpose\", \"signature_meaning\", \"signer_id\", \"signer_name\", \"signer_email\", \"signer_role\", \"authentication_method\", \"authentication_timestamp\", \"second_factor_verified\", \"signature_hash\", \"signature_manifest\", \"ip_address\", \"device_info\", \"status\", \"signed_at\", \"created_at\", \"updated_at\"\nparams: sig_1793580056359_736643e0e22f,10,10,99,approval,approval_attestation,approval,777,Dana Reviewer,s***@example.com,admin,password,2026-11-02T00:40:56.359Z,false,30f1cd591abf0d65b4a1b787e0f75b7fe3f1e2b8fb775b6df8205da49c273e33,{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"approval\",\"printedName\":\"Dana Reviewer\",\"attestationText\":\"I approve this document as reviewed.\",\"reason\":\"Reviewed against the protocol; approved for filing.\",\"previousStatus\":\"review\",\"newStatus\":\"approved\",\"contentHash\":\"230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5\",\"actionId\":\"act_1246da44be3b42688d953c5f081ce795\",\"auditId\":\"b7076c59-8cba-4d1f-8ba5-f571443212f2\",\"auditSha256Chain\":\"b03c22e2f10a5ce2c8987216a6053b4e1db79e1570e92a12914284dc6c333dce\"},127.0.0.xxx,,active,2026-11-02T00:40:56.359Z",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row 43ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > enrolled in TOTP: signed with password and a verified code; without the code, refused 32ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > no stored row for the version: the act records it from the content and signs that — never approved unsigned 30ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a provenance event that cannot be written takes the whole act back 29ms
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > review → draft: a provenance event that cannot be written takes the change back
+{
+  "timestamp": "2026-11-02T00:40:56.396Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, $10, $11, $12, $13, default)\nparams: evt_1793580056395_006528df0123,13,99,status_change,status_draft,777,s***@example.com,s***@example.com,{\"previousStatus\":\"review\",\"newStatus\":\"draft\",\"reason\":\"Returned for rework of section 2.\",\"attestation\":null,\"signatureId\":null,\"snapshotId\":null},Status changed from review to draft,/projects/3/artifacts/artifact_abc/status,concept2cure-api,127.0.0.xxx",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > approved → review: a provenance event that cannot be written takes the change back
+{
+  "timestamp": "2026-11-02T00:40:56.408Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, $10, $11, $12, $13, default)\nparams: evt_1793580056407_831363f7e642,14,99,status_change,status_review,777,s***@example.com,s***@example.com,{\"previousStatus\":\"approved\",\"newStatus\":\"review\",\"reason\":\"Returned for rework of section 2.\",\"attestation\":null,\"signatureId\":null,\"snapshotId\":null},Status changed from approved to review,/projects/3/artifacts/artifact_abc/status,concept2cure-api,127.0.0.xxx",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a signature that cannot be written takes the approval back with it 23ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > review → draft: changed, with one provenance event naming it 11ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > approved → review: changed, with one provenance event naming it 10ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > review → draft: a provenance event that cannot be written takes the change back 10ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > approved → review: a provenance event that cannot be written takes the change back 12ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > without re-authentication: refused 401, not locked, no snapshot 9ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > re-authenticated with the meaning release: locked at the version, with its snapshot, signature and ledger row 23ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > approved in between (a second approval racing the first): not signed, nothing written 11ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > edited in between (a new version): not signed, nothing written 8ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > re-approved in between with no version recorded (the lock would cover nothing): not signed, nothing written 10ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > review → approved by the author: not signed, nothing written 24ms
+   → promise resolved "{ row: { id: 20, …(27) }, …(4) }" instead of rejecting
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > approved → locked by the author: not signed, nothing written 17ms
+   → promise resolved "{ row: { id: 21, …(27) }, …(4) }" instead of rejecting
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > the harness metadata the route republishes is written by the act, through the route 28ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > an extra column is a contract error, never "the document changed", and nothing is written 8ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > a column it must write, removed is a contract error, never "the document changed", and nothing is written 6ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > approving what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 27ms
+   → {"success":true,"data":{"artifactId":"artifact_abc","status":"approved","previousStatus":"review","lockedAt":null,"approvedVersionId":2,"publishedVersionId":null,"publishedAt":null,"enforcedRole":"admin","auditTrail":{"persisted":true,"chained":false},"signature":{"signatureId":"sig_1793580056568_898c88205007","signatureType":"approval","signatureMeaning":"approval","signerName":"Dana Reviewer","signerRole":"admin","signedAt":"2026-11-02T00:40:56.568Z","signatureHash":"12f85e7c0080aa7b6880b74eeabf44f72250be0ec66b175fe60c215503095a20","authenticationMethod":"password","versionSigned":2},"snapshot":null}}: expected 200 to be 403 // Object.is equality
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > releasing (locking) what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 21ms
+   → {"success":true,"data":{"artifactId":"artifact_abc","status":"locked","previousStatus":"approved","lockedAt":"2026-11-02T00:40:56.591Z","approvedVersionId":2,"publishedVersionId":2,"publishedAt":"2026-11-02T00:40:56.591Z","enforcedRole":"admin","auditTrail":{"persisted":true,"chained":false},"signature":{"signatureId":"sig_1793580056595_e25c0c385bb3","signatureType":"publish","signatureMeaning":"release","signerName":"Dana Reviewer","signerRole":"admin","signedAt":"2026-11-02T00:40:56.595Z","signatureHash":"63e70d5c573d433b5dc28c2e7f15067b5c54b147f74c11f5b1bf5f0dd990305b","authenticationMethod":"password","versionSigned":2},"snapshot":{"snapshotId":"snap_1793580056599_1009aa9e86a3","versionId":2,"contentHash":"230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5","actionType":"publish","actorName":"Dana Reviewer","createdAt":"2026-11-02T00:40:56.590Z"}}}: expected 200 to be 403 // Object.is equality
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written 21ms
+   → {"success":true,"data":{"artifactId":"artifact_abc","status":"approved","previousStatus":"review","lockedAt":null,"approvedVersionId":2,"publishedVersionId":null,"publishedAt":null,"enforcedRole":"admin","auditTrail":{"persisted":true,"chained":false},"signature":{"signatureId":"sig_1793580056617_ad42fd0113bd","signatureType":"approval","signatureMeaning":"approval","signerName":"Dana Reviewer","signerRole":"admin","signedAt":"2026-11-02T00:40:56.617Z","signatureHash":"9ce30b6f8b85c03f7e8c90b1273320d373e8745791984fbcf682b7a0db733780","authenticationMethod":"password","versionSigned":2},"snapshot":null}}: expected 200 to be 403 // Object.is equality
+stdout | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-02T00:40:57.640Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T00:40:57.641Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-02T00:40:57.641Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-02T00:40:57.766Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning approval: approved at the version, one signature, its ledger row
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > with a reason only (no verified signature): refused, and nothing is written 16ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning approval: approved at the version, one signature, its ledger row 44ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning release: refused, nothing written — the act fixes its meaning 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning authorship: refused, nothing written — the act fixes its meaning 4ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning review: refused, nothing written — the act fixes its meaning 9ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a member, whom the status route does not let approve: refused, nothing written 7ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a manager, whom the status route does not let approve: refused, nothing written 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a author, whom the status route does not let approve: refused, nothing written 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned "Approved": refused as needing a signature, nothing written 4ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned " approved ": refused as needing a signature, nothing written 3ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned "APPROVED": refused as needing a signature, nothing written 3ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > signed "Approved": approved at the version, recorded as approved 21ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned "archived": not a status this command writes; nothing changed 3ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned "effective": not a status this command writes; nothing changed 5ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned "published": not a status this command writes; nothing changed 3ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > the ledger row names the door the act was taken through, and the signature the moment the signer was verified 19ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > what the status route checks before a signed act, AnA checks too > a lock over an edit made after the approval: refused, nothing written 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > what the status route checks before a signed act, AnA checks too > an approval with an assigned reviewer still pending: refused, nothing written 8ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the review quorum decides on the version that would be approved > a decision recorded against an earlier version: refused, nothing written 9ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the review quorum decides on the version that would be approved > a reviewer who did not approve: refused 8ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the review quorum decides on the version that would be approved > every reviewer approving the current version: approved and signed at that version 26ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > a signature does not make an unlawful step lawful > signed draft → approved: refused by the status route's transitions, nothing written 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > a signature does not make an unlawful step lawful > signed draft → locked: refused by the status route's transitions, nothing written 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > a signature does not make an unlawful step lawful > signed review → locked: refused by the status route's transitions, nothing written 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > with a reason only: refused, not locked, no snapshot 4ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > signed with the meaning release: locked at the version, with its snapshot, signature and ledger row 24ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > signed with the meaning approval: refused, not locked 4ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > a reviewer, whom the status route lets approve but not lock: refused 7ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > a approver who drafted it, no reviewer assigned: refused SEPARATION_OF_DUTIES, nothing written 26ms
+   → "Clinical overview" approved at version 2: signed by Dana Reviewer with the meaning 'approval'.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > a admin who drafted it, no reviewer assigned: refused SEPARATION_OF_DUTIES, nothing written 22ms
+   → "Clinical overview" approved at version 2: signed by Dana Reviewer with the meaning 'approval'.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > the author, with a reviewer still pending: told they are the author, before the open review 11ms
+   → expected { code: undefined } to match object { code: 'SEPARATION_OF_DUTIES' }
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > a user who wrote a later version is an author too: refused, nothing written 18ms
+   → "Clinical overview" approved at version 2: signed by Dana Reviewer with the meaning 'approval'.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > the author locking (release) their approved artifact: refused, not locked, no snapshot 18ms
+   → "Clinical overview" locked at version 2: signed by Dana Reviewer with the meaning 'release'.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > the signer became an author after the preflight passed: refused on the signing transaction, nothing written 19ms
+   → "Clinical overview" approved at version 2: signed by Dana Reviewer with the meaning 'approval'.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > an artifact that names no author: refused as unresolved, never signed on the assumption 24ms
+   → "Clinical overview" approved at version 2: signed by Dana Reviewer with the meaning 'approval'.: expected true to be false // Object.is equality
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'no assignments preserves the existing…' 10ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'all latest-round assignments withdraw…' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'one complete assigned approval for th…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'two separate completed reviewer appro…' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'pending assignment refuses even with …' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'in-progress assignment refuses' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a completed assignment with no decisi…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'one of two completed assignments with…' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'duplicate approvals cannot cover an u…' 9ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'duplicate approvals on a single assig…' 7ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'approval attributed to another review…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'approval pointing to an unknown assig…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a legitimate approval plus an orphan …' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'crossed reviewer identities do not co…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'one mismatched duplicate cannot hide …' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a rejection from an active reviewer s…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a request for changes still refuses' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'stale decision for an active assignme…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'future decision version refuses' 10ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'null reviewed version refuses' 7ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn reviewer rejection does not…' 8ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn reviewer stale approval doe…' 7ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn approvals do not fill missi…' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn duplicates do not fill miss…' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'old round approval cannot fill a new-…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'older rejected round does not block v…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'old pending round does not block vali…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'another tenant decision cannot fill a…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'another artifact decision cannot fill…' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'same tenant but wrong round decision …' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'other tenant assignments and decision…' 8ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'other artifact newer round does not c…' 8ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'historical departed reviewer identity…' 7ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'zero requested version never receives…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'negative requested version never rece…' 3ms
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum
+Contradiction check unavailable: fixture private storage failure
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is null.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing fields
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses string false
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses numeric zero
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing finding arrays
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null blocking array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null warning array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocking finding despite clearance
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocked with no findings
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum
+Contradiction check unavailable: fixture private storage failure
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is null.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing fields
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses string false
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses numeric zero
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing finding arrays
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null blocking array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null warning array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocking finding despite clearance
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocked with no findings
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'null requested version never receives…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'fractional requested version never re…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'out-of-range requested version never …' 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'zero organizationId never receives a …' 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'zero artifactPk never receives a no-r…' 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'assignment query failure propagates' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'decision query failure propagates' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing verdict 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null verdict 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing fields 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses string false 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses numeric zero 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing finding arrays 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null blocking array 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null warning array 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocking finding despite clearance 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocked with no findings 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > preserves a real blocking finding and its 409 refusal 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > preserves the explicit-clear/no-review policy 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > does not elevate warnings into blocking findings 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing verdict 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null verdict 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing fields 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses string false 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses numeric zero 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing finding arrays 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null blocking array 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null warning array 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocking finding despite clearance 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocked with no findings 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > preserves a real blocking finding and its 409 refusal 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > preserves the explicit-clear/no-review policy 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > does not elevate warnings into blocking findings 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > shared signed-approval preflight refuses missing decisions 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > an uncovered lock remains refused before contradiction lookup 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > does not change ordinary draft-to-review or signing role permissions 1ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > approved: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES 7ms
+   → expected null to match object { httpStatus: 403, …(1) }
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > locked: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES 2ms
+   → expected null to match object { httpStatus: 403, …(1) }
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > anyone who wrote a version is an author too, not only the creator 2ms
+   → expected null to match object { httpStatus: 403, …(1) }
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > a version written in another organization is not read as authorship of this one 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > approved: a different user signing, no reviewer assigned, still passes 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > locked: a different user signing, no reviewer assigned, still passes 1ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > the author is told so before the quorum: not that a review is still open 4ms
+   → expected { httpStatus: 400, …(1) } to match object { code: 'SEPARATION_OF_DUTIES' }
+(2 matching properties omitted from actual)
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > an artifact with no recorded author is refused 409: independence cannot be shown 3ms
+   → expected null to match object { httpStatus: 409, …(1) }
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > an authorship read that fails is refused 503 and names no cause, and the quorum is not read 2ms
+   → expected null to match object { httpStatus: 503, …(1) }
+stderr | tests/artifact-status-lock-covers-approval.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/artifact-status-lock-covers-approval.test.ts
+{
+  "timestamp": "2026-11-02T00:41:07.717Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved v2 (approved at v2) → locked records published_version_id = 2, and the result is filable
+{
+  "timestamp": "2026-11-02T00:41:08.771Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "[vitest] No \"SignerNotAttributableError\" export is defined on the \"../server/services/part11/resolve-signer-identity\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > review v3 → approved records approved_version_id = 3; an edit to v4 afterwards is not filable
+{
+  "timestamp": "2026-11-02T00:41:08.789Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "[vitest] No \"SignerNotAttributableError\" export is defined on the \"../server/services/part11/resolve-signer-identity\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a quorum that cannot be read is not met: the approval is refused and records no approved version
+{
+  "timestamp": "2026-11-02T00:41:08.800Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "relation unavailable",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a decisions read that fails after the assignments read is not met either
+{
+  "timestamp": "2026-11-02T00:41:08.803Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "relation unavailable",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved v2 (approved at v2) → locked records published_version_id = 2, and the result is filable 29ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved at v2, edited to v3, then locked: REFUSED with 409, nothing written, and the message asks for re-approval 5ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved with no approved version recorded, then locked: REFUSED (fail closed) 3ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > review v3 → approved records approved_version_id = 3; an edit to v4 afterwards is not filable 5ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer still pending refuses the approval (400) and records no approved version 4ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer who did not approve refuses the approval (400) 3ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a quorum that cannot be read is not met: the approval is refused and records no approved version 3ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a decisions read that fails after the assignments read is not met either 3ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a manager is refused review → approved (403) and nothing is written 4ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a super_admin is refused review → approved (403) and nothing is written 3ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a author is refused review → approved (403) and nothing is written 2ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > POST …/audit-report/export: the locked report records its lock, and no approval nobody gave > inserts status locked with published_version_id = version = 1, approved_version_id unset, so it is not filable 4ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: signing authority before the password > locked by a manager on the membership row is refused 403 ESIGNATURE_NO_AUTHORITY, no password compared, nothing written 3ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: signing authority before the password > approved by a member on the membership row is refused 403 ESIGNATURE_NO_AUTHORITY, no password compared, nothing written 3ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: signing authority before the password > a move to review is not a signature and does not ask for the role 3ms
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts
+{
+  "timestamp": "2026-11-02T00:41:09.541Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a statement timeout
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: canceling statement due to statement timeout
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a dropped connection
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: Connection terminated unexpectedly
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an RLS / permission refusal
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: permission denied
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an undefined column
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: column does not exist
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > names the target and says nothing was signed
+[governance/SoD] authorship lookup failed for "document:doc-1"; refusing to sign: timeout
+
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > an authorship signature is not a separation-of-duties case 2ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning review requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning approval requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning responsibility requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning release requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning undefined requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning  requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > lock always requires independence 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > the author signing AS AUTHOR is allowed, without even querying 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > a section author is caught even when the document owner is someone else (the scaffolder) 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > whoever accepted a drafted section is an author of record 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > template scaffolds are excluded from the version-ledger query 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > every source is org-scoped 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > a non-author passes, and the result says which sources were checked 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > eCTD sequence authorship is its creator, org-scoped 0ms
+ × server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > a Concept2Cure artifact: its creator and every version author, by external id, org-scoped 8ms
+   → expected { modelled: false, authors: [], …(1) } to deeply equal { modelled: true, …(2) }
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > blocker authorship uses the real org column (org_id, not organization_id) 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > a modelled record with no recorded author → AuthorUnresolved (was: log and allow) 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of submission:sub-1 (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of specification:spec-1 (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of batch:b-1 (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of haq:x (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > but an authorship signature on such a record is allowed 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a statement timeout 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a dropped connection 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an RLS / permission refusal 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an undefined column 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > names the target and says nothing was signed 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > the sequence creator: author 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > a colleague: independent 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > no recorded creator: unresolved — nobody can be shown independent 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > a record type with no authorship modelled: unresolved 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > a failed lookup: unverified — never independent 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > approved: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES
+ FAIL  server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > locked: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES
+AssertionError: expected null to match object { httpStatus: 403, …(1) }
+
+- Expected:
+{
+  "code": "SEPARATION_OF_DUTIES",
+  "httpStatus": 403,
+}
+
++ Received:
+null
+
+ ❯ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts:203:22
+    201|     it(`${status}: the creator signing, no reviewer assigned, is refus…
+    202|       const result = await refuseSignedArtifactAct(signedInput(queryab…
+    203|       expect(result).toMatchObject({ httpStatus: 403, code: 'SEPARATIO…
+       |                      ^
+    204|       expect(result?.message).toMatch(/you are an author of this recor…
+    205|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > anyone who wrote a version is an author too, not only the creator
+AssertionError: expected null to match object { httpStatus: 403, …(1) }
+
+- Expected:
+{
+  "code": "SEPARATION_OF_DUTIES",
+  "httpStatus": 403,
+}
+
++ Received:
+null
+
+ ❯ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts:209:69
+    207|   it('anyone who wrote a version is an author too, not only the creato…
+    208|     await pg.exec(`INSERT INTO concept2cure_artifact_versions (artifac…
+    209|     expect(await refuseSignedArtifactAct(signedInput(queryable()))).to…
+       |                                                                     ^
+    210|   });
+    211|   it('a version written in another organization is not read as authors…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > the author is told so before the quorum: not that a review is still open
+AssertionError: expected { httpStatus: 400, …(1) } to match object { code: 'SEPARATION_OF_DUTIES' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SEPARATION_OF_DUTIES",
++   "httpStatus": 400,
++   "message": "Cannot approve: 1 of 1 reviewers have not yet submitted their decision",
+  }
+
+ ❯ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts:222:89
+    220|   it('the author is told so before the quorum: not that a review is st…
+    221|     await seed({ name: 'pending', assignments: [{ id: 1, artifact_id: …
+    222|     expect(await refuseSignedArtifactAct(signedInput(queryable(), 'app…
+       |                                                                                         ^
+    223|   });
+    224|   it('an artifact with no recorded author is refused 409: independence…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > an artifact with no recorded author is refused 409: independence cannot be shown
+AssertionError: expected null to match object { httpStatus: 409, …(1) }
+
+- Expected:
+{
+  "code": "SEPARATION_OF_DUTIES_AUTHOR_UNRESOLVED",
+  "httpStatus": 409,
+}
+
++ Received:
+null
+
+ ❯ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts:226:69
+    224|   it('an artifact with no recorded author is refused 409: independence…
+    225|     await pg.exec('UPDATE concept2cure_artifacts SET created_by_id = N…
+    226|     expect(await refuseSignedArtifactAct(signedInput(queryable()))).to…
+       |                                                                     ^
+    227|       httpStatus: 409, code: 'SEPARATION_OF_DUTIES_AUTHOR_UNRESOLVED',
+    228|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > an authorship read that fails is refused 503 and names no cause, and the quorum is not read
+AssertionError: expected null to match object { httpStatus: 503, …(1) }
+
+- Expected:
+{
+  "code": "SEPARATION_OF_DUTIES_UNVERIFIED",
+  "httpStatus": 503,
+}
+
++ Received:
+null
+
+ ❯ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts:238:20
+    236|     } };
+    237|     const result = await refuseSignedArtifactAct(signedInput(q));
+    238|     expect(result).toMatchObject({ httpStatus: 503, code: 'SEPARATION_…
+       |                    ^
+    239|     expect(result?.message).not.toContain('private authorship failure'…
+    240|     expect(reads.some(sql => sql.includes('concept2cure_review_assignm…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > review → approved by the author: not signed, nothing written
+AssertionError: promise resolved "{ row: { id: 20, …(27) }, …(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "row": {
++     "anaThreadId": null,
++     "approvedVersionId": 2,
++     "artifactId": "artifact_abc",
++     "category": "document",
++     "citationRunId": null,
++     "citations": [],
++     "citationsAt": null,
++     "content": "body",
++     "contentHash": "230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5",
++     "conversationId": null,
++     "createdAt": 2026-11-02T00:40:56.473Z,
++     "createdById": 777,
++     "ctdSection": null,
++     "id": 20,
++     "lockedAt": null,
++     "lockedById": null,
++     "metadata": null,
++     "organizationId": 99,
++     "projectId": 3,
++     "publishedAt": null,
++     "publishedVersionId": null,
++     "status": "approved",
++     "templateId": null,
++     "title": "Clinical overview",
++     "titleSlug": null,
++     "type": "document",
++     "updatedAt": 2026-11-02T00:40:56.477Z,
++     "version": 2,
++   },
++   "signature": {
++     "artifactId": 20,
++     "artifactVersionId": 20,
++     "authenticationMethod": "password",
++     "authenticationTimestamp": 2026-11-02T00:40:56.481Z,
++     "createdAt": 2026-11-02T00:40:56.476Z,
++     "deviceInfo": null,
++     "id": 6,
++     "ipAddress": null,
++     "organizationId": 99,
++     "secondFactorVerified": false,
++     "signatureHash": "fd10c718c9023651207ba8141901d2149a9e0efee65cb087f25dad0ddd7afa92",
++     "signatureId": "sig_1793580056481_b03a3e1ebdac",
++     "signatureManifest": {
++       "actionId": "act_d676e13f9ad2439692ef33322f0b0a0a",
++       "attestationText": "I sign this.",
++       "auditId": "6eac7275-a8ea-47ee-b759-894cc7f17942",
++       "auditSha256Chain": "1837f881df5e1f63ffe48fc5bc2d5669f1c0b3c767f85da678b39560b94eaa51",
++       "contentHash": "230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5",
++       "meaning": "approval",
++       "newStatus": "approved",
++       "part": "21 CFR Part 11 §11.50",
++       "previousStatus": "review",
++       "printedName": "Dana Reviewer",
++       "reason": null,
++     },
++     "signatureMeaning": "approval",
++     "signaturePurpose": "approval_attestation",
++     "signatureType": "approval",
++     "signedAt": 2026-11-02T00:40:56.481Z,
++     "signerEmail": "signer@example.com",
++     "signerId": 777,
++     "signerName": "Dana Reviewer",
++     "signerRole": "admin",
++     "status": "active",
++     "updatedAt": 2026-11-02T00:40:56.476Z,
++   },
++   "signer": {
++     "email": "signer@example.com",
++     "name": "Dana Reviewer",
++     "title": null,
++   },
++   "snapshot": null,
++   "version": {
++     "artifactId": 20,
++     "changeDescription": null,
++     "content": "body",
++     "contentHash": "230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5",
++     "createdAt": 2026-11-02T00:40:56.474Z,
++     "createdById": 777,
++     "id": 20,
++     "organizationId": 99,
++     "updatedAt": 2026-11-02T00:40:56.474Z,
++     "version": 2,
++   },
+  }
+
+ ❯ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts:475:79
+    473|   it.each([['review', 'approved'], ['approved', 'locked']] as const)('…
+    474|     await seed(from, { author: USER });
+    475|     await expect(commitAs(to, from, await readArtifact(), await readVe…
+       |                                                                               ^
+    476|     expect(await signatures()).toEqual([]);
+    477|     expect(await ledger()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > approved → locked by the author: not signed, nothing written
+AssertionError: promise resolved "{ row: { id: 21, …(27) }, …(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "row": {
++     "anaThreadId": null,
++     "approvedVersionId": 2,
++     "artifactId": "artifact_abc",
++     "category": "document",
++     "citationRunId": null,
++     "citations": [],
++     "citationsAt": null,
++     "content": "body",
++     "contentHash": "230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5",
++     "conversationId": null,
++     "createdAt": 2026-11-02T00:40:56.498Z,
++     "createdById": 777,
++     "ctdSection": null,
++     "id": 21,
++     "lockedAt": 2026-11-02T00:40:56.501Z,
++     "lockedById": 777,
++     "metadata": null,
++     "organizationId": 99,
++     "projectId": 3,
++     "publishedAt": 2026-11-02T00:40:56.501Z,
++     "publishedVersionId": 2,
++     "status": "locked",
++     "templateId": null,
++     "title": "Clinical overview",
++     "titleSlug": null,
++     "type": "document",
++     "updatedAt": 2026-11-02T00:40:56.501Z,
++     "version": 2,
++   },
++   "signature": {
++     "artifactId": 21,
++     "artifactVersionId": 21,
++     "authenticationMethod": "password",
++     "authenticationTimestamp": 2026-11-02T00:40:56.505Z,
++     "createdAt": 2026-11-02T00:40:56.501Z,
++     "deviceInfo": null,
++     "id": 7,
++     "ipAddress": null,
++     "organizationId": 99,
++     "secondFactorVerified": false,
++     "signatureHash": "9e7635ace2c37600e950bdcacb20e3f52914dc60207f160af2ce617d95488b49",
++     "signatureId": "sig_1793580056505_5e84c4a6c19a",
++     "signatureManifest": {
++       "actionId": "act_e8e6c9fd864040a9b9e303a46014c16a",
++       "attestationText": "I sign this.",
++       "auditId": "e7d90d20-79e2-45cb-8b6d-acecbee9bda0",
++       "auditSha256Chain": "5d564fc61406632f1421118df3f31c4b2fab1673f915ebe32468b16b174816b2",
++       "contentHash": "230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5",
++       "meaning": "release",
++       "newStatus": "locked",
++       "part": "21 CFR Part 11 §11.50",
++       "previousStatus": "approved",
++       "printedName": "Dana Reviewer",
++       "reason": null,
++     },
++     "signatureMeaning": "release",
++     "signaturePurpose": "publish_attestation",
++     "signatureType": "publish",
++     "signedAt": 2026-11-02T00:40:56.505Z,
++     "signerEmail": "signer@example.com",
++     "signerId": 777,
++     "signerName": "Dana Reviewer",
++     "signerRole": "admin",
++     "status": "active",
++     "updatedAt": 2026-11-02T00:40:56.501Z,
++   },
++   "signer": {
++     "email": "signer@example.com",
++     "name": "Dana Reviewer",
++     "title": null,
++   },
++   "snapshot": {
++     "actionType": "publish",
++     "actorEmail": "signer@example.com",
++     "actorId": 777,
++     "actorName": "Dana Reviewer",
++     "actorRole": "admin",
++     "approvedVersionId": 2,
++     "artifactId": 21,
++     "attestationText": "I sign this.",
++     "contentHash": "230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5",
++     "createdAt": 2026-11-02T00:40:56.501Z,
++     "ctdSection": null,
++     "exportHash": null,
++     "fileSize": null,
++     "filename": null,
++     "id": 2,
++     "metadata": {
++       "newStatus": "locked",
++       "previousStatus": "approved",
++       "reason": null,
++       "signatureId": "sig_1793580056505_5e84c4a6c19a",
++     },
++     "organizationId": 99,
++     "publishedVersionId": 2,
++     "signatureMeaning": "release",
++     "snapshotId": "snap_1793580056510_0d21e7ad72d2",
++     "templateId": null,
++     "title": "Clinical overview",
++     "updatedAt": 2026-11-02T00:40:56.501Z,
++     "versionId": 2,
++   },
++   "version": {
++     "artifactId": 21,
++     "changeDescription": null,
++     "content": "body",
++     "contentHash": "230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5",
++     "createdAt": 2026-11-02T00:40:56.498Z,
++     "createdById": 777,
++     "id": 21,
++     "organizationId": 99,
++     "updatedAt": 2026-11-02T00:40:56.498Z,
++     "version": 2,
++   },
+  }
+
+ ❯ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts:475:79
+    473|   it.each([['review', 'approved'], ['approved', 'locked']] as const)('…
+    474|     await seed(from, { author: USER });
+    475|     await expect(commitAs(to, from, await readArtifact(), await readVe…
+       |                                                                               ^
+    476|     expect(await signatures()).toEqual([]);
+    477|     expect(await ledger()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > approving what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written
+AssertionError: {"success":true,"data":{"artifactId":"artifact_abc","status":"approved","previousStatus":"review","lockedAt":null,"approvedVersionId":2,"publishedVersionId":null,"publishedAt":null,"enforcedRole":"admin","auditTrail":{"persisted":true,"chained":false},"signature":{"signatureId":"sig_1793580056568_898c88205007","signatureType":"approval","signatureMeaning":"approval","signerName":"Dana Reviewer","signerRole":"admin","signedAt":"2026-11-02T00:40:56.568Z","signatureHash":"12f85e7c0080aa7b6880b74eeabf44f72250be0ec66b175fe60c215503095a20","authenticationMethod":"password","versionSigned":2},"snapshot":null}}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts:575:50
+    573|     const res = await putStatus(body);
+    574|
+    575|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+    576|     expect(JSON.stringify(res.body)).toContain('SEPARATION_OF_DUTIES');
+    577|     expect(JSON.stringify(res.body)).toMatch(/you are an author of thi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > releasing (locking) what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written
+AssertionError: {"success":true,"data":{"artifactId":"artifact_abc","status":"locked","previousStatus":"approved","lockedAt":"2026-11-02T00:40:56.591Z","approvedVersionId":2,"publishedVersionId":2,"publishedAt":"2026-11-02T00:40:56.591Z","enforcedRole":"admin","auditTrail":{"persisted":true,"chained":false},"signature":{"signatureId":"sig_1793580056595_e25c0c385bb3","signatureType":"publish","signatureMeaning":"release","signerName":"Dana Reviewer","signerRole":"admin","signedAt":"2026-11-02T00:40:56.595Z","signatureHash":"63e70d5c573d433b5dc28c2e7f15067b5c54b147f74c11f5b1bf5f0dd990305b","authenticationMethod":"password","versionSigned":2},"snapshot":{"snapshotId":"snap_1793580056599_1009aa9e86a3","versionId":2,"contentHash":"230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5","actionType":"publish","actorName":"Dana Reviewer","createdAt":"2026-11-02T00:40:56.590Z"}}}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts:575:50
+    573|     const res = await putStatus(body);
+    574|
+    575|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+    576|     expect(JSON.stringify(res.body)).toContain('SEPARATION_OF_DUTIES');
+    577|     expect(JSON.stringify(res.body)).toMatch(/you are an author of thi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written
+AssertionError: {"success":true,"data":{"artifactId":"artifact_abc","status":"approved","previousStatus":"review","lockedAt":null,"approvedVersionId":2,"publishedVersionId":null,"publishedAt":null,"enforcedRole":"admin","auditTrail":{"persisted":true,"chained":false},"signature":{"signatureId":"sig_1793580056617_ad42fd0113bd","signatureType":"approval","signatureMeaning":"approval","signerName":"Dana Reviewer","signerRole":"admin","signedAt":"2026-11-02T00:40:56.617Z","signatureHash":"9ce30b6f8b85c03f7e8c90b1273320d373e8745791984fbcf682b7a0db733780","authenticationMethod":"password","versionSigned":2},"snapshot":null}}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts:596:50
+    594|     const res = await putStatus(APPROVE);
+    595|
+    596|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+    597|     expect(JSON.stringify(res.body)).toContain('SEPARATION_OF_DUTIES');
+    598|     expect(await artifactRow()).toMatchObject({ status: 'review', appr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > a approver who drafted it, no reviewer assigned: refused SEPARATION_OF_DUTIES, nothing written
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > a admin who drafted it, no reviewer assigned: refused SEPARATION_OF_DUTIES, nothing written
+AssertionError: "Clinical overview" approved at version 2: signed by Dana Reviewer with the meaning 'approval'.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:422:44
+    420|     const result = await updateArtifactStatus(signed('approval'), para…
+    421|
+    422|     expect(result.success, result.message).toBe(false);
+       |                                            ^
+    423|     expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' }…
+    424|     expect(result.message).toMatch(/you are an author of this record/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > the author, with a reviewer still pending: told they are the author, before the open review
+AssertionError: expected { code: undefined } to match object { code: 'SEPARATION_OF_DUTIES' }
+
+- Expected
++ Received
+
+  {
+-   "code": "SEPARATION_OF_DUTIES",
++   "code": undefined,
+  }
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:441:25
+    439|
+    440|     expect(result.success, result.message).toBe(false);
+    441|     expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' }…
+       |                         ^
+    442|     expect(result.message).not.toMatch(/have not yet submitted/);
+    443|     expect(await signatures()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > a user who wrote a later version is an author too: refused, nothing written
+AssertionError: "Clinical overview" approved at version 2: signed by Dana Reviewer with the meaning 'approval'.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:451:44
+    449|     const result = await updateArtifactStatus(signed('approval'), para…
+    450|
+    451|     expect(result.success, result.message).toBe(false);
+       |                                            ^
+    452|     expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' }…
+    453|     expect(await signatures()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > the author locking (release) their approved artifact: refused, not locked, no snapshot
+AssertionError: "Clinical overview" locked at version 2: signed by Dana Reviewer with the meaning 'release'.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:460:44
+    458|     const result = await updateArtifactStatus(signed('release'), param…
+    459|
+    460|     expect(result.success, result.message).toBe(false);
+       |                                            ^
+    461|     expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' }…
+    462|     expect(await artifactRow()).toMatchObject({ status: 'approved', pu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > the signer became an author after the preflight passed: refused on the signing transaction, nothing written
+AssertionError: "Clinical overview" approved at version 2: signed by Dana Reviewer with the meaning 'approval'.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:472:44
+    470|     const result = await updateArtifactStatus(signed('approval'), para…
+    471|
+    472|     expect(result.success, result.message).toBe(false);
+       |                                            ^
+    473|     expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' }…
+    474|     expect(result.message).toMatch(/you are an author of this record/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > an artifact that names no author: refused as unresolved, never signed on the assumption
+AssertionError: "Clinical overview" approved at version 2: signed by Dana Reviewer with the meaning 'approval'.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:486:44
+    484|     const result = await updateArtifactStatus(signed('approval'), para…
+    485|
+    486|     expect(result.success, result.message).toBe(false);
+       |                                            ^
+    487|     expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES_AU…
+    488|     expect(result.message.match(/nothing was signed/gi), 'said once, n…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+
+ FAIL  server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > a Concept2Cure artifact: its creator and every version author, by external id, org-scoped
+AssertionError: expected { modelled: false, authors: [], …(1) } to deeply equal { modelled: true, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "authors": [
+-     21,
+-     22,
+-   ],
+-   "modelled": true,
+-   "sources": [
+-     "artifact creator",
+-     "artifact version ledger",
+-   ],
++   "authors": [],
++   "modelled": false,
++   "sources": [],
+  }
+
+ ❯ server/services/governance/__tests__/separation-of-duties.test.ts:114:66
+    112|       'FROM concept2cure_artifact_versions': [{ created_by_id: 22 }],
+    113|     });
+    114|     await expect(resolveTargetAuthors('artifact:artifact_abc', 7)).res…
+       |                                                                  ^
+    115|       modelled: true,
+    116|       authors: [21, 22],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/19]⎯
+
+
+ Test Files  4 failed | 1 passed (5)
+      Tests  19 failed | 173 passed (192)
+   Start at  00:40:49
+   Duration  20.00s (transform 4.98s, setup 133ms, import 11.49s, tests 7.59s, environment 0ms)
+
