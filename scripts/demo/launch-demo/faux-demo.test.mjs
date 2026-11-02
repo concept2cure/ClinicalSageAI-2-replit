@@ -250,20 +250,22 @@ test('purge is an honest refusal to delete governed source records', async () =>
   assert.match(run.notes.join(' '), /no destructive|archive/i);
 });
 
-test.each([
+for (const [name, options] of [
   ['missing', { missingTemplate: true }],
   ['duplicated', { duplicateTemplate: true }],
-])('rejects %s canonical CSR templates before any tenant write', async (_name, options) => {
-  const app = fakeApplication(options);
-  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
-    /canonical CSR component template is unavailable or duplicated/);
-  assert.equal(app.state.clients.length, 0);
-  assert.equal(app.state.projects.length, 0);
-  assert.equal(app.state.vault.length, 0);
-  assert.equal(app.state.documents.length, 0);
-  assert.equal(app.state.tasks.length, 0);
-  assert.ok(app.state.calls.every(c => c.method === 'GET'));
-});
+]) {
+  test(`rejects ${name} canonical CSR templates before any tenant write`, async () => {
+    const app = fakeApplication(options);
+    await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+      /canonical CSR component template is unavailable or duplicated/);
+    assert.equal(app.state.clients.length, 0);
+    assert.equal(app.state.projects.length, 0);
+    assert.equal(app.state.vault.length, 0);
+    assert.equal(app.state.documents.length, 0);
+    assert.equal(app.state.tasks.length, 0);
+    assert.ok(app.state.calls.every(c => c.method === 'GET'));
+  });
+}
 
 test('ambiguous same-title Data Room sources are not silently adopted', async () => {
   const app = fakeApplication();
