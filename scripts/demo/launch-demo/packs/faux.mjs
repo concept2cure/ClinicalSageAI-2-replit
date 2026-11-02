@@ -198,18 +198,23 @@ const CSR_TEMPLATE_ENTRY = 'component:clinical_study_report';
 const AUTHORING_DOC_NAME = 'FBT-201 ICH E3 Clinical Study Report — working draft';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-async function ensureCsrWorkingDocument({ api, run, tally }, project) {
+async function canonicalCsrTemplate(api) {
+  // Resolve the one editor's template BEFORE writing the project or the Vault
+  // assets. An unready authoring catalog must not leave a new half-demo behind.
+  const search = must(await api('GET',
+    '/api/authoring/templates?search=Clinical%20Study%20Report'), 200, 'read the existing authoring template catalog');
+  const matches = (Array.isArray(search.templates) ? search.templates : [])
+    .filter(template => template.entryId === CSR_TEMPLATE_ENTRY);
+  if (matches.length !== 1 || !UUID_RE.test(String(matches[0].id ?? '')) ||
+      !(Number(matches[0].section_count) > 0)) {
+    throw new Error('The one canonical CSR component template is unavailable or duplicated. No demo records were written.');
+  }
+  return matches[0];
+}
+
+async function ensureCsrWorkingDocument({ api, run, tally }, project, template) {
   let document;
   await run.step('Canvas / one editor: create or reopen ICH E3 CSR working draft', async () => {
-    const search = must(await api('GET',
-      '/api/authoring/templates?search=Clinical%20Study%20Report'), 200, 'read the existing authoring template catalog');
-    const matches = (Array.isArray(search.templates) ? search.templates : [])
-      .filter(template => template.entryId === CSR_TEMPLATE_ENTRY);
-    if (matches.length !== 1 || !UUID_RE.test(String(matches[0].id ?? '')) ||
-        !(Number(matches[0].section_count) > 0)) {
-      throw new Error('The one canonical CSR component template is unavailable or duplicated. No blank or legacy CSR document was created.');
-    }
-    const template = matches[0];
     const endpoint = `/api/authoring/docs?status=all&programId=${encodeURIComponent(project.id)}`;
     const before = must(await api('GET', endpoint), 200, 'list the project\'s working documents');
     if (!Array.isArray(before.documents)) {
@@ -277,6 +282,7 @@ export async function seed(ctx) {
   const c = { ...ctx, tally };
   ctx.run.note('The fictional client and FBT-201 project use the platform\'s existing Project Management, Data Room, Tasking and single editor. No CSR application, parallel workflow, study approval, signature or clinical trial is created.');
   ctx.run.record('sourceRevision', { revision: 2, sha256: source.digest, synthetic: true, clinicalVerification: 'not-established' });
+  const canonicalTemplate = await canonicalCsrTemplate(api);
 
   const clientWorkspaceId = await ensureClient(c);
   const project = await ensureProject(c, clientWorkspaceId);
@@ -295,7 +301,7 @@ export async function seed(ctx) {
       bytes: () => pdfFromMarkdown(filename, label),
     });
   }
-  const workingDocument = await ensureCsrWorkingDocument(c, project);
+  const workingDocument = await ensureCsrWorkingDocument(c, project, canonicalTemplate);
   // The original Tasking and one-editor navigation already understand the
   // authoring_document origin. This is a pending work item, not an executed
   // review or an electronic signature.
