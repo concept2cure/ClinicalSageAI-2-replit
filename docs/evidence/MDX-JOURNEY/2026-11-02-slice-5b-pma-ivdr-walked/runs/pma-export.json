@@ -1,0 +1,42 @@
+{
+ "api": [
+  {
+   "u": "/api/510k/estar/build",
+   "s": 200,
+   "sent": "{\"meta\":{\"id\":\"pma\",\"ident\":\"2393bb28-c5a9-4943-a6d6-cb83634d48f0\",\"title\":\"Corvant valve\"},\"useProjectContent\":true}",
+   "body": {
+    "filingAgreement": {
+     "compared": true,
+     "documentId": "doc_dba736021ed549a0b4e76edbec160e74",
+     "unfiled": []
+    },
+    "packageFamily": "pma",
+    "deviceContentSource": "governed_program",
+    "keys": [
+     "governed",
+     "source_type",
+     "artifact_id",
+     "artifact_version",
+     "artifact_status",
+     "placement_state",
+     "suggested_placement",
+     "provenance_ref",
+     "audit_ref",
+     "delivered_artifact_sha256",
+     "downloadable_output_ref",
+     "formattingReport",
+     "deviceContentSource",
+     "packageFamily",
+     "sectionsAuthored",
+     "sectionsRendered",
+     "filingAgreement"
+    ]
+   }
+  }
+ ],
+ "said": [
+  "Downloaded pma_pma-content-package-draft.zip · 0 formatting errors, 1 warnings to fix before submitting",
+  "No tracked filings yet\nSelect a submission type and run a filing-readiness assessment; tracking becomes available once it has one.\nServes the eSTAR submission record (FDA 510(k) / De Novo)"
+ ],
+ "download": "pma_pma-content-package-draft.zip"
+}

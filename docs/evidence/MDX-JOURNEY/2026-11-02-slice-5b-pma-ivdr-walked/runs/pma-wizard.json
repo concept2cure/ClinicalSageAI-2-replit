@@ -1,0 +1,51 @@
+{
+ "url": "/concept2cure/project-home?program=2393bb28-c5a9-4943-a6d6-cb83634d48f0",
+ "api": [
+  {
+   "status": 201,
+   "id": "2393bb28-c5a9-4943-a6d6-cb83634d48f0",
+   "program_type": "pma",
+   "pathway": "pma"
+  }
+ ],
+ "labels": [
+  "Client workspace",
+  "Project nameRequired. The project is listed under ",
+  "Product name",
+  "Device classNot yet determinedClass IClass IIClass",
+  "Product typeMedical deviceIn-vitro diagnosticCompa",
+  "Target submission date",
+  "Product codeThe three-letter FDA product code from",
+  "Regulation numberThe 21 CFR regulation listed for ",
+  "Review panelNot yet determinedAnesthesiologyCardio",
+  "Predicate 510(k) numberThe cleared device this one",
+  "Predicate device nameThe eSTAR prints this beside ",
+  "Indications for use",
+  "Combination product21 CFR 3.2(e) — adds a lead-cen",
+  "Software / AI-MLJune 2023 device software guidance",
+  "Cyber deviceFD&C Act §524B — cybersecurity documen",
+  "SterileSterilisation validation, packaging and she",
+  "ImplantableLong-term biocompatibility and, for som",
+  "CLIA-waived (IVD)CLIA categorisation and a waiver ",
+  "Clinical data submittedFDA 3454/3455 financial cer",
+  "Risk-based monitoring Include risk assessment, mon"
+ ],
+ "placeholders": [
+  "e.g. BX-204 — Premarket Approval Application",
+  "e.g. BX-204",
+  "",
+  "e.g. BZH",
+  "e.g. 868.1860",
+  "e.g. K181234",
+  "the predicate’s trade name, as it is marketed",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  ""
+ ],
+ "reviewText": "Projects\nProjects\n/\nNew project\nNew project\n\nChoose the filing, describe the project, then review what will be recorded. The filing decides the dossier outline the project is built against.\n\nStep 1\nChoose filing type\nStep 2\nConfigure project\n3\nStep 3\nReview & create\nReview & create\nClient workspace\nConcept2Cure Therapeutics\nFiling type\nPremarket Approval Application\nAgency / Region\nFDA · US\nDossier\nregional\nProject name\nCorvant valve — PMA\nRisk-based monitoring\nNot selected\nProduct\nCorvant valve\nTarget date\nNot set\nPathway\nPMA — eCopy\nWorkstream\nMDX\nRecorded as\nPMA · Medical device\nClassification\nNot recorded\nPredicate\nNot recorded\n\nYour project is saved to the portfolio and opens in its workspace, where you can add documents and author sections with AnA. After it is created, share it with people in your organization from its Team section.\n\nCancel\nBack\nCreate project"
+}

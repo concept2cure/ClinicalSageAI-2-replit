@@ -72,12 +72,17 @@ export interface LiteratureBucket {
   hits: number;
 }
 
+/** One 21 CFR 814 module of the project's PMA document, as the PMA mapper scores it (server: getPmaModules). */
 export interface PmaModule {
-  id: 'preclinical' | 'clinical' | 'manufacturing' | 'labeling' | 'statistical' | 'financial';
+  id: string;
+  module: number;
   label: string;
-  desc: string;
-  docs: number;
-  status: 'complete' | 'active' | 'review' | 'draft';
+  required: boolean;
+  /** Section codes the assembly verdict counts: written and finished. */
+  finished: string[];
+  /** Section codes written but not finished. */
+  written: string[];
+  status: 'present' | 'written' | 'not_started';
 }
 
 export interface TrialMetric {
@@ -132,7 +137,7 @@ export interface UseProgramExtrasResult {
  *   /change-impact          → recent edits + cross-section refs
  *   /safety-signals         → CER signals
  *   /literature             → year-bucketed literature corpus
- *   /pma-modules            → cerv2 sections grouped by PMA module
+ *   /pma-modules            → the project's PMA document, by the PMA mapper's modules
  *   /pma-trial-metrics      → clinical_ops.studies KPIs
  *
  * Uses Promise.allSettled — a single failed endpoint (e.g.,

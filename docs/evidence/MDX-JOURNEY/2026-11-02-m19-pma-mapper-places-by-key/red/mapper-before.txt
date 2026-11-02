@@ -1,0 +1,61 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > mapToPma > is ready when every required PMA section is present 3ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > mapToPma > reports missing required sections and partial completeness 2ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > mapToPma > treats post-approval study and references as optional (not blocking) 1ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > mapToPma > records source leaves and FDA module numbers per section 1ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > mapToPma > matches by documentType as well as title 0ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > mapToPma > honesty fix: a matched-but-non-substantive leaf (draft/placeholder) does NOT mark a required section present, and does NOT make the submission ready 0ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > mapToPma > handles empty input honestly (nothing invented) 0ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > mapToPma > threads the submission type 1ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > mapToPma > accepts the full PMA supplement taxonomy incl. 30-day notice and 135-day supplement 9ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > PMA submission-type metadata > enumerates all six application/supplement types in lifecycle order 1ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > PMA submission-type metadata > carries review clocks where FDA publishes one 0ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > PMA submission-type metadata > distinguishes originals from supplements 0ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > PMA submission-type metadata > per-submission-type required sections (21 CFR 814.39) > a 30-day notice requires only admin + manufacturing (not clinical) 1ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > PMA submission-type metadata > per-submission-type required sections (21 CFR 814.39) > the same content is NOT complete as an original PMA (clinical becomes required) 0ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > PMA submission-type metadata > per-submission-type required sections (21 CFR 814.39) > a real-time supplement requires admin, device description, and labeling only 0ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > PMA submission-type metadata > per-submission-type required sections (21 CFR 814.39) > a panel-track supplement still requires new clinical data + SSED + stats 1ms
+ × server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > a governed leaf is placed by its 814.20 key, never by its title > an approved SSED is module 7 only 11ms
+   → device-description: expected { id: 'device-description', …(5) } to match object { present: false, sources: [] }
+(4 matching properties omitted from actual)
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > a governed leaf is placed by its 814.20 key, never by its title > the modules those summaries describe are present from their own letters 1ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > a governed leaf is placed by its 814.20 key, never by its title > G.5 is the clinical module and the statistics module, as the pack places it 0ms
+ ✓ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > a governed leaf is placed by its 814.20 key, never by its title > a legacy leaf, with no 814.20 key, is still placed by its title and type 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts > a governed leaf is placed by its 814.20 key, never by its title > an approved SSED is module 7 only
+AssertionError: device-description: expected { id: 'device-description', …(5) } to match object { present: false, sources: [] }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "present": false,
+-   "sources": [],
++   "present": true,
++   "sources": [
++     "B.1",
++     "B.2",
++   ],
+  }
+
+ ❯ server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts:214:32
+    212|     expect(at(ssed, 'ssed-summary')).toMatchObject({ present: true, so…
+    213|     for (const id of ['device-description', 'nonclinical', 'clinical']…
+    214|       expect(at(ssed, id), id).toMatchObject({ present: false, sources…
+       |                                ^
+    215|     }
+    216|     expect(mapToPma({ leaves: ssed }).summary.missingRequired).toEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  04:45:40
+   Duration  491ms (transform 148ms, setup 117ms, import 64ms, tests 38ms, environment 0ms)
+

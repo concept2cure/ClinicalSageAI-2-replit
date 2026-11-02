@@ -1,0 +1,20 @@
+{
+ "pick": {
+  "code": "II.1.a",
+  "row": "II.1.a Product name, general description, intended purpose and intended user Required"
+ },
+ "api": [
+  {
+   "m": "POST",
+   "u": "/api/authoring/sections",
+   "s": 201,
+   "got": "{\"success\":true,\"section\":{\"id\":\"12e8c893-0aa2-4b67-a30f-3955fac6acfe\",\"doc_id\":\"51459dea-ce55-4d4e-b8a5-9179f76550e4\",\"code\":\"II.1.a\",\"title\":\"Product name, general description, intended purpose and intended user\",\"content\":\"\",\"order_index\":0,\"track_changes\":false,\"tenant_id\":2,\"created_at\":\"2026-11-02T05:10:08.325Z\",\"updated_at\":\"2026-11-02T05:10:08.325Z\"},\"message\":\"Section created successfully"
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/authoring/sections/12e8c893-0aa2-4b67-a30f-3955fac6acfe",
+   "s": 200,
+   "got": "{\"success\":true,\"section\":{\"id\":\"12e8c893-0aa2-4b67-a30f-3955fac6acfe\",\"doc_id\":\"51459dea-ce55-4d4e-b8a5-9179f76550e4\",\"code\":\"II.1.a\",\"title\":\"Product name, general description, intended purpose and intended user\",\"content\":\"<p>The Veritas assay is a qualitative real-time PCR test for the detection of SARS-CoV-2 RNA in nasopharyngeal swabs, for professional use in clinical laboratories.</p>\",\"ord"
+  }
+ ]
+}

@@ -1,0 +1,48 @@
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'tone')
+ ❯ client/src/concept2cure/mdx/surfaces/PmaSurface.tsx:314:73
+    312|             <div className="pma-mod-hdr">
+    313|               <div className="pma-mod-label">{m.label}</div>
+    314|               <span className={`status-pill ${PMA_MODULE_PILL[m.status…
+       |                                                                         ^
+    315|             </div>
+    316|             <div className="pma-mod-desc">Module {m.module} · {m.requi…
+ ❯ children client/src/concept2cure/mdx/surfaces/PmaSurface.tsx:300:15
+ ❯ DataGate client/src/concept2cure/mdx/components/DataGate.tsx:92:43
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "a PMA program on the PMA surface is produced as a PMA, on its family". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'tone')
+ ❯ client/src/concept2cure/mdx/surfaces/PmaSurface.tsx:314:73
+    312|             <div className="pma-mod-hdr">
+    313|               <div className="pma-mod-label">{m.label}</div>
+    314|               <span className={`status-pill ${PMA_MODULE_PILL[m.status…
+       |                                                                         ^
+    315|             </div>
+    316|             <div className="pma-mod-desc">Module {m.module} · {m.requi…
+ ❯ children client/src/concept2cure/mdx/surfaces/PmaSurface.tsx:300:15
+ ❯ DataGate client/src/concept2cure/mdx/components/DataGate.tsx:92:43
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "a De Novo program open on the PMA surface is produced as a De Novo". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
