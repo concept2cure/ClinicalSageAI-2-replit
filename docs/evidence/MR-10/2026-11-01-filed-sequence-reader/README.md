@@ -63,3 +63,29 @@ on them in a sequence.
 `docs/design/FILED_ELSEWHERE_BASELINE_2026-10-29.md` (another lane's record)
 still says no part of the Stage 9 import exists. The reader now exists; that row
 is left to its owner.
+
+## Correction, 2026-11-02: three consumer tests this slice turned red
+
+An independent review of the slice (`…01Gx2fiw…`, 2026-11-02, five lenses, each finding
+reproduced by a second agent) found that `90f1c747` left three more fixtures written in
+the old reader's shape, and they failed on trunk:
+
+- `server/routes/__tests__/mdx-imports-filename-suggestion-not-mapped.pglite.test.ts`;
+- `server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts`
+  (AnA's `start_legacy_import`);
+- `server/routes/__tests__/mdx-onboarding-aggregate-counts-only-confirmed-mappings.pglite.test.ts`.
+
+Their red run on the unchanged fixtures is
+[consumers-red-at-90f1c747.txt](consumers-red-at-90f1c747.txt). Each fixture is now a
+conformant sequence (`handSequenceFiles`). The structure files it adds (`index.xml`,
+`index-md5.txt`) are counted as skipped, and each test asserts what it did before.
+
+Every test file that imports the detector, `mdx-imports`, `mdx-onboarding` or
+`start_legacy_import` now passes: 15 files, 95 tests
+([consumers-green.txt](consumers-green.txt)).
+
+The claim above and in the commit, "95/95 across the importer, route and AnA-consumer
+suites", was wrong. That run covered 8 files and no AnA test. "Two existing fixtures"
+should have read five.
+
+The review's other findings are fixed in a following change, recorded below.
