@@ -5,6 +5,8 @@
  * section status use; csr-builder.ts re-exports it.
  */
 
+import { CSR_DATA_PLACEHOLDER } from '../../../shared/authoring/csr-scientific-review.js';
+
 /**
  * Matches an unresolved data placeholder left in drafted CSR content, e.g.
  * [DATA TO BE INSERTED], [N], [value], [result], [reasons], [list], [X],
@@ -21,7 +23,9 @@
  * [DATA TO BE INSERTED] report as filing-ready, which is the bug this gate
  * exists to close. Legitimate regulatory prose does not use square brackets.
  */
-const PLACEHOLDER_PATTERN = /\[[^[\]]*[A-Za-z][^[\]]*\]/;
+// The pattern lives in shared/authoring/csr-scientific-review.ts (2026-11-02, F8), so the CSR scientific review
+// applies this same rule to the text it approves.
+const PLACEHOLDER_PATTERN = CSR_DATA_PLACEHOLDER;
 
 /** True if `content` still contains at least one unresolved data placeholder. */
 export function hasUnresolvedPlaceholders(content: string | null | undefined): boolean {
