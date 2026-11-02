@@ -15,6 +15,7 @@ import {
 
 const targets = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry) || isSharedPlanningRegistryEntry(entry) || isCanonicalCtdModuleTemplate(entry.id))
   && ['US', 'CA', 'EU', 'JP', 'GLOBAL'].includes(entry.region));
+const catalogTargets = targets.filter(entry => entry.id !== 'ICH_CSR');
 const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.length > 0);
 let all: BuiltinAuthoringTemplate[];
 beforeAll(async () => { all = await getBuiltinAuthoringTemplates(); });
@@ -29,6 +30,15 @@ function everySection(outline: DocumentTemplateStructure): DocumentTemplateStruc
 }
 
 describe('one builtin authoring projection', () => {
+  it('offers one working CSR template and still resolves existing registry IDs', async () => {
+    const listed = all.filter(template => template.entryId === 'component:clinical_study_report' ||
+      template.entryId === 'registry:ICH_CSR');
+    expect(listed).toHaveLength(1);
+    expect(listed[0].entryId).toBe('component:clinical_study_report');
+    expect((await getBuiltinAuthoringTemplate(builtinAuthoringTemplateId('registry:ICH_CSR')))?.entryId).toBe('registry:ICH_CSR');
+  });
+
+
   it('preserves every IND source object and snapshot without added metadata', () => {
     for (const source of getIndAuthoringTemplates()) {
       const actual = all.find(template => template.id === source.id)!;
@@ -39,7 +49,7 @@ describe('one builtin authoring projection', () => {
   });
 
   it('contains exactly the existing IND sources, selected registry rows, components and explicit leaflet gap', () => {
-    expect(all).toHaveLength(getIndAuthoringTemplates().length + targets.length + components.length + 1);
+    expect(all).toHaveLength(getIndAuthoringTemplates().length + catalogTargets.length + components.length + 1);
     expect(new Set(all.map(template => template.id)).size).toBe(all.length);
     expect(new Set(all.map(template => template.entryId)).size).toBe(all.length);
     for (const template of all) {
@@ -49,7 +59,7 @@ describe('one builtin authoring projection', () => {
     }
   });
 
-  it.each(targets)('projects the exact $id outline and regional identity', async entry => {
+  it.each(catalogTargets)('projects the exact $id outline and regional identity', async entry => {
     const expected = await getRegistryDocumentTemplate(entry.id);
     const actual = all.find(template => template.entryId === `registry:${entry.id}`)!;
     expect(actual.id).toBe(builtinAuthoringTemplateId(`registry:${entry.id}`));
