@@ -244,7 +244,8 @@ describe('Rail licence gating', () => {
        Home itself on the rail on 2026-10-16 (327bc9fb6, RAIL_CORE). Home has no
        catalog row: its name must NOT carry the locked suffix, and it navigates.
        Scoped to the list of places — the rail logo is also named "Home". */
-    const btn = within(document.querySelector<HTMLElement>('.rail-nav')!).getByRole('button', { name: 'Home' });
+    // The places are the first .rail-nav in the scrolled list; the actions group (New conversation, Search) sits above it (D1-1).
+    const btn = within(document.querySelector<HTMLElement>('.rail-scroll .rail-nav')!).getByRole('button', { name: 'Home' });
     expect(btn.getAttribute('aria-label')).toBeNull();
     expect(btn.getAttribute('data-locked')).toBeNull();
     fireEvent.click(btn);

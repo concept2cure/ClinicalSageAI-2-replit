@@ -1,0 +1,109 @@
+{
+  "findings": [
+    {
+      "code": "MISSING",
+      "tool": "add_ctq_factor",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "approve_rbm_assessment",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "approve_rbm_plan",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "assess_site_risk",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "create_monitoring_action",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "define_kri",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "draft_monitoring_plan",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "evaluate_kris_qtls",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "generate_rbm_plan",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "generate_rbm_report",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "get_rbm_attention",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "prioritize_monitoring_queries",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "raise_monitoring_signal",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "record_kri_reading",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "run_central_monitoring",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "run_rbm_assessment",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "scan_patient_profiles",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "set_qtl",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "triage_signal",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    },
+    {
+      "code": "MISSING",
+      "tool": "update_monitoring_action",
+      "detail": "no `present` block: its steps would read \"Ran a step\""
+    }
+  ],
+  "stats": {
+    "inScope": 675,
+    "present": 662,
+    "engineClaims": 134
+  }
+}

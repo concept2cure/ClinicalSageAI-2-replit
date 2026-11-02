@@ -1,0 +1,36 @@
+# Skeptic additions, red against the fix as handed over, 2026-11-02T00:43:37Z. HEAD 1427862c2 + the F1 fix with only the skeptic's handler edits undone (add_ctq_factor reads an unreadable detectability or category as absent and ignores a non-boolean isCritical; run_rbm_assessment returns no seeded/note). The skeptic's helper extraction is kept, so only behaviour differs.
+# F1_SWAP_DIR=<that AnaToolExecutor.ts> F1_INCLUDE=server/services/ana/__tests__/rbm-handlers.test.ts npx vitest run --maxWorkers=1 --config docs/evidence/F1/2026-11-01-rbm-handlers/method/vitest.swap.config.ts
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a1: attaches the factor to the study's one open draft, inside one transaction 52ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a1b: with a signed v1 and an open amendment v2, the factor joins the draft v2 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a2: refuses with the actuator's read-only reason, and writes nothing, when the only version is signed 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3: refuses a named signed assessment, as the route does (requireDraftAssessment) 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3b: a named draft is used even when the study has two drafts 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3c: the snake_case assessment_id the admission checks is the one the factor joins 5ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4: refuses likelihood 7, which the route refuses with 422 (SCALE_1_5), and writes nothing 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4b: refuses a category the route does not accept 1ms
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4c: refuses an unreadable optional input instead of saving the default in its place 18ms
+   → .toMatch() expects to receive a string, but got undefined
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a5: refuses when the study has no assessment, pointing to the seed, and writes nothing 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a6: refuses when the study has more than one draft, naming each 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a7: rechecks write authority on the transaction before the insert, and a revoked one writes nothing 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a8: leases the canonical pool for the transaction instead of transacting through pool.query 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a9: transacts on a pinned request client as supplied 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b1: refuses with the route's reason when the study has no risk assessment, instead of answering "medium" 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b2: refuses with the route's reason when the only assessment is an unsigned draft 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b3: derives from the approved version and its factors only, not a newer draft amendment 3ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b4: refuses an approved assessment that records no overall risk, instead of "medium" 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b5: the proposal is the route's derivation — an issue per open critical factor, a visit per enhanced site — and nothing is written 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b6: says when a draft plan is already open, since generating would then be refused 1ms
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c1 (guard): seed:true writes the canonical library as one unsigned draft, in one transaction 3ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c2 (guard): seed:true does not write when the study already has an assessment, and says so 13ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c2b: a draft summary says the draft governs nothing; an approved one carries no such note 2ms
+   → .toMatch() expects to receive a string, but got undefined
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c3: the summary reads the factors of the assessment it returns, not every version 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c4: after an amendment it returns the draft v2 as a draft, with each factor once 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c5: the "No RACT yet" hint appears only when the study has no assessment 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 22 passed (26)
+# exit 1

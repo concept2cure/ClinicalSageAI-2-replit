@@ -1,0 +1,3152 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > replaces the current paragraph the chosen one is paired with, naming the alternative’s turn 5857ms
+   → Unable to find role="radiogroup" and name `/alternatives/i`
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+ × client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > adds chosen paragraphs to an empty section as one addition, each decided on its own 5436ms
+   → Unable to find role="radiogroup" and name `/alternatives/i`
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+ × client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > keeps an answer the governed-write rule does not admit out of the section 5387ms
+   → Unable to find role="radiogroup" and name `/alternatives/i`
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+ × client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > says before the click that chosen paragraphs carry no source citations 5374ms
+   → Unable to find role="radiogroup" and name `/alternatives/i`
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > replaces the current paragraph the chosen one is paired with, naming the alternative’s turn
+TestingLibraryElementError: Unable to find role="radiogroup" and name `/alternatives/i`
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openAlternatives client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx:72:30
+     70|   fireEvent.click(open);
+     71|   fireEvent.click(await screen.findByRole('button', { name: 'Draft thr…
+     72|   const group = await screen.findByRole('radiogroup', { name: /alterna…
+       |                              ^
+     73|   await waitFor(() => expect((within(group).getByRole('radio', { name:…
+     74|   return group;
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx:90:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > adds chosen paragraphs to an empty section as one addition, each decided on its own
+TestingLibraryElementError: Unable to find role="radiogroup" and name `/alternatives/i`
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openAlternatives client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx:72:30
+     70|   fireEvent.click(open);
+     71|   fireEvent.click(await screen.findByRole('button', { name: 'Draft thr…
+     72|   const group = await screen.findByRole('radiogroup', { name: /alterna…
+       |                              ^
+     73|   await waitFor(() => expect((within(group).getByRole('radio', { name:…
+     74|   return group;
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx:114:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > keeps an answer the governed-write rule does not admit out of the section
+TestingLibraryElementError: Unable to find role="radiogroup" and name `/alternatives/i`
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openAlternatives client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx:72:30
+     70|   fireEvent.click(open);
+     71|   fireEvent.click(await screen.findByRole('button', { name: 'Draft thr…
+     72|   const group = await screen.findByRole('radiogroup', { name: /alterna…
+       |                              ^
+     73|   await waitFor(() => expect((within(group).getByRole('radio', { name:…
+     74|   return group;
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx:131:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > says before the click that chosen paragraphs carry no source citations
+TestingLibraryElementError: Unable to find role="radiogroup" and name `/alternatives/i`
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M5
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical study report
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                11.4.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Analysis of Efficacy
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M5
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical study report"
+            >
+              Clinical study report
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              11.4.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openAlternatives client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx:72:30
+     70|   fireEvent.click(open);
+     71|   fireEvent.click(await screen.findByRole('button', { name: 'Draft thr…
+     72|   const group = await screen.findByRole('radiogroup', { name: /alterna…
+       |                              ^
+     73|   await waitFor(() => expect((within(group).getByRole('radio', { name:…
+     74|   return group;
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx:143:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  23:15:23
+   Duration  28.64s (transform 4.48s, setup 272ms, import 5.40s, tests 22.06s, environment 682ms)
+

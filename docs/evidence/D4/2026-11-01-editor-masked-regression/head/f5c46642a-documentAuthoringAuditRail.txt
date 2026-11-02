@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > renders the server’s events — actor, role, operation, reason, hashes, section link 2030ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > a failed read is a failure to READ — never "no governed acts occurred" 786ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > an empty trail says so honestly, as an empty — not an error 652ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > runs the scan on demand and renders the flags under the server’s own honest framing 1803ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > zero flags reads as "passed mechanical checks" — never as compliant 1863ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  22:21:54
+   Duration  15.71s (transform 5.08s, setup 282ms, import 6.41s, tests 7.14s, environment 1.14s)
+

@@ -1,0 +1,1502 @@
+# D1-3 green run: the new and rewritten tests (final text), with D1-3's Shell.tsx and app-v2.css, in the shared tree, 2026-11-02T01:38:37Z
+# npx vitest run --config vitest.config.ts --maxWorkers=1 <files>
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > "Go to" lists the places, in the rail's order 79ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > a place opens as the rail opens it 326ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > a surface outside the release is not listed; a licence lock still is, with its reason 301ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > with a project open, its steps are listed, and a step opens the project on it 215ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > with no project open, no steps are listed 59ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > groups: This project, Recent conversations, Go to, Actions, in sentence case 67ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > lists the person’s conversations first, newest first, read only while the palette is open 59ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > a conversation opens as the sidebar’s Recents opens it, by click or by Enter 222ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > a failed read says so; none is no group at all 43ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > a place carries no hint; Actions are the two quick actions, New task and Message a colleague 29ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > "New task" opens the launcher on its tab, as the top bar does, and closes the palette 28ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K with nothing typed: the most likely next things (§D1.F steps 1–3) > "Message a colleague" opens the launcher on its tab, as the top bar does, and closes the palette 30ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K’s words when searching (§D1.F steps 1, 4 and 5) > the field names projects, conversations, pages and ">" for actions; there is no footer of key hints 35ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K’s words when searching (§D1.F steps 1, 4 and 5) > pages are under "Pages"; "Ask AnA" ends the list with no header or hint of its own 43ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K’s words when searching (§D1.F steps 1, 4 and 5) > ">" lists the AI actions; New task is found by its name 56ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > finds the palette’s rules 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > a centred dialog on a dimmed, lightly blurred page, with a fade that reduced motion turns off 2ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > rows: 36px, 14px --text-200, grey icons, 12px hints; the selected row a soft fill, --bg-200 in dark 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > group labels are 12px sentence case in --text-300 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > the field is a large quiet line with no ring of its own; D0’s focus rule still steps the outline aside 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > no orange and nothing under 12px in the palette’s rules 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > at phone width the dialog sits 8px from the top and rows are 44px 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > the palette’s rules (app-v2.css, §D1.F step 6) > the footer has no rule left, the list and the empty line one each, and the lock rules are kept 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > renders no rail on a work screen (slice 9) 105ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > does not render the rail on a surface that owns its conversation 47ms
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > seeds the conversation surface and goes there, instead of arming a hidden rail
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > seeds the conversation surface and goes there, instead of arming a hidden rail 3221ms
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > re-seeds when the user is already on the conversation surface
+[useAnaChat] stream failed: Stream request failed: 503
+
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > a seeded conversation carries its files > sends the seeding composer's uploads by id, so the stream can open them
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > re-seeds when the user is already on the conversation surface 220ms
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that keeps the rail > goes to the conversation and sends there, naming the screen it was asked from
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > a seeded conversation carries its files > sends the seeding composer's uploads by id, so the stream can open them 78ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that keeps the rail > goes to the conversation and sends there, naming the screen it was asked from 120ms
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named 1983ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > "Back to" returns to the screen it was asked from 295ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > vault has no AnA column and no seam 43ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > projects has no AnA column and no seam 28ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > submission-center has no AnA column and no seam 23ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > home has no AnA column and no seam 47ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > crl-library has no AnA column and no seam 53ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > ⌘\ opens nothing and persists nothing: there is no rail to toggle 64ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses Vault before routing or action dispatch 701ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses Tasks before routing or action dispatch 257ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses logo before routing or action dispatch 233ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses project before routing or action dispatch 166ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses help before routing or action dispatch 219ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses account before routing or action dispatch 206ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses client type before routing or action dispatch 195ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > preserves query and selection when pending work refuses a keyboard-selected result before action dispatch 187ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > permits a clean result despite its own dialog while the shared default remains strict 184ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > still refuses an underlying native dialog with the same cmdk class 192ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > fails closed and reports the canonical reason when a registered guard throws 197ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > refuses a step result before creating a deferred action or conversation handoff 277ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > refuses a action result before creating a deferred action or conversation handoff 186ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > refuses a ask result before creating a deferred action or conversation handoff 166ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > does not replay a rejected palette result after changes are reverted; a fresh keyboard request succeeds 250ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > keeps governed ceremony ownership even when the palette itself is ignored 194ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell requests respect shared-editor text and in-flight saves > preserves a real protocol text edit when a rail navigation is requested 251ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell requests respect shared-editor text and in-flight saves > retains the legacy editor beforeunload refusal when no shared registry guard is active 165ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell requests respect shared-editor text and in-flight saves > does not leave while the protocol section PATCH is unresolved 426ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order 287ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading 62ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the feature catalog, Conversation and a second task entry are not on the rail 34ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no two entries share an icon 29ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=false) 243ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=true) 230ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > every entry opens a screen in this release 58ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Quality is on the rail, and opens Quality 99ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Projects is on the rail, and opens the Projects index 85ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > says a project screen needs a project when none is open, instead of doing nothing visible 220ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > CMC / Module 3 is on the rail beside Quality, and opens CMC 96ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Home is explicitly labelled and opens Home 82ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no entry carries an AnA badge, and no section lists retired or locked screens 24ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the mark goes to Home 116ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is reached without a rail entry > ⌘K finds Conversation and opens the conversation screen 63ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the task board on everyone’s tasks 244ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > the board’s My tasks gives the person’s own, and Tasks stays the marked entry 189ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the board at its own address, not the action’s alias 56ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the governed artifacts across projects, once the Artifacts center, are reached from ⌘K as the Vault > the sidebar’s Search opens the palette, and the result opens the Vault, not a retired screen 177ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers an organization administrator Subscription & features, which opens the catalog 106ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > names each subscription entry by its surface's registry label, as the breadcrumb and ⌘K do 139ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > gives a billing administrator one entry to Licensing, Subscription & billing (P-68) 94ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers every client type once, the current one checked, by more than colour 52ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing a client type sets it 88ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing the type already chosen changes nothing and closes the menu 77ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 34ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 43ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 34ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 94ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > engineering evidence, with a project open: the project › the feature
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > IVDR evidence, with a project open: the same trail, and no "Medical Device & IVD" parent
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names the project once, as the crumb button that opens its page
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names a project with no code by its title
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > engineering evidence, with a project open: the project › the feature 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > IVDR evidence, with a project open: the same trail, and no "Medical Device & IVD" parent 9ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names the project once, as the crumb button that opens its page 11ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names a project with no code by its title 7ms
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > follows the channel when another project is opened
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with no project open: the feature alone
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): the feature alone
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > the project page is still named by the project, once, as the current page
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > a core place carries the project crumb while a project is open
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > every MDX project feature: its parent is the open project, never the old tier 94ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > follows the channel when another project is opened 10ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with no project open: the feature alone 11ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): the feature alone 5ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > the project page is still named by the project, once, as the current page 7ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > a core place carries the project crumb while a project is open 6ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > a one-category surface keeps its category; an admin surface keeps Admin 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the registry model names Projects as a project feature’s parent > for every MDX project feature 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the registry model names Projects as a project feature’s parent > no surface is crumbed with the old tier 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > engineering evidence 68ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > IVDR evidence 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > no row for a folded screen: risk management, design controls and IVD completeness live in their targets 84ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > no ⌘K row is hinted with the old tier 29ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > renders no lock and navigates normally when the navigation fetch fails 509ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > renders no lock when the server answers resolved:false 297ms
+stderr | client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > locks a tier-gated surface, states the real reason, and does not navigate
+An update to NavUnlockPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > locks a tier-gated surface, states the real reason, and does not navigate 288ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > hands a locked result to the unlock panel, which outlives the palette 207ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > keeps a locked result arrow-reachable and Enter-activatable 100ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > leaves an entitled surface completely alone 200ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > shows no locks for the master-admin owner grant 223ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > gates the default list without ever locking a surface the catalog has no row for 105ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a tier lock 161ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a disabled lock 155ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a industry lock 148ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > the first two .rail-nav buttons are "New conversation" and "Search"
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > New conversation opens Home, where a question starts a new conversation
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > the first two .rail-nav buttons are "New conversation" and "Search" 202ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > Search still opens the command palette
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > New conversation opens Home, where a question starts a new conversation 151ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > names the organisation under the person, and in the button’s title
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > with no organisation known, says the role in words, never the raw value
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > the menu head names the organisation and the role on one line
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > Search still opens the command palette 129ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > names the organisation under the person, and in the button’s title 27ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > with no organisation known, says the role in words, never the raw value 23ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > the menu head names the organisation and the role on one line 42ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > "What AnA remembers" follows Account, opens the drawer, and Escape returns focus to the account button 138ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > Organizations and invitations sits in the sidebar foot, after the account
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > collapsed, the foot stacks the expand toggle, organisation access, then the avatar
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > "Open the sidebar" is the bar’s first control and opens it
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > draws no sidebar button that would do nothing
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > has no Organizations and invitations button of its own
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > a place, New conversation and Search each close it
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > keeps the admin entries gated exactly as before 105ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > Organizations and invitations sits in the sidebar foot, after the account 25ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > collapsed, the foot stacks the expand toggle, organisation access, then the avatar 21ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > "Open the sidebar" is the bar’s first control and opens it 8ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > draws no sidebar button that would do nothing 13ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > has no Organizations and invitations button of its own 18ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > wider than that, the sidebar stays as it is
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > a place, New conversation and Search each close it 181ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in it) 92ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > draws no search box, organisation label, project chip, Task chip or Help; the open project is a crumb button
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Vault with C2C-101 open it reads "C2C-101 › Vault", and the project crumb opens the project page
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on the project page it reads "C2C-101" once, as the current page
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > wider than that, the sidebar stays as it is 100ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > draws no search box, organisation label, project chip, Task chip or Help; the open project is a crumb button 27ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Vault with C2C-101 open it reads "C2C-101 › Vault", and the project crumb opens the project page 27ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on the project page it reads "C2C-101" once, as the current page 26ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home with no project open: exactly Collaborate, New task and Your work, and no text
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > with no project open there is no project button (Projects is the sidebar’s), and none is invented for an id alone
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > Collaborate, New task and Your work are icon buttons, in that order, that keep their handlers
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > at phone width: the sidebar button first, New conversation last, and it opens Home
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > New conversation waits for unsaved work, as the sidebar’s does
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > a project feature reads "the project › the feature"; a one-category or admin page names only itself 20ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home with no project open: exactly Collaborate, New task and Your work, and no text 10ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home and in a conversation with a project open, the project crumb is the bar’s one text 14ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > with no project open there is no project button (Projects is the sidebar’s), and none is invented for an id alone 12ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > Collaborate, New task and Your work are icon buttons, in that order, that keep their handlers 8ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > at phone width: the sidebar button first, New conversation last, and it opens Home 8ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > New conversation waits for unsaved work, as the sidebar’s does 8ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the lazy fallback says "Loading…" (§D1.B step 8) > a screen still loading shows one quiet status line, still busy for the probes that wait on it 11ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > finds the sidebar’s rules 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the round "+" of New conversation is the sidebar’s one orange 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > no brand fill beside Home’s own row, and the ".RI" in ink 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > group labels are 12px sentence case in --text-300 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > rows are 14px, recents 13px, and nothing in the sidebar is under 12px 5ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the avatar is ink, in the sidebar and the account menu’s head, ranked above the menu block’s own rule 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the account’s second line is 12px --text-300; the menu head’s line 13px 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > at ≤640px no strip is reserved, the collapsed rail is not drawn, and the expanded one is the drawer 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > finds the bar’s rules 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the bar: 4px between controls, a hairline under it that Home drops 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the crumbs: 13px --text-300, the page --text-100 at 500, the project a quiet button that hovers --bg-100, unclipped 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > icon buttons: 32px, --text-300, hover --bg-100; 44px at phone width 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > at phone width the menu and New conversation show, and Collaborate and New task go to ⌘K 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the badge is ink at 12px, and red when something is overdue 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > no orange and nothing under 12px in the bar’s rules 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the retired bar classes have no rule left 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the lazy fallback is a quiet line, not a box (§D1.B step 8) 1ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > medtech: no control on Home leads to the catalog, and Home invents no project or conversation
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > diagnostics: no control on Home leads to the catalog, and Home invents no project or conversation
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > biopharma: no control on Home leads to the catalog, and Home invents no project or conversation
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > medtech: no control on Home leads to the catalog, and Home invents no project or conversation 404ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > diagnostics: no control on Home leads to the catalog, and Home invents no project or conversation 78ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > cro: no control on Home leads to the catalog, and Home invents no project or conversation
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > biopharma: no control on Home leads to the catalog, and Home invents no project or conversation 99ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > health: no control on Home leads to the catalog, and Home invents no project or conversation
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > cro: no control on Home leads to the catalog, and Home invents no project or conversation 106ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > academic: no control on Home leads to the catalog, and Home invents no project or conversation
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > health: no control on Home leads to the catalog, and Home invents no project or conversation 105ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > regulatory: no control on Home leads to the catalog, and Home invents no project or conversation
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > academic: no control on Home leads to the catalog, and Home invents no project or conversation 106ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > medical_writing: no control on Home leads to the catalog, and Home invents no project or conversation
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > regulatory: no control on Home leads to the catalog, and Home invents no project or conversation 111ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > biotech: no control on Home leads to the catalog, and Home invents no project or conversation
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > medical_writing: no control on Home leads to the catalog, and Home invents no project or conversation 108ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > pharma: no control on Home leads to the catalog, and Home invents no project or conversation
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > biotech: no control on Home leads to the catalog, and Home invents no project or conversation 99ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > pharma: no control on Home leads to the catalog, and Home invents no project or conversation 103ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > nor while the portfolio read is pending 52ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > nor when the portfolio read fails, which is said and not shown as an empty portfolio 71ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > the catalog is named Subscription & features, at its unchanged routable id 1ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > the duplicate discovery presentation is retired > removes the overlay implementation and its Home integration 1ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > nonlicensable records keep their existing command-palette replacement > 'audit-trail' stays reachable without a subscribable catalog row 106ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > nonlicensable records keep their existing command-palette replacement > the folded Part 11 console has no command-palette entry of its own 61ms
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents > lists the person’s own conversations, and one reopens its thread 109ms
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents > with none, says where they will appear 45ms
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents > a failed read is said, and is not shown as no conversations 32ms
+stderr | client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents > is not drawn in the collapsed rail
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents > a reply without a list is a failed read, not an empty one 31ms
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents > is not drawn in the collapsed rail 14ms
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents: projects, then conversations (D1.md §D1.A step 4) > lists up to three projects first, by title with a folder, then the conversations 30ms
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents: projects, then conversations (D1.md §D1.A step 4) > a project opens its page, as every list opens one 28ms
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents: projects, then conversations (D1.md §D1.A step 4) > a failed project read shows no project rows and never hides the conversations 17ms
+stderr | client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Search > opens the command palette
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents: projects, then conversations (D1.md §D1.A step 4) > with no conversations, the note stays under the projects 21ms
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Search > opens the command palette 233ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > project-home is shown under projects 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > dossier is shown under projects 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > dossier-map is shown under projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > device-510k is shown under projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > biostatistics is shown under projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > biostat-workbench is shown under projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > protocol-dev is shown under projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > vault is shown under vault 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > tasks is shown under tasks 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > cmc is shown under cmc 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > rbm is shown under rbm 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > home is shown under home 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > the rail inside a project > marks Projects as the current place on a project’s page 304ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > ⌘K finds a project > by title or code, under Projects, and opens it on its page 147ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > ⌘K finds a project > says a failed project read, and never reads it as no match 33ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > ⌘K finds a project > asks AnA in words a person knows 40ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a member is offered neither the Admin console, Subscription & features, Access requests nor Platform licensing 297ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a customer's administrator is offered the Admin console, not Platform licensing 90ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a platform administrator is offered Platform licensing 35ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > reads the client TSX and the v2 stylesheets 4ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-head`: no more than 18 uses, and gone from the CSS at 0 15ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-eyebrow`: no more than 18 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-title`: no more than 18 uses, and gone from the CSS at 0 13ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-state`: no more than 23 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-head`: no more than 11 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-eyebrow`: no more than 9 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-title`: no more than 11 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-sub`: no more than 10 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-head`: no more than 0 uses, and gone from the CSS at 0 16ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-kicker`: no more than 0 uses, and gone from the CSS at 0 13ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-title`: no more than 0 uses, and gone from the CSS at 0 13ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-head`: no more than 5 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-kicker`: no more than 2 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-eyebrow`: no more than 1 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-cta`: no more than 13 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `landing-newproj`: no more than 1 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `btn sm`: no more than 14 uses, and gone from the CSS at 0 13ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-card`: no more than 15 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tabs`: no more than 11 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tab`: no more than 13 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-subtab`: no more than 0 uses, and gone from the CSS at 0 13ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sc-ws`: no more than 1 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cc-tab`: no more than 1 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-seg`: no more than 2 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-seg`: no more than 4 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cl-toast`: no more than 1 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `tb-detail`: no more than 4 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-modal`: no more than 3 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-connect`: no more than 0 uses, and gone from the CSS at 0 13ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-stageband`: no more than 2 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 1 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `This work flows into`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > reads the stylesheets it guards 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > every allowlist entry carries a written reason 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > no `text-transform: uppercase` in v2/styles/*.css or design-system/colors_and_type.css 30ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > reads the v2 stylesheets and resolves nesting and :is() lists 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .btn is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card-h is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .rd-chip is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-lead is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-k is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .ph-title is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .seg is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .tab is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .reg-tbl th is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-input is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-empty-state is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de is defined in exactly one stylesheet, journey-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de-toast is defined in exactly one stylesheet, journey-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-seclbl is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > retired alias .btn.sm is defined at most once, in app-v2.css 1ms
+
+ Test Files  14 passed (14)
+      Tests  259 passed (259)
+   Start at  01:38:38
+   Duration  43.85s (transform 6.97s, setup 1.18s, import 10.60s, tests 23.70s, environment 6.17s)
+
+exit 0

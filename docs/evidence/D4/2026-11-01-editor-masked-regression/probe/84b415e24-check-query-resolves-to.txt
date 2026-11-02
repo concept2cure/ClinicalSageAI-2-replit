@@ -1,0 +1,4 @@
+PROBE2 synchronously after render, /check|save/i buttons: ["Save","Check saved sources"]
+PROBE2 findByRole(/check/i) resolved to: "Check saved sources" disabled= true owner= SavedAssemblySourcesNotice < AuthoringAssemblyBuild < DocumentWorkbench < DocumentAuthoring
+PROBE2 /check/i buttons at that moment: ["Check saved sources"]
+PROBE2 section-check after clicking it: false

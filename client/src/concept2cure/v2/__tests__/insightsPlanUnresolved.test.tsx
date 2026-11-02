@@ -111,9 +111,11 @@ function ask(text: string) {
   fireEvent.change(field, { target: { value: text } });
   fireEvent.keyDown(field, { key: 'Enter' });
 }
-async function openLibrary(name: RegExp) {
+/** Opens a view by its tab, and waits for its panel's heading. The Catalog tab
+ *  is "Catalog"; its panel is still headed "Report catalog". */
+async function openLibrary(name: RegExp, heading: RegExp | string = name) {
   fireEvent.click(screen.getByRole('tab', { name }));
-  await screen.findByRole('heading', { name });
+  await screen.findByRole('heading', { name: heading });
 }
 
 describe('Insights — unverified plan execution', () => {
@@ -151,7 +153,7 @@ describe('Insights — unverified plan execution', () => {
 
   it('makes catalog generation unavailable with a verification reason', async () => {
     await renderCanvas();
-    await openLibrary(/Report catalog/);
+    await openLibrary(/^Catalog$/, 'Report catalog');
     expect(document.querySelectorAll('button.rl-card-run:not(:disabled)')).toHaveLength(0);
     expect(document.querySelector('.rc-canvas')?.textContent).toMatch(/plan could not be verified/);
     expect(document.querySelector('.rl-card-lock')).toBeNull();
@@ -160,8 +162,8 @@ describe('Insights — unverified plan execution', () => {
   it('also withholds organization catalog generation before a lead program exists', async () => {
     leadAvailable = false;
     render(<InsightsCanvas {...PROPS} />);
-    await screen.findByRole('tab', { name: /Report catalog/ });
-    await openLibrary(/Report catalog/);
+    await screen.findByRole('tab', { name: 'Catalog' });
+    await openLibrary(/^Catalog$/, 'Report catalog');
     expect(document.querySelectorAll('button.rl-card-run:not(:disabled)')).toHaveLength(0);
     expect(document.querySelector('.rc-canvas')?.textContent).toMatch(/plan could not be verified/);
   });

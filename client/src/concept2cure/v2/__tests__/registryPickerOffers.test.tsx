@@ -154,7 +154,20 @@ describe('RegistryPicker description search', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Search filing types' }), { target: { value: refused.description } });
     const section = screen.getByTestId('rpk-not-offered');
     expect(within(section).getByText(`${refused.displayName} · ${refused.agency}.`)).toBeTruthy();
-    expect(section.textContent).toContain(marketSupport({ applicationType: typeOf(refused), market: refused.agency }, packs, ASOF).offer.reason);
+    /* The server states a per-filing reason where one filing of a not-offered market differs from the rest
+       (ICH / Global: the QOS and Module 3 sections are written inside their application); the picker shows
+       that one, and the market's general reason otherwise. */
+    const offer = marketSupport({ applicationType: typeOf(refused), market: refused.agency }, packs, ASOF).offer;
+    const own = Object.entries(offer.reasonByFiling ?? {}).find(([id]) => id.toLowerCase() === refused.id.toLowerCase())?.[1];
+    expect(section.textContent).toContain(own ?? offer.reason);
+  });
+
+  it('a refused filing with a reason of its own shows that reason, not the market\'s general one', async () => {
+    renderPicker();
+    await screen.findByRole('textbox', { name: 'Search filing types' });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search filing types' }), { target: { value: 'Quality Overall Summary' } });
+    const section = screen.getByTestId('rpk-not-offered');
+    expect(section.textContent).toContain('Not offered as its own project: the Quality Overall Summary is Module 2.3 of its application');
   });
 });
 afterEach(() => cleanup());

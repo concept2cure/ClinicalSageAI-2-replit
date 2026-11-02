@@ -1,0 +1,26 @@
+# HEAD 72383e342, 2026-11-01T23:10:20Z
+# npx vitest run --maxWorkers=1 --config docs/evidence/F1/2026-11-01-rbm-handlers/method/vitest.probe.config.ts
+ × docs/evidence/F1/2026-11-01-rbm-handlers/method/rbm-handlers.probe.ts > (a) add_ctq_factor > a1: attaches the factor to the study's one open draft assessment 45ms
+   → expected null to be 12 // Object.is equality
+ × docs/evidence/F1/2026-11-01-rbm-handlers/method/rbm-handlers.probe.ts > (a) add_ctq_factor > a2: refuses, and writes nothing, when the study has no draft (only a signed version) 2ms
+   → expected undefined to be truthy
+ × docs/evidence/F1/2026-11-01-rbm-handlers/method/rbm-handlers.probe.ts > (a) add_ctq_factor > a3: refuses a named signed assessment, as POST /rbm-risk-items does (mdx-rbm.ts:361) 1ms
+   → expected undefined to be truthy
+ × docs/evidence/F1/2026-11-01-rbm-handlers/method/rbm-handlers.probe.ts > (a) add_ctq_factor > a4: refuses likelihood 7, which the route refuses with 422 (SCALE_1_5, mdx-rbm.ts:115) 1ms
+   → expected undefined to be truthy
+ × docs/evidence/F1/2026-11-01-rbm-handlers/method/rbm-handlers.probe.ts > (b) generate_rbm_plan > b1: refuses when the study has no risk assessment, instead of answering "medium" 1ms
+   → expected 'medium' to be undefined
+ × docs/evidence/F1/2026-11-01-rbm-handlers/method/rbm-handlers.probe.ts > (b) generate_rbm_plan > b2: refuses when the only assessment is an unsigned draft (rbm-actuator.ts:497) 1ms
+   → expected undefined to be truthy
+ × docs/evidence/F1/2026-11-01-rbm-handlers/method/rbm-handlers.probe.ts > (b) generate_rbm_plan > b3: takes critical factors from the approved assessment only (rbm-actuator.ts:504-511) 1ms
+   → expected 'SELECT id, ctq_factor, mitigation, ri…' to match /assessment_id\s*=\s*\$\d/
+ × docs/evidence/F1/2026-11-01-rbm-handlers/method/rbm-handlers.probe.ts > (b) generate_rbm_plan > b4: refuses an approved assessment that records no overall risk, instead of "medium" 1ms
+   → expected 'medium' not to be 'medium' // Object.is equality
+ ✓ docs/evidence/F1/2026-11-01-rbm-handlers/method/rbm-handlers.probe.ts > (c) run_rbm_assessment > c1 (holds today): seed:true writes the canonical library as one unsigned draft 2ms
+ ✓ docs/evidence/F1/2026-11-01-rbm-handlers/method/rbm-handlers.probe.ts > (c) run_rbm_assessment > c2 (holds today): seed:true does not write when the study already has an assessment 1ms
+ × docs/evidence/F1/2026-11-01-rbm-handlers/method/rbm-handlers.probe.ts > (c) run_rbm_assessment > c3: the summary reads the factors of the assessment it returns, not every version 3ms
+   → expected 'SELECT category, ctq_factor, likeliho…' to match /assessment_id\s*=\s*\$\d/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  9 failed | 2 passed (11)
+# exit 1

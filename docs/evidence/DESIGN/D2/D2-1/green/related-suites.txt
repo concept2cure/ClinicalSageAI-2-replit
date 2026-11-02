@@ -1,0 +1,288 @@
+# Green: the other suites that render or import Projects (AnA drives/sees, the New project wizard suites, discovery handoff, registry picker, wizard filing type), after D2-1, on 14dce5e38
+# DEBUG_PRINT_LIMIT=0 npx vitest run --maxWorkers=1 anaDrivesScreens anaSeesScreens newProjectWizard*.test.tsx projectDiscoveryHandoff registryPickerOffers wizardFilingType
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > registers on mount, and vault.search drives the SAME search state the surface renders 216ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > vault.search on an empty vault is refused, not reported as a search nobody can see 35ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > with no program open, both vault operations say so rather than "no documents" or "no such folder" 22ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > vault.open-folder refuses an unknown folder honestly 47ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > the navigate→mount stash performs when the Vault mounts (AnA acts before the screen exists) 99ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > a data-dependent action stashed pre-mount is HELD through the load and applies when the read lands 81ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — AnA opens a real program > projects.open-program resolves the portfolio, publishes the shell project, and enters project home 33ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — AnA opens a real program > opens a program named by its id, as the server resolves it 23ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — AnA opens a real program > an unknown or ambiguous program is an honest refusal, never a guess 19ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — AnA opens a real program > a chip-shaped payload validates through the registry before it can drive anything 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — the program the server found > opens the program the server found, even one past this page 16ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — the program the server found > an open offered as a chip (Live Drive off) opens the program the server found 186ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — the program the server found > the server's program wins over a name the page reads differently 20ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > requires a local multi-workspace choice despite the global default, and sends the reviewed sponsor 712ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > names and records the single verified workspace 271ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed duplicate directory without enabling Continue 176ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed foreign directory without enabling Continue 167ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed inactive directory without enabling Continue 187ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed actor directory without enabling Continue 185ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed missing-name directory without enabling Continue 156ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified workspace creation receipt 560ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified actor creation receipt 476ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified anchor creation receipt 375ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified uuid creation receipt 416ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified json creation receipt 465ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown transport outcome 548ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown server outcome 625ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refreshes active options before retrying a confirmed refusal 500ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires sponsor form contents on an account or organization change 304ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not send a stale write after a token switch 304ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires a late workspace read when the bearer changes without a render 204ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not publish or navigate after an old create receipt arrives under another bearer 385ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > returns to Configure without writing if the selected workspace changes before Create 426ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > states confirmed creation when only the saved project details are unavailable 410ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands the verified sponsor to the actual sharing and assignment consumers before leaving the wizard 418ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands off the verified workspace for a confirmed scaffold notice without navigating 474ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Cancel, then restores Check projects after uncertainty 601ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Projects, then restores Check projects after uncertainty 663ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Escape, then restores Check projects after uncertainty 440ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_pma retains CDx in review and create across arrival lanes 789ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_510k retains CDx in review and create across arrival lanes 681ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > eu_cdx_ivdr_d retains CDx in review and create across arrival lanes 421ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_510k permits the supported samd refinement and sends the reviewed value 528ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_mdl permits the supported samd refinement and sends the reviewed value 485ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_ivd_licence permits the supported cdx refinement and sends the reviewed value 321ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > jp_ivd_approval permits the supported cdx refinement and sends the reviewed value 328ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > retires a previous subtype when the person changes filing 628ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'us_hde' retains 'hde'/'device'/'FDA' 438ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'us_hde' retains 'hde'/'ivd'/'FDA' 420ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'ca_mdl' retains 'mdl'/'device'/'Health Canada' 314ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'ca_ivd_licence' retains 'ivd_licence'/'ivd'/'Health Canada' 317ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_shonin' retains 'shonin'/'device'/'PMDA' 345ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_nintei' retains 'ninsho'/'device'/'Registered certification body' 346ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_todokede' retains 'todokede'/'device'/'PMDA' 421ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_ivd_approval' retains 'ivd_approval'/'ivd'/'PMDA' 293ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_cdx' retains 'jp_cdx'/'cdx'/'PMDA' 391ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > reads only on request, previews context, and copies stated fields only after confirmation 1004ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > preserves manually entered fields, including entries typed after the preview was loaded 400ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > allows a member to reuse a saved draft and never substitutes therapeutic area for indication 295ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > copies device purpose only into intended use and leaves classification fields unset 526ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > keeps project creation on the separate review step and sends the reviewed copied wording 533ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > shows an honest unstarted state while manual project entry remains usable 264ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a network read failure and allows an explicit retry 271ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a invalid read failure and allows an explicit retry 289ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > drops a late tenant read and never applies another organization’s preview 9ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > is a labelled region, not a modal dialog 253ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > closes on Escape and hands focus into the view on open 15ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > offers a named way back to the portfolio 175ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > states the current step in text, not only in colour 20ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the human sentence and never the enum token 529ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > offers a retry for a confirmed refusal, after verifying workspaces again 445ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the correlation id as the support handle 317ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > renders nothing internal even if an internal string reaches it 344ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > does not render a browser-native fetch message 326ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — created but not scaffolded > is a polite status with no retry, because the project exists 331ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > ReportGovernance — the register publishes itself honestly > a loaded register publishes real seal counts 129ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > ReportGovernance — the register publishes itself honestly > a FAILED register read publishes the failure, never an empty org 67ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > IdentityConsole — the forbidden state grounds AnA without a single secret > a 403 publishes "cannot administer" — and no token, CIDR or org id ever enters facts 104ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > Orchestration — a dead checkpoint store is NEVER "zero gates pending" > publishes the gates failure in the reviewer-protecting words 89ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > BiopharmaJourney — the journey publishes real program identity > a loaded journey names the program, its stage count and readiness 74ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > security: identity-console never leaks a SCIM token, CIDR or org id > publishes counts from a populated directory — and no label, CIDR or org id 63ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > security: access-requests never leaks a requester email, name, note or reason > publishes the requested module (allowed) but no third-party PII or free text 64ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: task board — a failed read is a failure, never a clean empty board > publishes "could not be read", not "0 tasks", when the board read fails 70ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: doc-journey never publishes the actor name/email > publishes the active stage label but not its who (a name-or-email field) 58ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: projects never publishes the lead email > publishes the program code but not its lead (a COALESCE(name,email) field) 82ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: audit-trail never publishes an actor name or a reason free-text > publishes the event meaning and hasReason boolean, not the actor or the reason text 74ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: the ledger row names the account that acted (F-42) > shows each entry's account reference beside a display name two accounts share 79ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit2: review queue — a dead my-queue read is a failure, not "0 threads" > publishes "could not be read", not "0 open threads", when the queue read fails 60ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit2: clinical-ops never publishes a subject-scoped deviation narrative > publishes the deviation category/study but not its free-text description or CAPA 81ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > publishes the first step and chosen filing, and passes Ask AnA through 553ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > reports actual picker segment and search alongside the selected filing 105ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > keeps an inspected unavailable filing separate from the selected creation choice and retires both with the actor 120ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > reports the visible filing segment and search, and clears the browsing context on close 154ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > tracks Configure, Review and Back while excluding entered/private fields 585ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > replaces a prior selection and restores portfolio context on close 281ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > keeps wizard state when a delayed portfolio response arrives 113ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > retires selected metadata if the signed-in organization no longer matches 130ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > starts a matching new account at the first step with no prior selection 292ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'mdrIII' offers only its exact declared-class scope, without choosing one 796ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'mdrI' offers only its exact declared-class scope, without choosing one 252ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'ivdrA' offers only its exact declared-class scope, without choosing one 270ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'ivdrCD' offers only its exact declared-class scope, without choosing one 267ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > leaves a class-specific filing unconfirmed when the sponsor has not stated its class 348ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > mdr asks its regional class, initially unstated 266ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > ivdr asks its regional class, initially unstated 262ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > mdr sends and reviews only the stated regional classification 299ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > ivdr sends and reviews only the stated regional classification 356ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > an unstated IVDR class sends null, never an FDA class 272ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > changing from FDA to IVDR retires hidden FDA facts and does not restore them on return 1254ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > changing MDR to IVDR and back retires both earlier regional classifications 608ms
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-11-01T22:21:48.334Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T22:21:48.336Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-11-01T22:21:48.336Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Database connection successful
+
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > shows the catalog description and the selected market facts as visible text 425ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > asks the catalog question about the chosen filing without changing the selection 565ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > keeps author-only limits in the details instead of claiming a sequence or transmit 284ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > does not present parent-application build facts as facts about an unclaimed filing 606ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > reports missing build fields without discarding the existing offer or inventing facts 159ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > keeps Ask AnA absent for callers with no question callback 168ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > finds an offered filing using wording present only in its description 184ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > uses the same description rule for refused filings and retains the refusal reason 440ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > for every catalog row, a tile is shown exactly when the server offers the filing, and author-only ones say so 4107ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > offers exact Canada device authoring while medicinal applications retain their refusal 548ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a filing whose agency the server names no market for is not offered, and its reason is the server's 357ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > the chosen filing states its offer as text 169ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > lists nothing while the verdict is pending 19ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a failed read is an error with Retry, never an empty or a full list 196ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a tab shows the filings built and validated here first; the rest are one press away 801ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a chosen filing among the rest is never hidden behind the press 1195ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a search lists everything it matches, built here or not, with no press 324ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a filing that creates an IND without being one (a Pre-IND meeting) states no tier; the NDA itself says Build and sequence 666ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a Type A meeting package is its own class: authored here, and says so 158ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the harmonised documents are offered for authoring under ICH, asked of the server by their own market 164ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market 159ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a search lists not-offered filings by the same fields as offered ones (an eCTD search finds Health Canada) 314ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the not-offered note counts the tab it is shown on 501ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > Retry stays mounted and busy while it reads again, and focus lands on the search box when the list arrives 443ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > shows the selected filing lifecycle as a clearly labelled reference 543ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > keeps the segment visible on a search result across all segments 334ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > finds a filing by the existing workflow label 284ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — a disabled Continue says why > names the first missing field beside Continue, step by step, and Continue is described by it 1740ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — a disabled Continue says why > states the order the fields are asked in, for the create step too 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > opens Configure with the outline the project is built against, without transmit caveats 160ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > keeps a filing the platform does not offer in the server’s words 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > names the filing and the product type by their labels, and prints the date as a date 437ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > labels a filing as people name it, never by its key 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > says when the name is already a project in the portfolio, and does not refuse it 379ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_mdr_techdoc' records 'device' 2217ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_cer' records 'device' 609ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'medtech' search for 'us_510k_ivd' records 'ivd' 1014ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'us_510k' records 'ivd' 852ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > asks for the trade name as well as the number 1669ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > sends both halves when both are given 834ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > does not read a number with no trade name as a recorded predicate 445ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > says nothing about a predicate when neither half is given 949ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > offers no therapeutic area and no pre-chosen indication: the indication is an empty text field 829ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends no indication when none was typed, and the review says it is not stated 647ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends exactly the indication the person typed 354ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > starts on "Not stated — choose" and offers only drug and biologic 235ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > cannot continue until the product type is chosen 308ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > records the class that was chosen, and the review shows it 295ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — a filing type that fixes the class asks nothing > an NDA is recorded as a drug with no product-type question 301ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 767ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 278ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 331ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 532ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 592ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 302ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > states the reason, offers no "Try again", and "Choose another filing" returns to step 1 without sending again 793ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > another confirmed refusal keeps "Try again" 390ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > an EU CTA is a CTA, not an NDA 4ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the eu_cta registry row actually carries a pathwayKey 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the eu_cta row no longer claims to be an eCTD five-module dossier 5ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > a 505(b)(2) is an NDA, a 351(k) is a BLA, a DMF is a master file — none of them is an IND 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the controls still map correctly 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ctn_au is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cta_hc is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ctn_jp is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cta_nmpa is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_i routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iia routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iib routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iii routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_sig_change routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_clin_inv routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_a routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_b routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_cd routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cdx_ivdr_d routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivdr_perf_study routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivdr_pmpf routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivd_pms_plan routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > uk_ukca is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > nmpa_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > tga_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > br_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > nmpa_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > tga_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivd_vigilance is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > fda_hde reaches its exact regional application class hde 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > hc_mdl reaches its exact regional application class mdl 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > hc_ivd reaches its exact regional application class ivd_licence 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > pmda_shonin reaches its exact regional application class shonin 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > pmda_nintei reaches its exact regional application class ninsho 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > jp_todokede reaches its exact regional application class todokede 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > pmda_ivd reaches its exact regional application class ivd_approval 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cdx_pmda reaches its exact regional application class jp_cdx 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > no device or IVD filing resolves to a drug marketing application 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_nda_supp is created as pas 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_cbe is created as cbe 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_nda_annual is created as annual_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_rems is created as rems 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_pader is created as pader 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_ind_amendment is created as ind_amendment 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_ind_sr is created as ind_safety_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_ind_annual is created as ind_annual_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_type_a_meeting is created as briefing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_type_b_meeting is created as briefing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_type_c_meeting is created as briefing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_orphan is created as orphan 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_btd is created as designation 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_fast_track is created as fast_track 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_rmat is created as rmat 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_psp is created as psp 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_type_d_meeting is created as type_d_meeting 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_interact is created as interact_meeting 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_expanded_access_individual is created as expanded_access_individual 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_expanded_access_intermediate is created as expanded_access_intermediate 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_expanded_access_treatment is created as expanded_access_treatment 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_supp is created as bla_pas 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_cbe30 is created as bla_cbe30 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_cbe0 is created as bla_cbe0 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_annual is created as bla_annual_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_pediatric_annual is created as bla_pediatric_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_pmr_annual is created as bla_pmr_status_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_distribution is created as bla_distribution_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bpdr is created as bpdr 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_pae_report is created as bla_pae_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_cber_master_file is created as cber_master_file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_cber_lot_release is created as cber_lot_release 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_eua_therapeutic is created as eua_request 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_csr is created as csr 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_protocol is created as protocol 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_ib is created as ib 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_sap is created as sap 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_icf is created as icf 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_dsur is created as dsur 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > eu_psur is created as psur 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > none of them is created as the application it belongs to 2ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > the Pre-IND meeting still creates the IND it is about 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > reviews and persists the explicitly selected monitoring service without seeding a record 1325ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > leaves monitoring unselected unless the creator chooses it 798ms
+
+ Test Files  17 passed (17)
+      Tests  249 passed (249)
+   Start at  22:20:54
+   Duration  106.76s (transform 9.25s, setup 2.28s, import 19.40s, tests 68.38s, environment 13.15s)
+

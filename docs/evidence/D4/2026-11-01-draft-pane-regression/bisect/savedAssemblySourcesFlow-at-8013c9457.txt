@@ -1,0 +1,762 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/tree-8013c9457
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=false) 1705ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=true) 1267ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current detail read admits only sections 361ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current sections read admits only sections 300ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withdraws cached saved source history after the current document read becomes partial 962ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > distinguishes an admitted empty history from a failed read without selecting or changing text 658ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt malformed manifest 549ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt foreign scoped success 555ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > refuses a newer saved event during reuse instead of silently selecting it 782ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > lets dirty authors inspect but blocks reuse while text or a ceremony owns the editor 1298ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > gives a new catalogue selection precedence over a delayed historical check 495ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > keeps an unresolved structural write held after checking historical references 1475ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across project visit ABA 421ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across account session ABA 764ms
+ × client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it 5786ms
+   → Unable to find an element by: [data-testid="ai-draft-body"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Saved reference working document
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Existing saved section
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Saved reference working document"
+            >
+              Saved reference working document
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Saved reference working document
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Existing saved section
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Saved reference working document"
+            >
+              Saved reference working document
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it
+TestingLibraryElementError: Unable to find an element by: [data-testid="ai-draft-body"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Saved reference working document
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Existing saved section
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Saved reference working document"
+            >
+              Saved reference working document
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Saved reference working document
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Existing saved section
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Saved reference working document"
+            >
+              Saved reference working document
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <button
+              class="btn primary"
+              data-testid="save-section"
+              disabled=""
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               
+              Saved
+            </button>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <button
+              class="btn ghost"
+              disabled=""
+              style="height: 30px;"
+              title="Open a saved section bound to a filing first."
+              type="button"
+            >
+              Re-file saved text
+            </button>
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"...
+ ❯ waitForWrapper ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx:281:31
+    279|     fireEvent.click(screen.getByTestId('ai-draft-open'));
+    280|     fireEvent.click(await screen.findByTestId('ai-draft-generate'));
+    281|     const body = await screen.findByTestId('ai-draft-body') as HTMLTex…
+       |                               ^
+    282|     fireEvent.change(body, { target: { value: 'My retained manual revi…
+    283|     await act(async () => { pending.resolve(ok({ success: true, data: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  23:04:52
+   Duration  23.43s (transform 3.96s, setup 198ms, import 4.96s, tests 17.39s, environment 731ms)
+

@@ -40,13 +40,150 @@ one file).
    `/api/ana-ri/stream`. So a **probable** row is a lead to check, and a **none** row is the firmer finding.
 5. **Owning package.** The route file is matched against each package's `paths` in `docs/design/one-design-plan.json`.
 
-**Limits.** "Not called" means no literal in the client names the path:
+**Limits.** "Not called" means no literal in the client names the path. The first limit below is narrowed by the
+two corrections of 2026-11-01, which follow this section:
 - A URL assembled from variables declared in another file reads as not called. This **under**-counts callers, so
   each row must be checked before a reach is built.
+- **The HTTP method is not compared by the literal pass.** A row it marks exact means some client code sends that
+  *path*, with any method. For example, `POST /api/mdx/labeling/:id/symbols` is exact, and the client only GETs
+  `/symbols` (`Labeling.tsx:211`). The second pass, since the second correction, does compare the method.
+- **"Exact" does not mean reached.** A call in code that nothing runs still counts: a fixture file in §1, and
+  `GET /api/global-ri/catalog/:group`, sent only from a hook no screen calls.
 - AnA tools and the MCP connector call *services*, not routes. A route that is not called can still have its
   capability reachable through AnA. A reach decides whether the screen needs it as well.
 
+## Correction, 2026-11-01: callers built from path constants
+
+**The defect.** `POST /api/audit/reviews/:id/sign` (`server/routes/audit-compliance-reviews.ts`) was filed as not
+called, and it is called. `client/src/concept2cure/v2/surfaces/ComplianceReviewRecords.tsx:212` signs a review
+record through the shared `EsignModal`, at `` `${REVIEWS_PATH}/${id}/sign` ``. `REVIEWS_PATH` is
+`'/api/audit/reviews'`, imported from `complianceReviewModel.ts`. Both passes missed it:
+- The literal pass read the template as `${…}/${…}/sign`, which has no mount root.
+- `match2.py` needs one file that names both the root and `/sign`.
+
+P-87 (RIM) retires routes on these rows, so a false "not called" could have deleted a live Part 11 signing path.
+
+**The fix to the method.** It works for every constant, not as a special case. `method/resolve.cjs` parses the
+client with the TypeScript parser and evaluates every template and `+` chain. It substitutes:
+- module-level and block-scoped `const` strings;
+- constants imported from other client modules, including aliases and re-exports;
+- object and enum members;
+- helper returns;
+- a parameter bound at its call sites or JSX props, which covers a URL passed to `apiCall`, a hook or a component
+  in a variable.
+
+`method/match.py` tests the resulting patterns only on routes the literal pass missed. It is stricter than the
+literal pass: a pattern must start with `/api/<literal>`, and a runtime value matches only a route parameter, one
+segment. The literal pass itself is unchanged.
+
+**How it was checked.**
+- **Reproduction:** `match.py --literal-only` reproduces `inventory.before-template-callers.json` byte for byte.
+- **The known case:** `POST /api/audit/reviews/:id/sign` is now `exact` at `ComplianceReviewRecords.tsx:212`, found
+  through an import.
+- **The self-test:** `method/selftest-callers.py` passes, and fails on two deliberately broken copies of the method.
+
+The full method change, the commands and every changed row are in `method/CHANGELOG-template-callers.md`.
+
+### Second correction, 2026-11-01: the HTTP method, the call that sends the URL, and two more URL shapes
+
+Three refuters checked the first correction row by row. It held in the direction that matters for P-87: every row
+it moved from "none" to "exact" is a real call. But they found four faults that the method can fix in general, and
+it now does:
+- **The method was not compared.** 7 rows were marked exact on a call with another method, for example
+  `DELETE /api/c2c/templates/:id` on a PUT. The second pass now reads the method of the call that sends each URL
+  (an HTTP verb argument, `fetch`'s `method`, react-query's `queryKey`, or by following the URL into the client
+  function it is handed to). It claims a row only when a call sends the path with the route's method. When every
+  call uses another method, the row is left to `match2.py` as before, with `samePathAt` and `samePathMethods`.
+- **The line named was where the URL is built.** `callerAt` is now the call that sends it, and `builtAt` is where
+  it is built.
+- **A URL made only of substitutions, from objects in a `const` array, was not read.** The biostatistics workbench
+  posts `` `${calc.base ?? DEFAULT_CALCULATOR_BASE}${calc.path}` `` for each calculator in
+  `biostatCalculators.ts` and `biostatCalculatorsIvd.ts` (`BiostatWorkbench.tsx:375`). 23 launch routes were filed
+  as not called, and §2 listed them as reach candidates. The method now evaluates the URL once per object of such
+  an array.
+- **A callback handed down as a prop was not followed** (`CmcSectionEvidence.tsx`, `write` → `/unlink`). It is
+  now.
+
+The patterns it cannot read are listed in the warning below. The self-test was extended and seen failing on seven
+broken copies of the method. Both the inventory as first filed and the new one reproduce byte for byte.
+
+**Counts.** These cover the same 3,923 handlers at the same commit, `18261a908`.
+
+| Caller status | As first filed | First correction | Second correction |
+|---|---:|---:|---:|
+| exact | 1,230 | 1,330 | 1,350 |
+| probable | 510 | 425 | 428 |
+| none | 2,183 | 2,168 | 2,145 |
+
+Against the inventory as first filed, 120 rows changed: 38 from "none" to "exact" and 82 from "probable" to
+"exact". By verdict they are 99 launch, 7 never-gated, 11 out-of-scope and 3 unmapped. No row lost a caller.
+
+The corrections to the sections below:
+- **§1, called and refused:** 182 as first filed, 199 after the first correction, **196** now.
+- **§2, served and not called:** 341, then 327, **304** now. By owning package: none 186, S3 56, S5 28, S4 26,
+  S10 8, S1 4, S8 3, S9 2.
+- **§3, route files with no caller:** 171, then 170, **170** now (1,226 handlers).
+  `server/routes/k510-document-preview.ts` has left the list. **20 of the 170 are called** (blind spot 1 below).
+
+The 38 rows that were "none" and are now called. The first 15 are from the first correction, and the other 23 are
+from the second:
+
+| Route | Called at |
+|---|---|
+| `POST /api/audit/reviews/:id/sign` | `client/src/concept2cure/v2/surfaces/ComplianceReviewRecords.tsx:212` |
+| `GET /api/510k/projects/:projectIdent/document-preview` | `client/src/concept2cure/mdx/hooks/useK510.ts:143` |
+| `GET /api/cerv2/literature/screening` | `client/src/concept2cure/mdx/hooks/useCerLiterature.ts:386` |
+| `PUT /api/client-branding/company-documents/branding-policy` | `client/src/concept2cure/v2/surfaces/company-documents/CompanyBrandingPolicy.tsx:17` |
+| `POST /api/client-branding/company-documents/designs/:id/proof` | `client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx:33` |
+| `POST /api/client-branding/company-documents/designs/:id/publish` | `client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx:25` |
+| `GET /api/client-branding/company-documents/permissions` | `client/src/concept2cure/v2/surfaces/company-documents/CompanyPermissionsPanel.tsx:47` |
+| `PUT /api/client-branding/company-documents/permissions/:userId` | `client/src/concept2cure/v2/surfaces/company-documents/CompanyPermissionsPanel.tsx:25` |
+| `GET /api/client-branding/company-documents/revisions` | `client/src/concept2cure/v2/surfaces/company-documents/CompanyPresentationHistory.tsx:65` |
+| `GET /api/client-branding/company-documents/revisions/:revision` | `client/src/concept2cure/v2/surfaces/company-documents/CompanyPresentationHistory.tsx:41` |
+| `GET /api/csr/jobs/:jobId/assembly/:assemblyId/lifecycle` | `client/src/concept2cure/v2/surfaces/CsrPlacementLifecycle.tsx:44` |
+| `POST /api/csr/jobs/:jobId/assembly/:assemblyId/withdraw-placement` | `client/src/concept2cure/v2/surfaces/CsrPlacementLifecycle.tsx:124` |
+| `GET /api/ectd-compile/:projectIdent/filed-state` | `client/src/concept2cure/v2/surfaces/EctdFiledState.tsx:107` |
+| `DELETE /api/realtime-collab/rooms/:documentId/users/me` | `client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx:110` |
+| `GET /api/region-profiles/:region` | `client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:553` |
+| `POST /api/biostat/` + `assurance`, `diagnostic/bayesian-device`, `diagnostic/mrmc`, `diagnostic/sizing`, `dose-finding/boin`, `enrollment/backtest`, `enrollment/forecast`, `external-control/sensitivity`, `mmrm/power`, `mmrm/sample-size`, `multiplicity/test`, `survival/rmst`, `win-ratio` (13, all of `server/routes/biostat-design-stats.ts`'s "none" rows) | `client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375` |
+| `POST /api/diagnostics-performance/` + `analytical/detection-capability`, `analytical/imprecision`, `analytical/interference`, `analytical/linearity`, `analytical/method-comparison`, `analytical/qualitative-dose-response`, `analytical/reference-interval`, `clinical/accuracy`, `clinical/roc`, `clinical/weighted-kappa` (10, all of `server/routes/diagnostics-performance.ts`'s "none" rows) | `client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:375` |
+
+> **Warning: a "none" row is still a finding of static analysis, not proof that nothing calls the route.** The
+> 2,145 rows left without a caller were read from the client's source. These are the known blind spots, each with
+> the rows found so far:
+> 1. **A URL taken from a server response.** `GlobalRiBrowser.tsx:66-82` (`griRun`, the "Run capability" button)
+>    calls `/api/global-ri` + the last route of each capability that `GET /api/global-ri/catalog` returns. Those
+>    routes come from the static table in `server/services/global-ri/global-ri-capabilities.ts`. **32 "none" rows
+>    and 9 "probable" rows are called this way**, all out-of-scope in production; the changelog lists every one.
+>    **20 of the 170 route files in §3 are called this way:** `bioequivalence`, `clinical-evidence-standards`,
+>    `companion-diagnostics`, `controlled-substances`, `establishment-registration`, `expanded-access`, `fees`,
+>    `gcp`, `guidance`, `impurities`, `lifecycle`, `pediatric`, `pharmacovigilance`, `process-validation`,
+>    `programs`, `promotional-compliance`, `reliance`, `strategy`, `submission-format` and `timeline`, each
+>    `server/routes/global-ri/<name>.routes.ts`. Only `gdp.routes.ts` has no caller among the global-RI files there.
+> 2. **A runtime prefix-rewrite map:** `rbmEndpoint` (`rbmWrites.tsx:23-42`). Its rows stay "probable"; none is
+>    "none".
+> 3. **Other URLs built at runtime:** a registry looked up by key, a `let` reassigned in a loop, a class field such
+>    as `this.baseUrl`, a URL passed through React context, and a parameter whose call sites pass only runtime values.
+> 4. **Calls from AnA tools and the MCP connector**, which reach services, not routes; and **tests**, which are
+>    excluded (`biostatWorkbenchFreshness.test.tsx` asserts the call to `/api/biostat/assurance`).
+> 5. **9 routes the client may reach through a literal segment in a `:param` position**, listed in the changelog
+>    and not applied.
+>
+> The inventory is also measured at `18261a908`, and the client has changed since.
+>
+> **So no route is retired on this column alone.** Before a retirement (P-87 or any other), text-search the current
+> client, `shared/` and `server/` for each of the route's literal segments, its last segment above all. Read every
+> hit, and record the search in the retirement's evidence. Searching `server/` is what finds blind spot 1: the
+> global-RI routes appear there, in the capability table, and nowhere in the client. Such a search is not a filter
+> that clears rows in bulk: the last segment of most "none" rows appears somewhere in the client as a path piece,
+> most of them common words (1,194 of the 2,168 counted after the first correction). It is a check to run, one
+> route at a time.
+
 ## Results
+
+These are the figures as first filed, before the corrections above. The corrected counts are in that section, and
+`inventory.json` carries the corrected rows. In the tables below, a count the corrections changed is shown as
+"before → now".
 
 | Client caller | Production verdict | Handlers |
 |---|---|---:|
@@ -69,7 +206,7 @@ one file).
 - **1230 handlers are called by a screen (exact)**, **510 probably are**, and **2183 have no caller found by either pass.**
 - **171 route files (1227 handlers) have no client caller found by either pass.** (The exact pass alone found 236 files and 1,765 handlers.)
 
-### 1. Called by a screen, refused in production: 182 handlers
+### 1. Called by a screen, refused in production: 182 handlers (196 after the corrections)
 
 These are doors a client can see and production refuses. Most callers are surfaces that are themselves outside
 the launch scope (locked in production), so a customer never reaches them. **The rows whose caller is a launch
@@ -162,9 +299,9 @@ reached in the screen of the package that owns it, or put to the founder for ret
 
 | Owning package | Handlers |
 |---|---:|
-| none (no package path claims the file) | 209 |
-| S3 | 69 |
-| S5 | 29 |
+| none (no package path claims the file) | 209 → 186 |
+| S3 | 69 → 56 |
+| S5 | 29 → 28 |
 | S4 | 26 |
 | S10 | 8 |
 | S1 | 4 |
@@ -179,11 +316,11 @@ By route file (largest first). Only rows with no caller found by either pass are
 | 29 | `server/routes/biostatPlatform.ts` | S3 | `GET /api/biostat/continuum/:threadId` |
 | 19 | `server/routes/ana-ri.ts` | S4 | `GET /api/ana-ri/commands` |
 | 19 | `server/routes/submissions.ts` | S5 | `GET /api/submissions/:id` |
-| 13 | `server/routes/biostat-design-stats.ts` | S3 | `POST /api/biostat/assurance` |
+| 13 → 0 | `server/routes/biostat-design-stats.ts` | S3 | `POST /api/biostat/assurance`: all 13 are called by `BiostatWorkbench.tsx:375` |
 | 13 | `server/routes/users.ts` | — | `GET /api/user` |
 | 12 | `server/routes/manufacturing-routes.ts` | — | `POST /api/manufacturing/ai/simulate-deficiency` |
 | 11 | `server/routes/ivdr-routes.ts` | — | `GET /api/ivdr/cdx-workflows` |
-| 10 | `server/routes/diagnostics-performance.ts` | — | `POST /api/diagnostics-performance/analytical/detection-capability` |
+| 10 → 0 | `server/routes/diagnostics-performance.ts` | — | `POST /api/diagnostics-performance/analytical/detection-capability`: all 10 are called by `BiostatWorkbench.tsx:375` |
 | 9 | `server/routes/fda-forms.routes.ts` | — | `GET /api/fda-forms/applicable` |
 | 9 | `server/routes/ivdr-binder-routes.ts` | — | `GET /api/ivdr/binder` |
 | 8 | `server/routes/clients-routes.ts` | — | `DELETE /api/clients/:id` |
@@ -194,7 +331,7 @@ By route file (largest first). Only rows with no caller found by either pass are
 | 6 | `server/routes/cer-routes.ts` | — | `POST /api/cer/faers/data` |
 | 6 | `server/routes/project-rules.ts` | — | `DELETE /api/project-rules/:ruleId` |
 | 6 | `server/routes/submission-ops.ts` | S5 | `GET /api/submission-ops/packages/:packageId/milestones` |
-| 5 | `server/routes/company-document-governance.ts` | — | `PUT /api/client-branding/company-documents/branding-policy` |
+| 5 → 0 | `server/routes/company-document-governance.ts` | — | `PUT /api/client-branding/company-documents/branding-policy` |
 | 5 | `server/routes/ind-forms.routes.ts` | — | `POST /api/ind-forms/1572/pdf-all` |
 | 5 | `server/routes/statistical-defensibility.ts` | — | `POST /api/statistical-defensibility/consistency` |
 | 5 | `server/routes/tenants-simple.ts` | — | `DELETE /api/tenants/:id` |
@@ -212,10 +349,10 @@ By route file (largest first). Only rows with no caller found by either pass are
 | 2 | `server/routes/510k-estar-routes.ts` | — | `POST /api/510k/estar/registration/assess` |
 | 2 | `server/routes/biostat-bridge.ts` | S3 | `GET /api/biostat-bridge/computation-runs/:runId/reproduce` |
 | 2 | `server/routes/c2c/documents.ts` | S1 | `GET /api/c2c/documents/by-legacy/cerv2-section/:id` |
-| 2 | `server/routes/cerv2-document-routes.ts` | — | `POST /api/cerv2/documents/:documentId/save` |
-| 2 | `server/routes/company-document-designs.ts` | — | `POST /api/client-branding/company-documents/designs/:id/proof` |
+| 2 → 1 | `server/routes/cerv2-document-routes.ts` | — | `POST /api/cerv2/documents/:documentId/save` |
+| 2 → 0 | `server/routes/company-document-designs.ts` | — | `POST /api/client-branding/company-documents/designs/:id/proof` |
 | 2 | `server/routes/c2c/reviews.ts` | S1 | `POST /api/concept2cure/review-tasks/:taskId/reopen` |
-| 2 | `server/routes/csr-jobs-assembly.ts` | — | `GET /api/csr/jobs/:jobId/assembly/:assemblyId/lifecycle` |
+| 2 → 0 | `server/routes/csr-jobs-assembly.ts` | — | `GET /api/csr/jobs/:jobId/assembly/:assemblyId/lifecycle` |
 | 2 | `server/routes/human-factors.ts` | — | `POST /api/human-factors/hfe-completeness` |
 | 2 | `server/routes/ind-lifecycle/documents.routes.ts` | S5 | `POST /api/ind-lifecycle/annual-report/line-listing` |
 | 2 | `server/routes/ivd-assessments.ts` | — | `DELETE /api/ivd-assessments/:id` |
@@ -223,23 +360,24 @@ By route file (largest first). Only rows with no caller found by either pass are
 | 2 | `server/routes/mdx-notifications.ts` | — | `POST /api/mdx/notifications/:id/archive` |
 | 2 | `server/routes/protocol-milestones.ts` | S3, S9 | `GET /api/protocol-milestones/documents/:id/timeline` |
 | 2 | `server/routes/protocol-reviews.ts` | S3 | `PATCH /api/protocol-reviews/comments/:id/resolve` |
-| 1 | `server/routes/k510-document-preview.ts` | — | `GET /api/510k/projects/:projectIdent/document-preview` |
+| 1 → 0 | `server/routes/k510-document-preview.ts` | — | `GET /api/510k/projects/:projectIdent/document-preview` |
 | 1 | `server/routes/company-legal-workflows.ts` | — | `GET /api/client-branding/company-documents/legal-workflows/catalog` |
 | 1 | `server/routes/csr-jobs.ts` | — | `POST /api/csr/jobs/:jobId/cancel` |
-| 1 | `server/routes/ectd-compile.ts` | S5 | `GET /api/ectd-compile/:projectIdent/filed-state` |
+| 1 → 0 | `server/routes/ectd-compile.ts` | S5 | `GET /api/ectd-compile/:projectIdent/filed-state` |
 | 1 | `server/routes/ectd-export.ts` | S5 | `POST /api/ectd/validate/preflight` |
 | 1 | `server/routes/ha-interactions.ts` | — | `POST /api/ha-interactions/interactions/:id/questions` |
 | 1 | `server/routes/mdx-udi.ts` | — | `POST /api/mdx/udi/:id/submit-gudid` |
 | 1 | `server/routes/predicate-intelligence.ts` | — | `PATCH /api/predicate-intelligence/candidates/:id/status` |
 | 1 | `server/routes/protocol-risks.ts` | S3 | `GET /api/protocol-risks/documents/:id/register` |
-| 1 | `server/routes/realtime-collab.ts` | — | `DELETE /api/realtime-collab/rooms/:documentId/users/me` |
-| 1 | `server/routes/region-profiles.ts` | — | `GET /api/region-profiles/:region` |
+| 1 → 0 | `server/routes/realtime-collab.ts` | — | `DELETE /api/realtime-collab/rooms/:documentId/users/me` |
+| 1 → 0 | `server/routes/region-profiles.ts` | — | `GET /api/region-profiles/:region` |
 | 1 | `server/routes/validate-completeness.ts` | — | `GET /api/validate-completeness/health` |
 
-### 3. Route files with no client caller at all: 171
+### 3. Route files with no client caller at all: 171 (170 after the corrections)
 
 These files are candidates for the founder to retire (RULE 6: nothing new; each is reached or retired). The full
-list is in `inventory.json`. The 40 largest:
+list is in `inventory.json`. **20 of the 170 are called** by `GlobalRiBrowser.tsx` through the global-RI catalog
+(blind spot 1 in the warning above), so they are not retirement candidates on this evidence. The 40 largest:
 
 | Handlers | Route file | Production verdicts | Packages |
 |---:|---|---|---|
@@ -300,5 +438,11 @@ list is in `inventory.json`. The 40 largest:
 ## Files
 
 - `inventory.json`: every handler, with method, path, route file, production verdict, claiming surfaces, owning
-  packages and the first client caller found.
-- `method/`: the trace, compose, match and verdict scripts used to produce it.
+  packages and the first client caller found. A row found by the second caller pass also carries `callerAt` (the
+  file:line of the call that sends the URL with the route's method), `builtAt` (where the URL is assembled), `via`,
+  `how` and `pattern`. A row whose path the client sends only with other methods carries `samePathAt` and
+  `samePathMethods` (7 rows).
+- `method/`: the trace, compose, match and verdict scripts used to produce it. Added by the 2026-11-01 correction:
+  `resolve.cjs`, the second caller pass; `recompose.py`, which re-runs the caller columns over the traced route table;
+  `selftest-callers.py`; and `CHANGELOG-template-callers.md`, which records both corrections.
+- `inventory.before-template-callers.json`: the inventory as first filed, before the corrections.

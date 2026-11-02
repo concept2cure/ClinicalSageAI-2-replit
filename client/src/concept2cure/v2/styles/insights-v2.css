@@ -19,15 +19,7 @@
 .rc-ana-mark.sm{ font-size:14px; flex-shrink:0; margin-top:2px; }
 .rc-ana-scroll{ display:flex; flex-direction:column; gap:12px; }
 
-.rc-opener{ background:var(--bg-000); border:1px solid var(--border); border-radius:var(--radius-md,12px); padding:14px; }
-.rc-op-head{ display:flex; align-items:center; gap:7px; font-size:var(--fs-caption); font-weight:600; color:var(--ai,#6a9bcc); margin-bottom:8px; }
-.rc-op-headline{ font-size:14.5px; font-weight:600; color:var(--text-100); line-height:1.4; margin-bottom:6px; }
 .rc-op-body{ font-size:12.5px; color:var(--text-300); line-height:1.55; margin-bottom:11px; }
-.rc-preset-btn{ display:inline-flex; align-items:center; gap:7px; width:100%; justify-content:center; background:var(--accent-strong); color:var(--accent-on-strong); border:none; border-radius:9px; padding:9px 12px; font-size:12.5px; font-weight:600; cursor:pointer; transition:background var(--dur) var(--ease); }
-.rc-preset-btn:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
-.rc-preset-btn svg{ width:14px; height:14px; }
-.rc-op-why{ font-size:11.5px; color:var(--text-400); line-height:1.5; margin-top:8px; }
-.rc-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
 .rc-chip{ background:var(--bg-000); border:1px solid var(--border); color:var(--text-200); font-size:12px; padding:6px 11px; border-radius:999px; cursor:pointer; text-align:left; transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease); }
 .rc-chip:hover{ border-color:var(--accent-200); color:var(--accent-200); background:var(--accent-000); }
 
@@ -49,11 +41,6 @@
 .rc-typing span{ width:6px; height:6px; border-radius:50%; background:var(--ai,#6a9bcc); opacity:.5; animation:rcpulse 1.4s ease-in-out infinite; }
 .rc-typing span:nth-child(2){ animation-delay:.2s; } .rc-typing span:nth-child(3){ animation-delay:.4s; }
 
-.rc-composer{ margin:12px 0 24px; }
-.rc-tier{ display:flex; align-items:center; gap:5px; margin-bottom:9px; }
-.rc-tier-lbl{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin-right:3px; }
-.rc-tier-b{ background:var(--bg-000); border:1px solid var(--border); color:var(--text-300); font-size:11px; font-weight:600; padding:4px 9px; border-radius:7px; cursor:pointer; }
-.rc-tier-b.on{ background:var(--accent-strong); color:var(--accent-on-strong); border-color:var(--accent-strong); }
 /* Find a report (D7 §D.4 step 3): label, field and Find on one line. The
    field is D0's `.c2c-input`; nothing here restyles it. */
 .rc-find{ display:flex; align-items:center; gap:8px; margin:0 0 16px; }
@@ -80,7 +67,14 @@
 .rc-ep-h{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:var(--text-100); }
 .rc-ep-h svg{ width:15px; height:15px; color:var(--accent-200); }
 .rc-ep-s{ font-size:12.5px; color:var(--text-300); line-height:1.55; margin:6px 0 8px; }
-.rc-ep-types{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); }
+/* The Reports view's standard packs (D7 §D.4 step 8): D0's `.pj-card`, two to
+   a row, one at 640px and below. */
+.rc-packs{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.rc-pack{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; text-align:left; }
+.rc-pack .pj-card-foot{ margin-top:10px; }
+.rc-packs-none{ margin:0; font-size:var(--fs-small); color:var(--text-300); }
+.rc-nc-list{ margin:6px 0 0; padding-left:18px; }
+@media (max-width:640px){ .rc-packs{ grid-template-columns:1fr; } }
 
 /* ── Governed report artifact ── */
 .ro-report{ max-width:760px; }
@@ -158,7 +152,7 @@
 .ro-dash-note{ display:flex; align-items:flex-start; gap:7px; font-size:11.5px; color:var(--text-400); line-height:1.5; margin-top:16px; }
 .ro-dash-note svg{ width:13px; height:13px; flex-shrink:0; margin-top:1px; }
 .rc-ana-scroll > .ro-dash-note{ margin-top:0; }
-.rc-composer > .ro-dash-note{ margin:0 0 9px; }
+.rc-canvas > .ro-dash-note:first-child{ margin:0 0 12px; }
 .ro-pack-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
 .ro-pack-card{ text-align:left; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:14px; cursor:pointer; transition:border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease); display:flex; flex-direction:column; gap:8px; }
 .ro-pack-card:hover{ border-color:var(--accent-200); transform:translateY(-1px); box-shadow:var(--shadow-sm,0 2px 8px rgba(20,20,19,.05)); }
@@ -186,12 +180,7 @@
    caller (ui-surface-registry.ui-v2.ts, the `insights` row). They live in the
    views' column (`.rc-canvas`), under the page's own gutters. All colour
    comes from tokens so both themes and the contrast floor hold. */
-.rl-tabs{ display:flex; gap:6px; flex-wrap:wrap; border-bottom:1px solid var(--border); margin:0 0 18px; padding-bottom:12px; }
-.rl-tab{ display:inline-flex; align-items:center; gap:6px; background:var(--bg-000); border:1px solid var(--border); color:var(--text-300); font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px; cursor:pointer; transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease); }
-.rl-tab:hover{ border-color:var(--accent-200); color:var(--accent-200); }
-.rl-tab.on{ background:var(--accent-strong); border-color:var(--accent-strong); color:var(--accent-on-strong); }
-.rl-tab svg{ width:13px; height:13px; }
-.rl-tab:focus-visible, .ro-port-open:focus-visible{ outline:2px solid var(--accent-200); outline-offset:2px; }
+.ro-port-open:focus-visible{ outline:2px solid var(--accent-200); outline-offset:2px; }
 .ro-port-open{ text-align:left; font:inherit; cursor:pointer; }
 .ro-port-open:hover{ border-color:var(--accent-200); }
 .rl-pagination{ display:flex; gap:12px; align-items:center; margin-top:16px; font-size:12px; color:var(--text-300); }

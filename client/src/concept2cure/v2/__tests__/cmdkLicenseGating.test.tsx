@@ -126,7 +126,7 @@ async function mountCmdK() {
   return { onNav, onAct, onAsk };
 }
 
-/** Type a query, which switches the list from "Jump to" to search results. */
+/** Type a query, which switches the list from "Go to" (D1-3; it was "Jump to") to search results. */
 function search(term: string) {
   fireEvent.change(screen.getByRole('textbox'), { target: { value: term } });
 }
@@ -308,7 +308,7 @@ describe('⌘K licence gating', () => {
     );
     const { onNav } = await mountCmdK();
 
-    // The default "Jump to" list, then a search: neither branch locks anything.
+    // The default "Go to" list, then a search: neither branch locks anything.
     expect(lockedRows()).toHaveLength(0);
     search('submission');
     expect(lockedRows()).toHaveLength(0);
@@ -319,11 +319,11 @@ describe('⌘K licence gating', () => {
 
   /* CONTRACT 7 — THE DEFAULT LIST GATES TOO, AND AN UNKNOWN ID NEVER LOCKS.
      Two rules in one mount because they need the same payload. The empty-query
-     "Jump to" list is a separate code path from a search hit and was equally
+     "Go to" list is a separate code path from a search hit and was equally
      ungated. And a destination with no catalog row (Home, which the shell
      synthesises) must read as unconditionally available: absent from the
      payload is never a lock. (Until 2026-10-26 this used Plan & features, then
-     in "Jump to"; "Jump to" lists the places now, and Plan & features is an
+     in "Jump to"; that list ("Go to" since D1-3) lists the places now, and Plan & features is an
      administrator's account-menu entry, slice 0 of the placement map.) */
   it('gates the default list without ever locking a surface the catalog has no row for', async () => {
     mockNav(async () =>
@@ -337,7 +337,7 @@ describe('⌘K licence gating', () => {
     );
     const { onNav } = await mountCmdK();
 
-    // No query typed: this is the "Jump to" branch.
+    // No query typed: this is the "Go to" branch.
     const locked = await screen.findByRole('button', {
       name: 'Projects — turned off for this workspace',
     });

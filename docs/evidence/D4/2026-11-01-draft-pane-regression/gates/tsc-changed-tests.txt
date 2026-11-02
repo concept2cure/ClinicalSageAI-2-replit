@@ -1,0 +1,6 @@
+# Targeted typecheck: tsc -p <scratch tsconfig extending tsconfig.json, files = the two changed tests>, NODE_OPTIONS=--max-old-space-size=6144
+# exit=2; 0 errors in the two changed tests; 4 errors below are in files this change does not touch (unmodified vs HEAD)
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/v2/surfaceActions.ts(305,19): error TS2339: Property 'env' does not exist on type 'ImportMeta'.

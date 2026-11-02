@@ -1,0 +1,102 @@
+# The verifier on HEAD's previews and README (95dbf007c), against HEAD's stylesheets, 2026-11-01.
+# The pre-D0-5 specimens copied none of the app's rules, so it exits 1. Built with:
+#   git show HEAD:<each source sheet and each design-system file> into a scratch copy;
+#   python3 -I verify_specimens.py <copy>  ->  exit 1
+
+== design-system/preview/_base.css
+  MISS html, body {
+  MISS .card {
+  MISS .row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  MISS .col { display: flex; flex-direction: column; gap: 12px; }
+  MISS .grid { display: grid; gap: 12px; }
+  MISS .chip {
+  MISS .swatch { border-radius: var(--radius-md); border: 1px solid var(--border-subtle); }
+  MISS .mono { font-family: var(--font-mono); }
+  MISS .label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; c
+
+== design-system/preview/components-buttons.html
+  MISS .row3 { display:flex; gap: 12px; align-items:center; flex-wrap: wrap; padding: 8px 0; }
+  MISS button { font-family: var(--font-sans); font-size: 13px; font-weight: 500; border-radius: var(--
+  MISS button.primary { background: var(--accent-main-100); color: #fff; }
+  MISS button.primary:hover { background: var(--accent-main-200); }
+  MISS button.secondary { background: var(--secondary); color: var(--secondary-foreground); border-colo
+  MISS button.ghost { background: transparent; color: var(--ink); }
+  MISS button.ghost:hover { background: var(--bg-200); }
+  MISS button.icon { width: 32px; height: 32px; padding: 0; display:inline-flex; align-items:center; ju
+  MISS button.icon:hover { background: var(--bg-200); color: var(--ink); }
+  MISS button.destructive { background: #141413; color: #fff; }
+  MISS button.send { width: 32px; height: 32px; padding: 0; border-radius: 9999px; background: var(--ac
+  MISS .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-subt
+
+== design-system/preview/components-cards.html
+  MISS .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  MISS .card2 {
+  MISS .card2:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+  MISS .ttl { font-family: var(--font-sans); font-size: 13px; font-weight: 600; color: var(--ink); }
+  MISS .sub { font-size: 12px; color: var(--ink-muted); margin-top: 4px; line-height: 1.5; }
+  MISS .meta { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-sub
+  MISS .row { display:flex; justify-content:space-between; align-items: flex-start; }
+  MISS .chip { display:inline-flex; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weig
+
+== design-system/preview/components-inputs.html
+  MISS .stack { display:flex; flex-direction:column; gap: 14px; }
+  MISS .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-subt
+  MISS .input {
+  MISS .input::placeholder { color: var(--ink-subtle); }
+  MISS .input:focus { border-color: var(--accent-main-100); box-shadow: 0 0 0 3px var(--accent-subtle);
+  MISS .composer {
+  MISS .composer:focus-within { border-color: var(--border-strong); box-shadow: var(--shadow-glow); }
+  MISS .composer-input {
+  MISS .composer-actions { display:flex; justify-content: space-between; align-items: center; margin-to
+  MISS .composer-actions .left { display: flex; gap: 4px; color: var(--ink-muted); align-items: center;
+  MISS .composer-actions .left svg { display: block; }
+  MISS .chip { display:inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid
+  MISS .send { width: 30px; height: 30px; padding: 0; border-radius: 9999px; background: var(--accent-m
+
+== design-system/preview/components-badges.html
+  MISS .row { display:flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 8px 0; }
+  MISS .pill {
+  MISS .dot { width: 6px; height: 6px; border-radius: 9999px; }
+  MISS .p-draft { background: var(--bg-100); color: var(--ink-body); }
+  MISS .p-draft .dot { background: var(--ink-subtle); }
+  MISS .p-review { background: var(--warning-muted); color: #8a4b0c; }
+  MISS .p-review .dot { background: var(--warning); }
+  MISS .p-ready { background: var(--success-muted); color: #4e6638; }
+  MISS .p-ready .dot { background: var(--success); }
+  MISS .p-blocked { background: var(--error-muted); color: #7f2323; }
+  MISS .p-blocked .dot { background: var(--error); }
+  MISS .p-locked { background: var(--bg-200); color: var(--ink-body); }
+  MISS .p-locked .dot { background: var(--ink-muted); }
+  MISS .p-ai { background: var(--ai-muted); color: #2f5a86; }
+  MISS .p-ai .dot { background: var(--ai); }
+  MISS .p-pro { background: var(--accent-pro-000); color: var(--accent-pro-200); }
+  MISS .p-pro .dot { background: var(--accent-pro-100); }
+  MISS .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-subt
+
+== design-system/preview/type-body.html
+  MISS .stack { display:flex; flex-direction:column; gap: 14px; }
+  MISS .r { display:flex; align-items:baseline; gap: 16px; }
+  MISS .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-subt
+
+  ok   flattened .c2c-v2 .dcv-bar .btn.ed-ico { width: 32px; padding: 0; } = authoring-v2.css:1514-1517
+
+== design-system/README.md type table against colors_and_type.css
+  MISS --fs-greeting: README -px, colors_and_type.css:548 32px
+  MISS --fs-title: README -px, colors_and_type.css:549 26px
+  MISS --fs-prose: README -px, colors_and_type.css:554 16px
+  MISS --fs-section: README -px, colors_and_type.css:550 15px
+  MISS --fs-body: README -px, colors_and_type.css:551 14px
+  MISS --fs-small: README -px, colors_and_type.css:552 13px
+  MISS --fs-caption: README -px, colors_and_type.css:553 12px
+  app-v2.css declares no --fs-* token(s)
+
+== design-system/preview/type-body.html labels against colors_and_type.css
+  MISS --fs-greeting: label -, colors_and_type.css:548 32px
+  MISS --fs-title: label -, colors_and_type.css:549 26px
+  MISS --fs-section: label -, colors_and_type.css:550 15px
+  MISS --fs-body: label -, colors_and_type.css:551 14px
+  MISS --fs-small: label -, colors_and_type.css:552 13px
+  MISS --fs-caption: label -, colors_and_type.css:553 12px
+  MISS --fs-prose: label -, colors_and_type.css:554 16px
+
+FAIL: 77 rule(s) not found in the source sheets

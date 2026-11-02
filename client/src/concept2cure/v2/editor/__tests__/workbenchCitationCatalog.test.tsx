@@ -11,6 +11,7 @@ vi.mock('../../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => 
 vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));
 vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFiling: () => null }));
 import { DocumentWorkbench } from '../DocumentWorkbench';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const PID = 'bbbbbbbb-0000-4000-8000-000000000001';
 const OTHER = 'bbbbbbbb-0000-4000-8000-000000000002';
@@ -69,7 +70,7 @@ describe('the existing editor reads the whole project citation catalogue', () =>
     render(<DocumentWorkbench {...props} />);
     await openCurrent();
     await waitFor(() => expect(document.querySelector('.tiptap [data-cite="1"]')?.textContent).toBe('[1]'));
-    fireEvent.click(screen.getByRole('button', { name: /^Sources/ }));
+    fireEvent.click(openEditorControl(/^Sources/));
     await waitFor(() => expect(reads).toBe(2));
     expect(options()).toEqual(['1', '2']);
     expect(apiRequest.mock.calls.filter(([, url]) => url === `/api/authoring/docs/${DOC}/citations`)).toHaveLength(2);

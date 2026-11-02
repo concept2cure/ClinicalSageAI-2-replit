@@ -20,6 +20,10 @@
  *    that matched it would let a typed fragment confirm a colleague's address
  *    one character at a time. Search covers title and code only — the same
  *    reason the surface's AnA publisher drops the field (anaSeesScreens).
+ *
+ * D2-1 (2026-11-01): the summary line is the list view's footing, not the
+ * page's chrome (.design/claude-convergence/D2.md §1.4 items 2 and 7), so the
+ * figure checks switch to the list first. The guard is the same `kv()`.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -73,6 +77,9 @@ describe('Projects — the summary line stays honest when the read fails', () =>
     render(<Projects {...props()} />);
 
     await waitFor(() => expect(screen.getByText(/Couldn.t load the project portfolio/i)).toBeTruthy());
+    expect(document.querySelector('.pj-summary'), 'the figures are the list view’s footing (D2-1)').toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
+    expect(document.querySelector('.pj-summary')).toBeTruthy();
 
     /* The specific regression: a portfolio mean over zero programmes rendering
        as a real, confident figure. Not "0%" and not any other percentage. */
@@ -91,6 +98,8 @@ describe('Projects — the summary line stays honest when the read fails', () =>
       return ok({ data: [] });
     });
     render(<Projects {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
+    expect(document.querySelector('.pj-summary')?.textContent).toContain('—');
 
     expect(document.body.textContent).not.toMatch(/\d+%/);
     expect(screen.getByText(/Loading projects/i)).toBeTruthy();
@@ -104,9 +113,11 @@ describe('Projects — the summary line stays honest when the read fails', () =>
       url === '/api/c2c/projects' ? ok({ data: [ZX, KP] }) : ok({ data: [] }),
     );
     render(<Projects {...props()} />);
+    await screen.findByText('Companion assay');
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
     /* (40 + 80) / 2 = 60. Proves the em dashes above are the guard firing and
        not the figures having been removed by the redesign. */
-    await waitFor(() => expect(document.body.textContent).toContain('60%'));
+    await waitFor(() => expect(document.querySelector('.pj-summary')?.textContent).toContain('60%'));
     expect(document.body.textContent).toContain('2');
   });
 });

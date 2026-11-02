@@ -1,0 +1,3993 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx > the section check shows the record’s required content > lists the record’s elements for 2.5, named as the record’s statement and as unverified, with its basis 5737ms
+   → Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx > the section check shows the record’s required content > shows a parent code’s contained sections instead of an empty list 5306ms
+   → Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx > the section check shows the record’s required content > names the containing section when the answer came from an ancestor entry 5369ms
+   → Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx > the section check shows the record’s required content > reads a code the record does not index as not indexed — never as nothing required 5282ms
+   → Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx > the section check shows the record’s required content > says nothing about required content when the server sent no record statement 5210ms
+   → Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > will not save a governed record without one
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > says what is missing rather than just being inert
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > will not save a governed record without one 2427ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_0_"
+  class="btn primary"
+  data-testid="save-section"
+  disabled=""
+  style="height: 30px;"
+  title="Say why this section changed, in at least 8 characters — it is recorded with the revision."
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > says what is missing rather than just being inert 1664ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_e_"
+  class="btn primary"
+  data-testid="save-section"
+  disabled=""
+  style="height: 30px;"
+  title="Say why this section changed, in at least 8 characters — it is recorded with the revision."
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > states the requirement in text the field and Save both point to
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > states the requirement in text the field and Save both point to 1007ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_s_"
+  class="btn primary"
+  data-testid="save-section"
+  disabled=""
+  style="height: 30px;"
+  title="Say why this section changed, in at least 8 characters — it is recorded with the revision."
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > carries the stated reason on the save
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > carries the stated reason on the save 5430ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1a_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed"
+      >
+        <aside
+          class="ed-tree"
+        >
+          <div
+            class="ed-tree-h"
+          >
+            <div
+              class="ed-tree-t"
+              tabindex="-1"
+            >
+              Document tree
+            </div>
+            <div
+              ...
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > does not accept whitespace as a reason
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > does not accept whitespace as a reason 538ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1o_"
+  class="btn primary"
+  data-testid="save-section"
+  disabled=""
+  style="height: 30px;"
+  title="Say why this section changed, in at least 8 characters — it is recorded with the revision."
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > stays stated across repeated saves of the same section
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > stays stated across repeated saves of the same section 5308ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_26_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed"
+      >
+        <aside
+          class="ed-tree"
+        >
+          <div
+            class="ed-tree-h"
+          >
+            <div
+              class="ed-tree-t"
+              tabindex="-1"
+            >
+              Document tree
+            </div>
+            <div
+              ...
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > refuses a Cmd-S that bypasses the button, and says so
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > refuses a Cmd-S that bypasses the button, and says so 776ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringAuditRail.loose.test.tsx > the audit rail reads the real record > renders the server’s events — actor, role, operation, reason, hashes, section link 2443ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringAuditRail.loose.test.tsx > the audit rail reads the real record > a failed read is a failure to READ — never "no governed acts occurred" 526ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringAuditRail.loose.test.tsx > the audit rail reads the real record > an empty trail says so honestly, as an empty — not an error 473ms
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringAuditRail.loose.test.tsx > the heuristic section check > runs the scan on demand and renders the flags under the server’s own honest framing 5354ms
+   → expected "vi.fn()" to be called at least once
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed"
+      >
+        <aside
+          class="ed-tree"
+        >
+          <div
+            class="ed-tree-h"
+          >
+            <div
+              class="ed-tree-t"
+              tabindex="-1"
+            >
+              Document tree
+            </div>
+            <div
+              ...
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringAuditRail.loose.test.tsx > the heuristic section check > zero flags reads as "passed mechanical checks" — never as compliant 5299ms
+   → Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — saved draft and filing trees > keeps the tree basis explicit for null / null 573ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — saved draft and filing trees > keeps the tree basis explicit for 'M5' / 'filing-id' 348ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — real editable canvas > loads the document, opens its section, and shows the real server content in the editor 760ms
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — real editable canvas > saves edited content via PATCH and reports that a revision was recorded
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — real editable canvas > saves edited content via PATCH and reports that a revision was recorded 1017ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1a_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — real editable canvas > surfaces a failed save honestly and keeps the user’s text (no fabrication)
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — real editable canvas > surfaces a failed save honestly and keeps the user’s text (no fabrication) 914ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1o_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — saved section ordering > moves the open section — server-validated reorder, tree redrawn from the canonical order 1265ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — document-level section structure > names a section code that is used twice 183ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — document-level section structure > says when the stored order differs from the section codes 171ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — document-level section structure > says nothing when the document is structurally clean 247ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — document-level section structure > claims nothing when the server sent no structure at all 219ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > governed figures belong to the actual open authoring document > sends the actual document id with the file, independent of shell program selection 208ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > governed figures belong to the actual open authoring document > an upload finishing after a scope switch cannot insert into the replacement editor 358ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > deliberately re-filing unchanged saved text > offers a deliberate filing action without making an arbitrary edit or ordinary save 1286ms
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > says the text did not reach the filing, with the server’s reason
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > says the text did not reach the filing, with the server’s reason 650ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_e_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > says the text was committed to the filing when the server says so
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > says the text was committed to the filing when the server says so 571ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_s_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > names the filing section a part-of save went into
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > names the filing section a part-of save went into 443ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1a_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > claims nothing about the filing when the server reported nothing
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > claims nothing about the filing when the server reported nothing 485ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1o_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > will not save a governed record without one
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_0_"
+  class="btn primary"
+  data-testid="save-section"
+  disabled=""
+  style="height: 30px;"
+  title="Say why this section changed, in at least 8 characters — it is recorded with the revision."
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveBtn ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx:130:32
+    128|     await waitFor(() => expect(canvasText()).toBe(text));
+    129|   }
+    130|   const saveBtn = () => screen.getByRole('button', { name: /Save/i }) …
+       |                                ^
+    131|   const reasonField = () => screen.getByTestId('change-reason') as HTM…
+    132|   const patches = () => apiRequest.mock.calls.filter((c) => c[0] === '…
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx:137:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > says what is missing rather than just being inert
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_e_"
+  class="btn primary"
+  data-testid="save-section"
+  disabled=""
+  style="height: 30px;"
+  title="Say why this section changed, in at least 8 characters — it is recorded with the revision."
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveBtn ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx:130:32
+    128|     await waitFor(() => expect(canvasText()).toBe(text));
+    129|   }
+    130|   const saveBtn = () => screen.getByRole('button', { name: /Save/i }) …
+       |                                ^
+    131|   const reasonField = () => screen.getByTestId('change-reason') as HTM…
+    132|   const patches = () => apiRequest.mock.calls.filter((c) => c[0] === '…
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx:145:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > states the requirement in text the field and Save both point to
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_s_"
+  class="btn primary"
+  data-testid="save-section"
+  disabled=""
+  style="height: 30px;"
+  title="Say why this section changed, in at least 8 characters — it is recorded with the revision."
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveBtn ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx:130:32
+    128|     await waitFor(() => expect(canvasText()).toBe(text));
+    129|   }
+    130|   const saveBtn = () => screen.getByRole('button', { name: /Save/i }) …
+       |                                ^
+    131|   const reasonField = () => screen.getByTestId('change-reason') as HTM…
+    132|   const patches = () => apiRequest.mock.calls.filter((c) => c[0] === '…
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx:164:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > carries the stated reason on the save
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1a_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed"
+      >
+        <aside
+          class="ed-tree"
+        >
+          <div
+            class="ed-tree-h"
+          >
+            <div
+              class="ed-tree-t"
+              tabindex="-1"
+            >
+              Document tree
+            </div>
+            <div
+              ...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx:176:11
+    174|     await openDirty();
+    175|     fireEvent.change(reasonField(), { target: { value: 'Corrected the …
+    176|     await waitFor(() => expect(saveBtn().disabled).toBe(false));
+       |           ^
+    177|     fireEvent.click(saveBtn());
+    178|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > does not accept whitespace as a reason
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1o_"
+  class="btn primary"
+  data-testid="save-section"
+  disabled=""
+  style="height: 30px;"
+  title="Say why this section changed, in at least 8 characters — it is recorded with the revision."
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveBtn ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx:130:32
+    128|     await waitFor(() => expect(canvasText()).toBe(text));
+    129|   }
+    130|   const saveBtn = () => screen.getByRole('button', { name: /Save/i }) …
+       |                                ^
+    131|   const reasonField = () => screen.getByTestId('change-reason') as HTM…
+    132|   const patches = () => apiRequest.mock.calls.filter((c) => c[0] === '…
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx:188:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx > the editor asks why, once per section > stays stated across repeated saves of the same section
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_26_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed"
+      >
+        <aside
+          class="ed-tree"
+        >
+          <div
+            class="ed-tree-h"
+          >
+            <div
+              class="ed-tree-t"
+              tabindex="-1"
+            >
+              Document tree
+            </div>
+            <div
+              ...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringReasonForChange.loose.test.tsx:195:11
+    193|     await openDirty('First revision.');
+    194|     fireEvent.change(reasonField(), { target: { value: 'Aligning with …
+    195|     await waitFor(() => expect(saveBtn().disabled).toBe(false));
+       |           ^
+    196|     fireEvent.click(saveBtn());
+    197|     await waitFor(() => expect(patches().length).toBe(1));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > says the text did not reach the filing, with the server’s reason
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_e_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveOnce ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx:150:25
+    148|     await waitFor(() => expect(canvasText()).toBe('Revised substance d…
+    149|     fireEvent.change(screen.getByTestId('change-reason'), { target: { …
+    150|     const save = screen.getByRole('button', { name: /Save/i }) as HTML…
+       |                         ^
+    151|     await waitFor(() => expect(save.disabled).toBe(false));
+    152|     fireEvent.click(save);
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx:160:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > says the text was committed to the filing when the server says so
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_s_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveOnce ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx:150:25
+    148|     await waitFor(() => expect(canvasText()).toBe('Revised substance d…
+    149|     fireEvent.change(screen.getByTestId('change-reason'), { target: { …
+    150|     const save = screen.getByRole('button', { name: /Save/i }) as HTML…
+       |                         ^
+    151|     await waitFor(() => expect(save.disabled).toBe(false));
+    152|     fireEvent.click(save);
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx:167:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > names the filing section a part-of save went into
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1a_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveOnce ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx:150:25
+    148|     await waitFor(() => expect(canvasText()).toBe('Revised substance d…
+    149|     fireEvent.change(screen.getByTestId('change-reason'), { target: { …
+    150|     const save = screen.getByRole('button', { name: /Save/i }) as HTML…
+       |                         ^
+    151|     await waitFor(() => expect(save.disabled).toBe(false));
+    152|     fireEvent.click(save);
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx:177:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx > the save confirmation carries whether the text reached the filing > claims nothing about the filing when the server reported nothing
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1o_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveOnce ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx:150:25
+    148|     await waitFor(() => expect(canvasText()).toBe('Revised substance d…
+    149|     fireEvent.change(screen.getByTestId('change-reason'), { target: { …
+    150|     const save = screen.getByRole('button', { name: /Save/i }) as HTML…
+       |                         ^
+    151|     await waitFor(() => expect(save.disabled).toBe(false));
+    152|     fireEvent.click(save);
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSaveFilingCommit.loose.test.tsx:183:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx > the section check shows the record’s required content > lists the record’s elements for 2.5, named as the record’s statement and as unverified, with its basis
+TestingLibraryElementError: Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openCheck ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx:116:30
+    114|   render(<DocumentAuthoring {...props()} />);
+    115|   fireEvent.click(await screen.findByRole('button', { name: /check/i }…
+    116|   const panel = await screen.findByTestId('section-check');
+       |                              ^
+    117|   expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/sect…
+    118|   return panel;
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx:139:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx > the section check shows the record’s required content > shows a parent code’s contained sections instead of an empty list
+TestingLibraryElementError: Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openCheck ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx:116:30
+    114|   render(<DocumentAuthoring {...props()} />);
+    115|   fireEvent.click(await screen.findByRole('button', { name: /check/i }…
+    116|   const panel = await screen.findByTestId('section-check');
+       |                              ^
+    117|   expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/sect…
+    118|   return panel;
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx:169:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx > the section check shows the record’s required content > names the containing section when the answer came from an ancestor entry
+TestingLibraryElementError: Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openCheck ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx:116:30
+    114|   render(<DocumentAuthoring {...props()} />);
+    115|   fireEvent.click(await screen.findByRole('button', { name: /check/i }…
+    116|   const panel = await screen.findByTestId('section-check');
+       |                              ^
+    117|   expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/sect…
+    118|   return panel;
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx:187:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx > the section check shows the record’s required content > reads a code the record does not index as not indexed — never as nothing required
+TestingLibraryElementError: Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openCheck ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx:116:30
+    114|   render(<DocumentAuthoring {...props()} />);
+    115|   fireEvent.click(await screen.findByRole('button', { name: /check/i }…
+    116|   const panel = await screen.findByTestId('section-check');
+       |                              ^
+    117|   expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/sect…
+    118|   return panel;
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx:200:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx > the section check shows the record’s required content > says nothing about required content when the server sent no record statement
+TestingLibraryElementError: Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openCheck ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx:116:30
+    114|   render(<DocumentAuthoring {...props()} />);
+    115|   fireEvent.click(await screen.findByRole('button', { name: /check/i }…
+    116|   const panel = await screen.findByTestId('section-check');
+       |                              ^
+    117|   expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/sect…
+    118|   return panel;
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/authoringSectionCheckRecord.loose.test.tsx:209:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringAuditRail.loose.test.tsx > the heuristic section check > runs the scan on demand and renders the flags under the server’s own honest framing
+AssertionError: expected "vi.fn()" to be called at least once
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed"
+      >
+        <aside
+          class="ed-tree"
+        >
+          <div
+            class="ed-tree-h"
+          >
+            <div
+              class="ed-tree-t"
+              tabindex="-1"
+            >
+              Document tree
+            </div>
+            <div
+              ...
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringAuditRail.loose.test.tsx:174:38
+    172|     fireEvent.click(btn);
+    173|
+    174|     await waitFor(() => expect(scan).toHaveBeenCalled());
+       |                                      ^
+    175|     const panel = await screen.findByTestId('section-check');
+    176|     // The server's framing survives into the UI — signals, not compli…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringAuditRail.loose.test.tsx > the heuristic section check > zero flags reads as "passed mechanical checks" — never as compliant
+TestingLibraryElementError: Unable to find an element by: [data-testid="section-check"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringAuditRail.loose.test.tsx:197:32
+    195|     render(<DocumentAuthoring {...props()} />);
+    196|     fireEvent.click(await screen.findByRole('button', { name: /check/i…
+    197|     const panel = await screen.findByTestId('section-check');
+       |                                ^
+    198|     expect(panel.textContent).toContain('this is not a review');
+    199|     expect(panel.textContent).not.toMatch(/compliant/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — real editable canvas > saves edited content via PATCH and reports that a revision was recorded
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1a_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx:166:28
+    164|     });
+    165|     // The header Save button enables once the dirty state propagates.
+    166|     const saveBtn = screen.getByRole('button', { name: /Save/i }) as H…
+       |                            ^
+    167|     await waitFor(() => expect(saveBtn.disabled).toBe(false));
+    168|     fireEvent.click(saveBtn);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/19]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx > DocumentAuthoring — real editable canvas > surfaces a failed save honestly and keeps the user’s text (no fabrication)
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_1o_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  disabled=""
+  style="height: 30px;"
+  title="Save or discard the unsaved edits before re-filing saved text."
+  type="button"
+>
+  Re-file saved text
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+            tabindex="-1"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/d4mr/loose/documentAuthoringEditor.loose.test.tsx:218:28
+    216|       target: { value: 'Reworded the opening paragraph.' },
+    217|     });
+    218|     const saveBtn = screen.getByRole('button', { name: /Save/i }) as H…
+       |                            ^
+    219|     await waitFor(() => expect(saveBtn.disabled).toBe(false));
+    220|     fireEvent.click(saveBtn);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/19]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  19 failed | 15 passed (34)
+   Start at  22:45:03
+   Duration  85.00s (transform 5.42s, setup 815ms, import 11.22s, tests 67.90s, environment 3.79s)
+

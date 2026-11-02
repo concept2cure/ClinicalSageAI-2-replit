@@ -1,0 +1,213 @@
+# The new and rewritten tests against HEAD b854c54c2b's sources (no D1-1 source change yet), 2026-11-01
+# npx vitest run --maxWorkers=1 __tests__/{shellQuietChrome,railRecents,shellChromeTruth,shellWiring}.test.tsx
+# exit code: 1. shellWiring's first case ('locked for the workspace') is a lazy-import timing flake under the shared host's load: it passes in red/neighbours-head.txt (a warm run) and fails the same way on HEAD's own sources run cold (red/shellWiring-head-alone.txt).
+
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > the first two .rail-nav buttons are "New conversation" and "Search"
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > New conversation opens Home, where a question starts a new conversation
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > Search still opens the command palette
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > names the organisation under the person, and in the button’s title
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > with no organisation known, says the role in words, never the raw value
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > the menu head names the organisation and the role on one line
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > "What AnA remembers" follows Account, opens the drawer, and Escape returns focus to the account button
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > keeps the admin entries gated exactly as before
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > Organizations and invitations sits in the sidebar foot, after the account
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > collapsed, the foot stacks the expand toggle, organisation access, then the avatar
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > "Open the sidebar" is the bar’s first control and opens it
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > draws no sidebar button that would do nothing
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > has no Organizations and invitations button of its own
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > a place, New conversation and Search each close it
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > wider than that, the sidebar stays as it is
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > finds the sidebar’s rules
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the round "+" of New conversation is the sidebar’s one orange
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > no brand fill beside Home’s own row, and the ".RI" in ink
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > group labels are 12px sentence case in --text-300
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > rows are 14px, recents 13px, and nothing in the sidebar is under 12px
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the avatar is ink, in the sidebar and the account menu’s head, ranked above the menu block’s own rule
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the account’s second line is 12px --text-300; the menu head’s line 13px
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > at ≤640px no strip is reserved, the collapsed rail is not drawn, and the expanded one is the drawer
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names no category for a surface that belongs to both — the launch core
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names the one category a surface belongs to, and Admin for an admin surface
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD"), for every surface
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > never names a category the rail does not list the surface under — for every surface
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws exactly that crumb
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > shows the organisation as a label, not as a control that does nothing
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > names no organisation when none is known: no "Organization" placeholder (P-25)
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > Help goes where the account menu’s "Get help" goes
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > marks the open surface as the current page, and lists no client category beside it
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > draws the current page, and no rule draws a client category on the rail
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > collapsed, the brand mark keeps the top and the toggle moves to the foot
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > expanded, the toggle stays at the top
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > draws no floating launcher — the header’s Task and Collaborate buttons open it
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > the header’s Task and Collaborate buttons open it — the path that replaced the floating button
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > names the surface, not its URL slug or the payload field
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > offers each module once, by name, with the server’s value
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > labels priorities for people, and posts the server’s values
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > keeps the auto-assign note one sentence beside its icon
+ × client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > locked for the workspace: the conversation shows the offer as a record, not a button
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > not locked: the same offer is a button that starts the demonstration
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > choosing a client type from the account menu > lands on that type’s default screen, which is in this release
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > choosing a client type from the account menu > choosing the type already chosen leaves the person where they are
+ × client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the top bar opens the sidebar > "Open the sidebar" expands a collapsed sidebar
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents > lists the person’s own conversations, and one reopens its thread
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents > with none, says where they will appear
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents > a failed read is said, and is not shown as no conversations
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents > a reply without a list is a failed read, not an empty one
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents > is not drawn in the collapsed rail
+ × client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents: projects, then conversations (D1.md §D1.A step 4) > lists up to three projects first, by title with a folder, then the conversations
+ × client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents: projects, then conversations (D1.md §D1.A step 4) > a project opens its page, as every list opens one
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents: projects, then conversations (D1.md §D1.A step 4) > a failed project read shows no project rows and never hides the conversations
+ × client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents: projects, then conversations (D1.md §D1.A step 4) > with no conversations, the note stays under the projects
+ ✓ client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Search > opens the command palette
+
+ FAIL  client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents: projects, then conversations (D1.md §D1.A step 4) > lists up to three projects first, by title with a folder, then the conversations
+    TestingLibraryElementError: Unable to find an element with the text: BX-204 Oncology IND. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+    aria-labelledby="_r_g_"
+    class="rail-nav rail-group rail-recents"
+    data-testid="rail-recents"
+
+ FAIL  client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents: projects, then conversations (D1.md §D1.A step 4) > a project opens its page, as every list opens one
+    TestingLibraryElementError: Unable to find an element with the text: BX-204 Oncology IND. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+    aria-labelledby="_r_j_"
+    class="rail-nav rail-group rail-recents"
+    data-testid="rail-recents"
+
+ FAIL  client/src/concept2cure/v2/__tests__/railRecents.test.tsx > Recents: projects, then conversations (D1.md §D1.A step 4) > with no conversations, the note stays under the projects
+    TestingLibraryElementError: Unable to find an element with the text: BX-204 Oncology IND. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+    aria-labelledby="_r_p_"
+    class="rail-nav rail-group rail-recents"
+    data-testid="rail-recents"
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > draws the current page, and no rule draws a client category on the rail
+    AssertionError: expected '/* ══════════════════════════════════…' to match /\.nav-item\[aria-current="page"\]\{ba…/
+    - Expected:
+    /\.nav-item\[aria-current="page"\]\{background:var\(--bg-200\)/
+    + Received:
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > the first two .rail-nav buttons are "New conversation" and "Search"
+    AssertionError: expected [ 'Home', 'Projects' ] to deeply equal [ 'New conversation', 'Search' ]
+    - Expected
+    + Received
+    [
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > New conversation opens Home, where a question starts a new conversation
+    TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "New conversation"
+    Here are the accessible roles:
+    button:
+    Name "Home":
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > names the organisation under the person, and in the button’s title
+    AssertionError: expected 'admin' to be 'Concept2Cure Therapeutics' // Object.is equality
+    Expected: "Concept2Cure Therapeutics"
+    Received: "admin"
+    ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:128:54
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > with no organisation known, says the role in words, never the raw value
+    AssertionError: expected 'org_admin' to be 'Org admin' // Object.is equality
+    Expected: "Org admin"
+    Received: "org_admin"
+    ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:137:54
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > the menu head names the organisation and the role on one line
+    AssertionError: expected 'admin' to be 'Concept2Cure Therapeutics · Admin' // Object.is equality
+    Expected: "Concept2Cure Therapeutics · Admin"
+    Received: "admin"
+    ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:146:52
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > "What AnA remembers" follows Account, opens the drawer, and Escape returns focus to the account button
+    AssertionError: expected [ 'Account', 'Admin' ] to deeply equal [ 'Account', 'What AnA remembers' ]
+    - Expected
+    + Received
+    [
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > keeps the admin entries gated exactly as before
+    AssertionError: expected [ 'Account', 'Usage & limits', …(4) ] to include 'What AnA remembers'
+    ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:169:20
+    167|     fireEvent.click(rail.querySelector('.rail-account') as HTMLElement…
+    168|     const member = within(screen.getByRole('menu')).getAllByRole('menu…
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > Organizations and invitations sits in the sidebar foot, after the account
+    AssertionError: expected -1 to be 1 // Object.is equality
+    - Expected
+    + Received
+    - 1
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > collapsed, the foot stacks the expand toggle, organisation access, then the avatar
+    AssertionError: expected [ 'toggle', 'account' ] to deeply equal [ 'toggle', …(2) ]
+    - Expected
+    + Received
+    [
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > "Open the sidebar" is the bar’s first control and opens it
+    AssertionError: expected null to be 'Open the sidebar' // Object.is equality
+    - Expected:
+    "Open the sidebar"
+    + Received:
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > has no Organizations and invitations button of its own
+    AssertionError: expected <button class="tb-btn" …(2)>…(1)</button> to be null
+    - Expected:
+    null
+    + Received:
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > a place, New conversation and Search each close it
+    AssertionError: expected last "vi.fn()" call to have been called with [ true ]
+    - Expected:
+    [
+    true,
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the round "+" of New conversation is the sidebar’s one orange
+    AssertionError: expected [] to deeply equal [ '.c2c-v2 .nav-item.rail-new .ico' ]
+    - Expected
+    + Received
+    - [
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > no brand fill beside Home’s own row, and the ".RI" in ink
+    AssertionError: expected '\n:root {\n  --accent-000: var(--acce…' not to match /\.rail-logo\[data-on/
+    - Expected:
+    /\.rail-logo\[data-on/
+    + Received:
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > group labels are 12px sentence case in --text-300
+    AssertionError: expected 'padding:0 8px 4px;font-size:var(--fs-…' to match /text-transform:none/
+    - Expected:
+    /text-transform:none/
+    + Received:
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > rows are 14px, recents 13px, and nothing in the sidebar is under 12px
+    AssertionError: expected 'display:flex;align-items:center;gap:1…' to match /font-size:var\(--fs-body,\s*14px\)/
+    - Expected:
+    /font-size:var\(--fs-body,\s*14px\)/
+    + Received:
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the avatar is ink, in the sidebar and the account menu’s head, ranked above the menu block’s own rule
+    AssertionError: expected '' to match /background:var\(--text-100\)/
+    - Expected:
+    /background:var\(--text-100\)/
+    + Received:
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the account’s second line is 12px --text-300; the menu head’s line 13px
+    AssertionError: expected 'font-size:10px;color:var(--text-400);…' to match /font-size:var\(--fs-caption,\s*12px\)…/
+    - Expected:
+    /font-size:var\(--fs-caption,\s*12px\);color:var\(--text-300\)/
+    + Received:
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > at ≤640px no strip is reserved, the collapsed rail is not drawn, and the expanded one is the drawer
+    AssertionError: expected ' --rail: var(--rail-collapsed); ' to match /--rail:0px/
+    - Expected:
+    /--rail:0px/
+    + Received:
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > locked for the workspace: the conversation shows the offer as a record, not a button
+    TestingLibraryElementError: Unable to find an element with the text: Start demonstration: Sales demonstration. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+    class="c2c-v2 shell"
+    data-ana-open="false"
+    data-collapsed="false"
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the top bar opens the sidebar > "Open the sidebar" expands a collapsed sidebar
+    TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Open the sidebar"
+    Here are the accessible roles:
+    link:
+    Name "Skip to content":
+
+Test Files  4 failed (4)
+Tests  25 failed | 31 passed (56)

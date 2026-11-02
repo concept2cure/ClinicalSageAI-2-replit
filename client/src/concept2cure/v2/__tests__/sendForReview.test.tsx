@@ -76,6 +76,7 @@ import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
 import { SendForReviewDialog } from '../editor/SendForReviewDialog';
 import { authService } from '@/services/portal/authService';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
@@ -166,7 +167,8 @@ afterEach(() => {
 async function openDialog(p = props()) {
   render(<DocumentAuthoring {...p} />);
   await screen.findAllByText('Rationale');
-  fireEvent.click(await screen.findByTestId('send-for-review-open'));
+  await screen.findByTestId('ed-more');
+  fireEvent.click(openEditorControl('Send for review…'));
   const dlg = await screen.findByTestId('send-for-review-dialog');
   await within(dlg).findByTestId('sfr-reviewer-42');
   return dlg;
@@ -388,7 +390,13 @@ describe('Send for review — a refusal, an unknown outcome and a failed task ar
     expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
     fireEvent.click(within(dlg).getByRole('button', { name: 'Check existing review tasks' }));
     await waitFor(() => expect(screen.queryByTestId('send-for-review-dialog')).toBeNull());
-    expect(await screen.findByRole('complementary', { name: 'Review tasks' })).toBeTruthy();
+    const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
+    /* D4-2: no control in the bar opened this rail (the dialog did), and every
+       rail is in More, so its close returns focus to More, not to the page. */
+    const closeTasks = within(rail).getByRole('button', { name: 'Close tasks' });
+    closeTasks.focus(); fireEvent.click(closeTasks);
+    await waitFor(() => expect(screen.queryByRole('complementary', { name: 'Review tasks' })).toBeNull());
+    expect(document.activeElement).toBe(within(screen.getByTestId('ed-more')).getAllByRole('button')[0]);
   });
 
 });
@@ -397,7 +405,7 @@ describe('Send for review — the Tasks rail', () => {
   it('the Tasks rail offers Send for review, not a task-only assignment', async () => {
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('Rationale');
-    fireEvent.click(screen.getByTestId('tasks-rail-open'));
+    fireEvent.click(openEditorControl('Review tasks'));
     const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
     await within(rail).findByTestId('rt-empty');
     expect(within(rail).queryByText(/Assign review/)).toBeNull();

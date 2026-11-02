@@ -1,0 +1,87 @@
+{
+ "steps": [
+  "signed in as Ava Approver",
+  "opened the project",
+  "opened the document in the editor",
+  "signed as Approval (first attempt)",
+  "figure question: 1 figure(s), each starting at \"Go back and correct it\"",
+  "kept each figure, continued",
+  "signed again, with each figure acknowledged",
+  "signed confirmation still on screen 5 s later: true",
+  "after: null"
+ ],
+ "api": [
+  {
+   "method": "POST",
+   "path": "/api/authoring/docs/c4542c5d-eb94-4f6e-aba3-5b3e1d04b507/e-sign",
+   "status": 409,
+   "sent": {
+    "meaning": "APPROVER",
+    "intent": "I approve this overview for the IND, as written."
+   },
+   "body": {
+    "success": false,
+    "error": {
+     "code": "FIGURES_UNVERIFIED",
+     "message": "Not approved \u2014 1 figure in this document is not in the sources its section cites. An approval seals the text for filing. Correct it, or acknowledge each one and sign again. Nothing was signed."
+    },
+    "unverifiedFigures": {
+     "digest": "117fb6019cfe896379950cd3543b23033a75031acaa81e687276081aa06cf466",
+     "items": [
+      {
+       "key": "576c909a-ecf8-47fe-9376-994052ca83ed#1:HR 0.71",
+       "sectionId": "576c909a-ecf8-47fe-9376-994052ca83ed",
+       "sectionCode": "2.5.4",
+       "sectionTitle": "Overview of efficacy",
+       "text": "HR 0.71",
+       "kind": "hr",
+       "reason": "not_in_cited_source"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/api/authoring/docs/c4542c5d-eb94-4f6e-aba3-5b3e1d04b507/e-sign",
+   "status": 200,
+   "sent": {
+    "meaning": "APPROVER",
+    "intent": "I approve this overview for the IND, as written.",
+    "acknowledgedFigures": [
+     "576c909a-ecf8-47fe-9376-994052ca83ed#1:HR 0.71"
+    ]
+   },
+   "body": {
+    "success": true,
+    "signatureId": "1f524d4f-872d-4376-a8bc-b47727f2cd8b",
+    "documentHash": "983243cc5c399919082e08977ab60b17d844f09458d3b7e96c5d23018a847c2f",
+    "digest": "70d23bb66deb92d7f25bb9604bbc8c4c0fe4a0c48d501af635a080dbf187d231",
+    "covers": {
+     "version": "approved",
+     "contentHash": "037e84c287007fa2c2aa7eb8e61e8c649fe14bd5040bed5bb29e8d3425425ea8"
+    },
+    "workflowSourceAdoption": null,
+    "signedAt": "2026-11-02T01:38:16.502Z",
+    "filingApproval": {
+     "approved": [],
+     "notApproved": [],
+     "documentId": null,
+     "reason": "This document is not bound to a filing, so no governed section was approved."
+    }
+   }
+  }
+ ],
+ "figureQuestion": {
+  "groups": 1,
+  "labels": [
+   {
+    "group": 0,
+    "startsAt": "Go back and correct it"
+   }
+  ],
+  "text": "Part 11 \u00b7 approval\nA figure is not in its cited source\n\u201cBX-301 Clinical Overview, second draft\u201d states 1 figure that the sources its section cites do not hold. An approval seals the text for filing. Keep it only if you have checked it yourself. Signing goes ahead only when every figure is kept.\nHR 0.71 \u00b7 2.5.4 Overview of efficacy*\nNot found in the excerpts this section cites.\nGo back and correct it\nKeep it as written\nThis is a governed record \u2014 saving writes an audit entry and may require your e-signature per 21 CFR \u00a711.\nCancel\nContinue"
+ },
+ "confirmationAfter5s": true,
+ "after": null
+}

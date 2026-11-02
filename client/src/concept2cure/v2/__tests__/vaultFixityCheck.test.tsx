@@ -50,6 +50,8 @@ describe('check stored files (critique 15)', () => {
     onFixity = () => ok({ success: true, data: run });
     render(<Vault {...props()} />);
     const panel = await screen.findByTestId('vault-fixity');
+    // D6-3: the check is a section of the Seals & fixity view (D6 §C.4 step 5).
+    fireEvent.click(screen.getByRole('tab', { name: 'Seals & fixity' }));
     fireEvent.click(within(panel).getByRole('button', { name: 'Check stored files' }));
     const status = await within(panel).findByRole('status');
     expect(apiRequest).toHaveBeenCalledWith('POST', FIX_URL, {});
@@ -62,6 +64,8 @@ describe('check stored files (critique 15)', () => {
     onFixity = () => { throw new ApiRequestError('Insufficient permissions', 403, { error: 'Insufficient permissions' }, ''); };
     render(<Vault {...props()} />);
     const panel = await screen.findByTestId('vault-fixity');
+    // D6-3: the check is a section of the Seals & fixity view (D6 §C.4 step 5).
+    fireEvent.click(screen.getByRole('tab', { name: 'Seals & fixity' }));
     fireEvent.click(within(panel).getByRole('button', { name: 'Check stored files' }));
     expect((await within(panel).findByRole('alert')).textContent).toContain('The check did not run. Insufficient permissions');
     expect(within(panel).queryByRole('status')).toBeNull();

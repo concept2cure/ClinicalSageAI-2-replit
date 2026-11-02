@@ -40,36 +40,56 @@ export function portfolioStatusChoices(statuses: string[], selected: string) {
 }
 
 const sum = (values: Record<string, number>) => Object.values(values).reduce((total, value) => total + value, 0);
-const chipLabel = (label: string, value: number | undefined) => value === undefined ? label : `${label} ${value}`;
+/** An option's text, with its count only when the server sent one: no count is not a 0. */
+const optionLabel = (label: string, value: number | undefined) => value === undefined ? label : `${label} (${value})`;
+
+/**
+ * Each portfolio workstream code as a client type, in sentence case. "MDX" is
+ * an internal code; the rail names that client type "Medical Device & IVD"
+ * (registryModel.ts), written here in sentence case. The project page's About
+ * card reads the same map (D3-2), so a project's client type is named once.
+ */
+export const WS_LABEL: Readonly<Record<string, string>> = {
+  MDX: 'Medical device & IVD',
+  Biotech: 'Biotech',
+  Pharma: 'Pharma',
+  CRO: 'CRO',
+};
+
+/** The client types the filter offers, in the server's filter values (shared/navigation/surface-actions.ts). */
+const CLIENT_TYPES = ['MDX', 'Biotech', 'Pharma'] as const;
 
 /** Workstream counts ignore ws/pathway; pathway counts honor ws and ignore
- * pathway. Both honor Client. Selected chips remain clearable after failures. */
+ * pathway. Both honor Client. A selected value stays clearable after a failed
+ * read: its option is kept, and "All" is always offered.
+ *
+ * Two toolbar selects (D2 §1.4 item 4), where there were two rows of
+ * segmented buttons: the same state, the same server URL
+ * (`portfolioFilterUrl`) and the same `projects.filter` action. */
 export function ProjectPortfolioFilters({ workstream, pathway, counts, hasDeviceRows, onWorkstream, onPathway }: {
   workstream: string; pathway: string; counts: PortfolioCounts | null; hasDeviceRows: boolean;
   onWorkstream: (value: string) => void; onPathway: (value: string) => void;
 }) {
   const pathways = REGULATORY_PATHWAYS.filter(key => (counts?.byPathway[key] ?? 0) > 0 || key === pathway);
   /* Drug and biologic applications are pathways too since 2026-10-31 (IND,
-     NDA, BLA…: every one was "Other"), so the row shows whenever there is a
+     NDA, BLA…: every one was "Other"), so the select shows whenever there is a
      choice to make, in any workstream. */
   const pathwaysVisible = pathway !== 'all' || pathways.length > 1
     || (counts === null && (workstream === 'MDX' || hasDeviceRows));
-  return <div style={{ display: 'grid', gap: 8, marginBottom: 8, justifyItems: 'start' }}>
-    <div className="ws-switch" style={{ marginBottom: 0 }} role="group" aria-label="Workstream filters">
-      {['all', 'MDX', 'Biotech', 'Pharma'].map(key => <button key={key}
-        className={`ws-btn${workstream === key ? ' on' : ''}`} aria-pressed={workstream === key}
-        onClick={() => onWorkstream(key)}>
-        {chipLabel(key === 'all' ? 'All workstreams' : key, counts ? (key === 'all' ? sum(counts.byWorkstream) : counts.byWorkstream[key] ?? 0) : undefined)}
-      </button>)}
-    </div>
-    {pathwaysVisible && <div className="ws-switch" style={{ marginBottom: 0, flexWrap: 'wrap', maxWidth: '100%' }} role="group" aria-label="Pathway filters">
-      <button className={`ws-btn${pathway === 'all' ? ' on' : ''}`} aria-pressed={pathway === 'all'} onClick={() => onPathway('all')}>
-        {chipLabel('All pathways', counts ? sum(counts.byPathway) : undefined)}
-      </button>
-      {pathways.map(key => <button key={key} className={`ws-btn${pathway === key ? ' on' : ''}`}
-        aria-pressed={pathway === key} onClick={() => onPathway(key)}>
-        {chipLabel(PATHWAY_LABEL[key], counts?.byPathway[key])}
-      </button>)}
-    </div>}
-  </div>;
+  return <>
+    <select className="c2c-input pj-filter" aria-label="Client type" value={workstream}
+      onChange={event => onWorkstream(event.target.value)}>
+      <option value="all">{optionLabel('All client types', counts ? sum(counts.byWorkstream) : undefined)}</option>
+      {CLIENT_TYPES.map(key => <option key={key} value={key}>
+        {optionLabel(WS_LABEL[key], counts ? counts.byWorkstream[key] ?? 0 : undefined)}
+      </option>)}
+      {workstream !== 'all' && !(CLIENT_TYPES as readonly string[]).includes(workstream)
+        && <option value={workstream}>{WS_LABEL[workstream] ?? workstream}</option>}
+    </select>
+    {pathwaysVisible && <select className="c2c-input pj-filter" aria-label="Pathway" value={pathway}
+      onChange={event => onPathway(event.target.value)}>
+      <option value="all">{optionLabel('All pathways', counts ? sum(counts.byPathway) : undefined)}</option>
+      {pathways.map(key => <option key={key} value={key}>{optionLabel(PATHWAY_LABEL[key], counts?.byPathway[key])}</option>)}
+    </select>}
+  </>;
 }

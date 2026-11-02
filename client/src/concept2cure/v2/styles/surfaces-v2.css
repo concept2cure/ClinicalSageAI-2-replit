@@ -136,11 +136,6 @@
 .c2c-v2 .cb-card:hover .cb-card-l{color:var(--text-100);}
 @media(max-width:760px){.c2c-v2 .capbrowser-groups{columns:1;}.c2c-v2 .capbrowser{max-height:88vh;}.c2c-v2 .capbrowser-bd{padding:12px;}}
 
-/* workspace switch + segmented */
-.c2c-v2 .ws-switch{display:inline-flex;gap:2px;padding:3px;background:var(--bg-100);border-radius:var(--radius-lg);margin-bottom:18px;}
-.c2c-v2 .ws-btn{padding:6px 14px;border-radius:var(--radius-md);font-size:12.5px;font-weight:500;color:var(--text-300);white-space:nowrap;}
-.c2c-v2 .ws-btn.on{background:var(--bg-000);color:var(--text-100);box-shadow:var(--v2-shadow-xs);}
-
 /* metrics */
 .c2c-v2 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
 .c2c-v2 .metric{border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px 16px;background:var(--bg-050);}
