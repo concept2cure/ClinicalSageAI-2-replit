@@ -1,0 +1,493 @@
+{
+  "reader": "B",
+  "group": "g2",
+  "letters": [
+    {
+      "letter": "L18",
+      "missing": [],
+      "note": "Line 26 \"Please submit your response ... by November 30, 2026.\" is a response instruction and line 28 is the closer; neither is a question."
+    },
+    {
+      "letter": "L19",
+      "missing": []
+    },
+    {
+      "letter": "L20",
+      "missing": []
+    },
+    {
+      "letter": "L21",
+      "missing": []
+    },
+    {
+      "letter": "L22",
+      "missing": [],
+      "note": "No missing question; question 2 is truncated in the letter itself (see question 76)."
+    },
+    {
+      "letter": "L23",
+      "missing": []
+    },
+    {
+      "letter": "L24",
+      "missing": []
+    },
+    {
+      "letter": "L25",
+      "missing": []
+    },
+    {
+      "letter": "L26",
+      "missing": []
+    },
+    {
+      "letter": "L27",
+      "missing": []
+    },
+    {
+      "letter": "L28",
+      "missing": [],
+      "note": "The three numbered items under \"Question 1\" are parts of that one question, not missing questions."
+    },
+    {
+      "letter": "L29",
+      "missing": []
+    },
+    {
+      "letter": "L30",
+      "missing": [],
+      "note": "Line 13 \"以上\" is the end marker."
+    },
+    {
+      "letter": "L31",
+      "missing": []
+    },
+    {
+      "letter": "L32",
+      "missing": []
+    },
+    {
+      "letter": "L33",
+      "missing": []
+    }
+  ],
+  "questions": [
+    {
+      "id": 64,
+      "letter": "L18",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "Only an ordinary line-wrap LF (line 9 to 10) inside."
+    },
+    {
+      "id": 65,
+      "letter": "L18",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "Sub-items a. and b. (lines 13-14) are the agency's own parts of question 2 and belong in it."
+    },
+    {
+      "id": 66,
+      "letter": "L18",
+      "ref": "3",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "Lines 16-21 sit between \"including\" (line 15) and \"the discriminating ability of the method.\" (line 22): line 16 \"Reference ID: 5123456\" (Reference ID line), line 17 empty, line 18 \"-- 1 of 2 --\" (page-break marker / page furniture), line 19 empty, line 20 \"IND 123456\" (running header), line 21 \"Page 2\" (page number)."
+    },
+    {
+      "id": 67,
+      "letter": "L18",
+      "ref": "4",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "The number \"4.\" stands alone on line 23; the span correctly starts at line 24."
+    },
+    {
+      "id": 68,
+      "letter": "L19",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "Span runs under the \"Quality\" heading (line 1, excluded) and includes \"The following lots are affected.\" and the lot list (lines 5, 7), which are the question's own words (\"the lots below\"); only empty docx paragraph lines (4, 6) between them."
+    },
+    {
+      "id": 69,
+      "letter": "L19",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "Second question numbered 1, under the \"Clinical\" heading (line 9, excluded); a reader would record it as Clinical 1."
+    },
+    {
+      "id": 70,
+      "letter": "L19",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 71,
+      "letter": "L20",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "A form feed U+000C (control character) at the start of line 3 (offset 67), between \"registration\" + LF and \"batches\"; no contiguous span can hold the words without it."
+    },
+    {
+      "id": 72,
+      "letter": "L20",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 73,
+      "letter": "L21",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "A form feed U+000C (control character) on line 2 (offset 66) joining \"registration\" and \"batches\"; it is the only separator between those two words, so no contiguous span can avoid it."
+    },
+    {
+      "id": 74,
+      "letter": "L21",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 75,
+      "letter": "L22",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 76,
+      "letter": "L22",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "The question is incomplete as stored: it ends \"for the\" (line 9) with no object. Page 2 opens with \"Drug Product\" (line 16) after the page furniture (lines 10-15). I read line 16 as a section heading for question 3 (own line, capitalised, where these letters write \"drug product\"/\"drug substance\" in lower case in body text), so the span holds all of question 2's stored words and nothing else. If line 16 were instead read as the end of question 2 (\"for the Drug Product\"), B would be no: lines 10-15 (Reference ID, page marker, \"IND 123456\" running header, \"Page 2\") would lie inside. A response preparer would flag question 2 as truncated."
+    },
+    {
+      "id": 77,
+      "letter": "L22",
+      "ref": "3",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "The \"Drug Product\" heading on line 16 is correctly outside the span."
+    },
+    {
+      "id": 78,
+      "letter": "L23",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "\"Kind Regards\" on line 3 is the name the other product is sold under (\"sold as Kind Regards in the European Union\"), so it is the question's words, not a closing."
+    },
+    {
+      "id": 79,
+      "letter": "L23",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 80,
+      "letter": "L24",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 81,
+      "letter": "L24",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "The second sentence \"Include the trend plots for each attribute.\" (line 4) is part of question 2; the closer on line 5 is correctly outside."
+    },
+    {
+      "id": 82,
+      "letter": "L25",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 83,
+      "letter": "L25",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "The lead-in \"Regarding the dissolution method, address the following:\" (line 5) is outside the span; a reader would carry it as context (\"the method\" in question 2 refers to it, and it may govern question 3 too), but it is a lead-in, not question 2's own words."
+    },
+    {
+      "id": 84,
+      "letter": "L25",
+      "ref": "3",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 85,
+      "letter": "L26",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "Line 7 \"-- 1 of 2 --\" (page-break marker / page furniture) with empty lines 6 and 8 lies between \"Food and Drug Administration\" (line 5) and \"in 2024 for the registration batches.\" (line 9).",
+      "note": "I read line 5 \"Food and Drug Administration\" as the question's own words, not letterhead at the page foot: the sentence \"issued by the ... in 2024\" needs it, and the letter carries no other letterhead. Even if it were letterhead, B would still be no."
+    },
+    {
+      "id": 86,
+      "letter": "L26",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 87,
+      "letter": "L27",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "The lot list (1)-(2) on lines 8-9 is part of question 1 (\"listed below\")."
+    },
+    {
+      "id": 88,
+      "letter": "L27",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 89,
+      "letter": "L27",
+      "ref": "3",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 90,
+      "letter": "L28",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "One question labelled \"Question 1\" whose three numbered items (lines 3-5) are its own parts; a response preparer might track them as 1.1-1.3, but they are not separate agency questions."
+    },
+    {
+      "id": 91,
+      "letter": "L29",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "\"Please clarify.\" on line 9 is the request of question 1 and belongs in it; the Reference ID line 10 is correctly outside."
+    },
+    {
+      "id": 92,
+      "letter": "L29",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "Starts after the page-2 running header and page number (lines 14-15); \"Please clarify.\" (line 18) belongs in it."
+    },
+    {
+      "id": 93,
+      "letter": "L29",
+      "ref": "3",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 94,
+      "letter": "L30",
+      "ref": "照会事項１",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "The U+3000 ideographic space after the reference (line 7, offset 41) is correctly outside the span."
+    },
+    {
+      "id": 95,
+      "letter": "L30",
+      "ref": "照会事項２",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 96,
+      "letter": "L30",
+      "ref": "照会事項３",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 97,
+      "letter": "L31",
+      "ref": "Deficiency 1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "The predicate list K201234 / K193456 (lines 9, 11) is part of the deficiency's sentence; only empty docx paragraph lines inside. Line 1 \"K261234\" (the submission number) is correctly outside."
+    },
+    {
+      "id": 98,
+      "letter": "L31",
+      "ref": "Deficiency 2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 99,
+      "letter": "L32",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 100,
+      "letter": "L32",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 101,
+      "letter": "L32",
+      "ref": "3",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 102,
+      "letter": "L32",
+      "ref": "4",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "\"regards\" at the start of line 18 is the wrapped \"With regards to the impurity profile\", part of the question, not a closing."
+    },
+    {
+      "id": 103,
+      "letter": "L32",
+      "ref": "5",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 104,
+      "letter": "L32",
+      "ref": "6",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 105,
+      "letter": "L33",
+      "ref": "1",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "Line 9 \"Reference ID: 5123456\" (Reference ID line), line 10 empty, line 11 \"-- 1 of 3 --\" (page-break marker / page furniture), line 12 empty, all between \"Table 2\" (line 8) and \"and justify the proposed limits.\" (line 13).",
+      "note": "I read \"Table 2\" (line 8) as the question's words (\"as shown in Table 2\")."
+    },
+    {
+      "id": 106,
+      "letter": "L33",
+      "ref": "2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "Line 16 \"Reference ID: 5123456\" (Reference ID line), line 17 empty, line 18 \"-- 2 of 3 --\" (page-break marker / page furniture), line 19 empty, all between \"Table 5\" (line 15) and \"and provide the trend plots.\" (line 20).",
+      "note": "I read \"Table 5\" (line 15) as the question's words (\"as given in Table 5\")."
+    },
+    {
+      "id": 107,
+      "letter": "L33",
+      "ref": "3",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    }
+  ],
+  "conventions": "An ordinary line-feed that wraps the question's own text, and empty docx paragraph lines between parts of one question, are counted as whitespace between the question's words, not as foreign content; every other control character, page-break marker, Reference ID line, running header, page number, heading or other question inside the span makes B no."
+}

@@ -278,16 +278,16 @@ function Field({ field, value, error, onChange }: {
     onChange: (e: any) => onChange(e.target.value),
   };
   return (
-    <label style={{ fontSize: 12, display: 'block' }}>
+    <label className="wb-f">
       <span>{field.label}{field.optional ? <span style={{ color: 'var(--text-300,#6b6963)' }}> (optional)</span> : null}</span>
       {field.kind === 'select' ? (
-        <select {...common} style={{ height: 30 }}>
+        <select {...common}>
           {(field.options ?? []).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       ) : field.kind === 'rows' ? (
-        <textarea {...common} rows={Math.max(3, (value.match(/\n/g)?.length ?? 0) + 2)} style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12, resize: 'vertical' }} placeholder={field.placeholder} />
+        <textarea {...common} rows={Math.max(3, (value.match(/\n/g)?.length ?? 0) + 2)} className="wb-f-rows" placeholder={field.placeholder} />
       ) : (
-        <input {...common} style={{ height: 30 }} placeholder={field.placeholder} />
+        <input {...common} placeholder={field.placeholder} />
       )}
       {error && (
         <span id={`${field.key}-err`} style={{ display: 'block', fontSize: 11, color: 'var(--error,#b63939)', marginTop: 2 }}>{error}</span>
@@ -398,15 +398,11 @@ function CalculatorPanel({ calc, fireToast, onNav }: { calc: Calculator; fireToa
   }, [calc, discardResult]);
 
   return (
-    <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">{calc.title}</span>
-        <span className="s">{calc.subtitle}</span>
-      </div>
-      <div className="pj-card-b">
-        <div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginBottom: 12, lineHeight: 1.5 }}>{calc.about}</div>
+    <div className="wb-calc">
+      <h3 className="wb-calc-t">{calc.title}<span className="sec-sub"> {calc.subtitle}</span></h3>
+      <p className="wb-calc-about">{calc.about}</p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 10, marginBottom: 12 }}>
+      <div className="wb-calc-fields">
           {visible.map(f => (
             <Field
               key={f.key}
@@ -427,20 +423,23 @@ function CalculatorPanel({ calc, fireToast, onNav }: { calc: Calculator; fireToa
           ))}
         </div>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button className="btn primary" style={{ height: 32 }} onClick={run} disabled={busy}>
+        <div className="wb-calc-acts">
+          {/* Ghost, not primary: the page's one primary is "Assess
+              defensibility" above. Compute is this section's action, and the
+              engine list beside it carries no fill either. */}
+          <button type="button" className="btn ghost" onClick={run} disabled={busy}>
             {I.zap} {busy ? 'Computing…' : 'Compute'}
           </button>
-          <button className="btn" style={{ height: 32 }} onClick={reset}>Reset</button>
-          {result && <button className="btn" style={{ height: 32 }} aria-expanded={showRaw} aria-controls={`raw-${calc.id}`} onClick={() => setShowRaw(r => !r)}>{showRaw ? 'Hide' : 'Show'} raw response</button>}
+          <button type="button" className="btn" onClick={reset}>Reset</button>
+          {result && <button type="button" className="btn" aria-expanded={showRaw} aria-controls={`raw-${calc.id}`} onClick={() => setShowRaw(r => !r)}>{showRaw ? 'Hide' : 'Show'} raw response</button>}
           {result !== null && (rows.length > 0 || tables.length > 0) && (
             /* BP-W2-4: these numbers are SAP content, and until this button the
                only way off this screen was retyping them — which severs the
                provenance stamp from the result. The section is filed as the
                tabulated result plus the stamp with the FULL inputs hash. */
             <button
+              type="button"
               className="btn"
-              style={{ height: 32 }}
               disabled={handoff.blocked}
               onClick={() => void insertIntoDocument()}
             >
@@ -500,9 +499,13 @@ function CalculatorPanel({ calc, fireToast, onNav }: { calc: Calculator; fireToa
               // Shown because these numbers go into an SAP or a submission and a
               // reviewer will ask how they were produced. The hash is over the
               // inputs, so the same hash means the same computation.
-              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-300,#6b6963)' }}>
+              <div
+                className="wb-prov"
+                title={provenance.inputsSha256
+                  ? `Engine ${provenance.engine} ${provenance.engineVersion} · input record ${String(provenance.inputsSha256)}`
+                  : undefined}
+              >
                 {provenance.method} · {provenance.engine} {provenance.engineVersion}
-                {provenance.inputsSha256 ? <> · inputs <span className="mono">{String(provenance.inputsSha256).slice(0, 12)}</span></> : null}
                 {provenance.reproducible ? ' · reproducible' : null}
               </div>
             )}
@@ -514,7 +517,6 @@ function CalculatorPanel({ calc, fireToast, onNav }: { calc: Calculator; fireToa
             )}
           </div>
         )}
-      </div>
     </div>
   );
 }
@@ -686,38 +688,43 @@ export function BiostatWorkbench(props: SurfaceViewProps) {
   }, [asmt, fireToast]);
 
   return (
-    <div className="cm-body">
-      <div className="pj-card">
-        <div className="pj-card-h">
-          <span className="t">Biostatistics workbench</span><span className="s">Reviewer-risk assessment + {CALCULATORS.length} design engines</span>
-          {props.onNav && (
-            <button type="button" className="btn ghost small" style={{ marginLeft: 'auto' }} onClick={() => props.onNav?.('biostatistics')}>
-              Your study designs and documents
-            </button>
-          )}
+    <div className="page-inner" data-work-area="biostat-workbench">
+      {/* The way back is the link, not a ghost button reading "YOUR STUDY
+          DESIGNS AND DOCUMENTS" in the card's heading row (§WA.4.2 rule 2). */}
+      {props.onNav && (
+        <button type="button" className="pj-back" onClick={() => props.onNav?.('biostatistics')}>
+          {I.left} Biostatistics
+        </button>
+      )}
+      <header className="ph">
+        <div>
+          <h1 className="ph-title">Design calculators</h1>
+          {/* The intro card's three sentences, as one. What it said about the
+              defensibility assessment running on the same engine is said by
+              the two sections being on one page. */}
+          <p className="ph-sub">
+            Deterministic, provenance-stamped engines, reference-tested against published tables and closed
+            forms. Nothing is computed in the browser.
+          </p>
         </div>
-        <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--text-300,#6b6963)' }}>
-          The design calculators below run on the server’s statistical engine — deterministic, provenance-stamped, and reference-tested against published tables and closed forms. Nothing is computed in the browser. The defensibility assessment runs on the same engine: it computes the design from the inputs below and judges what it computed.
-        </div>
-      </div>
+      </header>
 
       {/* Reviewer-risk defensibility */}
-      <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Statistical defensibility</span><span className="s">Reviewer-risk assessment</span></div>
-        <div className="pj-card-b">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 8, marginBottom: 10 }}>
-            <label style={{ fontSize: 12 }}>Phase<select className="c2c-input" style={{ height: 30 }} value={asmt.studyPhase} onChange={(e) => setAsmt({ ...asmt, studyPhase: e.target.value })}>{PHASES.map((p) => <option key={p}>{p}</option>)}</select></label>
-            <label style={{ fontSize: 12 }}>Indication<input className="c2c-input" style={{ height: 30 }} value={asmt.indication} onChange={(e) => setAsmt({ ...asmt, indication: e.target.value })} placeholder="e.g. NSCLC" /></label>
-            <label style={{ fontSize: 12 }}>Design<select className="c2c-input" style={{ height: 30 }} value={asmt.studyType} onChange={(e) => setAsmt({ ...asmt, studyType: e.target.value })}>{DESIGN_TYPES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
-            <label style={{ fontSize: 12 }}>Objective<select className="c2c-input" style={{ height: 30 }} value={asmt.objectiveType} onChange={(e) => setAsmt({ ...asmt, objectiveType: e.target.value })}>{OBJECTIVES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
-            <label style={{ fontSize: 12 }}>Primary endpoint type<select className="c2c-input" style={{ height: 30 }} value={asmt.endpointType} onChange={(e) => setAsmt({ ...asmt, endpointType: e.target.value })}>{ENDPOINT_TYPES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
+      <section className="pj-sec" aria-label="Statistical defensibility">
+        <div className="pj-sec-h"><h2>Statistical defensibility</h2><span className="sec-sub">Reviewer-risk assessment</span></div>
+        <div className="wb-fields">
+            <label className="wb-f">Phase<select className="c2c-input" value={asmt.studyPhase} onChange={(e) => setAsmt({ ...asmt, studyPhase: e.target.value })}>{PHASES.map((p) => <option key={p}>{p}</option>)}</select></label>
+            <label className="wb-f">Indication<input className="c2c-input" value={asmt.indication} onChange={(e) => setAsmt({ ...asmt, indication: e.target.value })} placeholder="e.g. NSCLC" /></label>
+            <label className="wb-f">Design<select className="c2c-input" value={asmt.studyType} onChange={(e) => setAsmt({ ...asmt, studyType: e.target.value })}>{DESIGN_TYPES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
+            <label className="wb-f">Objective<select className="c2c-input" value={asmt.objectiveType} onChange={(e) => setAsmt({ ...asmt, objectiveType: e.target.value })}>{OBJECTIVES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
+            <label className="wb-f">Primary endpoint type<select className="c2c-input" value={asmt.endpointType} onChange={(e) => setAsmt({ ...asmt, endpointType: e.target.value })}>{ENDPOINT_TYPES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
             {asmt.endpointType === 'binary' ? (
               <>
-                <label style={{ fontSize: 12 }}>Control rate<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.controlRate} onChange={(e) => setAsmt({ ...asmt, controlRate: e.target.value })} placeholder="e.g. 0.5" /></label>
-                <label style={{ fontSize: 12 }}>Treatment rate<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.treatmentRate} onChange={(e) => setAsmt({ ...asmt, treatmentRate: e.target.value })} placeholder="e.g. 0.7" /></label>
+                <label className="wb-f">Control rate<input className="c2c-input" inputMode="decimal" value={asmt.controlRate} onChange={(e) => setAsmt({ ...asmt, controlRate: e.target.value })} placeholder="e.g. 0.5" /></label>
+                <label className="wb-f">Treatment rate<input className="c2c-input" inputMode="decimal" value={asmt.treatmentRate} onChange={(e) => setAsmt({ ...asmt, treatmentRate: e.target.value })} placeholder="e.g. 0.7" /></label>
               </>
             ) : (
-              <label style={{ fontSize: 12 }}>
+              <label className="wb-f">
                 {/* The engine reads this field for a time-to-event design as
                     the hazard-ratio REDUCTION (computation-engine.ts
                     hazardRatio, HR = 1 − effectSize). It was labelled "Hazard
@@ -728,7 +735,7 @@ export function BiostatWorkbench(props: SurfaceViewProps) {
                     the hint states the arithmetic, because a convention a
                     reader has to infer is one that will be got wrong. */}
                 {asmt.endpointType === 'time_to_event' ? 'Hazard-ratio reduction (1 − HR)' : 'Effect size (standardized)'}
-                <input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.effectSize} onChange={(e) => setAsmt({ ...asmt, effectSize: e.target.value })} placeholder={asmt.endpointType === 'time_to_event' ? 'e.g. 0.3' : 'e.g. 0.5'} />
+                <input className="c2c-input" inputMode="decimal" value={asmt.effectSize} onChange={(e) => setAsmt({ ...asmt, effectSize: e.target.value })} placeholder={asmt.endpointType === 'time_to_event' ? 'e.g. 0.3' : 'e.g. 0.5'} />
                 {asmt.endpointType === 'time_to_event' && (
                   <span style={{ display: 'block', fontSize: 11, color: 'var(--text-300,#6b6963)', marginTop: 2 }}>
                     Not the hazard ratio itself. For a protocol stating HR 0.7, enter 0.3.
@@ -737,43 +744,49 @@ export function BiostatWorkbench(props: SurfaceViewProps) {
               </label>
             )}
             {(asmt.studyType === 'non_inferiority' || asmt.studyType === 'equivalence') && (
-              <label style={{ fontSize: 12 }}>{asmt.studyType === 'equivalence' ? 'Equivalence margin' : 'Non-inferiority margin'}<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.margin} onChange={(e) => setAsmt({ ...asmt, margin: e.target.value })} /></label>
+              <label className="wb-f">{asmt.studyType === 'equivalence' ? 'Equivalence margin' : 'Non-inferiority margin'}<input className="c2c-input" inputMode="decimal" value={asmt.margin} onChange={(e) => setAsmt({ ...asmt, margin: e.target.value })} /></label>
             )}
-            <label style={{ fontSize: 12 }}>Alpha (two-sided)<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.alpha} onChange={(e) => setAsmt({ ...asmt, alpha: e.target.value })} /></label>
-            <label style={{ fontSize: 12 }}>Power<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.powerTarget} onChange={(e) => setAsmt({ ...asmt, powerTarget: e.target.value })} /></label>
-            <label style={{ fontSize: 12 }}>Dropout rate<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.attritionRate} onChange={(e) => setAsmt({ ...asmt, attritionRate: e.target.value })} /></label>
-            <label style={{ fontSize: 12 }}>Allocation ratio<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.allocationRatio} onChange={(e) => setAsmt({ ...asmt, allocationRatio: e.target.value })} /></label>
+            <label className="wb-f">Alpha (two-sided)<input className="c2c-input" inputMode="decimal" value={asmt.alpha} onChange={(e) => setAsmt({ ...asmt, alpha: e.target.value })} /></label>
+            <label className="wb-f">Power<input className="c2c-input" inputMode="decimal" value={asmt.powerTarget} onChange={(e) => setAsmt({ ...asmt, powerTarget: e.target.value })} /></label>
+            <label className="wb-f">Dropout rate<input className="c2c-input" inputMode="decimal" value={asmt.attritionRate} onChange={(e) => setAsmt({ ...asmt, attritionRate: e.target.value })} /></label>
+            <label className="wb-f">Allocation ratio<input className="c2c-input" inputMode="decimal" value={asmt.allocationRatio} onChange={(e) => setAsmt({ ...asmt, allocationRatio: e.target.value })} /></label>
           </div>
-          <button className="btn primary" style={{ height: 32 }} onClick={runAssess} disabled={asmtBusy}>{I.zap} {asmtBusy ? 'Assessing…' : 'Assess defensibility'}</button>
+        {/* The view's ONE primary (§WA.4.2 rule 7). The engine list below used
+            to fill twenty-nine buttons with the same colour, and "Compute" a
+            thirtieth; this is the only one left. */}
+        <button type="button" className="btn primary" onClick={runAssess} disabled={asmtBusy}>{I.zap} {asmtBusy ? 'Assessing…' : 'Assess defensibility'}</button>
 
-          {asmtRes && <DefensibilityResult asmtRes={asmtRes} />}
+        {asmtRes && <DefensibilityResult asmtRes={asmtRes} />}
+      </section>
+
+      {/* Design calculators. The picker and the chosen engine are one section:
+          the pills ARE the section's control, and a card around each of them
+          made two frames for one choice. */}
+      <section className="pj-sec" aria-label="Engines">
+        {/* Not "Design calculators" again: that is the page's `h1`, twelve
+            lines above, and a section heading repeating its page's title is
+            the repetition §WA.4.2 rule 4 retires. The section is the bank of
+            engines; the page is what the bank is for. */}
+        <div className="pj-sec-h"><h2>Engines</h2><span className="sec-sub">{CALCULATORS.length} deterministic calculators, one chosen</span></div>
+        <div className="wb-engines">
+          {CALCULATORS.map(c => (
+            <button
+              key={c.id}
+              type="button"
+              className="btn small"
+              aria-pressed={c.id === activeId}
+              onClick={() => setActiveId(c.id)}
+            >
+              {c.title}
+            </button>
+          ))}
         </div>
-      </div>
 
-      {/* Design calculators */}
-      <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Design calculators</span><span className="s">Choose an engine</span></div>
-        <div className="pj-card-b">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {CALCULATORS.map(c => (
-              <button
-                key={c.id}
-                className={'btn' + (c.id === activeId ? ' primary' : '')}
-                style={{ height: 28, fontSize: 12 }}
-                aria-pressed={c.id === activeId}
-                onClick={() => setActiveId(c.id)}
-              >
-                {c.title}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Remounted per calculator so form state never leaks between engines —
-          a leftover value under a key the next engine also uses would be sent
-          silently. */}
-      <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} onNav={props.onNav} />
+        {/* Remounted per calculator so form state never leaks between engines —
+            a leftover value under a key the next engine also uses would be sent
+            silently. */}
+        <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} onNav={props.onNav} />
+      </section>
 
       {/* The two stored-state capabilities. Everything above is stateless: a
           figure is computed and nothing is kept. These two record — an interim
