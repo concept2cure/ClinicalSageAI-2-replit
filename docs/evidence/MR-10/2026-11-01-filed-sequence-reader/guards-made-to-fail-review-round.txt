@@ -1,0 +1,79 @@
+Review round, 2026-11-02. Each guard the review round added to
+server/services/legacy-importer/filed-sequence-{xml,reader,pointers}.ts was
+removed in turn, and the reader's three test files were run against the
+mutated code: filed-sequence-reader-real-archives, -refuses and -round-trip
+(77 tests). Each file was restored byte-for-byte afterwards and checked with
+cmp. Every guard turns at least one test red.
+
+The first round's guards (guards-made-to-fail.txt) were removed from the
+reader as it stood at 90f1c747.
+
+== mutation: byte-order mark kept (filed-sequence-xml.ts)
+ x filed-sequence-reader-real-archives.test.ts > encodings real publishing tools write > reads a backbone that starts with a UTF-8 byte-order mark, as .NET writes by default
+      Tests  1 failed | 76 passed (77)
+== mutation: declared encoding ignored (filed-sequence-xml.ts)
+ x filed-sequence-reader-real-archives.test.ts > encodings real publishing tools write > decodes a backbone in the encoding it declares, so an accented title is recorded as written
+      Tests  1 failed | 76 passed (77)
+== mutation: quoted literals not skipped in the DOCTYPE scan (filed-sequence-xml.ts)
+ x filed-sequence-reader-real-archives.test.ts > the DOCTYPE check is linear and quote-aware > refuses an internal subset after a ">" inside a quoted system literal
+      Tests  1 failed | 76 passed (77)
+== mutation: DTD-fixed prefixes not in scope (filed-sequence-xml.ts)
+ x filed-sequence-reader-real-archives.test.ts > encodings real publishing tools write > reads backbones that rely on the DTD to fix the xlink, ectd and fda-regional prefixes
+      Tests  1 failed | 76 passed (77)
+== mutation: ICH tree check removed (filed-sequence-xml.ts)
+ x filed-sequence-reader-real-archives.test.ts > the ICH tree and the nesting it allows > refuses a leaf under <m2-8-other>, a section no ICH heading has
+ x filed-sequence-reader-real-archives.test.ts > the ICH tree and the nesting it allows > refuses a leaf under <m3-9-other>, a section no ICH heading has
+ x filed-sequence-reader-real-archives.test.ts > the ICH tree and the nesting it allows > refuses a leaf under <m5-9-other>, a section no ICH heading has
+      Tests  3 failed | 74 passed (77)
+== mutation: nesting cap removed (filed-sequence-xml.ts)
+ x filed-sequence-reader-real-archives.test.ts > the ICH tree and the nesting it allows > refuses a leaf nested deeper than any backbone nests, without walking all of it
+      Tests  1 failed | 76 passed (77)
+== mutation: file hashed per leaf, not once (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > every file is inflated and hashed once > reads a file once however many leaves name it
+      Tests  1 failed | 76 passed (77)
+== mutation: percent-encoding not decoded (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > percent-encoded hrefs > reads a href whose file name the publisher percent-encoded
+ x filed-sequence-reader-real-archives.test.ts > percent-encoded hrefs > still refuses traversal spelled in percent-encoding
+      Tests  2 failed | 75 passed (77)
+== mutation: decoded traversal not refused (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > percent-encoded hrefs > still refuses traversal spelled in percent-encoding
+      Tests  1 failed | 76 passed (77)
+== mutation: reuse not checked against the sequence number (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > a href into an earlier sequence: ICH file reuse > refuses a href into a later sequence
+ x filed-sequence-reader-real-archives.test.ts > a href into an earlier sequence: ICH file reuse > checks an archive-root sequence's reuse against the number its regional backbone gives it
+ x filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a href out of the sequence, without reading it
+      Tests  3 failed | 74 passed (77)
+== mutation: nothing waiting on the filed state still complete (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > a href into an earlier sequence: ICH file reuse > leaves a file reused from a sequence the archive does not hold for the filed state to bind; the sequence is not complete until then
+ x filed-sequence-reader-real-archives.test.ts > modified-file pointers > a withdrawal of a leaf the archive does not hold leaves the sequence not complete
+      Tests  2 failed | 75 passed (77)
+== mutation: four-digit number not required (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > the sequence itself > refuses a number that is not four digits
+      Tests  1 failed | 76 passed (77)
+== mutation: grouped application not chosen (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > the sequence itself > takes the application from the <application> whose files the grouped backbone carries
+      Tests  1 failed | 76 passed (77)
+== mutation: EU envelope not read (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > the sequence itself > reads an EU sequence's number and applicant from its envelope
+      Tests  1 failed | 76 passed (77)
+== mutation: identity check removed (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > what the fold could not tell apart > refuses two leaves of one sequence filed under one heading with one file name, rather than fold one away
+      Tests  1 failed | 76 passed (77)
+== mutation: pointer not recorded in canonical form (filed-sequence-pointers.ts)
+ x filed-sequence-reader-real-archives.test.ts > modified-file pointers > records a grouped-layout pointer in the form the fold binds, so the replaced leaf leaves the filed state
+      Tests  1 failed | 76 passed (77)
+== mutation: pointer may leave its application (filed-sequence-pointers.ts)
+ x filed-sequence-reader-real-archives.test.ts > modified-file pointers > refuses a pointer that climbs past its own application, or names another application
+      Tests  1 failed | 76 passed (77)
+== mutation: pointer may name its own or a later sequence (filed-sequence-pointers.ts)
+ x filed-sequence-reader-real-archives.test.ts > modified-file pointers > refuses a pointer at its own sequence or a later one, wherever that sequence is
+      Tests  1 failed | 76 passed (77)
+== mutation: pointer may name a leaf no longer on file (filed-sequence-pointers.ts)
+ x filed-sequence-reader-real-archives.test.ts > modified-file pointers > refuses a pointer at a leaf already replaced, or at a withdrawal
+      Tests  1 failed | 76 passed (77)
+== mutation: two acts on one leaf in one sequence (filed-sequence-pointers.ts)
+ x filed-sequence-reader-real-archives.test.ts > modified-file pointers > refuses a second leaf of one sequence replacing the leaf another already replaces
+      Tests  1 failed | 76 passed (77)
+== mutation: withdrawal keeps its own heading's section (filed-sequence-pointers.ts)
+ x filed-sequence-reader-real-archives.test.ts > modified-file pointers > a withdrawal takes the withdrawn leaf's section, so the fold withdraws only that leaf
+      Tests  1 failed | 76 passed (77)

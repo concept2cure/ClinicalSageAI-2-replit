@@ -138,6 +138,10 @@ Each is a repair of shipped behaviour (F1): no screen, mount or table.
 | M11 | **Fixed 2026-11-02** (`docs/evidence/MDX-JOURNEY/2026-11-02-m11-device-screens-describe-themselves/`). Registry notes were stale: device-cer says "Dashboard only today", and `CerSurface.tsx:13` still describes sample mode, which was removed. | `shared/constants/ui-surface-registry.ts:540`; `ui-surface-registry.ui-v2.ts:443` | search |
 | M12 | ~~`device-clinical-studies` lists every study in the organization, not the project's.~~ **Corrected 2026-11-02: not a defect.** With a project open the list is the project's (`programForContext` → `useClinicalStudies(program.id)` → `?program_id=`, filtered by the server); with none it is the documented portfolio. `docs/evidence/MDX-JOURNEY/2026-11-02-m11-device-screens-describe-themselves/` | `ClinicalStudiesSurface.tsx:116-117`, `server/routes/mdx-clinical-studies.ts:119-122` | read |
 | M13 | The AnA k510 transmit is in launch scope, while the HTTP package transmit is refused 403 in production. | `ana-launch-scope.inventory.json`; `ui-surface-registry.ts:418-422` | search |
+| M14 | Found in the running app, 2026-11-02: a working document's advice, "place the document into a filing", leads to the eCTD placement dialog, which on a device project has no submission and refuses "B1" as "not a CTD section code". The home filing's own editing copy is now offered beside it (`bda1d5aed1`). | `editor/DocumentWorkbench.tsx` (the unbound working copy note), the Place into filing dialog | walk |
+| M15 | Found in the running app: a device 510(k)'s Author tab offers "Write the protocol in the protocol workspace", and its work areas list Biostatistics. | Project home, Author tab and work areas | walk |
+| M16 | Found in the running app: Engineering's "What's blocking your documents" tags every eSTAR node "DHF", the cover letter included, and its zero "Open risks" card is red. | `mdx/surfaces/EngineeringSurface.tsx` | walk |
+| M17 | **Fixed 2026-11-02** (`docs/evidence/MDX-JOURNEY/2026-11-02-m17-udi-empty-state-door/`): the action is Open Labeling. Found in the running app: UDI's empty state is the passive instruction M8 fixed on Labeling ("appear here once labeling documents are created", with only "Check again"). | `mdx/surfaces/UdiSurface.tsx` | walk |
 
 ## The order of work
 
@@ -165,7 +169,10 @@ on, not raced.
 4. **Dead ends** (F1): M8 (Labeling create, through the existing labeling route) and M9 (Respond's device wording,
    in `ProjectRespond.tsx`, which is under D3 and S10. RIM holds S10, so this goes through the coordinator).
 5. **The journey walked in the running app** (L1 and RULE 4: "a screen is not done until it was opened in the
-   running app and used"). The seeded NeuroPanel-Dx 510(k), from New project to a signed eSTAR filing record, at
+   running app and used"). **Walked 2026-11-02** at 1440 and 390 px, from New project to the draft package, its refusal
+   of a rewritten filed copy and its remedy (`docs/evidence/MDX-JOURNEY/2026-11-02-slice-5-journey-walked/`). The
+   walk found and fixed the home filing's editing copy (`bda1d5aed1`) and the template's section order. It recorded
+   M14–M17 and the 390 px clipping. The seeded NeuroPanel-Dx 510(k), from New project to a signed eSTAR filing record, at
    1440 px and 390 px. Evidence under `docs/evidence/MDX-JOURNEY/`.
 6. **Reach or retire the unreached device capability** (R1, with `01QoxbL`): the list in §6, each reached in the
    device journey's existing screen or put to the founder for retirement.

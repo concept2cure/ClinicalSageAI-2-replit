@@ -78,6 +78,8 @@ const NAMED: Readonly<Record<string, string>> = {
   'nda_submission.exclusivity_claims=orphan_7yr': 'an exclusivity claim, which the designation is checked against',
   'ind_submission.prea_applicable=orphan_exempt': 'a PREA position (the paediatric family)',
   'nda_submission.prea_applicable=orphan_exempt': 'a PREA position (the paediatric family)',
+  'nda_submission.user_fee_paid=orphan_exempt': 'the fee exemption a grant gives, judged against it (nda-submission-user-fee.ts)',
+  'bla_submission.user_fee_paid=orphan_exempt': 'the fee exemption a grant gives, judged against it (nda-submission-user-fee.ts)',
   'csr_report.expedited_pathways=orphan_drug': 'the expedited family redraws this list',
   'briefing_book.expedited_designations=orphan': 'the expedited family redraws this list',
 };

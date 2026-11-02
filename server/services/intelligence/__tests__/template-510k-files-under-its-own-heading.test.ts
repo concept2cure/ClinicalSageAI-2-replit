@@ -22,6 +22,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { SEED_TEMPLATES } from '../template-seeds';
 import { filingSectionKey } from '../../../../shared/regulatory/filing-section-key';
+import { sectionStructureIssues } from '../../../../shared/regulatory/section-code';
 
 const ROOT = path.resolve(__dirname, '../../../..');
 const OUTLINE_SQL = path.join(ROOT, 'migrations/20261005c_k510_denovo_estar_outline_v1_1.sql');
@@ -76,5 +77,20 @@ describe('the seeded 510(k) template files under the eSTAR outline it is scaffol
   it('no two sections file under the same heading', () => {
     const nodes = template!.sections.map((s) => filingSectionKey(keys, s.sectionCode));
     expect(new Set(nodes).size).toBe(nodes.length);
+  });
+
+  /* Walking the journey in the running app, 2026-11-02: a document made from
+     this template warned "These sections are stored in an order that differs
+     from their section codes, and they assemble and export in the stored
+     order". The codes became the outline's keys (M5) but kept the old reading
+     order (bench before biocompatibility, labeling near the end), so every new
+     510(k) document carried the warning and exported out of the eSTAR's order.
+     This is the editor's own rule (shared/regulatory/section-code.ts). */
+  it('is stored in the order its codes belong in, which is the outline\'s order', () => {
+    const stored = [...template!.sections].sort((a, b) => a.ordering - b.ordering).map((s) => s.sectionCode);
+    const issues = sectionStructureIssues(stored);
+    expect(issues.outOfOrder, `stored ${stored.join(', ')}; belongs ${issues.suggestedOrder.join(', ')}`).toBe(false);
+    const outlineOrder = keys.filter((k) => stored.includes(k));
+    expect(stored).toEqual(outlineOrder);
   });
 });

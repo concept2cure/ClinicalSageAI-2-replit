@@ -10,6 +10,7 @@
 
 import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
 import { ORPHAN_FEE_NOTE, orphanFeeStandingOf, orphanReadingOf } from '../../flows/ind-submission-orphan-designation.js';
+import { UNSUPPORTED_EXEMPTION_NOTE, isUnsupportedExemption, userFeeVerdictOf } from '../../flows/nda-submission-user-fee.js';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -413,9 +414,27 @@ const rules: AuditRule[] = [
     question: 'The submission does not confirm that the required PDUFA user fee has been submitted. Under PDUFA VII, the application will not be received for review until the user fee is paid. Can the applicant confirm the fee payment status?',
     /* 2026-11-02 (S4): a granted orphan designation exempts the application
        from the fee, so an unpaid fee is then a claim to confirm (info), not a
-       critical refuse-to-file. Read through the designation's one reader. */
+       critical refuse-to-file. Read through the designation's one reader.
+       The fee is positions now (flows/nda-submission-user-fee.ts): paid,
+       waived and a supported exemption settle it; an exemption the
+       designation does not support is the finding. */
     check(answers) {
-      if (isYes(answers.user_fee_paid)) return null;
+      const verdict = userFeeVerdictOf(answers.user_fee_paid, answers.orphan_designation, false);
+      if (verdict === 'settled') return null;
+      if (isUnsupportedExemption(verdict)) {
+        return finding(
+          this.id,
+          this.dimension,
+          verdict === 'exemption_unconfirmed' ? 'warning' : 'critical',
+          this.title,
+          this.question,
+          'The NDA claims the orphan exemption from the PDUFA application fee.',
+          UNSUPPORTED_EXEMPTION_NOTE[verdict],
+          'FD&C Act Section 736(a)(1)(F), 736(e); FD&C Act Section 526; 21 CFR 316.24',
+          'Include FDA\u2019s orphan-drug designation letter for the indication and confirm that every indication in the NDA is the designated rare disease or condition. If the designation is not granted, pay the fee with the submission.',
+          ['user_fee_paid', 'orphan_designation'],
+        );
+      }
       const standing = orphanFeeStandingOf(orphanReadingOf(answers.orphan_designation));
       const exempt = standing === 'exempt';
       return finding(

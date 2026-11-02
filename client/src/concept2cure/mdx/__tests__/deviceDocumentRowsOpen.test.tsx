@@ -162,3 +162,20 @@ describe('what AnA is told about the device screens is true', () => {
     expect(DEVICE_SCREEN_ACTIONS.join(' | ')).toMatch(/Nothing on these screens sends a filing to an agency/);
   });
 });
+
+/* M17, found walking the journey in the running app (2026-11-02): UDI's empty
+   labeling list said "IFUs, package and on-device labels appear here once
+   labeling documents are created." and offered only "Check again". A labeling
+   document starts in Labeling (M8), so that is the empty state's door. */
+describe('UDI with no labeling document opens Labeling', () => {
+  it('offers Open Labeling, and it opens the Labeling screen', async () => {
+    const empty = { ...UDI, data: { ...UDI.data, labels: [] } };
+    vi.stubGlobal('fetch', vi.fn(async () => answer(200, empty)));
+    H.apiRequest.mockImplementation(async () => answer(200, empty));
+    const onNav = renderHost('device-udi');
+    const open = await screen.findByRole('button', { name: 'Open Labeling' }).catch(() => null);
+    expect(open, 'the empty labeling list offered no way to where a labeling document starts').not.toBeNull();
+    fireEvent.click(open!);
+    expect(onNav).toHaveBeenCalledWith('labeling');
+  });
+});

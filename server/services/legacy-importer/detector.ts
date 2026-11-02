@@ -49,6 +49,9 @@ import JSZip from 'jszip';
 import { ArchiveLimitError, assertZipWithinLimits } from '../archive/safeZip';
 import { readFiledSequences, type FiledArchive, type FiledSequenceLeaf } from './filed-sequence-reader';
 
+/** A regional Module 1 backbone, any region: what the reader reads and what is stored as structure. */
+const REGIONAL_BACKBONE = /(^|\/)m1\/[a-z]{2}\/[a-z]{2}-regional\.xml$/i;
+
 export type DetectedFormat =
   | 'fda_ectd' | 'ema_ectd' | 'pmda_ectd'
   | 'fda_estar' | 'fda_510k_folder' | 'pma_module'
@@ -220,9 +223,14 @@ export async function detectArchive(archivePath: string): Promise<DetectedArchiv
   const read = await readFiledSequences(zip);
   const declared = new Map<string, FiledSequenceLeaf>();
   for (const seq of read.sequences) {
-    for (const leaf of seq.leaves) if (leaf.archivePath) declared.set(leaf.archivePath, leaf);
+    // Ascending: a file reused by a later sequence keeps the section the sequence that filed it gave it.
+    for (const leaf of seq.leaves) if (leaf.archivePath && !declared.has(leaf.archivePath)) declared.set(leaf.archivePath, leaf);
   }
-  findings.push(...readerFindings(read, hasUs || hasEu || hasJp));
+  findings.push(...readerFindings(read, entries.map((e) => e.name)));
+  /* A file whose leaf the reader refused is not placed by its name: what the
+     archive says about it is defective, and the error finding names it. */
+  const refusedFiles = new Set(read.sequences.flatMap((s) =>
+    s.refusals.filter((r) => r.code.startsWith('leaf_') && r.path).map((r) => path.posix.normalize(`${s.root}${r.path}`))));
   const { applicationId, sequence, sponsor } = applicationOfArchive(read);
 
   /* Build per-file mapping. */
@@ -233,7 +241,7 @@ export async function detectArchive(archivePath: string): Promise<DetectedArchiv
     /* Backbone + util files are not "leaves" — they're structure, recognized by
        path. 2026-10-15: their source was 'backbone_xml', so each was stored as
        declared by the backbone at mapping_confidence 1; nothing declares them. */
-    if (/(^|\/)m1\/(us|eu|jp)\/(us|eu|jp)-regional\.xml$/i.test(ent.name)) {
+    if (REGIONAL_BACKBONE.test(ent.name)) {
       files.push(await fileEntry(ent, 'backbone_xml', null, null, null, 'structure_path'));
       continue;
     }
@@ -258,6 +266,11 @@ export async function detectArchive(archivePath: string): Promise<DetectedArchiv
         null, inBackbone.title ? guessArtifactKind(inBackbone.title) : null,
         'backbone_xml',
       ));
+      continue;
+    }
+
+    if (refusedFiles.has(ent.name)) {
+      files.push(await fileEntry(ent, 'attachment', null, null, 'attachment', 'fallback'));
       continue;
     }
 
@@ -304,19 +317,27 @@ export async function detectArchive(archivePath: string): Promise<DetectedArchiv
   return { format, region, applicationId, sequence, sponsor, files, findings };
 }
 
-/** What the filed-sequence reader refused, as findings naming the file. */
-function readerFindings(read: FiledArchive, hasRegionalBackbone: boolean): DetectedFinding[] {
+/**
+ * What the filed-sequence reader refused, as findings naming the file; and each
+ * regional backbone no sequence was read for, named, with the reason.
+ */
+function readerFindings(read: FiledArchive, names: string[]): DetectedFinding[] {
   const out: DetectedFinding[] = read.refusals.map((r) => ({ severity: 'error', code: r.code, message: r.message }));
   for (const seq of read.sequences) {
     const where = `Sequence ${seq.sequence ?? (seq.root || '(unnumbered)')}`;
     for (const r of seq.refusals) {
-      out.push({ severity: 'error', code: r.code, message: `${where}: ${r.message}`, ...(r.path ? { filePath: `${seq.root}${r.path}` } : {}) });
+      out.push({ severity: 'error', code: r.code, message: `${where}: ${r.message}`, ...(r.path ? { filePath: path.posix.normalize(`${seq.root}${r.path}`) } : {}) });
     }
   }
-  if (read.sequences.length === 0 && hasRegionalBackbone) {
+  const readRoots = new Set(read.sequences.map((s) => s.root));
+  for (const backbone of names.filter((n) => REGIONAL_BACKBONE.test(n))) {
+    const root = backbone.slice(0, backbone.search(/m1\/[a-z]{2}\/[a-z]{2}-regional\.xml$/i));
+    if (readRoots.has(root)) continue;
     out.push({
-      severity: 'error', code: 'ich_backbone_missing',
-      message: 'The archive holds a regional backbone but no index.xml. An eCTD sequence declares its leaves in index.xml and the regional backbone it points at, so no leaf is mapped from it.',
+      severity: 'error', code: 'ich_backbone_missing', filePath: backbone,
+      message: names.includes(`${root}index.xml`)
+        ? `${root}index.xml is in a folder that is not the archive root, not named with four digits, and holds no index-md5.txt, so it was not read as a sequence; no leaf is mapped from ${backbone}.`
+        : `${backbone} has no index.xml beside its m1/ folder. An eCTD sequence declares its leaves in index.xml and the regional backbone it points at, so no leaf is mapped from it.`,
     });
   }
   return out;
