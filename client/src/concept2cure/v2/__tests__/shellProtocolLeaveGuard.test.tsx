@@ -63,7 +63,8 @@ async function pending() {
 }
 const rail = () => screen.getByRole('navigation', { name: 'Primary' });
 const palette = () => screen.getByRole('dialog', { name: 'Command palette' });
-const query = () => within(palette()).getByPlaceholderText(/Search surfaces/) as HTMLInputElement;
+// D1-3 (D1.md §D1.F step 1): the field's words name projects, conversations and pages.
+const query = () => within(palette()).getByPlaceholderText(/^Search projects, conversations and pages/) as HTMLInputElement;
 function result(label: string) {
   const button = within(palette()).getAllByRole('button').find(element => element.querySelector('.lbl')?.textContent === label);
   if (!button) throw new Error(`No palette result ${label}`);

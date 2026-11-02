@@ -1,0 +1,46 @@
+# ci:surface-text-ramp for D1-3, in a scratch repo of HEAD's tracked client/src CSS plus the generator (git ls-files answered by the scratch repo), 2026-11-02T01:43:07Z
+# The shared tree holds other sessions' uncommitted sheets, so the ramp is not regenerated there.
+# Made first at 1c48581ae, then remade at 75cc3c1c8 after D4-2 (authoring-v2.css) and D7-D (insights-v2.css) moved the ramp's base; the share is the same both times.
+
+# --- at 1c48581ae ---
+## 1. HEAD (1c48581ae) sheets, HEAD's committed ramp
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+  A stylesheet gained or lost a tinted-surface rule, so the re-based
+exit 1
+## 2. HEAD's sheets, the ramp regenerated from them (R0)
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+exit 0
+## 3. + D1-3's app-v2.css, ramp R0
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+exit 1
+## 4. + the D1-3 share (R0 -> R1)
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+exit 0
+
+# --- at 75cc3c1c8 (the patch filed here) ---
+## 1. HEAD (75cc3c1c8) sheets, HEAD's committed ramp
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+exit 1
+## 2. HEAD's sheets, the ramp regenerated from them (R0)
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+exit 0
+## 3. + D1-3's app-v2.css, ramp R0
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+exit 1
+## 4. + the D1-3 share (R0 -> R1)
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+exit 0
+
+## 5. The share, by selector (R0 -> R1), identical at both bases
+--bg-100: added .c2c-v2 .cmdk-item.on
+--bg-200: added .c2c-v2.dark .cmdk-item.on
+(removed: none; the old .cmdk-item.on fill was --accent-000, which the ramp does not re-base)
+
+## 6. git apply --check of the patch on HEAD's committed (stale) ramp
+error: patch failed: client/src/concept2cure/v2/styles/surface-text-ramp.css:369
+error: client/src/concept2cure/v2/styles/surface-text-ramp.css: patch does not apply
+exit 1 (expected: the committed ramp is already stale at HEAD, coordinator task 42)

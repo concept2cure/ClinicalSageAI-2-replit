@@ -138,7 +138,8 @@ async function walkPalette(page: Page, visits: Visit[], term: string) {
     const row = page.locator('.cmdk-list button').nth(i);
     if (!(await row.isVisible().catch(() => false))) { await page.keyboard.press('Escape'); continue; }
     await row.click();
-    visits.push(await observe(page, term ? `⌘K "${term}"` : '⌘K Jump to', rows[i]));
+    // D1-3 (D1.md §D1.F step 1): the empty list's places are "Go to", which was "Jump to".
+    visits.push(await observe(page, term ? `⌘K "${term}"` : '⌘K Go to', rows[i]));
     await page.keyboard.press('Escape').catch(() => undefined);
   }
 }
@@ -205,7 +206,7 @@ for (const mode of ['biotech', 'medtech'] as const) {
     const visits: Visit[] = [];
 
     await test.step('every rail entry', () => walkRail(page, visits));
-    await test.step('⌘K: Jump to, then each search', async () => {
+    await test.step('⌘K: Go to, then each search', async () => {
       await page.goto('/concept2cure');
       await settle(page);
       await walkPalette(page, visits, '');

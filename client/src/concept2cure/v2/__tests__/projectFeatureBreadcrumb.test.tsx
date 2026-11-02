@@ -207,7 +207,8 @@ describe('⌘K’s hint names Projects for a project feature', () => {
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
     });
-    fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: text } });
+    // D1-3 (D1.md §D1.F step 1): the field's words name projects, conversations and pages.
+    fireEvent.change(screen.getByPlaceholderText(/^Search projects, conversations and pages/), { target: { value: text } });
   }
   const hintOf = (label: string) => {
     const row = Array.from(document.querySelectorAll('.cmdk-item')).find(

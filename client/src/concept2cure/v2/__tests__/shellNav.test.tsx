@@ -265,7 +265,8 @@ describe('the conversation in progress is reached without a rail entry', () => {
       </NavEntitlementsProvider>,
     );
     await settle();
-    fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: 'conversation' } });
+    // D1-3 (D1.md §D1.F step 1): the field's words name projects, conversations and pages.
+    fireEvent.change(screen.getByPlaceholderText(/^Search projects, conversations and pages/), { target: { value: 'conversation' } });
     const hit = screen.getAllByRole('button').find((b) => b.querySelector('.lbl')?.textContent === 'Conversation');
     expect(hit, 'a Conversation result').toBeTruthy();
     fireEvent.click(hit!);
@@ -346,9 +347,10 @@ describe('the governed artifacts across projects, once the Artifacts center, are
     render(<Harness />);
     await settle();
     fireEvent.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: 'Search' }));
-    fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: 'Artifacts' } });
+    // D1-3 (D1.md §D1.F step 1): the field's words name projects, conversations and pages.
+    fireEvent.change(screen.getByPlaceholderText(/^Search projects, conversations and pages/), { target: { value: 'Artifacts' } });
     expect(screen.queryAllByRole('button', { name: /Artifacts center/i })).toEqual([]);
-    fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: 'Vault' } });
+    fireEvent.change(screen.getByPlaceholderText(/^Search projects, conversations and pages/), { target: { value: 'Vault' } });
     // The palette's own row: the sidebar beside it has a Vault place too.
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Command palette' })).getAllByRole('button', { name: /^Vault/ })[0]);
     expect(onNav).toHaveBeenCalledWith('vault');

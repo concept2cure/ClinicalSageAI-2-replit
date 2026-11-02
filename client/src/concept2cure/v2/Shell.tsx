@@ -83,6 +83,14 @@ function openNewConversation(onNav: (id: string) => void) {
   requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>('.landing-input')?.focus());
 }
 
+/** One of the person's conversations, through the shell's one conversation channel
+ *  (C2C_CONVO = { id }). The sidebar's Recents and ⌘K's "Recent conversations" share
+ *  it (D1.md §D1.F step 2); each asks its own leave guard first. */
+function openConversation(id: string, onNav: (id: string) => void) {
+  window.C2C_CONVO = { id };
+  onNav('conversation-thread');
+}
+
 /** Preflight chrome requests before dispatch; surface-owned saved handoffs keep their own controls. */
 function useShellLeaveGuard(onNav?: (id: string) => void) {
   const [notice, notify] = useToast();
@@ -369,8 +377,7 @@ export function Rail({
           onOpen={(id) => {
             if (!canLeave()) return;
             closeOnPhone();
-            window.C2C_CONVO = { id };
-            onNav('conversation-thread');
+            openConversation(id, onNav);
           }}
           onOpenProject={(p) => {
             if (!canLeave()) return;
@@ -520,9 +527,33 @@ function railProjectOf(row: unknown): PaletteProject | null {
   return id && title ? { id, title, code: text(r.code), ws: text(r.ws), status: text(r.status) } : null;
 }
 
+/** One of the person's own AnA conversations, as GET /api/chat/threads lists it. */
+interface RecentThread { id: string; title?: string | null }
+/** The person's recent conversations as the sidebar and the palette read them. */
+interface RecentThreadsRead { threads: RecentThread[]; loading: boolean; failed: boolean }
+const hasThreads = hasKeys<{ threads: unknown }>('threads');
+/** A list of threads; anything else (no `threads`, or not a list) is a failed read. */
+const isThreadList = (v: unknown): v is { threads: RecentThread[] } => hasThreads(v) && Array.isArray(v.threads);
+
+/**
+ * The person's own AnA conversations, newest first (GET /api/chat/threads, the
+ * caller's own threads in the organisation), at most `limit`, read while
+ * `enabled`: always for the sidebar's Recents, while it is open for ⌘K's
+ * "Recent conversations" (D1.md §D1.F step 2). A reply without `threads` is a
+ * failed read; it is never shown as none.
+ */
+function useRecentThreads(limit: number, enabled = true): RecentThreadsRead {
+  const read = useLiveData<{ threads: RecentThread[] }>(enabled ? `/api/chat/threads?limit=${limit}` : null, [], isThreadList);
+  const { data, loading, error } = read;
+  return React.useMemo(
+    () => ({ threads: (data?.threads ?? []).slice(0, limit), loading, failed: Boolean(error) }),
+    [data, loading, error, limit],
+  );
+}
+
 /**
  * Recents, as in Claude's sidebar: up to three recent projects, then the
- * person's own AnA conversations, newest first (GET /api/chat/threads, the same
+ * person's own AnA conversations, newest first (useRecentThreads, the same
  * read Home used to list), under one heading. A reply without `threads` is a
  * failed read and says so; it is never shown as none. The projects come from
  * the list route Home and the palette read; a failed project read shows no
@@ -530,12 +561,8 @@ function railProjectOf(row: unknown): PaletteProject | null {
  */
 function RailRecents({ onOpen, onOpenProject }: { onOpen: (id: string) => void; onOpenProject: (p: PaletteProject) => void }) {
   const headId = React.useId();
-  const read = useLiveData<{ threads: Array<{ id: string; title?: string | null }> }>(
-    `/api/chat/threads?limit=${RAIL_RECENTS}`,
-    [],
-    hasKeys<{ threads: Array<{ id: string; title?: string | null }> }>('threads'),
-  );
-  const threads = read.data?.threads ?? [];
+  const read = useRecentThreads(RAIL_RECENTS);
+  const { threads } = read;
   const projectsRead = useLiveData<unknown[]>(RAIL_PROJECTS_URL, [], isRows);
   const projects = projectsRead.error || !Array.isArray(projectsRead.data)
     ? []
@@ -552,12 +579,12 @@ function RailRecents({ onOpen, onOpenProject }: { onOpen: (id: string) => void; 
       ))}
       {read.loading ? (
         <div className="rail-recents-note" role="status">Loading…</div>
-      ) : read.error ? (
+      ) : read.failed ? (
         <div className="rail-recents-note" role="alert">Couldn&rsquo;t load your conversations.</div>
       ) : threads.length === 0 ? (
         <div className="rail-recents-note">Your conversations appear here.</div>
       ) : (
-        threads.slice(0, RAIL_RECENTS).map((t) => (
+        threads.map((t) => (
           <button key={t.id} type="button" className="nav-item rail-recent" title={t.title || 'Untitled conversation'}
             onClick={() => onOpen(t.id)}>
             <span className="lbl">{(t.title || 'Untitled conversation').slice(0, 120)}</span>
@@ -852,6 +879,7 @@ export function TopBar({
 /* ── ⌘K palette ───────────────────────────────────────────────────────── */
 interface CmdKItem {
   id: string;
+  /** header, note, nav, project, thread (a conversation), action, launch (the launcher) or ask. */
   kind: string;
   label: string;
   hint?: string;
@@ -873,6 +901,57 @@ interface CmdKItem {
   applies?: SurfaceApplies;
   /** A `project` result: the project it opens. */
   project?: PaletteProject;
+  /** A `thread` result: the id of the conversation it reopens. */
+  thread?: string;
+}
+
+/** How many of the person's conversations ⌘K lists with nothing typed (D1.md §D1.F step 2). */
+const PALETTE_RECENTS = 5;
+
+/** The places (RAIL_CORE, by the id each opens). Their rows carry no hint: the
+ *  place's own name says where it goes (D1.md §D1.F step 4). */
+const PALETTE_PLACE_IDS: ReadonlySet<string> = new Set(RAIL_CORE.map((s) => s.target ?? s.id));
+
+/** New task and Message a colleague: the launcher (surfaces/CollabLauncher.tsx), as the
+ *  top bar's New task and Collaborate open it. At phone width the top bar hides both,
+ *  and these rows are where they are (D1.md §D1.F step 3, §D1.B step 3). */
+const LAUNCH_ACTIONS: readonly CmdKItem[] = [
+  { id: 'launch:task', kind: 'launch', label: 'New task', icon: 'checkSquare' },
+  { id: 'launch:collab', kind: 'launch', label: 'Message a colleague', icon: 'messageSquare' },
+];
+const launchHits = (term: string): CmdKItem[] => LAUNCH_ACTIONS.filter((a) => !term || a.label.toLowerCase().includes(term));
+
+/** "Recent conversations" with nothing typed: the person's newest, each reopening
+ *  as the sidebar's Recents reopens it, or the line saying they could not be read.
+ *  Never an empty group: none, or a read still running, adds nothing. */
+function recentItems(recent: RecentThreadsRead): CmdKItem[] {
+  if (recent.loading) return [];
+  const header: CmdKItem = { id: '_hd_recent', kind: 'header', label: 'Recent conversations' };
+  if (recent.failed) return [header, { id: '_note_recent', kind: 'note', label: 'Conversations could not be read, so none are listed here.' }];
+  if (!recent.threads.length) return [];
+  return [header, ...recent.threads.map((t): CmdKItem => ({
+    id: `thread:${t.id}`, kind: 'thread', label: (t.title || 'Untitled conversation').slice(0, 120), icon: 'messageCircle', thread: t.id,
+  }))];
+}
+
+/** Opens a result that leaves the screen: a place or a step (with its screen
+ *  action), a project, a conversation, an AnA action, or the question asked of
+ *  AnA. The palette has already asked the leave guard. */
+function openPaletteResult(
+  it: CmdKItem,
+  question: string,
+  to: { onNav: (id: string) => void; onAct: (id: string) => void; onAsk: (text: string) => void },
+): void {
+  if (it.kind === 'nav' && it.applies) {
+    const res = resolveSurfaceAction(it.applies.actionId, it.applies.params);
+    const target = it.id.startsWith('step:') ? 'project-home' : it.id;
+    if (res.ok) applySurfaceAction(res.directive, () => to.onNav(target));
+    else to.onNav(target);
+  } else if (it.kind === 'nav') to.onNav(it.id);
+  else if (it.kind === 'project' && it.project) openPaletteProject(it.project, to.onNav);
+  else if (it.kind === 'thread' && it.thread) openConversation(it.thread, to.onNav);
+  else if (it.kind === 'action') to.onAct(it.id);
+  else to.onAsk(question);
 }
 
 /** The Projects group under a search: the matching projects, or a line saying why
@@ -942,6 +1021,8 @@ export function CmdK({
   const project = useShellProject();
   /** The organization's projects, which a search matches by title and code. */
   const projectsRead = usePaletteProjects(open);
+  /** The person's newest conversations, listed with nothing typed (the sidebar's read). */
+  const recent = useRecentThreads(PALETTE_RECENTS, open);
   /** The locked destination the human just activated from the palette. */
   const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
   React.useEffect(() => {
@@ -964,7 +1045,7 @@ export function CmdK({
   const items = React.useMemo<CmdKItem[]>(() => {
     /**
      * Every navigation result is built here, so the palette's two branches —
-     * the empty-query "Jump to" list and a search hit — cannot drift on
+     * the empty-query "Go to" list and a search hit — cannot drift on
      * entitlement. They did not merely drift before: NEITHER checked, so ⌘K
      * handed a customer a one-keystroke route into a destination the rail had
      * greyed out and explained. The rail's gate is only wayfinding, and a
@@ -976,6 +1057,8 @@ export function CmdK({
          is what carries the verdict into the branch for TypeScript, and it
          makes the "no verdict ⇒ no lock" rule readable at the call site. */
       const lock = verdict !== null && isLocked(verdict) ? verdict : undefined;
+      /* A place carries no group: its own name says where it goes (D1.md §D1.F step 4). */
+      const group = PALETTE_PLACE_IDS.has(s.id) ? undefined : breadcrumbTierOf(s)?.label;
       return {
         id: s.id,
         kind: 'nav',
@@ -988,9 +1071,7 @@ export function CmdK({
            server's own reason per verdict — never a blanket "upgrade", which
            would be wrong for a module an admin switched off (nothing to buy)
            or one outside the workspace's industry mode (no plan fixes it). */
-        hint: lock
-          ? lockShortReason(lock)
-          : breadcrumbTierOf(s)?.label,
+        hint: lock ? lockShortReason(lock) : group,
         icon: s.icon,
         lock,
       };
@@ -1001,8 +1082,8 @@ export function CmdK({
     /* ⌘K reaches what a person can already see; it is not a catalogue (slice 0
        of .design/client-journey/INFORMATION_ARCHITECTURE.md, section 2). "Jump
        to" listed the first eight registry rows (Plan & features, Artifacts
-       center, a locked Regulatory workspace among them); it lists the places,
-       as the rail does, by the rail's own rule. */
+       center, a locked Regulatory workspace among them); "Go to" (D1-3) lists
+       the places, as the rail does, by the rail's own rule. */
     const places: CmdKItem[] = RAIL_CORE
       .filter((s) => flagAllowsSurface(s.id) && !isLaunchScopeLocked(verdictFor(s.target ?? s.id)))
       .map((s) => ({
@@ -1021,24 +1102,32 @@ export function CmdK({
           applies: { actionId: 'project-home.set-stage', params: { stage: step.id } },
         }))
       : [];
+    /* With nothing typed, the most likely next things, as Claude's palette offers
+       them (D1.md §D1.F step 2): the open project's steps, the person's newest
+       conversations, the places, then the actions. */
     if (!q.trim()) {
       return [
-        { id: '_hd_jump', kind: 'header', label: 'Jump to' },
-        ...places,
         ...(steps.length ? [{ id: '_hd_project', kind: 'header', label: 'This project' }, ...steps] : []),
-        { id: '_hd_actions', kind: 'header', label: 'Quick actions' },
+        ...recentItems(recent),
+        { id: '_hd_jump', kind: 'header', label: 'Go to' },
+        ...places,
+        { id: '_hd_actions', kind: 'header', label: 'Actions' },
         { id: 'run_validation', kind: 'action', label: 'Run validation', hint: 'Action', icon: 'zap' },
         { id: 'export_document', kind: 'action', label: 'Export document', hint: 'Action · e-sign', icon: 'zap' },
+        ...LAUNCH_ACTIONS,
       ];
     }
     if (isCmd) {
-      return AI_ACTIONS.filter((a) => !term || a.label.toLowerCase().includes(term)).map((a) => ({
-        id: a.id,
-        kind: 'action',
-        label: a.label,
-        hint: a.governed ? 'Action · e-sign required' : 'Action',
-        icon: 'zap',
-      }));
+      return [
+        ...AI_ACTIONS.filter((a) => !term || a.label.toLowerCase().includes(term)).map((a) => ({
+          id: a.id,
+          kind: 'action',
+          label: a.label,
+          hint: a.governed ? 'Action · e-sign required' : 'Action',
+          icon: 'zap',
+        })),
+        ...launchHits(term),
+      ];
     }
     const results: CmdKItem[] = [];
     const stepHits = steps.filter((st) => st.label.toLowerCase().includes(term));
@@ -1070,36 +1159,27 @@ export function CmdK({
       return haystack.includes(term);
     }).slice(0, 25);
     if (navs.length) {
-      results.push({ id: '_hd_surfaces', kind: 'header', label: 'Surfaces' });
+      results.push({ id: '_hd_surfaces', kind: 'header', label: 'Pages' });
       navs.forEach((s) => results.push(navResult(s)));
     }
-    const acts = AI_ACTIONS.filter((a) => a.label.toLowerCase().includes(term)).slice(0, 3);
-    if (acts.length) {
-      results.push({ id: '_hd_actions2', kind: 'header', label: 'Actions' });
-      acts.forEach((a) =>
-        results.push({
-          id: a.id,
-          kind: 'action',
-          label: a.label,
-          hint: a.governed ? 'Action · e-sign' : 'Action',
-          icon: 'zap',
-        })
-      );
-    }
-    if (q.trim()) {
-      results.push({ id: '_hd_ana', kind: 'header', label: 'AnA' });
-      results.push({
-        id: 'ask',
-        kind: 'ask',
-        label: `Ask AnA: "${q.trim()}"`,
-        hint: 'Ask AnA',
-        icon: 'sparkles',
-      });
-    }
+    const acts: CmdKItem[] = [
+      ...AI_ACTIONS.filter((a) => a.label.toLowerCase().includes(term)).slice(0, 3).map((a) => ({
+        id: a.id,
+        kind: 'action',
+        label: a.label,
+        hint: a.governed ? 'Action · e-sign' : 'Action',
+        icon: 'zap',
+      })),
+      ...launchHits(term),
+    ];
+    if (acts.length) results.push({ id: '_hd_actions2', kind: 'header', label: 'Actions' }, ...acts);
+    /* The question itself, last: its words say what it does, so it has no group
+       or hint of its own (D1.md §D1.F step 1). */
+    results.push({ id: 'ask', kind: 'ask', label: `Ask AnA: "${q.trim()}"`, icon: 'sparkles' });
     return results;
     /* `verdictFor` is memoised by the provider on the payload, so this list
        rebuilds once — when the verdicts land — and not on every render. */
-  }, [q, term, isCmd, verdictFor, project, isOrgAdmin, platformAdmin, projectsRead]);
+  }, [q, term, isCmd, verdictFor, project, isOrgAdmin, platformAdmin, projectsRead, recent]);
 
   const selectable = React.useMemo(() => items.filter((it) => it.kind !== 'header' && it.kind !== 'note'), [items]);
 
@@ -1117,16 +1197,15 @@ export function CmdK({
         onClose();
         return;
       }
+      /* New task and Message a colleague open the launcher over this screen, as the
+         top bar's icons do: nothing is left, so no leave guard is asked. */
+      if (it.kind === 'launch') {
+        onClose();
+        openLauncher(it.id === 'launch:task' ? 'task' : 'collab');
+        return;
+      }
       if (!canLeave(dialogRef.current)) return;
-      if (it.kind === 'nav' && it.applies) {
-        const res = resolveSurfaceAction(it.applies.actionId, it.applies.params);
-        const target = it.id.startsWith('step:') ? 'project-home' : it.id;
-        if (res.ok) applySurfaceAction(res.directive, () => onNav(target));
-        else onNav(target);
-      } else if (it.kind === 'nav') onNav(it.id);
-      else if (it.kind === 'project' && it.project) openPaletteProject(it.project, onNav);
-      else if (it.kind === 'action') onAct(it.id);
-      else onAsk(q.trim());
+      openPaletteResult(it, q.trim(), { onNav, onAct, onAsk });
       onClose();
     },
     [onNav, onAct, onAsk, q, onClose, canLeave]
@@ -1184,7 +1263,7 @@ export function CmdK({
               setQ(e.target.value);
               setSel(0);
             }}
-            placeholder='Search surfaces, or ">" for actions…'
+            placeholder="Search projects, conversations and pages, or type > for actions"
           />
           {q && (
             <button
@@ -1249,12 +1328,6 @@ export function CmdK({
             );
           })}
           {items.length === 0 && <div className="cmdk-empty">No results for &quot;{q}&quot;</div>}
-        </div>
-        <div className="cmdk-foot">
-          <span>↑↓ navigate</span>
-          <span>↵ select</span>
-          <span>esc close</span>
-          <span className="cmdk-foot-hint">/ jump · &gt; action</span>
         </div>
         {leaveNotice}
       </div>

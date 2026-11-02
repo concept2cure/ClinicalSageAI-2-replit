@@ -119,7 +119,8 @@ function streamTurns(): Array<{ message?: string; screen?: string }> {
 /** Open ⌘K, type a question, and take the "Ask AnA" row. */
 async function askThroughPalette(question: string) {
   fireEvent.keyDown(window, { key: 'k', metaKey: true });
-  const input = await screen.findByPlaceholderText(/Search surfaces/);
+  // D1-3 (D1.md §D1.F step 1): the field's words name projects, conversations and pages.
+  const input = await screen.findByPlaceholderText(/^Search projects, conversations and pages/);
   fireEvent.change(input, { target: { value: question } });
   // A predicate, not `new RegExp(question)`. Semgrep's detect-non-literal-regexp
   // flagged that correctly in shape even though `question` is a test literal:

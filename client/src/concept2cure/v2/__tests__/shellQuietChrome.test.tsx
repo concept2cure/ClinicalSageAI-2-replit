@@ -45,8 +45,6 @@
  * The top bar's cases, red at 16df5ed4b7 (before D1-2): docs/evidence/DESIGN/D1/D1-2/red/.
  */
 import React from 'react';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
@@ -72,6 +70,7 @@ import { registerSurfaceLeaveGuard } from '../navParams';
 import { Rail, TopBar } from '../Shell';
 import { clearShellProject, publishShellProject } from '../shellProject';
 import { SURFACE_VIEWS } from '../surfaceViews';
+import { APP_V2_CSS, rules } from './_cssRules';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
 const NAV = { organizationId: 7, tier: 'enterprise', industryMode: 'biotech', masterAdmin: false, resolved: true, surfaces: [] };
@@ -444,48 +443,8 @@ describe('the lazy fallback says "Loading…" (§D1.B step 8)', () => {
 
 /* ── The sidebar's rules (app-v2.css) ─────────────────────────────────────── */
 
-const CSS = readFileSync(resolve(__dirname, '../styles/app-v2.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-
-interface CssRule { selector: string; body: string; media: string | null }
-
-/** Every rule with its selector, body and enclosing @media (one level, as this sheet nests). */
-function rules(css: string): CssRule[] {
-  const out: CssRule[] = [];
-  let i = 0;
-  const walk = (end: number, media: string | null) => {
-    let start = i;
-    while (i < end) {
-      const ch = css[i];
-      if (ch === '{') {
-        const prelude = css.slice(start, i).trim();
-        let depth = 1;
-        let j = i + 1;
-        while (j < css.length && depth > 0) {
-          if (css[j] === '{') depth++;
-          else if (css[j] === '}') depth--;
-          j++;
-        }
-        if (prelude.startsWith('@media')) {
-          const save = j;
-          i += 1;
-          walk(save - 1, prelude);
-          i = save;
-        } else if (!prelude.startsWith('@')) {
-          out.push({ selector: prelude.replace(/\s+/g, ' '), body: css.slice(i + 1, j - 1), media });
-          i = j;
-        } else {
-          i = j;
-        }
-        start = i;
-        continue;
-      }
-      if (ch === '}' || ch === ';') start = i + 1;
-      i++;
-    }
-  };
-  walk(css.length, null);
-  return out;
-}
+// The parser moved to _cssRules.ts in D1-3, shared with the palette's rules (cmdkPlaces.test.tsx).
+const CSS = APP_V2_CSS;
 
 const ALL = rules(CSS);
 /** The sidebar's own rules: the rail's classes, the rows, the account button. The account menu's
