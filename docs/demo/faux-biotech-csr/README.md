@@ -54,6 +54,18 @@ approval and provider/model readiness as unresolved. A saved JSON file does not
 create a Vault document, clinical table, CSR build, review task, signature or
 filing. No NCT number or agency identifier is invented.
 
+## Current operational seed and shared-editor handoff (2026-11-02)
+
+The existing API-only demonstration seeder now includes `--pack faux`. **This is a data pack, not a CSR module or a second product workflow.** It runs under a separately authorized and explicitly identified Faux Biotech organization, and its seed records are created only through the application's existing Project Management, Data Room, Authoring and Tasking APIs.
+
+The seed first verifies the revision-2 compressed and decompressed SHA-256 against `REVISION_PROVENANCE_v2.json` and the current canonical authoring template `component:clinical_study_report`. It refuses either condition **before creating client/project/source records**. A real operator must provide the numeric tenant through `--organization-id` or `DEMO_EXPECTED_ORGANIZATION_ID`; `--pack all` never includes this customer.
+
+The intended FBT-201 journey is now: Project Management project with document type **CSR** and recorded objective → original source JSON plus fictional protocol/SAP in that project's Data Room → **one existing Authoring editor** with the canonical ICH E3 component template and seeded empty sections → an explicitly **pending** review task with `sourceEntityType: authoring_document` and the exact authoring document UUID. This task uses the existing Tasking-to-editor navigation, not a parallel CSR surface.
+
+The seed reopens the document through the existing `GET /api/authoring/docs?status=all&programId=...` read and verifies project, template and section count; it fails on duplicate titles, wrong template binding, mismatched source hashes or unrelated organizations. None of these steps applies source approval, generates an AnA narrative, completes review, signs electronically, or files a dossier. Those steps require the real governed user journey and its evidence.
+
+**Operator command and verified boundaries:** [Faux demo seed runbook](../../evidence/DEMO/faux/README.md). The full app's native `node --test scripts/demo/launch-demo/faux-demo.test.mjs`, TypeScript/build and hosted browser validation remain required; focused source-level tests against controlled API doubles do not qualify a deployment.
+
 ## Current files
 
 - `FBT201_CSR_SOURCE_SYNTHETIC_v2.json.gz` retains the complete structured source
