@@ -228,3 +228,27 @@ The paths are `client/src/concept2cure/v2/dataConnect.tsx`,
 `docs/evidence/DESIGN/D0/D0-7-project-back/`. The trailers are `Plan: D0` and
 `Completes: client/src/concept2cure/v2/dataConnect.tsx`. The working tree also holds `Projects.tsx`,
 `newProjectWizardLook.test.tsx` and `docs/evidence/DESIGN/D2/D2-2/`, which are D2-2's and not part of this step.
+
+## 2026-11-02: a project opened from a link has only its id
+
+Reporting's running-app pass (`docs/evidence/DESIGN/D7/2026-11-02-reporting/`, finding 1) found that a
+project opened from `?program=<id>` reaches the shell as `{ id }`. `restoreShellProject` rehydrates the id
+only, so the link read "Project". The same is true on every screen that uses the shared link (CMC, Vault,
+Project home and Reporting), and it was true of each hand-drawn copy before it.
+
+`ProjectBack` now takes an optional `name`, the screen's own read of the project. Its label is the first
+non-blank of these, each read as `String(v ?? '').trim()`:
+1. the shell's `title`;
+2. `name`;
+3. the shell's `product`;
+4. the shell's `code`;
+5. "Project".
+
+The shell's title still wins, because the shell names the project that is open now.
+
+- **Red:** `__tests__/projectBack.test.tsx` gained two cases, and both failed against the old component
+  ("Unable to find … name "BX-301 Phase 2"" and "… "anti-IL-23p19 mAb"").
+- **Green:** 12/12. ESLint shows no warnings in either file, before or after.
+
+Reporting passes its own `p.label` when it switches `ReportingHead` over; its `insightsOpenProgram` case
+is the gate. Vault has no read of the project's name of its own, so it keeps the shell's fields.

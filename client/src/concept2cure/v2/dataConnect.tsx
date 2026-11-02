@@ -770,16 +770,25 @@ export function EmptyState({
  *   the global is loosely typed and restored from storage with only its id
  *   checked: a `.trim()` on a non-string would take the work area down.
  *
+ * - **A project opened from a link has only its id** (`?program=<id>`:
+ *   `restoreShellProject` rehydrates the id alone), so the label takes, in
+ *   order: the shell's title, the `name` the screen passes from its own read
+ *   of the project, the shell's product, then its code, then "Project"
+ *   (2026-11-02, Reporting's running-app finding 1).
+ *
  * The look is `.pj-back` in `styles/app-v2.css`, and its focus ring is the
  * shared `.c2c-v2 button:focus-visible`. `ProjectHome`'s "All projects" link
  * shares the class but leaves the project, so it is not this component.
  */
-export function ProjectBack({ onNav }: { onNav?: (id: string) => void }) {
+export function ProjectBack({ onNav, name }: { onNav?: (id: string) => void; name?: string }) {
   const project = useShellProject();
   if (!project) return null;
+  const label = [project.title, name, project.product, project.code]
+    .map(v => String(v ?? '').trim())
+    .find(Boolean) || 'Project';
   return (
     <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>
-      {I.left} {String(project.title ?? '').trim() || 'Project'}
+      {I.left} {label}
     </button>
   );
 }

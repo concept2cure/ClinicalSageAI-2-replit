@@ -58,6 +58,28 @@ describe('ProjectBack, the one way back to the project', () => {
     expect(screen.getByRole('button', { name: 'Project' }).className).toBe('pj-back');
   });
 
+  it("names the project from the screen's own read when the shell holds only its id", () => {
+    /* A project opened from `?program=<id>` reaches the shell as `{ id }`
+       (restoreShellProject rehydrates the id only), so the link read "Project"
+       on Reporting, CMC, Vault and Project home (docs/evidence/DESIGN/D7/
+       2026-11-02-reporting/, finding 1). The screen that has read the project
+       passes its name. */
+    publishShellProject({ id: PID });
+    render(<ProjectBack onNav={vi.fn()} name="  BX-301 Phase 2  " />);
+    expect(screen.getByRole('button', { name: 'BX-301 Phase 2' }).className).toBe('pj-back');
+  });
+
+  it("keeps the shell's title over the screen's name, and falls back to the product or code the shell holds", () => {
+    publishShellProject({ id: PID, title: 'C2C-101' });
+    const { unmount } = render(<ProjectBack onNav={vi.fn()} name="Something older" />);
+    expect(screen.getByRole('button', { name: 'C2C-101' })).toBeTruthy();
+    unmount();
+
+    publishShellProject({ id: PID, product: 'anti-IL-23p19 mAb', code: 'C2C-101' });
+    render(<ProjectBack onNav={vi.fn()} name="   " />);
+    expect(screen.getByRole('button', { name: 'anti-IL-23p19 mAb' })).toBeTruthy();
+  });
+
   it('names a title that is not a string, as the copies did, and does not throw', () => {
     /* The channel is a loosely typed window global, restored from session storage
        with only its id checked; its own reader (`shellProgramName`) reads every
