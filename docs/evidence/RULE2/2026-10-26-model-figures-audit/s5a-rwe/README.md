@@ -10,7 +10,10 @@ covers. The coordinating session approved S5a under F1, on the files this sessio
 ## The defect
 
 The six RWE worksheets in `server/services/rwe/rwe-methodology-knowledge.ts` read every boolean as a truthy test, so
-an omitted fact behaved as a stated false. Enums and numbers were not validated. All 21 booleans were
+an omitted fact behaved as a stated false. Enums were not validated. Three worksheets range-checked their numbers
+when present, and the bias confounder count and the acceptability sample size were not checked: an omitted number,
+NaN or a string (unless it read as an out-of-range number) reached the engine, and a range refusal carried no `code`
+or `field`. All 21 booleans were
 schema-required, but the executor's required-key check only reports, so an omitted fact still reached the engine.
 - **Data-source scoring.** Omitted capture facts scored as absent and were reported as findings:
   - "No validation study for key variable definitions";
@@ -88,17 +91,21 @@ This is a completion: nothing was rebuilt.
 
 ## The change
 
-- **Booleans.** The 12 booleans of data-source scoring, bias assessment and acceptability are optional. Each
+- **Booleans.** The 12 booleans of data-source scoring, bias assessment and acceptability are optional (13 since
+  the review follow-up below). Each
   reports `true`, `false` or `not_stated` through `inputStates`. Each property description says what an omission
   means ("Omitted or null stays not_stated: …"), as the vaccine definitions do. A malformed answer is refused by
   field, never read.
 - **Data-source scoring.** A dimension that reads an unstated fact is `null`, and names it in `notStated`. While any
-  dimension is unassessed, the overall score is `null` and fitness is `not_assessed`. No finding is written for an
-  unstated fact.
+  dimension is unassessed, the overall score is `null` and fitness is `not_assessed`. No dimension gap,
+  recommendation or reliability finding is written for an unstated fact. The per-source-type strengths and
+  limitations are a reference profile; since the review follow-up below, its note says so.
 - **Bias assessment.** An unstated bias stays listed and ungraded (`not_assessed`). The overall grade, and whether
   quantitative bias analysis is required, are given only when no answer could change them.
 - **Regulatory acceptability.** A requirement that reads an unstated fact is `not_assessed`. The overall grade is
-  given only when no answer could change it. No advice is written from an unstated fact.
+  given only when no answer could change it. No advice is written from an unstated fact. The second sentence holds
+  only since the review follow-up below: until then the sensitivity-analysis requirement was fixed at
+  `partially_met`, with no input behind it.
 - **Selection.** `design_propensity_analysis` and `select_rwe_design` output nothing but the choice, so they refuse
   an unstated deciding fact by name. This is conservative: they refuse even a fact the branch they reach would not
   read.
@@ -116,16 +123,23 @@ This is a completion: nothing was rebuilt.
 
 **Residuals, recorded rather than changed:**
 - **Description length.** All six descriptions exceed the 1,024 characters the gateway keeps for OpenAI-compatible
-  providers (1,248 to 1,688). Four already exceeded it before this change. On that path the shared note is cut. The
-  per-property descriptions still carry what an omission means, and the results still carry `not_stated` and
-  `not_assessed`. Moving the note to the front of each description is a follow-up.
-- **Unvalidated optional inputs.** `assessBiasRisk`'s optional `observedEffectEstimate` and `observedCILower`, and
-  `designTargetTrial`'s optional `therapeuticArea`, are still not validated. A string `observedEffectEstimate` still
-  ends in `{error: …}`.
+  providers (1,248 to 1,705 after the review follow-up). Four already exceeded it before this change. On that path
+  the shared note is cut. The per-property descriptions still carry what an omission means, the three assessment
+  descriptions name their `null` or `not_assessed` result within the first 1,024 characters, and the results still
+  carry `not_stated` and `not_assessed`. Moving the note to the front of each description is a follow-up.
+- **Unvalidated optional inputs.** `assessBiasRisk`'s optional `observedEffectEstimate` and `observedCILower` are
+  still not validated. A string `observedEffectEstimate` still ends in `{error: …}`. `designTargetTrial`'s optional
+  `therapeuticArea` is not read at all: the result is the same with or without it, and its description now says so.
 - **Duplicated vocabularies.** The enum vocabularies are listed in both the tool schema and the engine. They are typed
   against the engine's own unions, but a future enum change must touch both files.
 - **Strict selection.** The two selection tools could later read their facts three-valued, refusing only a fact the
   reached branch needs.
+- **Source-type profile.** A trait that bears on a flag without asserting lab, clinical-notes or pharmacy capture
+  stays, labelled by the note: EHR "Disease severity markers available", and claims "Standardized coding
+  (ICD/CPT/NDC)", which no stated `hasProcedures` or `hasPharmacyDispensing` removes. So do traits about size,
+  follow-up and geography, such as claims "Large, representative populations" or a registry's "Limited sample size
+  relative to claims", which can disagree with a stated `estimatedSampleSize`, `longitudinalYears` or
+  `geographicCoverage`.
 
 **User-visible:** when a fact is not given, AnA's real-world-evidence tools report the affected score, bias or
 requirement as not assessed and ask for it. Examples are whether a validation study exists, whether there is an
@@ -164,3 +178,87 @@ through a shim and through the real executor, and corrected it. It:
 
 The critic's corrected edits and red test were applied. Its three status-line edits were re-anchored, because the
 pharmacovigilance and dose-optimization slices landed first.
+
+## Review follow-up (2026-11-02)
+
+An adversarial review of this commit confirmed two defects and three nits; this follow-up corrects all five. A third
+claim, that the acceptability pathway text is FDA-framed whatever the authority, was refuted for this commit: that
+text is unchanged from the parent, and the follow-up does not touch it.
+
+**What already exists (RULE 3).** Each fix completes code named above: the acceptability grading in
+`assessRegulatoryAcceptability` (`ACCEPTABILITY_FLAGS`, `statedBoolean`, `statusFrom`, `unresolved`, `gradeOf`), the
+`sourceTraits` map that `scoreDataSource` returns as `strengthsAndLimitations`, the six definitions, the clinical
+skill's RWE method and `rwe-unstated-inputs.test.ts`. Before this follow-up, `git grep strengthsAndLimitations`
+found only its interface and its return, so adding a field breaks no reader. The executor's handler passes its
+input to the engine whole, so the new input needs no handler change. One optional input is added to an existing
+tool; no tool, route, service file or table is added.
+
+- **The sensitivity-analysis requirement was a default.** "Sensitivity analyses for unmeasured confounding" was fixed
+  at `partially_met`, with no input behind it, and its half credit counted toward the grade. A fully stated
+  post-marketing-safety plan (FDA, nested case-control, claims, all three facts true, n = 5,000) graded `moderate` at
+  5.5 of 7 credits, a grade no answer decided: with the analyses planned it is 6 of 7 (`high`), without them 5 of 7
+  (`moderate`). The review's plan, the same with a new-user active-comparator design, graded `high` at 6 of 7: without
+  the analyses it is 5.5 of 7 (`moderate`).
+- **Decision: an input, read as the other facts are.** `assess_rwe_regulatory_acceptability` takes an optional
+  `sensitivityAnalysesPlanned`, read through `statedBoolean` and `statusFrom` as `preRegistered` and
+  `validatedOutcomes` are. Stated true, the requirement is `met`; stated false, it is `not_met`, with the existing
+  advice on what to include. Omitted or null, it stays `not_stated` and the requirement is `not_assessed`: its credit,
+  0 or 1, joins the unresolved ones, so the grade is given only when no answer could change it, and the `State …`
+  recommendation names it. All seven requirements count, as before. Both plans above are now `not_assessed` with
+  the input left out, `high` with it true and `moderate` with it false.
+- **Why not the alternatives.** A first draft of this follow-up graded over the other six requirements. That scores
+  the missing one at the mean of the six (for their credit c, c/6 = (c + c/6)/7), and it moved 720 fully stated plans
+  from `moderate` to `high`, the favourable direction, with nothing stated. Holding the credit open with no input to
+  resolve it would leave 6,672 of the 10,368 fully stated plans counted below with no way to be graded. Keeping the fixed half
+  credit keeps a default deciding grades.
+- **The data-source profile stated capture facts.** `strengthsAndLimitations` is a fixed profile per `sourceType`,
+  and it was returned whatever the flags said. A claims source listed "Complete pharmacy dispensing capture" and "No
+  lab results or clinical notes" when those facts were not stated, and also beside a stated
+  `hasPharmacyDispensing: false` or `hasLabResults: true`. The profile now carries a `note`: it is typical of the
+  source type and not established for the stated source, and the stated capture facts are in `inputStates` and
+  `dimensions`. The nine traits that assert lab, clinical-notes or pharmacy capture are left out when a stated flag
+  contradicts them. Biomarkers count as lab results and unstructured data as clinical notes, as the tool definitions
+  describe `hasLabResults` and `hasClinicalNotes`: EHR "Treatment response data (biomarkers)" and "Unstructured data
+  requires NLP extraction", and biobank "Genomic/biomarker data linked to clinical records", are among the nine.
+- **Nits.** The three assessment descriptions name their `null` or `not_assessed` result inline, within the first
+  1,024 characters, and no renderer changes. `therapeuticArea`'s description says it is not read. "The defect" no
+  longer says numbers were not validated.
+
+**Results that change for fully stated inputs**, against the code before this follow-up:
+- **Acceptability.** Over the 10,368 plans that state the three existing facts (8 purposes, 9 designs, 6 sources,
+  sample sizes 50, 200 and 5,000, every true/false answer):
+  - `sensitivityAnalysesPlanned: true` raises 3,456 grades one step: 720 `moderate` to `high`, 1,728 `low` to
+    `moderate` and 1,008 `insufficient` to `low`.
+  - `sensitivityAnalysesPlanned: false` lowers 3,216 one step: 288 `high` to `moderate`, 1,488 `moderate` to `low`
+    and 1,440 `low` to `insufficient`.
+  - Left out, 6,672 become `not_assessed`: exactly the plans in the two lists above, whose grade the answer decides.
+    The other 3,696 keep their grade.
+
+  Each changed grade rested on the fixed half credit, and the grade does not read the authority. In every result
+  the sensitivity requirement is `met`, `not_met` or `not_assessed` rather than `partially_met`, with its
+  recommendation to match, `inputStates` carries `sensitivityAnalysesPlanned`, and the note's counts follow. Left
+  out, the input is also named in the `State …` recommendation. Nothing else in the result changes.
+- **Data source.** A trait is dropped only where a stated flag contradicts it: claims with `hasLabResults: true` no
+  longer lists "No lab results or clinical notes". Every profile gains the note. Over all 384 true/false answers to
+  the six flags for the six source types, with one set of stated numbers, nothing else in the result changes.
+
+With another fact left out as well, the answer can also give a grade that was withheld, or withhold one that was
+given. The test's label-expansion plan (FDA, new-user active comparator, linked claims-EHR, every fact true,
+n = 5,000) with `validatedOutcomes` left out grades `high` with the analyses planned (6 or 7 of 7), where it was
+`not_assessed` (5.5 or 6.5 of 7). With `dataSource: 'claims'` as well, it stays `not_assessed`.
+
+**Proof:**
+- `red/review-before.txt`: the follow-up's `rwe-unstated-inputs.test.ts` fails 15 of 77 cases against the engine
+  and definitions as they were before it. The 15 are the 13 new cases, the acceptability definition case (no
+  `sensitivityAnalysesPlanned` property) and the replaced "gives a grade the unstated fact cannot change"; the
+  other 62 pass.
+- `green/review-after.txt`: 77 of 77 pass.
+- `manifest:ana` regenerated: three tool descriptions and the `therapeuticArea` input description change, and
+  `assess_rwe_regulatory_acceptability` gains the optional `sensitivityAnalysesPlanned` input. No tool is added and
+  no renderer changes; `design_target_trial` and `assess_rwe_bias_risk` stay `result-card`.
+- **The neighbourhood passes: 23 files, 2,040 tests.** It covers every S5a unstated-input suite, the skills suites,
+  the tool-selection suites, the tool registry, the RWE engine's own test, and the other RWE code's tests
+  (`rwe-design`, `rwe-study-service`, the real-world-evidence route's 5xx containment and its FAERS honesty
+  contract).
+- **Gates:** typecheck 0; ESLint ratchet unchanged (the engine's warnings stay complexity and max-lines, as before);
+  `ci:one-design-plan` with `Plan: F1`.
