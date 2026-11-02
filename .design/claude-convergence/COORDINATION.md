@@ -77,7 +77,9 @@ S10 (the agency's communications back into the project) is held by RIM since 202
 
 ## What every session does
 
-1. Fetch, read this file, and stay off the locked rows.
+1. Fetch, read this file, and stay off the locked rows. **Check your hooks once per container:** `git config
+   core.hooksPath` must print `.husky/_`; if it prints nothing, run `npx husky`. Without it, `git push` skips every
+   pre-push gate, the plan gate included (RIM found its container so on 2026-11-02).
 2. Every commit names one package (`Plan: <ID>`) and the existing path it finishes (`Completes: <path>`), and stays
    inside that package's ledger paths.
 3. An S package changes behaviour on a screen, never its layout (plan §3). Layout follows the screen's D spec in
