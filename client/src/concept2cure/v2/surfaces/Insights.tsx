@@ -1600,7 +1600,8 @@ function ROSealLine({ seal }: { seal: ReportSeal }) {
   );
 }
 
-/** Export reads; Finalize, when offered, signs. */
+/** Export reads; Finalize, when offered, signs. Both are quiet: the page's one
+    primary is the header's (D7 §D.6), and an open report made Export a second. */
 function ROReportActions({ report, onExport, onFinalize, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
@@ -1609,7 +1610,7 @@ function ROReportActions({ report, onExport, onFinalize, exporting = false }: {
 }) {
   return (
     <div className="ro-rep-actions">
-      <button type="button" className="sp-primary" disabled={exporting} aria-busy={exporting} onClick={() => onExport(report)}>{I.download || I.fileText} {exporting ? 'Preparing PDF…' : 'Export PDF'}</button>
+      <button type="button" className="btn ghost" disabled={exporting} aria-busy={exporting} onClick={() => onExport(report)}>{I.download || I.fileText} {exporting ? 'Preparing PDF…' : 'Export PDF'}</button>
       {onFinalize && <button type="button" className="btn ghost" onClick={onFinalize}>{I.shieldCheck} Finalize…</button>}
     </div>
   );
