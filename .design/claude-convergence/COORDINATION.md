@@ -17,6 +17,7 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | Files | Held by | For | Until |
 |---|---|---|---|
 | `styles/app-v2.css` | **one holder at a time**. Now: the coordinating session, for D0's fixes and the shared `ProjectBack`. Ask for a turn, keep the change a small CSS-only commit, and say when you release it | BUILD_ORDER §2.1 | each step's commit |
+| `Projects.tsx` (the New project wizard only), `styles/project-home-v2.css` (the `.npw-*` block) | the coordinating session | L3, D2-2: the New project wizard's look; `.rpk-*` waits for an `app-v2.css` turn | its commit |
 | `client/src/concept2cure/v2/AnswerLead.tsx`, `icons.tsx`, `C2CForm.tsx`, `dataConnect.tsx` | the coordinating session | D0 (use them; change them only through D0) | D0 closes |
 
 ### Holds on other files (one session per file, plan §4.6)
