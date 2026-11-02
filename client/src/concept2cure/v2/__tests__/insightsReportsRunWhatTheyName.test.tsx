@@ -261,6 +261,40 @@ describe('5 — the catalog follows the program’s product type', () => {
   });
 });
 
+/* Seen in the running app (docs/evidence/DESIGN/D7/2026-11-02-reporting/): the
+   biotech packs were offered by segment alone, so an IND was offered "Build the
+   BLA assembly pack". A pack is offered where the project's filing fits it; one
+   that does not fit is named, with what it is for, never dropped silently. */
+describe('5b — a pack is offered for the filing it is for', () => {
+  const pack = () => document.querySelector('[data-work-area="insights"] > .ph .ph-acts .btn.primary')?.textContent ?? '';
+  const cards = () => [...document.querySelectorAll('.rc-pack .pj-card-t')].map((c) => c.textContent);
+
+  it('an IND is not offered the BLA assembly pack, and is told why', async () => {
+    answer = overview({ leadProgram: { ...LEAD, registryId: 'US_IND' } });
+    renderCanvas();
+    await ready();
+    expect(cards()).not.toContain('BLA assembly pack');
+    expect(pack()).not.toMatch(/BLA assembly pack/);
+    expect(document.querySelector('[data-testid="rc-packs-not-offered"]')?.textContent).toMatch(/Not offered for this IND: the BLA assembly pack \(for a BLA\)\./);
+  });
+
+  it('a BLA is offered it', async () => {
+    answer = overview({ leadProgram: { ...LEAD, registryId: 'US_BLA' } });
+    renderCanvas();
+    await ready();
+    expect(cards()).toContain('BLA assembly pack');
+    expect(pack()).toMatch(/Build the BLA assembly pack/);
+    expect(document.querySelector('[data-testid="rc-packs-not-offered"]')).toBeNull();
+  });
+
+  it('a project whose filing is not recorded is offered every pack, as before', async () => {
+    renderCanvas();
+    await ready();
+    expect(cards()).toContain('BLA assembly pack');
+    expect(document.querySelector('[data-testid="rc-packs-not-offered"]')).toBeNull();
+  });
+});
+
 describe('6 — the report names its scope', () => {
   it('shows the program’s name, not "project — 11"', async () => {
     renderCanvas();

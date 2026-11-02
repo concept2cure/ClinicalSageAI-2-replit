@@ -66,9 +66,51 @@ describe('renderReport — readiness', () => {
         summary: { scopeLabel: 'BX-301', regulatory: { readinessScore: 62, readinessLevel: 'in_progress', applicationDisplayName: 'BLA' } },
       }),
     );
-    expect(r.sections[0].blocks).toContainEqual({ kind: 'summary', text: 'Submission readiness 62% (in progress), evaluated against BLA.' });
+    // A run stored before its gap list was kept: the count was not read, and
+    // the sentence says so rather than calling 62% ready (readiness-statement).
+    expect(r.sections[0].blocks).toContainEqual({ kind: 'summary', text: 'BX-301 scores 62% on submission readiness; its critical-gap count was not read. Evaluated against BLA.' });
     expect(r.sections[0].blocks).toContainEqual({ kind: 'metric', label: 'Submission readiness', value: 62, unit: '%' });
     expect(text(r)).not.toMatch(/confidence/i);
+  });
+
+  /* HS-1008-1, in the digest. The digest printed the evaluator's level raw
+     ("not_ready" in the running app, 2026-11-02) and appended it to the
+     summary in its own words. It now speaks through
+     shared/regulatory/readiness-statement, the one place "ready" is decided,
+     and shows the critical-gap count instead. The renderer reads a STORED
+     summary, so this case gives it a level that disagrees with its gaps
+     (`nearly_ready` beside an open critical gap): today's evaluator would say
+     `not_ready` (readinessEvaluator.ts:178), but the renderer must decide from
+     the gaps, not trust the level. */
+  it('never calls a figure with a critical gap open ready, and prints no raw level', () => {
+    const r = renderReport(
+      digest({
+        providers: [{ provider: 'submission_readiness', observedAt: AT, status: 'partial' }],
+        blockers: [],
+        summary: { scopeLabel: 'BX-204', regulatory: { readinessScore: 100, readinessLevel: 'nearly_ready', applicationDisplayName: 'IND', gaps: [
+          { title: 'Artifact matrix', severity: 'critical', message: 'Required artifacts are not modelled for this filing type.' },
+          { title: 'Cover letter', severity: 'minor', message: 'Draft.' },
+        ] } },
+      }),
+    );
+    const blocks = r.sections[0].blocks;
+    expect(blocks).toContainEqual({ kind: 'summary', text: 'BX-204 scores 100% on submission readiness, with 1 critical gap outstanding. Evaluated against IND.' });
+    expect(blocks).toContainEqual({ kind: 'metric', label: 'Critical gaps', value: 1 });
+    expect(blocks.some((b) => b.kind === 'metric' && b.label === 'Readiness level')).toBe(false);
+    const said = JSON.stringify(blocks);
+    expect(said).not.toMatch(/nearly[ _]ready|not_ready|\bready\b/i);
+  });
+
+  it('says ready only when no critical gap is open', () => {
+    const r = renderReport(
+      digest({
+        providers: [{ provider: 'submission_readiness', observedAt: AT, status: 'ready' }],
+        blockers: [],
+        summary: { scopeLabel: 'BX-204', regulatory: { readinessScore: 96, readinessLevel: 'ready', applicationDisplayName: 'IND', gaps: [] } },
+      }),
+    );
+    expect(r.sections[0].blocks).toContainEqual({ kind: 'summary', text: 'BX-204 is 96% ready. Evaluated against IND.' });
+    expect(r.sections[0].blocks).toContainEqual({ kind: 'metric', label: 'Critical gaps', value: 0 });
   });
 });
 
