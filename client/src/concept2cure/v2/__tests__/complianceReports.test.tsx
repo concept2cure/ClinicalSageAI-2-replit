@@ -391,8 +391,8 @@ describe('entry points', () => {
     });
     const onNav = vi.fn();
     render(<InsightsCanvas onNav={onNav} segment="biotech" surface={{ id: 'insights', label: 'Reporting & analytics' } as never} />);
-    await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
-    const head = document.querySelector('.rc-ana-head') as HTMLElement;
+    await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
+    const head = document.querySelector('[data-work-area="insights"] > .ph') as HTMLElement;
     fireEvent.click(within(head).getByRole('button', { name: 'Audit & compliance reports' }));
     expect(onNav).toHaveBeenCalledWith('compliance-reports');
   });

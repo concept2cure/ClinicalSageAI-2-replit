@@ -45,7 +45,7 @@ afterEach(() => cleanup());
 async function renderCanvas(seg: string) {
   segment = seg;
   render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment={seg} onNav={() => {}} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 function ask(text: string) {
@@ -75,7 +75,7 @@ describe('Insights — no prediction it cannot make', () => {
 
   it.each(['pharma', 'biotech'])('no %s standard pack offers a prediction tile', async (seg) => {
     await renderCanvas(seg);
-    fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
+    fireEvent.click(document.querySelector('[data-work-area="insights"] .ph-acts .btn.primary') as HTMLElement);
     await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
     const grid = document.querySelector('.ro-pack-grid')?.textContent ?? '';
     expect(grid).not.toMatch(/Forecast|Pre-Mortem|Predictive/i);

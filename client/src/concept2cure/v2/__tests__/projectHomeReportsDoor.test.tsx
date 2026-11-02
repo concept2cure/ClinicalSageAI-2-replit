@@ -117,9 +117,9 @@ describe("Project home: a door to this project's reports", () => {
     // The shell mounts the `insights` view (surfaceViews.ts: InsightsCanvas) in Project home's place.
     cleanup();
     render(<InsightsCanvas surface={{ id: 'insights', label: 'Reporting & analytics' } as OwnedSurfaceViewProps['surface']} segment="pharma" onNav={() => {}} />);
-    await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+    await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
     expect(overviewUrls()).toEqual([`/api/insights-canvas/overview?programId=${PID}`]);
-    expect(document.querySelector('.rc-ana-head')?.textContent).toMatch(/BX-204/);
+    expect(document.querySelector('[data-work-area="insights"] > .ph')?.textContent).toMatch(/BX-204/);
     expect(screen.queryByTestId('rc-program-picker')).toBeNull();
   });
 

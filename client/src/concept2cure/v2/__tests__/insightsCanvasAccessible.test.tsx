@@ -74,7 +74,7 @@ describe('a failed canvas load', () => {
     const before = overviewCalls();
     fail = false;
     fireEvent.click(within(panel).getByRole('button', { name: 'Try again' }));
-    await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+    await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
     expect(overviewCalls()).toBe(before + 1);
   });
 });

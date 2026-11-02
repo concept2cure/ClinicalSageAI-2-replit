@@ -66,7 +66,7 @@ afterEach(() => cleanup());
 
 async function renderCanvas() {
   render(<InsightsCanvas {...PROPS} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 describe('Insights — readiness that was not computed', () => {

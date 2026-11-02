@@ -47,7 +47,7 @@ afterEach(() => cleanup());
 async function renderCanvas(seg: string) {
   segment = seg;
   render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment={seg} onNav={() => {}} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 describe('Insights — reports run over the lead project', () => {
@@ -63,7 +63,7 @@ describe('Insights — reports run over the lead project', () => {
 
   it('a pack tile whose type does not run over a project says so and offers no run', async () => {
     await renderCanvas('academic');
-    fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
+    fireEvent.click(document.querySelector('[data-work-area="insights"] .ph-acts .btn.primary') as HTMLElement);
     await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
     expect(screen.getByText(/Runs over project group or account, not a single project\./)).toBeTruthy();
     const runnable = [...document.querySelectorAll('button.ro-pack-card')].map((b) => b.textContent ?? '');

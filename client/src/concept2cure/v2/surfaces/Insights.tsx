@@ -1624,11 +1624,34 @@ const RO_PRESET_SEGMENT: Record<string, string> = {
 export function InsightsCanvas(props: OwnedSurfaceViewProps) {
   const session = useAuthoringReadSession(authService.getUser());
   const changed = session.key > 1;
-  if (changed && !authService.getUser()) return <div className="rc"><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+  if (changed && !authService.getUser()) return <div className="page-inner rc" data-work-area="insights"><ReportingHead onNav={props.onNav} /><div className="rc-canvas">
     <ReportingRecoveryNotice ended />
     <EmptyState icon={I.lock} title="Sign in to read reporting" hint="Your previous reporting data has been withdrawn. Sign in again to reopen Run history." />
   </div></div>;
   return <ReportingCanvasForSession key={session.key} {...props} owner={session} reloaded={changed} />;
+}
+
+/* The work area's back link and page header (D5 §WA.4.2, D7 §D.4 steps 1-2).
+   The title is the surface's registry label. The back link names the open
+   project and goes back to it; with no project open there is nowhere to go
+   back to, so it renders nothing rather than a dead link. Every state of the
+   canvas (signed out, loading, a failed read, no project, the live canvas)
+   carries the same head, so the page is the same page while it loads. */
+function ReportingHead({ onNav, sub, note, acts }: { onNav?: (id: string) => void; sub?: React.ReactNode; note?: React.ReactNode; acts?: React.ReactNode }) {
+  const project = useShellProject();
+  return (
+    <>
+      {project && <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>{I.left} {project.title ?? 'Project'}</button>}
+      <header className="ph">
+        <div>
+          <h1 className="ph-title">{getSurfaceMeta('insights').label}</h1>
+          {sub ? <p className="ph-sub">{sub}</p> : null}
+          {note}
+        </div>
+        {acts ? <div className="ph-acts">{acts}</div> : null}
+      </header>
+    </>
+  );
 }
 
 function ReportingRecoveryNotice({ ended = false }: { ended?: boolean }) {
@@ -1706,7 +1729,6 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   // The displayed run's signature and seal once finalized here, and whether the signing dialog is open.
   const [seal, setSeal] = useState<ReportSeal | null>(null);
   const [signing, setSigning] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   /* Which artifact-pane view is open. 'report' is the report/dashboard/landing
      pane this surface has always shown and stays the default; the other four
@@ -1750,10 +1772,13 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     setQuery('');
     setSigning(false); setBusy(false); setBundlePicks([]);
   }, [contextKey, hasReportingContext]);
-  /* The result sits just above the field; keep it in view as it changes. */
-  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [found, runNote, busy]);
-
-  const pushCanvasTop = () => { const el = canvasRef.current; if (el) el.scrollTop = 0; };
+  /* A view change shows the top of the new view. The views were their own
+     scroll box, reset to 0; on one column the page scrolls, so the views are
+     brought into view only when their top has scrolled above the window. */
+  const pushCanvasTop = () => {
+    const el = canvasRef.current;
+    if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView?.({ block: 'start' });
+  };
 
   /* Generate a report from the REAL governed backend. POST /api/report-os/runs
      computes + persists the run synchronously (no polling); GET /runs/:id/rendered
@@ -2020,15 +2045,16 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
      the overview computed them, on the Report tab's landing canvas, with or
      without a project open. It shows nothing for a reader with no device project. */
   const deviceSection = paneView === 'report' && !report && !dashboard ? <InsightsDevicePortfolio device={data?.device} /> : null;
-  const withoutProgram = (content: React.ReactNode) => <div className="rc" {...ownerEvents}><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>{libraryTabs}{recoveryNotice}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}{deviceSection}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />}</div></div>;
+  const withoutProgram = (content: React.ReactNode) => <div className="page-inner rc" data-work-area="insights" {...ownerEvents}><ReportingHead onNav={onNav} /><div className="rc-canvas" ref={canvasRef}>{libraryTabs}{recoveryNotice}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}{deviceSection}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />}</div></div>;
 
   // Four-state render: loading → honest error → honest empty (no flagship
   // program) → the live canvas. No fixture stand-in in any state.
   const snapshotMatchesProgram = !openProgramId || !data?.openProgram || data.openProgram.programId === openProgramId;
   if (overview.loading || !snapshotMatchesProgram) {
     return (
-      <div className="rc" {...ownerEvents}>
-        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+      <div className="page-inner rc" data-work-area="insights" {...ownerEvents}>
+        <ReportingHead onNav={onNav} />
+        <div className="rc-canvas">
           {recoveryNotice}
           <EmptyState busy icon={I.barChart} title="Loading the reporting canvas…" />
         </div>
@@ -2037,8 +2063,9 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   }
   if (overview.error) {
     return (
-      <div className="rc" {...ownerEvents}>
-        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+      <div className="page-inner rc" data-work-area="insights" {...ownerEvents}>
+        <ReportingHead onNav={onNav} />
+        <div className="rc-canvas">
           {recoveryNotice}
           <ErrorState
             title="Couldn't load the reporting canvas"
@@ -2117,7 +2144,27 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   const p = program; // narrowed non-null past the guards above
 
   return (
-    <div className="rc" {...ownerEvents}>
+    <div className="page-inner rc" data-work-area="insights" {...ownerEvents}>
+      <ReportingHead
+        onNav={onNav}
+        sub={<>Governed reports for {p.code}. Every value is computed from the governed record; nothing is estimated.</>}
+        note={!canWrite && (
+          <p className="ph-sub" role="note" data-testid="rc-view-only">
+            {I.lock} View only. Running a governed report needs an editor role in this organization.
+          </p>
+        )}
+        acts={<>
+          {/* The organisation-wide audit and compliance reports live on their
+              own surface; this is the quiet way there. */}
+          <button type="button" className="btn ghost" onClick={() => onNav && onNav('compliance-reports')}>Audit & compliance reports</button>
+          {/* The one primary: the segment's standard pack. It is a static
+              per-segment default (roPresetsForSeg), and its card in the
+              Reports view says what it is for. */}
+          {suggest.preset && (
+            <button type="button" className="btn primary" onClick={() => suggest.preset && buildPreset(suggest.preset)}>Build the {suggest.preset.label}</button>
+          )}
+        </>}
+      />
       {/* -- Left: report routing pane --
            This column called itself "AnA -- Reporting analyst" and spoke in the
            first person, while what answered was `roRouteReply`: a deterministic
@@ -2142,31 +2189,14 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
            field labelled "Find a report", a Find button, and one result that
            the next search replaces. `roRouteReply` is still its router. -- */}
       <div className="rc-ana">
-        <div className="rc-ana-head">
-          <div className="rc-ana-id"><div><div className="nm">Report builder</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' — ')}</div></div></div>
-          {/* The organisation-wide audit and compliance reports live on their own
-              surface; this is the quiet way there from the program canvas. */}
-          <button type="button" className="pj-card-h-go" onClick={() => onNav && onNav('compliance-reports')}>Audit & compliance reports</button>
-        </div>
-
-        <div className="rc-ana-scroll" ref={scrollRef}>
-          {!canWrite && (
-            <div className="ro-dash-note" role="note" data-testid="rc-view-only">
-              {I.lock} View only. Running a governed report needs an editor role in this organization.
-            </div>
-          )}
+        <div className="rc-ana-scroll">
           {/* Opener. The program facts below are live; the preset is a static
               per-segment default, and says so. */}
           <div className="rc-opener">
             <div className="ro-rep-eyebrow">Where to start</div>
             <div className="rc-op-headline">{suggest.headline}</div>
             <div className="rc-op-body">{suggest.body}</div>
-            {suggest.preset && (
-              <>
-                <button className="rc-preset-btn" onClick={() => suggest.preset && buildPreset(suggest.preset)}>{I.barChart} Build the {suggest.preset.label} {I.right}</button>
-                <div className="rc-op-why">{suggest.preset.why}</div>
-              </>
-            )}
+            {suggest.preset && <div className="rc-op-why">{suggest.preset.why}</div>}
             <div className="rc-chips">
               {suggest.prompts.map((q, i) => (<button key={i} className="rc-chip" disabled={!tierResolved} onClick={() => findReport(q)}>{q}</button>))}
             </div>
