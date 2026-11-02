@@ -1,0 +1,41 @@
+# Mutation 8 (finding: the guard's real-FDA-ESG test depends on the FDA ESG environment). The test stops clearing FDA_ESG_*, and runs with an operator's supported setting FDA_ESG_STAGING_TRANSPORT=rest.
+# File: server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts
+# Replaced (exactly once):
+#   - const clearFdaEnv = () => { for (const k of Object.keys(process.env)) if (k.startsWith('FDA_ESG_')) delete process.env[k]; };
+# With:
+#   + const clearFdaEnv = () => {};
+# Command: env FDA_ESG_STAGING_TRANSPORT=rest npx vitest run server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts
+# Exit code: 1 (non-zero = the test caught the mutation)
+# Restored byte for byte: sha256 a5465d3e6a0c2ae31667f2c984a4a0c66b77bb38c5d111eb590c717bbe226e74 before and after
+# Run: 2026-11-02T01:26:22.964923Z
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > stamps the leaf manifest of the package it hands the gateway, and its binding 9ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply what was sent: a bound transmit’s are overwritten 3ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > and an unbound transmit’s are removed, so nothing reads it as a sequence’s send 3ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent 1ms
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > the FDA ESG transmittal row, written before any connection, carries both 6ms
+   → the gateway wrote its transmittal row: expected undefined to be defined
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  01:26:21
+   Duration  1.82s (transform 1.19s, setup 85ms, import 1.49s, tests 34ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > the FDA ESG transmittal row, written before any connection, carries both
+AssertionError: the gateway wrote its transmittal row: expected undefined to be defined
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:160:61
+    158|     expect(await failureOf(getGateway('fda', 'esg').transmit(request({…
+    159|     const insert = h.calls.find((c) => /INSERT INTO submission_transmi…
+    160|     expect(insert, 'the gateway wrote its transmittal row').toBeDefine…
+       |                                                             ^
+    161|     const metadata = JSON.parse(String(insert!.params[10]));
+    162|     expect(metadata.leafManifest).toEqual(buildLeafManifest(LEAF_MANIF…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

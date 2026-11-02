@@ -61,7 +61,7 @@ describe('EctdCompile — real eCTD assembly', () => {
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
       if (method === 'GET' && url === '/api/ectd-compile/42/filed-state') {
         return ok({ projectIdent: '42', submissionId: 7, throughSequence: '0000',
-          sequences: [{ sequenceNumber: '0000', dispatchStatus: 'acknowledged', filed: true }],
+          sequences: [{ sequenceNumber: '0000', dispatchStatus: 'acknowledged', filed: true, basis: 'transmit' }],
           leaves: [{ ctdSection: '3.2.S.1', fileName: 'general.pdf', title: 'General information', href: 'm3/general.pdf', sequenceNumber: '0000', operation: 'new', md5: 'a'.repeat(32) }] });
       }
       return fallback(method, url, body);
@@ -69,7 +69,7 @@ describe('EctdCompile — real eCTD assembly', () => {
     render(<EctdCompile {...props()} />);
     const m3 = await screen.findByRole('table', { name: 'Module 3: 1 document on file' });
     expect(within(m3).getByText('General information')).toBeTruthy();
-    expect(screen.getByTestId('ectd-filed-state').textContent).toContain('Folds 0000 (acknowledged).');
+    expect(screen.getByTestId('ectd-filed-state').textContent).toContain('1 document is on file, read from what each sequence sent. Includes 0000 (acknowledged by the agency).');
   });
 
   it('shows an honest empty state when no program is open (no fixture)', () => {

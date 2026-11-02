@@ -1,0 +1,268 @@
+# The design's six mutations, re-run by the verifier on the FINAL fold and guard and their final test files.
+# Each: one exact replacement (shown), one test file run, the file restored from a byte copy and checked by sha256.
+# Fold test: server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts (15 cases).
+# Guard test: server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts (5 cases).
+# Summary:
+#   1 fold ignores the transmittal ............ 8 of 15 red (phantom leaf, sent without compile, resend, ...)
+#   2 fold drops the attempt match ............ 1 of 15 red (rejected, then resent)
+#   3 fold drops the organization filter ...... 1 of 15 red (another organisation's transmittal)
+#   4 fold takes the first of two ............. 2 of 15 red (both 'the read throws' cases)
+#   5 guard keeps a caller's leafManifest ..... 2 of 5 red (bound overwritten; unbound removed)
+#   6 guard sends with no leaf manifest ....... 1 of 5 red (the refusal case)
+# After all six: sha256sum -c of both files against the hashes taken before:
+server/services/ectd/prior-sequence-loader.ts: OK
+server/services/submission-gateways/index.ts: OK
+# Script: scratch f1-confirm/mutate.py (source at the end).
+
+/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/f1-confirm/mutate.py:45: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  print(f'# {datetime.datetime.utcnow().isoformat()}Z  tree: HEAD 609ef94c7 + this build')
+# 2026-11-02T02:50:39.431619Z  tree: HEAD 609ef94c7 + this build
+
+## mutation 1: fold ignores the transmittal (reads compiles only)
+# file server/services/ectd/prior-sequence-loader.ts  sha256 before f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845
+# replaced:
+#   -        JOIN submission_transmittals t
+#   -          ON t.organization_id = $1
+#   +        JOIN submission_transmittals t
+#   +          ON FALSE AND t.organization_id = $1
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 22ms
+   → expected [ 'draft-only.pdf', 'general.pdf' ] to deeply equal [ 'general.pdf' ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 8ms
+   → expected [] to deeply equal [ 'csr.pdf', 'general.pdf' ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 8ms
+   → expected { leaves: [], basis: null } to deeply equal { leaves: [ 'resend.pdf' ], …(1) }
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > sent before the guard kept the record and never compiled: the next sequence is refused, the view names it 9ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > bound to its attempt, but the transmittal predates the record and there is no compile: the same refusal 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > another agency’s row carrying a binding to an FDA sequence is not read 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt and sequence under another signature is not read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt under another sequence’s id is not read 4ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > two rows of its own agency bind the attempt, one with no manifest: the read throws, never reads either 6ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > an EU sequence is read from the EMA gateway’s row: the region is compared as one agency, not as text 4ms
+   → expected { leaves: [], basis: null } to deeply equal { leaves: [ 'sent-to-ema.pdf' ], …(1) }
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 9ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 8ms
+   → expected [ [ '0001', 'replace' ] ] to deeply equal [ [ '0000', 'new' ], …(1) ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 6ms
+   → expected [ [ 'general.pdf', '0000', 'a' ] ] to deeply equal [ [ 'general.pdf', '0001', 'b' ] ]
+ Test Files  1 failed (1)
+      Tests  8 failed | 7 passed (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf)
+AssertionError: expected [ 'draft-only.pdf', 'general.pdf' ] to deeply equal [ 'general.pdf' ]
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:130:33
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it
+AssertionError: expected [] to deeply equal [ 'csr.pdf', 'general.pdf' ]
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:140:33
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read
+AssertionError: expected { leaves: [], basis: null } to deeply equal { leaves: [ 'resend.pdf' ], …(1) }
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:155:104
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > two rows of its own agency bind the attempt, one with no manifest: the read throws, never reads either
+AssertionError: promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:254:32
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > an EU sequence is read from the EMA gateway’s row: the region is compared as one agency, not as text
+AssertionError: expected { leaves: [], basis: null } to deeply equal { leaves: [ 'sent-to-ema.pdf' ], …(1) }
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:262:79
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence
+AssertionError: promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:274:31
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles
+AssertionError: expected [ [ '0001', 'replace' ] ] to deeply equal [ [ '0000', 'new' ], …(1) ]
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:290:81
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal
+AssertionError: expected [ [ 'general.pdf', '0000', 'a' ] ] to deeply equal [ [ 'general.pdf', '0001', 'b' ] ]
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:300:79
+# vitest exit 1
+# restored: sha256 after f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845 (IDENTICAL)
+
+## mutation 2: fold drops the transmit_attempt_id match
+# file server/services/ectd/prior-sequence-loader.ts  sha256 before f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845
+# replaced:
+#   -         AND lower(t.metadata -> 'dispatchBinding' ->> 'attemptId') = f.transmit_attempt_id::text
+#   + (nothing)
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 16ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 7ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 10ms
+   → promise rejected "Error: Sequence 0000 is bound to more tha…" instead of resolving
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > sent before the guard kept the record and never compiled: the next sequence is refused, the view names it 9ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > bound to its attempt, but the transmittal predates the record and there is no compile: the same refusal 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > another agency’s row carrying a binding to an FDA sequence is not read 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt and sequence under another signature is not read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt under another sequence’s id is not read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > two rows of its own agency bind the attempt, one with no manifest: the read throws, never reads either 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > an EU sequence is read from the EMA gateway’s row: the region is compared as one agency, not as text 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 5ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read
+AssertionError: promise rejected "Error: Sequence 0000 is bound to more tha…" instead of resolving
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:155:104
+Caused by: Error: Sequence 0000 is bound to more than one transmittal of what it sent (3, 4); what is on file cannot be read, so none of it was.
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:155:5
+# vitest exit 1
+# restored: sha256 after f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845 (IDENTICAL)
+
+## mutation 3: fold drops the transmittal's organization filter
+# file server/services/ectd/prior-sequence-loader.ts  sha256 before f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845
+# replaced:
+#   -          ON t.organization_id = $1
+#   -         AND lower(
+#   +          ON TRUE
+#   +         AND lower(
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 16ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 5ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 12ms
+   → expected { leaves: [ 'foreign.pdf' ], …(1) } to deeply equal { leaves: [ 'mine.pdf' ], …(1) }
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > sent before the guard kept the record and never compiled: the next sequence is refused, the view names it 8ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > bound to its attempt, but the transmittal predates the record and there is no compile: the same refusal 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > another agency’s row carrying a binding to an FDA sequence is not read 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt and sequence under another signature is not read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt under another sequence’s id is not read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > two rows of its own agency bind the attempt, one with no manifest: the read throws, never reads either 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > an EU sequence is read from the EMA gateway’s row: the region is compared as one agency, not as text 3ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 8ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 5ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read
+AssertionError: expected { leaves: [ 'foreign.pdf' ], …(1) } to deeply equal { leaves: [ 'mine.pdf' ], …(1) }
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:180:79
+# vitest exit 1
+# restored: sha256 after f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845 (IDENTICAL)
+
+## mutation 4: fold takes the first of two binding rows instead of throwing
+# file server/services/ectd/prior-sequence-loader.ts  sha256 before f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845
+# replaced:
+#   -     if (read.sent.length > 1) {
+#   +     if (false) {
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 24ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 9ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > sent before the guard kept the record and never compiled: the next sequence is refused, the view names it 12ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > bound to its attempt, but the transmittal predates the record and there is no compile: the same refusal 9ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > another agency’s row carrying a binding to an FDA sequence is not read 8ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt and sequence under another signature is not read 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt under another sequence’s id is not read 6ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > two rows of its own agency bind the attempt, one with no manifest: the read throws, never reads either 18ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > an EU sequence is read from the EMA gateway’s row: the region is compared as one agency, not as text 5ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 11ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 7ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 13 passed (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > two rows of its own agency bind the attempt, one with no manifest: the read throws, never reads either
+AssertionError: promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:254:32
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence
+AssertionError: promise resolved "{ throughSequence: '0000', …(2) }" instead of rejecting
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:274:31
+# vitest exit 1
+# restored: sha256 after f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845 (IDENTICAL)
+
+## mutation 5: guard keeps a caller's metadata.leafManifest
+# file server/services/submission-gateways/index.ts  sha256 before f2329d357d7c46e6827e2db069e485721b61a78e4f421e3c5d00c62c6ef12a98
+# replaced:
+#   -           leafManifest: sentLeaves,
+#   +           leafManifest: (req.metadata as Record<string, unknown> | undefined)?.leafManifest ?? sentLeaves,
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > stamps the leaf manifest of the package it hands the gateway, and its binding 15ms
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply what was sent: a bound transmit’s are overwritten 16ms
+   → expected [ { ctdSection: '2.5', …(3) } ] to deeply equal [ { ctdSection: '2.2', …(7) } ]
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > and an unbound transmit’s are removed, so nothing reads it as a sequence’s send 5ms
+   → expected { applicationId: 'IND123456', …(5) } to not have property "leafManifest"
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent 2ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > the FDA ESG transmittal row, written before any connection, carries both 4ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply what was sent: a bound transmit’s are overwritten
+AssertionError: expected [ { ctdSection: '2.5', …(3) } ] to deeply equal [ { ctdSection: '2.2', …(7) } ]
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:128:35
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > and an unbound transmit’s are removed, so nothing reads it as a sequence’s send
+AssertionError: expected { applicationId: 'IND123456', …(5) } to not have property "leafManifest"
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:140:24
+# vitest exit 1
+# restored: sha256 after f2329d357d7c46e6827e2db069e485721b61a78e4f421e3c5d00c62c6ef12a98 (IDENTICAL)
+
+## mutation 6: guard sends a bound transmit with no leaf manifest
+# file server/services/submission-gateways/index.ts  sha256 before f2329d357d7c46e6827e2db069e485721b61a78e4f421e3c5d00c62c6ef12a98
+# replaced:
+#   -   if (!Array.isArray(req.bundle?.leafManifest)) {
+#   -     throw new ValidationError(
+#   +   if (!Array.isArray(req.bundle?.leafManifest)) return undefined;
+#   +   if (false) {
+#   +     throw new ValidationError(
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > stamps the leaf manifest of the package it hands the gateway, and its binding 9ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply what was sent: a bound transmit’s are overwritten 3ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > and an unbound transmit’s are removed, so nothing reads it as a sequence’s send 3ms
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent 6ms
+   → the transmit was refused: expected null to be an instance of ValidationError
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > the FDA ESG transmittal row, written before any connection, carries both 5ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent
+AssertionError: the transmit was refused: expected null to be an instance of ValidationError
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:148:45
+# vitest exit 1
+# restored: sha256 after f2329d357d7c46e6827e2db069e485721b61a78e4f421e3c5d00c62c6ef12a98 (IDENTICAL)
+
+## mutate.py
+#!/usr/bin/env python3
+"""Verifier's re-run of the design's six mutations on the FINAL tree (fold and guard as they stand now).
+Each: back the file up, apply one replacement (must match exactly once), run the one test file, restore
+the backup byte for byte, and prove it by sha256. Output goes to stdout; nothing else is touched."""
+import hashlib, subprocess, sys, shutil, os, datetime
+REPO = '/home/user/ClinicalSageAI-2-replit'
+LOADER = 'server/services/ectd/prior-sequence-loader.ts'
+GUARD = 'server/services/submission-gateways/index.ts'
+FOLD_TEST = 'server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts'
+GUARD_TEST = 'server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts'
+M = {
+ 1: ('fold ignores the transmittal (reads compiles only)', LOADER, FOLD_TEST,
+     "       JOIN submission_transmittals t\n         ON t.organization_id = $1\n",
+     "       JOIN submission_transmittals t\n         ON FALSE AND t.organization_id = $1\n"),
+ 2: ('fold drops the transmit_attempt_id match', LOADER, FOLD_TEST,
+     "        AND lower(t.metadata -> 'dispatchBinding' ->> 'attemptId') = f.transmit_attempt_id::text\n", ""),
+ 3: ("fold drops the transmittal's organization filter", LOADER, FOLD_TEST,
+     "         ON t.organization_id = $1\n        AND lower(", "         ON TRUE\n        AND lower("),
+ 4: ('fold takes the first of two binding rows instead of throwing', LOADER, FOLD_TEST,
+     "    if (read.sent.length > 1) {", "    if (false) {"),
+ 5: ("guard keeps a caller's metadata.leafManifest", GUARD, GUARD_TEST,
+     "          leafManifest: sentLeaves,", "          leafManifest: (req.metadata as Record<string, unknown> | undefined)?.leafManifest ?? sentLeaves,"),
+ 6: ('guard sends a bound transmit with no leaf manifest', GUARD, GUARD_TEST,
+     "  if (!Array.isArray(req.bundle?.leafManifest)) {\n    throw new ValidationError(",
+     "  if (!Array.isArray(req.bundle?.leafManifest)) return undefined;\n  if (false) {\n    throw new ValidationError("),
+}
+sha = lambda p: hashlib.sha256(open(os.path.join(REPO, p), 'rb').read()).hexdigest()
+def run(n):
+    name, path, test, old, new = M[n]
+    full = os.path.join(REPO, path); bak = f'/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/f1-confirm/mut-{n}.bak'
+    before = sha(path); shutil.copyfile(full, bak)
+    text = open(full).read(); assert text.count(old) == 1, f'mutation {n}: text found {text.count(old)} times'
+    print(f'\n## mutation {n}: {name}\n# file {path}  sha256 before {before}\n# replaced:'); [print(f'#   - {l}') for l in old.splitlines()]
+    [print(f'#   + {l}') for l in (new.splitlines() or ['(nothing)'])]
+    try:
+        open(full, 'w').write(text.replace(old, new))
+        out = subprocess.run(['npx', 'vitest', 'run', test], cwd=REPO, capture_output=True, text=True)
+        lines = [l for l in (out.stdout + out.stderr).splitlines() if any(k in l for k in ('✓', '×', 'FAIL', 'AssertionError', 'Error:', 'Tests ', 'Test Files', 'expected', '❯ server'))]
+        import re; lines = [re.sub(r'\x1b\[[0-9;]*m', '', l) for l in lines]
+        print('\n'.join(lines[:60])); print(f'# vitest exit {out.returncode}')
+    finally:
+        shutil.copyfile(bak, full)
+    after = sha(path); print(f'# restored: sha256 after {after} ({"IDENTICAL" if after == before else "DIFFERENT"})')
+    assert after == before
+print(f'# {datetime.datetime.utcnow().isoformat()}Z  tree: HEAD 609ef94c7 + this build')
+for n in [int(a) for a in sys.argv[1:]]: run(n)

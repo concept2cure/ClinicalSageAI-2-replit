@@ -1,0 +1,12 @@
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Projects.tsx
+   120:8   warning  Function 'programTypeFor' has a complexity of 43. Maximum allowed is 15              complexity
+   325:1   warning  Function 'NewProjectWizardSession' has too many lines (693). Maximum allowed is 100  max-lines-per-function
+   325:1   warning  Function 'NewProjectWizardSession' has a complexity of 137. Maximum allowed is 15    complexity
+   502:29  warning  Async arrow function has a complexity of 39. Maximum allowed is 15                   complexity
+   728:1   warning  File has too many lines (1334). Maximum allowed is 500                               max-lines
+  1338:8   warning  Function 'Projects' has too many lines (342). Maximum allowed is 100                 max-lines-per-function
+  1427:33  warning  Arrow function has a complexity of 27. Maximum allowed is 15                         complexity
+
+✖ 7 problems (0 errors, 7 warnings)
+

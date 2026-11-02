@@ -1,0 +1,112 @@
+# mutant m2-cue-twice
+# planted: 'eyebrow: <>{cue.icon}{spoken}</> }' -> 'eyebrow: <>{cue.icon}{spoken}</>, headline: <><span className="al-cue">{cue.icon}</span>{spoken}{\' \'}</> }'
+# exit 1
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > an urgent or good lead with no eyebrow carries its cue on the headline > urgent: the icon, then the hidden "Urgent:", then the headline 49ms
+ ✓ client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > an urgent or good lead with no eyebrow carries its cue on the headline > good: the icon, then the hidden "On track:", then the headline 9ms
+ ✓ client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > an urgent or good lead with no eyebrow carries its cue on the headline > urgent with no eyebrow and no headline: the cue moves to the body, so it never vanishes 5ms
+ × client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > an urgent or good lead with an eyebrow carries its cue on the eyebrow, once > urgent: the eyebrow keeps its icon and gains the hidden "Urgent:"; the headline is untouched 15ms
+   → expected <span class="al-cue">…(1)</span> to be null
+ × client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > an urgent or good lead with an eyebrow carries its cue on the eyebrow, once > good: the eyebrow keeps its icon and gains the hidden "On track:"; the headline is untouched 8ms
+   → expected <span class="al-cue">…(1)</span> to be null
+ ✓ client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > a calm lead stays as it was > calm with no eyebrow: no icon, no hidden words, the headline alone 3ms
+ ✓ client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > a calm lead stays as it was > calm with an eyebrow: the eyebrow has no icon and no hidden words 5ms
+ ✓ client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > the headline cue looks like the eyebrow cue (app-v2.css) > urgent is --warning and good is --success, as on .al-k 3ms
+ ✓ client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > the headline cue looks like the eyebrow cue (app-v2.css) > the icon is 14px, the size of the eyebrow icon 14ms
+ ✓ client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > the headline cue looks like the eyebrow cue (app-v2.css) > the hidden words use the one .sr-only rule, which hides them visually 1ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  03:13:24
+   Duration  1.67s (transform 211ms, setup 272ms, import 250ms, tests 118ms, environment 677ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > an urgent or good lead with an eyebrow carries its cue on the eyebrow, once > urgent: the eyebrow keeps its icon and gains the hidden "Urgent:"; the headline is untouched
+AssertionError: expected <span class="al-cue">…(1)</span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="al-cue"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-clock"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <polyline
+      points="12 6 12 12 16 14"
+    />
+  </svg>
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx:92:57
+     90|
+     91|       const h = lead().querySelector<HTMLElement>('.al-h')!;
+     92|       expect(h.querySelector('.al-cue, svg, .sr-only')).toBeNull();
+       |                                                         ^
+     93|       expect(h.textContent).toBe(HEAD);
+     94|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx > an urgent or good lead with an eyebrow carries its cue on the eyebrow, once > good: the eyebrow keeps its icon and gains the hidden "On track:"; the headline is untouched
+AssertionError: expected <span class="al-cue">…(1)</span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="al-cue"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/answerLeadToneCue.test.tsx:92:57
+     90|
+     91|       const h = lead().querySelector<HTMLElement>('.al-h')!;
+     92|       expect(h.querySelector('.al-cue, svg, .sr-only')).toBeNull();
+       |                                                         ^
+     93|       expect(h.textContent).toBe(HEAD);
+     94|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

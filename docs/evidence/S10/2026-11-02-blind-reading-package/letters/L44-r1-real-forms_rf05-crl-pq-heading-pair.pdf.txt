@@ -1,0 +1,81 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Public Health Service
+Food and Drug Administration
+Silver Spring MD 20993
+NDA 219876
+COMPLETE RESPONSE
+Meridian Pharma, Inc.
+Attention: Laura Chen, PharmD
+Vice President, Regulatory Affairs
+55 Corporate Drive
+Bridgewater, NJ 08807
+Dear Dr. Chen:
+Please refer to your new drug application (NDA) dated December 18, 2025, received December 18,
+2025, and your amendments, submitted pursuant to section 505(b)(1) of the Federal Food, Drug, and
+Cosmetic Act (FDCA) for Lumetrex (lumetinib) tablets, 25 mg and 50 mg.
+We have completed our review of this application, as amended, and have determined that we cannot
+approve this application in its present form. We have described our reasons for this action below
+and, where possible, our recommendations to address these issues.
+CLINICAL/STATISTICAL
+1. Study LMX-301 did not demonstrate a statistically significant treatment effect on the primary
+endpoint (change from baseline in FEV1 at Week 24). The estimated treatment difference was
+42 mL (95% CI: -8, 92; p=0.10).
+Recommendation: Conduct an additional adequate and well-controlled trial that demonstrates a
+clinically meaningful and statistically significant effect on the primary endpoint.
+2. The safety database is insufficient to characterize the risk of QT prolongation at the proposed
+50 mg dose. Exposure-response analyses suggest a mean QTcF increase of 12 ms at the Cmax of the
+50 mg dose.
+Recommendation: Conduct a thorough QT study or provide concentration-QTc analyses from studies
+with adequate exposure margins, consistent with ICH E14/S7B Q&As.
+Reference ID: 5623456
+
+-- 1 of 3 --
+
+NDA 219876
+Page 2
+PRODUCT QUALITY
+DRUG PRODUCT
+3. The proposed dissolution acceptance criterion (Q = 70% at 30 minutes) is not acceptable. The
+data from the registration batches support a criterion of Q = 80% at 30 minutes. Revise the
+acceptance criterion and submit the updated specification.
+4. The stability data do not support the proposed 36-month expiration dating period. Based on the
+submitted data, an expiration dating period of 24 months is supported.
+FACILITY INSPECTIONS
+5. During a recent inspection of the Meridian Pharma manufacturing facility (FEI 3001234567) for
+this application, our field investigator conveyed deficiencies to the representative of the
+facility. Satisfactory resolution of these deficiencies is required before this application may
+be approved.
+Reference ID: 5623456
+
+-- 2 of 3 --
+
+NDA 219876
+Page 3
+PRESCRIBING INFORMATION
+We reserve comment on the proposed labeling until the application is otherwise adequate. We
+encourage you to review the labeling review resources on the PLR Requirements for Prescribing
+Information and Pregnancy and Lactation Labeling Final Rule websites.
+SAFETY UPDATE
+When you respond to the above deficiencies, include a safety update as described at 21 CFR
+314.50(d)(5)(vi)(b). The safety update should include data from all nonclinical and clinical
+studies/trials of the drug under consideration regardless of indication, dosage form, or dose level.
+OTHER
+Within one year after the date of this letter, you are required to resubmit or take one of the
+other actions available under 21 CFR 314.110. If you do not take one of these actions, we may
+consider your lack of response a request to withdraw the application under 21 CFR 314.65.
+A resubmission must fully address all the deficiencies listed in this letter and should be clearly
+marked with "RESUBMISSION" in large font, bolded type at the beginning of the cover letter of the
+submission.
+The drug product may not be legally marketed until you have been notified in writing that this
+application is approved.
+If you have any questions, call Mark Davis, Regulatory Project Manager, at (301) 796-4321.
+Sincerely,
+{See appended electronic signature page}
+Sally Turner, MD
+Director
+Office of Pulmonary, Allergy, and Critical Care
+Office of New Drugs
+Center for Drug Evaluation and Research
+Reference ID: 5623456
+
+-- 3 of 3 --

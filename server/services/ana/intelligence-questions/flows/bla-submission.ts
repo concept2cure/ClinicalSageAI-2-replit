@@ -24,6 +24,7 @@
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 import { OTHER_POSITION } from '../../../../../shared/types/intelligence-questions.js';
+import { orphanProgrammeLeaves, usOrphanDesignationField } from './ind-submission-orphan-designation.js';
 
 export function createBlaSubmissionFlow(): FlowDefinition {
   return {
@@ -168,13 +169,14 @@ export function createBlaSubmissionFlow(): FlowDefinition {
               { value: 'rmat', label: 'RMAT (Regenerative Medicine Advanced Therapy)' },
             ],
           },
-          {
-            id: 'orphan_designation',
-            label: 'Orphan Drug Designation',
-            type: 'yes_no',
+          /* 2026-11-02 (S4): a yes/no whose help promised a "waiver" of the
+             user fee (it is an exemption, and only for a 351(a) BLA) and 7
+             years of exclusivity on designation (it attaches on approval). The
+             positions every interview offers. */
+          usOrphanDesignationField({
             helpText:
-              'Per the Orphan Drug Act (21 USC 360bb) and 21 CFR 316, orphan designation applies to products intended for conditions affecting fewer than 200,000 persons in the US. Provides 7 years of market exclusivity, tax credits, and waiver of PDUFA user fees.',
-          },
+              'Orphan-drug designation under FD&C Act §526 (21 USC 360bb) and 21 CFR part 316, for a product for a disease or condition affecting fewer than 200,000 persons in the US. For a 351(a) BLA it exempts the application from the PDUFA application fee unless the application also includes a non-orphan indication; a 351(k) biosimilar application pays BsUFA fees. Approval for the designated use may carry 7 years of orphan exclusivity (FD&C Act §527).',
+          }),
         ],
         branches: [
           {
@@ -239,7 +241,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             label: 'PDUFA User Fee Paid',
             type: 'yes_no',
             helpText:
-              'Per 21 USC 379h (PDUFA), the application fee must be paid before the BLA will be received. The FY2026 application fee exceeds $4 million. Orphan products may qualify for a fee waiver.',
+              'Per 21 USC 379h (PDUFA), the application fee must be paid before a 351(a) BLA will be received. The FY2026 application fee exceeds $4 million. A 351(a) BLA for an orphan-designated product is exempt from the application fee unless it also includes an indication for other than a rare disease or condition (FD&C Act §736(a)(1)(F)); the exemption is claimed on the user fee cover sheet, not requested as a waiver. A 351(k) biosimilar application pays BsUFA fees, which hold no orphan exemption.',
           },
           {
             id: 'pdufa_goal_date',
@@ -1556,13 +1558,14 @@ export function createBlaSubmissionFlow(): FlowDefinition {
           /* 2026-11-02 (S4): xn_orphan_without_natural_history read
              `natural_history` / `disease_natural_history`, asked by no flow, and
              triggered on `expedited_designations` / `special_designations`, which
-             none of the four flows it applies to asks. Dead on both sides. */
+             none of the four flows it applies to asks. Dead on both sides. The
+             orphan leaves are the rule's own predicate (orphanProgrammeLeaves). */
           {
             id: 'natural_history',
             label: 'How natural-history data enter the efficacy evidence',
             type: 'select',
             required: true,
-            visibleWhen: { anyOf: [{ field: 'orphan_designation', operator: 'eq', value: true }, { field: 'therapeutic_area', operator: 'eq', value: 'rare_disease' }] },
+            visibleWhen: { anyOf: [...orphanProgrammeLeaves(['orphan_designation']), { field: 'therapeutic_area', operator: 'eq', value: 'rare_disease' }] },
             helpText:
               'What role natural-history data play in the evidence of effectiveness for this licence.',
             options: [

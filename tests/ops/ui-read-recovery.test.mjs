@@ -109,6 +109,8 @@ function fixture() {
       if (Object.hasOwn(stubs, spec)) return stubs[spec];
       if (aliases[spec]) return load(aliases[spec]);
       if (spec === './icons') return { I: { alertTriangle: '!', close: 'x' } };
+      /* dataConnect's ProjectBack reads the open project; these cases drive the reads, never that link. */
+      if (spec === './shellProject') return { useShellProject: () => null };
       if (spec.endsWith('/sessionEnd')) return { announceSessionEnded: r => state.ended.push(r), sessionEndReasonOfResponse: res => state.sessionReason(res) };
       let target = path.posix.normalize(path.posix.join(path.posix.dirname(relative), spec));
       if (!path.extname(target)) target += '.ts';

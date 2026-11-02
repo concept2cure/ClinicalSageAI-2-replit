@@ -18,6 +18,7 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { orphanProgrammeLeaves, usOrphanDesignationField } from './ind-submission-orphan-designation.js';
 
 export function createNdaSubmissionFlow(): FlowDefinition {
   return {
@@ -168,20 +169,13 @@ export function createNdaSubmissionFlow(): FlowDefinition {
           },
           /* 2026-11-02 (S4): the NDA asked no orphan designation at all, so no
              rule could know a marketing application was for a designated drug.
-             The IND's vocabulary; converging the designation vocabularies
-             across flows is its own change (S4, #7). */
-          {
-            id: 'orphan_designation',
-            label: 'Orphan-drug designation for this indication',
-            type: 'select',
-            options: [
-              { value: 'granted', label: 'Yes — orphan designation granted' },
-              { value: 'applied', label: 'Requested — pending FDA decision' },
-              { value: 'not_applicable', label: 'No / not applicable' },
-            ],
+             The positions every interview offers
+             (ind-submission-orphan-designation.ts). */
+          usOrphanDesignationField({
+            label: 'US orphan-drug designation for this indication',
             helpText:
               'Orphan-drug designation is granted under FD&C Act §526 (21 USC 360bb) and 21 CFR part 316 for a drug for a rare disease or condition (in general, fewer than 200,000 persons in the US). The request must be made before the marketing application is submitted (FD&C Act §526(a)(1)). Approval of a designated drug for the designated use may carry 7-year orphan exclusivity (FD&C Act §527; 21 USC 360cc).',
-          },
+          }),
           {
             id: 'accelerated_pathway',
             label: 'Expedited Program Designations',
@@ -301,8 +295,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'PDUFA User Fee Required',
             message:
-              'The Prescription Drug User Fee must be paid at the time of NDA submission. FDA will refuse to file the application without fee payment per FD&C Act section 736(e) (21 USC 379h). Fee waivers may be available for small businesses or orphan products under certain conditions.',
-            reference: 'FD&C Act section 736 (21 USC 379h), including 736(e); PDUFA',
+              'The Prescription Drug User Fee must be paid at the time of NDA submission: an application is not accepted for filing until the fees owed are paid (FD&C Act section 736(e), 21 USC 379h). An application for a drug designated under section 526 is exempt from the application fee unless it also includes an indication for other than a rare disease or condition (section 736(a)(1)(F)); for such an application, "not paid" is correct and the exemption is claimed on the user fee cover sheet (Form FDA 3397). A waiver or reduction, for example for a small business submitting its first application, is a separate request under section 736(d).',
+            reference: 'FD&C Act section 736 (21 USC 379h), including 736(a)(1)(F), 736(d) and 736(e); PDUFA',
           },
         ],
       },
@@ -1275,13 +1269,14 @@ export function createNdaSubmissionFlow(): FlowDefinition {
           /* 2026-11-02 (S4): xn_orphan_without_natural_history read
              `natural_history` / `disease_natural_history`, asked by no flow, and
              triggered on `expedited_designations` / `special_designations`, which
-             none of the four flows it applies to asks. Dead on both sides. */
+             none of the four flows it applies to asks. Dead on both sides. The
+             orphan leaves are the rule's own predicate (orphanProgrammeLeaves). */
           {
             id: 'natural_history',
             label: 'How natural-history data enter the efficacy evidence',
             type: 'select',
             required: true,
-            visibleWhen: { allOf: [{ anyOf: [{ field: 'orphan_designation', operator: 'in', value: ['granted', 'applied'] }, { field: 'therapeutic_area', operator: 'eq', value: 'rare_disease' }] }, { field: 'supplement_type', operator: 'not_in', value: ['new_strength', 'labeling_change', 'manufacturing_change'] }] },
+            visibleWhen: { allOf: [{ anyOf: [...orphanProgrammeLeaves(['orphan_designation']), { field: 'therapeutic_area', operator: 'eq', value: 'rare_disease' }] }, { field: 'supplement_type', operator: 'not_in', value: ['new_strength', 'labeling_change', 'manufacturing_change'] }] },
             helpText:
               'What role natural-history data play in the evidence of effectiveness. A historical control is one of the designs 21 CFR 314.126(b)(2)(v) recognises: a comparison with the adequately documented natural history of the disease or condition.',
             options: [
@@ -2343,7 +2338,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'none', label: 'No Exclusivity Claims' },
             ],
             helpText:
-              'NCE exclusivity (5 years) applies to drugs containing an active moiety never previously approved. Clinical data exclusivity (3 years) applies to supplements with new clinical studies. Orphan exclusivity (7 years) applies to drugs with orphan designation.',
+              'NCE exclusivity (5 years) applies to drugs containing an active moiety never previously approved. Clinical data exclusivity (3 years) applies to supplements with new clinical studies. Orphan exclusivity (7 years) may attach on approval of a designated drug for the designated use (FD&C Act §527; 21 CFR 316.31, 316.34); designation alone does not confer it.',
           },
           {
             id: 'patent_certifications',

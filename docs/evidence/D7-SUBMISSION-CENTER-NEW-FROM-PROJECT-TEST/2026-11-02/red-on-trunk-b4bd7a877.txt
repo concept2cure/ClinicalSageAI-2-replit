@@ -1,0 +1,4 @@
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type 64ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+      Tests  1 failed | 16 passed (17)

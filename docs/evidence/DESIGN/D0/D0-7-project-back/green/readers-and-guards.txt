@@ -1,0 +1,841 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked 114ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference 8ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does 6ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy 5ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > Auto is the product copy, with every ceiling from the shared constants — rounds whichever engine, and the wall clock 1ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > Manual says what she does, and the three ways a hold ends without the person 0ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > Quick ask says what Auto does to it, where the engine is chosen 1ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > menu: each radio is named by its label and described by its description 536ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the checked option is marked by more than colour: a check mark 126ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > foot: each radio is named by its label and described by its description 64ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the switch does not animate under reduced motion 18ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the foot shows, in words on screen, what the chosen policy does 23ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > says a change applies to the next message while one is running 36ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > renders nothing outside the shell 8ms
+stderr | client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > Home, beside AnA drives, behind AnA settings
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > Home, beside AnA drives, behind AnA settings 389ms
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot 3ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > V2App sends the preference as the shell chat’s run policy > passes runPolicy: prefs.anaRunPolicy into the shell useAnaChat 0ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > V2App sends the preference as the shell chat’s run policy > defaults the preference to Auto and provides the switch its context 0ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > a draft survives a history read, and is sent once the conversation is back > typed while history loads, it is held, then sent after loading 625ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > a draft survives a history read, and is sent once the conversation is back > typed while history failed, it is held through the retry and sent after recovery 192ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > an executed action is shown as a record — not a button, not a sample 114ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a non-signature governed command shows the reason-for-change sign-off 70ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a navigation chip that cannot say where it goes is a record, not a control 124ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a "Start demonstration" chip that cannot name its script is never a button 124ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a "Start demonstration" chip is inert when the shell gives no demo starter 134ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > never rewrites what the person typed, with Live Drive on 88ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the person's turn stays the person's > a user turn is shown as typed and grows no work record 39ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > why a turn stopped reaches the conversation > a turn the round limit cut short says so under it, with the rounds it ran 76ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > why a turn stopped reaches the conversation > a turn she ended herself claims no stop 98ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual enrollment.csv bytes, scoped to the open project 83ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual enrollment.xlsx bytes, scoped to the open project 52ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual resource.json bytes, scoped to the open project 69ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual define.xml bytes, scoped to the open project 55ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > POSTs the real File to /api/chat/upload, not just its name 62ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > names the uploaded file in the turn once it is ready, and sends it by id 106ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > does NOT claim an attachment when the upload failed 88ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > refuses to send at all when only a failed upload is present 65ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > does not send while an upload is still in flight 125ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > the chip says how the file was read once it was 66ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > the chip gives the failure reason rather than a bare filename 69ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > rejects an unsupported type without a network call 50ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > shows the panel with the live turn by default 98ms
+stderr | client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > the header chip opens and closes the panel, names it, and remembers the choice
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > renders a turn as every host does: her work, then the answer 77ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > the header chip opens and closes the panel, names it, and remembers the choice 172ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > counts her declared plan on the chip, and only that 278ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > styles the open chip by aria-expanded — the attribute the component sets — never aria-pressed 9ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the steers AnA accepted are under the answer they shaped > shows each accepted steer as the person’s, in order 135ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the steers AnA accepted are under the answer they shaped > adds no steer furniture to a turn that was never steered 85ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > mounts the panel for a turn that produced one, each risk bound to its precedent 111ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > offers no export the conversation cannot perform 107ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > adds no pre-mortem furniture to a turn that produced none 47ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > offers recovery only for an interrupted partial: timeout 744ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > does not label an unfinished tool as a network failure when the server reports an error
+[useAnaChat] stream failed: Generation failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > offers recovery only for an interrupted partial: stop 187ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request
+[useAnaChat] stream failed: Generation failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > does not label an unfinished tool as a network failure when the server reports an error 91ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request 334ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > keeps the existing repeated-step explanation and offers no Continue
+[useAnaChat] stream failed: Finishing failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done 109ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 401
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > keeps the existing repeated-step explanation and offers no Continue 98ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 403
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 429
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue 131ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue 91ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue 76ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 401 }
+[useAnaChat] stream failed: internal provider details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 403 }
+[useAnaChat] stream failed: internal provider details
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > leaves a completed text response without an interruption note or Continue 92ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 401 } 68ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 429 }
+[useAnaChat] stream failed: internal provider details
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 403 } 72ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'internal limiter details' } }
+[useAnaChat] stream failed: internal limiter details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'GATEWAY_UNAVAILABLE' }
+[useAnaChat] stream failed: internal provider details
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 429 } 83ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'internal limiter details' } } 47ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'THREAD_FORBIDDEN' }
+[useAnaChat] stream failed: internal provider details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for {}
+[useAnaChat] stream failed: internal provider details
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'GATEWAY_UNAVAILABLE' } 70ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'THREAD_FORBIDDEN' } 59ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for {} 59ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation final activity reconciliation > closes an unconfirmed search_documents without changing received results or the finished answer 52ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation final activity reconciliation > closes an unconfirmed update_plan without changing received results or the finished answer 88ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > PrecedentEngine — a search that did not run is not a search that found nothing > the lead does not claim a search ran and matched nothing 401ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > PrecedentEngine — a search that did not run is not a search that found nothing > the precedents panel does not claim the corpus was searched 148ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > PrecedentEngine — a search that did not run is not a search that found nothing > still names the closest precedent when the search genuinely returned one 89ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > PrecedentEngine — a rejected risk analysis is not a clean risk profile > does not present a failed analyzeRisk() as no scored risk factors 110ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > PrecedentEngine — a rejected risk analysis is not a clean risk profile > still reads clear when the risk analysis ran and scored nothing 109ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > PrecedentEngine — a rejected risk analysis is not a clean risk profile > still lists scored factors when the analysis produced them 151ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > PrecedentEngine — a rejected strategy analysis is not a thin precedent set > does not blame the user’s search for a failed recommendStrategy() 219ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > PrecedentEngine — a rejected strategy analysis is not a thin precedent set > still recommends when the strategy analysis ran 147ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > PrecedentEngine — a rejected strategy analysis is not a thin precedent set > still lists the rationale when the analysis produced one 142ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > an unreachable FDA registry is not an empty registry > says the registry answered when it did — the one case that may assert a clean result 84ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > an unreachable FDA registry is not an empty registry > says the registry did not answer, and carries the reason 42ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > an unreachable FDA registry is not an empty registry > keeps naming the ambiguity where the registry was never consulted 41ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > an unreachable FDA registry is not an empty registry > falls back to the ambiguity when the board carries no sources at all 101ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > the analysis tabs follow the pathway the board reports > shows the device lenses and none of the drug ones for a 510(k) board 135ms
+stderr | client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > the analysis tabs follow the pathway the board reports > offers device and drug submission types as separate, named groups
+An update to PrecedentEngine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > the analysis tabs follow the pathway the board reports > still shows the drug lenses for a drug board 71ms
+ ✓ client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx > the analysis tabs follow the pathway the board reports > offers device and drug submission types as separate, named groups 25ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed 'PDF' body on same-program session replacement and opens for the current owner 554ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed 'non-PDF' body on same-program session replacement and opens for the current owner 243ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed refusal json body without a toast in the replacement session 237ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires an in-flight file immediately when the supplied owner becomes invalid 128ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > does not revive a retired in-flight file when the same owner key becomes valid again 166ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > does not give the first A visit authority after an A to B to A session visit 215ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > keeps selection, an in-flight open and its viewer through equivalent owner and section rerenders 123ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > releases an open PDF URL on same-program session replacement before another file opens 178ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > still reports a refusal that belongs to the current session 57ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > no C2C_CONVO at all (a first visit, or AnA’s own navigation here): AnA's running turn is kept, and on screen 234ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > { id: "new" } with no seed: AnA's running turn is kept, and on screen 56ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > "Open full thread" with an empty box: AnA's running turn is kept, and on screen 44ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an unseeded ask to draft: AnA's running turn is kept, and on screen 50ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an idle conversation is kept too — arriving is not a request to start over 50ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an empty conversation in progress is titled as the new conversation it is 98ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > a question sent here while AnA is still answering > neither aborts her nor vanishes: it waits in the composer, and the person is told 105ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > a question sent here while AnA is still answering > when she is idle, the question starts its new conversation and is sent 77ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > another conversation, asked for by id > is not loaded over a turn that is still running — the person is told to open it again 105ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > another conversation, asked for by id > once loaded, is the conversation in progress — the next arrival does not load it again 114ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > New conversation resets the shell’s chat 343ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > can replace a pending history read with a new conversation and keeps the draft 257ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > is not offered mid-turn — a reset would abort AnA where she stands 156ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is loading 129ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is failed 119ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > shows the failed history with retry for that same thread and an explicit new conversation control 137ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > pauses the run 548ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > offers Resume, not Pause, once paused 147ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > stops the run 122ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > does not double-send while the first steer is still in flight 91ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > refuses to send an empty steer 52ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > pause never promises an instant stop 61ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > stop does not borrow pause's promise — it cuts the step in flight 45ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > never claims stopped before the server has said so 39ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > KEEPS the text, says it was not sent, and marks the box invalid 82ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > treats a thrown handler as a refusal, not a send 118ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > treats a handler that reports nothing as accepted (unchanged contract) 160ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > clears the refusal once the person edits the text again 76ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > has Stop (DT3 accepts an admin cancel), no Pause, and a composer that says only the asker can steer 755ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > Stop asks why first, in a dialog that names the person and says what stopping does; the reason goes with the cancel 373ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > a refused stop is said in the dialog, which stays open: nothing changed 294ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > the asker following their own turn keeps every control, and the composer steers 151ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > the asker's Stop is their own: no dialog, straight to stop 164ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > a conversation whose live runs could not be read > says so, and Check again reads them again 138ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > a followed turn that ended with something to say, and no step rows > a hand-over whose answer could not be read says so, beside its record, never an empty answer 64ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > a followed turn that ended with something to say, and no step rows > a poll answered 401 says the sign-in ended, in the server’s words 55ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationScope.test.tsx > canonical authoring context follows the verified saved canvas > uses the newer saved canvas version on the first explicit send instead of the earlier handoff snapshot 464ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationScope.test.tsx > canonical authoring context follows the verified saved canvas > uses the currently open section rather than an earlier section attached on arrival 94ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationScope.test.tsx > canonical authoring context follows the verified saved canvas > withholds a prior-project ordinary canvas from the next turn after the shell project changes 433ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationScope.test.tsx > retained editor sources preserve intentional omission and scope guards > does not retarget an attached section from a different section retained in a hidden canvas 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationScope.test.tsx > retained editor sources preserve intentional omission and scope guards > refuses a bridge whose saved identity does not match its document and section 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationScope.test.tsx > retained editor sources preserve intentional omission and scope guards > does not reintroduce the live authoring bridge into a question whose source attachment was removed 176ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationScope.test.tsx > retained editor sources preserve intentional omission and scope guards > keeps an insertion disabled after explicitly reopening a canvas from another project 440ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationScope.test.tsx > retained editor sources preserve intentional omission and scope guards > keeps a remedy disabled after explicitly reopening a canvas from another project 521ms
+stderr | client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx > saved Authoring arrivals wait for explicit submission > leaves a scoped question queued until an existing run finishes instead of steering without its saved context
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx > saved Authoring arrivals wait for explicit submission > continues the current conversation and opens the exact canonical canvas after inventory verification 469ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx > saved Authoring arrivals wait for explicit submission > leaves a scoped question queued until an existing run finishes instead of steering without its saved context 148ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx > saved Authoring arrivals wait for explicit submission > supports the AnA toolbar without an invented prompt or automatic turn 125ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx > saved Authoring arrivals wait for explicit submission > retains a saved document without an active section instead of inventing a section identity 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx > unverified origin context fails closed and has recovery > withholds source identity and canvas until a real retry verifies the saved record 260ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx > unverified origin context fails closed and has recovery > rejects a changed project before reading and allows removing the unverified source context 146ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx > unverified origin context fails closed and has recovery > invalidates a verified origin and closes its retained canvas when the open project changes 149ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx > unverified origin context fails closed and has recovery > ignores an old project verification that completes after the project has changed 73ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx > unverified origin context fails closed and has recovery > does not reopen a removed attachment when its outstanding verification eventually returns 179ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the client walker sees the real tree > found a substantial number of source files 2ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the client walker sees the real tree > includes the surfaces that carried the defect 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_API has no remaining reads anywhere 101ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_SIGNED has no remaining reads anywhere 88ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_AUTHORING has no remaining reads anywhere 91ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > __C2C_NEW_PROJECT has no remaining reads anywhere 118ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_API is not assigned either — it stays a non-thing 83ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_SIGNED is not assigned either — it stays a non-thing 84ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_AUTHORING is not assigned either — it stays a non-thing 104ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > __C2C_NEW_PROJECT is not assigned either — it stays a non-thing 108ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated storage notes stay eliminated > c2c_biostat_doc is never written 113ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated storage notes stay eliminated > c2c_biostat_doc is never read either — it stays a non-thing 101ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > the shared handoff POSTs a document and a section 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/Biostatistics.tsx hands off through saveToAuthoring 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/ReportEngine.tsx hands off through saveToAuthoring 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/CmcQuality.tsx hands off through saveToAuthoring 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/Biostatistics.tsx does not navigate when the handoff failed 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/ReportEngine.tsx does not navigate when the handoff failed 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/CmcQuality.tsx does not navigate when the handoff failed 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > client/src/concept2cure/v2/surfaces/BatchDraft.tsx reads no ghost channel at all 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > client/src/concept2cure/v2/surfaces/AnaVerbs.tsx reads no ghost channel at all 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > __C2C_DOC_ID is read nowhere, so it needs no fence 92ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/LicensingSurface.tsx goes through dataConnect 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/ReportEngine.tsx goes through dataConnect 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx goes through dataConnect 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > liveMutateOrNull exists and returns null rather than a fixture 2ms
+stderr | client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > says she is waiting, names the next step, and offers the three answers
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > says she is waiting, names the next step, and offers the three answers
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > says she is waiting, names the next step, and offers the three answers 667ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > a hold that ran out says so, with nothing to press 42ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > offers only Stop before the run is controllable, as the rail does 194ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > no strip when nothing is running 45ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the strip on its own > lists at most three next steps, then how many more 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the strip on its own > a person's pause is unchanged: Paused after this step, Resume, Steer 39ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > announces the hold once to assistive technology, with the step, and says when it ends 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > Run this step and Do this instead are described by the step they act on 25ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > while a Manual turn is working, the steer box says a steer replaces her next step 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > …and says nothing of the kind under Auto 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > the conversation screen passes the turn policy to the strip, and the hold to its chip 111ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > one strip in the codebase > only AnaWorkSections.tsx defines .ana-runctl markup 90ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > masks the prior complete catalog in the replacement-owner render before passive effects 79ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > masks old associations before passive effects and keeps authoritative withheld details withheld 61ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > a retained catalog retry cannot restart or invalidate the replacement owner’s in-flight read 126ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > old admission retry and admit callbacks cannot erase or extend replacement-session associations 63ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > does not resurrect old callbacks after A → B → A even when the original owner key is valid again 168ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired catalog JSON body after a replacement read settles (old response ok: true) 113ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired catalog JSON body after a replacement read settles (old response ok: false) 112ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired admission JSON body after replacement associations settle (old response ok: true) 110ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired admission JSON body after replacement associations settle (old response ok: false) 107ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > never treats partial old-owner pages as complete citation authority for a replacement owner 109ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > keeps rows, associations, callbacks and read counts when the same valid owner is recreated 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > an invalid supplied owner exposes no source authority and cannot retry or admit into its retired visit 57ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx > CMC audited workflow gaps > refuses postapproval filing classification when launch scope is true 431ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx > CMC audited workflow gaps > refuses postapproval filing classification when launch scope is null 79ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx > CMC audited workflow gaps > reaches the Module 3 build from inside CMC, by either door, without leaving it 437ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx > CMC audited workflow gaps > retains the saved row while visibly reporting a failed Module 3 link 68ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx > CMC audited workflow gaps > dispatches the deferred scale-up assessment to the canonical classifier with actual scale 147ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx > CMC audited workflow gaps > reads pending linkage after a reload and clears it only after a successful server retry 66ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx > CMC audited workflow gaps > keeps a failed retry pending and refuses retry of unfiled records 57ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > the conversation URL > names a conversation by id under the conversation screen, and nothing else 9ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > a fresh page load on the conversation URL loads that conversation 79ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > the URL names the conversation the screen shows, once it has an id 57ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > keeps the shell's query (the open program) when it writes the conversation id 53ms
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > never rewrites the URL of a screen AnA has already moved the person to
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > a thread id that arrives mid-turn is written to the URL as it arrives 84ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > never rewrites the URL of a screen AnA has already moved the person to 74ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > starting a new conversation drops the id from the URL 378ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > audit-trail renders its no-data-yet state without a crash-class error 21ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > authoring-engine renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > access-requests renders its no-data-yet state without a crash-class error 42ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > batch-draft renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > admin-console renders its no-data-yet state without a crash-class error 12ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > biostat-workbench renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ana-command renders its no-data-yet state without a crash-class error 14ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > biostatistics renders its no-data-yet state without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > apps renders its no-data-yet state without a crash-class error 11ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > change-assessment renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > client-portal renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > clinical-ops renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > cmc renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > communication-center renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > compliance-reports renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > conversation-thread renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > coverage renders its no-data-yet state without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > crl-library renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > cro-portfolio renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > csr-workflow renders its no-data-yet state without a crash-class error 7ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > decision-lineage renders its no-data-yet state without a crash-class error 8ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > deep-research renders its no-data-yet state without a crash-class error 8ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-510k renders its no-data-yet state without a crash-class error 67ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-cer renders its no-data-yet state without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-clinical-studies renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-diagnostics renders its no-data-yet state without a crash-class error 5ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-engineering renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-pma renders its no-data-yet state without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-postmarket renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-presub renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-software renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-udi renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > dispatch-readiness renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > doc-journey renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > document-authoring renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ectd-coauthor renders its no-data-yet state without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ectd-compile renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > etmf renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > evidence-search renders its no-data-yet state without a crash-class error 19ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > filing-strategy renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > gateway-transmittals renders its no-data-yet state without a crash-class error 6ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > global-ri renders its no-data-yet state without a crash-class error 21ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > haq-manager renders its no-data-yet state without a crash-class error 13ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > human-factors renders its no-data-yet state without a crash-class error 8ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > identity-console renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > inconsistency renders its no-data-yet state without a crash-class error 7ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ind-checklist renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ind-lifecycle renders its no-data-yet state without a crash-class error 7ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > insights renders its no-data-yet state without a crash-class error 7ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > intelligence-catalog renders its no-data-yet state without a crash-class error 10ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > investigator-brochure renders its no-data-yet state without a crash-class error 5ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > labeling renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > labeling-pi renders its no-data-yet state without a crash-class error 15ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > labeling-smpc renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > licensing renders its no-data-yet state without a crash-class error 17ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > lifecycle-mgmt renders its no-data-yet state without a crash-class error 81ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > maa-cockpit renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > market-access renders its no-data-yet state without a crash-class error 41ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > master-licensing renders its no-data-yet state without a crash-class error 12ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > mission-control renders its no-data-yet state without a crash-class error 6ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > nda-cockpit renders its no-data-yet state without a crash-class error 24ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > nonclinical renders its no-data-yet state without a crash-class error 12ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > onboarding renders its no-data-yet state without a crash-class error 7ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > onboarding-ingest renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > orchestration renders its no-data-yet state without a crash-class error 7ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > orphan renders its no-data-yet state without a crash-class error 7ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev renders its no-data-yet state without a crash-class error 8ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-clinical renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-cmc renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-contradictions renders its no-data-yet state without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-fda-interactions renders its no-data-yet state without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-ind-assembly renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-nonclinical renders its no-data-yet state without a crash-class error 41ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-regulatory renders its no-data-yet state without a crash-class error 9ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pediatric renders its no-data-yet state without a crash-class error 8ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pharmacovigilance renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > precedent-intelligence renders its no-data-yet state without a crash-class error 12ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > program-journey renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > project-home renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > projects renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > protocol-dev renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pv-cockpit renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pyramid renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > qmp renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > quality renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > rbm renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > reg-change renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > registrations renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > regulatory-workspace renders its no-data-yet state without a crash-class error 6ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > report-engine renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > report-governance renders its no-data-yet state without a crash-class error 6ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > research-admin renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > review renders its no-data-yet state without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > safety-narrative renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > shadow-review renders its no-data-yet state without a crash-class error 5ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > source-tracer renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > submission-center renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > submission-twin renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > task-board renders its no-data-yet state without a crash-class error 6ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > tasks renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > template-library renders its no-data-yet state without a crash-class error 8ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > training renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > usage renders its no-data-yet state without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > vault renders its no-data-yet state without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > announces assertively as an alert 220ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > offers a retry that runs, and reports its busy state 62ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > is dismissible only when a dismiss handler is given 40ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > shows the correlation id as the support handle 38ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a missing relation 34ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a Drizzle failed query 18ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render raw SQL 17ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an API route 20ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an env var 18ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a file path 14ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a source location 10ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a stack frame 6ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an enum token 5ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a driver code 14ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > still renders a legitimate server sentence 7ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > EmptyState tone="error" delegates rather than rendering its own panel > renders the shared ErrorState, filter included 23ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > EmptyState tone="error" delegates rather than rendering its own panel > leaves the idle tone a polite status, not an alert 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > which turn, and which stops > the hosts pick the latest settled assistant turn, and none while a turn is in flight 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > which turn, and which stops > isContinuable follows the table, and Continue sends one fixed sentence 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > offers Continue on the latest settled turn only, and sends it on the same conversation 201ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > offers nothing while a turn is in flight 93ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > keeps keyboard focus in the transcript when the send withdraws Continue 123ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > renders nothing while no project is open 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > is a .pj-back button named by the open project, its arrow hidden from screen readers 301ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is missing, so the button always has a name 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is empty, so the button always has a name 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is blank, so the button always has a name 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > names a title that is not a string, as the copies did, and does not throw 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > goes to the project home on click 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > works from the keyboard: Tab reaches it, and Enter and Space each go back 80ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > follows the shell channel: it appears when a project opens after mount and goes when it closes 20ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > does nothing, and throws nothing, when the screen gives it no onNav 22ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > says a turn timed out, instead of showing the partial text as final 129ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > surfaces a degraded-mode warning from the server 75ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > shows every caveat, not just the first 65ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > does not need the disclosure opened — a caveat you must hunt for is hidden 75ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > never states a caveat in colour alone 69ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > a clean turn gets no caveat furniture at all 64ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > an empty warnings array is not a caveat 56ms
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — 21 CFR Part 11 signature gate > draws the signature prompt for a turn the server blocked pending sign-off
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — 21 CFR Part 11 signature gate > draws no prompt for an ordinary answer
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — the turn's work record reaches the thread > in flight: the phase line and the tool row are in the thread, on one turn, with no dots
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — the turn's work record reaches the thread > settled: the record survives the answer, collapsed to its summary
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — 21 CFR Part 11 signature gate > draws the signature prompt for a turn the server blocked pending sign-off 480ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — 21 CFR Part 11 signature gate > draws no prompt for an ordinary answer 33ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — the turn's work record reaches the thread > in flight: the phase line and the tool row are in the thread, on one turn, with no dots 38ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — the turn's work record reaches the thread > settled: the record survives the answer, collapsed to its summary 41ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > keeps same-name accounts distinct, sources responsibility and labels sharing separately 480ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > explicitly states unconfirmed membership and name-only records without fabricated assignments 58ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > keeps creator provenance separate from recorded responsibility 16ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > announces loading and a verified empty roster distinctly 47ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"error":"HTTP 503"} and offers a real read retry 56ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":null} and offers a real read retry 34ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":{"program_id":"other","project_id":51,"team":[{"user_id":7,"entry_id":"user:7","identity":"active_member","label":"Alex Chen · Account #7","name":"Alex Chen","email":"alex7@example.test","role":"lead","responsibilities":["project_lead"],"sharing_role":"use","sources":["program_lead","project_member"]},{"user_id":8,"entry_id":"user:8","identity":"active_member","label":"Alex Chen · Account #8","name":"Alex Chen","email":"alex8@example.test","role":null,"responsibilities":["project_owner"],"sharing_role":"owner","sources":["project_owner","project_creator"]},{"user_id":9,"entry_id":"user:9","identity":"unconfirmed_account","label":"Account #9 — Current membership not confirmed","name":null,"email":null,"role":"lead","responsibilities":["project_lead"],"sharing_role":null,"sources":["program_lead"]},{"user_id":null,"entry_id":"recorded-name:0","identity":"recorded_name","label":"Alex Chen","name":"Alex Chen","email":null,"role":null,"responsibilities":[],"sharing_role":null,"sources":["recorded_name"]}]}} and offers a real read retry 15ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":{"program_id":"11111111-1111-4111-8111-111111111111","project_id":51,"team":[]},"meta":{"pendingStore":true}} and offers a real read retry 20ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":{"program_id":"11111111-1111-4111-8111-111111111111","project_id":51,"team":[{"user_id":7,"entry_id":"user:7","identity":"active_member","label":"Alex Chen · Account #7","name":"Alex Chen","email":"alex7@example.test","role":"lead","responsibilities":["project_lead"],"sharing_role":"approve","sources":["program_lead","project_member"]}]}} and offers a real read retry 18ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFailureRetry.test.tsx > Orchestration — a failure offers a way out, and it really re-reads > workflow runs: renders a retry, and pressing it issues another request 148ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFailureRetry.test.tsx > Orchestration — a failure offers a way out, and it really re-reads > approval gates: renders a retry, and pressing it issues another request 359ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFailureRetry.test.tsx > Orchestration — a failure offers a way out, and it really re-reads > no longer instructs the user to "sign in and retry" 44ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHonesty.test.tsx > eTMF — a readiness verdict belongs to the trial it was computed for > does not carry the previous trial's complete verdict onto a newly named trial 337ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHonesty.test.tsx > eTMF — a readiness verdict belongs to the trial it was computed for > does not carry the previous trial's failed read onto a newly named trial 27ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHonesty.test.tsx > eTMF — a readiness verdict belongs to the trial it was computed for > will not call a trial complete when the assessment evaluated no zones at all 21ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHonesty.test.tsx > eTMF — a readiness verdict belongs to the trial it was computed for > still reads complete — headline, reassurance and badge — when the trial has genuinely earned it 56ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHonesty.test.tsx > eTMF — a readiness verdict belongs to the trial it was computed for > speaks only from a payload correlated with the current read 1ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHonesty.test.tsx > eTMF — a readiness verdict belongs to the trial it was computed for > states the real gap counts for the trial named, and does not reassure over them 115ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects the empty-list-for-an-object case that caused the crashes 6ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > names the path in the error, so the failing route is identifiable from a log 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects a JSON scalar 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects a bare array 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects an object missing a required key 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects a 200 carrying an error body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > reports the HTTP status alongside the rejection 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > accepts the well-formed payload (the guard did not gut the happy path) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > accepts present-but-null fields — "no program selected yet" is real data 2ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > does not guard an ABSENT payload — that is the honest empty state 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > does not guard a 204 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > is unchanged when no guard is passed (the 100+ existing call sites) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > hasKeys / isRowsWith > hasKeys rejects arrays and null, accepts an object with the keys 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > hasKeys / isRowsWith > isRowsWith accepts an EMPTY array — zero rows is a real answer 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > useLiveData surfaces a shape rejection as error, not as data 70ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > useLiveRows reports a non-array as an error instead of a false empty state 55ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > useLiveRows still reports a genuinely empty list as empty 58ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > an INLINE guard does not re-trigger the fetch on every render 56ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > a guarded surface reports instead of crashing > BatchDraft renders its error state for the payload that used to crash it 65ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > a guarded surface reports instead of crashing > BatchDraft still renders its real content for a well-formed spine 36ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > reads the client TSX and the v2 stylesheets 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-head`: no more than 18 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-eyebrow`: no more than 18 uses, and gone from the CSS at 0 25ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-title`: no more than 18 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-state`: no more than 23 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-head`: no more than 11 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-eyebrow`: no more than 9 uses, and gone from the CSS at 0 14ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-title`: no more than 11 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-sub`: no more than 10 uses, and gone from the CSS at 0 16ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-head`: no more than 0 uses, and gone from the CSS at 0 15ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-kicker`: no more than 0 uses, and gone from the CSS at 0 22ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-title`: no more than 0 uses, and gone from the CSS at 0 19ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-head`: no more than 5 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-kicker`: no more than 2 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-eyebrow`: no more than 1 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-cta`: no more than 13 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `landing-newproj`: no more than 1 uses, and gone from the CSS at 0 15ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `btn sm`: no more than 14 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-card`: no more than 15 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tabs`: no more than 11 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tab`: no more than 13 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-subtab`: no more than 0 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sc-ws`: no more than 1 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cc-tab`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-seg`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-seg`: no more than 4 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cl-toast`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `tb-detail`: no more than 4 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-modal`: no more than 3 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-connect`: no more than 0 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-stageband`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 1 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `This work flows into`: no more than 1 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > a turn stopped here before the server said why is mapped as the same stop 8ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > stopped here before AnA wrote anything: the note, not an empty mark 113ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > reopened from the saved conversation: the same note 41ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > what she had written before the stop stays, above the note 61ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > EmptyState — the four-part contract > renders all four parts, and the action fires 303ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > EmptyState — the four-part contract > a failure is not an empty state: tone="error" drops the CTA and the regulation line 181ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > EmptyState — the four-part contract > openProgramAction navigates when it holds nav, and reaches the shell when it does not 3ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > the passive instruction is retired from the converted surfaces > CmcModule3Build.tsx no longer says "Select a program" (or "Select a project") as prose 1ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > the passive instruction is retired from the converted surfaces > CmcQuality.tsx no longer says "Select a program" (or "Select a project") as prose 1ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > the passive instruction is retired from the converted surfaces > CmcModule.tsx no longer says "Select a program" (or "Select a project") as prose 1ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > the passive instruction is retired from the converted surfaces > each converted surface offers the one real action instead 1ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > EmptyState carries no chip tone > the idle panel is `c2c-empty-state` alone 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageWarnings.test.tsx > the conversation screen > shows a turn's warnings, as a note, under the answer 253ms
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageWarnings.test.tsx > the conversation screen > shows nothing when the turn has no warning 62ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > keeps one reference across re-renders when the payload is a real array 26ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > keeps one reference across re-renders on a null-payload success 39ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > keeps one reference across re-renders on a 204 No Content 27ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > a consumer effect keyed on rows settles instead of looping 121ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsHonesty.test.tsx > Design controls — the lead may not invent open V&V work > withholds the "missing V&V protocols" offer when every input is fully traced 117ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsHonesty.test.tsx > Design controls — the lead may not invent open V&V work > still offers to draft them when inputs are genuinely untraced 30ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsHonesty.test.tsx > Design controls — a populated read is never reported as an empty DHF > never renders "No design inputs defined yet" over a read that returned rows 95ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsHonesty.test.tsx > Design controls — a populated read is never reported as an empty DHF > still shows the honest empty state when the store genuinely holds nothing 35ms
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (biopharma)
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (medtech)
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (biopharma) 75ms
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (cro)
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > sends exactly the starter the person pressed
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (medtech) 21ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (cro) 33ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > sends exactly the starter the person pressed 24ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectOwnedRead.test.tsx > optional current owner on the canonical object reader > masks the previous owner during the render before the replacement read resolves 76ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectOwnedRead.test.tsx > optional current owner on the canonical object reader > never revives an earlier visit on a key round trip or its delayed completion 10ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectOwnedRead.test.tsx > optional current owner on the canonical object reader > masks an invalid captured owner even when its key remains unchanged 58ms
+ ✓ client/src/concept2cure/v2/__tests__/indBriefingBookStart.test.tsx > the IND briefing book starts in the editor > uses the built-in template for exactly the meeting type, never a shared one 2ms
+ ✓ client/src/concept2cure/v2/__tests__/indBriefingBookStart.test.tsx > the IND briefing book starts in the editor > starts or opens the project's package for the chosen meeting type 193ms
+ ✓ client/src/concept2cure/v2/__tests__/indBriefingBookStart.test.tsx > the IND briefing book starts in the editor > says so when no built-in template is returned, and starts nothing in its place 16ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > reads the v2 stylesheets and resolves nesting and :is() lists 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .btn is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card is defined in exactly one stylesheet, app-v2.css 34ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card-h is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .rd-chip is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-lead is defined in exactly one stylesheet, app-v2.css 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-k is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .ph-title is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .seg is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .tab is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .reg-tbl th is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-input is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-empty-state is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de is defined in exactly one stylesheet, journey-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de-toast is defined in exactly one stylesheet, journey-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-seclbl is defined in exactly one stylesheet, app-v2.css 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > retired alias .btn.sm is defined at most once, in app-v2.css 1ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — enum codes never become user copy > prefers the human message over an enum-shaped error token 3ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — enum codes never become user copy > never renders a bare enum token even when no message is supplied 1ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — enum codes never become user copy > treats FORBIDDEN as a code, not as copy 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — enum codes never become user copy > treats NOT_FOUND as a code, not as copy 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — enum codes never become user copy > treats INTERNAL_ERROR as a code, not as copy 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — enum codes never become user copy > treats QUOTA_EXCEEDED as a code, not as copy 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > assertApiResponseOk — a returned refusal cannot confirm a mutation > preserves the server refusal, machine code, status and request reference on a returned 401 22ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > assertApiResponseOk — a returned refusal cannot confirm a mutation > does not consume a successful 201 receipt 1ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > assertApiResponseOk — a returned refusal cannot confirm a mutation > does not consume a successful 204 receipt 1ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > assertApiResponseOk — a returned refusal cannot confirm a mutation > uses sign-in guidance for an unstructured 401 without displaying the upstream body 1ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > assertApiResponseOk — a returned refusal cannot confirm a mutation > preserves a stale revision code and its usable reason 1ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — real sentences still reach the user > renders a validation message sent in the error field 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — real sentences still reach the user > renders a multi-word sentence that happens to start capitalised 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — real sentences still reach the user > reads the reason out of the { error: CODE, detail } governed-action envelope 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — real sentences still reach the user > reads the nested { error: { code, message } } envelope 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — real sentences still reach the user > falls back to a status-appropriate sentence for an empty body 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > serverMessage — the shared primitive the surfaces call > returns null when the server sent nothing worth showing 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > serverMessage — the shared primitive the surfaces call > returns the sentence when there is one 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > serverMessage — the shared primitive the surfaces call > shows the reference a "quote the reference below" message points at 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > serverMessage — the shared primitive the surfaces call > lets a caller keep its own domain fallback 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > errorCodeOf — branching stays possible > reads the code from every envelope shape 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — nothing internal leaks through > does not surface a raw driver message left in the error field 0ms
+ ✓ client/src/lib/__tests__/api-error-extraction.test.ts > extractApiError — nothing internal leaks through > does not surface a missing-relation message left in the error field 0ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > reads the stylesheets it guards 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > every allowlist entry carries a written reason 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > no `text-transform: uppercase` in v2/styles/*.css or design-system/colors_and_type.css 23ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveGetOrNull failure status > reports 403 as 403, with the server’s own message 14ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveGetOrNull failure status > reports 404 as 404 3ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveGetOrNull failure status > keeps 0 for a request that never got a response 5ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveGetOrNull failure status > still returns 401 through the response branch apiRequest does not throw on 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveMutateOrNull failure status > reports a refused governed write as 403, not as a network failure 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveMutateOrNull failure status > reports a rejected body as 400 with the validation message 5ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveMutateOrNull failure status > keeps 0 for a mutation that never reached the server 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveMutateOrNull failure status > reports a 500 as 500 so a retry-able server fault is distinguishable 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > failure status is read structurally, not by class identity > honours a status on an error that is not an ApiRequestError instance 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > failure status is read structurally, not by class identity > ignores a non-numeric status rather than reporting nonsense 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > failure status is read structurally, not by class identity > does not throw when a non-Error value is thrown 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnect.test.ts > unwrapList > returns a bare array unchanged 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnect.test.ts > unwrapList > extracts the inner list from the canonical { data } envelope 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnect.test.ts > unwrapList > returns the payload as-is when data is not an array 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot
+Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/services/portal/authService"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ captureAuthoringSession client/src/concept2cure/v2/editor/authoringCurrentRead.ts:15:19
+     13| /** Keep one account/session owner across ordinary bearer refreshes. */
+     14| export function captureAuthoringSession() {
+     15|   const account = authService.getUser();
+       |                   ^
+     16|   const guard = authService.captureSessionReadGuard();
+     17|   return { sameRevision: () => guard.sameRevision() && authService.get…
+ ❯ mintAuthoringReadSession client/src/concept2cure/v2/editor/authoringCurrentRead.ts:26:17
+ ❯ useAuthoringReadSession client/src/concept2cure/v2/editor/authoringCurrentRead.ts:42:31
+ ❯ useDocumentList client/src/concept2cure/v2/editor/CanvasDocumentList.tsx:125:19
+ ❯ ConversationThread client/src/concept2cure/v2/surfaces/ConversationThread.tsx:1390:21
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+
+ Test Files  1 failed | 38 passed (39)
+      Tests  5 failed | 514 passed (519)
+   Start at  02:54:02
+   Duration  113.38s (transform 161.84s, setup 4.27s, import 38.17s, tests 34.87s, environment 24.49s)
+

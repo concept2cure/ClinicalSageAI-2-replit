@@ -1,0 +1,14 @@
+INFORMATION REQUEST
+Dear Dr. Example:
+We have the following requests for information:
+1. Describe how the stability protocol follows the guidance issued by the
+Food and Drug Administration
+
+-- 1 of 2 --
+
+in 2024 for the registration batches.
+2. Provide the batch analysis for lot 3.
+Sincerely,
+Jane Reviewer
+
+-- 2 of 2 --

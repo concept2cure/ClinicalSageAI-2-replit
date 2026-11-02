@@ -1,0 +1,95 @@
+# mutant m3-wrong-destination: the click goes to Projects, not the project
+# edits to client/src/concept2cure/v2/dataConnect.tsx (reverted after the run):
+#   - "onClick={() => onNav?.('project-home')}>\n      {I.left} {project.title"
+#   + "onClick={() => onNav?.('projects')}>\n      {I.left} {project.title"
+$ npx vitest run --config vitest.config.ts --maxWorkers=1 client/src/concept2cure/v2/__tests__/projectBack.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > renders nothing while no project is open 61ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > is a .pj-back button named by the open project, its arrow hidden from screen readers 249ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is missing, so the button always has a name 22ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is empty, so the button always has a name 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is blank, so the button always has a name 23ms
+ × client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > goes to the project home on click 32ms
+   → expected "vi.fn()" to be called with arguments: [ 'project-home' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "project-home",
++   "projects",
+  ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > works from the keyboard: Tab reaches it, and Enter and Space each go back 79ms
+   → expected [ [ 'projects' ], [ 'projects' ] ] to deeply equal [ [ 'project-home' ], …(1) ]
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > follows the shell channel: it appears when a project opens after mount and goes when it closes 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > does nothing, and throws nothing, when the screen gives it no onNav 28ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  02:39:11
+   Duration  2.74s (transform 514ms, setup 293ms, import 668ms, tests 559ms, environment 865ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > goes to the project home on click
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'project-home' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "project-home",
++   "projects",
+  ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/projectBack.test.tsx:67:19
+     65|     fireEvent.click(screen.getByRole('button', { name: 'BX-301' }));
+     66|     expect(onNav).toHaveBeenCalledTimes(1);
+     67|     expect(onNav).toHaveBeenCalledWith('project-home');
+       |                   ^
+     68|   });
+     69|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > works from the keyboard: Tab reaches it, and Enter and Space each go back
+AssertionError: expected [ [ 'projects' ], [ 'projects' ] ] to deeply equal [ [ 'project-home' ], …(1) ]
+
+- Expected
++ Received
+
+  [
+    [
+-     "project-home",
++     "projects",
+    ],
+    [
+-     "project-home",
++     "projects",
+    ],
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectBack.test.tsx:91:30
+     89|     await user.keyboard(' ');
+     90|     expect(onNav).toHaveBeenCalledTimes(2);
+     91|     expect(onNav.mock.calls).toEqual([['project-home'], ['project-home…
+       |                              ^
+     92|   });
+     93|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit 1

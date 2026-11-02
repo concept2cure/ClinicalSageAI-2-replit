@@ -15,6 +15,7 @@
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 import { getDocumentTemplate } from '../../../market-specs/document-template-library.js';
 import { BIOMARKER_SELECTION_OPTIONS } from './protocol-development-biomarker-selection.js';
+import { orphanProgrammeLeaves, usOrphanDesignationField } from './ind-submission-orphan-designation.js';
 
 /** The IB body headings, from the platform's one IB outline ('investigators_brochure'). */
 const IB_BODY = (getDocumentTemplate('investigators_brochure')?.sections ?? []).map((sec) => `${sec.number}. ${sec.heading}`).join('; ');
@@ -310,17 +311,14 @@ export function createIndSubmissionFlow(): FlowDefinition {
             helpText:
               'Biologic products (monoclonal antibodies, gene therapies, cell therapies, vaccines) are regulated under Section 351 of the PHS Act and require a BLA rather than an NDA for marketing approval.',
           },
-          {
-            id: 'orphan_designation',
-            label: 'Has Orphan Drug Designation been granted or applied for?',
-            type: 'select',
-            options: [
-              { value: 'granted', label: 'Yes — Orphan Designation Granted' },
-              { value: 'applied', label: 'Applied — Pending Review' },
-              { value: 'not_applicable', label: 'No / Not Applicable' },
-            ],
-            helpText: 'Orphan Drug Act (21 CFR 316) provides incentives for rare diseases (<200,000 US prevalence).',
-          },
+          /* 2026-11-02 (S4): the positions every interview offers, written once
+             (ind-submission-orphan-designation.ts). This list offered granted,
+             applied and "No / not applicable", so a request still to be made,
+             or one FDA refused, had no position. */
+          usOrphanDesignationField({
+            helpText:
+              'Orphan-drug designation is granted under FD&C Act §526 (21 USC 360bb) and 21 CFR part 316 for a drug for a rare disease or condition: one affecting fewer than 200,000 persons in the US, or one for which there is no reasonable expectation that US sales would recover the cost of developing the drug and making it available. The request must be made before the marketing application.',
+          }),
           {
             id: 'fast_track_status',
             label: 'Expedited Program Designations',
@@ -815,13 +813,14 @@ export function createIndSubmissionFlow(): FlowDefinition {
           /* 2026-11-02 (S4): xn_orphan_without_natural_history read
              `natural_history` / `disease_natural_history`, asked by no flow, and
              triggered on `expedited_designations` / `special_designations`, which
-             none of the four flows it applies to asks. Dead on both sides. */
+             none of the four flows it applies to asks. Dead on both sides. The
+             gate is the rule's own predicate (orphanProgrammeLeaves). */
           {
             id: 'natural_history',
             label: 'Natural-history evidence for this disease',
             type: 'select',
             required: true,
-            visibleWhen: { allOf: [{ field: 'orphan_designation', operator: 'in', value: ['granted', 'applied'] }, { field: 'ind_type_selection', operator: 'neq', value: 'emergency' }] },
+            visibleWhen: { allOf: [{ anyOf: orphanProgrammeLeaves(['orphan_designation']) }, { field: 'ind_type_selection', operator: 'neq', value: 'emergency' }] },
             helpText:
               'For a rare disease, what is known of the untreated disease course informs the population, endpoints and assessment timing of the development programme (FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development, March 2019). Choose the strongest source the programme relies on.',
             options: [
