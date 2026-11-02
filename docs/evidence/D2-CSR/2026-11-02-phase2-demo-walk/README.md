@@ -59,8 +59,9 @@ this walk with `scripts/seed-admin.mjs`. The screenshots are in `live/`, and the
 `live/db-rows.txt`.
 
 1. **Vault approval of the seven files, through the product's ceremony.** Each file got three steps: JM sent it on
-   a route naming Rhea and Ava, Rhea signed the review, and Ava approved it. That is 21 signatures, each with a
-   password. All seven are `approved` at their exact hash. The browser took about 30 s per file; by hand, plan on a
+   a route naming Rhea and Ava, Rhea signed the review, and Ava approved it. That is 7 routes and 14 signatures (7
+   review, 7 approval), each with a password; sending is not a signature. All seven are `approved` at their exact
+   hash. The browser took about 30 s per file; by hand, plan on a
    few minutes per file. (`01-…`, `02-…`, `03-…`.) The 10-31 walk had inserted this row into the database; this
    walk did not.
 2. **Study data.** The "Clinical source" picker offered the manifest as "v1.0 · approved". It also offered the
@@ -75,9 +76,11 @@ this walk with `scripts/seed-admin.mjs`. The screenshots are in `live/`, and the
    - "Assembled, incomplete": 181 links checked, 1 failed;
    - the body's bookmarks reach 3 levels where 4 are required;
    - 16 sections still hold a data placeholder, each of which blocks placement;
+   - 12 §16 appendices block placement: 16.1.1–16.1.5, 16.1.7, 16.1.9, 16.2.2, 16.2.3, 16.2.6, 16.2.8 and 16.3;
    - one gap for each heading the build did not save.
 
-   Placement needs a complete build, so it was not reached.
+   Placement needs a complete build, so it was not reached. After the narratives wrote §12.3.2 and §14.3.3, build
+   2 holds 20 rows ("20 of 119 … drafted").
 
 ## Defect 1 — the gateway's demo-mode reply was saved as an AI draft (fixed, `c226754e3`)
 
@@ -138,6 +141,15 @@ test pinned the old empty-state copy; it now pins the new copy.
 | F5 | **The "Clinical source" picker lists every JSON file in the project's Vault**, including the efficacy file, which cannot be a clinical source. | `vault-source-input.ts` source list | Low risk; it belongs with the source-list owner |
 | F6 | **"Import approved sections into Authoring" creates a new working copy.** It does not fill the CSR started from New document. | Roadmap step 3 ("a heading's draft is the editor's section draft") | Roadmap work, not a repair |
 | F7 | **The builder does not pace itself under the gateway's 30-per-minute user limit.** Without a key, instant demo-mode replies cross it (39 refusals in build 2). With a real key each heading takes seconds or more, so a sequential build stays far below the limit. | `csr-job-runner.ts` | Not reached with a model key; kept on record from the 10-31 walk |
+| F8 | **No placeholder gate on the editor's path to filing.** An imported working copy that still holds "[DATA TO BE INSERTED…]" can be approved (APPROVER e-sign), snapshotted and placed at 5.3.5.1 as an approved CSR leaf. Only the assembly's placement refuses a placeholder (`CSR_PLACEMENT_BODY_PLACEHOLDER`, `csr-assembly-placement.ts:132`); the authoring side has only an advisory scan (`authoring.router.ts:4609`). Fail closed requires a gate. | `server/routes/authoring.router.ts` (approval), `AuthoringPlaceIntoFiling` | Signing and filing are another lane's held files; needs a hold and, for the gate's scope, the coordinator |
+| F9 | **A heading is approved on the build board without its text.** The section review shows no section text, so the approver cannot read what they approve before the import. | `CsrBuildProgress.tsx` `CsrHeadingReview` | Same file as F2; roadmap step 5 folds this review into the editor's |
+| F10 | **A failed build shows no reason**, only "CSR build N · failed · NN%". The list returns no error, and `GET /api/csr/jobs/:jobId` has no client caller. | `server/routes/csr-jobs.ts` list, `CsrRunBuilds.tsx` | Another file; needs a hold |
+| F11 | **Copy that no longer matches the product.** The imported §14.3.3 says to "run the narratives again on the build board", a label that does not exist (it is "CSR builds from this study data"). eCTD Compile still says "First-study AI narrative generation remains unavailable." while the editor composed 95 narratives. | `CsrNarrativeReferenceView.tsx`, `CsrNarrativeReadiness` | Copy in other lanes' files |
+| F12 | **The picker that shows the source preview hides the builds, with no way back.** "Freeze newer study data" opens the source picker and hides the build, narratives and files until a freeze or a reopen; a freeze selects the new study data, which has no builds. | `editor/StudyDataBuild.tsx` | A behaviour change to the panel; not needed for the demo if it is not pressed |
+
+F8 to F12 were found by an independent check of this walk and its runbook (a workflow of 15 agents that mapped each
+stage against the code and the local database, then critiqued the runbook). Its corrections are taken into this
+file: the approval count, the appendix count, the row count, the P-89 claim and the runbook's live path.
 
 ## Not walked (blocked in this environment)
 
@@ -146,7 +158,8 @@ test pinned the old empty-state copy; it now pins the new copy.
   - section approvals;
   - "Import approved sections";
   - the review of drafted text;
-  - E-sign with the P-89 figure gate;
+  - E-sign of the CSR (P-89's figure question does not apply to it: an imported copy carries no project source
+    references, so the gate returns clear);
   - "Place CSR files";
   - "Place into filing".
 
@@ -155,61 +168,72 @@ test pinned the old empty-state copy; it now pins the new copy.
 
 ## Demo runbook (for the founder)
 
+The order matters more than any single click. **A build, its narratives and its files belong to the study data
+they were started from.** A CSR created live freezes new study data, which has no builds. So the demo is prepared
+on one CSR document beforehand, and the live part opens that document. Nothing below types an identifier the
+study does not have.
+
 ### Before the demo: the environment
 
-1. **A model key.** Set `ANTHROPIC_API_KEY` in the demo environment. Without it, nothing is drafted: after today's
-   fix, each heading keeps its template and the build ends failed.
-2. **Mode.** If the demo runs with `NODE_ENV=production`, drafting needs a PQ-passed model, and the pinned one is
-   pending. Run the demo in a non-production environment, or record the PQ first.
+1. **A model key.** Set `ANTHROPIC_API_KEY` in the demo environment. Without it, nothing is drafted: each heading
+   keeps its template and the build ends failed.
+2. **Mode.** With `NODE_ENV=production`, drafting needs a PQ-passed model, and the pinned one is pending. Run the
+   demo in a non-production environment, or record the PQ first.
 3. **The organization's tier.** `standard` allows 10 CSR builds per period, `enterprise` is unlimited, and `free`
-   has none: it fails with "Failed to enqueue CSR build job". Every press of Build counts.
-4. **Three people with signing authority:** an author, a reviewer and an approver. Separation of duties refuses
-   one person in two of these roles.
+   has none ("Failed to enqueue CSR build job"). Every press of Build counts.
+4. **Three people with signing authority, and their passwords at hand:** an author, a reviewer and an approver.
+   Separation of duties refuses one person in two roles, and the requester of a build cannot approve its headings.
 
-### Before the demo: the data
+### Before the demo: the data and the prepared CSR
 
-5. **Fetch the pilot files** with `scripts/cre/fetch-cdisc-pilot-adam.mjs`. Attribute CDISC. Do not modify the
+5. **Fetch the pilot files** with `scripts/cre/fetch-cdisc-pilot-adam.mjs`. Attribute CDISC; do not modify the
    files or charge for them.
 6. **Upload into the project's Vault:** ADSL, ADAE, ADLBC, ADLBH and ADVS (`.xpt`), define.xml, then the efficacy
    file, then the manifest. The manifest names each file by its Vault id and full SHA-256, so it is written after
    the uploads. Re-uploading a dataset makes the manifest stale.
-7. **Approve each of the seven files in the Vault:**
-   - the author sends it for review, naming the reviewer and the approver;
-   - the reviewer signs the review;
-   - the approver approves it.
+7. **Approve each of the seven files in the Vault:** the author sends it for review naming the reviewer and the
+   approver, the reviewer signs the review, the approver approves. A few minutes per file.
+8. **Create the CSR document:** Author → Find or start a document in the editor → More document actions → New
+   document… → M5 → "GLOBAL · Clinical Study Report (CSR)". Two entries share that label (F1), and their order
+   depends on the project's registry. The right one shows **Build from the study's data** once created; if it does
+   not, delete it and take the other.
+9. **Freeze the study data** in that document: Clinical source → the manifest (not the efficacy file, F5) →
+   Preview clinical tables → Freeze as this document's study data. Take screenshots of §11.1 and §11.4 here if you
+   want to show the tables; the preview is not reachable later without hiding the builds (F12).
+10. **Build CSR draft**, then wait. It drafts up to 119 headings one after another: tens of minutes.
+11. **Approve the headings** on the build board, as the reviewer or approver (not the requester). The board shows
+    no section text (F9), so read the drafts after step 12 and send back what is wrong.
+12. **Import approved sections into Authoring** (author). This creates a working copy, the document that is
+    reviewed, signed and filed (F6). **Read every section and replace any "[…]" text by hand: nothing stops a
+    placeholder from being approved and filed on this path (F8).**
+13. **Build narratives** (seconds) and **Assemble CSR files**. Supply each blocking §16 appendix from the Vault
+    (PDF) or declare it not applicable with a reason; 16.1.x and 16.3 come only from the sponsor.
+14. **Send the working copy for review** to the reviewer. In Submission Center, create sequence 0000 for the
+    project's submission.
+15. **The compile will refuse** without the agency's application number, a bound sponsor and its D-U-N-S number.
+    The pilot has none; do not type one. End the demo at placement, or show the refusal.
 
-   This takes a few minutes per file, about 20–30 minutes in all.
-8. **Run the build ahead of the demo.** With a real key it drafts up to 119 headings one after another. Plan on
-   tens of minutes, and do not run it live. After the build:
-   - have the reviewer approve the headings, one at a time (the requester cannot approve their own build's
-     headings);
-   - build the narratives (seconds);
-   - supply or declare "not applicable" for the §16 appendices (16.1.x and 16.3 come only from the sponsor);
-   - assemble the CSR files;
-   - create an open sequence in Submission Center for this project.
+### Live: what to show (each step was used in the running app on 2026-11-02, except where marked)
 
-### Live: what to show (each step was used in the running app on 2026-11-02)
-
-1. Open the project. On **Author**, choose **Find or start a document in the editor**, then **More document actions
-   → New document…**. Title it, choose **M5**, search "Clinical Study Report", and pick the **first** "GLOBAL ·
-   Clinical Study Report (CSR)" (F1). Then **Create document**.
-2. Open **Build from the study's data**. For **Clinical source**, choose "… ADaM bundle manifest · v1.0 · approved"
-   (not the efficacy file, F5). Choose **Preview clinical tables** (about 4 s). Open §11.1 and §11.4, and set them
-   beside the published Tables 14-1.01 and 14-3.01.
-3. **Freeze as this document's study data** (about 4 s). Show **Build CSR draft · CDISCPILOT01** and the prepared
-   build under "CSR builds from this study data", with its section review, narratives (95) and CSR files.
-4. **Review.** On the reviewer's account:
-   - open the project's **Review** tab;
-   - choose the document, then **Record review decision**, then **Approve**;
-   - in the CSR scientific review, tick the study data and choose **Read the retained tables**;
-   - map each figure to its table cell.
-5. **E-sign** on the approver's account. P-89 asks about each figure not found in its source.
+1. **The Vault.** The project's seven study files at Approved, each with its review and approval sign-offs.
+2. **New document** (optional, show only): More document actions → New document…, to show the CSR is one
+   document type in the one editor. Do not continue in it.
+3. **The prepared CSR.** Open it and expand **Build from the study's data**. Study data shows the frozen entry.
+   Show the build's section review, the narratives (95 of 95, each listing what the source does not record) and
+   the CSR files with their gaps.
+4. **The working copy** (not walked here: needs a real build). Show the drafted text beside the tables.
+5. **Review**, as the reviewer: the project's **Review** tab → the working copy → **Record review decision** →
+   **Approve**. In the CSR scientific review, tick "Study data the imported CSR build was drafted from" (fixed
+   today) → **Read the retained tables** → map each figure to its cell → attest → **Record approval**.
+6. **E-sign** as the approver (not walked here). Then **Place into filing** (5.3.5.1, Study id, STF file-tag) or
+   **Place CSR files** from the assembly into sequence 0000.
 
 ### What not to do live
 
-- Do not press Build. It takes tens of minutes and uses a credit.
-- Do not choose the second "Clinical Study Report (CSR)" entry.
-- Do not choose the efficacy file as the clinical source.
+- Do not press **Build CSR draft**, **Freeze newer study data** or **Freeze as this document's study data**. Each
+  either takes tens of minutes or moves the panel to study data that has no builds.
+- In "CSR build", do not choose a failed or keyless build.
+- Do not create the CSR live and expect the prepared build to appear in it.
 - Do not re-upload a dataset after the manifest is approved.
 
 ## Reproduce
