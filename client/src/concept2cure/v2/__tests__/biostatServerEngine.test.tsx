@@ -261,7 +261,9 @@ describe('Biostatistics — a preset is a worked example, not the person\'s stud
     await engineAnswered();
     expect(await screen.findByText(/Worked example — Pivotal OS \(survival\), not your study/)).toBeTruthy();
     expect(screen.queryByText(/is ready to review/i)).toBeNull();
-    expect(screen.getByRole('button', { name: 'Copy the example to the editor' })).toBeTruthy();
+    /* The act moved from the retired answer banner to the page's ONE primary
+       in the header (D5 §B.4.2), and its label lost the article with it. */
+    expect(screen.getByRole('button', { name: 'Copy example to editor' })).toBeTruthy();
     fireEvent.change(screen.getByLabelText(/^Alpha$/), { target: { value: '0.04' } });
     expect(await screen.findByText(/Worked example \(modified\) — Pivotal OS \(survival\), not your study/)).toBeTruthy();
     expect(screen.queryByText(/is ready to review/i)).toBeNull();
@@ -304,7 +306,13 @@ describe('Biostatistics — the statistics come from the server engine', () => {
     // The server's set.
     expect(mini()).toContain('733');
     expect(mini()).toMatch(/84%/);
-    expect(await screen.findByText(/733 subjects/)).toBeTruthy();
+    /* The engine's figures are read off ONE place now. They were in the mini
+       result and again in the answer banner's prose ("733 subjects, 84%
+       power"); the banner is retired (D5 §B.4.3) and its copy went with it,
+       which is the point — two renderings of one engine read is how they come
+       to disagree. What matters is that the figure on screen is the server's,
+       and the assertions below are what hold that. */
+    expect(await screen.findByText('733')).toBeTruthy();
 
     /* The deleted browser copy's set for this exact preset: 184 events, 396
        subjects after attrition, and the 90% TARGET reported as achieved power.
@@ -320,8 +328,9 @@ describe('Biostatistics — the statistics come from the server engine', () => {
     await engineAnswered();
     // From JUDGMENT above — a browser rule set could not have produced the
     // 'strong' endpoint-method fit, which the old copy answered 'not_assessed'.
-    expect(mini()).toContain('adequate');
-    expect(await screen.findByText(/reads as/)).toBeTruthy();
+    /* "not_adequate" is the engine's token; the chip reads it as a word. */
+    expect(mini()).toMatch(/adequate/i);
+    expect(mini(), 'the engine verdict is still rendered as its raw token').not.toMatch(/_/);
   });
 
   it('re-asks the engine when a design input changes, and never answers locally', async () => {
