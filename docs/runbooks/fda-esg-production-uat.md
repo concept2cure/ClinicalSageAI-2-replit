@@ -19,17 +19,23 @@ gateway code) · QA (transmit → ack chain verification).
 In scope:
 
 - mTLS handshake and AS2 envelope transmit against the FDA AS2 endpoint.
-- Synchronous MDN capture (the gateway requests `Receipt-Delivery-Option: sync`,
-  `fda-esg.ts:150`).
+- Synchronous MDN capture. The gateway requests a signed receipt
+  (`Disposition-Notification-Options: signed-receipt-protocol=required, pkcs7-signature;
+  signed-receipt-micalg=required, sha-256`) and sends no `Receipt-Delivery-Option`, which
+  means synchronous (`buildAs2Headers`, `as2-transport.ts`). *Corrected 2026-11-01 (F1): this
+  line said the gateway sent `Receipt-Delivery-Option: sync`; it does not.*
 - ack1 (gateway receipt), ack2 (virus + structure check), ack3 (center acceptance) capture
   via the FDA ESG WebTrader portal. ack2 / ack3 are async, hours–days.
 - SFTP fallback path exercised once (≥1 GB bundle, `fda-esg.ts:346`).
 
 Out of scope (defer to follow-on tasks):
 
-- PKCS#7 / CMS signed-and-encrypted AS2 payload. Today's code TLS-protects the AS2 body and
-  signs with a detached SHA-256 (`fda-esg.ts:158–166`); full CMS wrapping is flagged as an
-  engineering follow-up in the file header (`fda-esg.ts:125–131`).
+- ~~PKCS#7 / CMS signed-and-encrypted AS2 payload.~~ *Done since `e1f3fd425` (2026-10-17):
+  transmit signs the payload entity and encrypts it for FDA (`buildAs2CmsEnvelope`,
+  `as2-cms.ts`), and a receipt counts only when FDA's signature verifies against the pinned
+  certificate and its Received-Content-MIC matches (`classifyVerifiedAs2Delivery`). An answer
+  that does not verify is downloaded as the platform's transmittal record, never as FDA's
+  acknowledgement (2026-11-01, F1, DP-81). Note added 2026-11-01.*
 - Programmatic ack polling from `/outgoing/`. Today's `checkStatus` returns the last-known DB
   row (`fda-esg.ts:443–464`); `downloadAcknowledgment` synthesises a text summary
   (`fda-esg.ts:466–490`). Real polling is a follow-up.
@@ -134,17 +140,23 @@ a `TransportError` at transmit time.
 
 ### 4.3 AS2 envelope shape sanity check
 
-The gateway builds AS2 headers at `fda-esg.ts:142–156`. Confirm via the smoke script (§9,
-`--print-envelope`) that the headers it would send are:
+The gateway builds AS2 headers with `buildAs2Headers` (`as2-transport.ts`), and the smoke
+script's `--print-envelope` (§9) now calls that same function with the envelope transmit sends.
+Confirm the headers it prints are:
 
 - `Message-ID` of the form `<uuid@${AS2_FROM}>`
 - `AS2-From` matches `FDA_ESG_STAGING_AS2_FROM`
 - `AS2-To` matches `FDA_ESG_STAGING_AS2_TO` (FDA's AS2 identifier for this environment; the smoke refuses to run without it)
 - `AS2-Version: 1.2`
 - `Disposition-Notification-To` is set to the sponsor (sync MDN)
-- `Receipt-Delivery-Option: sync`
-- `Content-Type: application/octet-stream`
-- `Content-Disposition: attachment; filename="ectd.zip"`
+- `Disposition-Notification-Options: signed-receipt-protocol=required, pkcs7-signature; signed-receipt-micalg=required, sha-256`
+- no `Receipt-Delivery-Option` (its absence requests a synchronous receipt)
+- `Content-Type: application/pkcs7-mime; smime-type=enveloped-data; name="smime.p7m"`
+- `Content-Disposition: attachment; filename="smime.p7m"`
+
+*Corrected 2026-11-01 (F1). This list, and the script, used to show signed receipts `optional`,
+`Receipt-Delivery-Option: sync`, `application/octet-stream` and `ectd.zip`. Transmit sends
+none of those. The script printed a hand-copied map, not the gateway's own headers.*
 
 If your FDA ESG account profile expects different filename, AS2 version, or async MDN, raise
 to engineering — those values are hard-coded in `buildAs2Headers` and changing them is a code

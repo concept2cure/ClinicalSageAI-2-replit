@@ -90,13 +90,15 @@ vi.mock('../../../db', () => {
       }
       return { rows: [], rowCount: 1 };
     }
-    // SELECT for downloadAcknowledgment (returns transmission_id + mdn_raw).
-    if (/SELECT\s+transmission_id,\s+status,\s+ack_received_at,\s+mdn_raw,\s+metadata/i.test(sql)) {
+    // SELECT for downloadAcknowledgment (returns transmission_id + mdn_raw;
+    // http_status since 2026-11-01, F1 DP-81).
+    if (/SELECT\s+transmission_id,\s+status,\s+ack_received_at,\s+(?:http_status,\s+)?mdn_raw,\s+metadata/i.test(sql)) {
       return {
         rows: [{
           transmission_id: '<mdn-msg-id@FDA-CESUB>',
           status: 'received',
           ack_received_at: new Date('2026-06-29T12:00:00Z'),
+          http_status: 200,
           mdn_raw: mdnRawStorage.value,
           metadata: metadataStorage.value,
         }],

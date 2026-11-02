@@ -1,0 +1,9 @@
+
+<repo>/server/services/submission-gateways/regional-packager.ts
+   571:1  warning  Function 'buildFdaBackbone' has a complexity of 18. Maximum allowed is 15                complexity
+   919:1  warning  File has too many lines (935). Maximum allowed is 500                                    max-lines
+  1023:8  warning  Async function 'packageEctdSubmission' has too many lines (360). Maximum allowed is 100  max-lines-per-function
+  1023:8  warning  Async function 'packageEctdSubmission' has a complexity of 59. Maximum allowed is 15     complexity
+
+✖ 4 problems (0 errors, 4 warnings)
+

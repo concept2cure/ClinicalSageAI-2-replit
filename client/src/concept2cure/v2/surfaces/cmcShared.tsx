@@ -141,6 +141,53 @@ export function cmcWriteThrew(subject: string, e: unknown): string {
     : `Couldn’t save the ${subject}. Check your connection and try again. Nothing was persisted.`;
 }
 
+/* ── Raw states, as words ─────────────────────────────────────────────── */
+
+/**
+ * A record's state as a reader reads it.
+ *
+ * `approval_status` and the §3.2 section register store lower-case tokens, and
+ * the chips rendered them raw: a reviewer saw "review" and "in_progress" on a
+ * screen that files to an agency (§WA.4.2 rule 10 — no id, enum or snake_case
+ * on screen). One map, in the module the CMC surfaces already share, so two
+ * registers cannot spell the same state differently.
+ *
+ * An unknown token is NOT invented into a sentence: it is returned with its
+ * separators opened out, so a state this map has not met shows as itself
+ * rather than as some other state's word.
+ */
+const STATE_WORDS: Readonly<Record<string, string>> = {
+  draft: 'Draft',
+  review: 'In review',
+  in_review: 'In review',
+  in_progress: 'In progress',
+  approved: 'Approved',
+  reject: 'Rejected',
+  rejected: 'Rejected',
+  superseded: 'Superseded',
+  retired: 'Retired',
+  active: 'Active',
+  closed: 'Closed',
+  pending: 'Pending',
+  completed: 'Completed',
+  paused: 'Paused',
+  'on-hold': 'On hold',
+  cancelled: 'Cancelled',
+  /* The process-capability engine's verdicts. */
+  capable: 'Capable',
+  marginal: 'Marginal',
+  not_capable: 'Not capable',
+};
+
+/** @see STATE_WORDS */
+export function cmcStateWord(state: string | null | undefined): string {
+  if (!state) return '—';
+  const key = state.trim().toLowerCase();
+  if (STATE_WORDS[key]) return STATE_WORDS[key];
+  const opened = key.replace(/[_-]+/g, ' ').trim();
+  return opened ? opened.charAt(0).toUpperCase() + opened.slice(1) : '—';
+}
+
 /* ── The one view lead, and the one figure ─────────────────────────────── */
 
 interface CmHeadProps {
