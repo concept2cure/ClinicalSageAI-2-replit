@@ -1,0 +1,56 @@
+# 3b Slice 4 red, on trunk 9c05a6ac8 (a2bad27e1 plus 3b Slice 3 (a), which touches neither file):
+#   server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts: 11 of 15 fail; the 4 controls pass.
+#   server/routes/c2c/__tests__/projects-create-market-offer.test.ts: the 3 ICH / Global cases added here fail; its existing cases pass.
+
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an MHRA "IND" with 422 FILING_NOT_OFFERED and its reason, before any SQL 49ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a new Japanese NDA with 422 FILING_NOT_OFFERED and its reason, before any SQL 17ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency nothing maps (Swissmedic) with 422 FILING_NOT_OFFERED and its reason, before any SQL 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a drug application at a Notified Body with 422 FILING_NOT_OFFERED and its reason, before any SQL 7ms
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Module 3.2.S at "ICH / Global", sent as the wizard sends it (an NDA) with 422 FILING_NOT_OFFERED and its reason, before any SQL 17ms
+   → expected 'Not supported: the platform has no fi…' to match /^Not offered as its own project: drug…/
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses the Quality Overall Summary at "ICH / Global", by its legacy id with 422 FILING_NOT_OFFERED and its reason, before any SQL 7ms
+   → expected 'Not supported: the platform has no fi…' to match /^Not offered as its own project: the …/
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses any other filing at "ICH / Global" (a comparability protocol) with 422 FILING_NOT_OFFERED and its reason, before any SQL 6ms
+   → expected 'Not supported: the platform has no fi…' to match /^Not offered: ICH is no jurisdiction …/
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Health Canada (an NDS, sent as the wizard sends it) once the scaffold finds no outline, rolled back, nothing committed 13ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency with no outline (TGA) once the scaffold finds no outline, rolled back, nothing committed 12ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an EMA application with no EU outline (an NDA) once the scaffold finds no outline, rolled back, nothing committed 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > an EU MAA: created, "Author documents for this market", with the reason 9ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a continuing PMDA application (an approval number on file): created, author-only 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a US commercial IND: created, build and sequence 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU mdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU ivdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code us: scaffolded against FDA and created 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code US: scaffolded against FDA and created 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a Prior Approval Supplement at FDA: created author-only, its own outline, no submission spine 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a clinical study report at "ICH / Global": created author-only, scaffolded against ICH, no submission spine 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a class covers drugs and biologics alike, so the product class must be stated 4ms
+ × server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > (nda, ICH / Global) 15ms
+   → expected { applicationType: 'nda', …(12) } to match object { agency: 'ICH', region: null, …(4) }
+ × server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > (ind, ICH / Global) 3ms
+   → expected { applicationType: 'ind', …(12) } to match object { agency: 'ICH', region: null, …(4) }
+ × server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > (bla, ICH) 2ms
+   → expected { applicationType: 'bla', …(12) } to match object { agency: 'ICH', region: null, …(4) }
+ × server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > (maa, ich_global) 1ms
+   → expected { applicationType: 'maa', …(12) } to match object { agency: 'ICH', region: null, …(4) }
+ × server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > (pas, ICH / Global) 2ms
+   → expected { applicationType: 'pas', …(12) } to match object { agency: 'ICH', region: null, …(4) }
+ × server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > no part of the statement claims a missing outline or names a document agency 2ms
+   → expected 'Not supported: the platform has no fi…' not to match /Not supported|no filing outline|docu…/i
+ × server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > project creation reads the same refusal, whatever the scaffold would find 5ms
+   → true: expected 'Not supported: the platform has no fi…' to be 'Not offered: ICH is no jurisdiction a…' // Object.is equality
+ × server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > the QOS, the drug substance and the drug product each say where they are written > exactly these three registered filings carry a reason of their own, and the tier is unchanged 2ms
+   → expected [] to deeply equal [ 'ICH_M3_DP', 'ICH_M3_DS', 'ICH_QOS' ]
+ × server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > the QOS, the drug substance and the drug product each say where they are written > each names its module, where it is written, and what is composed for a small-molecule US IND 2ms
+   → expected {} to deeply equal { …(3) }
+ × server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > the QOS, the drug substance and the drug product each say where they are written > each reads as sentences, with no ids or tool names on screen 2ms
+   → expected [] to have a length of 3 but got +0
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > the QOS, the drug substance and the drug product each say where they are written > only ICH's not-offered statement carries a per-filing reason 4ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > what the three sentences state is true of the records they name > the registry places the QOS at 2.3, the drug substance at 3.2.S and the drug product at 3.2.P 1ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > what the three sentences state is true of the records they name > a drug substance filed on its own has its filing types, each in the catalog and offered for authoring 1ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > what the three sentences state is true of the records they name > AnA composes the QOS: its record-composed Module 2.3 tool is in the launch scope 1ms
+ × server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > a harmonised document at ICH says it is filed from its application's own project (as 5ab138ed3 words it) > (csr, ICH / Global): authored here, and filed in its application's sequence from that project 3ms
+   → expected 'Outline only: a harmonised document i…' to be 'Outline only: authored here; a harmon…' // Object.is equality
+ Test Files  2 failed (2)
+      Tests  14 failed | 22 passed (36)
