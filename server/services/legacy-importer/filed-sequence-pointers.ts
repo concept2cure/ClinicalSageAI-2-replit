@@ -22,11 +22,34 @@
 import * as path from 'path';
 import type { FiledSequence, FiledSequenceLeaf } from './filed-sequence-reader';
 
-/** A path ending in a sequence folder and one of its backbones, with what comes before the folder. */
-const SEQUENCE_BACKBONE = /^((?:[^/]+\/)*?)(\d{4})\/(index\.xml|m1\/[a-z]{2}\/[a-z]{2}-regional\.xml)$/;
+/** A sequence's backbone, from the sequence root. */
+const BACKBONE_PATH = /^(index\.xml|m1\/[a-z]{2}\/[a-z]{2}-regional\.xml)$/;
+
+/** An ID a later modified-file can name in the form the fold parses (prior-sequence-loader's MODIFIED_FILE). */
+export const LEAF_ID = /^[A-Za-z_][A-Za-z0-9._-]*$/;
 
 /** The folder that holds a sequence's folder: 'app/' for 'app/0001/', '' for '0001/', '../' for the archive root. */
 export const parentOf = (root: string): string => (root === '' ? '../' : root.replace(/[^/]+\/$/, ''));
+
+/**
+ * Where a path, joined to a sequence's root, lands among the sequences of that
+ * sequence's application: the sibling folder's number and the path inside it.
+ * `parent` is where those siblings sit in the archive.
+ *
+ * An archive zipped without its application folder (sequence folders at the
+ * top, or one sequence at the root) is read as that folder's contents. So a
+ * grouped-form path that climbs out and back in through a folder of any name
+ * (`../../nda123456/0000/…` from `0001/`) lands on the sibling, too.
+ */
+export function intoSibling(target: string, root: string): { parent: string; number: string; rest: string } | null {
+  const parent = parentOf(root);
+  const inside = target.startsWith(parent) ? target.slice(parent.length) : null;
+  const direct = inside === null ? null : /^(\d{4})\/(.+)$/.exec(inside);
+  if (direct) return { parent, number: direct[1], rest: direct[2] };
+  const climb = parent === '' ? /^\.\.\/[^/]+\/(\d{4})\/(.+)$/ : parent === '../' ? /^\.\.\/\.\.\/[^/]+\/(\d{4})\/(.+)$/ : null;
+  const m = climb?.exec(target);
+  return m ? { parent, number: m[1], rest: m[2] } : null;
+}
 
 /**
  * Bind each modified-file to the leaf it names and record it as
@@ -39,11 +62,22 @@ export const parentOf = (root: string): string => (root === '' ? '../' : root.re
 export function bindPointers(sequences: FiledSequence[]): void {
   const byRoot = new Map(sequences.map((s) => [s.root, s]));
   const onFile = new Set<string>();
+  // The fold also takes a leaf off file when a later one of the same application
+  // is filed under its section and file name; a pointer at it then binds nothing.
+  const holderOfKey = new Map<string, string>();
   for (const s of sequences) {
     const takenOff = new Set<string>();
     s.leaves = s.leaves.filter((l) => keepBound(s, l, bindPointer(s, l, byRoot, onFile), takenOff));
     for (const k of takenOff) onFile.delete(k);
-    for (const l of s.leaves) if (l.operation !== 'delete') onFile.add(`${s.root}${l.backbone}#${l.leafId}`);
+    for (const l of s.leaves) {
+      if (l.operation === 'delete') continue;
+      const key = `${s.root}${l.backbone}#${l.leafId}`;
+      const identity = `${parentOf(s.root)}|${l.ctdSection}/${l.fileName}`;
+      const superseded = holderOfKey.get(identity);
+      if (superseded) onFile.delete(superseded);
+      holderOfKey.set(identity, key);
+      onFile.add(key);
+    }
   }
 }
 
@@ -74,10 +108,11 @@ function bindPointer(s: FiledSequence, l: FiledSequenceLeaf, byRoot: Map<string,
   if (!l.modifiedFile) return null;
   const [file, id] = l.modifiedFile.split('#');
   const target = path.posix.normalize(path.posix.join(s.root, file));
-  const m = SEQUENCE_BACKBONE.exec(target);
-  if (!m) return { refusal: 'names no sequence\'s backbone' };
-  const [, parent, number, backbone] = m;
-  if (parent !== parentOf(s.root)) return { refusal: 'names a sequence of another application, or climbs past its own' };
+  const into = intoSibling(target, s.root);
+  if (!into || !BACKBONE_PATH.test(into.rest)) {
+    return { refusal: 'names no backbone of a sequence of its own application (another application, a path past its own, or no backbone at all)' };
+  }
+  const { parent, number, rest: backbone } = into;
   if (s.sequence === null || !(number < s.sequence)) return { refusal: `names sequence ${number}, which is not earlier than ${s.sequence ?? 'this one'}` };
   const canonical = `../${number}/${backbone}#${id}`;
   const prior = byRoot.get(`${parent}${number}/`);
@@ -102,7 +137,9 @@ export function refuseAmbiguousIdentity(s: FiledSequence): void {
   for (const l of s.leaves) {
     if (l.operation === 'delete') continue;
     const key = `${l.ctdSection}/${l.fileName}`;
-    byKey.set(key, [...(byKey.get(key) ?? []), l]);
+    const group = byKey.get(key);
+    if (group) group.push(l);
+    else byKey.set(key, [l]);
   }
   const ambiguous = new Set([...byKey.values()].filter((ls) => ls.length > 1).flat());
   if (!ambiguous.size) return;

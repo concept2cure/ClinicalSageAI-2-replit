@@ -78,7 +78,7 @@ import {
   elementsNamed, firstNamed, parseBackbone, placementOf, textOf,
   type BackboneProblemCode,
 } from './filed-sequence-xml';
-import { bindPointers, parentOf, refuseAmbiguousIdentity } from './filed-sequence-pointers';
+import { LEAF_ID, bindPointers, intoSibling, parentOf, refuseAmbiguousIdentity } from './filed-sequence-pointers';
 
 export { headingSection } from './filed-sequence-xml';
 
@@ -92,6 +92,7 @@ export type FiledSequenceRefusalCode =
   | 'regional_backbone_checksum_mismatch'
   | 'regional_backbone_unreferenced'
   | 'leaf_id_missing'
+  | 'leaf_id_malformed'
   | 'leaf_id_duplicate'
   | 'leaf_operation_unknown'
   | 'leaf_heading_unmapped'
@@ -175,8 +176,6 @@ const OPERATIONS = new Set(['new', 'replace', 'append', 'delete']);
 const XLINK_NAMESPACES = new Set(['http://www.w3c.org/1999/xlink', 'http://www.w3.org/1999/xlink']);
 const SEQUENCE_FOLDER = /^\d{4}$/;
 const REGIONAL_PATH = /^m1\/[a-z]{2}\/[a-z]{2}-regional\.xml$/;
-/** A path into a sequence folder: what comes before the folder, the folder, the rest. */
-const INTO_SEQUENCE = /^((?:[^/]+\/)*?)(\d{4})\/(.+)$/;
 const REGION_BY_FOLDER: Record<string, FiledSequence['region']> = { us: 'fda', eu: 'ema', jp: 'pmda' };
 
 
@@ -187,13 +186,25 @@ interface ArchiveContext {
   md5s: Map<string, Promise<string>>;
 }
 
-/** The sequence root a zip path belongs to: the longest root that is a folder prefix of it. */
+/** Zip paths longer or deeper than this belong to no sequence: an eCTD path is at most a few hundred characters. */
+const NAME_MAX = 1024;
+const DEPTH_MAX = 32;
+
+/**
+ * The sequence root a zip path belongs to: the longest root that is a folder
+ * prefix of it. The walk ends at the archive root, after at most DEPTH_MAX
+ * folders, and never starts on an absolute name. 2026-11-02: an entry named
+ * '/x' made this loop forever.
+ */
 function ownerOf(name: string, roots: Set<string>): string | null {
-  for (let cut = name.lastIndexOf('/'); ; cut = name.lastIndexOf('/', cut - 1)) {
-    const prefix = cut >= 0 ? name.slice(0, cut + 1) : '';
+  if (name.startsWith('/') || name.length > NAME_MAX) return null;
+  let cut = name.lastIndexOf('/');
+  for (let depth = 0; cut >= 0 && depth < DEPTH_MAX; depth++) {
+    const prefix = name.slice(0, cut + 1);
     if (roots.has(prefix)) return prefix;
-    if (cut < 0) return null;
+    cut = cut > 0 ? name.lastIndexOf('/', cut - 1) : -1;
   }
+  return cut < 0 && roots.has('') ? '' : null;
 }
 
 /** A file's MD5, inflating and hashing it at most once per archive. */
@@ -230,6 +241,9 @@ const titleOf = (leaf: Element): string | undefined => {
   return undefined;
 };
 
+/** A leaf whose file is in another sequence of its application. */
+interface Reuse { leafId: string; backbone: string; number: string; targetRoot: string; archivePath: string | null }
+
 interface ReadContext {
   arc: ArchiveContext;
   /** This sequence's root in the archive. */
@@ -240,8 +254,8 @@ interface ReadContext {
   refusals: FiledSequenceRefusal[];
   referenced: Set<string>;
   outsideArchive: string[];
-  /** Leaves whose file is reused from another sequence, checked against this sequence's number once it is known. */
-  reuses: { leafId: string; backbone: string; number: string }[];
+  /** Leaves whose file is reused from another sequence, bound once every sequence is read (bindReuses). */
+  reuses: Reuse[];
 }
 
 /**
@@ -278,37 +292,47 @@ function locate(href: string, ctx: ReadContext): Located | { refusal: string } {
 
 /**
  * A href may name a file of its own sequence, or a file filed in another
- * sequence of the same application (ICH file reuse); that sequence must be the
- * earlier one, which readSequence checks once this sequence's number is known.
- * Returns the zip path to verify (null when that sequence is not in the
- * archive, so the filed state binds it), or why the href may not lead there.
+ * sequence of the same application (ICH file reuse). Whether that sequence is
+ * the earlier one, and filed that file, is bound once every sequence is read
+ * (bindReuses). Returns the zip path to verify (null when that sequence is not
+ * in the archive, so the filed state binds it), or why the href may not lead there.
  */
-function hrefTarget(loc: Located, ctx: ReadContext): { archivePath: string | null; reuses?: string } | { refusal: string } {
+function hrefTarget(loc: Located, ctx: ReadContext): { archivePath: string | null; reuse?: Omit<Reuse, 'leafId' | 'backbone'> } | { refusal: string } {
   if (loc.archivePath !== null && !loc.fromRoot.startsWith('../') && ownerOf(loc.archivePath, ctx.arc.roots) === ctx.root) {
     return { archivePath: loc.archivePath };
   }
   const target = loc.archivePath ?? path.posix.normalize(path.posix.join(ctx.root, loc.fromRoot));
-  const m = INTO_SEQUENCE.exec(target);
-  if (!m || m[1] !== parentOf(ctx.root) || `${m[1]}${m[2]}/` === ctx.root) {
+  const into = intoSibling(target, ctx.root);
+  const targetRoot = into ? `${into.parent}${into.number}/` : null;
+  if (!into || targetRoot === ctx.root) {
     return { refusal: `href "${loc.fromRoot}" leads out of the sequence, and not into another sequence of the same application` };
   }
-  const held = loc.archivePath !== null && ctx.arc.roots.has(`${m[1]}${m[2]}/`);
-  return { archivePath: held ? loc.archivePath : null, reuses: m[2] };
+  const archivePath = ctx.arc.roots.has(targetRoot!) ? `${targetRoot}${into.rest}` : null;
+  return { archivePath, reuse: { number: into.number, targetRoot: targetRoot!, archivePath } };
 }
 
 interface LeafHead { id: string; label: string; operation: FiledSequenceLeaf['operation']; href: string | null; at: { path?: string; leafId?: string } }
 interface RegionalPointer { href: string; checksum: string | null; leafId: string }
 
+/** The file a leaf's href names, from the sequence root, counted as referenced: what every refusal of the leaf cites. */
+function citeFile(href: string | null, ctx: ReadContext): string | undefined {
+  const loc = href ? locate(href, ctx) : null;
+  if (!loc || 'refusal' in loc) return undefined;
+  if (loc.archivePath) ctx.referenced.add(loc.archivePath);
+  return loc.escapes ? undefined : loc.fromRoot;
+}
+
 /** A leaf's ID (present, once per backbone), operation (one of the four) and the file it names, for every refusal to cite. */
 function leafHead(el: Element, ids: Set<string>, ctx: ReadContext): LeafHead | FiledSequenceRefusal {
   const id = attr(el, 'ID');
   const href = xlinkHref(el);
-  const loc = href ? locate(href, ctx) : null;
-  const filePath = loc && !('refusal' in loc) && !loc.escapes ? loc.fromRoot : undefined;
-  if (loc && !('refusal' in loc) && loc.archivePath) ctx.referenced.add(loc.archivePath);
+  const filePath = citeFile(href, ctx);
   const at = { ...(filePath ? { path: filePath } : {}), ...(id ? { leafId: id } : {}) };
   const label = id ? `leaf ${id}` : `a leaf${href ? ` for "${href}"` : ''}`;
   if (!id) return refusal('leaf_id_missing', `${label} carries no ID, so no later sequence could name it`, at);
+  if (!LEAF_ID.test(id)) {
+    return refusal('leaf_id_malformed', `${label} carries the ID "${id}", which no later modified-file could name in the form the filed state binds`, at);
+  }
   if (ids.has(id)) return refusal('leaf_id_duplicate', `ID ${id} is carried by more than one leaf`, at);
   ids.add(id);
   const operation = attr(el, 'operation').toLowerCase();
@@ -339,7 +363,7 @@ function leafAct(el: Element, head: LeafHead, backboneDir: string): { modifiedFi
   const fromRoot = path.posix.normalize(path.posix.join(backboneDir, file));
   // What a pointer must be to name a leaf at all: out of this sequence, into a
   // backbone, with an ID. Whether it names one is decided by binding it.
-  if (extra !== undefined || !id || !/\.xml$/.test(fromRoot) || !fromRoot.startsWith('../')) {
+  if (extra !== undefined || !id || !LEAF_ID.test(id) || !/\.xml$/.test(fromRoot) || !fromRoot.startsWith('../')) {
     return refusal('leaf_modified_file_unresolved',
       `${head.label}'s modified-file "${raw}" does not name a leaf in another sequence's backbone (../<sequence>/<backbone>#<ID>)`, head.at);
   }
@@ -358,7 +382,7 @@ async function leafFile(el: Element, head: LeafHead, ctx: ReadContext): Promise<
   if (!checksum || attr(el, 'checksum-type').toLowerCase() !== 'md5') {
     return refusal('leaf_checksum_missing', `${label} carries no md5 checksum for "${loc.fromRoot}"`, at);
   }
-  if (target.reuses) ctx.reuses.push({ leafId: head.id, backbone: ctx.backbone, number: target.reuses });
+  if (target.reuse) ctx.reuses.push({ leafId: head.id, backbone: ctx.backbone, ...target.reuse });
   if (target.archivePath === null) {
     // A file filed in a sequence this archive does not hold: its checksum is
     // checked when the leaf is bound against the recorded filed state.
@@ -445,9 +469,14 @@ async function indexChecksumRefusal(zip: JSZip, root: string, indexBytes: Buffer
  * submission, the <application> marked application-containing-files="true",
  * else the only one, else the whole document.
  */
-function applicationElement(doc: Document): Document | Element {
+function applicationElement(doc: Document): Document | Element | null {
   const apps = elementsNamed(doc, 'application');
-  return apps.find((a) => a.getAttribute('application-containing-files') === 'true') ?? (apps.length === 1 ? apps[0] : doc);
+  const marked = apps.find((a) => a.getAttribute('application-containing-files') === 'true');
+  if (marked) return marked;
+  if (apps.length === 1) return apps[0];
+  // Several applications, none marked as carrying the files: which one is this
+  // sequence's is not said, so none is taken.
+  return apps.length ? null : doc;
 }
 
 /** The application block and sequence number of a regional backbone, by region. */
@@ -463,6 +492,7 @@ function applicationOf(doc: Document, region: FiledSequence['region']): { applic
     };
   }
   const app = applicationElement(doc);
+  if (!app) return { application: { number: null, applicationType: null, submissionType: null, applicant: textOf(firstNamed(doc, 'company-name')) }, sequence: null };
   const number = firstNamed(app, 'application-number');
   return {
     application: {
@@ -522,7 +552,7 @@ function numberSequence(seq: FiledSequence): void {
   }
 }
 
-async function readSequence(arc: ArchiveContext, root: string, names: string[]): Promise<FiledSequence> {
+async function readSequence(arc: ArchiveContext, root: string, names: string[]): Promise<{ seq: FiledSequence; reuses: Reuse[] }> {
   const referenced = new Set<string>();
   const seq: FiledSequence = {
     root, sequence: null, regionalBackbone: null, region: null,
@@ -547,7 +577,7 @@ async function readSequence(arc: ArchiveContext, root: string, names: string[]):
     // other number is no further defect.
     const folder = root.split('/').filter(Boolean).pop() ?? '';
     if (SEQUENCE_FOLDER.test(folder)) seq.sequence = folder;
-    return seq;
+    return { seq, reuses: [] };
   }
   const ich = await readLeaves(index.doc, { ...base, backbone: 'index.xml', backboneDir: '', regional: false });
   seq.leaves.push(...ich.leaves);
@@ -562,23 +592,39 @@ async function readSequence(arc: ArchiveContext, root: string, names: string[]):
     }
   }
   numberSequence(seq);
-  refuseLaterReuse(seq, base.reuses);
 
   const structure = new Set([`${root}index.xml`, `${root}index-md5.txt`, ...(seq.regionalBackbone ? [`${root}${seq.regionalBackbone}`] : [])]);
   seq.unreferenced = names
     .filter((n) => !structure.has(n) && !referenced.has(n) && !n.slice(root.length).startsWith('util/') && !unread.some((u) => n.startsWith(u)))
     .map((n) => n.slice(root.length));
-  return seq;
+  return { seq, reuses: base.reuses };
 }
 
-/** A reused file must come from an earlier sequence; this sequence's number is known only now. */
-function refuseLaterReuse(seq: FiledSequence, reuses: ReadContext['reuses']): void {
-  for (const r of reuses) {
-    if (seq.sequence !== null && r.number < seq.sequence) continue;
-    seq.refusals.push(refusal('leaf_href_unsafe',
-      `${r.backbone}: leaf ${r.leafId}'s href leads into sequence ${r.number}, which is not earlier than ${seq.sequence ?? 'this one'}; it is not read`, { leafId: r.leafId }));
-    seq.leaves = seq.leaves.filter((l) => !(l.leafId === r.leafId && l.backbone === r.backbone));
-    seq.outsideArchive.splice(0, seq.outsideArchive.length, ...seq.outsideArchive.filter((id) => id !== r.leafId));
+/**
+ * Bind each reused file: it must come from an earlier sequence of the same
+ * application, and, when the archive holds that sequence, be a file one of its
+ * leaves filed (read and kept). A file it refused, never named, or could not
+ * read is not one it filed.
+ */
+function bindReuses(sequences: FiledSequence[], reuses: Map<FiledSequence, Reuse[]>): void {
+  const filedBy = new Map(sequences.map((s) => [s.root, new Set(s.leaves.filter((l) => l.operation !== 'delete').map((l) => l.archivePath))]));
+  const why = (s: FiledSequence, r: Reuse): string | null => {
+    if (s.sequence === null || !(r.number < s.sequence)) return `leads into sequence ${r.number}, which is not earlier than ${s.sequence ?? 'this one'}`;
+    if (r.archivePath !== null && !filedBy.get(r.targetRoot)?.has(r.archivePath)) return `names ${r.archivePath}, which sequence ${r.number} did not file`;
+    return null;
+  };
+  for (const s of sequences) {
+    const refused = new Set<string>();
+    for (const r of reuses.get(s) ?? []) {
+      const reason = why(s, r);
+      if (!reason) continue;
+      s.refusals.push(refusal('leaf_href_unsafe', `${r.backbone}: leaf ${r.leafId}'s href ${reason}; it is not read`, { leafId: r.leafId }));
+      refused.add(`${r.backbone}#${r.leafId}`);
+    }
+    if (!refused.size) continue;
+    s.leaves = s.leaves.filter((l) => !refused.has(`${l.backbone}#${l.leafId}`));
+    const ids = new Set([...refused].map((k) => k.slice(k.lastIndexOf('#') + 1)));
+    s.outsideArchive = s.outsideArchive.filter((id) => !ids.has(id));
   }
 }
 
@@ -614,23 +660,45 @@ export async function readFiledSequences(zip: JSZip): Promise<FiledArchive> {
   const arc: ArchiveContext = { zip, roots, md5s: new Map() };
 
   const sequences: FiledSequence[] = [];
-  for (const root of roots) sequences.push(await readSequence(arc, root, owned.get(root) ?? []));
+  const reuses = new Map<FiledSequence, Reuse[]>();
+  for (const root of roots) {
+    const read = await readSequence(arc, root, owned.get(root) ?? []);
+    sequences.push(read.seq);
+    reuses.set(read.seq, read.reuses);
+  }
   sequences.sort((a, b) => (a.sequence ?? '\uFFFF').localeCompare(b.sequence ?? '\uFFFF') || a.root.localeCompare(b.root));
 
-  const refusals: FiledSequenceRefusal[] = [];
-  const seen = new Map<string, string>();
+  const refusals = duplicateNumbers(sequences);
+  // Identity first, so nothing binds to a leaf refused as ambiguous; then the
+  // files and leaves later sequences name.
+  for (const s of sequences) refuseAmbiguousIdentity(s);
+  bindReuses(sequences, reuses);
+  bindPointers(sequences);
+  return { sequences, refusals };
+}
+
+/**
+ * One sequence number twice in one application: two sibling folders, or a
+ * sequence folder inside another sequence of that number.
+ */
+function duplicateNumbers(sequences: FiledSequence[]): FiledSequenceRefusal[] {
+  const byNumber = new Map<string, FiledSequence[]>();
   for (const s of sequences) {
     if (s.sequence === null) continue;
-    const other = seen.get(`${parentOf(s.root)}|${s.sequence}`);
-    if (other !== undefined) {
-      refusals.push({ code: 'sequence_number_duplicate', message: `sequence ${s.sequence} is in the archive twice (${other || '/'} and ${s.root || '/'})` });
-    }
-    seen.set(`${parentOf(s.root)}|${s.sequence}`, s.root);
+    const group = byNumber.get(s.sequence);
+    if (group) group.push(s);
+    else byNumber.set(s.sequence, [s]);
   }
-
-  bindPointers(sequences);
-  for (const s of sequences) refuseAmbiguousIdentity(s);
-  return { sequences, refusals };
+  const out: FiledSequenceRefusal[] = [];
+  for (const [number, group] of byNumber) {
+    const seen = new Map<string, string>();
+    for (const s of group) {
+      const other = seen.get(parentOf(s.root)) ?? group.find((o) => o !== s && s.root.startsWith(o.root))?.root;
+      if (other !== undefined) out.push(refusal('sequence_number_duplicate', `sequence ${number} is in the archive twice (${other || '/'} and ${s.root || '/'})`));
+      seen.set(parentOf(s.root), s.root);
+    }
+  }
+  return out;
 }
 
 /** Read an uploaded archive: bounded before anything inflates (SEC-17), then every sequence in it. */

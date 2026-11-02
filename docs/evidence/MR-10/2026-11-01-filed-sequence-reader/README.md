@@ -159,3 +159,48 @@ test file that imports the detector, `mdx-imports`, `mdx-onboarding` or `start_l
   convergence.
 - Reading other regions' Module 1 headings beyond the FDA's and the EU's is
   unchanged.
+
+## Second review, 2026-11-02: the fixes, reviewed before they were pushed
+
+The review round's fixes were reviewed again, read-only and by three lenses:
+coverage of the 35 findings, the tests, and new holes. Each issue went to a
+skeptic. They found problems in the code already committed as `7e7fae33`, so
+that commit was not pushed until they were fixed. Every case below was run
+first against `7e7fae33`: **16 of 18 failed, and the absolute-name case hung
+until killed at 90 s** ([second-review-red-at-7e7fae33.txt](second-review-red-at-7e7fae33.txt)).
+The two that passed are coverage additions: guards the code had, which no test
+exercised (the pointer's backbone, and a refused regional backbone's files).
+
+| Issue | What `7e7fae33` did | Now |
+|---|---|---|
+| **High:** a zip entry named `/x` | The walk to its sequence root never ended (`lastIndexOf('/', -1)` finds the leading `/` again). Any upload holding one hung the detector. | An absolute name belongs to no sequence. The walk is bounded at 1,024 characters and 32 folders. |
+| 32 MiB backbone of empty leaves | About 1.7 million leaves, roughly 3 GB of heap and a 10 s block | Over 50,000 leaves is refused before the document is built (`backbone_too_large`) |
+| A reused file the earlier sequence refused, never read, or never filed | Recorded, complete, and mapped | Refused: a reused file must be one a kept leaf of that earlier sequence filed |
+| An archive zipped without its application folder | A grouped-form pointer (`../../nda123456/0000/…`) was refused | Bound to the sibling sequence |
+| A four-digit ancestor folder (`export/2024/ind123/`) | Reuse refused | Read |
+| A leaf a later filing under the same section and name took off file | A pointer at it bound, so the fold withdrew the re-filing | Refused, as the fold's own supersession implies |
+| An ID such as `1ov` | Recorded; a pointer at it could never be parsed by the fold | Refused (`leaf_id_malformed`), and so is a pointer naming one |
+| Several `<application>` elements, none marked | The first was taken | None is taken |
+| A pointer at a leaf its own sequence then refused as ambiguous | Bound | Identity is checked before anything binds |
+| `m3-2-z-…`, `m2-3-z-…` | Read as 3.2 and 2.3 | Not a heading |
+| A sequence folder inside another of the same number | No longer refused | Refused |
+| A leaf refused for having no ID | Its file became a filename suggestion | Stored skipped |
+| A reused file in the detector | Mapped under the reusing sequence's section | Keeps the section the sequence that filed it gave it |
+| 20,000 reuses refused at once; many leaves with one name | Quadratic: 14 s and 11 s | Linear (a test bounds it) |
+
+**Withdrawn after a dissenting verdict.** One fix refused a leaf filed directly
+in a heading that has sub-headings (3, 3.2, 5.3), as the packager's
+`isPlaceableSection` would. A second verifier pointed out that the ICH DTD lets
+every heading hold leaves. Such a leaf can be in a validly filed sequence, and
+refusing it would keep that sequence out of the filed state. Such leaves are
+read as filed, and a test pins it. A later act at that section is refused
+openly by the packager.
+
+**Each guard made to fail.**
+[guards-made-to-fail-second-review.txt](guards-made-to-fail-second-review.txt).
+On the first pass three guards survived; each got a case only it decides. On
+the second pass every guard turns a test red.
+
+**Green.** [second-review-green.txt](second-review-green.txt): the legacy-importer
+folder and every test file that imports the detector, `mdx-imports`,
+`mdx-onboarding` or `start_legacy_import`.

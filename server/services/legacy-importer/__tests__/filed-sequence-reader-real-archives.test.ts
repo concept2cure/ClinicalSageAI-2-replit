@@ -1,9 +1,16 @@
 /**
  * The filed-sequence reader on what real archives hold, and on what an
  * uploaded archive could hold to mislead it. Each case is a finding of the
- * independent review of 2026-11-02 (docs/evidence/MR-10/2026-11-01-filed-sequence-
- * reader/README.md, "Review round"), shown failing on the reader of 90f1c747
- * before it was fixed.
+ * independent reviews of 2026-11-02 (docs/evidence/MR-10/2026-11-01-filed-sequence-
+ * reader/README.md, "Review round" and "Second review").
+ *
+ * The cases above "a second review of the fixes" were run first against the
+ * reader at 0835454a: 33 of 37 failed. Four passed there:
+ *   - the size cap, which tests the new module directly;
+ *   - the later-sequence refusal, a control;
+ *   - `sequence_number_missing` and the wrong-backbone pointer, which existing
+ *     code already handled but no test exercised.
+ * The cases from "a second review" on were run first against 7e7fae33.
  */
 import { describe, expect, it, vi } from 'vitest';
 import { loadFiledStateBySubmission } from '../../ectd/prior-sequence-loader';
@@ -331,3 +338,127 @@ describe('refusals name the file', () => {
     expect(s.unreferenced).toEqual([]);
   });
 });
+
+describe('a second review of the fixes', () => {
+  const zero = (extra: Partial<HandSequence> = {}) => handSequenceFiles({ ...BASE, root: '0000/', ...extra });
+  const reuseOf = (href: string, bytes: string): HandLeaf => ({ headings: [...H.clinicalOverview], href, id: 'r1', omitFile: true, checksum: md5(bytes) });
+
+  it('refuses a backbone of more leaves than any real one, before building its document', async () => {
+    const many = Array.from({ length: 60_001 }, (_, i) => `<leaf ID="a${i}"/>`).join('');
+    const index = `<?xml version="1.0"?><ectd:ectd xmlns:ectd="http://www.ich.org/ectd"><m2-common-technical-document-summaries><m2-5-clinical-overview>${many}</m2-5-clinical-overview></m2-common-technical-document-summaries></ectd:ectd>`;
+    const started = performance.now();
+    const s = await only({ '0000/index.xml': index, '0000/index-md5.txt': md5(index) });
+    expect(codes(s)).toEqual(['backbone_too_large']);
+    expect(performance.now() - started).toBeLessThan(3000);
+  });
+
+  it.each([
+    ['whose own leaf for it the earlier sequence refused', zero({ ich: [{ ...OV, checksum: md5('not these bytes') }] })],
+    ['in an earlier sequence nothing of which was read', zero({ indexMd5: md5('other') })],
+    ['that the earlier sequence holds but never filed', { ...zero({ ich: [CSR] }), '0000/m2/2-5/clinical-overview.pdf': '%PDF-1.4 ov' }],
+  ])('refuses a reused file %s', async (_, files) => {
+    const one = handSequenceFiles({ root: '0001/', sequenceNumber: '0001', ich: [reuseOf('../0000/m2/2-5/clinical-overview.pdf', '%PDF-1.4 ov')] });
+    const [, s1] = (await read({ ...files, ...one })).sequences;
+    expect(s1.refusals.map((r) => [r.code, r.leafId])).toEqual([['leaf_href_unsafe', 'r1']]);
+    expect(s1.leaves).toEqual([]);
+  });
+
+  it('reads a reused file under an application folder whose ancestor is named with four digits', async () => {
+    const at = 'export/2024/ind123/';
+    const one = handSequenceFiles({ root: `${at}0001/`, sequenceNumber: '0001', ich: [reuseOf('../0000/m2/2-5/clinical-overview.pdf', '%PDF-1.4 ov')] });
+    const [, s1] = (await read({ ...handSequenceFiles({ ...BASE, root: `${at}0000/` }), ...one })).sequences;
+    expect(s1.refusals).toEqual([]);
+    expect(s1.leaves[0].archivePath).toBe(`${at}0000/m2/2-5/clinical-overview.pdf`);
+  });
+
+  it('binds a grouped-form pointer in an archive zipped without its application folder', async () => {
+    const one = handSequenceFiles({ root: '0001/', sequenceNumber: '0001', ich: [{ headings: [...H.clinicalOverview], href: 'm2/2-5/v2.pdf', id: 'v2', operation: 'replace', modifiedFile: '../../nda123456/0000/index.xml#ov' }] });
+    const [, s1] = (await read({ ...zero(), ...one })).sequences;
+    expect(s1.refusals).toEqual([]);
+    expect(s1.leaves[0].modifiedFile).toBe('../0000/index.xml#ov');
+    expect(s1.outsideArchive).toEqual([]);
+  });
+
+  it('refuses a pointer at a leaf a later filing under its section and name already took off file', async () => {
+    const one = handSequenceFiles({ root: '0001/', sequenceNumber: '0001', ich: [{ ...OV, id: 'ov-again', bytes: 'other bytes' }] });
+    const two = handSequenceFiles({ root: '0002/', sequenceNumber: '0002', ich: [{ headings: [...H.clinicalOverview], id: 'gone', operation: 'delete', modifiedFile: '../0000/index.xml#ov' }] });
+    const [, , s2] = (await read({ ...zero(), ...one, ...two })).sequences;
+    expect(s2.refusals.map((r) => [r.code, r.leafId])).toEqual([['leaf_modified_file_unresolved', 'gone']]);
+  });
+
+  it('refuses a leaf ID, or a pointer\'s ID, the filed state could not bind', async () => {
+    const s0 = await only(handSequenceFiles({ root: '0000/', ich: [{ ...OV, id: '1ov' }] }));
+    expect(s0.refusals.map((r) => [r.code, r.leafId])).toEqual([['leaf_id_malformed', '1ov']]);
+    const s1 = await only(handSequenceFiles({ root: '0001/', sequenceNumber: '0001', ich: [{ headings: [...H.clinicalOverview], href: 'm2/v2.pdf', id: 'v2', operation: 'replace', modifiedFile: '../0000/index.xml#1ov' }] }));
+    expect(codes(s1)).toEqual(['leaf_modified_file_unresolved']);
+  });
+
+});
+
+describe('a second review of the fixes: headings, applications, identity', () => {
+  it.each([
+    [['m3-quality', 'm3-2-body-of-data', 'm3-2-z-other']],
+    // 2.3 is a heading leaves sit in; a name saying 2.3.Z is not read as it.
+    [['m2-common-technical-document-summaries', 'm2-3-z-other']],
+  ])('refuses a leaf under a heading whose name says a section letter the CTD does not have: %j', async (headings) => {
+    const s = await only(handSequenceFiles({ root: '0000/', ich: [{ headings, href: 'm3/x.pdf', id: 'x' }] }));
+    expect(codes(s)).toEqual(['leaf_heading_unmapped']);
+  });
+
+  it.each([
+    [['m3-quality', 'm3-2-body-of-data'], '3.2'],
+    [['m3-quality'], '3'],
+    [['m5-clinical-study-reports', 'm5-3-clinical-study-reports'], '5.3'],
+  ])('reads a leaf filed in a heading that has sub-headings, as the DTD allows: %j', async (headings, section) => {
+    const s = await only(handSequenceFiles({ root: '0000/', ich: [{ headings, href: 'm3/x.pdf', id: 'x' }] }));
+    expect(s.refusals).toEqual([]);
+    expect(s.leaves[0].ctdSection).toBe(section);
+  });
+
+  it('takes no application from a grouped backbone that marks none as carrying the files', async () => {
+    const other = '<application><application-information><application-number application-type="fdaat1">999999</application-number></application-information><submission-information><submission-id submission-type="fdast2">0000</submission-id><sequence-number submission-sub-type="fdasst1">0000</sequence-number></submission-information></application>';
+    const unmark = text((x) => x.replace(' application-containing-files="true"', '').replace('<application-set>', `<application-set>${other}`));
+    const s = await only(rewrite(handSequenceFiles({ ...BASE, root: '0000/' }), '0000/', { regional: unmark }));
+    expect(s.application.number).toBeNull();
+    expect(s.sequence).toBe('0000');
+  });
+
+  it('binds nothing to a leaf its own sequence refused as ambiguous', async () => {
+    const zeroTwo = handSequenceFiles({ root: '0000/', ich: [
+      { headings: [...H.drugSubstance], href: 'm3/a/specification.pdf', id: 'a' },
+      { headings: [...H.drugSubstance], href: 'm3/b/specification.pdf', id: 'b', bytes: 'b' },
+    ] });
+    // b, the second of the two, is the one the fold's own supersession would leave on file.
+    const one = handSequenceFiles({ root: '0001/', sequenceNumber: '0001', ich: [{ headings: [...H.drugSubstance], href: 'm3/c/spec-v2.pdf', id: 'c', operation: 'replace', modifiedFile: '../0000/index.xml#b' }] });
+    const [, s1] = (await read({ ...zeroTwo, ...one })).sequences;
+    expect(codes(s1)).toEqual(['leaf_modified_file_unresolved']);
+  });
+
+  it('binds a pointer to the leaf of the backbone it names when both backbones carry the ID', async () => {
+    const zeroSame = handSequenceFiles({ root: '0000/', m1: [{ ...COVER, id: 'ov' }], ich: [OV] });
+    const one = handSequenceFiles({ root: '0001/', sequenceNumber: '0001', m1: [{ headings: [...H.coverLetters], id: 'w', operation: 'delete', modifiedFile: '../../../0000/m1/us/us-regional.xml#ov' }] });
+    const [, s1] = (await read({ ...zeroSame, ...one })).sequences;
+    expect(s1.refusals).toEqual([]);
+    expect(s1.leaves[0]).toMatchObject({ ctdSection: '1.2', fileName: 'cover.pdf' });
+  });
+
+  it('does not call a refused regional backbone\'s files unreferenced', async () => {
+    const s = await only(handSequenceFiles({ ...BASE, root: '0000/', regionalChecksum: md5('not it') }));
+    expect(codes(s)).toEqual(['regional_backbone_checksum_mismatch']);
+    expect(s.unreferenced).not.toContain('m1/us/1-2/cover.pdf');
+  });
+
+  it('refuses a sequence folder inside another sequence of the same number', async () => {
+    const out = await read({ ...handSequenceFiles(BASE), ...handSequenceFiles({ ...BASE, root: '0000/' }) });
+    expect(out.refusals.map((r) => r.code)).toEqual(['sequence_number_duplicate']);
+  });
+
+  it('answers in a few seconds on 20,000 reuses refused at once (it took 14 s)', async () => {
+    const leaves = Array.from({ length: 20_000 }, (_, i): HandLeaf => ({ headings: [...H.efficacySafety], href: `../0001/m5/f${i}.pdf`, id: `l${i}`, omitFile: true, checksum: md5('x') }));
+    const started = performance.now();
+    const s = await only(handSequenceFiles({ sequenceNumber: '0000', ich: leaves }));
+    expect(s.refusals).toHaveLength(20_000);
+    expect(performance.now() - started).toBeLessThan(6000);
+  }, 30_000);
+});
+

@@ -106,6 +106,16 @@ above:
     heading tree;
   - `filed-sequence-pointers.ts`: binding pointers, and identity.
 
+A second review, before these were pushed, found more. Its fixes (evidence
+README, "Second review"):
+- A reused file must be one a kept leaf of the earlier sequence filed.
+- An archive zipped without its application folder is read as that folder's
+  contents.
+- Leaf and pointer IDs must be in the grammar the fold parses.
+- The on-file model follows the fold's supersession by section and file name.
+- Leaves filed directly in a heading that has sub-headings are read as filed,
+  as the ICH DTD allows.
+
 ## Known limits, written down
 
 - **Section precision is the backbone's.** A sequence written by this platform's

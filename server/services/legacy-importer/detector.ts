@@ -223,13 +223,14 @@ export async function detectArchive(archivePath: string): Promise<DetectedArchiv
   const read = await readFiledSequences(zip);
   const declared = new Map<string, FiledSequenceLeaf>();
   for (const seq of read.sequences) {
-    for (const leaf of seq.leaves) if (leaf.archivePath) declared.set(leaf.archivePath, leaf);
+    // Ascending: a file reused by a later sequence keeps the section the sequence that filed it gave it.
+    for (const leaf of seq.leaves) if (leaf.archivePath && !declared.has(leaf.archivePath)) declared.set(leaf.archivePath, leaf);
   }
   findings.push(...readerFindings(read, entries.map((e) => e.name)));
   /* A file whose leaf the reader refused is not placed by its name: what the
      archive says about it is defective, and the error finding names it. */
   const refusedFiles = new Set(read.sequences.flatMap((s) =>
-    s.refusals.filter((r) => r.leafId && r.path).map((r) => path.posix.normalize(`${s.root}${r.path}`))));
+    s.refusals.filter((r) => r.code.startsWith('leaf_') && r.path).map((r) => path.posix.normalize(`${s.root}${r.path}`))));
   const { applicationId, sequence, sponsor } = applicationOfArchive(read);
 
   /* Build per-file mapping. */

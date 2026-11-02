@@ -118,6 +118,16 @@ describe('detectArchive on what the reader cannot read (review round, 2026-11-02
     expect(out.findings.find((f) => f.code === 'extra_files_not_in_backbone')).toBeUndefined();
   });
 
+  it('stores the file of a leaf refused for having no ID as skipped, too', async () => {
+    const file = path.join(work, 'refused-no-id.zip');
+    await fs.writeFile(file, await zipBufferOf(handSequenceFiles({
+      ich: [{ headings: [...H.efficacySafety], href: 'm5/5-3-5/protocol.pdf', id: '' }],
+    })));
+    const out = await detectArchive(file);
+    expect(out.files.find((f) => f.relativePath === 'm5/5-3-5/protocol.pdf')).toMatchObject({ reviewStatus: 'skipped', mappingSource: 'fallback' });
+    expect(out.findings).toContainEqual(expect.objectContaining({ code: 'leaf_id_missing', filePath: 'm5/5-3-5/protocol.pdf' }));
+  });
+
   it('names each regional backbone no sequence was read for, and why', async () => {
     const file = path.join(work, 'unread.zip');
     const read = handSequenceFiles({ root: '0000/', m1: [{ headings: ['m1-2-cover-letters'], href: '1-2/cover.pdf', id: 'c' }] });

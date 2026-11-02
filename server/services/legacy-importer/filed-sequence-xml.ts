@@ -20,8 +20,11 @@
  *     at all. The prefixes the ICH and FDA DTDs fix are now in scope when a
  *     document does not declare them.
  *   - "Must resolve in the ICH tree" could never fail. It now refuses a
- *     section that stops at a heading with sub-headings without naming one
- *     of them (2.8, 3.9, 3.2.Z, 5.9).
+ *     section that stops at a heading with sub-headings without naming one of
+ *     them (2.8, 3.9, 4.2.4, 5.9). A heading whose name says a section letter
+ *     the CTD does not have (3.2.Z, 2.3.Z) is not a heading at all.
+ *   - A backbone of more leaves than any real one (LEAVES_MAX) is refused
+ *     before its document is built.
  *
  * @module server/services/legacy-importer/filed-sequence-xml
  */
@@ -34,6 +37,14 @@ export const BACKBONE_MAX_BYTES = 32 * 1024 * 1024;
 
 /** Elements between a backbone's root and a leaf; real eCTD nesting is under ten. */
 export const HOLDERS_MAX = 32;
+
+/**
+ * Leaves in one backbone. A large NDA's index.xml holds tens of thousands
+ * (case report forms); xmldom keeps about 4 KB of heap per leaf, so a backbone
+ * of millions of empty leaves (a few megabytes zipped) is refused before its
+ * document is built.
+ */
+export const LEAVES_MAX = 50_000;
 
 export type BackboneProblemCode =
   | 'backbone_not_well_formed'
@@ -108,10 +119,21 @@ const DTD_FIXED_PREFIXES = {
   'fda-regional': 'http://www.ich.org/fda',
 };
 
+/** More than `max` leaf elements? Counted in one pass, stopping at the first past the cap. */
+function leavesExceed(xml: string, max: number): boolean {
+  const leaf = /<leaf[\s/>]/g;
+  let n = 0;
+  while (leaf.exec(xml)) if (++n > max) return true;
+  return false;
+}
+
 /** A backbone's bytes as a document, or why they are not one. External DTDs are never fetched. */
 export function parseBackbone(bytes: Buffer): { doc: Document } | BackboneProblem {
   const decoded = decodeBackbone(bytes);
   if ('code' in decoded) return decoded;
+  if (leavesExceed(decoded.text, LEAVES_MAX)) {
+    return { code: 'backbone_too_large', message: `holds more than ${LEAVES_MAX} leaves, which is not read` };
+  }
   if (declaresEntitiesOrSubset(decoded.text)) {
     return { code: 'backbone_declares_entities', message: 'declares entities or an internal DTD subset, which a backbone has no use for; it is not parsed' };
   }
@@ -154,7 +176,9 @@ export function headingSection(element: string): string | null {
     const t = tokens[i];
     if (/^\d+$/.test(t)) {
       out.push(t);
-    } else if (i === 2 && /^[spar]$/.test(t) && ['3.2', '2.3'].includes(out.join('.'))) {
+    } else if (i === 2 && /^[a-z]$/.test(t) && ['3.2', '2.3'].includes(out.join('.'))) {
+      // A letter the CTD has (S, P, A, R), or a name that says a section the CTD does not.
+      if (!/^[spar]$/.test(t)) return null;
       out.push(t.toUpperCase());
     } else {
       break;
@@ -221,10 +245,16 @@ function regionalPlacement(holders: Element[]): Placement | Refused {
 }
 
 /**
- * A Modules 2-5 section must be one the ICH heading tree has: either a heading
- * of it, or below a heading that has no sub-headings (3.2.S.4.1 under
- * 3.2.S, 5.3.5.1 under 5.3.5). A section that stops at a heading with
- * sub-headings without naming one of them (2.8, 3.9, 3.2.Z, 4.2.4, 5.9) is not.
+ * A Modules 2-5 section must be one the ICH heading tree has: a heading of it
+ * (3, 3.2, 5.3 included, since the DTD lets every heading hold leaves), or
+ * below a heading with no sub-headings (3.2.S.4.1 under 3.2.S, 5.3.5.1 under
+ * 5.3.5). A section that stops at a heading with sub-headings without naming
+ * one of them (2.8, 3.9, 4.2.4, 5.9) is not.
+ *
+ * A leaf filed in a heading with sub-headings is read as filed. The packager
+ * cannot place a later act at such a section (isPlaceableSection), and it
+ * refuses one openly. Refusing the leaf here would keep its whole sequence out
+ * of the filed state, for a leaf the agency holds (second review, 2026-11-02).
  */
 function ichPlacement(holders: Element[]): Placement | Refused {
   const found = deepestHeading(holders, WRAPPERS_INDEX);

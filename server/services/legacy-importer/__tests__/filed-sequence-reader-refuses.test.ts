@@ -63,7 +63,8 @@ describe('the reader refuses, naming the leaf', () => {
   });
 
   it.each([
-    ['out of the sequence', '../0000/m2/clinical-overview.pdf'],
+    // Not into another sequence of the application (that is file reuse): out of the archive altogether.
+    ['out of the sequence', '../../etc/clinical-overview.pdf'],
     ['absolute', '/etc/passwd'],
     ['a URL', 'https://example.com/x.pdf'],
     ['a backslash path', 'm2\\x.pdf'],
