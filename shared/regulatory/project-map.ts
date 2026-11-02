@@ -9,6 +9,26 @@
  * same system. "Biotech" describes client/product context, not a separate
  * customer-facing workspace or workflow.
  *
+ * IMPLEMENTATION SCOPE — FINISH WHAT EXISTS (founder clarification, 2026-11-02)
+ * "Don't build anything new but faux data but you can complete and finish
+ * unfinished code and features anywhere."
+ * - New demonstration content is permitted: clearly fictional clients,
+ *   projects, studies, datasets and example documents, using the existing
+ *   authorized creation/ingestion paths. Synthetic content is not real clinical
+ *   evidence, an executed review, an electronic signature or a filing receipt.
+ * - Completion is platform-wide, not limited to CSR or demo data. Repair,
+ *   connect, finish and test existing features wherever they are unfinished,
+ *   broken or unreachable. This includes implementing missing code within their
+ *   existing owners; it is not a restriction to documentation or data edits.
+ * - Search and name the existing implementation first. Reuse its UI, services,
+ *   records and contracts. Do not introduce new product capabilities, parallel
+ *   modules, services, routes, tables, editors, data rooms or workflows under
+ *   the label of completion. Keep the existing design/plan and coordination.
+ * - Bring that existing functionality into the shared project journey below.
+ *   Preserve authorization, source identity, history, review and signature
+ *   controls. Verify the actual user path; a commit or synthetic dataset alone
+ *   does not establish a working, populated or qualified demonstration.
+ *
  * The user journey this map must guide:
  * 1. PROJECT MANAGEMENT: choose the document/filing type and define the goal,
  *    hypothesis, trial/protocol context, team and relevant project history.
@@ -208,7 +228,7 @@ const SERVICE_PHASES: Record<WorkspaceServiceId, ProjectPhase[]> = {
 const CLAIM_PHASES: Record<string, ProjectPhase> = {
   quality: 'quality',
   device_description: 'quality',
-  analytical_performance: 'quality',
+  analytical_performance: 'clinical',
   quality_similarity: 'quality',
   nonclinical_safety: 'nonclinical',
   efficacy: 'clinical',
