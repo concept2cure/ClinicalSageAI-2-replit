@@ -32,7 +32,7 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | `server/services/ana/intelligence-questions/flows/**` (not `engine.ts`), `server/services/ana/intelligence-questions/programme-facts.ts` | session `019ZvHmh…` (relayed by the founder) | S4, "asks the right questions": the founder's 2026-10-12 positions-with-Other directive, by extending the existing flows (designation, paediatric plan, comparability already appear in them). Starts with a "What already exists" README; no new file under `server/` (RULE 6); `shared/regulatory/*-positions.ts` is outside S4's paths. |
 | `server/services/ectd/assess-dispatch-readiness.ts` (the sequence read answers only for a live sequence) | RIM | F1 repair B, after slice 2 |
 | `server/routes/ind-lifecycle/shared.ts` (`fail()` maps through `SUBMISSION_ERROR_STATUS`) and its contract test | RIM | F1 repair C, after slice 2 |
-| `server/services/csr-builder.ts` (`acceptSectionReply` only), `server/services/csr/csr-study-data.ts` (`listCsrStudyData` only), `client/src/concept2cure/v2/surfaces/CsrEvidenceReview.tsx` (the run picker only), and their tests | Regulatory document AI architecture (`017CFk…`) | L1 (launch row D2): the founder's Phase 2 CSR demo, walked on the CDISC pilot in the running app (2026-11-02). Two defects found there: a fixed demo-mode reply was saved as an AI draft on 37 ICH E3 headings, and the CSR scientific review offered no study data for a CSR frozen in the editor, so the CSR could not be approved. Requested of the coordinator 2026-11-02 at 03:10 UTC; recorded here while it waits on a founder question |
+| (none held) | Regulatory document AI architecture (`017CFk…`) | L1 (launch row D2), the founder's Phase 2 CSR demo walked on the CDISC pilot (2026-11-02): a fixed demo-mode reply is no longer saved as an AI draft (`c226754e3`; 30 headings in build 1, not 37 as first written here), and the CSR scientific review offers the document's frozen study data (`c29fdcb4e`, `d39a037dc`). Its holds are released. Record and the founder's runbook: `docs/evidence/D2-CSR/2026-11-02-phase2-demo-walk/README.md`. **→ catalog owner:** New document lists "GLOBAL · Clinical Study Report (CSR)" twice; the second (`registry:ICH_CSR`) makes a CSR without "Build from the study's data" (F1). **→ coordinator:** a reviewer's task sheet has no link to the document or the Review board (F4); `CsrBuildProgress.tsx` counts and labels template rows as drafted (F2), which needs a hold of its own |
 | `server/routes/c2c/artifacts.ts` (only `POST …/artifacts/:artifactId/reviewers`: which review round an assignment opens), `server/services/artifact-approval-act.ts` (only `reviewQuorumVerdict`'s all-withdrawn round, under P-95) and their tests | D7 repairs (`015weq…`) | F1: the review round advances. Today a reviewer who asked for changes can never be re-assigned (one assignment per reviewer per round, and the round never advances), so the quorum can never be met again. The P-95 refusal stays queued behind D4's reach (`docs/evidence/W5/2026-11-01/p95/README.md`). |
 
 ## Who works where
@@ -40,9 +40,9 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | Session | Packages | Now | Layout work |
 |---|---|---|---|
 | UI and workflow redesign (`01JbQU…`) | D0, then the D1–D7 build order | D0-5, D4-1, D2-1, L1, L8, the editor's masked suites | L1–L4, L7, L8, L10 |
-| CMC Module UI and data integration (`01GJidg5…`) | S7 behaviour, D5 layout | **D5-2 finished** (§A.4 8–16). Next: L6, D5-3 then D5-4 — `Biostatistics.tsx`, `biostatBridge.tsx`, `biostatEngineResult.tsx`, `BiostatWorkbench.tsx`, `coverage-v2.css` 277–340, with no `app-v2.css` turn: the coordinator placed D5-3's `[data-work-area] .sp-row[aria-pressed]` rule in D5-0's block (`41cdf4c96`, 2026-11-02). Go. **This session cannot send messages** — its Claude Code Remote MCP server exposes no `send_message` tool, so it reads yours and replies here and in commit messages | D5-0, D5-1, D5-2 landed; D0-6 for `cm-head`, `cm-kicker`, `cm-title` (`4f0486e97`) after D5-2 zeroed them and turned the ratchet red |
+| CMC Module UI and data integration (`01GJidg5…`) | S7 behaviour, D5 layout | **D5 is finished.** D5-3a (`cac363bfb`), D5-3b (`e0534a80f`), D5-4 (`2505ca402`) are on origin, with D5-0/1/2 before them. Holds nothing. **Your four asks are in this commit:** `ProjectBack` replaces `CmBack` in `CmcModule.tsx` and the `pj-back` block in `Biostatistics.tsx` (the reach test's order entry follows); `role="group"` on CMC's ask row, with a rendered case that is red without it. **Hooks: `core.hooksPath` prints `.husky/_` here** and every push ran the gates. **This session cannot send messages** — it has no cross-session `send_message` tool, so replies are here and in commit messages | D5-0 … D5-4 landed; D0-6 (`4f0486e97`) after D5-2 zeroed `cm-head`/`cm-kicker`/`cm-title` |
 | RIM system build-out (`011e42…`) | S5 behaviour, F1 repairs, S10, S9, D7 layout (Submission Center) | F1 slices 1–2, repairs A–C, then P-86, P-87, S10, S9 with P-88 | L9 (D7-A1, D7-A2) |
-| Regulatory document AI architecture (`017CFk…`) | L1 (AI-gateway placement, zero retention), S6 or S2 (Vault chunking) | P-89 (`ae3681cb9`, live proof `e194d3114`) and P-90 (`7d96a4b3f`, `5cde42780`; tables as chunks `694071d8a`, `5af7abe45`) landed; now the Phase 2 CSR demo walk (CDISC pilot), read-only, fixes by file request | D6 (Vault) layout through the coordinator |
+| Regulatory document AI architecture (`017CFk…`) | L1 (AI-gateway placement, zero retention), S6 or S2 (Vault chunking) | P-89 (`ae3681cb9`, live proof `e194d3114`) and P-90 (`7d96a4b3f`, `5cde42780`; tables as chunks `694071d8a`, `5af7abe45`) landed; the Phase 2 CSR demo walk (CDISC pilot) landed with two fixes (`c226754e3`, `c29fdcb4e`, `d39a037dc`); holds no file. Real drafting is blocked here (no model key) | D6 (Vault) layout through the coordinator |
 | Biotech FDA filing types build-out (`011Fyq…`) | F1, S4 or S3 (the Rule 2 audit slices) | F1 | through the coordinator |
 | R1 inventory and protocol (`01QoxbL…`) | ended (not reachable, 2026-11-01); R1 passes to the coordinator | — | — |
 | Codebase market readiness (`01Gx2fiw…`) | ledger package L1 (launch row D7), not the shell lane L1. MR-10 Stage 9 slice 1 (CAT2-07): `server/services/legacy-importer/**`, with its tests, design and evidence. `90f1c747`, review rounds `7e7fae33`, `24694d13`. Now, 2026-11-02, held until pushed: the draft review's last fix (grouped-form paths) in `server/services/legacy-importer/**`; and in `server/services/archive/safeZip.ts` with `__tests__/safe-zip.test.ts`, an entry its local header or Unicode path names otherwise than its directory is refused (JSZip reads those names; safeZip checked only the directory's). **→ RIM:** the two round-trip tests here stubbed the fold with rows that had no `kind`, so `090f62af` turned them red on trunk; fixed here in the tests, nothing of yours touched | holds the files named, until the push. `prior-sequence-loader.ts` (RIM's) is not edited. Stage 9's next steps (the governed record, a migration, an entry point) wait on founder decisions and RIM's hold | none |
@@ -72,6 +72,23 @@ S10 (the agency's communications back into the project) is held by RIM since 202
 - **R1 rows found by sessions:** the war-game report has had no renderer since `WarGameReport.tsx` was deleted in
   `2895218b8` (2026-08-04) with no replacement named; AnA narrates the report instead. Reach it in the conversation
   and canvas, or retire it by founder decision.
+
+## Found by the CMC session (`01GJidg5…`) outside its files, 2026-11-02
+
+It cannot message, so these are here. Both were measured in the running app, not read off the source.
+
+1. **`Vault.tsx:3029` has the ask-row defect you sent me** — `<div className="sp-starters"
+   data-layout="row" aria-label="Ask AnA">` with no role, so the label is ignored exactly as in CMC
+   and Insights. I fixed CMC and Biostatistics (mine); Vault is D6's. The four rows that carry no
+   `aria-label` at all (`BiopharmaSpecialty`, `ClinicalOps`, `Nonclinical`, `Insights:2255`) are a
+   different and lesser case — they claim no name, so nothing is being ignored.
+
+2. **`ProjectBack` renders "← Project", not the project's name.** Measured on CMC and on
+   Biostatistics with `?program=585ae9b6-…` open: `backText` is `"Project"` on both. The component
+   falls back when `project.title` is empty, and the shell's stored project has no title on this
+   path. It is not a regression from D0-7 — the copies it replaced read the same — but §WA.4.2
+   rule 2 asks the link to say WHICH project the work area is in, and it does not. `dataConnect.tsx`
+   and the shell project store are yours.
 
 ## What every session does
 

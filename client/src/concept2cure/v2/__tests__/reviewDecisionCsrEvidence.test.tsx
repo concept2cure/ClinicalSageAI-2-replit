@@ -117,7 +117,7 @@ describe('the review decision for a CSR', () => {
 
     expect((await screen.findByRole('alert')).textContent).toMatch(/clinical study report.*Nothing was recorded/);
     expect(await screen.findByRole('region', { name: 'CSR scientific review' })).toBeTruthy();
-    expect(await screen.findByText(/This program has no saved package run/)).toBeTruthy();
+    expect(await screen.findByText(/No retained clinical tables are available for this document/)).toBeTruthy();
     expect((screen.getByRole('button', { name: /Record approval/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -147,5 +147,77 @@ describe('the review decision for a CSR', () => {
     fireEvent.click(screen.getByRole('button', { name: /Record approval/ }));
     await waitFor(() => expect(reviewPosts()).toHaveLength(1));
     expect(reviewPosts()[0][2]).not.toHaveProperty('csr_evidence');
+  });
+});
+
+/**
+ * CSR demo rehearsal, 2026-11-02 (CDISC pilot, in the running app): a CSR whose study data is frozen in the
+ * editor ("Build from the study's data") was reviewed. The scientific review read only the program's package
+ * runs and said "This program has no saved package run. Start one from eCTD compile…", although the study
+ * data was frozen and the server's reader accepts it. So the CSR could not be approved. The review now offers
+ * the document's study data beside any package run; a failed read is said, never shown as nothing to choose.
+ */
+describe('the study data a CSR is reviewed against', () => {
+  const STUDY_DATA = '920a530f-6e01-4b27-81e5-1e9e66ce595c';
+  const entry = (via: string) => ({ studyDataId: STUDY_DATA, createdAt: '2026-11-02T02:57:55.000Z', createdBy: 1, via,
+    sources: [{ adapter: 'concept2cure.csr-source.v1', studyId: 'CDI02', protocolNumber: 'LMN-201-CDI02', version: '1', sha256: 'c'.repeat(64) }] });
+  const serve = (lists: { runs?: unknown; studyData?: unknown; studyDataFails?: boolean }) => {
+    mocks.apiRequest.mockImplementation(async (method: string, url: string) => {
+      const json = (body: unknown, ok = true) => ({ ok, status: ok ? 200 : 503, json: async () => body });
+      if (url.endsWith('/reviews')) return json(peerRead(csrContext));
+      if (url.startsWith('/api/submission-orchestrator/runs')) return json({ runs: lists.runs ?? [] });
+      if (url.startsWith('/api/submission-orchestrator/csr/study-data')) {
+        return lists.studyDataFails ? json({ message: 'The document’s study data could not be read.' }, false) : json({ studyData: lists.studyData ?? [] });
+      }
+      if (url.endsWith('/csr-evidence/preview')) return json({ success: true, preview: { runs: [{ ...runs[0], runId: STUDY_DATA }], tablesSha256: 'd'.repeat(64), snapshotHash: csrContext.snapshotHash } });
+      return json({ success: true });
+    });
+  };
+  const openApproval = async () => {
+    render(<ReviewDecisionDialog documentId={PEER_DOC} programId={PROGRAM} onClose={vi.fn()} onRecorded={vi.fn()} />);
+    fireEvent.change(await screen.findByLabelText('Decision'), { target: { value: 'approved' } });
+    return screen.findByRole('region', { name: 'CSR scientific review' });
+  };
+
+  it('offers the study data frozen for this document when the program has no package run, and reads its tables', async () => {
+    serve({ studyData: [entry('this-document')] });
+    await openApproval();
+    const choice = await screen.findByLabelText(/Study data frozen for this document/);
+    expect(screen.queryByText(/no saved package run/)).toBeNull();
+    fireEvent.click(choice);
+    fireEvent.click(screen.getByRole('button', { name: 'Read the retained tables' }));
+    await screen.findByText('2. Each figure in the saved text');
+    const preview = posts().find((c) => String(c[1]).endsWith('/csr-evidence/preview'))!;
+    expect(String(preview[1])).toBe(`/api/authoring/documents/${PEER_DOC}/csr-evidence/preview`);
+    expect(preview[2]).toEqual({ runIds: [STUDY_DATA] });
+    const read = mocks.apiRequest.mock.calls.find((c) => String(c[1]).startsWith('/api/submission-orchestrator/csr/study-data'))!;
+    expect(String(read[1])).toBe(`/api/submission-orchestrator/csr/study-data?programId=${PROGRAM}&documentId=${PEER_DOC}`);
+  });
+
+  it('names the study data an imported CSR build was drafted from as that', async () => {
+    serve({ studyData: [entry('imported-build')] });
+    await openApproval();
+    expect(await screen.findByLabelText(/Study data the imported CSR build was drafted from/)).toBeTruthy();
+  });
+
+  it('lists package runs and study data together', async () => {
+    serve({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-28T09:00:00Z' }], studyData: [entry('this-document')] });
+    await openApproval();
+    expect(await screen.findByLabelText(/Study data frozen for this document/)).toBeTruthy();
+    expect(screen.getByLabelText(/Run 0b6f2f5e/)).toBeTruthy();
+  });
+
+  it('with neither, says where the study data is frozen, not a package run it cannot start', async () => {
+    serve({});
+    await openApproval();
+    expect(await screen.findByText(/Build from the study’s data/)).toBeTruthy();
+    expect(screen.queryByText(/eCTD compile/)).toBeNull();
+  });
+
+  it('a failed read of the study data is said, never shown as nothing to choose', async () => {
+    serve({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-28T09:00:00Z' }], studyDataFails: true });
+    await openApproval();
+    expect((await screen.findByRole('alert')).textContent).toMatch(/study data could not be read/);
+    expect(screen.queryByLabelText(/Run 0b6f2f5e/)).toBeNull();
   });
 });
