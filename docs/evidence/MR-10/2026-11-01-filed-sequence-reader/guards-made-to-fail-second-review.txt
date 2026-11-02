@@ -1,0 +1,68 @@
+Second review, 2026-11-02. The guards the second review's fixes added were
+each removed in turn, and the reader's and detector's test files were run
+against the mutated code: real-archives, refuses, round-trip and
+detector-reads-a-filed-sequence. Each file was restored byte-for-byte
+afterwards and checked with cmp.
+
+First pass, 103 tests. Three guards survived: every test stayed green with
+them removed.
+== mutation: leaf-count cap removed (filed-sequence-xml.ts)
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a backbone of more leaves than any real one, before building its document
+      Tests  1 failed | 102 passed (103)
+== mutation: unknown section letter read as its container (filed-sequence-xml.ts)
+      Tests  103 passed (103)
+== mutation: reuse not checked against what the earlier sequence filed (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a reused file whose own leaf for it the earlier sequence refused
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a reused file in an earlier sequence nothing of which was read
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a reused file that the earlier sequence holds but never filed
+      Tests  3 failed | 100 passed (103)
+== mutation: leaf ID grammar not required (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a leaf ID, or a pointer's ID, the filed state could not bind
+      Tests  1 failed | 102 passed (103)
+== mutation: grouped application: first taken when none is marked (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > takes no application from a grouped backbone that marks none as carrying the files
+      Tests  1 failed | 102 passed (103)
+== mutation: nested duplicate not found (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a sequence folder inside another sequence of the same number
+      Tests  1 failed | 102 passed (103)
+== mutation: refused regional's files called unreferenced (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > does not call a refused regional backbone's files unreferenced
+      Tests  1 failed | 102 passed (103)
+== mutation: ambiguity checked after binding (filed-sequence-reader.ts)
+      Tests  103 passed (103)
+== mutation: archive without its application folder: climb not read (filed-sequence-pointers.ts)
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > binds a grouped-form pointer in an archive zipped without its application folder
+      Tests  1 failed | 102 passed (103)
+== mutation: fold's supersession by section and name ignored (filed-sequence-pointers.ts)
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a pointer at a leaf a later filing under its section and name already took off file
+      Tests  1 failed | 102 passed (103)
+== mutation: pointer's backbone not compared (filed-sequence-pointers.ts)
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > binds a pointer to the leaf of the backbone it names when both backbones carry the ID
+      Tests  1 failed | 102 passed (103)
+== mutation: detector: refused leaf with no ID left to filename suggestion (detector.ts)
+      Tests  103 passed (103)
+
+Each of the three got a case that only it decides:
+- a heading named m2-3-z-… under Module 2. 2.3 is a heading leaves sit in, so
+  only the letter rule refuses it.
+- the ambiguity test now points at the second of the two clashing leaves, the
+  one the fold's own supersession leaves on file.
+- a detector case where the refused leaf has no ID.
+
+Second pass, 105 tests:
+== mutation: unknown section letter read as its container (filed-sequence-xml.ts)
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > refuses a leaf filed where the ICH tree files none: ["m2-common-technical-document-summaries","m2-3-z-other"]
+      Tests  1 failed | 104 passed (105)
+== mutation: ambiguity checked after binding (filed-sequence-reader.ts)
+ x filed-sequence-reader-real-archives.test.ts > a second review of the fixes > binds nothing to a leaf its own sequence refused as ambiguous
+      Tests  1 failed | 104 passed (105)
+== mutation: detector: refused leaf with no ID left to filename suggestion (detector.ts)
+ x detector-reads-a-filed-sequence.test.ts > detectArchive on what the reader cannot read (review round, 2026-11-02) > stores the file of a leaf refused for having no ID as skipped, too
+      Tests  1 failed | 104 passed (105)
+
+Afterwards: the rule refusing a leaf filed directly in a heading that has
+sub-headings (3, 3.2, 5.3) was withdrawn. The ICH DTD lets every heading hold
+leaves, so such a leaf can be in a validly filed sequence, and refusing it would
+keep that whole sequence out of the filed state. Its mutation is no longer
+listed here. A second, independent verifier raised it, and the design note
+records the decision. Those leaves are now read as filed, and a test pins it.

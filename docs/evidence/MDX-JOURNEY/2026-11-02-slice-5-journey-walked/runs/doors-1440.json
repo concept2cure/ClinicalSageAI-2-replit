@@ -1,0 +1,57 @@
+{
+ "steps": [
+  {
+   "door": "Write the label and IFU",
+   "accessibleName": ""
+  },
+  {
+   "door": "Write the label and IFU",
+   "url": "/concept2cure/labeling?program=57ea2bb6-6e6b-4ace-9e09-ba12e60f5abd",
+   "heading": "Labeling and IFU"
+  },
+  {
+   "labelingStartOffered": 1
+  },
+  {
+   "door": "Assemble the eSTAR",
+   "accessibleName": ""
+  },
+  {
+   "door": "Assemble the eSTAR",
+   "url": "/concept2cure/device-510k?program=57ea2bb6-6e6b-4ace-9e09-ba12e60f5abd",
+   "heading": ""
+  },
+  {
+   "estarText": [
+    "Device spec · intended use",
+    "Device profile",
+    "Device description",
+    "Device description and principles of operation",
+    "IVD eSTAR",
+    "official eSTAR (PDF)",
+    "Device Trade Name\tAurora pump\tDevice profile · product name",
+    "Device profile · common name"
+   ]
+  },
+  {
+   "door": "Build the risk file and design-control trace",
+   "accessibleName": ""
+  },
+  {
+   "door": "Build the risk file and design-control trace",
+   "url": "/concept2cure/device-engineering?program=57ea2bb6-6e6b-4ace-9e09-ba12e60f5abd",
+   "heading": "Device engineering"
+  },
+  {
+   "door": "Check each label’s UDI",
+   "accessibleName": ""
+  },
+  {
+   "door": "Check each label’s UDI",
+   "url": "/concept2cure/device-udi?program=57ea2bb6-6e6b-4ace-9e09-ba12e60f5abd",
+   "heading": "UDI and labeling"
+  }
+ ],
+ "aborted": [],
+ "errors": []
+}

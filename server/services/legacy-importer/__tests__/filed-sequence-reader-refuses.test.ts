@@ -63,7 +63,8 @@ describe('the reader refuses, naming the leaf', () => {
   });
 
   it.each([
-    ['out of the sequence', '../0000/m2/clinical-overview.pdf'],
+    // Not into another sequence of the application (that is file reuse): out of the archive altogether.
+    ['out of the sequence', '../../etc/clinical-overview.pdf'],
     ['absolute', '/etc/passwd'],
     ['a URL', 'https://example.com/x.pdf'],
     ['a backslash path', 'm2\\x.pdf'],
@@ -155,9 +156,11 @@ describe('the reader refuses a backbone or a sequence, naming it', () => {
     expect(seq.refusals.map((r) => [r.code, r.path])).toEqual([['regional_backbone_missing', 'm1/us/us-regional.xml']]);
   });
 
-  it('one sequence number twice in an archive', async () => {
-    const out = await readFiledSequences(await zipOf({ ...handSequenceFiles(BASE), ...handSequenceFiles({ ...BASE, root: '0000/' }) }));
-    expect(out.sequences.map((s) => [s.sequence, s.root])).toEqual([['0000', ''], ['0000', '0000/']]);
+  it('one sequence number twice in one application', async () => {
+    // Two sibling folders of one application that both number themselves 0000
+    // (the second is read as a sequence because it holds index-md5.txt).
+    const out = await readFiledSequences(await zipOf({ ...handSequenceFiles({ ...BASE, root: 'app/0000/' }), ...handSequenceFiles({ ...BASE, root: 'app/copy/' }) }));
+    expect(out.sequences.map((s) => [s.sequence, s.root])).toEqual([['0000', 'app/0000/'], ['0000', 'app/copy/']]);
     expect(out.refusals.map((r) => r.code)).toEqual(['sequence_number_duplicate']);
   });
 
