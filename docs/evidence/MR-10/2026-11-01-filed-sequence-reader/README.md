@@ -257,8 +257,10 @@ applied. The facts, from [zip-local-name-probe.txt](zip-local-name-probe.txt):
   (and from a Unicode-path extra field). So the detector reached the loop.
 
 The rating stands. The gap is safeZip's and reaches every caller that reads
-with JSZip, so it is fixed in safeZip as its own change. This README links it
-once it lands.
+with JSZip, so it is fixed in safeZip as its own change:
+[`docs/evidence/D6/2026-11-02-zip-names-checked-where-read/`](../../D6/2026-11-02-zip-names-checked-where-read/README.md).
+There, a crafted upload is refused at this reader's entry point,
+`readFiledSequenceArchive`.
 
 **Correction: two tests went red on trunk under a change to the fold.** At
 02:56, `090f62af` (F1, "what the agency holds is what was sent") changed the
