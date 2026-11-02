@@ -1,0 +1,7 @@
+applied mutant drop-planar: "const NOT_A_PLAN = ['plantar', 'planar', 'plane', 'planes'];" -> "const NOT_A_PLAN = ['plantar', 'plane', 'planes'];"
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a CER or PER title whose next word begins with 'plan' fills the CER / PER slot 9ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a V&V report on a plantar, planar or plane subject fills the V&V slot; planned changes do not 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: Clinical evaluation planar X-ray detector: expected [] to include 'clinical-evaluation'
+AssertionError: Design verification – planar detector: expected [] to deeply equal [ 'preclinical-clinical' ]
+      Tests  2 failed | 50 passed (52)

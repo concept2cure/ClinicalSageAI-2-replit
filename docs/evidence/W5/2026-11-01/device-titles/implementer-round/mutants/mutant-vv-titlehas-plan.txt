@@ -1,0 +1,5 @@
+applied mutant vv-titlehas-plan: "all(any(titleTokens((t) => t.some(isPlan)), titleHas('protocol')), not(" -> "all(titleHas('plan', 'protocol'), not("
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a V&V report on a plantar, planar or plane subject fills the V&V slot; planned changes do not 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: Biocompatibility – plantar insole (ISO 10993): expected [] to deeply equal [ 'preclinical-clinical' ]
+      Tests  1 failed | 51 passed (52)

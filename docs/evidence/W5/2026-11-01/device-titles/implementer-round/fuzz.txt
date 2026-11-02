@@ -1,0 +1,37 @@
+# differential fuzz: HEAD 5f30fdda0d vs repaired patch (and previous patch); script <scratch>/fuzz.mts
+checked 600000 (title, regulation, code) cases
+I1 slots HEAD filled that the repair drops: 0
+I2 plan-guarded slot differs from HEAD without plantar/planar/plane in the title: 0
+EXPLAINED (IFU glued to PLAN, read as a plan) I1: 8, I2: 8
+    mdr@x preclinical-clinical <- IfUPLAN2Biocompatibility
+    mdr@4.2.1 preclinical-clinical <- IfUPLAN2Biocompatibility
+    mdr@x preclinical-clinical <- IFUPLANBiocompatibility2v_pre
+    mdr@4.2.1 preclinical-clinical <- IFUPLANBiocompatibility2v_pre
+    mdr@x preclinical-clinical <- ifu_IfUPLAN – Biocompatibility – Performance
+    mdr@4.2.1 preclinical-clinical <- ifu_IfUPLAN – Biocompatibility – Performance
+    mdr@x preclinical-clinical <- clinical_biocompatibility – eIfUPLAN
+    mdr@4.2.1 preclinical-clinical <- clinical_biocompatibility – eIfUPLAN
+    mdr@x preclinical-clinical HEAD=true REPAIR=false <- IfUPLAN2Biocompatibility
+    mdr@4.2.1 preclinical-clinical HEAD=true REPAIR=false <- IfUPLAN2Biocompatibility
+    mdr@x preclinical-clinical HEAD=true REPAIR=false <- IFUPLANBiocompatibility2v_pre
+    mdr@4.2.1 preclinical-clinical HEAD=true REPAIR=false <- IFUPLANBiocompatibility2v_pre
+    mdr@x preclinical-clinical HEAD=true REPAIR=false <- ifu_IfUPLAN – Biocompatibility – Performance
+    mdr@4.2.1 preclinical-clinical HEAD=true REPAIR=false <- ifu_IfUPLAN – Biocompatibility – Performance
+    mdr@x preclinical-clinical HEAD=true REPAIR=false <- clinical_biocompatibility – eIfUPLAN
+    mdr@4.2.1 preclinical-clinical HEAD=true REPAIR=false <- clinical_biocompatibility – eIfUPLAN
+I3 plan-guarded slot the repair fills and the previous patch did not: 0
+slots the repair fills and HEAD did not (count, examples):
+    mdr@x:manufacturer-information 20907 ["gsprVerification iFU_planning","eIfU_Benchmanagement2VerificationReport","planes-pms – iFU – plane","Protocol – IfU","Plan_eIfU-iFU","IfUPlantar2plan-Planv-Report"]
+    ivdr@x:manufacturer-information 20907 ["gsprVerification iFU_planning","eIfU_Benchmanagement2VerificationReport","planes-pms – iFU – plane","Protocol – IfU","Plan_eIfU-iFU","IfUPlantar2plan-Planv-Report"]
+    mdr@4.2.1:manufacturer-information 20907 ["gsprVerification iFU_planning","eIfU_Benchmanagement2VerificationReport","planes-pms – iFU – plane","Protocol – IfU","Plan_eIfU-iFU","IfUPlantar2plan-Planv-Report"]
+    mdr@x:preclinical-clinical 1836 ["Bench-eIfU2Plantar_biocompatibility","planar – biocompatibility","Evaluation2biocompatibilityBench_planesClinical","Biocompatibility-planes-v-electrical","verificationPMSbiocompatibility – Planar wave","Biocompatibility-planes Plane-wave-bench"]
+    mdr@4.2.1:preclinical-clinical 1836 ["Bench-eIfU2Plantar_biocompatibility","planar – biocompatibility","Evaluation2biocompatibilityBench_planesClinical","Biocompatibility-planes-v-electrical","verificationPMSbiocompatibility – Planar wave","Biocompatibility-planes Plane-wave-bench"]
+    mdr@x:gspr 56 ["IFUGSPR","iFUGSPR","IfUGSPR_bench2plano","validity2IFUGSPR","planPerformance_Plan – IfUGSPR","Verification2eIfUGSPR"]
+    ivdr@x:gspr 56 ["IFUGSPR","iFUGSPR","IfUGSPR_bench2plano","validity2IFUGSPR","planPerformance_Plan – IfUGSPR","Verification2eIfUGSPR"]
+    mdr@4.2.1:gspr 56 ["IFUGSPR","iFUGSPR","IfUGSPR_bench2plano","validity2IFUGSPR","planPerformance_Plan – IfUGSPR","Verification2eIfUGSPR"]
+    mdr@x:clinical-evaluation 14 ["ClinicalClinical Evaluation-plane – en","Planarsafety – clinical – evaluation – Plantar","Clinical2evaluation_planar","plantar_iFU Clinical_evaluation Plane","Clinical-evaluationplane","clinical_Evaluation-planes planned planrev"]
+    mdr@4.2.1:clinical-evaluation 14 ["ClinicalClinical Evaluation-plane – en","Planarsafety – clinical – evaluation – Plantar","Clinical2evaluation_planar","plantar_iFU Clinical_evaluation Plane","Clinical-evaluationplane","clinical_Evaluation-planes planned planrev"]
+    ivdr@x:performance-evaluation 19 ["performance-Evaluation – Plantar – results","performance2Evaluationplanes","Performance2EvaluationPlane","Clinical2planimetryPerformance – Evaluation Plane","performance2Evaluation – Planar_v","performance Evaluation2Planar2PLAN"]
+    mdr@x:pms-plan 5 ["Plantar_eIfUPMS-Planv","scientific_IfUPMS – planned","eIfUPMS planninggspr","IFUPMS Planv2planned","management – IfUPMS – plano"]
+    ivdr@x:pms-plan 5 ["Plantar_eIfUPMS-Planv","scientific_IfUPMS – planned","eIfUPMS planninggspr","IFUPMS Planv2planned","management – IfUPMS – plano"]
+    mdr@4.2.1:pms-plan 5 ["Plantar_eIfUPMS-Planv","scientific_IfUPMS – planned","eIfUPMS planninggspr","IFUPMS Planv2planned","management – IfUPMS – plano"]
