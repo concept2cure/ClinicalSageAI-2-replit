@@ -196,7 +196,7 @@ async function readAndRecord(client: import('pg').PoolClient, organizationId: nu
   }
   if (text && 'extracted' in read) {
     const { isVaultChunkingEnabled, chunkDocumentForIngest } = await import('../services/vault/document-chunking.service.js');
-    await chunkDocumentForIngest(doc.id, organizationId, text, read.extracted.pageSpans, { embed: await isVaultChunkingEnabled(organizationId) });
+    await chunkDocumentForIngest(doc.id, organizationId, text, read.extracted.pageSpans, { embed: await isVaultChunkingEnabled(organizationId), tableSpans: read.extracted.layout?.tables });
   }
   return outcome.status === 'extracted' ? 'extracted' : 'failed';
 }

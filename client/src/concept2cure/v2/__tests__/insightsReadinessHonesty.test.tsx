@@ -70,9 +70,9 @@ async function renderCanvas() {
 }
 
 describe('Insights — readiness that was not computed', () => {
-  it('says so in the opener instead of printing a percentage', async () => {
+  it('says so under the page title instead of printing a percentage', async () => {
     await renderCanvas();
-    const opener = document.querySelector('.rc-opener')?.textContent ?? '';
+    const opener = document.querySelector('[data-work-area="insights"] > .ph .ph-sub')?.textContent ?? '';
     expect(opener).toMatch(/readiness is not yet computed/);
     expect(opener).not.toMatch(/% ready/);
   });
@@ -109,7 +109,7 @@ describe('Insights — a readiness figure carrying outstanding critical gaps', (
 
   it('does not call the program ready, and states the gap count instead', async () => {
     await renderCanvas();
-    const opener = document.querySelector('.rc-opener')?.textContent ?? '';
+    const opener = document.querySelector('[data-work-area="insights"] > .ph .ph-sub')?.textContent ?? '';
     expect(opener).toMatch(/100%/);
     expect(opener).toMatch(/1 critical gap outstanding/);
     expect(opener).not.toMatch(/100% ready/);

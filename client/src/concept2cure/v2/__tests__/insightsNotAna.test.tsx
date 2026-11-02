@@ -119,7 +119,7 @@ describe('Insights reporting pane — identity', () => {
 
   it('does not claim the suggested pack was derived from the readiness figure', async () => {
     await renderCanvas();
-    const opener = document.querySelector('.rc-opener')?.textContent ?? '';
+    const opener = document.querySelector('[data-work-area="insights"] > .ph .ph-sub')?.textContent ?? '';
 
     // The live facts SHOULD still be stated — they are real, from the governed
     // overview read-model. Losing them would be the wrong fix.

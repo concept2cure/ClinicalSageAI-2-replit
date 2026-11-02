@@ -549,14 +549,14 @@ function roSuggestForClient(p: ProgramCtx, seg: string, types: ReportType[]) {
      equivalence matrix", chosen by the shell's segment preference: the 510(k)
      prompt was offered to a biologic program, and neither report has an engine
      (QA 2026-10-08, j8). The prompts now name only what runs here. */
+  /* The facts open the page, under its title (D7 §D.4 step 4, note of
+     2026-11-02): a live fact is stated, never put behind a click. The preset
+     is the header's primary and says only what it builds, so no sentence
+     here claims it was chosen from these facts. */
   return {
-    headline: 'Build any governed report or dashboard — describe what you need.',
-    body: preset
-      ? `${rBit}.${pduBit} The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} — it is not picked from the readiness figure above.`
-      : `${rBit}.${pduBit}`,
+    facts: `${rBit}.${pduBit}`,
     preset,
     prompts: [
-      ...(preset ? [`Build the ${preset.label}`] : []),
       p.readiness != null ? `How ready is ${p.code} to file?` : `Generate the Executive Readiness Digest for ${p.code}`,
       `What reports can you run for ${p.code}?`,
       'Compare readiness across all my projects',
@@ -2029,7 +2029,19 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     onNav?.('project-home');
   };
   const libraryTabs = <ReportingTabs value={paneView} id={tabsId} onChange={view => { setPaneView(view); pushCanvasTop(); }} />;
-  const libraryPane = paneView === 'catalog' ? <CatalogPanel key={contextKey} types={libraryCatalog} onRun={runFromCatalog} canRun={canExecute} runUnavailableReason={unavailableRunReason} busy={busy} programLabel={program?.code ?? null} projectId={data?.leadProgram?.projectId} />
+  /* Preview plan (D7 §D.4 step 6): which plan the locks are read against, for
+     looking only. It sits with the Catalog's filters because that is where
+     the locks it changes are listed; the active item is the seg's quiet
+     raised state, never orange. */
+  const planControl = (
+    <div className="rl-filter">
+      <span className="gov-label" id={`${tabsId}-plan`}>Preview plan</span>
+      <div className="seg" role="group" aria-labelledby={`${tabsId}-plan`}>
+        {RO_TIERS.map(t => (<button key={t.id} type="button" className="seg-b" aria-pressed={tier === t.id} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
+      </div>
+    </div>
+  );
+  const libraryPane = paneView === 'catalog' ? <CatalogPanel key={contextKey} planControl={planControl} types={libraryCatalog} onRun={runFromCatalog} canRun={canExecute} runUnavailableReason={unavailableRunReason} busy={busy} programLabel={program?.code ?? null} projectId={data?.leadProgram?.projectId} />
     : paneView === 'runs' ? <RunsPanel types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} onOpen={row => void openRunFromHistory(row)} onBundle={ids => { if (!reportAccessCurrent() || libraryActions.get(contextKey, 'bundle:create')) return; setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }} canBundle={canWrite && !libraryActions.get(contextKey, 'bundle:create')} />
     : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} />
     : paneView === 'bundles' ? <BundlesPanel key={contextKey} pendingRunIds={bundlePicks} canWrite={canWrite} pendingExports={pendingBundleExports} onExport={(id, name, content) => void exportBundle(id, name, content)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} onClearPending={() => { if (reportAccessCurrent()) setBundlePicks(now => now === bundlePicks ? [] : now); }} /> : null;
@@ -2142,12 +2154,15 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     );
   }
   const p = program; // narrowed non-null past the guards above
+  const packs = roPresetsForSeg(seg, catalog);
+  const notComputed = roNotComputed(catalog);
+  const segLabel = SEG_LABEL[seg] || seg;
 
   return (
     <div className="page-inner rc" data-work-area="insights" {...ownerEvents}>
       <ReportingHead
         onNav={onNav}
-        sub={<>Governed reports for {p.code}. Every value is computed from the governed record; nothing is estimated.</>}
+        sub={<>Governed reports for {p.code}. {suggest.facts} Every value is computed from the governed record; nothing is estimated.</>}
         note={!canWrite && (
           <p className="ph-sub" role="note" data-testid="rc-view-only">
             {I.lock} View only. Running a governed report needs an editor role in this organization.
@@ -2179,6 +2194,15 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void findReport(); } }} />
         <button type="button" className="btn ghost" disabled={!tierResolved || !query.trim() || busy} onClick={() => void findReport()}>Find</button>
       </div>
+      {/* Suggestions run the same router as the field, not AnA, so they carry
+          the search glyph, not AnA's mark. */}
+      <div className="sp-starters" data-layout="row" role="group" aria-label="Find suggestions">
+        {suggest.prompts.map(q => (
+          <button key={q} type="button" className="sp-starter" disabled={!tierResolved} onClick={() => findReport(q)}>
+            <span className="sk" aria-hidden="true">{I.search}</span><span>{q}</span>
+          </button>
+        ))}
+      </div>
       {/* -- Left: report routing pane --
            This column called itself "AnA -- Reporting analyst" and spoke in the
            first person, while what answered was `roRouteReply`: a deterministic
@@ -2204,18 +2228,6 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
            the next search replaces. `roRouteReply` is still its router. -- */}
       <div className="rc-ana">
         <div className="rc-ana-scroll">
-          {/* Opener. The program facts below are live; the preset is a static
-              per-segment default, and says so. */}
-          <div className="rc-opener">
-            <div className="ro-rep-eyebrow">Where to start</div>
-            <div className="rc-op-headline">{suggest.headline}</div>
-            <div className="rc-op-body">{suggest.body}</div>
-            {suggest.preset && <div className="rc-op-why">{suggest.preset.why}</div>}
-            <div className="rc-chips">
-              {suggest.prompts.map((q, i) => (<button key={i} className="rc-chip" disabled={!tierResolved} onClick={() => findReport(q)}>{q}</button>))}
-            </div>
-          </div>
-
           {/* The result of the last search: the router's words, the choices it
               offers and the plan lock, in one section the next search replaces.
               Not a thread: the searched words stay in the field above. The
@@ -2236,7 +2248,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
               </div>
             )}
             {found?.chips && found.chips.length ? (
-              <div className="sp-starters" data-layout="row" aria-label="Find next">
+              <div className="sp-starters" data-layout="row" role="group" aria-label="Find next">
                 {found.chips.map((c, ci) => (<button key={ci} type="button" className="sp-starter" disabled={!tierResolved} onClick={() => findReport(c[1])}><span className="sk" aria-hidden="true">{I.search}</span><span>{c[0]}</span></button>))}
               </div>
             ) : null}
@@ -2248,29 +2260,6 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
           {runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}
         </div>
 
-        {/* The plan the reports are read against */}
-        <div className="rc-composer">
-          <div className="rc-tier" role="group" aria-label="Subscription tier">
-            <span className="rc-tier-lbl">Plan</span>
-            {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} aria-pressed={tier === t.id} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
-          </div>
-          {/* A preview looked exactly like the organisation's plan (reporting
-              review 2026-10-01). It says it is one, and names the real plan. */}
-          {previewing && (
-            <div className="ro-dash-note" role="status" data-testid="rc-tier-preview">
-              {I.info} Previewing {tierLabel(tier)}.{' '}
-              {tierResolved
-                ? <>Your organization's plan is {tierLabel(realTier)}.{' '}</>
-                : <>Your organization's plan could not be verified, so it is not named here.{' '}</>}
-              <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>
-                {tierResolved ? <>Back to {tierLabel(realTier)}</> : <>Stop previewing</>}
-              </button>
-            </div>
-          )}
-          {/* Not previewing, and the plan was never read: say so where the plan
-              is shown, so a wall of locks is not read as the plan's doing. */}
-          {!previewing && planNotice}
-        </div>
       </div>
 
       {/* -- Right: the report / dashboard artifact, and the library beside it --
@@ -2281,40 +2270,66 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
            this surface has always shown and remains the default, so a reader
            who never opens a tab sees exactly what they saw before. -- */}
       <div className="rc-canvas" ref={canvasRef}>
+        {/* A preview looked exactly like the organisation's plan (reporting
+            review 2026-10-01). It says it is one, and names the real plan, on
+            every view: a preview started from a locked result is still a
+            preview on the Reports view. Not previewing and the plan never
+            read: said above the views, so a wall of locks is not read as the
+            plan's doing. */}
+        {previewing ? (
+          <div className="ro-dash-note" role="status" data-testid="rc-tier-preview">
+            {I.info} Previewing {tierLabel(tier)}.{' '}
+            {tierResolved
+              ? <>Your organization's plan is {tierLabel(realTier)}.{' '}</>
+              : <>Your organization's plan could not be verified, so it is not named here.{' '}</>}
+            <button type="button" className="btn ghost" onClick={() => setTierOverride(null)}>
+              {tierResolved ? <>Back to {tierLabel(realTier)}</> : <>Stop previewing</>}
+            </button>
+          </div>
+        ) : planNotice}
         {libraryTabs}
         {recoveryNotice}
         <div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>
         {libraryPane || reportPane || (dashboard ? <RODashboard dashboard={dashboard} tier={tier} actualTier={realTier} tierResolved={tierResolved} onRun={runFromTile} canRun={canExecute} scope={p.scope} catalog={catalog} onOpenProgram={openPortfolioProgram} />
           : (
-            <div className="rc-empty">
-              {/* "AnA builds the report" and "a pack AnA suggests … based on
-                  your whole portfolio" were the same two claims as the opener:
-                  a persona for a template matcher, and a portfolio-derived
-                  recommendation for `roPresetsForSeg(seg)`, which reads neither
-                  the portfolio nor the program. */}
-              <h2 className="rc-empty-h">Governed reports, built to order.</h2>
-              <p className="rc-empty-s">Find a report on the left, or start from one of the standard packs for {p.code}. Every value is computed from the governed record; nothing is estimated.</p>
-              <div className="rc-empty-presets">
-                {roPresetsForSeg(seg, catalog).map(pr => (
-                  <button key={pr.id} className="rc-empty-preset" onClick={() => buildPreset(pr)}>
-                    <div className="rc-ep-h">{I.barChart || I.grid} {pr.label}</div>
-                    <div className="rc-ep-s">{pr.why}</div>
-                    <div className="rc-ep-types">{pr.types.length} governed report{pr.types.length === 1 ? '' : 's'}</div>
-                  </button>
-                ))}
-              </div>
+            <>
+              {/* The standard packs (D7 §D.4 step 8): objects to pick, so cards.
+                  The page's sub says what the reports are; the centred
+                  "Governed reports, built to order." headline said it twice.
+                  A pack is `roPresetsForSeg(seg)`, a static per-segment list:
+                  its heading says so, and no copy here claims it was chosen
+                  from the portfolio or the program. */}
+              <section className="pj-sec" aria-labelledby={`${tabsId}-packs`}>
+                <div className="pj-sec-h">
+                  <h2 id={`${tabsId}-packs`}>Standard packs</h2>
+                  <span className="sec-sub">{packs.length} for {segLabel}</span>
+                </div>
+                {packs.length > 0 ? (
+                  <div className="rc-packs">
+                    {packs.map(pr => (
+                      <button key={pr.id} type="button" className="pj-card rc-pack" onClick={() => buildPreset(pr)}>
+                        <span className="pj-card-t">{pr.label}</span>
+                        <span className="pj-card-m">{pr.why}</span>
+                        <span className="pj-card-foot">{pr.types.length} governed report{pr.types.length === 1 ? '' : 's'}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rc-packs-none">No standard pack for {segLabel} can run here. Find a report above, or open the Catalog.</p>
+                )}
+              </section>
               {/* P-26: the program's report types no engine computes, listed
                   once, here, and never as tiles inside a pack. Asking for one
-                  by name says the same and runs nothing (roRouteReply). */}
-              {roNotComputed(catalog).length > 0 && (
-                <section aria-label="Not computed in this release" data-testid="ro-not-computed">
-                  <div className="ro-rep-eyebrow">Not computed in this release</div>
-                  <p className="rc-empty-s">
-                    No engine produces these reports for {p.code}, so no pack offers them and none is run: {roNotComputed(catalog).join('; ')}.
-                  </p>
-                </section>
+                  by name says the same and runs nothing (roRouteReply). A list,
+                  behind a disclosure: it was a fifteen-line run-on paragraph. */}
+              {notComputed.length > 0 && (
+                <details className="pj-more" data-testid="ro-not-computed">
+                  <summary>Reports not available for {p.code} ({notComputed.length})</summary>
+                  <p>No engine produces these reports for {p.code}, so no pack offers them and none is run.</p>
+                  <ul className="rc-nc-list">{notComputed.map(name => <li key={name}>{name}</li>)}</ul>
+                </details>
               )}
-            </div>
+            </>
           ))}
         {deviceSection}
         </div>
@@ -2334,7 +2349,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
 }
 
 function ReportingTabs({ id, value, onChange }: { id: string; value: 'report' | LibraryView; onChange: (view: 'report' | LibraryView) => void }) {
-  const views = [{ id: 'report' as const, label: 'Report', icon: I.fileText }, ...LIBRARY_VIEWS];
+  const views = [{ id: 'report' as const, label: 'Reports' }, ...LIBRARY_VIEWS];
   const move = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     const positions: Record<string, number> = { ArrowRight: (index + 1) % views.length, ArrowLeft: (index + views.length - 1) % views.length, Home: 0, End: views.length - 1 };
     const next = positions[event.key];
@@ -2343,5 +2358,5 @@ function ReportingTabs({ id, value, onChange }: { id: string; value: 'report' | 
     onChange(views[next].id);
     document.getElementById(`${id}-${views[next].id}`)?.focus();
   };
-  return <div className="rl-tabs" role="tablist" aria-label="Reporting views">{views.map((view, index) => <button key={view.id} id={`${id}-${view.id}`} type="button" role="tab" aria-selected={value === view.id} aria-controls={`${id}-panel`} tabIndex={value === view.id ? 0 : -1} className={'rl-tab' + (value === view.id ? ' on' : '')} onClick={() => onChange(view.id)} onKeyDown={event => move(event, index)}>{view.icon} {view.label}</button>)}</div>;
+  return <div className="tabs" role="tablist" aria-label="Reporting views">{views.map((view, index) => <button key={view.id} id={`${id}-${view.id}`} type="button" role="tab" aria-selected={value === view.id} aria-controls={`${id}-panel`} tabIndex={value === view.id ? 0 : -1} className="tab" onClick={() => onChange(view.id)} onKeyDown={event => move(event, index)}>{view.label}</button>)}</div>;
 }
