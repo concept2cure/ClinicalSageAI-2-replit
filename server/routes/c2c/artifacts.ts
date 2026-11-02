@@ -61,6 +61,7 @@ import { authorizedProjectId, loadProjectArtifact, urlProjectId } from './artifa
 import { projectAdmissionMiddleware, ProjectAdmissionRefusal, requireCurrentProjectActor } from './project-access';
 import { getAccessibleReportProjectIds } from '../../services/report-os/project-access';
 import { verifyReauth } from './actions';
+import { separationOfDutiesRefusal } from '../../services/governance/separation-of-duties';
 import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { isSigningAuthorized } from '../../services/part11/signing-authority';
 import { clientIpKey } from '../../utils/client-ip';
@@ -2558,19 +2559,22 @@ router.put(
       }
 
       // ── Before a signed act: a lock covers the approval, no blocking
-      // contradiction, the review quorum ───────────────────────────────
+      // contradiction, the signer is not an author, the review quorum ───
       // 2026-09-23 (W5/D7): a lock is lockable only when filable as approved
       // (artifactApproval, the one filing rule); the P12 quorum blocks
       // review → approved while assigned reviewers have not approved, and a
       // quorum that cannot be read throws (the catch below answers 500 before
       // anything is written). Since 2026-10-01 these live in
       // server/services/artifact-approval-act.ts (refuseSignedArtifactAct),
-      // applied here and by AnA's signed approve and lock.
+      // applied here and by AnA's signed approve and lock. 2026-11-01 (F1,
+      // P-18): the author refusal is answered 403/409/503 by the one
+      // separation-of-duties mapping, before the password is verified.
       if (status === 'approved' || status === 'locked') {
         const signedActRefusal = await refuseSignedArtifactAct({
           q: pool,
           organizationId,
           projectId,
+          signerId: userId,
           artifact,
           previousStatus,
           status,
@@ -2769,8 +2773,15 @@ router.put(
             ) {
               return err;
             }
+            // 2026-11-01 (F1, P-18): an author found on the signing transaction
+            // is answered as the preflight answers one, not as a 500.
+            const authorRefusal = separationOfDutiesRefusal(err, 'c2c/artifacts/status');
+            if (authorRefusal) return authorRefusal;
             throw err;
           });
+        if ('body' in signed) {
+          return sendError(res, signed.status, signed.body.detail, undefined, signed.body.error);
+        }
         if (signed instanceof ArtifactActContractError) {
           /* Ours, not the signer's: the detail stays in the log (this router
              forwards its results to a tenant client — ci:server-error-leaks)

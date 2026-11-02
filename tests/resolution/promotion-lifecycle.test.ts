@@ -86,10 +86,10 @@ describe('Full Promotion Lifecycle', () => {
 
     // promote-to-review: requires-confirmation
     expect(levels[0]).toBe('requires-confirmation');
-    // approve-artifact: requires-reviewer-approval
-    expect(levels[1]).toBe('requires-reviewer-approval');
-    // lock-artifact: requires-reviewer-approval
-    expect(levels[2]).toBe('requires-reviewer-approval');
+    // approve-artifact and lock-artifact: forbidden through this map.
+    // 2026-11-01 (F1): approve and lock are decided only by the signed act (server/services/artifact-approval-act.ts); the map's entries admit no role.
+    expect(levels[1]).toBe('forbidden');
+    expect(levels[2]).toBe('forbidden');
     // judge-dossier-ready: requires-escalation
     expect(levels[3]).toBe('requires-escalation');
   });
@@ -100,22 +100,23 @@ describe('Full Promotion Lifecycle', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe('Approve Artifact (review → approved)', () => {
-  it('requires reviewer approval authority', () => {
+  // 2026-11-01 (F1): approve and lock are decided only by the signed act (server/services/artifact-approval-act.ts); the map's entries admit no role.
+  it('is not decided by this map', () => {
     const authority = getAuthorityForAction('approve-artifact');
-    expect(authority.level).toBe('requires-reviewer-approval');
+    expect(authority.level).toBe('forbidden');
     expect(authority.requiresReviewerApproval).toBe(true);
   });
 
-  it('reviewer role is authorized', () => {
+  it('reviewer role is not authorized through this map', () => {
     const authority = getAuthorityForAction('approve-artifact');
     const check = isActorAuthorized(authority, 'reviewer');
-    expect(check.authorized).toBe(true);
+    expect(check.authorized).toBe(false);
   });
 
-  it('approver role is authorized', () => {
+  it('approver role is not authorized through this map', () => {
     const authority = getAuthorityForAction('approve-artifact');
     const check = isActorAuthorized(authority, 'approver');
-    expect(check.authorized).toBe(true);
+    expect(check.authorized).toBe(false);
   });
 
   it('creates decision + receipt on successful approval', () => {
@@ -145,9 +146,9 @@ describe('Approve Artifact (review → approved)', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe('Lock Artifact (approved → locked)', () => {
-  it('requires reviewer approval authority', () => {
+  it('is not decided by this map', () => {
     const authority = getAuthorityForAction('lock-artifact');
-    expect(authority.level).toBe('requires-reviewer-approval');
+    expect(authority.level).toBe('forbidden');
   });
 
   it('boundary service requires all decisions resolved for approved → locked', () => {
