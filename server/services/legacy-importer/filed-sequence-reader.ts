@@ -78,7 +78,7 @@ import {
   elementsNamed, firstNamed, parseBackbone, placementOf, textOf,
   type BackboneProblemCode,
 } from './filed-sequence-xml';
-import { LEAF_ID, bindPointers, intoSibling, parentOf, refuseAmbiguousIdentity } from './filed-sequence-pointers';
+import { LEAF_ID, bindPointers, climbRefusal, intoSibling, parentOf, refuseAmbiguousIdentity } from './filed-sequence-pointers';
 
 export { headingSection } from './filed-sequence-xml';
 
@@ -194,7 +194,8 @@ const DEPTH_MAX = 32;
  * The sequence root a zip path belongs to: the longest root that is a folder
  * prefix of it. The walk ends at the archive root, after at most DEPTH_MAX
  * folders, and never starts on an absolute name. 2026-11-02: an entry named
- * '/x' made this loop forever.
+ * '/x' made this loop forever. It came past safeZip in a local header that
+ * disagreed with the zip's directory, the name JSZip reads.
  */
 function ownerOf(name: string, roots: Set<string>): string | null {
   if (name.startsWith('/') || name.length > NAME_MAX) return null;
@@ -242,7 +243,7 @@ const titleOf = (leaf: Element): string | undefined => {
 };
 
 /** A leaf whose file is in another sequence of its application. */
-interface Reuse { leafId: string; backbone: string; number: string; targetRoot: string; archivePath: string | null }
+interface Reuse { leafId: string; backbone: string; number: string; targetRoot: string; archivePath: string | null; climbedThrough?: string }
 
 interface ReadContext {
   arc: ArchiveContext;
@@ -308,7 +309,7 @@ function hrefTarget(loc: Located, ctx: ReadContext): { archivePath: string | nul
     return { refusal: `href "${loc.fromRoot}" leads out of the sequence, and not into another sequence of the same application` };
   }
   const archivePath = ctx.arc.roots.has(targetRoot!) ? `${targetRoot}${into.rest}` : null;
-  return { archivePath, reuse: { number: into.number, targetRoot: targetRoot!, archivePath } };
+  return { archivePath, reuse: { number: into.number, targetRoot: targetRoot!, archivePath, ...(into.climbedThrough !== undefined ? { climbedThrough: into.climbedThrough } : {}) } };
 }
 
 interface LeafHead { id: string; label: string; operation: FiledSequenceLeaf['operation']; href: string | null; at: { path?: string; leafId?: string } }
@@ -609,6 +610,8 @@ async function readSequence(arc: ArchiveContext, root: string, names: string[]):
 function bindReuses(sequences: FiledSequence[], reuses: Map<FiledSequence, Reuse[]>): void {
   const filedBy = new Map(sequences.map((s) => [s.root, new Set(s.leaves.filter((l) => l.operation !== 'delete').map((l) => l.archivePath))]));
   const why = (s: FiledSequence, r: Reuse): string | null => {
+    const climbed = climbRefusal(r, s.application);
+    if (climbed) return climbed;
     if (s.sequence === null || !(r.number < s.sequence)) return `leads into sequence ${r.number}, which is not earlier than ${s.sequence ?? 'this one'}`;
     if (r.archivePath !== null && !filedBy.get(r.targetRoot)?.has(r.archivePath)) return `names ${r.archivePath}, which sequence ${r.number} did not file`;
     return null;

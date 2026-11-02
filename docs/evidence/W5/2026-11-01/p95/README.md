@@ -10,7 +10,10 @@ The work is split two ways:
 - **The coordinating session:** the reach, under D4. That means the existing reviewer-assignment route,
   called from the editor's Review panel.
 
-**Not built yet.** At the time of writing, P-95 is not on `origin/concept2cure-v2`
+**Update 2026-11-02.** P-95 is now recorded in `docs/LAUNCH_DEFINITION_OF_DONE.md`. The round repair
+landed (`0f7706e637`). The no-reviewer refusal waits for D4's reach.
+
+**Not built yet (as first written).** At the time of writing, P-95 is not on `origin/concept2cure-v2`
 (`docs/LAUNCH_DEFINITION_OF_DONE.md` ends at P-91; the commit that records it, `1c48581ae`, is
 unpushed). This lane builds nothing on a decision it cannot read in the repository. It also should
 not land the refusal before the reach; see the sequencing hazard below.
@@ -71,7 +74,9 @@ first.**
   task-management and authoring review routes do not satisfy it.
 
 **Recommended order:**
-1. The round repair (this lane, F1). It is safe on its own.
+1. ~~The round repair (this lane, F1).~~ *Landed 2026-11-02, `0f7706e637` (`../review-round/`). It
+   also refuses an all-withdrawn latest round under P-95, and refuses a new round over an objection to
+   the current version.*
 2. D4's reach of the two routes (the coordinating session).
 3. The P-95 refusal (this lane, F1).
 
