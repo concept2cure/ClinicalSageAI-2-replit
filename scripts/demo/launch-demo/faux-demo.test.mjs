@@ -25,7 +25,7 @@ const identity = Object.freeze({ email: 'demo@fictional.example', organizationId
 
 const ok = (json, status = 200) => ({ status, json, text: JSON.stringify(json) });
 
-function fakeApplication({ organization = identity, otherType = false } = {}) {
+function fakeApplication({ organization = identity, otherType = false, missingTemplate = false, duplicateTemplate = false } = {}) {
   const state = { calls: [], clients: [], projects: [], vault: [], documents: [], tasks: [] };
   let nextDocumentId = 1;
   const api = async (method, url, body) => {
@@ -76,10 +76,11 @@ function fakeApplication({ organization = identity, otherType = false } = {}) {
       return ok({ document: doc }, 201);
     }
     if (method === 'GET' && url === '/api/authoring/templates?search=Clinical%20Study%20Report') {
-      return ok({ templates: [{
+      const template = {
         id: '4331e7e3-7777-5c21-8c9b-0e2f56194e7e',
         entryId: 'component:clinical_study_report', section_count: 16,
-      }] });
+      };
+      return ok({ templates: missingTemplate ? [] : duplicateTemplate ? [template, { ...template }] : [template] });
     }
     if (method === 'GET' && url === '/api/authoring/docs?status=all&programId=p1') {
       return ok({ success: true, documents: state.documents });
@@ -247,6 +248,21 @@ test('purge is an honest refusal to delete governed source records', async () =>
   await purge({ api: app.api, identity: app.identity, run });
   assert.equal(app.state.calls.length, 0);
   assert.match(run.notes.join(' '), /no destructive|archive/i);
+});
+
+test.each([
+  ['missing', { missingTemplate: true }],
+  ['duplicated', { duplicateTemplate: true }],
+])('rejects %s canonical CSR templates before any tenant write', async (_name, options) => {
+  const app = fakeApplication(options);
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /canonical CSR component template is unavailable or duplicated/);
+  assert.equal(app.state.clients.length, 0);
+  assert.equal(app.state.projects.length, 0);
+  assert.equal(app.state.vault.length, 0);
+  assert.equal(app.state.documents.length, 0);
+  assert.equal(app.state.tasks.length, 0);
+  assert.ok(app.state.calls.every(c => c.method === 'GET'));
 });
 
 test('a prior CSR working document with a non-canonical template is never adopted', async () => {
