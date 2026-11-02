@@ -3,8 +3,9 @@
  * ════════════════════════════════════════════════════════════════════════════
  *
  * A pure, closed-form, reproducible knowledge base for oncology dose
- * optimization. NO LLM, NO network, NO database, NO imports from other
- * services. Identical input always yields identical output.
+ * optimization. NO LLM, NO network, NO database; it imports only the shared
+ * stated-input readers and refusal. Identical input always yields identical output. An
+ * unanswered boolean is not_stated, never true or false (Rule 2 S5a).
  *
  * GROUNDING / PRIMARY SOURCES
  * ───────────────────────────
@@ -38,6 +39,23 @@
  *
  * @module server/services/dose-optimization/dose-optimization-knowledge
  */
+
+import { ComputationRefusal } from '../ana-biostats/computation-engine';
+import { booleanInputStates, statedBoolean, statedNumber, statedOneOf } from '../immunogenicity/immunogenicity-reference';
+
+/** Read a list by index: a non-list, or an empty or malformed entry, is refused, never dropped. */
+function statedList<T>(field: string, list: unknown, read: (at: string, value: unknown) => T | undefined): T[] {
+  if (list === undefined || list === null) return [];
+  if (!Array.isArray(list)) throw new ComputationRefusal('invalid_input', `${field} must be a list.`, field);
+  return list.map((value, i) => {
+    const at = `${field}[${i}]`;
+    if (value === undefined || value === null) throw new ComputationRefusal('invalid_input', `${at} is empty.`, at);
+    return read(at, value) as T;
+  });
+}
+const positiveDose = (at: string, dose: unknown) => statedNumber(at, dose, n => n > 0, 'a positive number');
+const statedDoses = (field: string, list: unknown) =>
+  Array.from(new Set(statedList(field, list, positiveDose))).sort((a, b) => a - b);
 
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 
@@ -86,6 +104,9 @@ export type MechanismClass =
   | 'molecularly_targeted'
   | 'immunomodulatory'
   | 'other';
+
+/** The stated boolean answers: true, false, or not_stated when unanswered (never false). */
+export type InputStates = Record<string, boolean | 'not_stated'>;
 
 // ════════════════════════════════════════════════════════════════════════════
 // SECTION 1 — CITATION LIBRARY (single source of truth)
@@ -493,10 +514,12 @@ export interface SelectDoseFindingDesignParams {
 }
 
 export interface SelectDoseFindingDesignResult {
-  recommendedDesign: DesignName;
-  recommendedDesignProfile: DesignProfile;
-  designFamily: DesignFamily;
-  /** Ranked alternatives with one-line rationale. */
+  /** not_assessed while a fact that decides between designs is not stated. */
+  recommendedDesign: DesignName | 'not_assessed';
+  recommendedDesignProfile: DesignProfile | null;
+  designFamily: DesignFamily | null;
+  inputStates: InputStates;
+  /** Ranked alternatives with one-line rationale; empty when no design is recommended. */
   rankedAlternatives: Array<{ name: DesignName; rationale: string }>;
   /** Target toxicity rate applied. */
   targetToxicityRate: number;
@@ -512,7 +535,8 @@ export interface SelectDoseFindingDesignResult {
  * Choose a dose-escalation design. Rule-based, deterministic. Encodes the
  * modern (Project Optimus-era) preference for model-assisted/model-based
  * designs over the rule-based 3+3, and routes to TITE variants when late-onset
- * toxicity is expected.
+ * toxicity is expected. Late onset or real-time statistical support left
+ * unanswered recommends no design: each answer selects a different one.
  */
 export function selectDoseFindingDesign(
   params: SelectDoseFindingDesignParams,
@@ -520,33 +544,35 @@ export function selectDoseFindingDesign(
   const warnings: string[] = [];
   const rationale: string[] = [];
 
-  const targetToxicityRate =
-    typeof params.targetToxicityRate === 'number' &&
-    params.targetToxicityRate > 0 &&
-    params.targetToxicityRate < 1
-      ? params.targetToxicityRate
-      : 0.25;
+  // A stated rate outside (0, 1) is refused, never replaced; only an unstated one takes the disclosed 0.25.
+  const statedTargetToxicityRate = statedNumber('targetToxicityRate', params.targetToxicityRate,
+    n => n > 0 && n < 1, 'a probability strictly between 0 and 1');
+  const targetToxicityRate = statedTargetToxicityRate ?? 0.25;
 
-  if (params.targetToxicityRate === undefined) {
+  if (statedTargetToxicityRate === undefined) {
     rationale.push(
       'No target toxicity rate supplied; defaulting to 0.25, a common target ' +
         'for cytotoxic/targeted oncology dose-finding (often 0.20-0.35).',
     );
-  } else if (params.targetToxicityRate < 0.1 || params.targetToxicityRate > 0.4) {
+  } else if (statedTargetToxicityRate < 0.1 || statedTargetToxicityRate > 0.4) {
     warnings.push(
-      `Target toxicity rate ${params.targetToxicityRate} is outside the usual ` +
+      `Target toxicity rate ${statedTargetToxicityRate} is outside the usual ` +
         '0.10-0.40 range for oncology dose-finding; confirm it is clinically justified.',
     );
   }
 
-  const lateOnset =
-    params.lateOnsetToxicityExpected === true ||
+  const inputStates = booleanInputStates(params, ['lateOnsetToxicityExpected',
+    'realTimeStatisticianAvailable', 'optimalBiologicalDoseSought']);
+  // The flag, a DLT window > 28 days or the modality indicates late onset; when none does, only a stated false rules it out.
+  const lateOnsetIndicated =
+    inputStates.lateOnsetToxicityExpected === true ||
     (typeof params.dltWindowDays === 'number' && params.dltWindowDays > 28) ||
     params.modality === 'immune_checkpoint_inhibitor' ||
     params.modality === 'antibody_drug_conjugate' ||
     params.modality === 'cell_therapy';
+  const lateOnset: boolean | 'not_stated' = lateOnsetIndicated || inputStates.lateOnsetToxicityExpected;
 
-  if (lateOnset) {
+  if (lateOnset === true) {
     rationale.push(
       'Late-onset, cumulative, or delayed toxicity is anticipated (by modality, ' +
         'DLT window > 28 days, or explicit flag); a time-to-event (TITE) design is ' +
@@ -554,11 +580,17 @@ export function selectDoseFindingDesign(
     );
   }
 
-  const statistician = params.realTimeStatisticianAvailable === true;
+  const statistician = inputStates.realTimeStatisticianAvailable;
 
-  // Decision logic — deterministic cascade.
-  let recommended: DesignName;
-  if (lateOnset && statistician) {
+  // Decision logic — deterministic cascade. An unanswered deciding fact selects no design.
+  let recommended: DesignName | 'not_assessed';
+  if (lateOnset === 'not_stated' || statistician === 'not_stated') {
+    recommended = 'not_assessed';
+    rationale.push(
+      `No design is recommended (late-onset toxicity: ${lateOnset}; real-time statistician: ` +
+        `${statistician}). Late onset selects TITE-CRM or TITE-BOIN, otherwise CRM or BOIN, by that support.`,
+    );
+  } else if (lateOnset && statistician) {
     recommended = 'TITE-CRM';
     rationale.push(
       'Real-time statistical support is available, so a fully model-based TITE-CRM is ' +
@@ -590,16 +622,16 @@ export function selectDoseFindingDesign(
   warnings.push(
     'The rule-based 3+3 design is discouraged: it cannot target a pre-specified ' +
       'toxicity rate, imprecisely estimates the MTD, and is misaligned with Project ' +
-      'Optimus expectations. It is listed only as a fallback for resource-constrained ' +
-      'contexts.',
+      'Optimus expectations.' + (recommended === 'not_assessed' ? '' :
+      ' It is listed only as a fallback for resource-constrained contexts.'),
   );
 
   if (params.optimalBiologicalDoseSought === true) {
     rationale.push(
-      'The program seeks an optimal biological dose (OBD), not merely an MTD. The ' +
-        'chosen toxicity-finding design should be paired with backfill cohorts and ' +
+      'The program seeks an optimal biological dose (OBD), not merely an MTD.' + (recommended === 'not_assessed' ? '' :
+        ' The chosen toxicity-finding design should be paired with backfill cohorts and ' +
         'integration of PK/PD and efficacy (e.g., BOIN12/uTPI-style OBD extensions, ' +
-        'and/or a downstream randomized dose comparison).',
+        'and/or a downstream randomized dose comparison).'),
     );
     warnings.push(
       'OBD characterization requires more than a toxicity-driven escalation design; ' +
@@ -628,7 +660,7 @@ export function selectDoseFindingDesign(
     );
   }
 
-  const profile = DESIGN_PROFILES[recommended];
+  const profile = recommended === 'not_assessed' ? null : DESIGN_PROFILES[recommended];
 
   const rankedAlternatives: Array<{ name: DesignName; rationale: string }> = [];
   if (recommended !== 'BOIN') {
@@ -639,7 +671,7 @@ export function selectDoseFindingDesign(
         'good fallback if real-time modeling is unavailable.',
     });
   }
-  if (recommended !== 'CRM' && !lateOnset) {
+  if (recommended !== 'CRM' && lateOnset !== true) {
     rankedAlternatives.push({
       name: 'CRM',
       rationale:
@@ -665,7 +697,7 @@ export function selectDoseFindingDesign(
       'and the program accepts imprecise MTD estimation.',
   });
 
-  const operatingCharacteristicTradeoffs: string[] = [
+  const operatingCharacteristicTradeoffs: string[] = profile === null ? [] : [
     `MTD-selection accuracy: ${profile.operatingCharacteristics.accuracyOfMtdSelection}.`,
     `Proportion of patients treated at/near the MTD: ${profile.operatingCharacteristics.patientsTreatedAtOrNearMtd}.`,
     `Implementation complexity: ${profile.operatingCharacteristics.implementationComplexity}.`,
@@ -681,8 +713,9 @@ export function selectDoseFindingDesign(
   return {
     recommendedDesign: recommended,
     recommendedDesignProfile: profile,
-    designFamily: profile.family,
-    rankedAlternatives,
+    designFamily: profile ? profile.family : null,
+    inputStates,
+    rankedAlternatives: profile ? rankedAlternatives : [],
     targetToxicityRate,
     threePlusThreeDiscouraged,
     rationale,
@@ -739,16 +772,17 @@ export interface AssessProjectOptimusAlignmentParams {
 }
 
 export interface AssessProjectOptimusAlignmentResult {
-  /** 0-100 deterministic alignment score. */
-  alignmentScore: number;
-  alignmentTier: 'strong' | 'moderate' | 'weak' | 'non_aligned';
+  /** 0-100 deterministic alignment score; null while any scored pillar is not stated. */
+  alignmentScore: number | null;
+  alignmentTier: 'strong' | 'moderate' | 'weak' | 'non_aligned' | 'not_assessed';
+  inputStates: InputStates;
   gaps: Finding[];
   strengths: string[];
   recommendations: string[];
-  /** Summary of how each Optimus pillar is met. */
+  /** Summary of how each Optimus pillar is met; not_stated when its fact was not answered. */
   pillarStatus: Array<{
     pillar: string;
-    status: 'met' | 'partial' | 'not_met';
+    status: 'met' | 'partial' | 'not_met' | 'not_stated';
     note: string;
   }>;
   citations: Citation[];
@@ -757,7 +791,9 @@ export interface AssessProjectOptimusAlignmentResult {
 /**
  * Evaluate a development program against Project Optimus expectations.
  * Deterministic scoring: each pillar contributes a fixed weight; gaps are
- * generated from unmet pillars.
+ * generated from unmet pillars. An unanswered pillar is not_stated: it is
+ * neither met nor a gap, and the score and tier are not assessed until every
+ * scored pillar is stated.
  */
 export function assessProjectOptimusAlignment(
   params: AssessProjectOptimusAlignmentParams,
@@ -765,16 +801,26 @@ export function assessProjectOptimusAlignment(
   const gaps: Finding[] = [];
   const strengths: string[] = [];
   const recommendations: string[] = [];
-  const pillarStatus: Array<{
-    pillar: string;
-    status: 'met' | 'partial' | 'not_met';
-    note: string;
-  }> = [];
+  const pillarStatus: AssessProjectOptimusAlignmentResult['pillarStatus'] = [];
+  const inputStates = booleanInputStates(params, ['doseSelectedByMtdAlone', 'randomizedDoseComparisonConducted',
+    'exposureResponseEfficacyCharacterized', 'exposureResponseSafetyCharacterized', 'pkCharacterized',
+    'pdOrTargetEngagementCharacterized', 'longitudinalTolerabilityAssessed', 'patientReportedOutcomesCollected',
+    'optimizationBeforeMarketingApplication']);
+  const dosesInRandomizedComparison = statedNumber('dosesInRandomizedComparison', params.dosesInRandomizedComparison,
+    n => Number.isInteger(n) && n >= 0, 'a whole number of doses');
+  // An unanswered pillar is named, scores nothing and is not a gap.
+  const unstated: string[] = [];
+  const notStated = (pillar: string, field: string): void => {
+    unstated.push(field);
+    pillarStatus.push({ pillar, status: 'not_stated', note: `${field} was not stated; this pillar is not assessed.` });
+  };
 
   let score = 0;
 
   // Pillar 1 — Beyond MTD (weight 20)
-  if (!params.doseSelectedByMtdAlone) {
+  if (inputStates.doseSelectedByMtdAlone === 'not_stated') {
+    notStated('Selection beyond MTD', 'doseSelectedByMtdAlone');
+  } else if (!inputStates.doseSelectedByMtdAlone) {
     score += 20;
     strengths.push('Dose was not selected by MTD alone — central Optimus expectation.');
     pillarStatus.push({
@@ -803,12 +849,14 @@ export function assessProjectOptimusAlignment(
     });
   }
 
-  // Pillar 2 — Randomized dose comparison (weight 20)
+  // Pillar 2 — Randomized dose comparison (weight 20). The question itself asks for >= 2 doses,
+  // so a stated true needs no count; a stated count below 2 is partial.
   const adequateRandomized =
-    params.randomizedDoseComparisonConducted &&
-    (params.dosesInRandomizedComparison === undefined ||
-      params.dosesInRandomizedComparison >= 2);
-  if (adequateRandomized) {
+    inputStates.randomizedDoseComparisonConducted === true &&
+    (dosesInRandomizedComparison === undefined || dosesInRandomizedComparison >= 2);
+  if (inputStates.randomizedDoseComparisonConducted === 'not_stated') {
+    notStated('Randomized multi-dose comparison', 'randomizedDoseComparisonConducted');
+  } else if (adequateRandomized) {
     score += 20;
     strengths.push(
       'A randomized comparison of >= 2 dosages was conducted — the approach the ' +
@@ -843,7 +891,9 @@ export function assessProjectOptimusAlignment(
   }
 
   // Pillar 3 — Exposure-response efficacy (weight 12)
-  if (params.exposureResponseEfficacyCharacterized) {
+  if (inputStates.exposureResponseEfficacyCharacterized === 'not_stated') {
+    notStated('Exposure-response (efficacy)', 'exposureResponseEfficacyCharacterized');
+  } else if (inputStates.exposureResponseEfficacyCharacterized) {
     score += 12;
     strengths.push('Exposure-response for efficacy was characterized.');
     pillarStatus.push({
@@ -871,7 +921,9 @@ export function assessProjectOptimusAlignment(
   }
 
   // Pillar 4 — Exposure-response safety (weight 12)
-  if (params.exposureResponseSafetyCharacterized) {
+  if (inputStates.exposureResponseSafetyCharacterized === 'not_stated') {
+    notStated('Exposure-response (safety)', 'exposureResponseSafetyCharacterized');
+  } else if (inputStates.exposureResponseSafetyCharacterized) {
     score += 12;
     strengths.push('Exposure-response for safety was characterized.');
     pillarStatus.push({
@@ -899,7 +951,9 @@ export function assessProjectOptimusAlignment(
   }
 
   // Pillar 5 — PK characterization (weight 8)
-  if (params.pkCharacterized) {
+  if (inputStates.pkCharacterized === 'not_stated') {
+    notStated('PK / exposure', 'pkCharacterized');
+  } else if (inputStates.pkCharacterized) {
     score += 8;
     strengths.push('PK / exposure was adequately characterized.');
     pillarStatus.push({
@@ -927,7 +981,9 @@ export function assessProjectOptimusAlignment(
   }
 
   // Pillar 6 — PD / target engagement (weight 8)
-  if (params.pdOrTargetEngagementCharacterized) {
+  if (inputStates.pdOrTargetEngagementCharacterized === 'not_stated') {
+    notStated('PD / target engagement', 'pdOrTargetEngagementCharacterized');
+  } else if (inputStates.pdOrTargetEngagementCharacterized) {
     score += 8;
     strengths.push('PD / target-engagement / biomarker data were collected.');
     pillarStatus.push({
@@ -956,7 +1012,9 @@ export function assessProjectOptimusAlignment(
   }
 
   // Pillar 7 — Longitudinal tolerability (weight 12)
-  if (params.longitudinalTolerabilityAssessed) {
+  if (inputStates.longitudinalTolerabilityAssessed === 'not_stated') {
+    notStated('Longitudinal tolerability', 'longitudinalTolerabilityAssessed');
+  } else if (inputStates.longitudinalTolerabilityAssessed) {
     score += 12;
     strengths.push(
       'Longitudinal (multi-cycle) tolerability — low-grade, chronic, cumulative ' +
@@ -989,7 +1047,9 @@ export function assessProjectOptimusAlignment(
   }
 
   // Pillar 8 — Timing / pre-marketing optimization (weight 8)
-  if (params.optimizationBeforeMarketingApplication) {
+  if (inputStates.optimizationBeforeMarketingApplication === 'not_stated') {
+    notStated('Pre-marketing timing', 'optimizationBeforeMarketingApplication');
+  } else if (inputStates.optimizationBeforeMarketingApplication) {
     score += 8;
     strengths.push('Dose optimization is planned/completed before the marketing application.');
     pillarStatus.push({
@@ -1058,6 +1118,7 @@ export function assessProjectOptimusAlignment(
   if (
     (params.developmentStage === 'phase3' ||
       params.developmentStage === 'pre_nda_bla') &&
+    inputStates.randomizedDoseComparisonConducted !== 'not_stated' &&
     !adequateRandomized
   ) {
     recommendations.push(
@@ -1079,11 +1140,17 @@ export function assessProjectOptimusAlignment(
   if (score > 100) score = 100;
   if (score < 0) score = 0;
 
-  let alignmentTier: 'strong' | 'moderate' | 'weak' | 'non_aligned';
-  if (score >= 80) alignmentTier = 'strong';
+  let alignmentTier: AssessProjectOptimusAlignmentResult['alignmentTier'];
+  if (unstated.length > 0) alignmentTier = 'not_assessed';
+  else if (score >= 80) alignmentTier = 'strong';
   else if (score >= 55) alignmentTier = 'moderate';
   else if (score >= 30) alignmentTier = 'weak';
   else alignmentTier = 'non_aligned';
+  if (unstated.length > 0) {
+    recommendations.push(
+      `State ${unstated.join(', ')}: no alignment score or tier is given while a scored pillar is unanswered.`,
+    );
+  }
 
   recommendations.push(
     'Document the totality-of-evidence rationale (nonclinical, PK, PD, safety over ' +
@@ -1091,8 +1158,9 @@ export function assessProjectOptimusAlignment(
   );
 
   return {
-    alignmentScore: score,
+    alignmentScore: unstated.length > 0 ? null : score,
     alignmentTier,
+    inputStates,
     gaps,
     strengths,
     recommendations,
@@ -1143,6 +1211,7 @@ export interface DesignRandomizedDoseComparisonResult {
   numberOfArms: number;
   recommendedDoses: number[];
   doseUnit: string;
+  inputStates: InputStates;
   /** Recommended allocation ratio across arms (e.g., "1:1"). */
   allocationRatio: string;
   endpointStrategy: {
@@ -1151,9 +1220,9 @@ export interface DesignRandomizedDoseComparisonResult {
     rationale: string;
   };
   sampleSizeConsiderations: string[];
-  /** Deterministic illustrative per-arm size for an estimation-focused randomized dose comparison. */
-  illustrativePerArmSize: number;
-  illustrativeTotalSize: number;
+  /** Deterministic illustrative per-arm size; null while goalNonInferiorActivityLowerDose is not stated. */
+  illustrativePerArmSize: number | null;
+  illustrativeTotalSize: number | null;
   timingRecommendation: string;
   designNotes: string[];
   warnings: string[];
@@ -1163,7 +1232,9 @@ export interface DesignRandomizedDoseComparisonResult {
 /**
  * Design a randomized multi-dose comparison for dose optimization.
  * Estimation-oriented (not a hypothesis-testing superiority trial by default):
- * the goal is to compare activity/safety/tolerability across >= 2 doses.
+ * the goal is to compare activity/safety/tolerability across >= 2 doses. An
+ * unanswered non-inferiority goal gives no illustrative size, and an unanswered
+ * tolerability co-primary leaves that endpoint's role not assessed.
  */
 export function designRandomizedDoseComparison(
   params: DesignRandomizedDoseComparisonParams,
@@ -1174,23 +1245,13 @@ export function designRandomizedDoseComparison(
 
   const doseUnit = params.doseUnit && params.doseUnit.trim() ? params.doseUnit : 'mg';
 
-  // Sanitize candidate doses deterministically: dedupe + ascending sort.
-  const cleaned = Array.from(
-    new Set(
-      (params.candidateDoses || []).filter(
-        (d: number) => typeof d === 'number' && isFinite(d) && d > 0,
-      ),
-    ),
-  ).sort((a: number, b: number) => a - b);
-
-  let recommendedDoses = cleaned;
+  const cleaned = statedDoses('candidateDoses', params.candidateDoses);
   if (cleaned.length < 2) {
-    warnings.push(
-      'A dose-optimization comparison requires at least 2 dosages. Fewer than 2 valid ' +
-        'doses were supplied; specify a higher (e.g., MTD-anchored) and a lower candidate dose.',
-    );
-    recommendedDoses = cleaned;
-  } else if (cleaned.length > 3) {
+    throw new ComputationRefusal('missing_input', 'candidateDoses must list at least 2 distinct positive ' +
+      'doses to compare: a higher (e.g., MTD-anchored) and a lower one.', 'candidateDoses');
+  }
+  const recommendedDoses = cleaned;
+  if (cleaned.length > 3) {
     warnings.push(
       `${cleaned.length} candidate doses supplied; 2-3 arms are typically most feasible ` +
         'for a randomized dose comparison. Consider narrowing to the most informative doses.',
@@ -1201,12 +1262,18 @@ export function designRandomizedDoseComparison(
     );
   }
 
-  const numberOfArms = Math.max(recommendedDoses.length, 2);
+  const numberOfArms = recommendedDoses.length;
 
   // Endpoint strategy.
   const primaryEndpoint = params.primaryActivityEndpoint || 'ORR';
+  const inputStates = booleanInputStates(params, ['goalNonInferiorActivityLowerDose', 'tolerabilityCoPrimary']);
   const coPrimaryOrKey: string[] = [];
-  if (params.tolerabilityCoPrimary) {
+  if (inputStates.tolerabilityCoPrimary === 'not_stated') {
+    coPrimaryOrKey.push(
+      'Tolerability endpoint role not assessed: tolerabilityCoPrimary was not stated. Longitudinal ' +
+        'tolerability (dose modifications, chronic/cumulative toxicity, PRO-CTCAE) is integral either way.',
+    );
+  } else if (inputStates.tolerabilityCoPrimary) {
     coPrimaryOrKey.push(
       'Tolerability co-primary: dose intensity, Grade >= 3 AE rate, dose ' +
         'modifications/discontinuations, and PRO-CTCAE over multiple cycles.',
@@ -1235,8 +1302,16 @@ export function designRandomizedDoseComparison(
   // This is an ESTIMATION-oriented heuristic, not a powered superiority calculation.
   // Rationale encoded: randomized dose-optimization arms in oncology are commonly
   // ~20-50 patients/arm to estimate ORR and tolerability with reasonable precision.
-  let illustrativePerArmSize: number;
-  if (params.goalNonInferiorActivityLowerDose) {
+  const statedResponseRate = statedNumber('anticipatedResponseRateHighDose', params.anticipatedResponseRateHighDose,
+    n => n > 0 && n < 1, 'a probability strictly between 0 and 1');
+  let illustrativePerArmSize: number | null;
+  if (inputStates.goalNonInferiorActivityLowerDose === 'not_stated') {
+    illustrativePerArmSize = null;
+    sampleSizeConsiderations.push(
+      'No illustrative size is given: goalNonInferiorActivityLowerDose was not stated, and a ' +
+        'non-inferiority goal on activity is sized differently from an estimation-oriented comparison.',
+    );
+  } else if (inputStates.goalNonInferiorActivityLowerDose) {
     // Non-inferiority on activity needs more patients than pure estimation.
     illustrativePerArmSize = 60;
     sampleSizeConsiderations.push(
@@ -1244,13 +1319,9 @@ export function designRandomizedDoseComparison(
         'activity endpoint requires a pre-specified margin and is sample-size intensive; ' +
         'a larger per-arm size (illustratively ~60) is used here.',
     );
-  } else if (
-    typeof params.anticipatedResponseRateHighDose === 'number' &&
-    params.anticipatedResponseRateHighDose > 0 &&
-    params.anticipatedResponseRateHighDose < 1
-  ) {
+  } else if (statedResponseRate !== undefined) {
     // Width of a 95% CI on a proportion ~ 1.96*sqrt(p(1-p)/n). Target half-width ~0.13.
-    const p = params.anticipatedResponseRateHighDose;
+    const p = statedResponseRate;
     const targetHalfWidth = 0.13;
     const n = Math.ceil((1.96 * 1.96 * p * (1 - p)) / (targetHalfWidth * targetHalfWidth));
     illustrativePerArmSize = Math.max(20, Math.min(80, n));
@@ -1269,12 +1340,13 @@ export function designRandomizedDoseComparison(
     );
   }
 
-  let illustrativeTotalSize = illustrativePerArmSize * numberOfArms;
+  let illustrativeTotalSize = illustrativePerArmSize === null ? null : illustrativePerArmSize * numberOfArms;
 
   // Honor a feasibility cap if provided.
   if (
     typeof params.feasibleSampleSize === 'number' &&
     params.feasibleSampleSize > 0 &&
+    illustrativeTotalSize !== null &&
     illustrativeTotalSize > params.feasibleSampleSize
   ) {
     const cappedPerArm = Math.floor(params.feasibleSampleSize / numberOfArms);
@@ -1294,7 +1366,7 @@ export function designRandomizedDoseComparison(
   );
 
   // Allocation.
-  const allocationRatio = recommendedDoses.map(() => '1').join(':') || '1:1';
+  const allocationRatio = recommendedDoses.map(() => '1').join(':');
   designNotes.push(
     `Balanced ${allocationRatio} randomization across arms supports unbiased ` +
       'between-dose comparison of activity and tolerability.',
@@ -1333,6 +1405,7 @@ export function designRandomizedDoseComparison(
     numberOfArms,
     recommendedDoses,
     doseUnit,
+    inputStates,
     allocationRatio,
     endpointStrategy,
     sampleSizeConsiderations,
@@ -1388,6 +1461,7 @@ export interface SelectRP2DParams {
 export interface SelectRP2DResult {
   recommendedRP2D?: number;
   doseUnit: string;
+  inputStates: InputStates;
   /** Why this dose (integrates MTD, PK, PD, tolerability, efficacy). */
   selectionRationale: string[];
   /** Doses considered and why each was or was not selected. */
@@ -1395,6 +1469,7 @@ export interface SelectRP2DResult {
     dose: number;
     verdict: 'selected' | 'viable' | 'too_toxic' | 'sub_therapeutic' | 'insufficient_data';
     note: string;
+    inputStates: InputStates;
   }>;
   /** Explicit statement on MTD-vs-RP2D relationship. */
   mtdVersusRp2dStatement: string;
@@ -1403,10 +1478,43 @@ export interface SelectRP2DResult {
   citations: Citation[];
 }
 
+/** One dose row as stated. */
+interface StatedDoseEvidence {
+  dose: number;
+  toxicityProbability?: number;
+  activitySignal?: number;
+  inputStates: Record<
+    'targetExposureAchieved' | 'targetEngagementSaturated' | 'longitudinalTolerabilityAcceptable',
+    boolean | 'not_stated'
+  >;
+}
+
+/** Read one row: a malformed value is refused by its input index; an unanswered one is not_stated. */
+function statedDoseEvidence(l: DoseLevelEvidence, index: number): StatedDoseEvidence {
+  const field = (name: string): string => `doseLevels[${index}].${name}`;
+  const probability = (name: 'toxicityProbability' | 'activitySignal'): number | undefined =>
+    statedNumber(field(name), l[name], n => n >= 0 && n <= 1, 'a probability between 0 and 1');
+  const state = (name: keyof StatedDoseEvidence['inputStates']): boolean | 'not_stated' =>
+    statedBoolean(field(name), l[name]) ?? 'not_stated';
+  return {
+    dose: positiveDose(field('dose'), l.dose) as number,
+    toxicityProbability: probability('toxicityProbability'),
+    activitySignal: probability('activitySignal'),
+    inputStates: {
+      targetExposureAchieved: state('targetExposureAchieved'),
+      targetEngagementSaturated: state('targetEngagementSaturated'),
+      longitudinalTolerabilityAcceptable: state('longitudinalTolerabilityAcceptable'),
+    },
+  };
+}
+
 /**
  * Recommend a Phase 2 dose (RP2D) by integrating MTD, PK exposure, target
  * engagement/PD, longitudinal safety/tolerability, and efficacy — explicitly
- * NOT simply the MTD. Deterministic selection cascade.
+ * NOT simply the MTD. Deterministic selection cascade. A dose not too toxic or
+ * sub-therapeutic on its stated evidence, and without stated toxicity (or an MTD
+ * it does not exceed) or stated longitudinal tolerability, is insufficient_data;
+ * no RP2D is selected without stated effect evidence.
  */
 export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
   const warnings: string[] = [];
@@ -1415,23 +1523,29 @@ export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
 
   const doseUnit = params.doseUnit && params.doseUnit.trim() ? params.doseUnit : 'mg';
 
-  const levels = Array.from(params.doseLevels || []).filter(
-    (l: DoseLevelEvidence) => l && typeof l.dose === 'number' && isFinite(l.dose),
+  const inputStates = booleanInputStates(params, ['activityPlateauObserved']);
+  // Rows are read in input order, so a refusal names the row as it was sent.
+  const levels = Array.from(params.doseLevels || []).flatMap((l: DoseLevelEvidence, index: number) =>
+    l && typeof l.dose === 'number' && isFinite(l.dose) ? [statedDoseEvidence(l, index)] : [],
   );
   // Ascending by dose for deterministic evaluation.
-  levels.sort((a: DoseLevelEvidence, b: DoseLevelEvidence) => a.dose - b.dose);
+  levels.sort((a: StatedDoseEvidence, b: StatedDoseEvidence) => a.dose - b.dose);
 
-  const doseEvaluations: Array<{
-    dose: number;
-    verdict: 'selected' | 'viable' | 'too_toxic' | 'sub_therapeutic' | 'insufficient_data';
-    note: string;
-  }> = [];
+  const doseEvaluations: SelectRP2DResult['doseEvaluations'] = [];
+  const evaluate = (
+    l: StatedDoseEvidence,
+    verdict: SelectRP2DResult['doseEvaluations'][number]['verdict'],
+    note: string,
+  ): void => {
+    doseEvaluations.push({ dose: l.dose, verdict, note, inputStates: l.inputStates });
+  };
 
   if (levels.length === 0) {
     warnings.push('No valid dose-level evidence supplied; cannot recommend an RP2D.');
     return {
       recommendedRP2D: undefined,
       doseUnit,
+      inputStates,
       selectionRationale: [
         'Insufficient data: provide per-dose toxicity, PK exposure, PD/target ' +
           'engagement, tolerability, and activity to select an RP2D.',
@@ -1449,82 +1563,76 @@ export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
   // Toxicity ceiling: a dose is "too toxic" if toxicityProbability > 0.33,
   // OR it exceeds a defined MTD.
   const toxicityCeiling = 0.33;
+  const mtdDefined = typeof params.mtd === 'number' && isFinite(params.mtd);
 
-  // Classify each dose.
-  const viableDoses: DoseLevelEvidence[] = [];
+  // Classify each dose. Tolerable needs stated toxicity (or an MTD the dose does not exceed) and
+  // stated longitudinal tolerability; an unanswered one never makes a dose viable.
+  const viableDoses: StatedDoseEvidence[] = [];
   for (const l of levels) {
-    const aboveMtd =
-      typeof params.mtd === 'number' && isFinite(params.mtd) && l.dose > params.mtd;
+    const aboveMtd = mtdDefined && l.dose > (params.mtd as number);
     const tooToxicByProb =
-      typeof l.toxicityProbability === 'number' && l.toxicityProbability > toxicityCeiling;
-    const tolerabilityBad = l.longitudinalTolerabilityAcceptable === false;
+      l.toxicityProbability !== undefined && l.toxicityProbability > toxicityCeiling;
+    const tolerabilityBad = l.inputStates.longitudinalTolerabilityAcceptable === false;
 
     if (aboveMtd) {
-      doseEvaluations.push({
-        dose: l.dose,
-        verdict: 'too_toxic',
-        note: `Above the defined MTD (${params.mtd} ${doseUnit}); excluded.`,
-      });
+      evaluate(l, 'too_toxic', `Above the defined MTD (${params.mtd} ${doseUnit}); excluded.`);
       continue;
     }
     if (tooToxicByProb) {
-      doseEvaluations.push({
-        dose: l.dose,
-        verdict: 'too_toxic',
-        note: `Toxicity probability ${(l.toxicityProbability as number).toFixed(
-          2,
-        )} exceeds the ${toxicityCeiling} ceiling.`,
-      });
+      evaluate(l, 'too_toxic', `Toxicity probability ${(l.toxicityProbability as number).toFixed(
+        2,
+      )} exceeds the ${toxicityCeiling} ceiling.`);
       continue;
     }
     if (tolerabilityBad) {
-      doseEvaluations.push({
-        dose: l.dose,
-        verdict: 'too_toxic',
-        note: 'Longitudinal (multi-cycle) tolerability deemed unacceptable.',
-      });
+      evaluate(l, 'too_toxic', 'Longitudinal (multi-cycle) tolerability deemed unacceptable.');
       continue;
     }
 
     // Sub-therapeutic if target exposure not achieved AND no meaningful activity.
-    const exposureMissing = l.targetExposureAchieved === false;
-    const activityAbsent =
-      typeof l.activitySignal === 'number' && l.activitySignal <= 0.0;
-    const engagementAbsent = l.targetEngagementSaturated === false;
+    const exposureMissing = l.inputStates.targetExposureAchieved === false;
+    const activityAbsent = l.activitySignal !== undefined && l.activitySignal <= 0.0;
+    const engagementAbsent = l.inputStates.targetEngagementSaturated === false;
     if (exposureMissing && (activityAbsent || engagementAbsent)) {
-      doseEvaluations.push({
-        dose: l.dose,
-        verdict: 'sub_therapeutic',
-        note:
-          'Target exposure not achieved and no/low activity or target engagement; ' +
-          'likely below the active range.',
-      });
+      evaluate(l, 'sub_therapeutic',
+        'Target exposure not achieved and no/low activity or target engagement; ' +
+          'likely below the active range.');
       continue;
     }
 
-    // Otherwise viable.
+    // Acute toxicity is stated as a probability, or bounded by a stated MTD this dose does not exceed.
+    const unstated = [
+      ...(l.toxicityProbability === undefined && !mtdDefined ? ['toxicityProbability (or an MTD)'] : []),
+      ...(l.inputStates.longitudinalTolerabilityAcceptable === 'not_stated' ? ['longitudinalTolerabilityAcceptable'] : []),
+    ];
+    if (unstated.length > 0) {
+      evaluate(l, 'insufficient_data', `${unstated.join(' and ')} not stated; tolerability at this dose is not assessed.`);
+      continue;
+    }
+
     viableDoses.push(l);
-    doseEvaluations.push({
-      dose: l.dose,
-      verdict: 'viable',
-      note: 'Tolerable and within or near the active/exposure range; candidate RP2D.',
-    });
+    evaluate(l, 'viable', `Tolerable on the stated ${l.toxicityProbability === undefined ? 'MTD' : 'toxicity'} and ` +
+      'longitudinal-tolerability evidence; candidate RP2D.');
   }
 
   let recommendedRP2D: number | undefined;
 
   if (viableDoses.length === 0) {
     warnings.push(
-      'No dose level is simultaneously tolerable and plausibly therapeutic in the ' +
-        'supplied evidence; reconsider the dose range or collect more data.',
+      doseEvaluations.some(e => e.verdict === 'insufficient_data')
+        ? 'No RP2D is selected: no dose level is shown tolerable and plausibly therapeutic on ' +
+            'the stated evidence; each insufficient_data row names what was not stated.'
+        : 'No dose level is simultaneously tolerable and plausibly therapeutic in the ' +
+            'supplied evidence; reconsider the dose range or collect more data.',
     );
   } else {
     // Selection principle: prefer the LOWEST viable dose that still achieves target
     // exposure / target engagement / activity — i.e., the minimum effective dose
     // within the tolerable set, consistent with selecting below the MTD when the
     // dose-response/E-R has plateaued.
+    const plateauState = inputStates.activityPlateauObserved;
     const plateau =
-      params.activityPlateauObserved === true ||
+      plateauState === true ||
       params.mechanismClass === 'molecularly_targeted' ||
       params.mechanismClass === 'immunomodulatory' ||
       params.modality === 'monoclonal_antibody' ||
@@ -1533,20 +1641,29 @@ export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
 
     // Find the lowest viable dose that reaches target exposure or engagement or shows activity.
     const effective = viableDoses.filter(
-      (l: DoseLevelEvidence) =>
-        l.targetExposureAchieved === true ||
-        l.targetEngagementSaturated === true ||
-        (typeof l.activitySignal === 'number' && l.activitySignal > 0),
+      (l: StatedDoseEvidence) =>
+        l.inputStates.targetExposureAchieved === true ||
+        l.inputStates.targetEngagementSaturated === true ||
+        (l.activitySignal !== undefined && l.activitySignal > 0),
     );
 
-    if (plateau && effective.length > 0) {
+    if (effective.length === 0) {
+      selectionRationale.push(
+        'No RP2D is selected: no tolerable dose has stated target exposure, target engagement ' +
+          'or activity evidence, so the active range is not established.',
+      );
+      warnings.push(
+        'State target exposure, target engagement or activity at the tolerable doses before an ' +
+          'RP2D is selected.',
+      );
+    } else if (plateau) {
       recommendedRP2D = effective[0].dose; // lowest effective (ascending sorted)
       selectionRationale.push(
         'Mechanism/modality and/or an observed activity plateau indicate the dose-response ' +
           'likely flattens below the MTD; the lowest tolerable dose that achieves target ' +
           'exposure/engagement/activity is selected to optimize benefit-risk.',
       );
-    } else if (effective.length > 0) {
+    } else if (plateauState === false) {
       // Cytotoxic-like: activity may rise with dose; choose the highest tolerable effective dose.
       recommendedRP2D = effective[effective.length - 1].dose;
       selectionRationale.push(
@@ -1554,16 +1671,17 @@ export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
           'dose that achieves target exposure/engagement/activity is selected, but still ' +
           'integrating tolerability over time rather than defaulting to the raw MTD.',
       );
-    } else {
-      // Viable but none clearly "effective" by flags — choose middle/most-supported.
-      recommendedRP2D = viableDoses[Math.floor((viableDoses.length - 1) / 2)].dose;
+    } else if (effective.length === 1) {
+      recommendedRP2D = effective[0].dose;
       selectionRationale.push(
-        'Tolerable doses exist but target exposure/engagement/activity flags are ambiguous; ' +
-          'an intermediate tolerable dose is proposed pending exposure-response confirmation.',
+        'One tolerable dose has stated target exposure, engagement or activity evidence and is ' +
+          'selected; activityPlateauObserved was not stated and would not change the choice.',
       );
-      warnings.push(
-        'Effectiveness flags (target exposure/engagement/activity) were not clearly met at ' +
-          'any tolerable dose; confirm the active range before finalizing the RP2D.',
+    } else {
+      selectionRationale.push(
+        'No RP2D is selected: activityPlateauObserved was not stated and the mechanism/modality ' +
+          'does not indicate a plateau, so the choice between the lowest effective tolerable dose ' +
+          '(plateau) and the highest (rising dose-response) is not assessed.',
       );
     }
 
@@ -1583,7 +1701,6 @@ export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
       'not the MTD alone.',
   );
 
-  const mtdDefined = typeof params.mtd === 'number' && isFinite(params.mtd);
   let mtdVersusRp2dStatement: string;
   if (recommendedRP2D !== undefined && mtdDefined && recommendedRP2D < (params.mtd as number)) {
     mtdVersusRp2dStatement =
@@ -1600,7 +1717,7 @@ export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
       'MTD; it must not default to the MTD without supporting PK/PD/tolerability/efficacy data.';
   }
 
-  recommendations.push(
+  if (recommendedRP2D !== undefined) recommendations.push(
     'Confirm the selected RP2D with a randomized dose comparison where feasible, and ' +
       'document a totality-of-evidence dose-justification narrative.',
     'Continue to monitor longitudinal tolerability (dose modifications, chronic/cumulative ' +
@@ -1610,6 +1727,7 @@ export function selectRP2D(params: SelectRP2DParams): SelectRP2DResult {
   return {
     recommendedRP2D,
     doseUnit,
+    inputStates,
     selectionRationale,
     doseEvaluations,
     mtdVersusRp2dStatement,
@@ -1650,7 +1768,8 @@ export interface DesignBackfillStrategyParams {
 
 export interface BackfillCohortPlan {
   dose: number;
-  recommendedPatients: number;
+  /** null while biopsyFeasible decides the size and is not stated. */
+  recommendedPatients: number | null;
   dataToCollect: string[];
   note: string;
 }
@@ -1659,7 +1778,9 @@ export interface DesignBackfillStrategyResult {
   doseUnit: string;
   /** Per-dose backfill cohort plan. */
   cohortPlans: BackfillCohortPlan[];
-  totalBackfillPatients: number;
+  /** null while biopsyFeasible decides the size and is not stated. */
+  totalBackfillPatients: number | null;
+  inputStates: InputStates;
   objectivesAddressed: string[];
   operationalConsiderations: string[];
   warnings: string[];
@@ -1669,7 +1790,9 @@ export interface DesignBackfillStrategyResult {
 /**
  * Design a dose-expansion/backfill strategy to enrich PK/PD/biomarker and
  * preliminary-activity data at lower (already cleared) dose levels during
- * escalation. Deterministic allocation.
+ * escalation. Deterministic allocation. With a PD, target-engagement or
+ * biomarker objective and biopsy feasibility unanswered, the cohort sizes are
+ * not assessed, and the plan does not say a biopsy is infeasible.
  */
 export function designBackfillStrategy(
   params: DesignBackfillStrategyParams,
@@ -1679,20 +1802,11 @@ export function designBackfillStrategy(
 
   const doseUnit = params.doseUnit && params.doseUnit.trim() ? params.doseUnit : 'mg';
 
-  const cleared = Array.from(
-    new Set(
-      (params.clearedDoseLevels || []).filter(
-        (d: number) => typeof d === 'number' && isFinite(d) && d > 0,
-      ),
-    ),
-  ).sort((a: number, b: number) => a - b);
-
-  const objectives =
-    params.objectives && params.objectives.length > 0
-      ? params.objectives
-      : (['pk', 'pd', 'biomarker', 'preliminary_activity'] as Array<
-          'pk' | 'pd' | 'biomarker' | 'target_engagement' | 'preliminary_activity' | 'tolerability'
-        >);
+  const cleared = statedDoses('clearedDoseLevels', params.clearedDoseLevels);
+  const statedObjectives = statedList('objectives', params.objectives, (at, o) =>
+    statedOneOf(at, o, ['pk', 'pd', 'biomarker', 'target_engagement', 'preliminary_activity', 'tolerability'] as const));
+  const objectives = statedObjectives.length > 0 ? statedObjectives
+    : (['pk', 'pd', 'biomarker', 'preliminary_activity'] as typeof statedObjectives);
 
   const objectiveLabels: Record<string, string> = {
     pk: 'Pharmacokinetics (rich sampling for exposure metrics across doses)',
@@ -1719,18 +1833,21 @@ export function designBackfillStrategy(
   // Deterministic per-dose backfill size: base of 6, +4 if biopsy-driven PD/target
   // engagement objectives are in play (more patients needed for paired biopsies),
   // +2 if preliminary activity is an objective. Capped by maxBackfillPatients.
-  const wantsPdBiopsy =
-    (objectives.includes('pd') ||
-      objectives.includes('target_engagement') ||
-      objectives.includes('biomarker')) &&
-    params.biopsyFeasible === true;
+  const inputStates = booleanInputStates(params, ['biopsyFeasible', 'escalationOngoing']);
+  const pdObjective =
+    objectives.includes('pd') ||
+    objectives.includes('target_engagement') ||
+    objectives.includes('biomarker');
+  const wantsPdBiopsy = pdObjective && inputStates.biopsyFeasible === true;
   const wantsActivity = objectives.includes('preliminary_activity');
+  // Paired biopsies add 4 per dose, so an unanswered biopsy fact leaves the size unassessed.
+  const sizeAssessed = !pdObjective || inputStates.biopsyFeasible !== 'not_stated';
 
   let perDose = 6;
   if (wantsPdBiopsy) perDose += 4;
   if (wantsActivity) perDose += 2;
 
-  let totalBackfillPatients = 0;
+  let totalBackfillPatients: number | null = sizeAssessed ? 0 : null;
   for (const dose of cleared) {
     const dataToCollect: string[] = [];
     if (objectives.includes('pk')) {
@@ -1738,9 +1855,12 @@ export function designBackfillStrategy(
     }
     if (objectives.includes('pd') || objectives.includes('target_engagement')) {
       dataToCollect.push(
-        params.biopsyFeasible === true
-          ? 'Paired (baseline + on-treatment) tumor biopsies for PD / target engagement.'
-          : 'Peripheral PD / target-engagement markers (biopsy not feasible).',
+        inputStates.biopsyFeasible === 'not_stated'
+          ? 'PD / target engagement: biopsyFeasible was not stated, so the choice between paired ' +
+              'tumor biopsies and peripheral markers is not assessed.'
+          : inputStates.biopsyFeasible
+            ? 'Paired (baseline + on-treatment) tumor biopsies for PD / target engagement.'
+            : 'Peripheral PD / target-engagement markers (biopsy not feasible).',
       );
     }
     if (objectives.includes('biomarker')) {
@@ -1753,7 +1873,7 @@ export function designBackfillStrategy(
       dataToCollect.push('Longitudinal tolerability incl. PRO-CTCAE and dose modifications.');
     }
 
-    let recommendedPatients = perDose;
+    const recommendedPatients = sizeAssessed ? perDose : null;
     cohortPlans.push({
       dose,
       recommendedPatients,
@@ -1762,13 +1882,21 @@ export function designBackfillStrategy(
         'Backfill enrolls at this already-cleared dose in parallel with ongoing ' +
         'escalation to enrich the dose-response dataset below the MTD.',
     });
-    totalBackfillPatients += recommendedPatients;
+    if (totalBackfillPatients !== null) totalBackfillPatients += perDose;
+  }
+
+  if (!sizeAssessed && cohortPlans.length > 0) {
+    warnings.push(
+      'Cohort sizes are not assessed: state biopsyFeasible. Paired biopsies for PD, ' +
+        'target-engagement or biomarker objectives add 4 patients per dose.',
+    );
   }
 
   // Apply max cap proportionally if needed.
   if (
     typeof params.maxBackfillPatients === 'number' &&
     params.maxBackfillPatients > 0 &&
+    totalBackfillPatients !== null &&
     totalBackfillPatients > params.maxBackfillPatients &&
     cohortPlans.length > 0
   ) {
@@ -1826,6 +1954,7 @@ export function designBackfillStrategy(
     doseUnit,
     cohortPlans,
     totalBackfillPatients,
+    inputStates,
     objectivesAddressed,
     operationalConsiderations,
     warnings,
@@ -1862,19 +1991,19 @@ export interface AssessDoseExposureResponseParams {
 
 export interface AssessDoseExposureResponseResult {
   exposureMetric: string;
-  /** Is the efficacy E-R relationship effectively flat over the studied range? */
-  efficacyResponseFlat: boolean;
-  /** Is the safety E-R relationship rising with exposure? */
-  safetyRisesWithExposure: boolean;
+  /** Is the efficacy E-R effectively flat? not_assessed with fewer than 2 distinct efficacy exposures. */
+  efficacyResponseFlat: boolean | 'not_assessed';
+  /** Is safety rising with exposure? not_assessed with fewer than 2 distinct safety exposures. */
+  safetyRisesWithExposure: boolean | 'not_assessed';
   /** Qualitative therapeutic window/index assessment. */
   therapeuticWindow: 'wide' | 'moderate' | 'narrow' | 'indeterminate';
-  /** Quantitative deltas used (deterministic). */
+  /** Quantitative deltas used (deterministic); null or not_assessed where a curve has fewer than 2 distinct exposures. */
   metrics: {
-    efficacyResponseRangeAbsolute: number;
-    efficacyRelativeGainAcrossRange: number;
-    safetyResponseRangeAbsolute: number;
-    efficacySlopeSign: 'positive' | 'flat' | 'negative';
-    safetySlopeSign: 'positive' | 'flat' | 'negative';
+    efficacyResponseRangeAbsolute: number | null;
+    efficacyRelativeGainAcrossRange: number | null;
+    safetyResponseRangeAbsolute: number | null;
+    efficacySlopeSign: 'positive' | 'flat' | 'negative' | 'not_assessed';
+    safetySlopeSign: 'positive' | 'flat' | 'negative' | 'not_assessed';
   };
   interpretation: string[];
   doseImplications: string[];
@@ -1882,18 +2011,17 @@ export interface AssessDoseExposureResponseResult {
   citations: Citation[];
 }
 
-/** Sort E-R points ascending by exposure (deterministic, pure). */
-function sortByExposure(points: ExposureResponsePoint[]): ExposureResponsePoint[] {
-  return Array.from(points || [])
-    .filter(
-      (p: ExposureResponsePoint) =>
-        p &&
-        typeof p.exposure === 'number' &&
-        isFinite(p.exposure) &&
-        typeof p.response === 'number' &&
-        isFinite(p.response),
-    )
-    .sort((a: ExposureResponsePoint, b: ExposureResponsePoint) => a.exposure - b.exposure);
+/** One E-R point per exposure at its mean response, ascending, whatever the input order; a finite response outside 0-1 is refused. */
+function sortByExposure(points: ExposureResponsePoint[], curve: string): ExposureResponsePoint[] {
+  const byExposure = new Map<number, number[]>();
+  Array.from(points || []).forEach((p, i) => {
+    if (p && Number.isFinite(p.exposure) && Number.isFinite(p.response)) {
+      statedNumber(`${curve}[${i}].response`, p.response, n => n >= 0 && n <= 1, 'a probability between 0 and 1');
+      byExposure.set(p.exposure, [...(byExposure.get(p.exposure) ?? []), p.response]);
+    }
+  });
+  return Array.from(byExposure, ([exposure, rs]) => ({ exposure, response: rs.sort((a, b) => a - b).reduce((s, r) => s + r) / rs.length }))
+    .sort((a, b) => a.exposure - b.exposure);
 }
 
 /** Deterministic sign of the overall slope across the exposure range. */
@@ -1912,7 +2040,9 @@ function overallSlopeSign(
 /**
  * Exposure-response assessment for dose selection. Evaluates whether the
  * efficacy E-R is flat (supporting a lower dose) and whether safety rises with
- * exposure, and synthesizes a therapeutic-window verdict. Deterministic.
+ * exposure, and synthesizes a therapeutic-window verdict. Deterministic. A curve with fewer
+ * than 2 distinct exposures has its flags and slope signs not_assessed and its range metrics
+ * null, never false, flat or 0.
  */
 export function assessDoseExposureResponse(
   params: AssessDoseExposureResponseParams,
@@ -1923,18 +2053,18 @@ export function assessDoseExposureResponse(
 
   const exposureMetric = params.exposureMetric || 'AUC';
 
-  const eff = sortByExposure(params.efficacyExposureResponse);
-  const saf = sortByExposure(params.safetyExposureResponse);
+  const eff = sortByExposure(params.efficacyExposureResponse, 'efficacyExposureResponse');
+  const saf = sortByExposure(params.safetyExposureResponse, 'safetyExposureResponse');
 
   if (eff.length < 2) {
     warnings.push(
-      'Fewer than 2 valid efficacy exposure-response points; flatness of the efficacy ' +
+      'Fewer than 2 valid efficacy points at distinct exposures; flatness of the efficacy ' +
         'curve cannot be assessed. Provide >= 3 points spanning the dose range.',
     );
   }
   if (saf.length < 2) {
     warnings.push(
-      'Fewer than 2 valid safety exposure-response points; the safety E-R trend cannot ' +
+      'Fewer than 2 valid safety points at distinct exposures; the safety E-R trend cannot ' +
         'be assessed. Provide >= 3 points spanning the dose range.',
     );
   }
@@ -2073,17 +2203,19 @@ export function assessDoseExposureResponse(
     }
   }
 
+  const efficacyAssessed = eff.length >= 2;
+  const safetyAssessed = saf.length >= 2;
   return {
     exposureMetric,
-    efficacyResponseFlat,
-    safetyRisesWithExposure,
+    efficacyResponseFlat: efficacyAssessed ? efficacyResponseFlat : 'not_assessed',
+    safetyRisesWithExposure: safetyAssessed ? safetyRisesWithExposure : 'not_assessed',
     therapeuticWindow,
     metrics: {
-      efficacyResponseRangeAbsolute,
-      efficacyRelativeGainAcrossRange,
-      safetyResponseRangeAbsolute,
-      efficacySlopeSign,
-      safetySlopeSign,
+      efficacyResponseRangeAbsolute: efficacyAssessed ? efficacyResponseRangeAbsolute : null,
+      efficacyRelativeGainAcrossRange: efficacyAssessed ? efficacyRelativeGainAcrossRange : null,
+      safetyResponseRangeAbsolute: safetyAssessed ? safetyResponseRangeAbsolute : null,
+      efficacySlopeSign: efficacyAssessed ? efficacySlopeSign : 'not_assessed',
+      safetySlopeSign: safetyAssessed ? safetySlopeSign : 'not_assessed',
     },
     interpretation,
     doseImplications,

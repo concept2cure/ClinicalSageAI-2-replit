@@ -230,17 +230,18 @@ describe('E2E: Full Governed Authoring Workflow', () => {
     expect(decision.status).toBe('recommended');
   });
 
-  it('Step 7b: review → approved (approve-artifact)', () => {
+  // 2026-11-01 (F1): approve and lock are decided only by the signed act (server/services/artifact-approval-act.ts); the map's entries admit no role.
+  it('Step 7b: review → approved (approve-artifact) is not decided by this map', () => {
     const authority = getAuthorityForAction('approve-artifact');
-    expect(authority.level).toBe('requires-reviewer-approval');
+    expect(authority.level).toBe('forbidden');
 
     const check = isActorAuthorized(authority, 'reviewer');
-    expect(check.authorized).toBe(true);
+    expect(check.authorized).toBe(false);
   });
 
-  it('Step 7c: approved → locked (lock-artifact)', () => {
+  it('Step 7c: approved → locked (lock-artifact) is not decided by this map', () => {
     const authority = getAuthorityForAction('lock-artifact');
-    expect(authority.level).toBe('requires-reviewer-approval');
+    expect(authority.level).toBe('forbidden');
   });
 
   it('Step 7d: locked → submission_ready (judge-dossier-ready)', () => {

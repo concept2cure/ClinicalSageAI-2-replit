@@ -159,8 +159,9 @@ export class SavedDraftSourceError extends Error {
   }
 }
 
+type SavedSourceGroup = { sectionCode: string; refs: StoredDraftSourceReference[] };
 function savedSourceSelection(doc: { provenance?: unknown; client_program_id?: unknown }):
-  { programId: string; groups: StoredDraftSourceReference[][] } | null {
+  { programId: string; groups: SavedSourceGroup[] } | null {
   const provenance = doc.provenance;
   if (provenance == null) return null; // Legacy/manual records carry no selected-source receipt.
   if (typeof provenance !== 'object' || Array.isArray(provenance)) throw new Error('Invalid saved provenance');
@@ -176,7 +177,7 @@ function savedSourceSelection(doc: { provenance?: unknown; client_program_id?: u
 }
 
 /** Saved-only compatibility: a partial V2 group cannot become legacy. */
-function savedGroupReferences(value: unknown, programId: string): StoredDraftSourceReference[] {
+function savedGroupReferences(value: unknown, programId: string): SavedSourceGroup {
   const group = record(value);
   const sectionCode = field(group, 'sectionCode');
   if (typeof sectionCode !== 'string' || !sectionCode.trim() ||
@@ -190,7 +191,7 @@ function savedGroupReferences(value: unknown, programId: string): StoredDraftSou
     const sourceProgram = field(record(source), 'programId');
     return typeof sourceProgram !== 'string' || sourceProgram.toLowerCase() !== programId;
   })) throw new Error('Saved source scope conflicts');
-  return refs;
+  return { sectionCode, refs };
 }
 
 export async function verifySavedDraftSourceReferences(
@@ -202,7 +203,7 @@ export async function verifySavedDraftSourceReferences(
     actor = actor ? { id: actor.id, email: actor.email } : undefined;
     const selected = savedSourceSelection(doc);
     if (!selected) return;
-    for (const refs of selected.groups) await verifyReferenceSnapshots(refs, q, organizationId, selected.programId, { actor });
+    for (const { refs } of selected.groups) await verifyReferenceSnapshots(refs, q, organizationId, selected.programId, { actor });
     await verifySavedImportSource(doc, q, organizationId, actor);
   } catch {
     throw new SavedDraftSourceError();
@@ -230,6 +231,43 @@ export async function reserveSavedDraftSourceReferences(
   } catch {
     throw new SavedDraftSourceError();
   }
+}
+
+/**
+ * Each saved source group's excerpts, read again now, for the signing figure
+ * check (P-89, draft-figure-check.ts unverifiedFiguresAtSigning). Inside the
+ * signing transaction: the source stores are reserved as a save reserves them,
+ * so the excerpts cannot move before the signature commits. Empty, and no lock
+ * taken, for a document whose sections cite no saved project sources.
+ *
+ * A group whose sources no longer verify (withdrawn, superseded, a changed
+ * text) is returned with `excerpts: null`: its figures could not be checked,
+ * and the signer is told so rather than the check passing. A saved record that
+ * cannot be decoded at all throws SavedDraftSourceError: which sections cite
+ * what is then unknown, and nothing is signed over it.
+ */
+export async function savedSourceExcerptsForSigning(
+  doc: { provenance?: unknown; client_program_id?: unknown }, q: Queryable, organizationId: number,
+  actor?: AuthoringActor,
+): Promise<Array<{ sectionCode: string; excerpts: Array<{ documentId: string; contentHash: string; text: string; start?: number }> | null }>> {
+  let selected: ReturnType<typeof savedSourceSelection>;
+  try {
+    selected = savedSourceSelection(snapshotSavedDocument(doc));
+  } catch { throw new SavedDraftSourceError(); }
+  if (!selected?.groups.length) return [];
+  await reserveDraftSourceStores(q, organizationId, selected.programId);
+  const signer = actor ? { id: actor.id, email: actor.email } : undefined;
+  const out: Awaited<ReturnType<typeof savedSourceExcerptsForSigning>> = [];
+  for (const group of selected.groups) {
+    const excerpts: NonNullable<VerifyOptions['excerpts']> = [];
+    try {
+      await verifyReferenceSnapshots(group.refs, q, organizationId, selected.programId, { actor: signer, excerpts });
+      out.push({ sectionCode: group.sectionCode, excerpts });
+    } catch {
+      out.push({ sectionCode: group.sectionCode, excerpts: null });
+    }
+  }
+  return out;
 }
 
 /** Inside BEGIN; source versions remain reserved through save/rendition commit. */

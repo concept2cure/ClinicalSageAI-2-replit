@@ -1,0 +1,4 @@
+# Review: the StatedColumn type refuses a non-literal column (scratch copy with one probe line appended)
+# export const probe = (userInput: string) => stated(userInput);
+error TS2345: Argument of type 'string' is not assignable to parameter of type 'StatedColumn'.
+# The real file: no error.

@@ -39,7 +39,7 @@ import { EmptyState, useLiveData } from '../dataConnect';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
 import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
-import { cmcProjectUuid, cmcWriteError } from './cmcShared';
+import { CmHead, cmcProjectUuid, cmcWriteError } from './cmcShared';
 import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
 
@@ -236,18 +236,14 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
   if (!projectId) {
     return (
       <div className="cm-body">
-        <Head ask={ask} />
-        <div className="pj-card">
-          <div className="pj-card-b">
-            <EmptyState
-              icon={I.sigma}
-              title="Open a project to analyse its quality design"
-              hint="CQAs, CPPs, the control strategy and the ICH check are all derived from one project's own specifications, methods, impurity profiles, stability and process records."
-              action={openProgramAction(nav)}
-              regulation="Serves the quality design record (ICH Q8, Q9 and Q10)"
-            />
-          </div>
-        </div>
+        <CmHead title={QBD_TITLE} meta={QBD_META} />
+        <EmptyState
+          icon={I.sigma}
+          title="Open a project to analyse its quality design"
+          hint="CQAs, CPPs, the control strategy and the ICH check are all derived from one project's own specifications, methods, impurity profiles, stability and process records."
+          action={openProgramAction(nav)}
+          regulation="Serves the quality design record (ICH Q8, Q9 and Q10)"
+        />
       </div>
     );
   }
@@ -256,14 +252,16 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
 
   return (
     <div className="cm-body">
-      <Head
-        ask={ask}
+      {/* The view's one primary (§WA.3 "Actions"), in the tab's lead row. */}
+      <CmHead
+        title={QBD_TITLE}
+        meta={QBD_META}
         actions={
           <>
-            <button className="nda-open" onClick={() => void runIch()} disabled={Boolean(busy)}>
+            <button type="button" className="btn ghost small" onClick={() => void runIch()} disabled={Boolean(busy)}>
               {I.shieldCheck} {busy === 'ich' ? 'Checking…' : 'Run ICH compliance check'}
             </button>
-            <button className="reg-cta" onClick={() => void runStrategy()} disabled={Boolean(busy)}>
+            <button type="button" className="btn primary small" onClick={() => void runStrategy()} disabled={Boolean(busy)}>
               {I.workflow} {busy === 'strategy' ? 'Generating…' : 'Generate control strategy'}
             </button>
             {/* Both buttons report their work by swapping their own label — and
@@ -310,14 +308,7 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
         />
       ) : result ? (
         <>
-          <div className="cm-kpis">
-            <Kpi l="CQAs derived" v={result.cqas.length} s="ICH Q8" />
-            <Kpi l="Controlled by a method" v={result.cqas.filter((c) => c.methodLinked).length} tone={result.cqas.length && result.cqas.every((c) => c.methodLinked) ? 'ok' : 'warn'} />
-            <Kpi l="CPPs derived" v={result.cpps.length} s="ICH Q11" />
-            <Kpi l="Specifications read" v={result.inputs.specificationCount} />
-            <Kpi l="Methods read" v={result.inputs.methodCount} />
-            <Kpi l="Gaps" v={result.gaps.length} tone={result.gaps.length ? 'warn' : 'ok'} />
-          </div>
+          <QbdCounts result={result} />
 
           {result.partial && (
             <div className="pj-con" style={{ marginBottom: 14 }}>
@@ -653,42 +644,38 @@ export function strategyMarkdown(s: ControlStrategy): string {
 
 /* ── Local chrome ────────────────────────────────────────────────────────── */
 
-const SUGGEST = [
+export const SUGGEST = [
   'Which CQAs have no validated method controlling them?',
   'What would a reviewer challenge in this control strategy?',
   'Turn the ICH findings into a remediation plan with owners',
 ];
 
-function Head({ ask, actions }: { ask: (text: string) => void; actions?: React.ReactNode }) {
-  return (
-    <>
-      <div className="cm-head">
-        <div>
-          <div className="cm-kicker">CMC — Module 3 operating system</div>
-          <h1 className="cm-title">Quality by design</h1>
-          <div className="cm-meta">CQAs and CPPs derived from your own records, the control strategy over them, and the ICH check</div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          {actions}
-          <button className="reg-cta" onClick={() => ask(SUGGEST[0])}>{I.sparkles} Ask AnA</button>
-        </div>
-      </div>
-      <div className="sp-starters" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-        {SUGGEST.map((s, i) => (
-          <button key={i} className="sp-starter" onClick={() => ask(s)}>
-            <span className="sk">{I.sparkles}</span><span>{s}</span>
-          </button>
-        ))}
-      </div>
-    </>
-  );
-}
+/* This file's own `Head` and `Kpi` are deleted (D5 §A.4.14), as Module 3
+   build's were: a second page header with an uppercase kicker, an `h1` under
+   the page's `h1`, and an orange "Ask AnA" beside an orange "Generate control
+   strategy". Both come from ./cmcShared now. `SUGGEST` stays, exported: the
+   page's starter row reads it (CmcModule's CMC_SUGGEST.quality), so this
+   tab's asks have one home and now reach AnA's vocabulary too, which they
+   never did while they lived only here. */
+const QBD_TITLE = 'Quality by design';
+const QBD_META = 'CQAs and CPPs derived from the study records, the control strategy over them, and the ICH check';
 
-function Kpi({ l, v, s, tone }: { l: string; v: React.ReactNode; s?: string; tone?: string }) {
+/**
+ * What the derivation read and found, as the section's one grey line
+ * (D5 §A.4.14). Six tiles, the same six numbers. "Controlled by a method" and
+ * "Gaps" keep the tone the tiles carried — with the word beside the colour,
+ * because a gap is the thing a reviewer asks about first.
+ */
+function QbdCounts({ result }: { result: QbdResult }) {
+  const controlled = result.cqas.filter((c) => c.methodLinked).length;
+  const allControlled = result.cqas.length > 0 && controlled === result.cqas.length;
   return (
-    <div className="reg-kpi" data-tone={tone}>
-      <div className="reg-kpi-v">{v}</div>
-      <div className="reg-kpi-l">{l}{s ? ' — ' + s : ''}</div>
-    </div>
+    <p className="sec-sub" data-testid="qbd-counts">
+      {result.cqas.length} CQAs derived (ICH Q8)
+      {' · '}<span data-tone={allControlled ? 'ok' : 'warn'}>{controlled} controlled by a method</span>
+      {' · '}{result.cpps.length} CPPs derived (ICH Q11)
+      {' · '}from {result.inputs.specificationCount} specifications and {result.inputs.methodCount} methods
+      {' · '}<span data-tone={result.gaps.length ? 'warn' : 'ok'}>{result.gaps.length} gaps</span>
+    </p>
   );
 }

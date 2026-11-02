@@ -46,6 +46,7 @@ vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole: h.
 import { getToolHandler, type ToolContext } from '../AnaToolExecutor';
 import { START_LEGACY_IMPORT, OVERRIDE_IMPORT_MAPPING } from '../legacy-import-tool-defs';
 import importsRouter from '../../../routes/mdx-imports';
+import { handSequenceFiles } from '../../legacy-importer/__tests__/support/conformant-sequence';
 
 const ORG = 8461;
 const USER = 8462;
@@ -53,7 +54,16 @@ const CTX: ToolContext = { organizationId: ORG, userId: USER, humanConfirmed: tr
 const MIGRATION = readFileSync(path.join(process.cwd(), 'migrations/20260512_legacy_imports.sql'), 'utf8');
 const UPLOADS = path.resolve('uploads', `org-${ORG}`, randomUUID());
 
-const US_REGIONAL = `<fda-regional><leaf ID="L1" operation="new" xlink:href="m1/us/1-1/cover-letter.pdf"><title>Cover letter</title></leaf></fda-regional>`;
+/**
+ * A sequence as a publisher writes it: index.xml at the root pointing at
+ * m1/us/us-regional.xml, whose hrefs are relative to m1/us/, with every
+ * checksum right. Until 2026-11-02 this was a bare us-regional.xml with a
+ * root-relative href and no index.xml, the one shape the regex reader then in
+ * the detector could map (MR-10 Stage 9, docs/design/FILED_SEQUENCE_READER_2026-11-01.md).
+ */
+const DECLARED = handSequenceFiles({
+  m1: [{ headings: ['m1-2-cover-letters'], href: '1-2/cover-letter.pdf', id: 'L1', title: 'Cover letter', bytes: 'letter' }],
+});
 
 let pg: PGlite;
 
@@ -170,24 +180,23 @@ describe('start_legacy_import — what a detected file is stored as', () => {
 
   it('maps only the leaves the backbone declares, and records the skipped files on the job', async () => {
     const archive = await zipOf('ectd.zip', {
-      'm1/us/us-regional.xml': US_REGIONAL,
-      'm1/us/1-1/cover-letter.pdf': 'letter',
+      ...DECLARED,
       'util/dtd/us-regional.dtd': '<!ELEMENT x ANY>',
     });
     const out = await startViaAna(archive);
 
     const files = byPath(await storedFiles(out.jobId));
-    expect(files.get('m1/us/1-1/cover-letter.pdf')).toMatchObject({ status: 'mapped', mapping_confidence: '1.00', mapping_source: 'backbone_xml' });
-    expect(files.get('m1/us/us-regional.xml')?.status).toBe('skipped');
-    expect(files.get('util/dtd/us-regional.dtd')?.status).toBe('skipped');
+    expect(files.get('m1/us/1-2/cover-letter.pdf')).toMatchObject({ status: 'mapped', mapping_confidence: '1.00', mapping_source: 'backbone_xml' });
+    for (const structure of ['m1/us/us-regional.xml', 'index.xml', 'index-md5.txt', 'util/dtd/us-regional.dtd']) {
+      expect(files.get(structure)?.status, structure).toBe('skipped');
+    }
     expect(out).toMatchObject({ mappedCount: 1, suggestedCount: 0 });
-    expect(await jobHeader(out.jobId), 'the job header left skipped_count at its default').toMatchObject({ mapped_count: 1, skipped_count: 2 });
+    expect(await jobHeader(out.jobId), 'the job header left skipped_count at its default').toMatchObject({ mapped_count: 1, skipped_count: 4 });
   });
 
   it('stores the same file rows and job counts as POST /api/mdx/imports for the same archive', async () => {
     const archive = await zipOf('mixed.zip', {
-      'm1/us/us-regional.xml': US_REGIONAL,
-      'm1/us/1-1/cover-letter.pdf': 'letter',
+      ...DECLARED,
       'm5/53-clin-stud-rep/protocol-amendment-2.pdf': 'amendment',
       'notes.txt': 'n',
       'util/dtd/us-regional.dtd': '<!ELEMENT x ANY>',

@@ -9,7 +9,17 @@
     "P-82",
     "P-83",
     "P-84",
-    "P-85"
+    "P-85",
+    "P-86",
+    "P-87",
+    "P-88",
+    "P-89",
+    "P-90",
+    "P-91",
+    "P-92",
+    "P-93",
+    "P-94",
+    "P-95"
   ],
   "alwaysAllowed": [
     "**/__tests__/**",
@@ -541,6 +551,39 @@
       ]
     }
   ],
-  "approvedAdditions": [],
+  "approvedAdditions": [
+    {
+      "kind": "integration",
+      "name": "docling-serve",
+      "package": "L1",
+      "decision": "P-90",
+      "where": "docker-compose.yml, service \"docling\" (profile ingestion)",
+      "scope": "RULE 2 gateway/connector scope: a self-hosted document reader on the deployment's own network; no document text leaves the deployment"
+    },
+    {
+      "kind": "table",
+      "name": "public.report_bundles",
+      "package": "L1",
+      "decision": "P-91",
+      "where": "public schema, organization_id INTEGER NOT NULL; one migration in C2C_MIGRATION_FILES before the final sweep pair, IF NOT EXISTS-guarded",
+      "scope": "replaces the project_memory_entries bundle:<uuid> path, deleted in the same change (C3-BUNDLE-REGISTER.md)"
+    },
+    {
+      "kind": "table",
+      "name": "public.report_bundle_runs",
+      "package": "L1",
+      "decision": "P-91",
+      "where": "public schema, organization_id INTEGER NOT NULL; one migration in C2C_MIGRATION_FILES before the final sweep pair, IF NOT EXISTS-guarded",
+      "scope": "replaces the project_memory_entries bundle:<uuid> path, deleted in the same change (C3-BUNDLE-REGISTER.md)"
+    },
+    {
+      "kind": "table",
+      "name": "public.report_bundle_projects",
+      "package": "L1",
+      "decision": "P-91",
+      "where": "public schema, organization_id INTEGER NOT NULL; one migration in C2C_MIGRATION_FILES before the final sweep pair, IF NOT EXISTS-guarded",
+      "scope": "replaces the project_memory_entries bundle:<uuid> path, deleted in the same change (C3-BUNDLE-REGISTER.md)"
+    }
+  ],
   "completesRequired": true
 }

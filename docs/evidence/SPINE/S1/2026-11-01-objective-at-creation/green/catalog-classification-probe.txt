@@ -1,0 +1,6 @@
+# Final code, same script:
+#   npx tsx --tsconfig tsconfig.json docs/evidence/SPINE/S1/2026-11-01-objective-at-creation/probe-charter-classification.ts
+catalog entries 251 skipped (not creatable) 205
+CLASSIFIED 46
+REFUSED 0 
+GRID agency spellings 28 offered pairs 651 classified 651 refused 0

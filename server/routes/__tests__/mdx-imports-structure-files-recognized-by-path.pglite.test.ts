@@ -34,6 +34,7 @@ vi.mock('../../utils/document-file-roots', async (importOriginal) => ({
 
 import importsRouter from '../mdx-imports';
 import { detectArchive } from '../../services/legacy-importer/detector';
+import { handSequenceFiles } from '../../services/legacy-importer/__tests__/support/conformant-sequence';
 
 const ORG = 99;
 const USER = 777;
@@ -72,14 +73,20 @@ function app() {
   return a;
 }
 
-const STRUCTURE = ['m1/us/us-regional.xml', 'index.xml', 'util/index-md5.txt', 'util/dtd/us-regional.dtd', 'util/style/ectd-2-0.xsl'];
+const STRUCTURE = ['m1/us/us-regional.xml', 'index.xml', 'index-md5.txt', 'util/index-md5.txt', 'util/dtd/us-regional.dtd', 'util/style/ectd-2-0.xsl'];
 
+/**
+ * A sequence as a publisher writes it (index.xml pointing at a regional backbone
+ * whose hrefs are relative to m1/us/). Until 2026-11-01 index.xml here was
+ * `<ectd/>` and the regional href root-relative: the one shape the regex reader
+ * then in the detector could map.
+ */
 async function ectdArchive(): Promise<string> {
   const zip = new JSZip();
-  zip.file('m1/us/us-regional.xml',
-    `<fda-regional><leaf ID="L1" operation="new" xlink:href="m1/us/1-1/cover-letter.pdf"><title>Cover letter</title></leaf></fda-regional>`);
-  zip.file('m1/us/1-1/cover-letter.pdf', 'letter');
-  zip.file('index.xml', '<ectd/>');
+  const sequence = handSequenceFiles({
+    m1: [{ headings: ['m1-2-cover-letters'], href: '1-2/cover-letter.pdf', id: 'L1', title: 'Cover letter', bytes: 'letter' }],
+  });
+  for (const [name, body] of Object.entries(sequence)) zip.file(name, body);
   zip.file('util/index-md5.txt', 'md5');
   zip.file('util/dtd/us-regional.dtd', '<!ELEMENT x ANY>');
   zip.file('util/style/ectd-2-0.xsl', '<xsl/>');
@@ -107,7 +114,7 @@ describe('POST /api/mdx/imports — the archive\'s structure files', () => {
       expect(files.get(p)?.mapping_confidence, `${p} was stored with a confidence nobody measured`).toBeNull();
       expect(files.get(p)?.status).toBe('skipped');
     }
-    expect(files.get('m1/us/1-1/cover-letter.pdf')).toMatchObject({
+    expect(files.get('m1/us/1-2/cover-letter.pdf')).toMatchObject({
       status: 'mapped', mapping_source: 'backbone_xml', mapping_confidence: '1.00',
     });
   });
@@ -117,7 +124,7 @@ describe('POST /api/mdx/imports — the archive\'s structure files', () => {
     const basis = Object.fromEntries(files.map((f) => [f.relativePath, `${f.mappingSource} / ${f.reviewStatus}`]));
     expect(basis, 'a structure file was reported as declared by the backbone').toEqual({
       ...Object.fromEntries(STRUCTURE.map((p) => [p, 'structure_path / skipped'])),
-      'm1/us/1-1/cover-letter.pdf': 'backbone_xml / mapped',
+      'm1/us/1-2/cover-letter.pdf': 'backbone_xml / mapped',
     });
   });
 });

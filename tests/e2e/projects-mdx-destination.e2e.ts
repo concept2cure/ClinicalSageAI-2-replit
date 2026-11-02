@@ -40,8 +40,8 @@ async function reachMdxProjects(page: Page, suffix: string, device: { id: string
   expect(new URL(page.url()).searchParams.get('view')).toBe('compact');
   expect(new URL(page.url()).hash).toBe('#device-projects');
   await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible();
-  const mdx = page.getByRole('group', { name: 'Workstream filters' }).getByRole('button', { name: /^MDX(?: \d+)?$/ });
-  await expect(mdx).toHaveAttribute('aria-pressed', 'true');
+  // D2-1: the workstream filter is the toolbar's "Client type" select.
+  await expect(page.getByRole('combobox', { name: 'Client type', exact: true })).toHaveValue('MDX');
   await expect(page.locator('.pj-card')).toHaveCount(1);
   await expect(page.locator('.pj-card')).toContainText(device.title);
   const response = await filteredRead;
@@ -73,15 +73,16 @@ test('the old MDX entry reaches filtered Projects and the recorded device projec
   expect(new URL(page.url()).searchParams.has('program')).toBe(false);
   await testInfo.attach('mdx-filtered-projects.png', { body: await page.screenshot(), contentType: 'image/png' });
 
-  const filters = page.getByRole('group', { name: 'Workstream filters' });
-  await filters.getByRole('button', { name: /^All workstreams(?: \d+)?$/ }).click();
+  // D2-1: the workstream filter is the toolbar's "Client type" select.
+  const clientType = page.getByRole('combobox', { name: 'Client type', exact: true });
+  await clientType.selectOption('all');
   await expect(page.locator('.pj-card')).toHaveCount(2);
-  await expect(filters.getByRole('button', { name: /^MDX(?: \d+)?$/ })).toHaveAttribute('aria-pressed', 'false');
+  await expect(clientType).not.toHaveValue('MDX');
   const search = page.getByRole('searchbox', { name: 'Search projects by title or code' });
   await search.fill(drugTitle);
   await expect(page.locator('.pj-card')).toHaveCount(1);
   await expect(page.locator('.pj-card')).toContainText(drugTitle);
-  await expect(filters.getByRole('button', { name: /^All workstreams(?: \d+)?$/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(clientType).toHaveValue('all');
   await search.fill('');
   await page.locator('.pj-card').filter({ hasText: deviceTitle }).click();
   await expect(page).toHaveURL(/project-home/);

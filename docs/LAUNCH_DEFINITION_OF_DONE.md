@@ -1687,3 +1687,194 @@ the founder changes the plan. The founder chose "Approve both":
 
 Nothing new is built: these files exist, and the packages only gain the paths to finish them. Nothing else in the
 plan changes.
+
+### P-86 — A sequence that was never filed may be retired, by signature
+
+The founder, 2026-11-01, answering the RIM session's question, put to the founder by the coordinating session. RIM
+recommended yes, and the founder chose "Yes".
+
+The problem it answers: a dispatched eCTD sequence whose test-environment send found a content defect could be
+neither changed nor replaced, because its number stayed taken.
+
+Such a sequence may be retired by a signed, audited act, which frees its number, only while:
+- no production send is bound to it; and
+- it is not filed.
+
+The act reuses the filed-elsewhere baseline's existing removal of drafts. It goes under launch row D7 (`Plan: L1`).
+Nothing new is built beyond that act.
+
+### P-87 — The unreached IND diff and manifest routes are retired (R1)
+
+The founder, 2026-11-01, on the RIM session's question. These have no caller in any screen, in AnA or in any test:
+- `GET /sequence/:currentId/diff` and `/diff/pdf`;
+- `GET /sequence/:seqId/manifest` and `/manifest/pdf`;
+- the manifest embedded in `POST /sequence/:seqId/dispatch-gate`.
+
+They read the mutable `submission_leaves` table. They are retired with their two services,
+`ind-sequence-diff.ts` and `ind-package-manifest.ts`. Their outcome is delivered today by:
+- "On file at the agency" (`client/src/concept2cure/v2/surfaces/EctdFiledState.tsx`);
+- the compile's lifecycle view (`EctdCompile.tsx`).
+
+The deletion commit names the `git log --all --diff-filter=D` search and those replacements by path (the working
+agreement). This was checked with the R1 inventory first. CLAUDE.md RULE 3 cites these routes as an example of "reach,
+don't rebuild". This decision closes that example by retirement, because their outcome is now reached through the
+filed-state and compile views.
+
+### P-88 — The commitments re-cut, confirmed under RULES 5 and 6
+
+The founder, 2026-11-01, on the RIM session's question, confirming all four points:
+1. A fulfilment signed in error is corrected by set-once correction columns on the successor `regulatory_commitments`
+   row. No new table.
+2. No purge role or `SECURITY DEFINER` function is added. The DELETE gap stays owed (P-41).
+3. A milestone's "missed" is derived from its dates and never stored.
+4. The signed PMR, PMC and REMS milestone acts and the correction go under launch rows D2 and D5 (`Plan: L1`), not
+   under new S9 paths.
+
+The unsigned milestone work for meeting commitments (listing, adding, met and withdrawn) is S9 and needed no decision.
+
+Nothing else in the plan changes.
+
+### P-89 — An unverified figure blocks an approval or a seal unless the signer acknowledges each one
+
+The founder, 2026-11-01. The AI architecture session asked: "Two decisions are still open for you: should an
+unchecked figure block a signature unless the signer acknowledges it, and should the self-hosted Docling layout
+reader be enabled?" (`docs/design/AI_PLATFORM_BLUEPRINT_GAP_2026-10-25.md`, decisions 1 and 2). The founder answered:
+"Yes to all". This is the first of the two; P-90 is the second.
+
+- **What it covers.** An approval, meaning `/e-sign` or `/sign` as APPROVER, and a seal (`/freeze`) of an Authoring
+  document. Each is refused while the text being signed states a figure that its section's cited project sources do
+  not hold. It may go ahead only when the signer acknowledges every such figure, one by one.
+  - Review and authorship signatures are not approvals and are not asked.
+- **What "unverified" means.** It means what the existing figure check says (`draft-figure-check.ts`): a figure in a
+  section that cites saved project sources, and that those sources do not state.
+  - The check runs again at signing, inside the signing transaction, on the text being signed. The save's record goes
+    stale on the first edit, so it is not used.
+  - When a cited source no longer verifies, its section's figures are listed as unchecked.
+  - A figure in a section that cites no sources is never compared with anything, so the checker has no "unverified"
+    to report for it. Such figures are outside this decision. Widening the gate to cover them is a further founder
+    decision.
+- **The record.** The acknowledgement is written on the act's own transaction as a chained trail row,
+  `UNVERIFIED_FIGURES_ACKNOWLEDGED`, naming each figure. The act's chained row names its digest. An acknowledgement
+  of an earlier text does not cover a changed figure.
+- **RULE 2 holds.** The engine says whether a number is in its source. It never supplies one.
+
+Nothing new is built. The figure check, the signing routes and the signing dialog exist; the gate is added to them,
+under `Plan: L1` (row D5, Part 11 evidence).
+Evidence: `docs/evidence/D5-SIGNATURE-FIGURE-GATE/2026-11-01/`.
+
+### P-90 — The self-hosted Docling layout reader is admitted
+
+The founder, 2026-11-01, in the same answer as P-89. The AI architecture session asked "… and should the
+self-hosted Docling layout reader be enabled?", and the founder answered: "Yes to all". This is the second of the
+two.
+
+- **What is admitted.** The Docling layout reader (docling-serve), run by the deployment on its own infrastructure.
+  - It is reached only through the existing client (`server/integrations/docling/`), behind the existing flag
+    `oss.ingestion.docling_primary`.
+  - It gives table-cell structure that the current text extractors do not.
+- **Where it sits under RULE 2.** It is inside RULE 2's gateway and connector scope, as a self-hosted document
+  reader on the deployment's own network. It is not a model and drafts nothing. No document text leaves the
+  deployment through it.
+- **The one addition.** The reader's service definition: the `docling` service in `docker-compose.yml`, profile
+  `ingestion`. It is listed in `docs/design/one-design-plan.json` `approvedAdditions` under L1.
+  - Everything else exists, and is reached (RULE 6): the client, the flag, the one text extractor and Vault's two
+    ingestion reads.
+- **What is not admitted.**
+  - **Hosted parsing.** A hosted parsing service (LlamaParse or similar) would send dossier text to a third party.
+    It stays rejected.
+  - **A second way out.** The reader adds no second path for document text to leave the deployment. When it is off
+    or unreachable, ingestion uses the existing extractors and says so.
+  - **Hosted production.** Running the reader in the hosted Terraform stack is D1's to decide.
+- **Default.** The flag stays off until a deployment turns it on, after showing its reader running.
+
+The work, under `Plan: L1` (row D2): the client speaks the reader's real interface, and Vault ingestion reaches it.
+Evidence: `docs/evidence/D2-LAYOUT-READER/2026-11-01/`.
+
+### P-91 — The report-pack register gets its own tables
+
+The founder, 2026-11-01: "And I give you founder approval based on the questions you asked and the suggestion you
+offered. Proceed". The reporting session had said that the open `report_bundles` table (coverage review C-3)
+"now needs a **founder `approvedAdditions` entry** under RULE 6 before anyone can build it … it isn't a session's
+decision". The question and the shape it proposes are in
+`docs/evidence/reviews/2026-10-11-reporting-coverage/C3-BUNDLE-REGISTER.md`, "Still open: the table".
+
+- **Why.** A report pack is stored today as one `project_memory_entries` row per covered project, titled
+  `bundle:<uuid>`, with its run ids inside a JSON string.
+  - The record is duplicated once per project and reconciled in JavaScript (`dedupeByLatest`). Two copies that
+    disagree look like one.
+  - "List the packs" is `count(distinct title)` over a free-text column, not a count of packs.
+  - "Which packs contain this run?" is a scan.
+- **What is admitted.** Three tables, listed in `docs/design/one-design-plan.json` `approvedAdditions` under L1:
+  - `public.report_bundles`: one row per pack;
+  - `public.report_bundle_runs`: the runs a pack contains, one row each;
+  - `public.report_bundle_projects`: the projects a pack covers, in place of the row-per-project copies.
+- **The terms.**
+  - Each table is in `public` with `organization_id INTEGER NOT NULL`, so the tenant sweep gives it a policy.
+  - The migration goes into `C2C_MIGRATION_FILES` before the final sweep pair. It is `IF NOT EXISTS`-guarded and
+    replays on every deploy (RULE 1).
+  - The existing packs are backfilled with `INSERT … ON CONFLICT DO NOTHING`, with a row-count assertion. No DROP:
+    the old `project_memory_entries` rows stay where they are.
+  - **Replace, not add.** The `project_memory_entries` `bundle:<uuid>` path is moved onto the tables and its code is
+    deleted in the same change. No second register is left beside the first.
+- **What is not admitted.** No new screen, route file or mount. The register is read and written by the routes and
+  the panel that exist.
+- **The same answer confirms one design point, which is not a plan change.** In D7-D, "Find a report" is a plain
+  search field. It never takes the composer's look, because nothing but the conversation may look like talking to
+  AnA (`docs/design/FILING_SPINE.md` §7.2 F6).
+
+The work, under `Plan: L1` (row D2, the launch catalog's Reporting & analytics): the register moves onto its own
+tables. Evidence: `docs/evidence/reviews/2026-10-11-reporting-coverage/` (C-3).
+
+### P-92 — A held FDA send can be settled by a signed act, either way
+
+The founder, 2026-11-02, answering the coordinating session's question "An FDA ESG submission is stuck 'held': it was
+sent, but no signed MDN (delivery receipt) came back. Today nothing can settle it, because the rollback was removed on
+10-17 as it contradicted what FDA held. May a signed act, with re-authentication and the agency's document kept in
+Vault, settle it?": **"Allow both."** The question was raised by the D7-record session (`015weq…`,
+`docs/evidence/W5/2026-11-01/README.md`, "For the founder" 1, item A5).
+
+- **What is decided.** A held send may be settled by one of two signed acts, each with re-authentication and the
+  agency's document retained in Vault and linked to the act:
+  - **recorded as received**, on Ack2 or Ack3 evidence from FDA;
+  - **released as not received**, only on FDA's written confirmation of non-receipt. The act states the
+    duplicate-filing risk to the signer before they sign.
+- **What is not decided.** No settlement without the agency document; no settlement by an unsigned action; the
+  removed rollback route stays removed.
+- **Owner.** RIM (`011e42…`), under F1, in the files it holds (`submission-service.ts`, `fda-esg-receipts.ts`).
+
+### P-93 — FDA sequences over 1 GiB are out of scope for launch
+
+The founder, 2026-11-02, answering "FDA sequences larger than 1 GiB: the only code path is an SFTP transmit, and
+nothing in the repository documents FDA accepting SFTP. Are they in scope for launch?": **"Out of scope."** Raised by
+the D7-record session (`docs/evidence/W5/2026-11-01/README.md`, "For the founder" 2).
+
+- **What is decided.** A sequence over the size the documented channel takes is refused **before signing**, with a
+  plain message, from `sequenceTransmitReadiness`. The undocumented SFTP transmit (`transmitViaSftp`,
+  `ssh2-sftp-client`) is retired: removed, its reachable replacement being that refusal, named by path in the
+  removing commit (working agreement).
+- **Owner.** RIM, under F1.
+
+### P-94 — An onboarding upload is approved before it can be filed
+
+The founder, 2026-11-02, answering "A PDF uploaded during onboarding (`ctd_onboarding_documents`) has no approval
+state, so it can be filed without anyone approving it. Must an onboarding upload be approved before it can be
+filed?": **"Yes, approve first."** Raised by the D7-record session ("For the founder" 4).
+
+- **What is decided.** An uploaded leaf goes through the same approval as an authored one before it can be placed in
+  a sequence. Readiness and transmit both refuse an unapproved upload, as they do an unapproved authored leaf.
+- **Owner.** RIM for readiness and transmit (F1); the approval itself uses the existing approval act, nothing new.
+
+### P-95 — Review is mandatory before a regulated document is approved
+
+The founder, 2026-11-02, answering "A Concept2Cure document can be approved with no reviewer assigned, by design, and
+no screen assigns reviewers today. Should review be mandatory before approval?": **"Mandatory for regulated docs."**
+Raised by the D7-record session ("For the founder" 5; `artifact-approval-act.ts`).
+
+- **What is decided.** A regulated document cannot be approved until at least one assigned reviewer has completed
+  review. The existing reviewer-assignment route is reached from the one editor's Review panel (D4, the inspector),
+  not from a new screen.
+- **Owner.** The server refusal under F1 (the D7-record session, which found it, with the file list cleared by the
+  coordinator); the reach under D4 (the coordinator's editor lane).
+- **Still to settle, not by a session:** which document types count as regulated is read from the document-type
+  catalog's existing classification; where the catalog does not say, the document is treated as regulated (fail
+  closed).

@@ -1,0 +1,21 @@
+ ✓ server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > governedDeviceFilingAgreement: the question, asked from the filing > a filing that holds its editing copy agrees, and says which document it compared 36ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > governedDeviceFilingAgreement: the question, asked from the filing > a filed copy rewritten under the document is named, with the section the author opens 19ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > governedDeviceFilingAgreement: the question, asked from the filing > a section authored and never filed is reported as unfiled, not as rewritten 17ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > governedDeviceFilingAgreement: the question, asked from the filing > a filing no editing document is bound to is not applicable, and says why 12ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > governedDeviceFilingAgreement: the question, asked from the filing > another organization reaches no filing through this program 8ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > governedDeviceFilingAgreement: the question, asked from the filing > another organization's editing document bound to the same filing id is never compared 17ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > governedDeviceFilingAgreement: the question, asked from the filing > compares the class the exit builds from, never the newest device document of another class 20ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > the official eSTAR attaches a governed section only when the filing holds its text > attaches a section whose filed copy is the document's text 37ms
+ × server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > the official eSTAR attaches a governed section only when the filing holds its text > refuses a section whose filed copy was rewritten, naming it and the remedy 15ms
+   → a rewritten filed copy was attached to the official eSTAR: expected true to be false // Object.is equality
+ ✓ server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > the official eSTAR attaches a governed section only when the filing holds its text > still attaches the agreeing sections beside a rewritten one 10ms
+ × server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > the official eSTAR attaches a governed section only when the filing holds its text > refuses at delivery when the editing copy moved after the section was rendered 14ms
+   → promise resolved "undefined" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > the official eSTAR attaches a governed section only when the filing holds its text > refuses a section whose filed copy was rewritten, naming it and the remedy
+AssertionError: a rewritten filed copy was attached to the official eSTAR: expected true to be false // Object.is equality
+    151|     expect(out.ok, 'a rewritten filed copy was attached to the officia…
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts > the official eSTAR attaches a governed section only when the filing holds its text > refuses at delivery when the editing copy moved after the section was rendered
+AssertionError: promise resolved "undefined" instead of rejecting
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)

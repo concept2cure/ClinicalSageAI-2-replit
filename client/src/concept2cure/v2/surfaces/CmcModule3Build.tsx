@@ -34,7 +34,7 @@ import { useDialog } from '../useDialog';
 import { apiRequest } from '@/lib/queryClient';
 import { EmptyState, useLiveData, useLiveRows } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
-import { cmcProjectId, cmcWriteError } from './cmcShared';
+import { CmHead, cmcProjectId, cmcWriteError } from './cmcShared';
 import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
 import { SectionEvidence } from './CmcSectionEvidence';
@@ -65,6 +65,13 @@ export interface Module3SectionState {
   lastUpdated: string | null;
 }
 
+/* The view's lead, named once: the empty state and the board must not drift
+   into two descriptions of the same tab. The meta was "…from your CMC data";
+   "the study records" is what the other half of the work area is now called
+   (D5 §A.3), so the sentence points at a place the reader can go. */
+const BUILD_TITLE = 'Module 3 build';
+const BUILD_META = 'Compile CTD §3.2 from the study records, resolve what blocks it, and clear the export gate';
+
 export interface Module3BuildSummary {
   totalSections: number;
   readySections: number;
@@ -72,6 +79,36 @@ export interface Module3BuildSummary {
   blockedSections: number;
   buildableSections: number;
   readinessPercent: number;
+}
+
+/**
+ * The build's figures as the section's one grey line (D5 §A.4.13).
+ *
+ * Every number is the same read the five tiles made, and the two that stop an
+ * export — stale and blocked — keep the error colour when they are not zero,
+ * with the WORD beside them, never colour alone. "Approved" keeps its own
+ * tone band, so a reader sees at a glance whether the module is near ready.
+ */
+const EMPTY_BUILD_SUMMARY = {
+  readySections: 0, staleSections: 0, blockedSections: 0, buildableSections: 0, readinessPercent: 0,
+};
+/** How near ready the module is, in the band the tile's tone used. */
+function readinessTone(pct: number): string {
+  if (pct >= 80) return 'ok';
+  return pct >= 50 ? 'warn' : 'err';
+}
+function BuildCounts({ sections, summary }: { sections: number; summary?: Module3BuildSummary }) {
+  const n = { ...EMPTY_BUILD_SUMMARY, totalSections: sections, ...summary };
+  return (
+    <p className="sec-sub" data-testid="m3-build-counts">
+      {n.totalSections} {n.totalSections === 1 ? 'section' : 'sections'} in CTD §3.2
+      {' · '}
+      <span data-tone={readinessTone(n.readinessPercent)}>{n.readySections} of {n.totalSections} approved</span>
+      {' · '}{n.buildableSections} ready to compile
+      {' · '}<span data-tone={n.staleSections ? 'err' : undefined}>{n.staleSections} stale</span>
+      {' · '}<span data-tone={n.blockedSections ? 'err' : undefined}>{n.blockedSections} blocked</span>
+    </p>
+  );
 }
 
 interface Module3BuildPayload {
@@ -196,7 +233,10 @@ function fmtWhen(value: string | null | undefined): string {
 
 /* ── The surface ─────────────────────────────────────────────────────────── */
 
-export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+/* `ask` stays in the props type — CMC_SURF hands every tab the same pair — but
+   this tab no longer reads it: its orange "Ask AnA" went with `Head`, and its
+   `SUGGEST` list reaches the reader through the page's starter row. */
+export function CmModule3Build({ nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   const projectId = cmcProjectId();
   const [reloadKey, setReloadKey] = React.useState(0);
   const bump = () => setReloadKey((n) => n + 1);
@@ -351,32 +391,32 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
   if (!projectId) {
     return (
       <div className="cm-body">
-        <Head ask={ask} />
-        <div className="pj-card">
-          <div className="pj-card-b">
-            <EmptyState
-              icon={I.layers}
-              title="Open a project to build its Module 3"
-              hint="The §3.2 build state, its contradictions and its export readiness are all per-project."
-              action={openProgramAction(nav)}
-              regulation="Serves the CTD Module 3 record (ICH M4Q)"
-            />
-          </div>
-        </div>
+        <CmHead title={BUILD_TITLE} meta={BUILD_META} />
+        <EmptyState
+          icon={I.layers}
+          title="Open a project to build its Module 3"
+          hint="The §3.2 build state, its contradictions and its export readiness are all per-project."
+          action={openProgramAction(nav)}
+          regulation="Serves the CTD Module 3 record (ICH M4Q)"
+        />
       </div>
     );
   }
 
   return (
     <div className="cm-body">
-      <Head
-        ask={ask}
+      {/* The view's one primary (§WA.3 "Actions"): in a tabbed work area the
+          header holds none and the active tab's lead row holds it, so its
+          position is the same on every tab. */}
+      <CmHead
+        title={BUILD_TITLE}
+        meta={BUILD_META}
         actions={
           <>
-            <button className="nda-open" onClick={() => void detectContradictions()} disabled={Boolean(busy)}>
+            <button type="button" className="btn ghost small" onClick={() => void detectContradictions()} disabled={Boolean(busy)}>
               {I.shieldAlert} {busy === 'contradictions' ? 'Sweeping…' : 'Run contradiction sweep'}
             </button>
-            <button className="reg-cta" onClick={() => void compileAll()} disabled={Boolean(busy)}>
+            <button type="button" className="btn primary small" onClick={() => void compileAll()} disabled={Boolean(busy)}>
               {I.zap} {busy === 'compile' ? 'Compiling…' : 'Compile Module 3'}
             </button>
           </>
@@ -429,17 +469,12 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
             </div>
           )}
 
-          <div className="cm-kpis">
-            <Kpi l="Sections" v={summary?.totalSections ?? sections.length} s="CTD §3.2" />
-            <Kpi
-              l="Approved"
-              v={`${summary?.readySections ?? 0}/${summary?.totalSections ?? sections.length}`}
-              tone={(summary?.readinessPercent ?? 0) >= 80 ? 'ok' : (summary?.readinessPercent ?? 0) >= 50 ? 'warn' : 'err'}
-            />
-            <Kpi l="Ready to compile" v={summary?.buildableSections ?? 0} />
-            <Kpi l="Stale" v={summary?.staleSections ?? 0} tone={summary?.staleSections ? 'err' : 'ok'} />
-            <Kpi l="Blocked" v={summary?.blockedSections ?? 0} tone={summary?.blockedSections ? 'err' : 'ok'} />
-          </div>
+          {/* Five tiles were five figures nobody acts on as tiles; they are
+              the build table's one grey line now (D5 §A.4.13). Every number
+              and every tone is the same read — stale and blocked keep the
+              error colour when they are not zero, because those two are the
+              ones that stop an export. */}
+          <BuildCounts sections={sections.length} summary={summary} />
 
           {/* ── Export gate ── */}
           <div className="pj-card" style={{ marginBottom: 16 }}>
@@ -797,42 +832,16 @@ function SectionProvenance({
 
 /* ── Local chrome ────────────────────────────────────────────────────────── */
 
-const SUGGEST = [
+export const SUGGEST = [
   'Which §3.2 sections are blocking my export and why?',
   'Draft the narrative for the section with the lowest completeness',
   'What still stands between this Module 3 and its IND sequence?',
 ];
 
-function Head({ ask, actions }: { ask: (text: string) => void; actions?: React.ReactNode }) {
-  return (
-    <>
-      <div className="cm-head">
-        <div>
-          <div className="cm-kicker">CMC — Module 3 operating system</div>
-          <h1 className="cm-title">Module 3 build</h1>
-          <div className="cm-meta">Compile CTD §3.2 from your CMC data, resolve what blocks it, and clear the export gate</div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          {actions}
-          <button className="reg-cta" onClick={() => ask(SUGGEST[0])}>{I.sparkles} Ask AnA</button>
-        </div>
-      </div>
-      <div className="sp-starters" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-        {SUGGEST.map((s, i) => (
-          <button key={i} className="sp-starter" onClick={() => ask(s)}>
-            <span className="sk">{I.sparkles}</span><span>{s}</span>
-          </button>
-        ))}
-      </div>
-    </>
-  );
-}
-
-function Kpi({ l, v, s, tone }: { l: string; v: React.ReactNode; s?: string; tone?: string }) {
-  return (
-    <div className="reg-kpi" data-tone={tone}>
-      <div className="reg-kpi-v">{v}</div>
-      <div className="reg-kpi-l">{l}{s ? ' — ' + s : ''}</div>
-    </div>
-  );
-}
+/* This file's own `Head` and `Kpi` are deleted (D5 §A.4.13). `Head` drew a
+   second page header — an uppercase kicker, an `h1` under the page's `h1`, and
+   an orange "Ask AnA" beside an orange "Compile Module 3", the two orange
+   fills §WA.3 allows one of — and `Kpi` was a byte-near copy of CmcModule's.
+   Both now come from ./cmcShared: one lead and one figure for all nine tabs.
+   `SUGGEST` stays, exported: it is this tab's asks, and the page's starter row
+   reads it (CmcModule's CMC_SUGGEST.build), so the prompts have one home. */

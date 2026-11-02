@@ -21,7 +21,7 @@
  * once opened). A failed read is an error and a refusal says what it is;
  * neither is an empty registry.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 
 import { I } from '../icons';
 import { artifactSignatureState, type ArtifactOrigin, type ArtifactSignatureState } from '@shared/artifact-governance';
@@ -221,7 +221,7 @@ const OrganizationArtifactLine = React.forwardRef<HTMLDivElement, { row: Organiz
         data-testid={`vault-org-artifact-${r.id}`}
       >
         <div className="vn">
-          <span className="vtype" style={{ background: 'var(--accent-000)', color: 'var(--accent-200)' }}>{r.ver}</span>
+          <span className="rd-chip">{r.ver}</span>
           <span className="ct-strong">{r.name}</span>
           <span className="art-kind">{r.kind}</span>
           <span className="art-kind" data-testid={`artifact-governance-${r.id}`}>
@@ -229,19 +229,19 @@ const OrganizationArtifactLine = React.forwardRef<HTMLDivElement, { row: Organiz
             {r.reviewed ? 'Human review recorded' : 'Human review required'}
           </span>
         </div>
-        <div>{r.fmt ? <span className="art-fmt" data-tone="idle">{r.fmt.toUpperCase()}</span> : null}</div>
-        <div className="mono">{r.prog}</div>
+        <div>{r.fmt ? <span className="rd-chip">{r.fmt.toUpperCase()}</span> : null}</div>
+        <div>{r.prog}</div>
         <div>{r.model ?? 'Model not recorded'}</div>
         <div>{r.when}</div>
         <div>{artifactSignatureLine({ signature: organizationArtifactSignature(r), signedVersion: r.sigVersion ?? null }, r.ver)}</div>
         <div className="art-acts">
-          <button type="button" className="art-act" disabled={Boolean(downloadingId)} onClick={() => onDownload(r)}>
+          <button type="button" className="btn ghost small" disabled={Boolean(downloadingId)} onClick={() => onDownload(r)}>
             {I.download} {downloadingId === r.id ? 'Downloading…' : 'Download DOCX'}
           </button>
-          <button type="button" className="art-act" onClick={() => onOpenInEditor(r)}>
+          <button type="button" className="btn ghost small" onClick={() => onOpenInEditor(r)}>
             {I.penLine} Open in editor
           </button>
-          <button type="button" className="art-act" onClick={() => onAsk(r)}>
+          <button type="button" className="btn ghost small" onClick={() => onAsk(r)}>
             {I.sparkles} Ask AnA
           </button>
         </div>
@@ -270,7 +270,7 @@ function OrganizationArtifactsBody({ read, focusId, ...actions }: { read: Organi
         {words.retryable && (
           <>
             {' '}
-            <button type="button" className="sp-ask" onClick={read.reload}>Try again</button>
+            <button type="button" className="btn ghost small" onClick={read.reload}>Try again</button>
           </>
         )}
       </div>
@@ -318,32 +318,40 @@ export function OrganizationGovernedArtifacts({
 } & RowActions) {
   const w = organizationWindow(read);
   const settled = open && !read.loading && !read.error;
+  const headingId = useId();
+  /* A section of the Governed artifacts view (D6 §C.4 step 11), or of the page
+     when no project is open: the heading, the count, show/hide and the export. */
   return (
-    <div className="vd-dr" data-testid="vault-org-artifacts">
-      <div className="vd-dr-head">
-        <span className="vd-dr-title">{I.shieldCheck} Governed artifacts across your projects</span>
+    <section className="pj-sec vd-org" data-testid="vault-org-artifacts" aria-labelledby={headingId}>
+      <div className="pj-sec-h">
+        <h2 id={headingId}>Governed artifacts across your projects</h2>
         {settled && (
-          <span className="vd-dr-meta">
+          <span className="sec-sub">
             {plural(w.total, 'governed artifact', 'governed artifacts')} in the projects you can open
             {w.truncated ? ` · the newest ${w.listed} are listed` : ''}
           </span>
         )}
-        {onToggle && (
-          <button className="vd-dr-toggle" onClick={onToggle} aria-expanded={open}>
-            {open ? 'Hide' : 'Show'} governed artifacts across your projects
-          </button>
-        )}
-        {settled && read.rows.length > 0 && (
-          <button
-            className="vd-dr-toggle"
-            onClick={onExportManifest}
-            title="Download the index of the listed governed artifacts as CSV (their governance, not the files)"
-          >
-            {I.download} Export manifest
-          </button>
-        )}
+        {onToggle || (settled && read.rows.length > 0) ? (
+          <div className="pj-sec-acts">
+            {onToggle && (
+              <button type="button" className="btn ghost small" onClick={onToggle} aria-expanded={open}>
+                {open ? 'Hide' : 'Show'} governed artifacts across your projects
+              </button>
+            )}
+            {settled && read.rows.length > 0 && (
+              <button
+                type="button"
+                className="btn ghost small"
+                onClick={onExportManifest}
+                title="Download the index of the listed governed artifacts as CSV (their governance, not the files)"
+              >
+                {I.download} Export manifest
+              </button>
+            )}
+          </div>
+        ) : null}
       </div>
       {open && <OrganizationArtifactsBody read={read} focusId={focusId} {...actions} />}
-    </div>
+    </section>
   );
 }

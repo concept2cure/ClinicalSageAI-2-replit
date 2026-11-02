@@ -1,5 +1,5 @@
 import { rbmToolAdmissionRefusal } from '../rbm/rbm-access';
-import { seedRbmAssessment, seedRbmAssessmentFromPool, type RbmSeedPool } from '../rbm/rbm-assessment-seed';
+import { inOwnedRbmTransaction, inOwnedRbmTransactionFromPool, seedRbmAssessment, type RbmSeedPool } from '../rbm/rbm-assessment-seed';
 import { statedInputEnvelope, statedInputResult, STATED_DOSE_NOTE } from './stated-input-result.js';
 import { splitLetterQuestions } from '../../../shared/agency/letter-questions.js';
 import { readOnlyToolRefusal } from './read-only-turn.js';
@@ -153,15 +153,6 @@ import {
   type OddProvenance,
   type OddProductInput,
 } from 'shared/ana/orphan-drug-designation.js';
-import {
-  buildIndModuleAuthoringPlan,
-  evaluateIndModuleVerification,
-  assessIndModuleSealability,
-  listIndModules,
-  IND_MODULE_TEMPLATES,
-  type IndModuleProvenance,
-  type IndSourceFact,
-} from './ind-module-authoring.js';
 import { adviseEstimand, listEstimandFramework } from './estimands.js';
 import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
 import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
@@ -3049,96 +3040,6 @@ registerToolHandler('plan_orphan_drug_designation', async (input) => {
   });
 });
 
-// IND narrative-module planning (CTD Module 2.5 / 2.7) — E11.
-// Build a transcription scaffold from caller/model-supplied facts and check its
-// own text for the supported template headers and supplied figure values. This
-// does not author or verify a file, qualify study sources, or verify provenance;
-// the planning receipt is always non-sealable, including when labelled live.
-/** The section codes a plan_ind_module_authoring template holds, for its own messages. */
-const indModuleSectionCodes = (moduleId: string) => (IND_MODULE_TEMPLATES[moduleId] ?? []).map((s) => s.code).join(', ');
-
-registerToolHandler('plan_ind_module_authoring', async (input) => {
-  const moduleId = typeof input.module === 'string' ? input.module.trim() : '';
-  if (!moduleId || !listIndModules().includes(moduleId)) {
-    return JSON.stringify({
-      error: `plan_ind_module_authoring requires module to be one of ${listIndModules().join(', ')}.`,
-      modules: listIndModules(),
-    });
-  }
-  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
-  const productName = str(input.product_name);
-  const indication = str(input.indication);
-  if (!productName || !indication) {
-    return JSON.stringify({ error: 'plan_ind_module_authoring requires product_name and indication.' });
-  }
-
-  const facts: IndSourceFact[] = Array.isArray(input.facts)
-    ? (input.facts as unknown[])
-        .map((f) => (f && typeof f === 'object' ? (f as Record<string, unknown>) : null))
-        .filter((f): f is Record<string, unknown> => f !== null)
-        .map((f) => ({
-          sectionId: typeof f.section_id === 'string' ? f.section_id : '',
-          label: typeof f.label === 'string' ? f.label : '',
-          value: typeof f.value === 'string' ? f.value : '',
-          source: typeof f.source === 'string' ? f.source : undefined,
-        }))
-        .filter((f) => f.sectionId && typeof f.value === 'string' && f.value.trim().length > 0)
-    : [];
-
-  const rawProv = typeof input.provenance === 'string' ? input.provenance : '';
-  const provenance: IndModuleProvenance =
-    rawProv === 'live' || rawProv === 'sample' || rawProv === 'not_assessed' ? rawProv : 'not_assessed';
-
-  const plan = buildIndModuleAuthoringPlan({ module: moduleId, productName, indication, facts, provenance });
-  const verification = evaluateIndModuleVerification({
-    documentText: plan.content,
-    requiredStrings: plan.requiredStrings,
-  });
-  const sealability = assessIndModuleSealability({ provenance, verification });
-  // A supplied fact that names no section is said, never dropped (D2 cleanup C4c).
-  const unplaced = plan.unplacedFacts.map((f) => ({ section_id: f.sectionId, label: f.label, value: f.value }));
-  const unplacedBlocker = unplaced.length === 0 ? [] : [
-    `${unplaced.length} supplied ${unplaced.length === 1 ? 'fact names' : 'facts name'} no section of the ${moduleId} template: ` +
-      `${[...new Set(unplaced.map((f) => f.section_id))].join(', ')}. They are not in the plan; name a section by its CTD code ` +
-      `(${indModuleSectionCodes(moduleId)}) or a code below one.`,
-  ];
-
-  return JSON.stringify({
-    source: `AnA IND Module ${moduleId} Authoring (ICH M4E — CTD Module 2)`,
-    status: 'generated',
-    author_docx_native: {
-      title: plan.title,
-      content: plan.content,
-      required_strings: plan.requiredStrings,
-    },
-    verification: {
-      ...verification,
-      scope: 'plan_text_only',
-      artifactVerified: false,
-      sourceVerified: false,
-    },
-    honesty: {
-      sealable: false,
-      provenance: plan.provenance,
-      blockers: [
-        'Planning only: no authored file or independently verified project source evidence was checked. ' +
-          'Verify the actual governed artifact and its qualified sources before sealing.',
-        ...sealability.blockers,
-        ...unplacedBlocker,
-      ],
-      sectionsWithoutFacts: plan.sectionsWithoutFacts,
-      unplacedFacts: unplaced,
-    },
-    note:
-      'This tool builds a transcription scaffold and checks only its supported template headers and ' +
-      'caller/model-supplied strings. The plan body\'s \'verified against the source\' wording means only ' +
-      'supplied-string self-consistency: no authored file, underlying study, source qualification, or ' +
-      'caller-declared provenance was independently verified. This planning receipt is always non-sealable. ' +
-      'Use author_docx_native with author_docx_native.{title,content}, then verify the actual governed artifact ' +
-      'and its qualified source evidence separately; required_strings alone do not establish source qualification.',
-  });
-});
-
 // Medical-information / standard-response advisor.
 registerToolHandler('advise_medical_information', async (input) => {
   const responseType = typeof input.response_type === 'string' ? input.response_type : undefined;
@@ -3269,19 +3170,32 @@ registerToolHandler('advise_risk_management', async (input) => {
 // ── Risk-Based Monitoring (RBM / RBQM) — ICH E6(R3)/E8(R1) ──────────────────
 const RBM_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-async function seedRbmWithDispatchClient(
-  client: RequestSqlClient,
+/**
+ * One RBM write in its own transaction on the dispatch client, for the seed and
+ * add_ctq_factor alike. Realtime/deep-investigation pass this exact singleton
+ * pool: lease one connection from it. HTTP/stream pass a pinned, currently idle
+ * request client: transact on it as is; never infer its ownership from
+ * connect(), which a connected PoolClient also exposes.
+ */
+function rbmWriteOnDispatchClient<T>(
+  sqlClient: RequestSqlClient | undefined,
   canonicalPool: RequestSqlClient & RbmSeedPool,
-  programId: string,
-  organizationId: number,
-  ctx?: ToolContext,
-) {
-  const actor = { organizationId, userId: Number(ctx?.userId) };
-  // Realtime/deep-investigation pass this exact singleton pool. HTTP/stream
-  // pass a pinned, currently idle request client; never infer its ownership
-  // from connect(), which a connected PoolClient also exposes.
-  if (client === canonicalPool) await seedRbmAssessmentFromPool(canonicalPool, actor, { programId });
-  else await seedRbmAssessment(client, actor, { programId }, 'owned');
+  work: (tx: RequestSqlClient) => Promise<T>,
+): Promise<T> {
+  const client = sqlClient ?? canonicalPool;
+  return client === canonicalPool ? inOwnedRbmTransactionFromPool(canonicalPool, work) : inOwnedRbmTransaction(client, work);
+}
+
+/**
+ * What a RACT summary says beside its numbers: that a seed the person confirmed
+ * wrote nothing because the study already had an assessment, so the summary is
+ * never read as a new draft; and that a draft governs nothing.
+ */
+function rbmSummaryNote(seedAsked: boolean, seeded: boolean, row: Record<string, unknown> | null): string | undefined {
+  const notes: string[] = [];
+  if (seedAsked && !seeded && row) notes.push(`Nothing was seeded: the study already has a risk assessment (version ${row.version}, ${row.status}).`);
+  if (row?.status === 'draft') notes.push('This version is an unsigned draft: its ratings and overall risk govern nothing until it is approved.');
+  return notes.length ? notes.join(' ') : undefined;
 }
 
 // Seed or summarize a study Risk Assessment (RACT) for a program.
@@ -3298,34 +3212,52 @@ registerToolHandler('run_rbm_assessment', async (input, ctx) => {
   const canonicalPool = getPool();
   const pool = ctx?.sqlClient ?? canonicalPool;
 
-  const existing = await pool.query(
-    `SELECT * FROM rbm_risk_assessments WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1`,
-    [orgId, programId],
-  );
-
-  if (existing.rows.length === 0 && input.seed === true) {
-    await seedRbmWithDispatchClient(pool, canonicalPool, programId, orgId, ctx);
-  }
-
-  const items = await pool.query(
-    `SELECT category, ctq_factor, likelihood, impact, risk_score, is_critical, status
-       FROM rbm_risk_items WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
-       ORDER BY risk_score DESC NULLS LAST`,
-    [orgId, programId],
-  );
-  const assessmentRow = (await pool.query(
-    `SELECT id, title, framework, overall_risk, status FROM rbm_risk_assessments WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1`,
+  // The version the RACT screen shows: the highest (mdx-rbm-board.ts), so an
+  // open draft amendment is returned as the draft it is. Approval stamps the
+  // approved and the archived version with one updated_at, so that order alone
+  // could return the archived one.
+  const latestVersion = async () => (await pool.query(
+    `SELECT id, title, framework, overall_risk, status, version FROM rbm_risk_assessments
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+      ORDER BY version DESC, updated_at DESC LIMIT 1`,
     [orgId, programId],
   )).rows[0] ?? null;
+
+  // Only that version's factors, as GET /rbm-assessments/:id reads them. An
+  // amendment copies every factor forward, so a study-wide read lists each
+  // factor once per version.
+  const factorsOf = async (row: Record<string, unknown> | null) => {
+    if (!row) return [];
+    return (await pool.query(
+      `SELECT category, ctq_factor, likelihood, impact, risk_score, is_critical, status
+         FROM rbm_risk_items
+        WHERE organization_id = $1 AND program_id = $2 AND assessment_id = $3 AND deleted_at IS NULL
+        ORDER BY risk_score DESC NULLS LAST, id`,
+      [orgId, programId, row.id],
+    )).rows;
+  };
+  const seed = () => rbmWriteOnDispatchClient(pool, canonicalPool,
+    tx => seedRbmAssessment(tx, { organizationId: orgId, userId: Number(ctx?.userId) }, { programId }, 'caller-owned'));
+
+  let assessmentRow = await latestVersion();
+  let seeded = false;
+  if (!assessmentRow && input.seed === true) {
+    await seed();
+    seeded = true;
+    assessmentRow = await latestVersion();
+  }
+  const items = await factorsOf(assessmentRow);
 
   return JSON.stringify({
     source: 'AnA RBM Assessment',
     framework: 'ICH E6(R3) / E8(R1)',
+    seeded,
     assessment: assessmentRow,
     overallRisk: assessmentRow?.overall_risk ?? null,
-    criticalFactors: items.rows.filter((r: any) => r.is_critical).map((r: any) => r.ctq_factor),
-    items: items.rows,
-    hint: items.rows.length === 0 ? 'No RACT yet — call again with seed=true to create a default assessment.' : undefined,
+    criticalFactors: items.filter((r: any) => r.is_critical).map((r: any) => r.ctq_factor),
+    items,
+    note: rbmSummaryNote(input.seed === true, seeded, assessmentRow),
+    hint: assessmentRow ? undefined : 'No RACT yet — call again with seed=true to create a default assessment.',
   });
 });
 
@@ -3425,7 +3357,15 @@ registerToolHandler('evaluate_kris_qtls', async (input, ctx) => {
   });
 });
 
-// Draft an integrated monitoring plan from the assessment.
+// The route's refusals (mdx-rbm.ts, POST /rbm-monitoring-plans/generate), word for word.
+const RBM_PLAN_REFUSAL: Record<'no_assessment' | 'assessment_not_approved', string> = {
+  no_assessment: 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan',
+  assessment_not_approved: 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.',
+};
+
+// Propose the monitoring plan the approved assessment derives. Saves nothing:
+// the proposal is derivePlanFromAssessment, the read half of what
+// POST /api/mdx/rbm-monitoring-plans/generate saves, so the two never differ.
 registerToolHandler('generate_rbm_plan', async (input, ctx) => {
   const programId = typeof input.programId === 'string' ? input.programId : undefined;
   const orgId = ctx?.organizationId ?? null;
@@ -3433,31 +3373,36 @@ registerToolHandler('generate_rbm_plan', async (input, ctx) => {
     return JSON.stringify({ source: 'AnA RBM', error: 'A valid programId (UUID) and organization context are required.' });
   }
   const { getPool } = await import('../../db.js');
-  const { defaultPlanStrategy } = await import('../rbm/rbm-engine.js');
-  const pool = getPool();
-  const assessment = (await pool.query(
-    `SELECT id, overall_risk FROM rbm_risk_assessments WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1`,
-    [orgId, programId],
-  )).rows[0] ?? null;
-  const overall = (assessment?.overall_risk ?? 'medium') as 'low' | 'medium' | 'high';
-  const critical = await pool.query(
-    `SELECT id, ctq_factor, mitigation, risk_score FROM rbm_risk_items
-       WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL AND is_critical = true
-       ORDER BY risk_score DESC NULLS LAST`,
-    [orgId, programId],
-  );
+  const { derivePlanFromAssessment, openDraftPlan } = await import('../rbm/rbm-actuator.js');
+  const exec = ctx?.sqlClient ?? getPool();
+  const derivation = await derivePlanFromAssessment(exec, orgId, programId);
+  if (!derivation.derived) {
+    return JSON.stringify({ source: 'AnA RBM Plan', code: derivation.reason, error: RBM_PLAN_REFUSAL[derivation.reason] });
+  }
+  const { assessment } = derivation;
+  if (!derivation.recordedOverallRisk) {
+    return JSON.stringify({
+      source: 'AnA RBM Plan',
+      code: 'overall_risk_unrecorded',
+      assessmentId: assessment.id,
+      error: 'The approved risk assessment records no overall risk, so no monitoring strategy can be derived from it. ' +
+        'Record the overall risk in an amendment and approve it, then propose the plan again. Nothing was saved.',
+    });
+  }
+  const openDraft = await openDraftPlan(exec, orgId, programId);
   return JSON.stringify({
     source: 'AnA RBM Plan',
-    advisory: 'Draft plan — review and approve before activation (21 CFR Part 11 e-signature).',
-    recommendedStrategy: defaultPlanStrategy(overall),
-    overallRisk: overall,
-    proposedActions: critical.rows.map((r: any) => ({
-      riskItemId: r.id,
-      ctqFactor: r.ctq_factor,
-      actionType: 'site_visit',
-      priority: r.risk_score >= 15 ? 'high' : 'medium',
-      description: r.mitigation || `Targeted monitoring of: ${r.ctq_factor}`,
-    })),
+    advisory: 'Proposal only — nothing was saved. Generating the plan saves it as a draft, which must be reviewed and approved (21 CFR Part 11 e-signature) before it is active.',
+    derivedFrom: { assessmentId: assessment.id, title: assessment.title, version: assessment.version ?? null, overallRisk: derivation.recordedOverallRisk },
+    recommendedStrategy: derivation.strategy,
+    overallRisk: derivation.recordedOverallRisk,
+    criticalFactors: derivation.criticalFactors,
+    enhancedSites: derivation.enhancedSites,
+    proposedActions: derivation.actions,
+    openDraftPlan: openDraft ? { id: openDraft.id, version: openDraft.version } : null,
+    note: openDraft
+      ? `Draft plan version ${openDraft.version} is already open for this study; generating another is refused until it is approved or archived.`
+      : undefined,
   });
 });
 
@@ -3602,7 +3547,40 @@ const rbmNum = (v: unknown): number | undefined =>
       : undefined;
 const rbmBool = (v: unknown): boolean | undefined => (typeof v === 'boolean' ? v : undefined);
 const rbmErr = (msg: string) => JSON.stringify({ source: 'AnA RBM', error: msg });
+/** A record id the model may name: undefined when absent, null when it is not a positive integer. */
+const rbmRecordId = (v: unknown): number | null | undefined => {
+  if (v == null) return undefined;
+  const n = rbmNum(v);
+  return n !== undefined && Number.isSafeInteger(n) && n > 0 ? n : null;
+};
+/**
+ * add_ctq_factor's optional inputs: the assessment it names, and its optional
+ * ratings and labels. One present but unreadable is refused, as the route's
+ * schema refuses it, never dropped: a dropped override would be saved as the
+ * default with no word that it was. An unreadable detectability or category
+ * goes to addCtqFactor as given, which refuses it.
+ */
+function rbmCtqOptionals(input: Record<string, unknown>):
+  | { error: string }
+  | { named: number | undefined; fields: { detectability: number | null; category: any; isCritical: boolean | undefined } } {
+  // Both spellings, because admission checks both (rbm-access.ts RECORD_FIELDS).
+  const named = rbmRecordId(input.assessmentId ?? input.assessment_id);
+  if (named === null) return { error: 'assessmentId must be the id of one of the study\'s risk assessments.' };
+  if (input.isCritical != null && typeof input.isCritical !== 'boolean') return { error: 'isCritical must be true or false. Nothing was saved.' };
+  return {
+    named,
+    fields: {
+      detectability: (input.detectability == null ? null : rbmNum(input.detectability) ?? input.detectability) as number | null,
+      category: input.category == null ? undefined : rbmStr(input.category) ?? input.category,
+      isCritical: rbmBool(input.isCritical),
+    },
+  };
+}
 
+// A factor always joins a risk assessment: one without one is on no assessment
+// page, in no signed content and, once any assessment exists, off the RACT
+// screen. Checked and written as POST /rbm-risk-items does, in one transaction:
+// write authority, the draft rule (requireDraftAssessment), then the insert.
 registerToolHandler('add_ctq_factor', async (input, ctx) => {
   const orgId = ctx?.organizationId ?? null;
   const programId = rbmStr(input.programId);
@@ -3613,17 +3591,58 @@ registerToolHandler('add_ctq_factor', async (input, ctx) => {
   if (!programId || !RBM_UUID_RE.test(programId)) return rbmErr('A valid programId (UUID) is required.');
   if (!ctqFactor) return rbmErr('Ask the user what the risk / critical-to-quality factor is.');
   if (likelihood == null || impact == null) return rbmErr('Ask the user to rate likelihood and impact (1–5).');
+  const optionals = rbmCtqOptionals(input);
+  if ('error' in optionals) return rbmErr(optionals.error);
+  const { named, fields } = optionals;
   const { getPool } = await import('../../db.js');
-  const { addCtqFactor } = await import('../rbm/rbm-actuator.js');
-  const out = await addCtqFactor(getPool(), orgId, {
-    programId, ctqFactor, likelihood, impact,
-    category: rbmStr(input.category) as any,
-    riskDescription: rbmStr(input.riskDescription) ?? null,
-    detectability: rbmNum(input.detectability) ?? null,
-    mitigation: rbmStr(input.mitigation) ?? null,
-    isCritical: rbmBool(input.isCritical),
-  });
-  return JSON.stringify({ source: 'AnA RBM · add_ctq_factor', ...out });
+  const { addCtqFactor, requireDraftAssessment, RbmAssessmentEditError } = await import('../rbm/rbm-actuator.js');
+  const { requireRbmProgram, rbmAccessFailure } = await import('../rbm/rbm-access.js');
+  const canonicalPool = getPool();
+
+  // Which assessment, when the call names none: the study's one open draft. A
+  // signed-only study is handed to requireDraftAssessment, which refuses it
+  // with the amendment rule's own words.
+  const assessmentFor = async (tx: RequestSqlClient): Promise<number> => {
+    if (named !== undefined) return named;
+    const { rows } = await tx.query(
+      `SELECT id, version, status FROM rbm_risk_assessments
+        WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+        ORDER BY version DESC, id DESC`,
+      [orgId, programId],
+    );
+    const drafts = rows.filter(r => r.status === 'draft');
+    if (drafts.length === 1) return Number(drafts[0].id);
+    if (drafts.length > 1) {
+      throw new RbmAssessmentEditError(409, 'RBM_ASSESSMENT_AMBIGUOUS',
+        `This study has ${drafts.length} draft risk assessments: ${drafts.map(d => `#${d.id} (version ${d.version})`).join(', ')}. ` +
+        'Ask which one the factor belongs to, then call again with its assessmentId. Nothing was saved.');
+    }
+    if (rows.length > 0) return Number(rows[0].id);
+    throw new RbmAssessmentEditError(404, 'RBM_NO_ASSESSMENT',
+      'This study has no risk assessment yet, and a factor must belong to one. Start it first ' +
+      '(run_rbm_assessment with seed: true creates an unsigned draft from the CtQ library), then add the factor to it. Nothing was saved.');
+  };
+
+  let stage: 'access' | 'write' = 'access';
+  try {
+    const out = await rbmWriteOnDispatchClient(ctx?.sqlClient, canonicalPool, async tx => {
+      await requireRbmProgram(tx, { organizationId: orgId, userId: Number(ctx?.userId) }, { programId }, true);
+      stage = 'write';
+      const assessmentId = await assessmentFor(tx);
+      await requireDraftAssessment(tx, orgId, assessmentId, programId);
+      return addCtqFactor(tx, orgId, {
+        programId, assessmentId, ctqFactor, likelihood, impact, ...fields,
+        riskDescription: rbmStr(input.riskDescription) ?? null,
+        mitigation: rbmStr(input.mitigation) ?? null,
+      });
+    });
+    return JSON.stringify({ source: 'AnA RBM · add_ctq_factor', ...out });
+  } catch (error) {
+    if (error instanceof RbmAssessmentEditError) return JSON.stringify({ source: 'AnA RBM', error: error.message, code: error.code });
+    // The write recheck refuses as admission does; any later failure is thrown.
+    if (stage === 'access') { const refused = rbmAccessFailure(error); return JSON.stringify({ source: 'AnA RBM', error: refused.message, code: refused.code }); }
+    throw error;
+  }
 });
 
 registerToolHandler('define_kri', async (input, ctx) => {
@@ -7152,10 +7171,24 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>, 
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'generate_document requires tenant context (organizationId).' });
   }
+  // Rule 2 audit S6b (2026-11-01): an omitted type was built as a CSR, and a
+  // CSR, Module 2-5, CER, 510(k) or IB was built from text the model wrote.
+  // Each is refused before either mode runs, naming its record path.
+  const documentType = typeof input.document_type === 'string' ? input.document_type.trim() : '';
+  if (!documentType) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      missing: ['document_type'],
+      message: 'document_type is required: name the document to generate.',
+    });
+  }
+  const { recordDocumentRefusal } = await import('./generate-document-refusals.js');
+  const refusal = recordDocumentRefusal(documentType);
+  if (refusal) return refusal;
+
   const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
   const builder = getMasterDocumentBuilder();
 
-  const documentType = input.document_type as string || 'csr';
   const title = input.title as string || 'Untitled Document';
   const sections = (input.sections as Array<{ number: string; title: string; content: string }>) || [];
   const outputFormat = (input.output_format as string) || 'docx';
@@ -7208,17 +7241,8 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>, 
   // 'ectd_backbone' and 'icsr' used to be generated here from scratch: a
   // backbone with sequence 0000 and operation=new hardcoded, no modules and
   // a 'Product' placeholder; an ICSR with an invented report id and 'Unknown'
-  // drug and reaction. Neither was a regulatory artefact. The backbone comes
-  // from the submission packager and an ICSR from the safety-report register.
-  if (documentType === 'ectd_backbone' || documentType === 'icsr') {
-    return JSON.stringify({
-      success: false,
-      message: documentType === 'ectd_backbone'
-        ? 'An eCTD backbone is produced by assembling a submission sequence, not drafted as a document. Use the submission assembly tools.'
-        : 'An ICSR is composed from a recorded safety report, not drafted as a document. Use the IND safety-report tools.',
-    });
-  }
-
+  // drug and reaction. They are refused above, with the record documents
+  // (generate-document-refusals.ts), before sections can reach a builder.
   return JSON.stringify({
     success: false,
     message: 'Please provide sections content or a template path to generate a document.',
@@ -20911,14 +20935,28 @@ registerToolHandler('list_intelligence_flows', async (_input, ctx) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 registerToolHandler('start_war_game', async (input, ctx) => {
+  /* Rule 2 (2026-11-01, a finding of session 019ZvHmh): this scored
+     `input.answers`, which the model composes, and recorded the score as
+     WAR_GAME_RUN as if it described the project's interview. The answers now
+     come from the stored interview session, as answer_intelligence_question
+     loads them; answers in the call are not used. */
+  const sessionId = intelligenceSessionId(input);
+  if (!sessionId) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      missing: ['session_id'],
+      message: 'session_id is required: the War Game scores the stored interview, never answers given in the call.',
+    });
+  }
   try {
+    const { loadInterviewSession } = await import('../cmc/interview-sessions.js');
+    const session = await loadInterviewSession({ organizationId: ctx?.organizationId, sessionId });
+    if (session.status === 'abandoned') {
+      return JSON.stringify({ error: `Interview session ${sessionId} was abandoned; it is not war-gamed.`, session_id: sessionId, session_status: session.status });
+    }
     const { runWarGame } = await import('./intelligence-questions/war-game/engine.js');
     const category = String(input.war_game_category || '') as import('./intelligence-questions/war-game/types.js').WarGameCategory;
-    const report = runWarGame(
-      category,
-      String(input.source_flow_id || ''),
-      (input.answers || {}) as Record<string, Record<string, unknown>>,
-    );
+    const report = runWarGame(category, session.flowId, session.state.answers);
     /* Audit log the adversarial audit run — records who ran which War Game and
        the resulting readiness posture (score/assessment). Fire-and-forget. */
     try {
@@ -20928,10 +20966,11 @@ registerToolHandler('start_war_game', async (input, ctx) => {
         userId:     ctx?.userId ?? null,
         action:     'WAR_GAME_RUN',
         resource:   'war_game_report',
-        resourceId: String((report as any)?.id || input.source_flow_id || category),
+        resourceId: String((report as any)?.id || session.flowId || category),
         details: {
           category,
-          sourceFlowId:      String(input.source_flow_id || ''),
+          sessionId,
+          sourceFlowId:      session.flowId,
           overallScore:      (report as any)?.overallScore,
           overallAssessment: (report as any)?.overallAssessment,
           findingCount:      Array.isArray((report as any)?.findings) ? (report as any).findings.length : undefined,
@@ -20940,11 +20979,15 @@ registerToolHandler('start_war_game', async (input, ctx) => {
     } catch { /* never block the tool response on audit failure */ }
     return JSON.stringify({
       success: true,
+      session_id: sessionId,
+      session_status: session.status,
+      ...(input.answers !== undefined ? { answersInCallIgnored: true } : {}),
       war_game_report: report,
     });
   } catch (err: any) {
     return JSON.stringify({
       error: err?.message || 'Failed to run war game simulation',
+      session_id: sessionId,
     });
   }
 });

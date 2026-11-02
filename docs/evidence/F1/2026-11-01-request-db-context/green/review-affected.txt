@@ -1,0 +1,21 @@
+# Review, 2026-11-01: 20 test files that import the changed modules or drive the routes they serve, after the review's change (vitest, --maxWorkers=2).
+# server/db/__tests__/requestDbLease.test.ts server/db/__tests__/tenantDbHelper.test.ts server/middleware/__tests__/establishRequestTenantScope.test.ts server/middleware/__tests__/auth-establishes-scope.integration.test.ts server/routes/c2c/__tests__/project-route-access-requestdb.test.ts server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-disconnect.test.ts server/routes/__tests__/mdx-qms-readiness.test.ts server/routes/__tests__/qms-changes.test.ts server/routes/__tests__/qms-personal-training.test.ts server/routes/__tests__/qms-document-content-access.test.ts server/routes/__tests__/notification-server-only-category.test.ts server/routes/__tests__/project-schedule-of-events.test.ts server/routes/__tests__/project-schedule-admission.test.ts server/routes/__tests__/insights-canvas-open-program.test.ts server/routes/__tests__/mdx-analytics-availability.test.ts server/routes/__tests__/mdx-engineering.contract.test.ts server/routes/__tests__/review-board-reads-authoring-store.test.ts server/routes/__tests__/mdx-qms-nonconforming-project.test.ts server/routes/__tests__/qms-subrouters-governed.test.ts
+ × server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > keeps a genuine empty version history distinct from a denied authored history 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 19 passed (20)
+      Tests  1 failed | 366 passed (367)
+
+# The one failure, run again with the three source files at their HEAD text (identical at 9bf83a8f0 and e4ea399d6), then restored (sha256sum -c: OK):
+ × server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > keeps a genuine empty version history distinct from a denied authored history 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+ FAIL  server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > keeps a genuine empty version history distinct from a denied authored history
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+# Same failure without the change (expected 200, received 404 at HEAD too): not this change's. The builder's regression run recorded it as well.

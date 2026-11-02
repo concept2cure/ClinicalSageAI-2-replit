@@ -30,7 +30,7 @@ describe('current-context report capability disclosure', () => {
     } }) });
     const props: React.ComponentProps<typeof InsightsCanvas> = { surface: getSurface('insights')!, segment: 'pharma', onNav: vi.fn() };
     render(<InsightsCanvas {...props} />);
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     expect(await screen.findByText(/1 applicable definitions · 1 engine-backed · 1 available to run/)).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Run$/ })).toBeTruthy();
   });

@@ -192,15 +192,17 @@ export type SurfaceView =
  * being the thing every surface loads through.
  */
 function SurfaceChunkFallback() {
+  /* One quiet line in the person's words, not a box (D1.md §D1.B step 8): its look is
+     app-v2.css `.scaf-note[aria-busy="true"]`, which the inline padding and alignment
+     it carried before would have overridden. */
   return React.createElement(
     'div',
     {
       className: 'scaf-note',
-      style: { padding: '40px 16px', textAlign: 'center' },
       role: 'status',
       'aria-busy': true,
     },
-    'Loading surface…',
+    'Loading…',
   );
 }
 

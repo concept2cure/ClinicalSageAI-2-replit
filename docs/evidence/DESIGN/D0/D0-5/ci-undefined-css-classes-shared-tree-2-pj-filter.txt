@@ -1,0 +1,10 @@
+# npm run --silent ci:undefined-css-classes in the shared working tree, 2026-11-01, by the reviewer. pj-filter comes from another session's uncommitted edits to ProjectClientFilter.tsx and ProjectPortfolioFilters.tsx, not from D0-5.
+[ci:undefined-css-classes] FAIL — class names no stylesheet defines:
+  pj-filter
+    client/src/concept2cure/v2/surfaces/ProjectClientFilter.tsx
+    client/src/concept2cure/v2/surfaces/ProjectPortfolioFilters.tsx
+
+  These style NOTHING. The element renders unstyled and no test will say so.
+  Either use the existing vocabulary (grep the v2 styles/ folder for the
+  shape you want) or, if the class is a deliberate semantic hook with no
+  rule, add it to scripts/ci/undefined-css-classes-baseline.json WITH A REASON.

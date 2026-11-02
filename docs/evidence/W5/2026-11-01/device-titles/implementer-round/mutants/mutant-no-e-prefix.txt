@@ -1,0 +1,5 @@
+applied mutant no-e-prefix: "(?<!\\p{L})[eE]?[iI]" -> "(?<!\\p{L})[iI]"
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a mixed-case IFU fills the IFU slot 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: EIfU: expected [] to deeply equal [ 'manufacturer-information' ]
+      Tests  1 failed | 51 passed (52)

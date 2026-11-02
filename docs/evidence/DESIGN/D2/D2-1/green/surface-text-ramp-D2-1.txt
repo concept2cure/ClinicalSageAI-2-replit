@@ -1,0 +1,26 @@
+# surface-text-ramp.css: what D2-1 alone changes in it (skeptic re-check, HEAD 1d789b516, 2026-11-01)
+# The ramp is generated (node scripts/design/generate-surface-text-ramp.mjs), never hand-edited.
+#
+# Other lanes edit sheets in this same tree (at review time app-v2.css, coverage-v2.css and misc-surfaces-v2.css,
+# uncommitted), so the ramp is not staged from the working tree. It was regenerated in a scratch copy holding HEAD's
+# stylesheets plus D2-1's two sheets only (project-home-v2.css, surfaces-v2.css), and that output is the staged
+# file (git hash-object -w + git update-index --cacheinfo). It is byte-identical to the working-tree ramp the builder
+# generated, and the mdx/ and pdev/ ramp sheets it writes are unchanged from HEAD.
+#
+# The builder's surface-text-ramp.D2-1-only.patch was cut against e4ea399d6. HEAD's ramp has changed since (D1-4
+# 14dce5e38, D4-1 f23853723), the patch no longer applied, and it was removed rather than left as a dead instruction.
+#
+# Selector-level diff, HEAD -> the staged ramp (count, selector):
+
+362a363
+>       3 .c2c-v2 .pj-index .ct-row:hover
+520d520
+<       3 .c2c-v2 .ws-switch
+872,873c872,873
+<       1 /* ── --bg-050 · 311 selector(s) ── */
+<       1 /* ── --bg-100 · 328 selector(s) ── */
+---
+>       1 /* ── --bg-050 · 312 selector(s) ── */
+>       1 /* ── --bg-100 · 327 selector(s) ── */
+
+# .ws-switch leaves the --bg-100 list (its rule is deleted) and .pj-index .ct-row:hover joins the --bg-050 list.

@@ -10,7 +10,8 @@
  * quantitative bias analysis, and regulatory acceptability assessment across
  * FDA, EMA, PMDA, and Health Canada pathways. Each tool is a thin, validated
  * wrapper over a pure deterministic engine — no LLM, no network calls. The output
- * is reproducible and submission-defensible. Handlers live in AnaToolExecutor.ts
+ * is a reproducible worksheet over the stated inputs; no program source records
+ * are read. Handlers live in AnaToolExecutor.ts
  * (registerToolHandler) and dynamic-import `../rwe/rwe-methodology-knowledge`
  * through the runStatsTool deterministic envelope.
  *
@@ -35,7 +36,10 @@
 import type { AnaTool } from '../ai-gateway/types';
 
 const DETERMINISTIC_NOTE =
-  'Deterministic — identical input always yields identical output. No LLM, no network.';
+  'Deterministic worksheet over stated inputs; no LLM, network or program source-record read. ' +
+  'A required input that is left out or malformed is refused by name: ask the user for it, never supply a guess. ' +
+  'An optional true/false fact that is left out remains not_stated, and dependent conclusions remain not_assessed or null. ' +
+  'Report those states and ask for the missing facts.';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Target Trial Emulation
@@ -79,7 +83,7 @@ export const DESIGN_TARGET_TRIAL: AnaTool = {
       },
       therapeuticArea: {
         type: 'string',
-        description: 'Optional therapeutic area for context-specific guidance (e.g., "oncology", "cardiology", "endocrinology").',
+        description: 'Optional therapeutic area (e.g., "oncology", "cardiology", "endocrinology"). Not read: it does not change the protocol.',
       },
     },
     required: ['indication', 'treatmentStrategy', 'comparator', 'primaryOutcome', 'causalContrast', 'maxFollowUpMonths'],
@@ -94,7 +98,7 @@ export const SCORE_RWE_DATA_SOURCE: AnaTool = {
   name: 'score_rwe_data_source',
   description:
     'Score a real-world data source across six FDA-aligned quality dimensions (completeness, accuracy, linkage, longitudinality, sample size, data capture breadth) with dimension-specific weights that adapt to the study question type per the FDA RWE Framework (2018) data relevance and data reliability requirements. ' +
-    'Returns a weighted overall fitness-for-purpose score (0-100), per-dimension scores with identified gaps and actionable recommendations, source-type-specific strengths and limitations, and a regulatory acceptability assessment covering FDA data relevance, data reliability, and data governance requirements per the FDA Draft Guidance on RWD (2021). ' +
+    'Returns a weighted overall fitness-for-purpose score (0-100, or null with fitness not_assessed), per-dimension scores (or null) with identified gaps and actionable recommendations, strengths and limitations typical of the source type, and a regulatory acceptability assessment covering FDA data relevance, data reliability, and data governance requirements per the FDA Draft Guidance on RWD (2021). ' +
     'Use when evaluating whether a specific RWD source (claims, EHR, registry, biobank, linked claims-EHR, or integrated delivery network) is adequate for a planned regulatory-grade study — this is a prerequisite step under the FDA RWE Framework 2018 and EMA DARWIN EU methodology. ' +
     DETERMINISTIC_NOTE,
   input_schema: {
@@ -120,27 +124,27 @@ export const SCORE_RWE_DATA_SOURCE: AnaTool = {
       },
       deathLinkage: {
         type: 'boolean',
-        description: 'Whether the source is linked to death records (e.g., National Death Index, state death registries). Critical for mortality outcomes and identifying informative censoring from death.',
+        description: 'Whether the source is linked to death records (e.g., National Death Index, state death registries). Critical for mortality outcomes and identifying informative censoring from death. Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       hasLabResults: {
         type: 'boolean',
-        description: 'Whether the source captures structured laboratory results (e.g., HbA1c, creatinine, biomarkers). Essential for lab-based outcomes and biomarker-based eligibility criteria.',
+        description: 'Whether the source captures structured laboratory results (e.g., HbA1c, creatinine, biomarkers). Essential for lab-based outcomes and biomarker-based eligibility criteria. Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       hasClinicalNotes: {
         type: 'boolean',
-        description: 'Whether the source captures unstructured clinical notes that can be used for NLP-based variable extraction or chart review validation.',
+        description: 'Whether the source captures unstructured clinical notes that can be used for NLP-based variable extraction or chart review validation. Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       hasPharmacyDispensing: {
         type: 'boolean',
-        description: 'Whether the source captures pharmacy dispensing/fill records (not just prescribing orders). Essential for reliable medication exposure measurement via PDC/MPR.',
+        description: 'Whether the source captures pharmacy dispensing/fill records (not just prescribing orders). Essential for reliable medication exposure measurement via PDC/MPR. Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       hasProcedures: {
         type: 'boolean',
-        description: 'Whether the source captures procedure codes (CPT, ICD-10-PCS, HCPCS).',
+        description: 'Whether the source captures procedure codes (CPT, ICD-10-PCS, HCPCS). Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       hasValidationStudy: {
         type: 'boolean',
-        description: 'Whether a published or internal validation study exists for the key variable definitions (outcome and exposure algorithms) in this data source. FDA strongly recommends validated variable definitions.',
+        description: 'Whether a published or internal validation study exists for the key variable definitions (outcome and exposure algorithms) in this data source. FDA strongly recommends validated variable definitions. Omitted or null stays not_stated: the dimensions that read it and the overall score are null, and fitness is not_assessed.',
       },
       continuousEnrollmentPct: {
         type: 'number',
@@ -154,8 +158,7 @@ export const SCORE_RWE_DATA_SOURCE: AnaTool = {
     },
     required: [
       'sourceType', 'studyQuestion', 'estimatedSampleSize', 'longitudinalYears',
-      'deathLinkage', 'hasLabResults', 'hasClinicalNotes', 'hasPharmacyDispensing',
-      'hasProcedures', 'hasValidationStudy', 'continuousEnrollmentPct', 'geographicCoverage',
+      'continuousEnrollmentPct', 'geographicCoverage',
     ],
   },
 };
@@ -263,8 +266,8 @@ export const SELECT_RWE_DESIGN: AnaTool = {
 export const ASSESS_RWE_BIAS_RISK: AnaTool = {
   name: 'assess_rwe_bias_risk',
   description:
-    'Assess the bias risk profile of an RWE study across three epidemiologic domains (selection bias, information bias, confounding) with specific bias identification, direction-of-bias assessment (toward null, away from null, unpredictable), severity grading (high/moderate/low), and actionable mitigation strategies referencing the primary literature. ' +
-    'Returns an itemized bias inventory, an overall bias risk grade, a tailored sensitivity analysis plan (E-value per VanderWeele & Ding 2017, negative control outcomes/exposures per Schuemie et al. 2020, probabilistic bias analysis per Lash et al. 2009, multiple PS methods), and — when an observed effect estimate with confidence interval is provided — computes the E-value to quantify the minimum strength of unmeasured confounding needed to explain away the observed association. ' +
+    'Assess the bias risk profile of an RWE study across three epidemiologic domains (selection bias, information bias, confounding) with specific bias identification, direction-of-bias assessment (toward null, away from null, unpredictable), severity grading (high/moderate/low, or not_assessed), and actionable mitigation strategies referencing the primary literature. ' +
+    'Returns an itemized bias inventory, an overall bias risk grade (or not_assessed), a tailored sensitivity analysis plan (E-value per VanderWeele & Ding 2017, negative control outcomes/exposures per Schuemie et al. 2020, probabilistic bias analysis per Lash et al. 2009, multiple PS methods), and — when an observed effect estimate with confidence interval is provided — computes the E-value to quantify the minimum strength of unmeasured confounding needed to explain away the observed association. ' +
     'Use when conducting or reviewing a bias assessment for any RWE study — this is a required component of the FDA RWE Framework 2018, ISPE/ISPOR reporting guidelines (RECORD-PE, REPEAT, HARPER), and EMA DARWIN EU study protocols. ' +
     DETERMINISTIC_NOTE,
   input_schema: {
@@ -292,11 +295,11 @@ export const ASSESS_RWE_BIAS_RISK: AnaTool = {
       },
       selfReportedOutcome: {
         type: 'boolean',
-        description: 'Whether the primary outcome is self-reported (e.g., patient-reported symptoms, PRO instruments). Self-reported outcomes introduce recall and social desirability biases not present with objectively measured outcomes.',
+        description: 'Whether the primary outcome is self-reported (e.g., patient-reported symptoms, PRO instruments). Self-reported outcomes introduce recall and social desirability biases not present with objectively measured outcomes. Omitted or null stays not_stated: the reporting/recall bias is listed ungraded.',
       },
       differentialSurveillance: {
         type: 'boolean',
-        description: 'Whether there is likely differential healthcare utilization or surveillance intensity between treatment groups (e.g., newly treated patients have more frequent visits, leading to greater outcome detection in that group).',
+        description: 'Whether there is likely differential healthcare utilization or surveillance intensity between treatment groups (e.g., newly treated patients have more frequent visits, leading to greater outcome detection in that group). Omitted or null stays not_stated: the surveillance/detection bias is listed ungraded.',
       },
       nUnmeasuredConfounders: {
         type: 'number',
@@ -304,7 +307,7 @@ export const ASSESS_RWE_BIAS_RISK: AnaTool = {
       },
       hasActiveComparator: {
         type: 'boolean',
-        description: 'Whether an active comparator (another treatment for the same indication) is used. Absence of an active comparator creates high risk of confounding by indication (treated vs. untreated patients differ systematically).',
+        description: 'Whether an active comparator (another treatment for the same indication) is used. Absence of an active comparator creates high risk of confounding by indication (treated vs. untreated patients differ systematically). Omitted or null stays not_stated: confounding by indication is listed ungraded, never reported as no comparator.',
       },
       observedEffectEstimate: {
         type: 'number',
@@ -315,7 +318,7 @@ export const ASSESS_RWE_BIAS_RISK: AnaTool = {
         description: 'Optional lower bound of the 95% confidence interval for the effect estimate (the bound closest to the null). Used together with observedEffectEstimate for E-value computation.',
       },
     },
-    required: ['studyDesign', 'exposureType', 'dataSource', 'selfReportedOutcome', 'differentialSurveillance', 'nUnmeasuredConfounders', 'hasActiveComparator'],
+    required: ['studyDesign', 'exposureType', 'dataSource', 'nUnmeasuredConfounders'],
   },
 };
 
@@ -326,7 +329,7 @@ export const ASSESS_RWE_BIAS_RISK: AnaTool = {
 export const ASSESS_RWE_REGULATORY_ACCEPTABILITY: AnaTool = {
   name: 'assess_rwe_regulatory_acceptability',
   description:
-    'Assess the regulatory acceptability of a planned RWE submission across seven evidence requirements (pre-registration, validated outcomes, data relevance, data reliability, study design appropriateness, sensitivity analyses, transparency/reproducibility), returning an overall acceptability grade (high/moderate/low/insufficient), authority-specific regulatory pathway guidance, relevant regulatory precedents (Ibrance palbociclib label expansion 2019, Prograf tacrolimus pediatric 2021, Sentinel active surveillance, BEST vaccine safety monitoring), key guidance documents filtered by authority, and prioritized recommendations. ' +
+    'Assess the regulatory acceptability of a planned RWE submission across seven evidence requirements (pre-registration, validated outcomes, data relevance, data reliability, study design appropriateness, sensitivity analyses, transparency/reproducibility), returning an overall acceptability grade (high/moderate/low/insufficient, or not_assessed), authority-specific regulatory pathway guidance, relevant regulatory precedents (Ibrance palbociclib label expansion 2019, Prograf tacrolimus pediatric 2021, Sentinel active surveillance, BEST vaccine safety monitoring), key guidance documents filtered by authority, and prioritized recommendations. ' +
     'Covers FDA (RWE Framework 2018, Draft Guidance on EHR/Claims 2021, Externally Controlled Trials 2023, RWD Submission Guidance 2023), EMA (DARWIN EU 2022), PMDA (Registry Data Guidance 2021), ICH E8(R1), and Health Canada pathways, with authority-specific guidance filtering for global or regional submissions. ' +
     'Use when planning an RWE regulatory strategy, preparing a pre-submission meeting (Type B) package, or evaluating whether a study design meets the evidentiary bar for a specific regulatory purpose — label expansion, new indication, post-marketing safety/effectiveness, comparative effectiveness, formulary/coverage, pediatric extrapolation, or accelerated approval confirmation. ' +
     DETERMINISTIC_NOTE,
@@ -364,22 +367,26 @@ export const ASSESS_RWE_REGULATORY_ACCEPTABILITY: AnaTool = {
       },
       preRegistered: {
         type: 'boolean',
-        description: 'Whether the study protocol is pre-registered (e.g., on ClinicalTrials.gov, EU PAS Register, ENCEPP) before data access. FDA and EMA strongly recommend pre-registration to reduce investigator degrees of freedom and increase credibility.',
+        description: 'Whether the study protocol is pre-registered (e.g., on ClinicalTrials.gov, EU PAS Register, ENCEPP) before data access. FDA and EMA strongly recommend pre-registration to reduce investigator degrees of freedom and increase credibility. Omitted or null stays not_stated: the pre-registration and transparency requirements are not_assessed.',
       },
       validatedOutcomes: {
         type: 'boolean',
-        description: 'Whether validated algorithms with known operating characteristics (PPV, sensitivity, specificity) are used for the primary outcome and exposure definitions. FDA Draft Guidance on RWD (2021) emphasizes the need for validated variable definitions.',
+        description: 'Whether validated algorithms with known operating characteristics (PPV, sensitivity, specificity) are used for the primary outcome and exposure definitions. FDA Draft Guidance on RWD (2021) emphasizes the need for validated variable definitions. Omitted or null stays not_stated: the validated-definitions requirement is not_assessed.',
       },
       existingTrialData: {
         type: 'boolean',
-        description: 'Whether concurrent or historical randomized trial data exists for the same or closely related question. Existing trial data lowers the evidentiary bar for supportive/complementary RWE and enables triangulation.',
+        description: 'Whether concurrent or historical randomized trial data exists for the same or closely related question. Existing trial data lowers the evidentiary bar for supportive/complementary RWE and enables triangulation. Omitted or null stays not_stated: no recommendation assumes it either way.',
+      },
+      sensitivityAnalysesPlanned: {
+        type: 'boolean',
+        description: 'Whether sensitivity analyses for unmeasured confounding are planned and pre-specified: an E-value or quantitative bias analysis, negative control outcomes or exposures, and multiple analytic approaches (PS matching, IPTW, doubly robust). Omitted or null stays not_stated: the sensitivity-analysis requirement is not_assessed.',
       },
       sampleSize: {
         type: 'number',
         description: 'Study sample size. Scored against regulatory benchmarks: >= 500 is adequate for most regulatory purposes; >= 100 is marginal; < 100 is generally insufficient for regulatory-grade RWE.',
       },
     },
-    required: ['purpose', 'authority', 'studyDesign', 'dataSource', 'preRegistered', 'validatedOutcomes', 'existingTrialData', 'sampleSize'],
+    required: ['purpose', 'authority', 'studyDesign', 'dataSource', 'sampleSize'],
   },
 };
 

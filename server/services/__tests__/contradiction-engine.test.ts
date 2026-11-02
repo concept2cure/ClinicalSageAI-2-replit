@@ -595,11 +595,47 @@ describe('Authority Boundary Map', () => {
     expect(authority.level).toBe('requires-confirmation');
   });
 
-  test('approval requires reviewer role', () => {
-    const authority = getAuthorityForAction('approve-artifact');
-    expect(authority.requiresReviewerApproval).toBe(true);
-    expect(authority.allowedActorRoles).toContain('reviewer');
-    expect(authority.allowedActorRoles).toContain('approver');
+  // 2026-11-01 (F1): approve and lock are electronic signatures decided by the
+  // signed act (server/services/artifact-approval-act.ts: its role table, the
+  // review quorum and, under decision P-18, separation of duties). This map's
+  // entries for them held their own role lists, which disagreed with that
+  // table for admin, ra_lead, qa_lead and submission_lead, and gated nothing.
+  // They now admit no role. (This replaces 'approval requires reviewer role',
+  // which pinned the stale list.)
+  test.each(['approve-artifact', 'lock-artifact'] as const)('%s admits no role through this map', (action) => {
+    const authority = getAuthorityForAction(action);
+    expect(authority.level).toBe('forbidden');
+    expect(authority.allowedActorRoles).toBeUndefined();
+    expect(authority.blockedReason).toMatch(/artifact-approval-act\.ts/);
+    expect(authority.blockedReason).toMatch(/P-18/);
+    for (const role of [undefined, 'admin', 'approver', 'reviewer', 'ra_lead', 'qa_lead', 'submission_lead']) {
+      expect(isActorAuthorized(authority, role)).toEqual({ authorized: false, reason: authority.blockedReason });
+    }
+  });
+
+  // The fallback for an unlisted action carries a blockedReason but no role
+  // list, and isActorAuthorized admitted every role, a missing one included.
+  test('an action the map does not list is refused for every role', () => {
+    const authority = getAuthorityForAction('some-unlisted-action' as any);
+    for (const role of [undefined, 'admin', 'approver', 'ra_lead', 'viewer']) {
+      const check = isActorAuthorized(authority, role);
+      expect(check.authorized).toBe(false);
+      expect(check.reason).toBe('Unknown governed action: some-unlisted-action');
+    }
+  });
+
+  // What the callers ask (authoring-actions promote-to-review and
+  // judge-dossier-ready, contradiction-resolution-bridge, the decision
+  // lifecycle) answers as it did before the repair above.
+  test.each([
+    ['promote-to-review', undefined, true], ['promote-to-review', 'author', true],
+    ['judge-dossier-ready', 'submission_lead', true], ['judge-dossier-ready', 'ra_lead', false],
+    ['judge-dossier-ready', undefined, false], ['judge-module-ready', 'ra_lead', true],
+    ['explain-preflight-results', undefined, true], ['prepare-correction-draft', 'viewer', true],
+    ['prepare-harmonization-suggestion', undefined, true], ['create-contradiction-consequence', 'author', true],
+    ['execute-multi-object-correction', 'admin', false],
+  ] as const)('%s for %s: authorized %s, as before', (action, role, authorized) => {
+    expect(isActorAuthorized(getAuthorityForAction(action), role).authorized).toBe(authorized);
   });
 
   test('contradiction consequence requires confirmation', () => {

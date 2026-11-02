@@ -1,0 +1,6 @@
+# Review: shellQuietChrome's crumbs case against the builder's app-v2.css (before the review's fix); HEAD f0ade0abc + D1-2's sources in a scratch export; 2026-11-02T01:02:11Z
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the crumbs: 13px --text-300, the page --text-100 at 500, the project a quiet button that hovers --bg-100, unclipped
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ [ 'overflow:hidden' ], '', '' ] to deeply equal [ [ 'overflow:hidden', …(1) ], …(2) ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 43 skipped (44)

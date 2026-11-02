@@ -202,7 +202,7 @@ function StagedRow({ row, folders, repeated, busy, onChange, onRemove }: {
         <div className="vd-stage-h">
           <span className="vd-stage-path mono" id={`${id}-path`}>{row.path}</span>
           {!stored && (
-            <button type="button" className="sp-ask" data-remove onClick={onRemove} aria-disabled={busy || undefined}
+            <button type="button" className="btn ghost small" data-remove onClick={onRemove} aria-disabled={busy || undefined}
               aria-label={`Remove ${row.path} from this upload`}>
               {I.close} Remove
             </button>
@@ -308,7 +308,7 @@ export function VaultUploadStaging({ staging, folders, uploading, onChange, onRe
 
   return (
     <section className="vd-stage" aria-labelledby={headingId} data-testid="vault-upload-staging" ref={panel}>
-      <h3 className="vd-d-seclbl" id={headingId} ref={heading} tabIndex={-1}>Files to upload</h3>
+      <h3 className="vd-stage-t" id={headingId} ref={heading} tabIndex={-1}>Files to upload</h3>
       <div className="sr-only" role="status" aria-live="polite" data-testid="vault-stage-live">{announcement(staging, uploading)}</div>
       <p className="vd-d-idx">
         Say what each file is before it is recorded. A blank field takes the Vault&rsquo;s default. A folder chosen here is recorded as filed by you; without one, the Vault suggests a folder for you to confirm, or leaves the file Unfiled.
@@ -331,12 +331,13 @@ export function VaultUploadStaging({ staging, folders, uploading, onChange, onRe
       )}
       <div className="vd-stage-actions">
         {pending.length > 0 || uploading ? (
-          <button type="button" className="sp-primary" onClick={() => { if (!uploading) onUpload(); }} aria-disabled={uploading || undefined}
+          /* The list's submit: the one other orange while files wait here (D6 §C.4 step 10's rule for a form inside the work area). */
+          <button type="button" className="btn primary small" onClick={() => { if (!uploading) onUpload(); }} aria-disabled={uploading || undefined}
             data-testid="vault-stage-upload">
             {I.upload} {uploading ? 'Uploading…' : `${retrying ? 'Try again for' : 'Upload'} ${pending.length} file${pending.length === 1 ? '' : 's'}`}
           </button>
         ) : null}
-        <button type="button" className="sp-ask" ref={closeButton} onClick={() => { if (!uploading) onDone(); }} aria-disabled={uploading || undefined}>
+        <button type="button" className="btn ghost small" ref={closeButton} onClick={() => { if (!uploading) onDone(); }} aria-disabled={uploading || undefined}>
           {anyStored ? 'Close' : 'Cancel'}
         </button>
       </div>

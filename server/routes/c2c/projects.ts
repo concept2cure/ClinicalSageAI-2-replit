@@ -96,6 +96,7 @@ import { projectWorkspaceInput, ProjectWorkspaceInputError } from './project-int
 import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access';
 import { PROJECT_CARD_LIST_SQL, PROJECT_CARD_CREATED_SQL, portfolioAnchorJson, portfolioClientFilter, portfolioWorkstreamFilter, portfolioPathwayFilter, readPortfolioClients, readPortfolioCounts } from '../../services/c2c/project-portfolio';
 import { installProjectSettingsRoutes } from './project-settings';
+import { CharterObjectivesRefusal, objectiveStatedAtCreation, recordObjectiveAtCreation, type RecordedObjectives } from '../../services/c2c/charter-objectives';
 import { installProjectRecordedContextRoutes } from './project-recorded-context';
 
 /** A filing the market verdict does not offer, found once the scaffold has
@@ -110,8 +111,13 @@ class FilingNotOfferedError extends Error {
   }
 }
 
-function sendFilingNotOffered(res: Response, offer: FilingOffer) {
-  return res.status(422).json({ error: 'FILING_NOT_OFFERED', message: offer.reason, marketSupport: offer });
+/** The refusal says the filing's own reason where the verdict states one for it
+ *  (offer.reasonByFiling: the QOS, a drug substance or a drug product at ICH /
+ *  Global; D2 3b Slice 4, 2026-11-01). `marketSupport` is the verdict's offer as
+ *  stated. */
+function sendFilingNotOffered(res: Response, offer: FilingOffer, submissionTypeId: string | null) {
+  const own = offer.reasonByFiling?.[resolveFilingCatalogEntry(submissionTypeId)?.registryId ?? ''];
+  return res.status(422).json({ error: 'FILING_NOT_OFFERED', message: own ?? offer.reason, marketSupport: offer });
 }
 
 // People are named through public.actor_name, not a join on users: since users
@@ -644,6 +650,16 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+/** The creation's audit row names its objective (S1) by reference: the charter's own rows hold the text, which may be sponsor-confidential. */
+function objectiveAuditDetails(recorded: RecordedObjectives | null): Record<string, unknown> {
+  return recorded ? {
+    objective_charter_id: recorded.charterId,
+    objective_section_id: recorded.sectionId,
+    objective_version: recorded.version,
+    objective_content_hash: recorded.contentHash,
+  } : {};
+}
+
 // ── POST /api/c2c/projects ────────────────────────────────────────────────────
 //
 // Create a real regulatory program from the v2 New-Project wizard. Persists to
@@ -662,7 +678,12 @@ router.get('/', async (req: Request, res: Response) => {
 //
 // Body (from the wizard): { name, productName?, programType, productType?,
 // primaryAgency?, submissionTypeId?, indication?, targetSubmissionDate?,
-// teamMembers?, code? }. Org-scoped; the creating user becomes the lead.
+// teamMembers?, code?, objective?, objectiveSources? }. Org-scoped; the
+// creating user becomes the lead. A stated objective is version 1 of the
+// project charter's objectives section, recorded in this creation's transaction
+// (S1, ONE_DESIGN_PLAN.md §1a); none stated, nothing recorded. 400 on a
+// malformed objective, before anything is written; the charter module's own
+// refusal (409), after rolling the creation back.
 // 400 on a missing/invalid required field; 503 PENDING_STORE on 42P01 or an
 // absent anchor column; 409 PROJECT_RECORD_UNAVAILABLE when no workspace can be
 // chosen for the program's record; 422 FILING_NOT_OFFERED, with the reason, for
@@ -748,7 +769,7 @@ router.post('/', async (req: Request, res: Response) => {
     continuingLifecycle: applicationNumber != null,
   };
   const offer = marketOfferGivenOutline(marketInput, true);
-  if (offer.tier === 'not_offered') return sendFilingNotOffered(res, offer);
+  if (offer.tier === 'not_offered') return sendFilingNotOffered(res, offer, submissionTypeId);
   // The product class: the filing type's when it fixes one (a 510(k) is a
   // device, a BLA a biologic), the person's when it does not (an IND, CTA, MAA,
   // J-NDA or DMF covers drugs and biologics alike — P-21). A device filing may
@@ -756,6 +777,16 @@ router.post('/', async (req: Request, res: Response) => {
   const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase(), submissionTypeId);
   if ('refusal' in classDecision) return send400(res, classDecision.refusal);
   const { productType } = classDecision;
+
+  // The project's objective, when one is stated (S1; ONE_DESIGN_PLAN.md §1a):
+  // checked here, before anything is written, by the charter module's own
+  // schema, and recorded below in this creation's transaction. A malformed one
+  // refuses the creation, so what was typed is never dropped; the refusal
+  // echoes none of it.
+  const objectiveAtCreation = objectiveStatedAtCreation(body);
+  if ('refusal' in objectiveAtCreation) return send400(res, objectiveAtCreation.refusal);
+  const statedObjective = objectiveAtCreation.stated;
+  const objectiveProgram = { programType, primaryAgency, productName };
 
   // Licensed program count. The org's `max_projects` entitlement was sold and
   // billed but never checked on this path, so the wizard could create programs
@@ -925,6 +956,7 @@ router.post('/', async (req: Request, res: Response) => {
   const applicationType = DRUG_APPLICATION_TYPES[programType] ?? null;
   let submissionSpine: { id: number; created: boolean } | null = null;
   let projectAnchor: Awaited<ReturnType<typeof requireProgramProjectAnchor>> | null = null;
+  let objectiveRecord: RecordedObjectives | null = null;
   let commitStarted = false;
   let committed = false;
   let discardError: Error | undefined;
@@ -1012,6 +1044,20 @@ router.post('/', async (req: Request, res: Response) => {
         metadata: registryContextForProgram({ submissionTypeId, programType, primaryAgency }),
       });
 
+      // The objective of record, SAME transaction (S1). The charter module
+      // writes it exactly as the charter route's PUT does: the charter started
+      // from this program, the objectives section at version 1 on its hash
+      // chain, and its append-only charter_audit_events rows with the reason.
+      // It needs the project record above (project_charters.project_id). Any
+      // failure rolls the whole creation back: no project without the
+      // objective it was given.
+      if (statedObjective) {
+        objectiveRecord = await recordObjectiveAtCreation(client, {
+          orgId, userId, projectId: projectAnchor.projectId, program: objectiveProgram, body: statedObjective,
+          ipAddress: req.ip ?? null, userAgent: req.get('user-agent') ?? null,
+        });
+      }
+
       // Domain audit row for the creation, in the SAME transaction as the
       // insert: a created program that left no audit trace is not a record a
       // regulated tenant can defend, and rolling back the program is the only
@@ -1048,6 +1094,7 @@ router.post('/', async (req: Request, res: Response) => {
         project_anchor_id: projectAnchor.projectId,
         project_anchor_created: projectAnchor.created,
         client_workspace_id: projectAnchor.clientWorkspaceId,
+        ...objectiveAuditDetails(objectiveRecord),
       };
       await writeProgramAudit(client, {
         orgId, userId, programId: newId,
@@ -1105,6 +1152,8 @@ router.post('/', async (req: Request, res: Response) => {
         // The program's project record, written in the same transaction.
         projectAnchorId: projectAnchor.projectId,
         projectAnchorCreated: projectAnchor.created,
+        // The objective it was given, recorded in the same transaction.
+        ...(objectiveRecord ? { objective: { charterId: objectiveRecord.charterId, sectionId: objectiveRecord.sectionId, version: objectiveRecord.version } } : {}),
       },
     });
   } catch (err: unknown) {
@@ -1121,13 +1170,17 @@ router.post('/', async (req: Request, res: Response) => {
           clientWorkspaceName: projectAnchor?.clientWorkspaceName } : {}),
       });
     }
-    if (err instanceof FilingNotOfferedError) return sendFilingNotOffered(res, err.offer);
+    if (err instanceof FilingNotOfferedError) return sendFilingNotOffered(res, err.offer, submissionTypeId);
+    if (err instanceof CharterObjectivesRefusal) return res.status(err.status).json({ error: err.code, message: err.message });
     if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
     if (err instanceof ProgramAnchorUnavailableError) {
       return sendProjectRecordRefusal(err, req, res, orgId);
     }
-    if ((err as { code?: string })?.code === '42P01') {
-      const pending = await pendingStore(err, 'creating the project', req);
+    // A drizzle write in this transaction (the objective, S1) wraps the driver's
+    // error and carries its code on `.cause`; a missing store is still named.
+    const sqlError = (err as { code?: string })?.code ? err : (err as { cause?: unknown })?.cause;
+    if ((sqlError as { code?: string } | undefined)?.code === '42P01') {
+      const pending = await pendingStore(sqlError, 'creating the project', req);
       if (pending) return res.status(503).json(pending);
       return serverError(res, logger, 'creating the project', err);
     }

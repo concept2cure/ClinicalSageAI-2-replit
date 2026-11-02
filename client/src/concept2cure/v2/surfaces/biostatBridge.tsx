@@ -204,9 +204,12 @@ export function StudyDesignCard({ designs, selectedId, onSelect }: {
   onSelect: (studyId: string) => void;
 }) {
   return (
-    <div className="pj-card">
-      <div className="pj-card-h"><span className="t">Study design</span><span className="s">{scopeLabel()}</span></div>
-      <div className="pj-card-b" style={{ padding: 8 }}>
+    <section className="pj-sec" aria-label="Study design">
+      <div className="pj-sec-h">
+        <h2>Study design</h2>
+        <span className="sec-sub">{scopeLabel()}</span>
+      </div>
+      <>
         {designs.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '12px 10px' }}>Loading study designs…</div>
         ) : designs.error ? (
@@ -217,9 +220,12 @@ export function StudyDesignCard({ designs, selectedId, onSelect }: {
             hint="Design a study in the study-design spine (or the protocol workspace) and it appears here to load into the engine. The presets below are worked examples, not your study." />
         ) : (
           <div className="sp-list">
+            {/* Selection is the attribute the row already sets, styled in CSS
+                ([data-work-area] .sp-row[aria-pressed="true"], D5-0's block),
+                not an inline orange tint — it was one of this page's four
+                orange fills, on a row that is a choice and not an act. */}
             {designs.rows.map((d) => (
-              <button key={d.studyId} className="sp-row"
-                style={{ width: '100%', textAlign: 'left', ...(selectedId === d.studyId ? { background: 'var(--accent-000)', boxShadow: 'inset 0 0 0 1px var(--accent-muted)' } : {}) }}
+              <button key={d.studyId} type="button" className="sp-row"
                 aria-pressed={selectedId === d.studyId}
                 onClick={() => onSelect(d.studyId)} title={`Load "${d.title}" into the engine`}>
                 <span className="sp-row-b">
@@ -228,16 +234,17 @@ export function StudyDesignCard({ designs, selectedId, onSelect }: {
                   {/* Labelled, and under the title rather than beside it: in the
                       300px column a labelled chip beside the title squeezed it
                       to a word per line. */}
-                  <span style={{ display: 'block', marginTop: 4 }}>
+                  <span className="bs-row-chip">
                     <span className={'rd-chip tone-' + readinessTone(d.readiness.percent)} title="Share of applicable statistical checks that pass">Statistical readiness {d.readiness.percent}%</span>
                   </span>
                 </span>
+                {selectedId === d.studyId && <span className="bs-row-check" aria-hidden="true">{I.check}</span>}
               </button>
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </>
+    </section>
   );
 }
 

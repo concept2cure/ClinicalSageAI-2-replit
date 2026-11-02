@@ -1,0 +1,738 @@
+# npx vitest run --config vitest.config.ts --maxWorkers=1 client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx
+# at HEAD 505449d7aa on concept2cure-v2, 2026-11-01T22:00Z, test file uncommitted (written first), no D1-4 change yet
+# exit code: 1
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > is exported with the words the tray has always asked 12ms
+   → expected undefined to be 'Triage everything assigned to me acro…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > the triage row asks exactly it, as a quiet ghost button led by the ✻ 280ms
+   → expected [ 'tt-triage' ] to deeply equal ArrayContaining{…}
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the header (D1 §D1.G step 1) > says "none overdue" rather than counting zero, and closes with a D0 button 5062ms
+   → expected '2 assigned · 0 overdue' to be '2 assigned · none overdue' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <button
+        aria-expanded="true"
+        aria-label="Your work — 2 items waiting"
+        class="tt-trigger tb-btn"
+        title="Your tasks, approvals and messages"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-bell"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
+          />
+          <path
+            d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
+          />
+        </svg>
+        <span
+          class="tt-badge"
+        >
+          2
+        </span>
+      </button>
+      <div
+        class="tt-scrim"
+      />
+      <aside
+        aria-label="Your work"
+        aria-modal="true"
+        class="tt-panel"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="tt-head"
+        >
+          <b>
+            Your work
+          </b>
+          <span
+            class="tt-head-meta"
+          >
+            2 assigned · 0 overdue
+          </span>
+          <button
+            aria-label="Close"
+            class="tt-close"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="tt-scroll"
+        >
+          <div
+            class="tt-group"
+          >
+            <div
+              class="tt-group-head"
+            >
+              Assigned to you
+            </div>
+            <button
+              class="tt-item"
+            >
+              <span
+                aria-hidden="true"
+                class="tt-dot tt-dot-ok"
+              />
+              <span
+                class="tt-item-body"
+              >
+                <span
+                  class="tt-item-title"
+                >
+                  Write 3.2.S.4.1
+                </span>
+                <span
+                  class="tt-item-sub"
+                >
+                  C2C-101 · Authoring · due in 14d
+                </span>
+              </span>
+              <span
+                class="tt-go"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-arrow-right"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M5 12h14"
+                  />
+                  <path
+                    d="m12 5 7 7-7 7"
+                  />
+                </svg>
+              </span>
+            </button>
+            <button
+              class="tt-item"
+            >
+              <span
+                aria-hidden="true"
+                class="tt-dot tt-dot-ok"
+              />
+              <span
+                class="tt-item-body"
+              >
+                <span
+                  class="tt-item-title"
+                >
+                  Write 3.2.P.8
+                </span>
+                <span
+                  class="tt-item-sub"
+                >
+                  C2C-101 · Authoring · due in 14d
+                </span>
+              </span>
+              <span
+                class="tt-go"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-arrow-right"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M5 12h14"
+                  />
+                  <path
+                    d="m12 5 7 7-7 7"
+                  />
+                </svg>
+              </span>
+            </button>
+          </div>
+          <div
+            class="tt-group"
+          >
+            <div
+              class="tt-group-head"
+            >
+              Messages & alerts 
+              <button
+                class="btn ghost small"
+                type="button"
+              >
+                Notification preferences
+              </button>
+            </div>
+            <div
+              class="tt-empty"
+            >
+              No unread messages or alerts.
+            </div>
+          </div>
+        </div>
+        <button
+          class="tt-foot"
+        >
+          Open the task board 
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-right"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="m12 5 7 7-7 7"
+            />
+          </svg>
+        </button>
+      </aside>
+    </div>
+  </body>
+</html>
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the header (D1 §D1.G step 1) > still gives the number when something is late 49ms
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > rows: colour only where something is late or blocked (D1 §D1.G step 3) > a row due in 14 days keeps its dot’s place but shows none; late and blocked rows keep theirs 61ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > shows a severity dot only for a warning or a critical notice 39ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > draws Mark read, the open button and the preferences button with D0’s buttons 42ms
+   → expected [ 'tt-read' ] to deeply equal ArrayContaining ["btn", "small"]
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > finds the tray block 0ms
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > uses orange only for the ✻ 1ms
+   → expected [ '.c2c-v2 .tt-triage', …(4) ] to deeply equal []
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > sets no text under the 12px floor 1ms
+   → expected [ …(4) ] to deeply equal []
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > keeps the group heads in sentence case and hides a quiet dot 1ms
+   → expected [] to deeply equal [ 'none' ]
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > gives the panel title 16px and the counts line 13px 1ms
+   → expected [ '14px' ] to deeply equal [ '16px' ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > is exported with the words the tray has always asked
+AssertionError: expected undefined to be 'Triage everything assigned to me acro…' // Object.is equality
+
+- Expected:
+"Triage everything assigned to me across all projects and tell me what to do first"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:95:24
+     93| describe('TRIAGE_ASK: one source for the tray, Home and the task board…
+     94|   it('is exported with the words the tray has always asked', () => {
+     95|     expect(TRIAGE_ASK).toBe('Triage everything assigned to me across a…
+       |                        ^
+     96|   });
+     97|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > the triage row asks exactly it, as a quiet ghost button led by the ✻
+AssertionError: expected [ 'tt-triage' ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   "btn",
+-   "ghost",
++ [
+    "tt-triage",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:104:43
+    102|     const panel = await openTray();
+    103|     const triage = within(panel).getByRole('button', { name: 'Triage m…
+    104|     expect(triage.className.split(/\s+/)).toEqual(expect.arrayContaini…
+       |                                           ^
+    105|     const spark = triage.querySelector('.tt-spark');
+    106|     expect(spark?.textContent).toBe('✻');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the header (D1 §D1.G step 1) > says "none overdue" rather than counting zero, and closes with a D0 button
+AssertionError: expected '2 assigned · 0 overdue' to be '2 assigned · none overdue' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <button
+        aria-expanded="true"
+        aria-label="Your work — 2 items waiting"
+        class="tt-trigger tb-btn"
+        title="Your tasks, approvals and messages"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-bell"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
+          />
+          <path
+            d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
+          />
+        </svg>
+        <span
+          class="tt-badge"
+        >
+          2
+        </span>
+      </button>
+      <div
+        class="tt-scrim"
+      />
+      <aside
+        aria-label="Your work"
+        aria-modal="true"
+        class="tt-panel"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="tt-head"
+        >
+          <b>
+            Your work
+          </b>
+          <span
+            class="tt-head-meta"
+          >
+            2 assigned · 0 overdue
+          </span>
+          <button
+            aria-label="Close"
+            class="tt-close"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="tt-scroll"
+        >
+          <div
+            class="tt-group"
+          >
+            <div
+              class="tt-group-head"
+            >
+              Assigned to you
+            </div>
+            <button
+              class="tt-item"
+            >
+              <span
+                aria-hidden="true"
+                class="tt-dot tt-dot-ok"
+              />
+              <span
+                class="tt-item-body"
+              >
+                <span
+                  class="tt-item-title"
+                >
+                  Write 3.2.S.4.1
+                </span>
+                <span
+                  class="tt-item-sub"
+                >
+                  C2C-101 · Authoring · due in 14d
+                </span>
+              </span>
+              <span
+                class="tt-go"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-arrow-right"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M5 12h14"
+                  />
+                  <path
+                    d="m12 5 7 7-7 7"
+                  />
+                </svg>
+              </span>
+            </button>
+            <button
+              class="tt-item"
+            >
+              <span
+                aria-hidden="true"
+                class="tt-dot tt-dot-ok"
+              />
+              <span
+                class="tt-item-body"
+              >
+                <span
+                  class="tt-item-title"
+                >
+                  Write 3.2.P.8
+                </span>
+                <span
+                  class="tt-item-sub"
+                >
+                  C2C-101 · Authoring · due in 14d
+                </span>
+              </span>
+              <span
+                class="tt-go"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-arrow-right"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M5 12h14"
+                  />
+                  <path
+                    d="m12 5 7 7-7 7"
+                  />
+                </svg>
+              </span>
+            </button>
+          </div>
+          <div
+            class="tt-group"
+          >
+            <div
+              class="tt-group-head"
+            >
+              Messages & alerts 
+              <button
+                class="btn ghost small"
+                type="button"
+              >
+                Notification preferences
+              </button>
+            </div>
+            <div
+              class="tt-empty"
+            >
+              No unread messages or alerts.
+            </div>
+          </div>
+        </div>
+        <button
+          class="tt-foot"
+        >
+          Open the task board 
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-right"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="m12 5 7 7-7 7"
+            />
+          </svg>
+        </button>
+      </aside>
+    </div>
+  </body>
+</html>
+
+Expected: "2 assigned · none overdue"
+Received: "2 assigned · 0 overdue"
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:119:83
+    117|     render(<TaskTray onNav={vi.fn()} />);
+    118|     const panel = await openTray();
+    119|     await waitFor(() => expect(panel.querySelector('.tt-head-meta')?.t…
+       |                                                                                   ^
+    120|     expect(panel.querySelector('.tt-head b')?.textContent).toBe('Your …
+    121|     const close = within(panel).getByRole('button', { name: 'Close' });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > rows: colour only where something is late or blocked (D1 §D1.G step 3) > a row due in 14 days keeps its dot’s place but shows none; late and blocked rows keep theirs
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:147:52
+    145|     expect(calm.textContent).toContain('due in 14d');
+    146|     expect(dotOf(calm)).toBeTruthy();
+    147|     expect(dotOf(calm).hasAttribute('data-quiet')).toBe(true);
+       |                                                    ^
+    148|
+    149|     const late = rowOf('Late row');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > shows a severity dot only for a warning or a critical notice
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:173:70
+    171|     await openTray();
+    172|     const dot = async (title: string) => ((await screen.findByText(tit…
+    173|     expect((await dot('Routine notice')).hasAttribute('data-quiet')).t…
+       |                                                                      ^
+    174|     expect((await dot('Warning notice')).hasAttribute('data-quiet')).t…
+    175|     expect((await dot('Warning notice')).classList.contains('tt-dot-wa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > draws Mark read, the open button and the preferences button with D0’s buttons
+AssertionError: expected [ 'tt-read' ] to deeply equal ArrayContaining ["btn", "small"]
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   "btn",
+-   "small",
++ [
++   "tt-read",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:186:31
+    184|     const classes = (el: HTMLElement) => el.className.split(/\s+/);
+    185|     const markRead = await within(panel).findByRole('button', { name: …
+    186|     expect(classes(markRead)).toEqual(expect.arrayContaining(['btn', '…
+       |                               ^
+    187|     expect(markRead.getAttribute('title')).toBe('Mark read');
+    188|     const open = within(panel).getByRole('button', { name: 'Open linke…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > uses orange only for the ✻
+AssertionError: expected [ '.c2c-v2 .tt-triage', …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   ".c2c-v2 .tt-triage",
++   ".c2c-v2 .tt-triage:hover",
++   ".c2c-v2 .tt-triage svg",
++   ".c2c-v2 .tt-item:hover .tt-go",
++   ".c2c-v2 .tt-foot:hover",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:226:20
+    224|   it('uses orange only for the ✻', () => {
+    225|     const orange = OWN.filter((r) => /--accent/.test(r.decls) && r.sel…
+    226|     expect(orange).toEqual([]);
+       |                    ^
+    227|     expect(decl('.c2c-v2 .tt-spark', 'color')).toEqual(['var(--accent-…
+    228|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > sets no text under the 12px floor
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   ".c2c-v2 .tt-head-meta { font-size: 11px }",
++   ".c2c-v2 .tt-item-sub { font-size: 11px }",
++   ".c2c-v2 .tt-empty { font-size: 11.5px }",
++   ".c2c-v2 .tt-more { font-size: 11.5px }",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:233:19
+    231|     const small = OWN.flatMap((r) => [...r.decls.matchAll(/font-size\s…
+    232|       .filter((m) => !(px(m[1]) >= 12)).map((m) => `${r.sel} { font-si…
+    233|     expect(small).toEqual([]);
+       |                   ^
+    234|   });
+    235|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > keeps the group heads in sentence case and hides a quiet dot
+AssertionError: expected [] to deeply equal [ 'none' ]
+
+- Expected
++ Received
+
+- [
+-   "none",
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:237:62
+    235|
+    236|   it('keeps the group heads in sentence case and hides a quiet dot', (…
+    237|     expect(decl('.c2c-v2 .tt-group-head', 'text-transform')).toEqual([…
+       |                                                              ^
+    238|     expect(decl('.c2c-v2 .tt-dot[data-quiet]', 'visibility')).toEqual(…
+    239|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > gives the panel title 16px and the counts line 13px
+AssertionError: expected [ '14px' ] to deeply equal [ '16px' ]
+
+- Expected
++ Received
+
+  [
+-   "16px",
++   "14px",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:242:53
+    240|
+    241|   it('gives the panel title 16px and the counts line 13px', () => {
+    242|     expect(decl('.c2c-v2 .tt-head b', 'font-size')).toEqual(['16px']);
+       |                                                     ^
+    243|     expect(decl('.c2c-v2 .tt-head-meta', 'font-size')).toEqual(['var(-…
+    244|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)
+   Start at  22:00:15
+   Duration  7.71s (transform 850ms, setup 221ms, import 1.04s, tests 5.56s, environment 624ms)
+

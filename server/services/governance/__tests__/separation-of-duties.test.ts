@@ -104,6 +104,24 @@ describe('authorship is a set from the record’s history, not one mutable colum
     expect(h.calls[0].sql).toContain('organization_id = $2');
   });
 
+  // 2026-11-01 (F1, decision P-18): a Concept2Cure artifact was not modelled,
+  // so nothing could ask whether its signer wrote it.
+  it('a Concept2Cure artifact: its creator and every version author, by external id, org-scoped', async () => {
+    given({
+      'SELECT created_by_id FROM concept2cure_artifacts': [{ created_by_id: 21 }],
+      'FROM concept2cure_artifact_versions': [{ created_by_id: 22 }],
+    });
+    await expect(resolveTargetAuthors('artifact:artifact_abc', 7)).resolves.toEqual({
+      modelled: true,
+      authors: [21, 22],
+      sources: ['artifact creator', 'artifact version ledger'],
+    });
+    for (const c of h.calls) expect(c.params).toEqual(['artifact_abc', 7]);
+    expect(h.calls[1].sql).toMatch(/v\.organization_id = \$2/);
+    await expect(assertSignerIsNotAuthor('artifact:artifact_abc', 7, 22, { meaning: 'approval' })).rejects.toBeInstanceOf(SeparationOfDutiesError);
+    await expect(assertSignerIsNotAuthor('artifact:artifact_abc', 7, 23, { command: 'lock' })).resolves.toMatchObject({ checked: true });
+  });
+
   it('blocker authorship uses the real org column (org_id, not organization_id)', async () => {
     given({ 'FROM c2c_blockers': [{ owner_user_id: 13 }] });
     await resolveTargetAuthors('blocker:BLK-1', 2);

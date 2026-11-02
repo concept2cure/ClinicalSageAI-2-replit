@@ -549,13 +549,18 @@ export function buildSuggestedActions(
       break;
     case 'csr_report':
       actions.push(
-        { label: 'Generate CSR Draft', actionType: 'generate_document', description: "Create a Clinical Study Report from collected data (generate_document with document_type 'csr'; the synopsis is its first section)" },
+        // Rule 2 audit S6b: a CSR is drafted per section from a retained run's
+        // engine tables, never generated from the interview's answers.
+        { label: 'Draft the CSR from the run', actionType: 'get_csr_section_evidence', description: "Read each section's engine tables from a retained Submission Center run (get_csr_section_evidence), then draft that section in the project's CSR document (draft_authoring_document)" },
       );
       break;
     case 'ind_submission':
       actions.push(
         { label: 'Draft an IND Section', actionType: 'draft_authoring_document', description: 'Look up what the CTD section must contain (get_document_section_requirements), then draft it as an authoring document in the open project (draft_authoring_document; batch_draft_sections for several sections)' },
-        { label: 'Author IND Module 2 Narrative', actionType: 'plan_ind_module_authoring', description: 'Author the Module 2.5 Clinical Overview or 2.7 Clinical Summary from the collected facts (plan_ind_module_authoring)' },
+        // Rule 2 audit S6: Module 2.5 and 2.7 are composed from the program's
+        // completed CSRs, never from the interview's answers.
+        { label: 'Draft Clinical Overview (2.5)', actionType: 'draft_clinical_overview_m2_5', description: "Compose the Module 2.5 Clinical Overview from the program's completed CSRs; with none, it returns the 2.5 outline (draft_clinical_overview_m2_5)" },
+        { label: 'Draft Clinical Summary (2.7)', actionType: 'draft_clinical_summary_m2_7', description: "Compose 2.7.1 to 2.7.4 of the Module 2.7 Clinical Summary from the program's completed CSRs; with none it composes nothing, and get_document_template with template_id clinical_summary gives the 2.7 outline (draft_clinical_summary_m2_7)" },
       );
       break;
     case 'sop_development':
@@ -565,19 +570,20 @@ export function buildSuggestedActions(
       break;
     case 'device_510k':
       actions.push(
-        { label: 'Generate 510(k) Document', actionType: 'generate_document', description: "Create the 510(k) submission draft (generate_document with document_type '510k')" },
+        { label: 'Write the eSTAR sections', actionType: 'write_kit_section', description: "Write each eSTAR section of the project's 510(k) (write_kit_section); the 510(k) Summary is compose_510k_summary" },
         { label: 'Draft SE Comparison', actionType: 'draft_510k_substantial_equivalence', description: 'Build the Substantial Equivalence comparison structure against the chosen predicate (draft_510k_substantial_equivalence)' },
       );
       break;
     case 'cer_report':
       // Both actionTypes name REAL registered AnA tools (the old
       // generate_cer / generate_lit_search labels had no handler anywhere —
-      // dead affordances). generate_document accepts document_type 'cer';
-      // search_literature + record_literature run and persist the systematic
-      // search. Guarded by the suggested-actions test in
-      // __tests__/intelligence-flow-suggested-actions.test.ts.
+      // dead affordances). The CER is the device's stored CER, which
+      // assess_stored_cer reads (generate_document no longer writes one from
+      // the interview, Rule 2 audit S6b); search_literature + record_literature
+      // run and persist the systematic search. Guarded by the suggested-actions
+      // test in __tests__/intelligence-flow-suggested-actions.test.ts.
       actions.push(
-        { label: 'Generate CER Draft', actionType: 'generate_document', description: "Create the Clinical Evaluation Report draft from collected data (generate_document with document_type 'cer')" },
+        { label: 'Assess the stored CER', actionType: 'assess_stored_cer', description: "Assess the Clinical Evaluation Report stored for the device (assess_stored_cer); the CER itself is written in the device's CER workspace" },
         { label: 'Run & Record Literature Search', actionType: 'search_literature', description: 'Run the systematic PubMed search (search_literature) and record the relevant hits to the corpus (record_literature)' },
       );
       break;
@@ -591,7 +597,8 @@ export function buildSuggestedActions(
       break;
     case 'device_pma':
       actions.push(
-        { label: 'Generate PMA Document', actionType: 'generate_document', description: "Create the PMA submission draft (generate_document with document_type 'pma')" },
+        // P-55 (R-7): generating a PMA is withheld until a PMA record path exists.
+        { label: 'Write the PMA modules', actionType: 'write_kit_section', description: "Write each PMA module into the project's kit (write_kit_section, pma-module-1 to pma-module-6), where a person reviews it" },
         { label: 'Assess PMA Filing Readiness', actionType: 'advise_pma_readiness', description: 'Report completeness across the 21 CFR 814.20 module structure and what is still missing (advise_pma_readiness)' },
       );
       break;
@@ -601,7 +608,7 @@ export function buildSuggestedActions(
       // projects it onto the register write paths that feed Module 3.
       actions.push(
         { label: 'Commit Answers to the CMC Registers', actionType: 'commit_intelligence_flow', description: 'Record the interview answers as CMC register records (container closure, manufacturing processes, formulation, characterisation, drug substance/product) so they feed Module 3 (commit_intelligence_flow with the session_id)' },
-        { label: 'Generate CMC Module 3', actionType: 'generate_document', description: "Draft the CTD Module 3 Quality section from the recorded registers (generate_document with document_type 'ctd_module3')" },
+        { label: 'Open CMC / Module 3', actionType: 'navigate_to', description: 'Open CMC / Module 3 to compile Module 3 from the recorded registers, approve each section and place it into the submission (navigate_to)' },
         { label: 'Determine Specification Tests', actionType: 'set_specifications', description: 'Determine the required specification tests and acceptance criteria per ICH Q6A/Q6B for this product (set_specifications)' },
       );
       break;
@@ -650,7 +657,7 @@ export function buildSuggestedActions(
   actions.push({
     label: 'Run FDA War Game',
     actionType: 'start_war_game',
-    description: 'Pressure-test this document against FDA auditor scrutiny',
+    description: "Pressure-test this interview against FDA auditor scrutiny (start_war_game with the interview's session_id)",
   });
 
   return actions;

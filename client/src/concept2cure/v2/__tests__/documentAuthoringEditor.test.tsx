@@ -14,7 +14,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 /* The real class. The mock below spreads `importOriginal`, so this is the
    same ApiRequestError the transport actually throws — which is the point:
    the fixture has to fail the way production fails. */
@@ -162,9 +162,9 @@ describe('DocumentAuthoring — real editable canvas', () => {
     fireEvent.change(screen.getByTestId('change-reason'), {
       target: { value: 'Corrected the substance description.' },
     });
-    // The header Save button enables once the dirty state propagates.
-    const saveBtn = within(screen.getByRole('group', { name: 'Save and sign' }))
-      .getByRole('button', { name: /^Save(?:d)?$/i }) as HTMLButtonElement;
+    // The bar's Save button enables once the dirty state propagates (D4-2: the
+    // "Save and sign" group is gone; Save is in the editor's one bar).
+    const saveBtn = screen.getByTestId('save-section') as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);
 
@@ -216,8 +216,7 @@ describe('DocumentAuthoring — real editable canvas', () => {
     fireEvent.change(screen.getByTestId('change-reason'), {
       target: { value: 'Reworded the opening paragraph.' },
     });
-    const saveBtn = within(screen.getByRole('group', { name: 'Save and sign' }))
-      .getByRole('button', { name: /^Save(?:d)?$/i }) as HTMLButtonElement;
+    const saveBtn = screen.getByTestId('save-section') as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);
 

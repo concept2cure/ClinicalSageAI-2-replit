@@ -165,6 +165,22 @@ have blessed the un-attested store as the *sanctioned* authoring surface for
 roughly 34 of a 510(k)'s 38 nodes. Refused for that reason, and the D2
 consolidation of 2026-10-17 had already refused it in code — see P-29.5.
 
+**Shipped 2026-11-02** (MDX journey slice 3, after the template vocabulary fix
+M5 that this section's ordering required). The question is asked from the
+filing's side: `filingAgreesWithBoundDocuments` (`filing-section-target.ts`)
+asks `filingAgreesWithEditing` of every editing document bound to a filing.
+Its device form, `governedDeviceFilingAgreement` (`estar-content-leaves.ts`),
+reads the same governed document the device loaders read. `/build` refuses
+409 `FILING_DIVERGED` and builds nothing. The official eSTAR refuses the
+section's attachment, and asks again at delivery. The filing-readiness and
+assembly verdicts stop saying "can file" and "producible". Only `different`
+refuses, as at the seals. The gate learned the two device section loaders it
+could not see, and found the EU technical file
+(`assemble-technical-file-from-core.ts`). Later the same day it asked too, and
+refuses 409 `FILING_DIVERGED` through `submissions.ts`. Evidence:
+`docs/evidence/MDX-JOURNEY/2026-11-02-slice-3-estar-exits-ask-the-filing/` and
+`docs/evidence/MDX-JOURNEY/2026-11-02-m3-technical-file-asks-the-filing/`.
+
 ## P-29.4 — there is no mirror write-back from the filing into the editing layer. Ever.
 
 **Decided: no, permanently, and recorded here so no later session rebuilds it.**

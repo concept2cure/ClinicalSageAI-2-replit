@@ -66,20 +66,20 @@ afterEach(() => cleanup());
 
 async function renderCanvas() {
   render(<InsightsCanvas {...PROPS} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 describe('Insights — readiness that was not computed', () => {
-  it('says so in the opener instead of printing a percentage', async () => {
+  it('says so under the page title instead of printing a percentage', async () => {
     await renderCanvas();
-    const opener = document.querySelector('.rc-opener')?.textContent ?? '';
+    const opener = document.querySelector('[data-work-area="insights"] > .ph .ph-sub')?.textContent ?? '';
     expect(opener).toMatch(/readiness is not yet computed/);
     expect(opener).not.toMatch(/% ready/);
   });
 
   it('draws no ring for a program without a readiness, and averages only the computed ones', async () => {
     await renderCanvas();
-    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+    const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
     fireEvent.change(composer, { target: { value: 'portfolio board view across all programs' } });
     fireEvent.keyDown(composer, { key: 'Enter' });
     await screen.findByText(/Portfolio — board view/);
@@ -109,7 +109,7 @@ describe('Insights — a readiness figure carrying outstanding critical gaps', (
 
   it('does not call the program ready, and states the gap count instead', async () => {
     await renderCanvas();
-    const opener = document.querySelector('.rc-opener')?.textContent ?? '';
+    const opener = document.querySelector('[data-work-area="insights"] > .ph .ph-sub')?.textContent ?? '';
     expect(opener).toMatch(/100%/);
     expect(opener).toMatch(/1 critical gap outstanding/);
     expect(opener).not.toMatch(/100% ready/);
@@ -118,7 +118,7 @@ describe('Insights — a readiness figure carrying outstanding critical gaps', (
 
   it('qualifies the figure on the regional comparison line too', async () => {
     await renderCanvas();
-    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+    const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
     fireEvent.change(composer, { target: { value: 'compare FDA and EMA markets for harmonization' } });
     fireEvent.keyDown(composer, { key: 'Enter' });
     await waitFor(() => expect(document.querySelector('.ro-dash-progline')).not.toBeNull());

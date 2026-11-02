@@ -69,6 +69,9 @@ import './surface-text-ramp.css';
 import { publishShellProject, useShellProject } from '../v2/shellProject';
 import { usePublishSurfaceContext, type SurfaceContext } from '../v2/surfaceContext';
 import { openLetterInCommunication } from '../v2/surfaces/cmcAgencyQuestions';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
+import { applySurfaceAction } from '../v2/surfaceActions';
+import type { KitDocument } from './components/DocumentsPanel';
 
 /* The id list lives in `./surfaceIds` with no component or stylesheet imports,
    so the v2 registry can read it at module scope without pulling this file —
@@ -138,14 +141,41 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
 };
 
 /**
- * The two things a user can truthfully do from any device screen. No operable
- * screen actions are advertised because none are registered for the device
- * surfaces; governed operations are proposed by AnA in conversation only.
+ * What a user can do from a device screen, as AnA is told it. Until 2026-11-01
+ * (MDX journey M2) the second line said signatures, uploads and profile changes
+ * happen "never through screen controls", and AnA repeated it, while the
+ * screens have all three: "Sign and file" on EstarFilingPanel (with the
+ * password), attachments through DossierAttachments, and DeviceProfilePanel's
+ * save. Nothing on these screens sends a filing to an agency
+ * (server/services/submission-gateways/market-support.ts says so too).
  */
-const DEVICE_SCREEN_ACTIONS: string[] = [
+export const DEVICE_SCREEN_ACTIONS: string[] = [
   "Ask AnA about what is on this screen — the registers and counts render from the org's live device data",
-  'Signatures, transmissions, uploads and profile changes are governed — AnA proposes them in conversation, never through screen controls',
+  'Record an eSTAR filing with "Sign and file", which asks for the password and binds the signature to the retained eSTAR',
+  'Upload attachments to a filing, and edit and save the device profile',
+  'Nothing on these screens sends a filing to an agency: a filing is recorded here, and the agency\'s answers are entered as they arrive',
 ];
+
+/**
+ * Where a device document row opens (MDX journey M1, 2026-11-01). Each row
+ * names its record (server/routes/mdx-engineering.ts, mdx-udi.ts):
+ *   - `art-<id>`, a governed artifact: the one editor, by title;
+ *   - `swl-<id>`, an IEC 62304 software item: the Software screen;
+ *   - a labeling document (`editor: 'label'`): the Labeling screen.
+ * null when the row names none of these; the screen then passes no handler.
+ */
+export type DeviceDocumentDestination =
+  | { kind: 'surface'; surface: 'device-software' | 'labeling' }
+  | { kind: 'document'; title: string };
+export function deviceDocumentDestination(
+  docId: string,
+  doc?: Pick<KitDocument, 'title' | 'editor'>,
+): DeviceDocumentDestination | null {
+  if (docId.startsWith('swl-')) return { kind: 'surface', surface: 'device-software' };
+  if (docId.startsWith('art-') && doc?.title) return { kind: 'document', title: doc.title };
+  if (doc?.editor === 'label') return { kind: 'surface', surface: 'labeling' };
+  return null;
+}
 
 /* No device screen is an organization-wide view now, so the host names none.
    device-udi and device-presub read the open project since 2026-10-29 (D2,
@@ -254,6 +284,21 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
    */
   /** A device letter is answered where every letter is: on its record in Communication (P-39 step 3, S2). */
   const openLetter = React.useCallback((letterId: string) => openLetterInCommunication(onNav, letterId), [onNav]);
+
+  /* A document row opens its record. A governed artifact opens in the editor
+     the way Vault and the Artifacts center open one: the
+     authoring.open-document action by title, whose misses are honest. */
+  const openDocumentRow = React.useCallback((docId: string, doc?: KitDocument) => {
+    const to = deviceDocumentDestination(docId, doc);
+    if (!to) return;
+    if (to.kind === 'surface') {
+      onNav(to.surface);
+      return;
+    }
+    const res = resolveSurfaceAction('authoring.open-document', { title: to.title });
+    if (res.ok) applySurfaceAction(res.directive, (t) => onNav(t));
+    else onNav('document-authoring');
+  }, [onNav]);
 
   const openEditor = React.useCallback(
     (section?: EditorSectionRef) => {
@@ -396,12 +441,12 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       surface = <SoftwareSurface program={programForContext} onAskAna={onAsk} />;
       break;
     case 'device-engineering':
-      surface = <EngineeringSurface key={programForContext?.id ?? 'none'} program={programForContext} onAskAna={onAsk} onPanelsContext={setEngineeringPanels} />;
+      surface = <EngineeringSurface key={programForContext?.id ?? 'none'} program={programForContext} onAskAna={onAsk} onOpenEditor={openDocumentRow} onPanelsContext={setEngineeringPanels} />;
       break;
     case 'device-udi':
       /* Keyed by the project, so a switch starts the read afresh and never
          draws the previous project's labels while the next project's read is in flight. */
-      surface = <UdiSurface key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} />;
+      surface = <UdiSurface key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} onOpenEditor={openDocumentRow} />;
       break;
     case 'device-postmarket':
       surface = <PostmarketSurface program={programForContext} onAskAna={onAsk} />;

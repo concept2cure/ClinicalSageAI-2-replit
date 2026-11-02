@@ -19,7 +19,7 @@
  * received is checked against the SHA-256 the server recorded before it is
  * saved, and that hash is stated.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { useAuthUser } from '@/services/portal/authService';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
@@ -190,7 +190,7 @@ function SealRow({ projectId, seal }: { projectId: string; seal: VaultSealShape 
           {seal.documentCount === 1 ? 'document' : 'documents'} ·{' '}
           <span className="mono" title={seal.manifestSha256}>SHA-256 {seal.manifestSha256.slice(0, 12)}…</span>
         </span>
-        <button type="button" className="sp-ask" disabled={verifying} onClick={() => void verify()} data-testid="vault-seal-verify">
+        <button type="button" className="btn ghost small" disabled={verifying} onClick={() => void verify()} data-testid="vault-seal-verify">
           {verifying ? 'Verifying…' : 'Verify'}
         </button>
       </div>
@@ -202,7 +202,7 @@ function SealRow({ projectId, seal }: { projectId: string; seal: VaultSealShape 
       )}
       {result?.verdict === 'intact' && (
         <div className="vd-seal-archive">
-          <button type="button" className="sp-ask" disabled={archiving} onClick={() => void archive()} data-testid="vault-seal-archive">
+          <button type="button" className="btn ghost small" disabled={archiving} onClick={() => void archive()} data-testid="vault-seal-archive">
             {archiving ? 'Building the archive…' : 'Download closing archive'}
           </button>
           <span className="vd-seals-note">The sealed files, the record as signed, an index, SHA256SUMS and the audit trail, in one ZIP.</span>
@@ -223,6 +223,7 @@ export function VaultSeals({ projectId }: { projectId: string }) {
   const [seals, setSeals] = useState<VaultSealShape[] | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
   const [sealing, setSealing] = useState(false);
+  const headingId = useId();
   const load = useCallback(async () => {
     setReadError(null);
     try {
@@ -239,18 +240,28 @@ export function VaultSeals({ projectId }: { projectId: string }) {
   useEffect(() => { void load(); }, [load]);
 
   return (
-    <section className="vd-seals" aria-labelledby="vault-seals-heading" data-testid="vault-seals">
-      <div className="vd-d-seclbl" id="vault-seals-heading">Seals</div>
-      <p className="vd-seals-note">
-        A seal records every current document in this Vault (its version, content hash, filing and review stage) as it stands, under
-        your electronic signature. Nothing can change a seal afterwards; anyone in the organisation can verify it.
-      </p>
-      {readError && <p role="alert" data-testid="vault-seals-error">{readError} <button type="button" className="sp-ask" onClick={() => void load()}>Try again</button></p>}
-      {seals && seals.length === 0 && <p data-testid="vault-seals-empty">This Vault has not been sealed.</p>}
+    /* A section of the Seals & fixity view (D6 §C.4 steps 10–11): the heading,
+       how many seals, and the one act, "Seal this Vault…", as its action. */
+    <section className="pj-sec" aria-labelledby={headingId} data-testid="vault-seals">
+      <div className="pj-sec-h">
+        <h2 id={headingId}>Seals</h2>
+        {seals ? <span className="sec-sub">{seals.length === 0 ? 'None yet' : `${seals.length} ${seals.length === 1 ? 'seal' : 'seals'}`}</span> : null}
+        {canWrite && seals ? (
+          <div className="pj-sec-acts">
+            <button type="button" className="btn ghost small" onClick={() => setSealing(true)} data-testid="vault-seal-open">Seal this Vault…</button>
+          </div>
+        ) : null}
+      </div>
+      {readError && <p className="vd-dr-err" role="alert" data-testid="vault-seals-error">{readError} <button type="button" className="btn ghost small" onClick={() => void load()}>Try again</button></p>}
+      {seals && seals.length === 0 && <p className="vd-seals-empty" data-testid="vault-seals-empty">This Vault has not been sealed.</p>}
       {seals && seals.length > 0 && <ul className="vd-seal-list">{seals.map((s) => <SealRow key={s.id} projectId={projectId} seal={s} />)}</ul>}
-      {canWrite && seals && (
-        <button type="button" className="sp-primary" onClick={() => setSealing(true)} data-testid="vault-seal-open">Seal this Vault…</button>
-      )}
+      <details className="pj-more">
+        <summary>What a seal records</summary>
+        <p>
+          A seal records every current document in this Vault (its version, content hash, filing and review stage) as it stands, under
+          your electronic signature. Nothing can change a seal afterwards; anyone in the organisation can verify it.
+        </p>
+      </details>
       {sealing && (
         <EsignModal
           open

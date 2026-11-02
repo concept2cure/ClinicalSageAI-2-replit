@@ -298,10 +298,10 @@ function CorrectForm({ r, busy, onSave, onCancel }: {
           onChange={(e) => set({ reason: e.target.value })} data-testid="vault-catalog-reason" />
       </label>
       <div className="vd-d-filing-acts">
-        <button className="sp-primary" disabled={!canSave} onClick={() => onSave(draft)} data-testid="vault-catalog-correct-save">
+        <button type="button" className="btn primary small" disabled={!canSave} onClick={() => onSave(draft)} data-testid="vault-catalog-correct-save">
           {busy ? 'Saving…' : 'Save correction'}
         </button>
-        <button className="sp-ask" disabled={busy} onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn ghost small" disabled={busy} onClick={onCancel}>Cancel</button>
       </div>
     </div>
   );
@@ -336,7 +336,7 @@ function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
     return (
       <div className="vd-dr-err" role="alert" data-testid="vault-catalog-error">
         {cat.readError}{' '}
-        <button className="sp-ask" onClick={() => void cat.load()}>Try again</button>
+        <button type="button" className="btn ghost small" onClick={() => void cat.load()}>Try again</button>
       </div>
     );
   }
@@ -368,12 +368,12 @@ function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
           )}
           <div className="vd-d-filing-acts">
             {r.state === 'suggested' && (
-              <button className="sp-primary" disabled={mutationBusy} data-testid="vault-catalog-confirm"
+              <button type="button" className="btn primary small" disabled={mutationBusy} data-testid="vault-catalog-confirm"
                 onClick={() => void cat.decide('confirm', {}, "Confirmed. Your confirmation is recorded in this document's history.")}>
                 {cat.busy ? 'Confirming…' : 'Confirm as written'}
               </button>
             )}
-            <button className="sp-ask" disabled={mutationBusy} onClick={() => setCorrecting(true)} data-testid="vault-catalog-correct">
+            <button type="button" className="btn ghost small" disabled={mutationBusy} onClick={() => setCorrecting(true)} data-testid="vault-catalog-correct">
               Correct record
             </button>
           </div>
@@ -392,10 +392,10 @@ function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
 function ScopedVaultCatalogRecord(props: Props) {
   const cat = useCatalogRecord(props);
   return (
+    /* Headed by the record's "Catalog record" disclosure (Vault.tsx, D6 §C.4 step 9). */
     <div data-testid="vault-catalog-record">
-      <div className="vd-d-seclbl">Catalog record</div>
       <Body cat={cat} />
-      {cat.unconfirmed && <button className="sp-ask" disabled={cat.busy} onClick={() => void cat.load()}>Reload catalog record</button>}
+      {cat.unconfirmed && <button type="button" className="btn ghost small" disabled={cat.busy} onClick={() => void cat.load()}>Reload catalog record</button>}
       {cat.note && (
         <div className={cat.note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'}
           role={cat.note.tone === 'error' ? 'alert' : 'status'} data-testid="vault-catalog-note">

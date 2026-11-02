@@ -313,7 +313,7 @@ export function PmaSurface({ program, onAskAna, onOpenEditor, onOpenLetter }: Pm
       {/* eSTAR filing journey — live registration prerequisites + tracked
           submissions (register → produce → track), scoped to THIS programme — without programId the readiness verdict
           is computed over every device in the organisation. */}
-      <EstarFilingPanel programId={program?.id ?? null} />
+      <EstarFilingPanel programId={program?.id ?? null} defaultVariant={officialEstarVariantFor(program)} />
     </>
   );
 

@@ -1,0 +1,26 @@
+# npx eslint on the four D1-2 sources BEFORE any D1-2 change (working tree = HEAD 16df5ed4b7 for these files), 2026-11-01
+# npx eslint client/src/concept2cure/v2/Shell.tsx client/src/concept2cure/v2/V2App.tsx client/src/concept2cure/v2/TaskTray.tsx client/src/concept2cure/v2/surfaceViews.ts
+# Plus HEAD's tests/e2e/golden-customer-journey.e2e.ts (copied beside it as tests/e2e/.head-golden.e2e.ts, linted, deleted):
+#   91:14  warning  Async arrow function has too many lines (234). Maximum allowed is 100  max-lines-per-function
+# HEAD's shellQuietChrome.test.tsx (383 lines) and the other changed tests had no warning.
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/Shell.tsx
+  151:8  warning  Function 'Rail' has too many lines (254). Maximum allowed is 100         max-lines-per-function
+  151:8  warning  Function 'Rail' has a complexity of 39. Maximum allowed is 15            complexity
+  563:1  warning  Function 'AccountMenu' has too many lines (138). Maximum allowed is 100  max-lines-per-function
+  701:1  warning  File has too many lines (981). Maximum allowed is 500                    max-lines
+  987:8  warning  Function 'CmdK' has too many lines (267). Maximum allowed is 100         max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/TaskTray.tsx
+  97:1  warning  Function 'TaskTrayOwner' has a complexity of 20. Maximum allowed is 15  complexity
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/V2App.tsx
+   296:8   warning  Function 'V2App' has too many lines (696). Maximum allowed is 100                               max-lines-per-function
+   296:8   warning  Function 'V2App' has a complexity of 47. Maximum allowed is 15                                  complexity
+   553:55  warning  Arrow function has a complexity of 37. Maximum allowed is 15                                    complexity
+   878:1   warning  File has too many lines (852). Maximum allowed is 500                                           max-lines
+   889:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+   979:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1257:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+✖ 13 problems (0 errors, 13 warnings)

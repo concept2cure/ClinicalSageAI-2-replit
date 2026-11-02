@@ -129,3 +129,35 @@ describe('packageEctdSubmission — a delete leaf never ships bytes', () => {
     });
   });
 });
+
+/* 2026-11-01 (F1, W5 residual F(1)a): the first-sequence rules above compare
+   the sequence with the literal '0000'. A first sequence written '0' (AnA's
+   package_ectd_for_region passes the model's value through) slipped past
+   LEAF-DELETE-IN-FIRST-SEQUENCE and packaged a withdrawal of a document never
+   on file, as 123456-0-fda.zip with <sequence-number>0</sequence-number>; an
+   omitted one packaged as 123456-undefined-fda.zip. The packager now refuses
+   any sequence that is not four digits before a leaf is read. */
+describe('packageEctdSubmission — the sequence is the four-digit eCTD sequence', () => {
+  it.each(['0', '1', '00001', '0x01', ' 0000', '', undefined])('refuses sequence %j before any leaf is read', async (sequence) => {
+    await withWork(async (work, cover) => {
+      const run = pkg(work, sequence as string, [
+        { ctdSection: '3.2.S.2', operation: 'delete', sourcePath: '', fileName: 'old-manufacture.pdf', title: 'Old Manufacture',
+          modifiedFile: '../0000/index.xml#leaf-3-2-S-2-old-manufacture' },
+        { ctdSection: '1.2', operation: 'new', sourcePath: cover, fileName: 'cover.pdf', title: 'Cover' },
+      ]);
+      await expect(run).rejects.toMatchObject({
+        findings: [expect.objectContaining({ ruleId: 'PACKAGE-SEQUENCE-NOT-FOUR-DIGITS' })],
+      });
+      await expect(run).rejects.toThrow(/four-digit eCTD sequence, 0000 for the original/);
+      const out = await fs.readdir(path.join(work, 'out')).catch(() => [] as string[]);
+      expect(out.filter((f) => f.endsWith('.zip'))).toEqual([]);
+    });
+  });
+
+  it('still packages a four-digit sequence', async () => {
+    await withWork(async (work, cover) => {
+      const bundle = await pkg(work, '0001', [{ ctdSection: '1.2', operation: 'new', sourcePath: cover, fileName: 'cover.pdf', title: 'Cover' }]);
+      expect(path.basename(bundle.path)).toBe('123456-0001-fda.zip');
+    });
+  });
+});

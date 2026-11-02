@@ -6,7 +6,9 @@
  * guidance "Optimizing the Dosage of Human Prescription Drugs and Biological
  * Products for the Treatment of Oncologic Diseases" (Jan 2023), FDA Project
  * FrontRunner, ICH E4 (dose-response), and ICH S9. NO LLM estimation, NO network
- * calls — results are deterministic and submission-defensible. The engines
+ * calls — results are deterministic. These are worksheets over stated inputs;
+ * no program source records are read, and an unanswered boolean is not_stated,
+ * never true or false. The engines
  * encode the modern preference for dose optimization beyond the MTD: model-
  * assisted/model-based escalation, randomized multi-dose comparison, and RP2D
  * selection integrating PK/PD/safety/efficacy rather than MTD alone.
@@ -27,11 +29,11 @@
 
 import type { AnaTool } from '../ai-gateway/types';
 
+// Kept short: the gateway trims a tool description past 1,024 characters, and this note ends each one.
 const DETERMINISTIC_NOTE =
-  'Deterministic — identical input always yields identical output. No LLM, no network. ' +
-  'Report the returned design recommendations and regulatory citations verbatim — do ' +
-  'NOT recompute, re-rank designs, or substitute your own regulatory interpretation. ' +
-  'If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.';
+  'Deterministic over stated inputs; no LLM or network. An unanswered boolean is not_stated; ' +
+  'what depends on it is not_assessed or null: ask for it. Report results and citations ' +
+  'verbatim; do not recompute, re-rank or reinterpret. Relay a validation error; ask for the value.';
 
 const MODALITY_ENUM = [
   'cytotoxic',
@@ -75,10 +77,10 @@ export const SELECT_DOSE_FINDING_DESIGN: AnaTool = {
       modality: { type: 'string', enum: MODALITY_ENUM, description: 'Drug modality.' },
       mechanismClass: { type: 'string', enum: MECHANISM_CLASS_ENUM, description: 'Mechanism class shaping the dose-toxicity relationship.' },
       numberOfDoseLevels: { type: 'number', description: 'Number of pre-specified dose levels to evaluate.' },
-      targetToxicityRate: { type: 'number', description: 'Target toxicity rate (probability, 0–1). Default 0.25 if unspecified.' },
+      targetToxicityRate: { type: 'number', description: 'Target toxicity rate (probability strictly between 0 and 1). Omitted, it defaults to 0.25 and the result says so; a value outside that range is refused.' },
       dltWindowDays: { type: 'number', description: 'Expected DLT window in days. Long windows favor TITE designs.' },
-      lateOnsetToxicityExpected: { type: 'boolean', description: 'Whether late-onset/cumulative toxicity is anticipated.' },
-      realTimeStatisticianAvailable: { type: 'boolean', description: 'Whether a trial statistician can support real-time adaptation.' },
+      lateOnsetToxicityExpected: { type: 'boolean', description: 'Whether late-onset/cumulative toxicity is anticipated. Omitted is not_stated: unless the modality or a DLT window > 28 days indicates late onset, no design is recommended.' },
+      realTimeStatisticianAvailable: { type: 'boolean', description: 'Whether a trial statistician can support real-time adaptation. Omitted is not_stated, and no design is recommended.' },
       optimalBiologicalDoseSought: { type: 'boolean', description: 'Whether the program intends to characterize an optimal biological dose (OBD).' },
       anticipatedEscalationSampleSize: { type: 'number', description: 'Anticipated maximum accrual for the dose-escalation portion.' },
     },
@@ -113,7 +115,7 @@ export const ASSESS_PROJECT_OPTIMUS_ALIGNMENT: AnaTool = {
         enum: ['preclinical', 'phase1', 'phase1_2', 'phase2', 'phase3', 'pre_nda_bla', 'post_marketing'],
         description: 'Stage of development.',
       },
-      doseSelectedByMtdAlone: { type: 'boolean', description: 'Was dose selected solely by MTD / 3+3?' },
+      doseSelectedByMtdAlone: { type: 'boolean', description: 'Was dose selected solely by MTD / 3+3? Omitted is not_stated. Any omitted pillar fact is neither met nor a gap, and the score is null and the tier not_assessed until all eight are stated.' },
       randomizedDoseComparisonConducted: { type: 'boolean', description: 'Were ≥2 doses studied in a randomized fashion?' },
       dosesInRandomizedComparison: { type: 'number', description: 'Number of doses carried into the randomized comparison (if any).' },
       exposureResponseEfficacyCharacterized: { type: 'boolean', description: 'Was dose-/exposure-response for efficacy characterized?' },
@@ -166,7 +168,7 @@ export const DESIGN_RANDOMIZED_DOSE_COMPARISON: AnaTool = {
       candidateDoses: {
         type: 'array',
         items: { type: 'number' },
-        description: 'Candidate doses to compare (label values). Must be ≥ 2 entries.',
+        description: 'Candidate doses to compare (positive label values). Fewer than 2 distinct doses, or an entry that is not a positive number, is refused.',
       },
       doseUnit: { type: 'string', description: 'Unit label for the doses (e.g., "mg", "mg/kg", "mg QD").' },
       primaryActivityEndpoint: {
@@ -174,15 +176,15 @@ export const DESIGN_RANDOMIZED_DOSE_COMPARISON: AnaTool = {
         enum: ['ORR', 'PFS', 'OS', 'pCR', 'DoR', 'biomarker_response', 'other'],
         description: 'Primary activity endpoint type.',
       },
-      anticipatedResponseRateHighDose: { type: 'number', description: 'Anticipated response rate at the higher dose (0–1), for ORR-type endpoints.' },
-      goalNonInferiorActivityLowerDose: { type: 'boolean', description: 'Whether the comparison is intended to demonstrate non-inferior activity at a lower dose.' },
+      anticipatedResponseRateHighDose: { type: 'number', description: 'Anticipated response rate at the higher dose (strictly between 0 and 1), for ORR-type endpoints. A value outside that range is refused.' },
+      goalNonInferiorActivityLowerDose: { type: 'boolean', description: 'Whether the comparison is intended to demonstrate non-inferior activity at a lower dose. Omitted is not_stated, and no illustrative sample size is given.' },
       feasibleSampleSize: { type: 'number', description: 'Total feasible randomized sample size, if constrained.' },
       timing: {
         type: 'string',
         enum: ['pre_registration', 'within_registration', 'post_marketing'],
         description: 'Timing of the randomized comparison relative to registration.',
       },
-      tolerabilityCoPrimary: { type: 'boolean', description: 'Whether the program also wants a tolerability/PRO primary or co-primary endpoint.' },
+      tolerabilityCoPrimary: { type: 'boolean', description: 'Whether the program also wants a tolerability/PRO primary or co-primary endpoint. Omitted is not_stated, and the endpoint role is not assessed.' },
     },
     required: ['candidateDoses'],
   },
@@ -213,12 +215,12 @@ export const SELECT_RP2D: AnaTool = {
         items: {
           type: 'object',
           properties: {
-            dose: { type: 'number', description: 'Dose value (label only).' },
-            toxicityProbability: { type: 'number', description: 'Observed/estimated DLT or relevant toxicity probability at this dose (0–1).' },
+            dose: { type: 'number', description: 'Dose value (label only); zero or negative is refused.' },
+            toxicityProbability: { type: 'number', description: 'Observed/estimated DLT or relevant toxicity probability at this dose (0–1). Without it, or a stated MTD the dose does not exceed, a dose not too toxic or sub-therapeutic on its other stated evidence is insufficient_data.' },
             targetExposureAchieved: { type: 'boolean', description: 'Whether target steady-state exposure was achieved at/above this dose.' },
             targetEngagementSaturated: { type: 'boolean', description: 'Target engagement / PD effect saturated at/above this dose?' },
             activitySignal: { type: 'number', description: 'Observed response rate or activity signal (0–1) at this dose.' },
-            longitudinalTolerabilityAcceptable: { type: 'boolean', description: 'Longitudinal tolerability acceptable at this dose (multi-cycle)?' },
+            longitudinalTolerabilityAcceptable: { type: 'boolean', description: 'Longitudinal tolerability acceptable at this dose (multi-cycle)? Omitted is not_stated, and a dose not too toxic or sub-therapeutic on its other stated evidence is insufficient_data.' },
           },
           required: ['dose'],
         },
@@ -226,7 +228,7 @@ export const SELECT_RP2D: AnaTool = {
       mtd: { type: 'number', description: 'The MTD, if defined (label value).' },
       modality: { type: 'string', enum: MODALITY_ENUM, description: 'Drug modality.' },
       mechanismClass: { type: 'string', enum: MECHANISM_CLASS_ENUM, description: 'Mechanism class.' },
-      activityPlateauObserved: { type: 'boolean', description: 'Whether efficacy/activity appears to plateau across the upper dose range.' },
+      activityPlateauObserved: { type: 'boolean', description: 'Whether efficacy/activity appears to plateau across the upper dose range. Omitted is not_stated: with several effective tolerable doses and no plateau-indicating mechanism or modality, no RP2D is selected.' },
     },
     required: ['doseLevels', 'modality'],
   },
@@ -265,7 +267,7 @@ export const DESIGN_BACKFILL_STRATEGY: AnaTool = {
         description: 'Data objectives to enrich at lower doses.',
       },
       modality: { type: 'string', enum: MODALITY_ENUM, description: 'Modality (drives whether PD/target-engagement backfill is high value).' },
-      biopsyFeasible: { type: 'boolean', description: 'Whether a tumor biopsy (paired/on-treatment) is feasible.' },
+      biopsyFeasible: { type: 'boolean', description: 'Whether a tumor biopsy (paired/on-treatment) is feasible. Omitted is not_stated: with a PD, target-engagement or biomarker objective the cohort sizes are null.' },
       maxBackfillPatients: { type: 'number', description: 'Maximum additional patients available for backfill.' },
       escalationOngoing: { type: 'boolean', description: 'Whether escalation is ongoing concurrently.' },
     },
@@ -281,13 +283,14 @@ export const ASSESS_DOSE_EXPOSURE_RESPONSE: AnaTool = {
   name: 'assess_dose_exposure_response',
   description:
     'Assess exposure-response (E-R) for both efficacy and safety to inform dose ' +
-    'selection. Sorts E-R points by exposure and deterministically computes whether ' +
-    'the efficacy relationship is effectively flat over the studied range, whether ' +
+    'selection. Sorts E-R points by exposure, averaging responses at one exposure, and computes ' +
+    'whether the efficacy relationship is effectively flat, whether ' +
     'safety rises with exposure, and a qualitative therapeutic-window classification ' +
-    '(wide / moderate / narrow / indeterminate), with the underlying metrics ' +
+    '(wide/moderate/narrow/indeterminate), with the metrics ' +
     '(absolute and relative response ranges, slope signs). Returns interpretation ' +
-    'and dose implications — e.g., a flat efficacy curve with rising toxicity ' +
-    'supports a lower dose. Cites ICH E4 and the FDA dose-optimization draft ' +
+    'and dose implications — e.g., flat efficacy with rising toxicity ' +
+    'supports a lower dose. A curve with fewer than 2 distinct exposures has its flags and slope ' +
+    'signs not_assessed and its range metrics null. Cites ICH E4 and the FDA dose-optimization draft ' +
     'guidance (Jan 2023). ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -304,7 +307,7 @@ export const ASSESS_DOSE_EXPOSURE_RESPONSE: AnaTool = {
           type: 'object',
           properties: {
             exposure: { type: 'number', description: 'Exposure metric value (e.g., AUC or Cmin).' },
-            response: { type: 'number', description: 'Response/probability (0–1) for the efficacy endpoint at this exposure.' },
+            response: { type: 'number', description: 'Response/probability (0–1) for the efficacy endpoint at this exposure; a value outside 0–1 is refused.' },
           },
           required: ['exposure', 'response'],
         },
@@ -316,7 +319,7 @@ export const ASSESS_DOSE_EXPOSURE_RESPONSE: AnaTool = {
           type: 'object',
           properties: {
             exposure: { type: 'number', description: 'Exposure metric value.' },
-            response: { type: 'number', description: 'Probability (0–1) of the safety event at this exposure.' },
+            response: { type: 'number', description: 'Probability (0–1) of the safety event at this exposure; a value outside 0–1 is refused.' },
           },
           required: ['exposure', 'response'],
         },

@@ -1,0 +1,38 @@
+ × client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > shadow review — real runs and persisted findings > lists the sequence runs and the selected run findings with acknowledged state 41ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for 510k/device 123ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for de_novo/ivd 100ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for pma/ivd 94ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the companion diagnostic product family through destination reads and the official export 69ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the case-varied companion diagnostic product family through destination reads and the official export 65ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the complementary diagnostic product family through destination reads and the official export 64ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the software as a medical device product family through destination reads and the official export 65ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the medical device product family through destination reads and the official export 66ms
+ × client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx > Audit trail — the audit_events chain verdict in the chain banner > reads the route the Part 11 console read 70ms
+ × client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the apps catalog > shows and hides the admin controls, the one thing a person switches here 5015ms
+ × client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx > CMC audited workflow gaps > opens the reachable Module 3 build from the dossier control without leaving CMC 188ms
+ × client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > carries the server regulatory_path onto the kit Program — De Novo stays De Novo under the k510 pathway 59ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the apps catalog > shows and hides the admin controls, the one thing a person switches here
+AssertionError: expected { status: 'failed', …(1) } to match object { status: 'applied' }
+ FAIL  client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx > Audit trail — the audit_events chain verdict in the chain banner > reads the route the Part 11 console read
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+ FAIL  client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx > CMC audited workflow gaps > opens the reachable Module 3 build from the dossier control without leaving CMC
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > shadow review — real runs and persisted findings > lists the sequence runs and the selected run findings with acknowledged state
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+ FAIL  client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > carries the server regulatory_path onto the kit Program — De Novo stays De Novo under the k510 pathway
+AssertionError: expected 'de_novo' to be 'k510' // Object.is equality
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for 510k/device
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for de_novo/ivd
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for pma/ivd
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the companion diagnostic product family through destination reads and the official export
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the case-varied companion diagnostic product family through destination reads and the official export
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the complementary diagnostic product family through destination reads and the official export
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the software as a medical device product family through destination reads and the official export
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the medical device product family through destination reads and the official export
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+ Test Files  6 failed | 145 passed (151)
+      Tests  13 failed | 1552 passed (1565)

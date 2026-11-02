@@ -51,7 +51,7 @@ export interface UdiSurfaceProps {
   /** The open project, from the host's `programForContext`. Null reads nothing. */
   programId: string | null;
   onAskAna: (text: string, opts?: { tool?: string }) => void;
-  onOpenEditor?: (docId: string) => void;
+  onOpenEditor?: (docId: string, doc: KitDocument) => void;
 }
 
 interface UdiBlocker {
@@ -257,7 +257,7 @@ export function UdiSurface({ programId, onAskAna, onOpenEditor }: UdiSurfaceProp
         {(rows) => (
           <DocumentsPanel
             title="Documents in flight"
-            subtitle="Tap any row to open in the label editor · sparkle to draft a translation or symbol revision with AnA"
+            subtitle="A label opens in Labeling · sparkle to draft a translation or symbol revision with AnA"
             docs={toLabelDocuments(rows)}
             frameworks={frameworks}
             onOpenEditor={onOpenEditor}

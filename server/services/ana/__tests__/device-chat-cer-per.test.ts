@@ -150,6 +150,21 @@ describe('the chat device block is rendered from the projection', () => {
     expect(block).toMatch(/not the full .*technical documentation/i);
   });
 
+  // Rule 2 audit S6b (2026-11-01): the block told AnA to "Use the
+  // generate_document tool to draft any section", which no longer writes a
+  // 510(k), CER or PER from text in the call. Each type names its own path.
+  it.each([
+    ['510K', /write_kit_section/],
+    ['DE_NOVO', /write_kit_section/],
+    ['PMA', /write_kit_section/],
+    ['CER', /write_kit_section/],
+    ['IVDR', /create_per_document/],
+  ])('the %s block names the tool that writes its sections, not generate_document', (type, tool) => {
+    const block = fn<Render>('renderDeviceContextBlock')(type);
+    expect(block).not.toContain('generate_document');
+    expect(block).toMatch(tool);
+  });
+
   it('an unknown type renders nothing', () => {
     expect(fn<Render>('renderDeviceContextBlock')('NDA')).toBe('');
   });

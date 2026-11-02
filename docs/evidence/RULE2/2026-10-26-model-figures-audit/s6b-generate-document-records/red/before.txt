@@ -1,0 +1,44 @@
+# S6b red: generate-document-refuses-record-documents.test.ts against trunk d914c2618's handler, definition and flows. 19 of 21 fail; the protocol and SAP controls pass.
+
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > csr with sections: refused, its record path named, nothing built 23ms
+   → expected { success: true, …(6) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ctd_module5 with sections: refused, its record path named, nothing built 4ms
+   → expected { success: true, …(6) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ctd_module3 with sections: refused, its record path named, nothing built 3ms
+   → expected { success: true, …(6) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ctd_module2 with sections: refused, its record path named, nothing built 2ms
+   → expected { success: true, …(6) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ctd_module4 with sections: refused, its record path named, nothing built 3ms
+   → expected { success: true, …(6) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > cer with sections: refused, its record path named, nothing built 2ms
+   → expected { success: true, …(6) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > 510k with sections: refused, its record path named, nothing built 2ms
+   → expected { success: true, …(6) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ib with sections: refused, its record path named, nothing built 1ms
+   → expected { success: true, …(6) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > pma with sections: refused, its record path named, nothing built 3ms
+   → expected { success: true, …(6) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ectd_backbone with sections: refused, its record path named, nothing built 2ms
+   → expected { success: true, …(6) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > icsr with sections: refused, its record path named, nothing built 2ms
+   → expected { success: true, …(6) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > refuses template mode for those types too: the replacements are model-written as well 2ms
+   → expected { Object (error) } to match object { success: false, refused: true, …(1) }
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > asks for the document type instead of building a CSR when none is given 3ms
+   → expected { success: true, …(6) } to match object { status: 'needs_parameters', …(1) }
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > still builds a protocol, whose content is design rather than results 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > still builds a sap, whose content is design rather than results 1ms
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the definition says which documents it does not write > does not claim to generate a CSR, CER, 510(k) or ICSR, and names where they are made 2ms
+   → expected 'Generate a complete regulatory docume…' not to match /\(CSR, CTD section, CER, 510\(k\)/
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the intelligence flows offer the record path, not generate_document > csr_report suggests get_csr_section_evidence and no generate_document 5ms
+   → expected [ 'generate_document', …(1) ] to include 'get_csr_section_evidence'
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the intelligence flows offer the record path, not generate_document > device_510k suggests write_kit_section and no generate_document 3ms
+   → expected [ 'generate_document', …(2) ] to include 'write_kit_section'
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the intelligence flows offer the record path, not generate_document > cer_report suggests assess_stored_cer and no generate_document 1ms
+   → expected [ 'generate_document', …(2) ] to include 'assess_stored_cer'
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the intelligence flows offer the record path, not generate_document > cmc_specification suggests navigate_to and no generate_document 3ms
+   → expected [ 'commit_intelligence_flow', …(3) ] to include 'navigate_to'
+ × server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the intelligence flows offer the record path, not generate_document > device_pma suggests write_kit_section and no generate_document 3ms
+   → expected [ 'generate_document', …(2) ] to include 'write_kit_section'
+ Test Files  1 failed (1)
+      Tests  19 failed | 2 passed (21)

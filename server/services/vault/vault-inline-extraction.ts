@@ -20,7 +20,7 @@ export type InlineExtraction =
   | { kind: 'pending'; reason: 'needs_ocr' | 'too_large' | 'over_time' }
   | { kind: 'failed'; error: string };
 
-type Extract = (buffer: Buffer, mime: string, fileName: string, options: { ocr: false }) => Promise<ExtractedDocumentText>;
+type Extract = (buffer: Buffer, mime: string, fileName: string, options: { ocr: false; layout: true }) => Promise<ExtractedDocumentText>;
 
 /** Read what the request may read; never OCR, never past the budget. */
 export async function extractInline(
@@ -36,7 +36,9 @@ export async function extractInline(
   try {
     // The extraction that loses the race is left to finish and is ignored: the
     // parser cannot be interrupted, and its result is not what was recorded.
-    const read = extract(buffer, mime, fileName, { ocr: false });
+    // `layout`: the self-hosted layout reader first, when the deployment turned
+    // it on (P-90). A reading past the budget is left to the sweep, which asks too.
+    const read = extract(buffer, mime, fileName, { ocr: false, layout: true });
     read.catch(() => undefined);
     const won = await Promise.race([read, overTime]);
     if (won === 'over_time') return { kind: 'pending', reason: 'over_time' };
