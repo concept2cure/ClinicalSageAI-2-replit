@@ -575,7 +575,7 @@ function CmPush({ label, nav, bar }: { label: string; nav?: (id: string) => void
    all nine tabs. They could not be imported from here — this file imports
    those two surfaces, so the import would be a cycle — and cmcShared is where
    the CMC surfaces' shared plumbing already lives. */
-import { CmHead, Kpi } from './cmcShared';
+import { CmHead, Kpi, cmcStateWord } from './cmcShared';
 
 /**
  * The Overview's one grey line — what the retired answer banner's HEADLINE
@@ -1098,8 +1098,11 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                       {missing.length > 0 && <div className="cm-meta">missing: {missing.join(', ')}</div>}
                     </td>
                     <td>
-                      <span className={'rd-chip tone-' + stTone(s.st)}>{s.st}</span>
-                      {incomplete && <span className="rd-chip tone-err" style={{ marginLeft: 6 }} title={incompleteReason(s)}>incomplete</span>}
+                      <span className={'rd-chip tone-' + stTone(s.st)}>{cmcStateWord(s.st)}</span>
+                      {/* Authored copy, not a stored token — but it sat beside the state
+                          chips in lower case and read as one of them. Sentence case,
+                          same word, same reason on hover. */}
+                      {incomplete && <span className="rd-chip tone-err" style={{ marginLeft: 6 }} title={incompleteReason(s)}>Incomplete</span>}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       {s.st === 'approved'
@@ -1400,7 +1403,7 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
                 <td style={{ fontWeight: 600 }}>{r.attr}</td><td>{r.material}</td>
                 <td>{r.method || <span className="sp-tone-warn">no method</span>}</td>
                 <td>{r.release || '--'}</td><td>{r.shelf || '--'}</td><td className="mono">{r.ich}</td>
-                <td><span className={'rd-chip tone-' + stTone(r.st)}>{r.st}</span></td>
+                <td><span className={'rd-chip tone-' + stTone(r.st)}>{cmcStateWord(r.st)}</span></td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <button className="nda-open" onClick={() => setEdit(r)}>{I.penLine} Edit</button>
                   {r.st !== 'approved' && <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setSign(r)} disabled={r.noMethod} title={r.noMethod ? 'Validate the method before approval' : ''}>{I.lock} Approve</button>}
@@ -1996,16 +1999,16 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
         actions={<button className="nda-open" onClick={() => setRegistering(true)}>{I.plus} Register study</button>}
       />
       <CmCorrNotice prefixes={['3.2.S.7', '3.2.P.8']} noun="the stability program" nav={nav} />
-      <div className="reg-kpis">
-        {/* Two tiles, not six. "Studies", "Long-term" and "Accelerated" were
-            classification counts nobody acts on — the register below is sorted
-            and filterable and answers them better. "Results recorded" is a
-            volume metric, and the shelf-life evidence card already states it in
-            context. What is left is the pair a stability coordinator actually
-            decides on: how much is running, and how much is out of limits. */}
-        <Kpi l="Active studies" v={active} tone={active ? 'ok' : undefined} />
-        <Kpi l="Outside limits" v={oos.length} tone={oos.length ? 'err' : 'ok'} />
-      </div>
+      {/* The pair a stability coordinator decides on — how much is running and
+          how much is out of limits — as the view's grey line (D5 §A.4.10).
+          They were two tiles, already cut down from six: "Studies",
+          "Long-term" and "Accelerated" were classification counts nobody acts
+          on, and the register below answers them better. Out-of-limits keeps
+          the error colour, with the word beside it. */}
+      <p className="sec-sub" data-testid="cmc-stability-counts">
+        {active} active {active === 1 ? 'study' : 'studies'}
+        {' · '}<span data-tone={oos.length ? 'err' : undefined}>{oos.length} outside limits</span>
+      </p>
       {oos.length > 0 && (
         <div className="pj-con" style={{ marginBottom: 14 }}>
           <span className="ico">{I.alertTriangle}</span>
@@ -2076,7 +2079,11 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                           )}
                         </td>
                         <td>{r.shelfLife || <span className="cm-meta">not set</span>}</td>
-                        <td><span className={'rd-chip tone-' + stabStatusTone(r.status)}>{r.status || 'draft'}</span></td>
+                        {/* The store holds "COMPLETED", "ON-HOLD" and the rest in caps; the
+                            chip showed them that way, which is a stored token on screen
+                            (§WA.4.2 rule 10) and the uppercase §2 retires. One map, the
+                            same one the §3.2 sections use. */}
+                        <td><span className={'rd-chip tone-' + stabStatusTone(r.status)}>{cmcStateWord(r.status || 'draft')}</span></td>
                         <StabilityRowActions
                           study={r}
                           hasResults={results.length > 0}
@@ -2546,12 +2553,15 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
     <div className="cm-body">
       <CmHead title="Batch records" meta="Manufacture, yield, deviations and disposition"
         actions={<button className="nda-open" onClick={() => setForm(true)} disabled={!projectId} title={!projectId ? 'Open a project to log batch records' : ''}>{I.plus} Log batch</button>} />
-      <div className="reg-kpis">
-        <Kpi l="Batches" v={rows.length} />
-        <Kpi l="Pending release" v={pending} tone={pending ? 'warn' : 'ok'} />
-        <Kpi l="Open deviations" v={devs} tone={devs ? 'warn' : 'ok'} />
-        <Kpi l="Avg yield" v={avgY + '%'} />
-      </div>
+      {/* Four tiles → the view's grey line (D5 §A.4.11). Same four reads;
+          pending release and open deviations keep their warning colour,
+          because those two are what hold a batch. */}
+      <p className="sec-sub" data-testid="cmc-batch-counts">
+        {rows.length} {rows.length === 1 ? 'batch' : 'batches'}
+        {' · '}<span data-tone={pending ? 'warn' : undefined}>{pending} pending release</span>
+        {' · '}<span data-tone={devs ? 'warn' : undefined}>{devs} open {devs === 1 ? 'deviation' : 'deviations'}</span>
+        {' · '}average yield {avgY}%
+      </p>
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Batch disposition</span><span className="s">released over the batch’s recorded, reviewed QC results — open deviations closed first</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
@@ -2748,7 +2758,9 @@ function CapabilityRow({ row, side }: { row: CapabilitySeriesRow; side: { label:
       <td className="mono">{o.ok ? o.n : '—'}</td>
       <td className="mono">{o.ok ? num(o.ppk) : '—'}</td>
       <td className="mono">{o.ok ? num(o.cpk) : '—'}</td>
-      <td><span className={'rd-chip tone-' + capabilityTone(o)}>{o.ok ? o.verdict : 'not assessed'}</span></td>
+      {/* "capable" / "marginal" / "not_capable" are the engine's verdict
+          tokens. The words, and "Not assessed" when it refused. */}
+      <td><span className={'rd-chip tone-' + capabilityTone(o)}>{o.ok ? cmcStateWord(o.verdict) : 'Not assessed'}</span></td>
       <td style={{ fontSize: 11.5, color: 'var(--text-300)' }}>
         {/* The server's own words, in both directions: its refusal, or the
             caveats it attached to an index it did produce. A batch excluded or
@@ -3034,12 +3046,15 @@ function CmPathway({ nav }: { ask: (text: string) => void; nav?: (id: string) =>
         </div>
       ) : (
         <>
-          <div className="reg-kpis">
-            <Kpi l="Governed events" v={events.length} />
-            <Kpi l="Sections tracked" v={sections.rows.length} />
-            <Kpi l="Contradictions resolved" v={resolved.length} tone={resolved.length ? 'ok' : undefined} />
-            <Kpi l="Still open" v={open.length} tone={open.length ? 'warn' : 'ok'} />
-          </div>
+          {/* Four tiles → the audit section's grey line (D5 §A.4.12).
+              "Still open" keeps its warning colour: an unresolved
+              contradiction is what the export gate refuses on. */}
+          <p className="sec-sub" data-testid="cmc-audit-counts">
+            {events.length} governed {events.length === 1 ? 'event' : 'events'}
+            {' · '}{sections.rows.length} {sections.rows.length === 1 ? 'section' : 'sections'} tracked
+            {' · '}{resolved.length} {resolved.length === 1 ? 'contradiction' : 'contradictions'} resolved
+            {' · '}<span data-tone={open.length ? 'warn' : undefined}>{open.length} still open</span>
+          </p>
 
 
           <div className="pj-card" style={{ marginBottom: 16 }}>

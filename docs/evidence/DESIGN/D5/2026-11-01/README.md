@@ -196,3 +196,51 @@ Tests  1 failed | 17 passed (18)
 
 All 20 CMC client test files pass (265 cases), plus the eight other files that mount these
 components.
+
+---
+
+# D5-2, finished (§A.4 steps 10, 11, 12, 15, 16)
+
+The remaining steps, landed 2026-11-02. No stylesheet but `journey-v2.css`; no `app-v2.css` turn.
+
+| Step | What | Measured after, at 1440 on C2C-101 |
+|---|---|---|
+| 10 | Stability's two figures → the view's grey line | `0 active studies · 0 outside limits`; 0 tile groups, 0 uppercase |
+| 11 | Batch's four → one line | `0 batches · 0 pending release · 0 open deviations · average yield 0%` |
+| 12 | Approvals & audit's four → one line | governed events · sections tracked · contradictions resolved · still open |
+| 15 | `CmcPlaceIntoSubmission`: orange `reg-cta` → ghost; its paragraph → a "What placing does" disclosure | Module 3 build keeps its single orange, "Compile Module 3" |
+| 16 | One state vocabulary, `cmcStateWord` in `cmcShared.tsx` | chips read "Completed", "Capable", "Approved", "Draft", "In review" |
+
+The one `.reg-kpis` that remains is Overview's questions-overdue **door**, which §A.4.5 keeps as a
+`<button class="reg-kpi">`.
+
+## The vocabulary found more than the spec named
+
+§A.4.16 named three tokens on the §3.2 section chips (`draft`, `review`, `approved`). The new case —
+**"a stored state is shown as a word, never as its token"**, asserted over *every* rendered `.rd-chip`
+rather than one row — caught two the spec had not listed:
+
+```
+Stability   status chip   "COMPLETED"   ← the store's own caps, printed raw
+Capability  verdict chip  "capable"     ← the engine's verdict token
+```
+
+Both are enums on a screen that files to an agency (§WA.4.2 rule 10), and the second is this session's
+own code from pass 7. A token the map has not met is opened out and sentence-cased rather than guessed
+into another state's word — so a state nobody anticipated shows as itself.
+
+`incomplete` beside those chips is authored copy, not a token, and the spec says it stays. It sat in
+lower case among them and read as one of them, so it is sentence case now: same word, same reason on
+hover.
+
+## Ratchet
+
+`reg-cta`'s baseline drops 19 → 13 — the count after D5-2's three conversions — per the ratchet's own
+instruction to re-level in the commit that lowers it.
+
+Separately, D5-2 had taken `cm-head`, `cm-kicker` and `cm-title` to zero uses while their aliases stayed
+in D0's `:is()` lists, which turned `foundationsRetiredRatchet` red on origin. The D0-6 deletion for all
+three is `4f0486e97`: seven alias occurrences across five selector preludes, no rule body touched.
+
+**Gates:** tsc 0; ESLint 0 errors, no file gained a warning; 266 CMC tests across 20 files; 50 across the
+two foundation guards; `ci:undefined-css-classes` OK.

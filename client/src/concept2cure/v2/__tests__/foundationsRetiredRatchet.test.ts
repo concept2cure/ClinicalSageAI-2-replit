@@ -81,7 +81,7 @@ const RETIRED: Retired[] = [
   cls('surface-head', 5),
   cls('surface-kicker', 2),
   cls('pj-eyebrow', 1),
-  cls('reg-cta', 19),
+  cls('reg-cta', 13),
   cls('landing-newproj', 1),
   { name: 'btn sm', baseline: 14, kind: 'btn-sm', css: /\.btn\.sm(?![\w-])|\.sm\.btn(?![\w-])/ },
   cls('reg-card', 15),
