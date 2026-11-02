@@ -93,7 +93,7 @@ afterEach(() => cleanup());
 
 async function renderCanvas() {
   render(<InsightsCanvas {...OWNED_PROPS} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 describe('Insights reporting pane — identity', () => {
@@ -107,7 +107,7 @@ describe('Insights reporting pane — identity', () => {
 
     // …and so did the composer's placeholder, which is the last thing a user
     // reads before typing a question.
-    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement | null;
+    const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement | null;
     expect(composer, 'the composer textarea should still exist').not.toBeNull();
     expect(composer!.placeholder).not.toMatch(/\bAnA\b/);
 

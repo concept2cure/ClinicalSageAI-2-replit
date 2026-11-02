@@ -134,7 +134,7 @@ describe('Reporting & analytics carries the device section from its overview', (
 
   it('on the canvas of an open project', async () => {
     renderCanvas();
-    await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+    await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
     expect(within(section()).getByTestId('device-ana-rate').textContent).toBe('75%');
   });
 
@@ -149,7 +149,7 @@ describe('Reporting & analytics carries the device section from its overview', (
   it('a failed device read is said on the canvas', async () => {
     device = { state: 'unavailable' };
     renderCanvas();
-    await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+    await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
     expect(within(section()).getByRole('alert')).toBeTruthy();
   });
 });

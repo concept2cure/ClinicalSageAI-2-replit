@@ -336,6 +336,37 @@ async function authoringDocumentAuthors(db: AuthorshipReader, documentId: string
 }
 
 /**
+ * artifact:<artifact_id> (2026-11-01, F1, decision P-18): a Concept2Cure
+ * artifact, whose approved copy is the released, filable one (DP-35). Its
+ * authors are its recorded creator (`concept2cure_artifacts.created_by_id`;
+ * for an AnA draft, the user AnA drafted it for: ana/artifactVersionStore.ts
+ * records that user on the artifact and on every version it appends) and
+ * everyone who wrote a version of its content
+ * (`concept2cure_artifact_versions.created_by_id`). Keyed by the external
+ * artifact_id, the target the signed act's ledger row names
+ * (services/artifact-signed-act.ts). The version that act records for an
+ * unstored version is attributed to the creator, never to the signer.
+ */
+async function concept2cureArtifactAuthors(db: AuthorshipReader, artifactId: string, orgId: number): Promise<TargetAuthorship> {
+  const set = new AuthorSet();
+  const artifact = await db.query(
+    `SELECT created_by_id FROM concept2cure_artifacts WHERE artifact_id = $1 AND organization_id = $2 LIMIT 1`,
+    [artifactId, orgId],
+  );
+  set.add(artifact.rows, 'created_by_id', 'artifact creator');
+  const versions = await db.query(
+    `SELECT DISTINCT v.created_by_id
+       FROM concept2cure_artifact_versions v
+       JOIN concept2cure_artifacts a ON a.id = v.artifact_id
+      WHERE a.artifact_id = $1 AND a.organization_id = $2 AND v.organization_id = $2
+        AND v.created_by_id IS NOT NULL`,
+    [artifactId, orgId],
+  );
+  set.add(versions.rows, 'created_by_id', 'artifact version ledger');
+  return set.result();
+}
+
+/**
  * A protocol's authors: everyone who wrote its content. That is its creator, the
  * creator of every live content row (sections, objectives, eligibility, visits,
  * schedule-of-assessments rows and cells, team, version snapshots), and everyone
@@ -541,6 +572,7 @@ async function cmcModule3SectionAuthors(
  */
 /** The record types whose authorship is read from more than one source, each by its own reader. */
 const COMPOSITE_AUTHORS: Record<string, (db: AuthorshipReader, rest: string, orgId: number) => Promise<TargetAuthorship>> = {
+  artifact: concept2cureArtifactAuthors,
   'authoring-document': authoringDocumentAuthors,
   document: (db, rest, orgId) => documentAuthors(db, rest, orgId, null),
   section: documentSectionAuthors,

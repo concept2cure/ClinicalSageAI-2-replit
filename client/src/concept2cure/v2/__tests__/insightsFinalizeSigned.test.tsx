@@ -106,7 +106,7 @@ async function runReport() {
     </QueryClientProvider>,
   );
   const composer = await waitFor(() => {
-    const el = document.querySelector('.rc-input textarea') as HTMLTextAreaElement | null;
+    const el = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement | null;
     if (!el) throw new Error('composer not mounted');
     return el;
   });
@@ -143,7 +143,7 @@ describe('Insights — finalization belongs to the displayed run', () => {
     act(() => publishShellProject({ id: nextProgram, code: 'NEW-202' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     await waitFor(() => expect(document.body.textContent).toContain('NEW-202'));
-    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+    const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
     fireEvent.change(composer, { target: { value: 'Run the executive readiness digest report' } });
     fireEvent.click(screen.getByRole('button', { name: 'Find' }));
     await screen.findByText('Replacement report');
