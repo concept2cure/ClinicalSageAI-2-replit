@@ -1,0 +1,21 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Food and Drug Administration
+Silver Spring, MD 20993
+IND 123456
+INFORMATION REQUEST
+Dear Dr. Example:
+We have the following requests for information:
+1. Provide the batch analysis data for drug substance lots used in the
+clinical study, including residual solvents.
+Your response should include the certificates of analysis for each lot.
+2. Justify the proposed acceptance criterion for impurity B in the drug
+product specification.
+We request that you submit the toxicological qualification report and the
+batch data that support the limit.
+3. Provide the dissolution method development report.
+If you have any questions, please contact the Regulatory Project Manager.
+Sincerely,
+{See appended electronic signature page}
+Reference ID: 5123456
+
+-- 1 of 1 --

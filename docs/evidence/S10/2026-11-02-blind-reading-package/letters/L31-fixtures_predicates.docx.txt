@@ -1,0 +1,17 @@
+K261234
+
+Dear Example:
+
+We have reviewed your Section 510(k) premarket notification and need the following information:
+
+Deficiency 1: You compared your device to the following predicate devices:
+
+K201234
+
+K193456
+
+but the comparison table addresses only one of them. Please provide a comparison to each.
+
+Deficiency 2: Provide the biocompatibility test reports for the patient-contacting components.
+
+Sincerely,

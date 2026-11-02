@@ -16,6 +16,8 @@ import { ingestFdaAs2Receipt } from '../fda-esg-receipts';
 import { as2CmsFixture, receiptReport } from './support/as2-cms-fixture';
 let fixture: ReturnType<typeof as2CmsFixture>;
 const MESSAGE = '<retained@sponsor>', MIC = createHash('sha256').update('retained-bundle').digest('base64'), SHA = 'b'.repeat(64);
+// What the transmit guard recorded the send carried (F1, 2026-11-01): the fold reads it once the receipt settles the sequence.
+const SENT_LEAVES = [{ ctdSection: '3.2.S.1', fileName: 'general.pdf', href: 'm3/general.pdf', md5: 'a'.repeat(32), operation: 'new' }];
 beforeAll(async () => {
   fixture = as2CmsFixture(); state.pg = new PGlite();
   vi.stubEnv('FDA_ESG_STAGING_MDN_CERT_PATH', join(fixture.directory, 'agency.pem'));
@@ -30,7 +32,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   state.auditFail = false;
   await state.pg!.exec(`DELETE FROM submission_transmittals; DELETE FROM ectd_sequences; DELETE FROM receipt_audit; DELETE FROM audit_logs; UPDATE organization_users SET role='member';`);
-  const metadata = { as2: { messageId: MESSAGE, mic: MIC, environment: 'staging' }, dispatchBinding: { organizationId: 42, sequenceId: 88, signatureActionId: 'act_original', attemptId: 'a0000000-0000-4000-8000-000000000001', bundleSha256: SHA } };
+  const metadata = { as2: { messageId: MESSAGE, mic: MIC, environment: 'staging' }, dispatchBinding: { organizationId: 42, sequenceId: 88, signatureActionId: 'act_original', attemptId: 'a0000000-0000-4000-8000-000000000001', bundleSha256: SHA }, leafManifest: SENT_LEAVES };
   await state.pg!.query(`INSERT INTO submission_transmittals(id,organization_id,region,gateway,transport,status,metadata,bundle_sha256) VALUES(1,42,'fda','esg','as2','in_transit',$1::jsonb,$2)`, [JSON.stringify(metadata), SHA]);
   await state.pg!.exec(`INSERT INTO ectd_sequences VALUES(88,42,'dispatched','transmitting','act_original','a0000000-0000-4000-8000-000000000001',NULL,now());`);
 });
@@ -46,6 +48,9 @@ describe('actual agency-signed MDN ingestion and governed scope/atomicity', () =
     expect(result).toMatchObject({ verified: true, recorded: true, status: 'received', auditTrail: true, sequenceResolution: 'resolved' });
     const row = await read(); expect(row.status).toBe('received'); expect(Buffer.from(row.metadata.as2Receipt.bodyBase64, 'base64')).toEqual(input.body);
     expect((await state.pg!.query<any>('SELECT dispatch_status FROM ectd_sequences')).rows[0].dispatch_status).toBe('sent');
+    // The receipt merges into the row: what was sent, and the attempt it binds, stay on it.
+    expect(row.metadata.leafManifest).toEqual(SENT_LEAVES);
+    expect(row.metadata.dispatchBinding).toMatchObject({ sequenceId: 88, attemptId: 'a0000000-0000-4000-8000-000000000001' });
     expect((await state.pg!.query('SELECT * FROM receipt_audit')).rows).toHaveLength(1);
     expect((await ingestFdaAs2Receipt(input))).toMatchObject({ duplicate: true, sequenceResolution: 'already-resolved' });
     expect((await state.pg!.query('SELECT * FROM receipt_audit')).rows).toHaveLength(1);

@@ -517,7 +517,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'eSTAR section tree · content editor · predicate/SE intelligence panel. In progress.',
+    notes: 'Predicate table, substantial-equivalence matrix and eSTAR section list, with filing readiness, the draft content package and the official eSTAR. Sections open in the one editor.',
   },
   {
     id: 'device-cer',
@@ -537,7 +537,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Annex XIV structure, FAERS, literature, GSPR checklist, export. Dashboard only today.',
+    notes: 'Annex XIV clinical evaluation: safety signals, literature, GSPR checklist, equivalence and PMS/PMCF, with a generator whose sections open in the one editor and whose CER leaves through the governed export.',
   },
   {
     id: 'cmc',

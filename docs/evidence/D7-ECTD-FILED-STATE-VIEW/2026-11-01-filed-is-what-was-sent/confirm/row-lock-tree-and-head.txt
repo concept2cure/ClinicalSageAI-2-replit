@@ -1,0 +1,35 @@
+# server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts on real PostgreSQL, tree and clean HEAD export, two runs each. 2026-11-02T02:33:17Z
+# Command in each: TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55432/c2c_test npx vitest run server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts
+
+## tree, run 1
+ ✓ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > an upsertLeaf that starts while a freeze holds the row lock waits for it, then refuses the frozen sequence 40ms
+ × server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > a freeze that reaches its row lock while a leaf write holds it waits, then refuses the leaf manifest it never judged 127ms
+AssertionError: the freeze did not wait for the leaf write holding the sequence row: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+exit=1
+
+## tree, run 2
+ ✓ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > an upsertLeaf that starts while a freeze holds the row lock waits for it, then refuses the frozen sequence 37ms
+ × server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > a freeze that reaches its row lock while a leaf write holds it waits, then refuses the leaf manifest it never judged 126ms
+AssertionError: the freeze did not wait for the leaf write holding the sequence row: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+exit=1
+
+## head, run 1
+ ✓ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > an upsertLeaf that starts while a freeze holds the row lock waits for it, then refuses the frozen sequence 40ms
+ × server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > a freeze that reaches its row lock while a leaf write holds it waits, then refuses the leaf manifest it never judged 108ms
+AssertionError: the freeze did not wait for the leaf write holding the sequence row: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+exit=1
+
+## head, run 2
+ ✓ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > an upsertLeaf that starts while a freeze holds the row lock waits for it, then refuses the frozen sequence 39ms
+ × server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > a freeze that reaches its row lock while a leaf write holds it waits, then refuses the leaf manifest it never judged 106ms
+AssertionError: the freeze did not wait for the leaf write holding the sequence row: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+exit=1
+# Identical on the tree and on the clean HEAD export: the same case fails with the same assertion in all four runs. The test's fixture (_freeze-gate-fixture.ts) gained only the submission_transmittals DDL in this build (change-set.txt).

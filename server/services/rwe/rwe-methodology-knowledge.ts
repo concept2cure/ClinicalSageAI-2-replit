@@ -59,7 +59,7 @@ const REGULATORY_AUTHORITIES: readonly RegulatoryAuthority[] = ['fda', 'ema', 'p
 /** The true/false facts each scoring or assessment worksheet keeps as not_stated when left out. */
 const DATA_SOURCE_FLAGS = ['deathLinkage', 'hasLabResults', 'hasClinicalNotes', 'hasPharmacyDispensing', 'hasProcedures', 'hasValidationStudy'] as const;
 const BIAS_FLAGS = ['selfReportedOutcome', 'differentialSurveillance', 'hasActiveComparator'] as const;
-const ACCEPTABILITY_FLAGS = ['preRegistered', 'validatedOutcomes', 'existingTrialData'] as const;
+const ACCEPTABILITY_FLAGS = ['preRegistered', 'validatedOutcomes', 'existingTrialData', 'sensitivityAnalysesPlanned'] as const;
 
 interface RWEContext {
   /** Each must be one of its vocabulary. */
@@ -217,6 +217,7 @@ export interface TargetTrialParams {
   primaryOutcome: string;
   causalContrast: CausalContrast;
   maxFollowUpMonths: number;
+  /** Not read: it does not change the protocol. */
   therapeuticArea?: TherapeuticArea;
 }
 
@@ -540,9 +541,11 @@ export interface DataSourceResult {
     fdaReliability: string;
     dataGovernanceReqs: string[];
   };
+  /** Typical of the source type, not established for the stated source: see its note. */
   strengthsAndLimitations: {
     strengths: string[];
     limitations: string[];
+    note: string;
   };
   citations: Citation[];
   notes: string[];
@@ -711,7 +714,7 @@ export function scoreDataSource(params: DataSourceParams): DataSourceResult {
     overallScore >= 55 ? 'moderate' :
     overallScore >= 35 ? 'low' : 'inadequate';
 
-  // Source-type-specific strengths/limitations
+  // Strengths and limitations typical of each source type: a reference profile, not derived from the inputs.
   const sourceTraits: Record<DataSourceType, { strengths: string[]; limitations: string[] }> = {
     claims: {
       strengths: ['Large, representative populations', 'Longitudinal enrollment tracking', 'Complete pharmacy dispensing capture', 'Standardized coding (ICD/CPT/NDC)'],
@@ -739,7 +742,28 @@ export function scoreDataSource(params: DataSourceParams): DataSourceResult {
     },
   };
 
-  const traits = sourceTraits[sourceType];
+  // 2026-11-02: the profile was returned whatever the flags said, so a claims source stated to lack pharmacy
+  // dispensing still listed "Complete pharmacy dispensing capture". A trait that asserts lab, clinical-notes or
+  // pharmacy capture is now left out when a stated flag says otherwise, and the note says the profile is typical.
+  // Biomarkers count as lab results and unstructured data as clinical notes, as the tool definitions describe them.
+  const traitFacts: Record<string, Partial<Record<(typeof DATA_SOURCE_FLAGS)[number], boolean>>> = {
+    'Complete pharmacy dispensing capture': { hasPharmacyDispensing: true },
+    'No lab results or clinical notes': { hasLabResults: false, hasClinicalNotes: false },
+    'Rich clinical detail (labs, vitals, notes)': { hasLabResults: true, hasClinicalNotes: true },
+    'Treatment response data (biomarkers)': { hasLabResults: true },
+    'Pharmacy fills may be incomplete without PBM linkage': { hasPharmacyDispensing: false },
+    'Unstructured data requires NLP extraction': { hasClinicalNotes: true },
+    'Genomic/biomarker data linked to clinical records': { hasLabResults: true },
+    'Pharmacy dispensing from claims + lab values from EHR': { hasPharmacyDispensing: true, hasLabResults: true },
+    'Linked pharmacy, lab, imaging, and clinical data': { hasPharmacyDispensing: true, hasLabResults: true },
+  };
+  const fitsStatedFacts = (trait: string) => Object.entries(traitFacts[trait] ?? {})
+    .every(([field, asserted]) => inputStates[field] === 'not_stated' || inputStates[field] === asserted);
+  const traits = {
+    strengths: sourceTraits[sourceType].strengths.filter(fitsStatedFacts),
+    limitations: sourceTraits[sourceType].limitations.filter(fitsStatedFacts),
+    note: `Typical of ${sourceType} sources, not established for the stated source. A trait asserting lab, clinical-notes or pharmacy capture is left out when a stated flag contradicts it; the stated capture facts are in inputStates and dimensions.`,
+  };
 
   // FDA regulatory acceptability assessment
   const fdaRelevance = studyQuestion === 'label_expansion'
@@ -1742,6 +1766,8 @@ export interface RegulatoryAcceptabilityParams {
   validatedOutcomes?: boolean | null;
   /** Whether there is a concurrent randomized trial or existing trial data for the same question. Left out or null: not_stated. */
   existingTrialData?: boolean | null;
+  /** Whether sensitivity analyses for unmeasured confounding are planned and pre-specified. Left out or null: not_stated. */
+  sensitivityAnalysesPlanned?: boolean | null;
   /** Sample size. */
   sampleSize: number;
 }
@@ -1799,6 +1825,7 @@ export function assessRegulatoryAcceptability(params: RegulatoryAcceptabilityPar
   const preRegistered = statedBoolean('preRegistered', params.preRegistered);
   const validatedOutcomes = statedBoolean('validatedOutcomes', params.validatedOutcomes);
   const existingTrialData = statedBoolean('existingTrialData', params.existingTrialData);
+  const sensitivityAnalysesPlanned = statedBoolean('sensitivityAnalysesPlanned', params.sensitivityAnalysesPlanned);
   /** [credit if false, credit if true] for each requirement whose fact was not stated. */
   const unresolved: [number, number][] = [];
   const statusFrom = (fact: boolean | undefined, ifTrue: CreditedStatus, ifFalse: CreditedStatus): EvidenceRequirement['status'] => {
@@ -1850,8 +1877,14 @@ export function assessRegulatoryAcceptability(params: RegulatoryAcceptabilityPar
     },
     {
       requirement: 'Sensitivity analyses for unmeasured confounding',
-      status: 'partially_met',
-      recommendation: 'Include E-value analysis, negative control outcomes/exposures, and quantitative bias analysis. Multiple analytic approaches (PS matching, IPTW, doubly robust) should produce consistent results.',
+      // 2026-11-02: fixed at partially_met until now, with no input behind it, and its half credit could decide the
+      // grade. It now reads the stated plan through statusFrom, as pre-registration and validation do.
+      status: statusFrom(sensitivityAnalysesPlanned, 'met', 'not_met'),
+      recommendation: sensitivityAnalysesPlanned === undefined
+        ? 'Whether sensitivity analyses for unmeasured confounding are planned was not stated, so this requirement is not assessed. It asks whether an E-value or quantitative bias analysis, negative controls and multiple analytic approaches are pre-specified.'
+        : sensitivityAnalysesPlanned
+        ? 'Sensitivity analyses for unmeasured confounding are planned and pre-specified. Report whether the analytic approaches (PS matching, IPTW, doubly robust) give consistent results.'
+        : 'Include E-value analysis, negative control outcomes/exposures, and quantitative bias analysis. Multiple analytic approaches (PS matching, IPTW, doubly robust) should produce consistent results.',
     },
     {
       requirement: 'Transparency and reproducibility',

@@ -251,7 +251,12 @@
    320 rather than 300: at 300 the design inputs' two-column rows measured 366
    and spilled, which the note below this block records. */
 .c2c-v2 .bs-doc-layout{ display:grid; grid-template-columns:320px minmax(0,1fr); gap:24px; align-items:start; }
-.c2c-v2 .bs-side{ display:flex; flex-direction:column; gap:12px; }
+/* The study column's own rhythm. `.pj-sec + .pj-sec` is the page's 32px, and
+   with this column's 12px flex gap on top of it the three sections sat 44px
+   apart inside 320px (measured 2026-11-02). A side column reads tighter than
+   the page it sits beside: one gap, 24px, and no flex gap under it. */
+.c2c-v2 .bs-side{ display:flex; flex-direction:column; gap:0; }
+.c2c-v2 .bs-side > .pj-sec + .pj-sec{ margin-top:24px; }
 .c2c-v2 .bs-doc-group{ margin-bottom:10px; }
 .c2c-v2 .bs-doc-gl{ font-size:var(--fs-caption); color:var(--text-400); font-weight:600; margin:6px 4px 4px; }
 .c2c-v2 .bs-doc-opt{ display:flex; align-items:center; justify-content:space-between; width:100%; text-align:left; padding:8px 10px; border-radius:var(--radius-lg); border:1px solid transparent; background:transparent; cursor:pointer; margin-bottom:2px; }
@@ -305,7 +310,18 @@
 /* 48px, transparent, a hairline under it — no grey band (D0 §4.2.17). */
 .c2c-v2 .bs-doc-bar{ display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; padding:0 8px 0 16px; background:transparent; border-bottom:1px solid var(--border); }
 .c2c-v2 .bs-doc-meta{ font-size:var(--fs-small); line-height:1.5; color:var(--text-300); }
-.c2c-v2 .bs-assess{ margin-top:14px; }
+/* The assessment and the governed-document list are the page's two full-width
+   sections under the document. `.pj-sec + .pj-sec` (D5-0) spaces them from each
+   other; this is the gap from the document layout above, for whichever of the
+   two comes first — the assessment renders only with a design selected. */
+.c2c-v2 .bs-assess,
+.c2c-v2 .bs-doc-layout + .pj-sec{ margin-top:32px; }
+.c2c-v2 .bs-assess-b{ display:grid; gap:12px; }
+/* The three doors at the foot of the assessment are navigation, not a confirm
+   bar: they read in the page's own order, from the left. `.pj-sec-acts` is
+   right-aligned for a heading's actions, and a grid stretches it to the full
+   track, so it would otherwise end up as a toolbar pinned to the right. */
+.c2c-v2 .bs-assess-b > .pj-sec-acts{ justify-content:flex-start; }
 .c2c-v2 .bs-doc-kind{ font-size:var(--fs-body); font-weight:600; color:var(--text-100); white-space:nowrap; }
 .c2c-v2 .bs-doc-prov{ font-size:11px; color:var(--text-300); margin-left:10px; font-family:var(--font-mono,monospace); }
 .c2c-v2 .bs-doc-bar-a{ display:flex; flex-wrap:wrap; gap:8px; }
@@ -350,7 +366,13 @@
    and the inputs that produced it read as its settings underneath. */
 @media (max-width:1023px){
   .c2c-v2 .bs-doc-layout{ grid-template-columns:1fr; }
-  .c2c-v2 .bs-doc-layout > .bs-doc{ order:-1; }
+  /* The artifact comes first on a phone (D5 §B.6 acceptance 6). This selector
+     named `.bs-doc`, which was a direct child of the layout until D5-3a
+     wrapped the worked-example note and the artifact in `.bs-main` so the note
+     would stop becoming a third grid cell. The rule then matched nothing and
+     the 320px study column came first, measured at 390 on 2026-11-02. It is
+     the wrapper that is the grid item now, so it is the wrapper that moves. */
+  .c2c-v2 .bs-doc-layout > .bs-main{ order:-1; }
 }
 
 /* CMC change — generated change-control document */

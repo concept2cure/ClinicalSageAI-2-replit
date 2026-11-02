@@ -1,0 +1,359 @@
+# F1 view copy part: green, after the change. 2026-11-01T23:30:48Z
+# Tree: HEAD 609ef94c7 + part 1 (server) + this part, uncommitted. No migration in this part, so no migration-replay.txt.
+# Final files:
+#   1982f8cb4a47adc0dc31e04631c84269baeaf2183f12fb520a6ee7ecd47ec193  client/src/concept2cure/v2/surfaces/EctdFiledState.tsx
+#   d25b58676d46f3e648365e40132ff62d9ef1c509d991283c386e28838371b3da  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx
+#   cec5b3f494dead6e88fdb53f4d24cb9bf09e825db6d63a2cea37ff8002ec98c7  client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx
+
+## 1. The card's tests: ectdFiledState (the three states of the design's rule 4, the summary in words, nothing on file)
+##    and ectdCompile (the card reached through EctdCompile)
+$ npx vitest run client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > groups what is on file by module, naming each document’s section, holding sequence and act 207ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says how a replaced document came to be on file, and adds nothing for one filed once (gap 6.2) 31ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > names the sequences it includes and the ones it does not, with the reason in words, never a stored status 21ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says a failed read, never an empty dossier, and retries 38ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed" 27ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says the documents on file are read from what each sequence sent 17ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > names a sequence read from its compiles, sent before the platform kept what each send carried 48ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says a sent sequence with no record of what it carried is not included, and why 14ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > loads module readiness from the real status endpoint 117ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > compiles across the region and renders the server result with a backbone download 259ms
+stderr | client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows an honest empty state when no program is open (no fixture)
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows what the agency holds now, across the filed sequences (gap 6.1) 54ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows an honest empty state when no program is open (no fixture) 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > a program UUID ident is sent to the server (which resolves it) — the numeric-only dead-end is gone 47ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > names what is still missing instead of a bare negative 60ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > warns that the downloadable backbone is not a sequence 56ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > reports the readiness number as content completeness, not readiness to submit 38ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > claims nothing extra in the compile toast 54ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > opens both backbones as a navigable leaf hierarchy — Module 1 from the regional file 109ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > lists every file in the package and offers the regional backbone and the MD5 index 134ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > states the PDF/A outcome and whether the compilation was recorded 85ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > names an FDA form shipped as FDA issued apart from the PDF/A count 83ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > an unrecorded compilation says it can anchor no lifecycle 77ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > the region is the sequence's: shown, not chosen, and not sent 83ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > readiness counted from placed documents says so, and never reads as approval 32ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > history names the sequence each compilation covered and whether it anchors the next 61ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up sequence shows every act against the filed state, and what was left out 145ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up with no filed sequence on record says there is nothing on file to act on 109ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > an original sequence has no lifecycle to show 92ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > shows an imported report with its compilation, and says this product did not run it 49ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > names who imported it by account, and lists every report it replaced 54ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > replacing a report asks first, naming the report it replaces; cancelling opens nothing 203ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > imports a report against the compilation whose package it covered 106ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > a refused report is shown in the server's words, and nothing is shown as imported 63ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > is offered only for a follow-up sequence — an original has nothing to rehearse against 59ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > compiles as a rehearsal when asked, says which sequences were never filed, and exports the same 163ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > a compile without the toggle asks for no rehearsal 100ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > the history names a rehearsal compilation for what it is 29ms
+
+ Test Files  2 passed (2)
+      Tests  37 passed (37)
+   Start at  23:30:41
+   Duration  5.38s (transform 841ms, setup 192ms, import 1.16s, tests 2.94s, environment 840ms)
+
+exit 0
+
+## 2. Every client test under client/src/concept2cure/v2/__tests__ (891 files), the card's whole coverage:
+##    the EctdCompile family, the shell (surfaceViews.ts imports EctdCompile) and every source-scanning copy test.
+# Pass 1: npx vitest run client/src/concept2cure/v2/__tests__, started 22:28Z under timeout 3000; it reached the limit
+#   (exit 124) after 815 files. Per-test results: 9030 passed, 145 failed (30 files), 0 skipped.
+# Pass 2: the 76 files pass 1 did not reach (all files minus those with a result line in pass 1):
+#   npx vitest run <76 files>   ->  Test Files  2 failed | 75 passed (77); Tests  3 failed | 298 passed (301)
+# Together: 891 files, 9328 passed, 148 failed. The two files of this part: 37/37 passed in pass 1.
+# The 76 files of pass 2:
+#   client/src/concept2cure/v2/__tests__/DiscoveryNextSteps.test.tsx
+#   client/src/concept2cure/v2/__tests__/MdxCatalogSolution.test.tsx
+#   client/src/concept2cure/v2/__tests__/adminApiKeyUsage.test.tsx
+#   client/src/concept2cure/v2/__tests__/adminPendingInvitation.test.tsx
+#   client/src/concept2cure/v2/__tests__/agencyInboxClockLine.test.ts
+#   client/src/concept2cure/v2/__tests__/agencyInboxDueDays.test.ts
+#   client/src/concept2cure/v2/__tests__/agencyResponseEditorState.test.ts
+#   client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaDetachedCapNote.test.ts
+#   client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts
+#   client/src/concept2cure/v2/__tests__/anaReplyText.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx
+#   client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts
+#   client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts
+#   client/src/concept2cure/v2/__tests__/c2cFormCustomField.test.tsx
+#   client/src/concept2cure/v2/__tests__/c2cFormLiveDescription.test.tsx
+#   client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts
+#   client/src/concept2cure/v2/__tests__/cmcQualityBoundary.test.tsx
+#   client/src/concept2cure/v2/__tests__/communicationDraftCarriesLetter.test.tsx
+#   client/src/concept2cure/v2/__tests__/companyDocumentsAccount.test.tsx
+#   client/src/concept2cure/v2/__tests__/compliancePeriodFutureDate.test.ts
+#   client/src/concept2cure/v2/__tests__/conversationRefChipsNoLock.test.ts
+#   client/src/concept2cure/v2/__tests__/coreAuditWarningTransport.test.tsx
+#   client/src/concept2cure/v2/__tests__/croPortfolioCompanyType.test.tsx
+#   client/src/concept2cure/v2/__tests__/croPortfolioSurfaceContext.test.tsx
+#   client/src/concept2cure/v2/__tests__/csrWorkflowProgramScope.test.tsx
+#   client/src/concept2cure/v2/__tests__/dataConnect.test.ts
+#   client/src/concept2cure/v2/__tests__/deepLinkKeepsProgram.test.tsx
+#   client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts
+#   client/src/concept2cure/v2/__tests__/draftFigureLine.test.tsx
+#   client/src/concept2cure/v2/__tests__/ectdCompileHistoryHonesty.test.tsx
+#   client/src/concept2cure/v2/__tests__/ectdCompileRecordedType.test.tsx
+#   client/src/concept2cure/v2/__tests__/editingCopy.test.tsx
+#   client/src/concept2cure/v2/__tests__/filingAskPrompt.test.tsx
+#   client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx
+#   client/src/concept2cure/v2/__tests__/filingStudyReceipt.test.ts
+#   client/src/concept2cure/v2/__tests__/gatewayTransmittalsNames.test.tsx
+#   client/src/concept2cure/v2/__tests__/indLifecycleEctdFormat.test.tsx
+#   client/src/concept2cure/v2/__tests__/insightsChartNoFixtures.test.ts
+#   client/src/concept2cure/v2/__tests__/insightsHeldBecause.test.ts
+#   client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts
+#   client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts
+#   client/src/concept2cure/v2/__tests__/ivdCompletenessOneBoard.test.tsx
+#   client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx
+#   client/src/concept2cure/v2/__tests__/licensingEnterpriseAction.test.tsx
+#   client/src/concept2cure/v2/__tests__/navUnlockLockSource.test.tsx
+#   client/src/concept2cure/v2/__tests__/nonclinicalIntroNotAssessed.test.tsx
+#   client/src/concept2cure/v2/__tests__/notificationTarget.test.ts
+#   client/src/concept2cure/v2/__tests__/placementReasonField.test.tsx
+#   client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx
+#   client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx
+#   client/src/concept2cure/v2/__tests__/projectMarketsAddPermission.test.tsx
+#   client/src/concept2cure/v2/__tests__/projectPlanLifecycleReference.test.tsx
+#   client/src/concept2cure/v2/__tests__/projectSideNotRead.test.tsx
+#   client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx
+#   client/src/concept2cure/v2/__tests__/protocolReviewComments.test.tsx
+#   client/src/concept2cure/v2/__tests__/railOpensWithoutProject.test.ts
+#   client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts
+#   client/src/concept2cure/v2/__tests__/rbmSitesMapping.test.ts
+#   client/src/concept2cure/v2/__tests__/reviewCommentByline.test.tsx
+#   client/src/concept2cure/v2/__tests__/reviewRecordExport.test.tsx
+#   client/src/concept2cure/v2/__tests__/sameNameMemberPickers.test.tsx
+#   client/src/concept2cure/v2/__tests__/shadowRunCoverage.test.tsx
+#   client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts
+#   client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts
+#   client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionModule2Qc.test.ts
+#   client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts
+#   client/src/concept2cure/v2/__tests__/surfaceLeaveNavigationDialog.test.ts
+#   client/src/concept2cure/v2/__tests__/taskBoardCriticalPathHonesty.test.tsx
+#   client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts
+#   client/src/concept2cure/v2/__tests__/vaultDataRoomFiledAs.test.ts
+#   client/src/concept2cure/v2/__tests__/vaultDocumentOpenReads.test.tsx
+#   client/src/concept2cure/v2/__tests__/vaultLifecycleSigningRoles.test.ts
+#   client/src/concept2cure/v2/__tests__/vaultSectionCitations.test.ts
+#   client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx
+
+## 3. Every one of the 148 failures is pre-existing: identical, by test name, on a clean export of HEAD 609ef94c7
+##    (scratchpad/f1-view-head-export: git archive 609ef94c7, node_modules symlinked; its two test files are HEAD's).
+# Export batch 1 (11 files):  Tests  95 failed | 134 passed (229)   tree failures in those files: 95; export: 95; only in the tree: 0; only on the export: 0
+# Export batch 2 (21 files):  Tests  53 failed | 100 passed (153)   tree failures in those files: 53; export: 53; only in the tree: 0; only on the export: 0
+# None of these files imports EctdFiledState.tsx or EctdCompile.tsx at run time (grep: only moduleCatalogReconciliation
+# names surfaceViews, in a comment, and reportingContextIntegrity imports a type from it). Failures per file (tree = export):
+#         1 client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx
+#         3 client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx
+#        10 client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx
+#         2 client/src/concept2cure/v2/__tests__/adminApiKeyUsage.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx
+#         6 client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx
+#        14 client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/changeAssessmentReal.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts
+#         2 client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/csrWorkflowProgramScope.test.tsx
+#        37 client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/draftClaimsLine.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts
+#         2 client/src/concept2cure/v2/__tests__/homeSetup.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx
+#        18 client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx
+#        17 client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx
+#         2 client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts
+#         1 client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx
+#         9 client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx
+#         5 client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx
+#         3 client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx
+#         1 client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx
+# Every failing test, by name (the same list on the export):
+#   client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > separates requested SSO from verified second-factor status and routes to existing setup
+#   client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — the subscription entry (P-68) > a billing administrator has one entry, Subscription & billing, opening Licensing, and Usage & limits
+#   client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — the subscription entry (P-68) > a member keeps Usage & limits and Compare subscriptions, and has no billing entry
+#   client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — the subscription entry (P-68) > an organisation administrator whose session lacks the billing permission is offered what a member is
+#   client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Codebase coverage > is not offered to a member or an organisation administrator
+#   client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Codebase coverage > is not offered, even to a platform administrator, when the release locks it
+#   client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Codebase coverage > is offered to a platform administrator when it can be opened
+#   client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > follows the server, not the org role: a platform admin without an org-admin role sees it
+#   client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered on masterAdmin alone — the commercial unlock is not console access
+#   client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered to a customer org admin the console refuses
+#   client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered when an older server omits the field
+#   client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered when the navigation fetch fails
+#   client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is offered when the server says the console guard admits this viewer, and opens it
+#   client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > survives resolved:false — the answer does not depend on the catalog read
+#   client/src/concept2cure/v2/__tests__/adminApiKeyUsage.test.tsx > admin API-key usage > opens usage for the numeric key id from the active admin table
+#   client/src/concept2cure/v2/__tests__/adminApiKeyUsage.test.tsx > admin API-key usage > shows the server request count, status and honest no-use state
+#   client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the apps catalog > shows and hides the admin controls, the one thing a person switches here
+#   client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx > Audit trail — the audit_events chain verdict in the chain banner > reads the route the Part 11 console read
+#   client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > a re-placement that promoted the copy’s status says so, and never says nothing was written
+#   client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > an edited document over a filed copy: the server’s refusal verbatim, and no leaf is requested
+#   client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > an unchanged re-placement says nothing was written
+#   client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > a one-section document is filed at that section’s code
+#   client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > a repeat placement the server answers with the existing leaf is reported as already placed, not as a new leaf
+#   client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > refuses one of the document’s own section codes — the leaf would hold the other sections too — and writes nothing
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > browses the returned catalog with a count and no additional reads
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds   pRoToCoL   in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds EMA in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds FDA in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds M5 in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds Sponsor standards in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds clinical master in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds ctis-form in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds dose escalation in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds dose protocol in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds eCTD in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds manual in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds registry:eu-cta in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds signed originals in returned titles and metadata
+#   client/src/concept2cure/v2/__tests__/changeAssessmentReal.test.tsx > ChangeAssessment — fixture-free > renders the org REAL rows and derives KPIs from them
+#   client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > screen actions
+#   client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named with a word from "Not in client copy"
+#   client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the names AnA and the @ menu give a reachable screen (NAVIGATION_TARGETS) use none of the words
+#   client/src/concept2cure/v2/__tests__/csrWorkflowProgramScope.test.tsx > CSR board program changes > reads the actual shell program and clears the previous study while the next program loads
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > a lost leaf reply is unknown, never nothing placed, and offers reconciliation
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > does not report a malformed successful leaf reply false as a refusal
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > does not report a malformed successful leaf reply null as a refusal
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > does not report a malformed successful leaf reply {"id":0} as a refusal
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > does not report a malformed successful leaf reply {} as a refusal
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > refuses a mismatched leaf receipt {"documentId":999}
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > refuses a mismatched leaf receipt {"lifecycleOp":"replace"}
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > refuses a mismatched leaf receipt {"sectionCode":"3.2.P.8"}
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > refuses a mismatched leaf receipt {"sequenceId":32}
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > states audit confirmation null without rolling back a real placement
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > states audit confirmation {"persisted":false} without rolling back a real placement
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > states audit confirmation {"persisted":true,"chained":false} without rolling back a real placement
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement context > a document switch resets the dialog and stops the old chain after its pending read
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot receipts > does not turn malformed saved-section data into an empty document
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot receipts > never places from an invalid snapshot id -1
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot receipts > never places from an invalid snapshot id 0
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot receipts > never places from an invalid snapshot id 1.5
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot receipts > never places from an invalid snapshot id 9007199254740992
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot source lineage > does not file a copy with unconfirmed source lineage undefined
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot source lineage > does not file a copy with unconfirmed source lineage {"source":"authoring-document","docId":"D2"}
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot source lineage > does not file a copy with unconfirmed source lineage {"source":"upload","docId":"D1"}
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > pending filing receipts > ignores an old leaf receipt after a project switch
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > pending filing receipts > ignores an old snapshot receipt after a project switch
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the dialog states the identity fact and picks real targets > excludes frozen sequences from selection WITH the reason shown
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the dialog states the identity fact and picks real targets > loads the org submissions on open and the chosen submission’s sequences
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > a failed snapshot POST stops the chain — the leaves endpoint is never called
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > a refused PUT surfaces the server verdict verbatim and never claims a placement
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > blocks placement while the section has unsaved changes, with the reason
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > files at the code the note announces, not at the keystrokes
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > places via GET saved sections → POST snapshot → PUT leaves with the snapshot id
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > refuses an empty document honestly — nothing is written at all
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > canonicalises what the author typed — one CTD section, one folder
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > names the module folder a precise Module 3 section files into — full depth
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > refuses a bare module — a container is not a section a document can be filed at
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > refuses a value that is not a CTD code, and will not place it
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > says a Module 1 section goes to the regional folder, whichever spelling is used
+#   client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > writes nothing at all for an unplaceable code — no snapshot, no leaf
+#   client/src/concept2cure/v2/__tests__/draftClaimsLine.test.tsx > the line is on the surface the author already reads > is rendered by the workbench wherever the figure line is, from the same provenance read
+#   client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > no `text-transform: uppercase` in v2/styles/*.css or design-system/colors_and_type.css
+#   client/src/concept2cure/v2/__tests__/homeSetup.test.tsx > Home: set up your organisation > is not offered to an administrator role the server refuses the steps to
+#   client/src/concept2cure/v2/__tests__/homeSetup.test.tsx > Home: set up your organisation > with all three done, the checklist is gone
+#   client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a member > is told who sees invoices, and no invoice request is made
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — governed writes > does not write until a reason has been given
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — governed writes > offers "End now" only while the grant is still running
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — governed writes > surfaces the server reason when a write fails
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — governed writes > will not submit a reason shorter than the server floor
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — honest reads > a genuinely empty list says every grant is permanent
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — honest reads > puts the workspaces that have lost a module first
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — opening a grant > does not claim "already included" for a module the workspace's industry is not offered
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — opening a grant > leaves the form filled when the write fails, and says why
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — opening a grant > offers the control even when no trial exists yet
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — opening a grant > posts the end date as end-of-day, with the reason, and clears the form
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — opening a grant > refuses a date in the past — an expiry already behind us grants nothing
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — opening a grant > says the grant would change nothing when the plan already includes the module
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — opening a grant > says what access the grant actually buys when the plan does not include it
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — opening a grant > will not submit until a workspace, a module and a date are all chosen
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — the four states > ENDED and the plan does not cover it: says access is gone, and raises it
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — the four states > ENDED but the plan covers it: says the workspace still has it, and raises nothing
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — the four states > LIVE and covered: says plainly that nothing changes
+#   client/src/concept2cure/v2/__tests__/licensingTrials.test.tsx > TrialsPanel — the four states > LIVE and not covered: names the loss that is coming
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — applying a plan > names the grants a downgraded tenant KEEPS above its new plan
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — applying a plan > reports nothing at all when provisioning fails
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — applying a plan > reports the real grant count from the server, not a guess
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — enforcement report > always states the per-server caveat, so the report is not read as a total
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — enforcement report > distinguishes "not switched on" from "observing and quiet"
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — enforcement report > reports what would be refused, and says it was served
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — enforcement report > says NOT ENOUGH IS KNOWN when nothing has been observed — never an all-clear
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — enforcement report > says refusals are real once enforcement is on
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — enforcement report > says so when the buffer is full, rather than presenting a truncated report as complete
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — enforcement report > surfaces a failed read as an error, never as an empty report
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — enforcement report > will not discard the record without a reason
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — governed writes > does not PATCH until a reason has been given
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — governed writes > reverts the optimistic change and shows the server reason when a write fails
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — governed writes > sends the reason the operator typed, to the right endpoint
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — reads > renders an error state, not an empty table, when the read fails
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — reads > renders the live matrix
+#   client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > Master Licensing — reads > surfaces a 403 as a refusal rather than an empty console
+#   client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > lists one module once — never the same surface under two ids
+#   client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > seeds no catalog row for something a user cannot actually open
+#   client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps one fenced workspace during pending adoption and creates one fresh adopted workspace
+#   client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > leaves an entitled module completely alone
+#   client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > locks a tier-gated module, keeps it activatable, and routes to plans
+#   client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > never locks a destination the catalog has no row for
+#   client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > renders no lock at all when the navigation fetch fails
+#   client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > renders no lock when the server answers resolved:false
+#   client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > shows no locks for the master-admin owner grant
+#   client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a disabled lock in the accessible name
+#   client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a industry lock in the accessible name
+#   client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a tier lock in the accessible name
+#   client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > runs a lineage report for the chosen owned document instead of the program id
+#   client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy
+#   client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does
+#   client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference
+#   client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked
+#   client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot
+#   client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Shadow review tab — waived and failed runs > a failed run the server does not call waivable gets no pointer
+#   client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > draws the current page, and no rule draws a client category on the rail
+#   client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > shadow review — real runs and persisted findings > lists the sequence runs and the selected run findings with acknowledged state
+#   client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type
+#   client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > credits are not presented as metered > makes no price claim it cannot honour
+#   client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > credits are not presented as metered > no balance, no Buy more, no auto-reload control, and no credits read
+#   client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > the referral offer > is gone — the product cannot pay it
+#   client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > limits the headline to accessible projects, names each hit’s project, and downloads through that project
+#   client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into filing from the Vault > opens with a confirmed filing's section filled in, and reads this version's stage
+#   client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > an earlier version compares with the current one: bytes, details and the changed lines
+
+## 4. Typecheck
+$ npm run -s typecheck
+23:20:57
+
+real	5m3.697s
+user	5m30.969s
+sys	0m20.404s
+exit 0
+23:26:01
+# 'error TS' lines: 0
+
+## 5. Lint of the changed client files
+$ npx eslint client/src/concept2cure/v2/surfaces/EctdFiledState.tsx client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx
+exit 0
+# 0 errors, 0 warnings.
