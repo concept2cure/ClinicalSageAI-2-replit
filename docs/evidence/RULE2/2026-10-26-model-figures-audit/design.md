@@ -617,7 +617,12 @@ dimension that reads an unstated fact and the overall score are `null`, and fitn
 acceptability grade and whether quantitative bias analysis is required are given only when no
 answer could change them. An unstated bias stays listed, ungraded. The two selection
 worksheets refuse an unstated deciding fact, and every required enum, number and text is
-refused by name. No source reader, app or service was added.
+refused by name. No source reader, app or service was added. Review follow-up (2026-11-02): the
+sensitivity-analysis requirement was fixed at `partially_met`, with no input behind it. It now reads a thirteenth
+optional boolean, `sensitivityAnalysesPlanned`, as the pre-registration and validation requirements read theirs: it
+is `not_assessed` when that is left out, and the grade is given only when no answer could change it. The
+data-source strengths and limitations carry a note that they are typical of the source type, and leave out a lab,
+clinical-notes or pharmacy capture trait that a stated flag contradicts.
 - **S5b (device and diagnostics):**
   - `biomarkerTools` and `ivdLifecycleTools`: `assess_iso17511_traceability`, `assess_scientific_validity`, `assess_shelf_life_stability`, `assess_accelerated_stability`;
   - `digitalHealthTools`, `medicalDeviceTools`, `assess_qms`, `assess_pathway_eligibility`.
