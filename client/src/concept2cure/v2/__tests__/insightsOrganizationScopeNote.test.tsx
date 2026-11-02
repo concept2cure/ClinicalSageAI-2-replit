@@ -118,7 +118,7 @@ const ready = () => waitFor(() => expect(document.querySelector('[data-testid="r
 async function openPack() {
   renderCanvas();
   await ready();
-  // "Where to start": the segment's first pack, offered for the open project.
+  // The header's primary: the segment's first pack, offered for the open project.
   const opener = await waitFor(() => {
     const button = document.querySelector<HTMLElement>('[data-work-area="insights"] .ph-acts .btn.primary');
     expect(button?.textContent).toMatch(/Build the Portfolio oversight pack/);
@@ -166,7 +166,7 @@ describe('report scope line — what the counts cover', () => {
     rendered = calendarDoc;
     renderCanvas();
     await ready();
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     const card = (await screen.findByText('Lifecycle Obligation Calendar')).closest('.rl-card') as HTMLElement;
     fireEvent.click(within(card).getByRole('button', { name: /^Run$/ }));
     expect((await screen.findByTestId('ro-scope')).textContent).toBe(PROJECT);

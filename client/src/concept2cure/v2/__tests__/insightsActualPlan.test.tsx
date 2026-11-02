@@ -65,11 +65,15 @@ function ask() {
   fireEvent.change(field, { target: { value: 'Generate the Executive Readiness Digest' } });
   fireEvent.keyDown(field, { key: 'Enter' });
 }
+/** The plan preview lives in the Catalog's filters (D7 §D.4 step 6): open it,
+ *  choose, and come back to the Reports view the tests read. */
 function preview(name: string) {
-  fireEvent.click(within(screen.getByRole('group', { name: 'Subscription tier' })).getByRole('button', { name }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Catalog' }));
+  fireEvent.click(within(screen.getByRole('group', { name: 'Preview plan' })).getByRole('button', { name }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Reports' }));
 }
 async function catalog() {
-  fireEvent.click(screen.getByRole('tab', { name: 'Report catalog' }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Catalog' }));
   await screen.findByRole('heading', { name: 'Report catalog' });
 }
 async function pack() {
@@ -187,7 +191,7 @@ describe('actual plan — existing reads and positive execution', () => {
     expect(document.querySelectorAll('button.ro-pack-card')).toHaveLength(0);
   });
   it('keeps exactly the three existing plan preview choices', async () => {
-    await canvas();
-    expect(within(screen.getByRole('group', { name: 'Subscription tier' })).getAllByRole('button').map(button => button.textContent)).toEqual(['Standard', 'Professional', 'Enterprise']);
+    await canvas(); await catalog();
+    expect(within(screen.getByRole('group', { name: 'Preview plan' })).getAllByRole('button').map(button => button.textContent)).toEqual(['Standard', 'Professional', 'Enterprise']);
   });
 });
