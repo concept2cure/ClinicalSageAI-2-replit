@@ -164,7 +164,14 @@ async function ensureSource({ api, run, tally }, project, spec) {
     const digest = sha256(content);
     const search = must(await api('GET',
       `/api/c2c/project-vault/${project.id}/search?q=${encodeURIComponent(spec.label)}&limit=50`), 200, 'search existing source');
-    const existing = (search.data?.results ?? []).find(doc => doc.title === name);
+    if (!Array.isArray(search.data?.results)) {
+      throw new Error('The project Data Room did not return a verified source list. No duplicate upload was attempted.');
+    }
+    const sameTitle = search.data.results.filter(doc => doc.title === name);
+    if (sameTitle.length > 1) {
+      throw new Error(`The project Data Room has duplicate current candidates titled "${name}". Reconcile their versions before a demo seed.`);
+    }
+    const existing = sameTitle[0] ?? null;
     if (existing) {
       if (existing.current === false || existing.contentHash !== digest) {
         throw new Error(`A source titled "${name}" exists but its current SHA-256 does not match revision 2. Reconcile it in Vault; this seed will not overwrite governed data.`);
@@ -252,9 +259,10 @@ async function ensureCsrWorkingDocument({ api, run, tally }, project, template) 
     // The list read is the same endpoint used by DocumentAuthoring. It must
     // actually show the new or found document in the CURRENT project.
     const after = must(await api('GET', endpoint), 200, 'reopen the project\'s CSR working document');
-    const saved = (Array.isArray(after.documents) ? after.documents : [])
-      .find(row => String(row.id) === id && row.title === titleText);
-    if (!saved || String(saved.program_id ?? '') !== String(project.id) ||
+    const matching = (Array.isArray(after.documents) ? after.documents : [])
+      .filter(row => row.title === titleText);
+    const saved = matching.find(row => String(row.id) === id);
+    if (matching.length !== 1 || !saved || String(saved.program_id ?? '') !== String(project.id) ||
         String(saved.template_id ?? '') !== String(template.id) ||
         !(Number(saved.section_count) > 0)) {
       throw new Error('The editor did not return the CSR document with the canonical template and seeded ICH E3 sections. The demo is not ready.');
