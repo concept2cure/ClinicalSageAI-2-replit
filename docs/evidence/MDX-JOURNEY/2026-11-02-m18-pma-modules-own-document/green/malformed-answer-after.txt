@@ -1,0 +1,23 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > 510(k) surface — the official eSTAR family follows the program > an IVD program on the 510(k) surface is produced on the IVD eSTAR 99ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > 510(k) surface — the official eSTAR family follows the program > a device program on the 510(k) surface is produced on the nIVD eSTAR 31ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the official eSTAR pathway follows the program, not the surface > a De Novo program on the 510(k) surface is produced as a De Novo, on its family 49ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the official eSTAR pathway follows the program, not the surface > a PMA program on the PMA surface is produced as a PMA, on its family 201ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the official eSTAR pathway follows the program, not the surface > an IVD PMA program on the PMA surface is produced as a PMA on the IVD eSTAR 26ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the PMA surface derives the pathway from the program, never from itself > a De Novo program open on the PMA surface is produced as a De Novo 41ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the PMA surface derives the pathway from the program, never from itself > a 510(k) program open on the PMA surface is produced as a 510(k) 25ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the diagnostics surface derives the eSTAR family from the program, never from itself > a non-IVD device program open on the diagnostics surface is produced on the nIVD eSTAR 57ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the diagnostics surface derives the eSTAR family from the program, never from itself > an IVD program open on the diagnostics surface is still produced on the IVD eSTAR 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > state the required modules present, as the assembly check counts them 111ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > name the sections finished and written, by code 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > ask AnA with the module's own facts 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > say a malformed answer is a failed read: no throw, and not "no PMA document" 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > say so when the project has no PMA document 29ms
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  05:05:44
+   Duration  4.16s (transform 1.55s, setup 153ms, import 2.24s, tests 827ms, environment 699ms)
+

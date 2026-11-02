@@ -119,6 +119,14 @@ describe("the PMA screen's module cards", () => {
     expect(String(onAsk.mock.calls.at(-1)?.[0])).toMatch(/^PMA module 7, "Summary of safety and effectiveness data \(SSED\)": Written, not finished: B\.2\./);
   });
 
+  it('say a malformed answer is a failed read: no throw, and not "no PMA document"', async () => {
+    stubFetch([{ id: 'preclinical', label: 'Preclinical', desc: 'Bench', docs: 47, status: 'complete' }]);
+    const { container } = mount();
+    await waitFor(() => expect(container.textContent).toMatch(/the answer was not a list of modules/));
+    expect(container.querySelectorAll('.pma-mod').length).toBe(0);
+    expect(container.textContent).not.toMatch(/This project has no PMA document/);
+  });
+
   it('say so when the project has no PMA document', async () => {
     stubFetch([]);
     const { container } = mount();

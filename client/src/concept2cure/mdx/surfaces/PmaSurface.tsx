@@ -95,6 +95,14 @@ const PMA_MODULE_PILL: Record<PmaModule['status'], { tone: string; text: string 
   not_started: { tone: 'empty', text: 'not started' },
 };
 
+/** A row the server's getPmaModules returns; anything else is not a module. */
+function isPmaModule(m: unknown): m is PmaModule {
+  const r = m as Partial<PmaModule> | null;
+  return !!r && typeof r.id === 'string' && typeof r.label === 'string'
+    && typeof r.status === 'string' && Object.prototype.hasOwnProperty.call(PMA_MODULE_PILL, r.status)
+    && Array.isArray(r.finished) && Array.isArray(r.written);
+}
+
 /** What is written in a module, by section code. */
 export function pmaModuleFacts(m: PmaModule): string {
   if (m.finished.length) {
@@ -139,9 +147,15 @@ export function PmaSurface({ program, onAskAna, onOpenEditor, onOpenLetter }: Pm
      Both go through DataGate now, which separates loading from error from empty
      from idle. The two fixtures were deleted with sample mode on 2026-10-14. */
   const extras = useProgramExtras(program?.id ?? null);
-  const modulesState = toDataState(extras.pmaModules, extras.loading, extras.error, {
-    idleReason: 'PMA module assembly is held per project.',
-  });
+  /* A row that is not a module is a failed read, said as one: it neither
+     throws inside the cards nor passes for "no PMA document". */
+  const modulesMalformed = Array.isArray(extras.pmaModules) && !extras.pmaModules.every(isPmaModule);
+  const modulesState = toDataState(
+    extras.pmaModules,
+    extras.loading,
+    extras.error ?? (modulesMalformed ? 'The PMA modules could not be read: the answer was not a list of modules.' : null),
+    { idleReason: 'PMA module assembly is held per project.' },
+  );
   const trialState = toDataState(extras.pmaTrialMetrics, extras.loading, extras.error, {
     idleReason: 'Pivotal-trial figures are held per project.',
   });

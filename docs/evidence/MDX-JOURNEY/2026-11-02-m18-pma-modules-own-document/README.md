@@ -75,12 +75,23 @@ and its keyword rules are deleted.
 | Check | Before | After |
 |---|---|---|
 | `server/services/__tests__/pma-modules-own-document.pglite.test.ts` (PGlite: two orgs; one project with B.2 drafted and G.1 approved, one blank, one with only a 510(k) document; the org's validated legacy 510(k) rows) | 5 failed (`red/pma-modules-before.txt`) | 5 passed |
-| `client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx`, through the real host | 4 failed (`red/pma-cards-before.txt`) | 4 passed (`green/pma-modules-after.txt`) |
+| `client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx`, through the real host | 4 failed (`red/pma-cards-before.txt`) | 4 passed (`green/pma-modules-after.txt`); 5 with the malformed-answer case below |
 | Neighbours: the routes test (its mock takes the new shape), every `client/src/concept2cure/mdx` suite, the PMA mapper, device assembly, the PMA package build, milestones, progress, safety signals | — | 1,112 passed. Nine failed, all in `useMdxPrograms.productType` and `OfficialEstarPanel.attachments`. They fail identically at HEAD without this change (`green/preexisting-at-head.txt`) |
 | The running app, restarted on this change, with the same project | "0 documents total" | "0 of 8 required modules present". B.2 is listed "Written, not finished" under module 2 and module 7, and every other module reads "Nothing written" (`shots/02-after-own-document.png`, `runs/pma-screen-after.txt`) |
 
 The second case of the pglite test pins agreement: for every slot, the card's `present` is the verdict's `present`
 over the same document.
+
+## Found after the first commit: a malformed answer threw
+
+The wider run for M19 (`../2026-11-02-m19-pma-mapper-places-by-key/green/pma-scorers-after.txt`) caught two uncaught
+exceptions from `PmaSurface.tsx`, "Cannot read properties of undefined (reading 'tone')", while
+`k510IvdVariant.test.tsx` ran (`red/malformed-answer-throws.txt`). That test's fetch stub answers every
+`/api/regulatory-programs*` URL with program rows, `/pma-modules` included. A row that is not a module threw inside
+the cards, and in the app that would blank the whole PMA screen. Now `isPmaModule` checks every row, and a malformed
+answer is a failed read, said as one: "The PMA modules could not be read: the answer was not a list of modules." It
+neither throws nor passes for "no PMA document". This is pinned by a fifth case in `PmaSurface.modules.test.tsx`.
+After the change, both files pass with no uncaught exception (`green/malformed-answer-after.txt`).
 
 ## Seen here, and left to the next slice
 
