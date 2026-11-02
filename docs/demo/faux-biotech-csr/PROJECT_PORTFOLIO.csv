@@ -1,0 +1,12 @@
+record_type,record_key,name,related_project,proposed_state,fictional,creation_status,notes
+organization,faux-biotech-therapeutics-demo,Faux Biotech Therapeutics [DEMO / FICTIONAL],,proposed,TRUE,NOT_CREATED,Separate tenant required through existing authorized organization workflow
+workspace,fbt-clinical-csr,Clinical Development / CSR Demonstration,,proposed,TRUE,NOT_CREATED,Workspace to own three example projects
+project,FBT-102,FBT-102 Nonclinical to IND,FBT-102,planning,TRUE,NOT_CREATED,Project shell only; no nonclinical evidence provided
+project,FBT-201,FBT-201 Phase 2 CSR,FBT-201,active-draft,TRUE,NOT_CREATED,Synthetic protocol FBT-201-2026 and complete source bundle
+project,FBT-202,FBT-202 Phase 3 planning,FBT-202,planning,TRUE,NOT_CREATED,Project shell only; no Phase 3 outcomes
+milestone,MS-01,Protocol version 2 approved for mock timeline,FBT-201,scenario-only,TRUE,NOT_CREATED,Not an actual institutional approval
+milestone,MS-02,Synthetic participant-level dataset frozen for demo,FBT-201,scenario-only,TRUE,NOT_CREATED,Data cut 2026-09-30 is fictional
+milestone,MS-03,TLF computation and reconciliation,FBT-201,review-needed,TRUE,NOT_CREATED,52/80 vs 30/80 PASI75; 42/80 vs 37/80 TEAE
+milestone,MS-04,ICH E3 medical-writing draft,FBT-201,draft,TRUE,NOT_CREATED,No model-generated narrative or source qualification implied
+milestone,MS-05,Scientific and QA review,FBT-201,not-executed,TRUE,NOT_CREATED,Must occur via real app workflow; synthetic task plan is not proof
+milestone,MS-06,Electronic signature and archive,FBT-201,not-executed,TRUE,NOT_CREATED,Only the real authorized signature can complete this
