@@ -1,0 +1,20 @@
+# The two amended probes (send modelled as made after the change), run against the tree after the F1 review fixes, 2026-11-02T01:32:02Z.
+# npx tsx from the repo root. Each sequence's transmit attempt and signature are bound, and the guard's row (FDA) carries what was sent.
+
+## phantom-leaf (amended: sent after the change)
+$ npx tsx docs/evidence/D7-ECTD-FILED-STATE-VIEW/2026-11-01-filed-is-what-was-sent/1-server/probes/phantom-leaf.after-change.probe.mts
+on file per the fold: ["general.pdf"]  sequences: [{"sequenceNumber":"0000","dispatchStatus":"sent","filed":true,"basis":"transmit"}]
+not reproduced: the fold reports only what the transmit recorded it sent.
+exit=0
+
+## sent-without-compile (amended: sent after the change)
+$ npx tsx docs/evidence/D7-ECTD-FILED-STATE-VIEW/2026-11-01-filed-is-what-was-sent/1-server/probes/sent-without-compile.after-change.probe.mts
+case 1 (0000 sent, no compile row, the transmit recorded what it sent):
+  view leaves: ["general.pdf"]  sequences: [{"sequenceNumber":"0000","dispatchStatus":"sent","filed":true,"basis":"transmit"},{"sequenceNumber":"0001","dispatchStatus":null,"filed":false,"basis":null}]
+  prior state 0001 binds against: [{"f":"general.pdf","seq":"0000","md5":"cccc"}] through "0000"
+  not reproduced: 0000 is filed (basis transmit), and 0001 binds against 1 leaf/leaves on file from 0000.
+case 2 (a compile of 0000 with md5 a is also on record):
+  view leaves: [{"f":"general.pdf","md5":"cccc"}]  basis: "transmit"
+  the md5 is what the transmit recorded it sent (cccc), not the compile's.
+exit=0
+

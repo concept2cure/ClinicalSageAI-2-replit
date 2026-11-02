@@ -1,0 +1,17 @@
+# ci:internals-in-copy on a clean export of HEAD 609ef94c7 (git archive; run with GIT_DIR=<repo>/.git GIT_WORK_TREE=<export>, read-only, because the gate lists files with git ls-files). Same single finding as the tree (gates.txt): SubmissionSeqWorkspaces.tsx:745, a file this build does not change.
+
+❌ Internal identifiers in user-visible copy.
+
+   client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:745  [table name]
+     coauthor_documents
+
+   The reader of these surfaces is a regulatory director. A route name tells
+   them nothing they can act on, and the internal shape of a governed system is
+   an information-disclosure finding in a regulated product, not a cosmetic one.
+   (BIOPHARMA_WORK_ORDER.md guardrail 3; BP-W0-5.)
+
+   Name the CAPABILITY, not the endpoint:
+     "GET /api/cmc/stability-studies didn't respond."
+     → "The stability register didn't respond."
+
+exit=1

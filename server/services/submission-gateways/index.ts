@@ -29,10 +29,11 @@ import type {
   TransmitAuthorization,
 } from './types';
 import {
-  CredentialError, TransmitAuthorizationError, TransportError, UnverifiedTransportError, ValidationError,
+  CredentialError, NOTHING_TRANSMITTED, TransmitAuthorizationError, TransportError, UnverifiedTransportError, ValidationError,
 } from './types';
 import { evaluatePreTransmit } from './pre-transmit-check';
 import { resolvePdfARequirement } from '../ectd/pdfa-requirement';
+import { buildLeafManifest, type SequenceLeafManifestEntry } from '../ectd/sequence-manifest';
 import { assertBundleLeafSecurity } from './bundle-leaf-security';
 import { pool } from '../../db';
 import { clientAccountRefusal, resolveGatewayAccount, specFor, type ResolvedGatewayAccount } from './gateway-accounts';
@@ -137,6 +138,29 @@ function assertDispatchBinding(req: GatewayTransmitRequest): void {
   ) {
     throw new TransmitAuthorizationError('The internal sequence attempt binding does not match its organization, verified signature and package. Nothing was transmitted.');
   }
+}
+
+/**
+ * What a sequence transmit carries, as the record of it the filed state reads
+ * (ectd/prior-sequence-loader.ts): the bundle's leaf manifest in the stored
+ * shape every compile row uses (buildLeafManifest). Only a bound transmit
+ * records it — transmitSequence, the one caller that names a sequence attempt;
+ * an unbound transmit records none. A bound transmit whose bundle carries no
+ * leaf manifest is refused: the agency would hold a sequence nothing says the
+ * contents of, and the next sequence would bind against it blind. Every
+ * assembled bundle carries one (packageEctdSubmission always sets it), so this
+ * refuses only a bundle built some other way. 2026-11-01 (F1, rows D7 and D2).
+ */
+function sentLeafManifest(req: GatewayTransmitRequest): SequenceLeafManifestEntry[] | undefined {
+  if (!req.dispatchBinding) return undefined;
+  if (!Array.isArray(req.bundle?.leafManifest)) {
+    throw new ValidationError(
+      'This sequence transmit carries no leaf manifest: nothing records what it would carry, so it is not sent. Nothing was transmitted.',
+      [],
+      NOTHING_TRANSMITTED,
+    );
+  }
+  return buildLeafManifest(req.bundle.leafManifest);
 }
 
 /** Errors the transmit guard raised before handing anything to a gateway. */
@@ -255,9 +279,11 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
       let leafSecurity: Awaited<ReturnType<typeof assertBundleLeafSecurity>>;
       let account: ResolvedGatewayAccount;
       let sentPackage: SentPackageRecord;
+      let sentLeaves: SequenceLeafManifestEntry[] | undefined;
       try {
         assertTransmitAuthorized(impl.region, impl.gateway, req?.authorization);
         assertDispatchBinding(req);
+        sentLeaves = sentLeafManifest(req);
         if (UNSOURCED_GATEWAYS.has(key)) {
           throw new UnverifiedTransportError(impl.region, impl.gateway, impl.transport, ADAPTER_UNSOURCED);
         }
@@ -304,8 +330,11 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
         throw markRefusedBeforeWire(err);
       }
       // Stamped server-side, after the caller's metadata, so the record of which
-      // account sent it, and where its bytes are kept, cannot be supplied by a
-      // caller.
+      // account sent it, where its bytes are kept, and what a sequence transmit
+      // carries and for which attempt, cannot be supplied by a caller. The last
+      // two are what the filed state reads as on file at the agency (F1,
+      // 2026-11-01); for an unbound transmit both are undefined, which JSON
+      // drops, so a caller's own keys of those names never reach the row.
       const result = await impl.transmit({
         ...req,
         account,
@@ -313,6 +342,8 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
           ...(req.metadata ?? {}),
           gatewayAccount: { mode: account.mode, senderIdentifier: account.senderIdentifier },
           sentPackage,
+          dispatchBinding: req.dispatchBinding ?? undefined,
+          leafManifest: sentLeaves,
         },
       });
       // What was checked travels with the result — including checks that
