@@ -191,17 +191,17 @@ function DecisionForm({ disabled, adaptationType, onAdaptationType, decision, on
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <label style={{ fontSize: 12 }}>
           Adaptation
-          <select className="c2c-input" style={{ height: 30 }} value={adaptationType}
+          <select className="c2c-input" value={adaptationType}
             onChange={(e) => onAdaptationType(e.target.value)}>
             {ADAPTATION_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </label>
         <label style={{ fontSize: 12, flex: 1, minWidth: 220 }}>
           Decision
-          <input className="c2c-input" style={{ height: 30 }} value={decision}
+          <input className="c2c-input" value={decision}
             onChange={(e) => onDecision(e.target.value)} placeholder="e.g. Increase N to 640" />
         </label>
-        <button className="btn primary" style={{ height: 30 }} disabled={disabled || !stated}
+        <button type="button" className="btn" disabled={disabled || !stated}
           title={
             disabled ? 'Select the look this decision is about'
               : !stated ? 'State the decision'
@@ -241,10 +241,10 @@ function OpenPlanForm({ value, onValue, onOpen, onInvalid }: {
     >
       <label style={{ fontSize: 12 }}>
         Adaptive plan id
-        <input className="c2c-input" style={{ height: 30 }} inputMode="numeric" value={value}
+        <input className="c2c-input" inputMode="numeric" value={value}
           onChange={(e) => onValue(e.target.value)} placeholder="e.g. 12" />
       </label>
-      <button className="btn primary" style={{ height: 30 }} type="submit">{I.search} Open plan</button>
+      <button className="btn" type="submit">{I.search} Open plan</button>
     </form>
   );
 }
@@ -387,12 +387,12 @@ export function AdaptiveMonitoringPanel() {
   const a = useAdaptivePlan();
 
   return (
-    <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">Adaptive monitoring</span>
-        <span className="s">interim looks, their figures, and the signed decision</span>
-      </div>
-      <div className="pj-card-b" style={{ padding: 12, display: 'grid', gap: 12 }}>
+    /* A section of the design-calculators work area since D5-4, not a card
+       inside it: the page's frame is D5-0's, and a card drawn inside a
+       frameless work area is the second frame §WA.3 retires. */
+    <section className="pj-sec" aria-label="Adaptive monitoring">
+      <div className="pj-sec-h"><h2>Adaptive monitoring</h2><span className="sec-sub">interim looks, their figures, and the signed decision</span></div>
+      <div className="wb-panel-b">
         <div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', lineHeight: 1.5 }}>
           The stored side of an adaptive trial: a plan, its interim looks, the stopping rules evaluated at each,
           the blinded sample-size re-estimation, the IDMC report, and the decision — which is an electronic
@@ -452,6 +452,6 @@ export function AdaptiveMonitoringPanel() {
           }}
         />
       )}
-    </div>
+    </section>
   );
 }

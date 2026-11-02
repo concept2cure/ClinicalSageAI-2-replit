@@ -1,0 +1,12 @@
+ ✓ client/src/concept2cure/v2/__tests__/editingCopy.test.tsx > editingCopyOf > one bound document is the copy; none is none; two are said, not chosen 2ms
+ ✓ client/src/concept2cure/v2/__tests__/editingCopy.test.tsx > the editor's filing list reads the same rule > a market with two bound documents says so and offers neither 35ms
+ ✓ client/src/concept2cure/v2/__tests__/editingCopy.test.tsx > the editor's filing list reads the same rule > a market with one bound document opens it 101ms
+ × client/src/concept2cure/v2/__tests__/editingCopy.test.tsx > the home filing's editing copy can be created > a project with no added market offers it, and the create names the home filing 5ms
+   → the home filing offered no way to create its editing copy: expected null not to be null
+ × client/src/concept2cure/v2/__tests__/editingCopy.test.tsx > the home filing's editing copy can be created > is offered while a working document is open, which is where a new project lands 2ms
+   → expected null not to be null
+ ✓ client/src/concept2cure/v2/__tests__/editingCopy.test.tsx > the home filing's editing copy can be created > once the copy exists, a project with no market shows no list while a working document is open 2ms
+ ✓ client/src/concept2cure/v2/__tests__/editingCopy.test.tsx > the home filing's editing copy can be created > a home filing whose copy is open is still "Shown in the outline" 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)

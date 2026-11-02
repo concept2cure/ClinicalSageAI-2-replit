@@ -142,6 +142,17 @@ the comparators and the reconcilers is a **design change, not a pattern**, and i
 recorded as open rather than bodged in. The rest of the misses are prose with no figure in
 it, which the lexicon is right to ignore.
 
+> **2026-11-02 — that design change already exists, and it is not in this lexicon.**
+> `server/services/truth-engine/clinical-claims/` (8,476 lines) models the whole frame — study
+> or pool, population, **arm**, measure, scope, endpoint, effect type, scale, interval — and
+> refuses a verdict when any slot differs or is unstated, with reason codes `arm_unidentified`,
+> `per_arm_vs_total` and `unrecognised_qualifier`. Three callers reach it; the submission
+> consistency route, which reads through this lexicon instead, does not. Measured both ways:
+> `docs/evidence/F1/2026-11-02-two-figure-engines/`. Widening this table with a qualifier would
+> be a second, shallower copy of `ClaimFrame`, so it is NOT the work — which direction the
+> convergence runs is a RULE 3 decision and needs one measurement on real saved sections that
+> nobody has yet taken.
+
 ## The split
 
 The table outgrew its host: `cross-artifact-consistency.ts` crossed the 500-line ceiling, and

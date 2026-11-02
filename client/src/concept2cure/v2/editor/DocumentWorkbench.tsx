@@ -4227,19 +4227,20 @@ export function DocumentWorkbench({
         </div>
 
         {/* The project's filings: its home filing and each market added to it
-            (FILING_SPINE F22b), and from here, which one to open. */}
-        {!unboundDraft && !pinnedDocId && (
-          <FilingMarkets
-            home={filing.home}
-            markets={filing.markets}
-            marketsError={filing.marketsError}
-            shownId={filing.document?.id ?? null}
-            docs={docs}
-            onOpen={(id) => requestLeave({ kind: 'document', id })}
-            onCreate={(m) => void marketCopy.create(m)}
-            creatingId={marketCopy.creatingId}
-          />
-        )}
+            (FILING_SPINE F22b), and from here, which one to open. While a
+            working or pinned document is open, only a home filing with no
+            editing copy is listed, so its create is always reachable. */}
+        <FilingMarkets
+          home={filing.home}
+          markets={filing.markets}
+          marketsError={filing.marketsError}
+          shownId={filing.document?.id ?? null}
+          docs={docs}
+          onOpen={(id) => requestLeave({ kind: 'document', id })}
+          onCreate={(m, home) => void marketCopy.create(m, home)}
+          creatingId={marketCopy.creatingId}
+          quiet={unboundDraft || !!pinnedDocId}
+        />
 
         {/* ── What the outline below was built FROM ──
             Until this shipped, a tree transcribed from 21 CFR 814.20(b) and a

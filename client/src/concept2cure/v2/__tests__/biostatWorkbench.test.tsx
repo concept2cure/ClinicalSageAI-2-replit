@@ -115,8 +115,9 @@ describe('BiostatWorkbench — real statistical engine', () => {
   it('sends the engine its inputs and renders the deterministic verdict', async () => {
     render(<BiostatWorkbench {...props()} />);
     // The knowledge panel also has an Indication field; this request belongs
-    // to the existing reviewer-risk assessment card.
-    const assessment = within(screen.getByText('Statistical defensibility').closest<HTMLElement>('.pj-card')!);
+    // to the existing reviewer-risk assessment, which is a `.pj-sec` of the
+    // work area since D5-4 rather than a card of its own.
+    const assessment = within(screen.getByText('Statistical defensibility').closest<HTMLElement>('.pj-sec')!);
     fireEvent.change(assessment.getByLabelText(/^Indication$/), { target: { value: 'NSCLC' } });
     fireEvent.change(assessment.getByLabelText(/^Effect size/), { target: { value: '0.5' } });
     fireEvent.click(assessment.getByRole('button', { name: /Assess defensibility/ }));
