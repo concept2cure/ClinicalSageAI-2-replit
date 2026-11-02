@@ -101,16 +101,12 @@ const NOT_ASKED_YET: Readonly<Record<string, string>> = {
     'asks none of: ethnic_bridging, ethnicity_factors',
   'xn_global_trial_no_ethnic_bridging/ind_submission':
     'asks none of: ethnic_bridging, ethnicity_factors',
-  'xn_phase3_no_interim/protocol_development':
-    'asks none of: interim_analysis, planned_interim',
   'xn_stability_insufficient_for_shelf_life/stability_study':
     'asks none of: long_term_data_months, stability_data_months',
   'xn_stability_insufficient_for_shelf_life/nda_submission':
     'asks none of: long_term_data_months, stability_data_months',
   'xn_stability_insufficient_for_shelf_life/bla_submission':
     'asks none of: long_term_data_months, stability_data_months',
-  'xn_rems_without_etasu/labeling':
-    'asks none of: etasu, rems_elements',
 };
 
 /**
@@ -489,7 +485,7 @@ describe('the findings that were asserted at a sponsor who was never asked', () 
   });
 
   it('still fire where the mitigating question IS asked and left blank', () => {
-    /* `rems_elements` IS asked, so a labeling programme that says a REMS is
+    /* `rems_elements` IS asked, so an NDA programme that says a REMS is
        required and leaves the elements empty is a real absence — and the rule
        must still work. This is the case that proves the repair narrowed the
        rules rather than disabling them. */
@@ -506,10 +502,26 @@ describe('the findings that were asserted at a sponsor who was never asked', () 
       firedFor('nda_submission', { rems_required: 'yes', rems_elements: 'Prescriber certification' }),
       'and it is silent once they say what the elements are',
     ).not.toContain('xn_rems_without_etasu');
-    /* And the same programme answered through `labeling`, which asks the
-       trigger and NOT the elements, is told nothing — the asymmetry this
-       repair is about. */
-    expect(fieldsAskedBy(definitionOf('labeling')).has('rems_elements')).toBe(false);
-    expect(firedFor('labeling', { rems_required: 'yes' })).not.toContain('xn_rems_without_etasu');
+    /* The labeling interview used to ask the trigger and NOT the elements, so
+       the same programme answered there was told nothing. It asks them now
+       (2026-11-02, S4), for a prescription drug or a biologic only. */
+    expect(fieldsAskedBy(definitionOf('labeling')).has('rems_elements')).toBe(true);
+    for (const said of ['yes', true]) {
+      expect(firedFor('labeling', { rems_required: said, product_type: 'rx_drug' })).toContain('xn_rems_without_etasu');
+    }
+    expect(
+      firedFor('labeling', { rems_required: 'yes', product_type: 'biosimilar', rems_elements: ['etasu', 'implementation_system'] }),
+    ).not.toContain('xn_rems_without_etasu');
+    expect(firedFor('labeling', { rems_required: 'yes', product_type: 'rx_drug', rems_elements: ['__other__'] })).not.toContain(
+      'xn_rems_without_etasu',
+    );
+    expect(
+      firedFor('labeling', { rems_required: 'yes', product_type: 'rx_drug', rems_elements: ['under_fda_discussion'] }),
+      'elements still being negotiated name none',
+    ).toContain('xn_rems_without_etasu');
+    for (const pt of ['medical_device', 'ivd', 'otc_drug']) {
+      expect(firedFor('labeling', { rems_required: 'yes', product_type: pt }), pt).not.toContain('xn_rems_without_etasu');
+    }
+    expect(firedFor('labeling', { rems_required: 'yes' }), 'no product type: fails closed').not.toContain('xn_rems_without_etasu');
   });
 });

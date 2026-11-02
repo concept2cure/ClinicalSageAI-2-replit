@@ -1091,6 +1091,76 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'none', label: 'None (Single Primary Endpoint)' },
             ],
           },
+          /* 2026-11-02 (S4): the interim-analysis plan for a large confirmatory trial.
+             xn_phase3_no_interim read `interim_analysis` / `planned_interim`, which
+             no flow asked, and its triggers were not fields at all, so it could
+             never fire. Asked only where that rule can hold; an adaptive design
+             answers `interim_analysis_planned` on its own branch instead, so no
+             programme is asked twice. 'none' and 'not_defined' are spelled for
+             the refusal set in cross-node-context.ts. */
+          {
+            id: 'interim_analysis',
+            label: 'Interim analyses planned',
+            type: 'select',
+            required: true,
+            visibleWhen: {
+              allOf: [
+                { field: 'phase', operator: 'in', value: ['phase_2b_3', 'phase_3', 'phase_3b_4'] },
+                { field: 'planned_enrollment', operator: 'gt', value: 200 },
+                { field: 'design_type', operator: 'neq', value: 'adaptive' },
+              ],
+            },
+            helpText:
+              'An interim analysis is any analysis comparing treatment arms for efficacy or safety before the trial formally completes (ICH E9, Section 4.5). None is required. Any that is planned should be described in the protocol before the trial starts, with its timing, the stopping guidelines and how the overall Type I error is preserved.',
+            options: [
+              {
+                value: 'efficacy_and_futility',
+                label: 'Group-sequential: efficacy and futility looks',
+                commits:
+                  "Pre-specify in the protocol and SAP the number and timing (information fractions) of the looks, an alpha-spending function for efficacy (for example Lan-DeMets with O'Brien-Fleming-type boundaries), and the futility criterion, stating whether it is binding. An independent DMC should review the unblinded results under a charter with firewall procedures. The final analysis is tested at the adjusted level, and an estimate from a trial stopped early for benefit may overstate the effect.",
+                authority:
+                  'ICH E9 (1998) Sections 4.5 and 4.6; FDA Guidance: Adaptive Designs for Clinical Trials of Drugs and Biologics (2019); FDA Guidance: Establishment and Operation of Clinical Trial Data Monitoring Committees (2006)',
+              },
+              {
+                value: 'efficacy_only',
+                label: 'Interim for efficacy only (early stop for overwhelming benefit)',
+                commits:
+                  'Alpha spending across the looks and an independent DMC, as above, with no futility stop. A trial stopped early has fewer participants exposed for less time, so the safety database and the secondary endpoints are thinner than planned, and the treatment-effect estimate may be biased upward.',
+                authority: 'ICH E9 (1998) Section 4.5; FDA Guidance: Adaptive Designs for Clinical Trials of Drugs and Biologics (2019)',
+              },
+              {
+                value: 'futility_only',
+                label: 'Interim for futility only',
+                commits:
+                  'Pre-specify the futility criterion and its timing. A non-binding rule leaves the Type I error controlled whether or not it is followed. A binding rule may allow a less stringent final boundary, but then the trial must stop when the rule is met. An independent DMC reviews the unblinded results against the rule and recommends to the sponsor. The trial cannot stop early for efficacy.',
+                authority: 'ICH E9 (1998) Section 4.5; FDA Guidance: Adaptive Designs for Clinical Trials of Drugs and Biologics (2019)',
+              },
+              {
+                value: 'safety_only',
+                label: 'Unblinded comparative safety review by a DMC, with no efficacy or futility test',
+                commits:
+                  'A DMC charter naming the safety data reviewed, how often, and the criteria for recommending modification or termination. Where no formal efficacy comparison is made and the protocol states the trial will not stop for benefit, no Type I error is ordinarily allocated to the review. Because it compares arms, it is still an interim analysis under E9, and it should be planned and documented.',
+                authority:
+                  'ICH E9 (1998) Sections 4.5 and 4.6; FDA Guidance: Establishment and Operation of Clinical Trial Data Monitoring Committees (2006)',
+              },
+              {
+                value: 'none',
+                label: 'No interim analysis: one final analysis',
+                commits:
+                  'The trial runs to its planned completion whatever the accumulating efficacy or futility data show. Safety is still monitored under the safety plan and expedited safety reporting (ICH E2A; for a trial under a US IND, 21 CFR 312.32). AnA will ask you to record in the protocol why a fixed design is preferred.',
+                authority:
+                  'ICH E9 (1998) Section 4.5, which sets out how a planned interim analysis is pre-specified and requires none; ICH E2A (1994); 21 CFR 312.32',
+              },
+              {
+                value: 'not_defined',
+                label: 'Not decided yet',
+                commits:
+                  'The interim plan is open. If any interim analysis will be made, E9 expects the protocol to state its schedule, or at least the considerations that will govern it, before the trial starts. AnA keeps the finding open until this is decided.',
+                authority: 'ICH E9 (1998) Section 4.5',
+              },
+            ],
+            allowOther: { prompt: 'Describe the interim plan, or why the design has none, in your own words.' },
+          },
           {
             id: 'analysis_populations',
             label: 'Analysis Populations',

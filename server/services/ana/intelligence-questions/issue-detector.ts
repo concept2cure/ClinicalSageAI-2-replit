@@ -280,24 +280,40 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_phase3_no_interim',
     appliesTo: ['protocol_development'],
-    triggeredBy: ['study_phase', 'trial_phase', 'sample_size', 'target_enrollment'],
-    mitigatedBy: ['interim_analysis', 'planned_interim'],
+    /* 2026-11-02 (S4): `phase` and `planned_enrollment` are the flow's own
+       questions. The old ids (study_phase, trial_phase, sample_size,
+       target_enrollment) were never fields — `sample_size` is a node id — so the
+       rule could not trigger. */
+    triggeredBy: ['phase', 'planned_enrollment'],
+    /* `interim_analysis` is asked in stats_approach for non-adaptive
+       confirmatory designs; `interim_analysis_planned` is the adaptive branch's
+       own. Their gates are disjoint. No negativeIsAnswer: 'none', 'not_defined'
+       and a false yes_no ARE the finding. */
+    mitigatedBy: ['interim_analysis', 'interim_analysis_planned'],
     check(flat, _state, _definition, ctx) {
-      const phase = strVal(flat['study_phase'] ?? flat['trial_phase']);
-      const interim = strVal(flat['interim_analysis'] ?? flat['planned_interim']);
-      const enrollment = numVal(flat['sample_size'] ?? flat['target_enrollment']);
-      if (phase.includes('3') && enrollment !== null && enrollment > 200 && !interim.includes('yes') && ctx.mitigationAbsent()) {
-        return {
-          checkId: 'xn_phase3_no_interim',
-          severity: 'warning',
-          title: 'Large Phase 3 Without Interim Analysis',
-          message: `A Phase 3 trial with ${enrollment} subjects and no planned interim analysis may expose patients to unnecessary risk. Consider adding a futility or efficacy interim analysis.`,
-          reference: 'ICH E9(R1); FDA Guidance on Adaptive Designs (2019)',
-          questionId: '_cross_node',
-          triggerValues: { study_phase: flat['study_phase'], sample_size: flat['sample_size'] },
-        };
-      }
-      return null;
+      const confirmatory = ['phase_2b_3', 'phase_3', 'phase_3b_4'].includes(strVal(flat['phase']));
+      const enrollment = numVal(flat['planned_enrollment']);
+      /* 200 is a heuristic for "large", never a regulatory figure. */
+      if (!confirmatory || enrollment === null || enrollment <= 200 || !ctx.mitigationAbsent()) return null;
+      return {
+        checkId: 'xn_phase3_no_interim',
+        severity: 'warning',
+        title: 'Large confirmatory trial with no interim analysis',
+        message:
+          `This confirmatory protocol plans ${enrollment} participants and no interim analysis, so it runs to completion ` +
+          'whatever the accumulating data show. ICH E9 Section 4.5 does not require an interim analysis; it asks that ' +
+          'any that is planned be described in the protocol in advance. Consider a futility or efficacy interim overseen ' +
+          'by an independent DMC, or record in the protocol why a fixed design is preferred.',
+        reference:
+          'ICH E9 (1998) Section 4.5; FDA Guidance: Adaptive Designs for Clinical Trials of Drugs and Biologics (2019); FDA Guidance: Establishment and Operation of Clinical Trial Data Monitoring Committees (2006)',
+        questionId: '_cross_node',
+        triggerValues: {
+          phase: flat['phase'],
+          planned_enrollment: flat['planned_enrollment'],
+          interim_analysis: flat['interim_analysis'],
+          interim_analysis_planned: flat['interim_analysis_planned'],
+        },
+      };
     },
   },
   {
@@ -538,16 +554,26 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
     triggeredBy: ['rems_required', 'rems'],
     mitigatedBy: ['etasu', 'rems_elements'],
     check(flat, _state, _definition, ctx) {
-      const hasRems = strVal(flat['rems_required'] ?? flat['rems']) === 'yes';
-      if (hasRems && ctx.mitigationAbsent()) {
+      const remsAnswer = flat['rems_required'] ?? flat['rems'];
+      /* A yes_no is 'yes' from the card and may be a boolean from the tool
+         surface; the NDA and BLA store the select value 'yes'. 'likely' does
+         not trigger. (2026-11-02, S4: a boolean `true` used to read as no REMS.) */
+      const hasRems = remsAnswer === true || strVal(remsAnswer) === 'yes';
+      const elements = flat['rems_elements'];
+      /* "Not yet agreed with FDA" is an answer that names no element. The
+         refusal set cannot see it, because it arrives inside an array. */
+      const onlyUndetermined =
+        Array.isArray(elements) && elements.length > 0 && elements.every(v => strVal(v) === 'under_fda_discussion');
+      if (hasRems && (ctx.mitigationAbsent() || onlyUndetermined)) {
         return {
           checkId: 'xn_rems_without_etasu',
           severity: 'warning',
           title: 'REMS Required Without Its Elements Defined',
-          message: 'If a REMS is required, confirm its elements are defined. A REMS may consist of a Medication Guide, a patient package insert and/or a communication plan; Elements to Assure Safe Use (ETASU) are required only where FDA determines they are necessary (FD&C Act 505-1(f)), and if included they must be clearly defined. Common ETASU include prescriber certification, pharmacy certification, patient registries, and restricted distribution.',
-          reference: 'FD&C Act §505-1 (21 U.S.C. 355-1), added by FDAAA; FDA REMS Guidance (2022)',
+          message: 'If a REMS is required, confirm its elements are defined. A REMS may consist of a Medication Guide, a patient package insert, a communication plan and/or packaging or disposal requirements; Elements to Assure Safe Use (ETASU) are required only where FDA determines they are necessary (FD&C Act 505-1(f)), and if included they must be clearly defined. Common ETASU include prescriber certification, pharmacy certification, patient registries, and restricted distribution.',
+          reference:
+            "FD&C Act §505-1(e)-(f) (21 U.S.C. 355-1), added by FDAAA §901 (2007); FDA guidance 'REMS: FDA's Application of Statutory Factors in Determining When a REMS Is Necessary' (2019)",
           questionId: '_cross_node',
-          triggerValues: { rems_required: flat['rems_required'] },
+          triggerValues: { rems_required: flat['rems_required'], rems_elements: elements },
         };
       }
       return null;

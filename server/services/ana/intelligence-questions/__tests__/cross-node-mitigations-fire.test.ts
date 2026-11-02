@@ -20,6 +20,7 @@ import { describe, expect, it } from 'vitest';
 import type { DetectedIssue, FlowCategory, FlowEngineContext, FlowState } from '../types.js';
 import { runCrossNodeAnalysis, runIssueChecks } from '../issue-detector.js';
 import { getFlowDefinition } from '../flows/index.js';
+import { advanceFlow, evaluatePredicate } from '../engine.js';
 
 const CTX: FlowEngineContext = { organizationId: 7, userId: 3, projectId: null };
 const definitionOf = (category: FlowCategory) => getFlowDefinition(category, CTX)!;
@@ -253,5 +254,88 @@ describe('xn_accelerated_approval_no_confirmatory', () => {
     expect(
       confirmatoryCritical(runIssueChecks(nodeHolding('bla_submission', 'confirmatory_study_needed'), { confirmatory_study_needed: false })),
     ).toEqual([]);
+  });
+});
+
+/* ── A large confirmatory trial with no interim analysis ─────────────────── */
+describe('xn_phase3_no_interim', () => {
+  const IA = 'xn_phase3_no_interim';
+  const large = { phase: 'phase_3', planned_enrollment: 400, design_type: 'parallel' };
+
+  it.each(['none', 'not_defined'])('fires on %s', answer => {
+    expect(ids(fired('protocol_development', { ...large, interim_analysis: answer }))).toContain(IA);
+  });
+
+  it('fires where the statistics node was reached and the question left blank', () => {
+    expect(ids(fired('protocol_development', large, ['stats_approach']))).toContain(IA);
+  });
+
+  it.each(['efficacy_and_futility', 'efficacy_only', 'futility_only', 'safety_only', '__other__'])(
+    'is cleared by a stated plan: %s',
+    answer => {
+      expect(ids(fired('protocol_development', { ...large, interim_analysis: answer }))).not.toContain(IA);
+    },
+  );
+
+  it('waits while the statistics node is unreached', () => {
+    expect(ids(fired('protocol_development', large))).not.toContain(IA);
+  });
+
+  it('is silent for a Phase 2 trial and for a trial of 200 or fewer', () => {
+    expect(ids(fired('protocol_development', { ...large, phase: 'phase_2', interim_analysis: 'none' }))).not.toContain(IA);
+    expect(ids(fired('protocol_development', { ...large, planned_enrollment: 150, interim_analysis: 'none' }))).not.toContain(IA);
+  });
+
+  it.each(['phase_2b_3', 'phase_3b_4'])('treats %s as confirmatory', phase => {
+    expect(ids(fired('protocol_development', { ...large, phase, interim_analysis: 'none' }))).toContain(IA);
+  });
+
+  it('reads the adaptive branch\u2019s own interim question', () => {
+    const adaptive = { ...large, design_type: 'adaptive' };
+    expect(ids(fired('protocol_development', { ...adaptive, interim_analysis_planned: false }))).toContain(IA);
+    expect(ids(fired('protocol_development', { ...adaptive, interim_analysis_planned: true }))).not.toContain(IA);
+  });
+
+  it('reads an enrolment given as a string', () => {
+    expect(ids(fired('protocol_development', { ...large, planned_enrollment: '400', interim_analysis: 'none' }))).toContain(IA);
+  });
+
+  it('asks the question only where the rule can hold', () => {
+    const field = definitionOf('protocol_development')
+      .nodes.flatMap(n => n.fields)
+      .find(f => f.id === 'interim_analysis')!;
+    expect(field.visibleWhen, 'the question must be gated').toBeDefined();
+    const shown = (answers: Record<string, unknown>) => evaluatePredicate(field.visibleWhen!, answers);
+    expect(shown({ phase: 'phase_3', planned_enrollment: 201, design_type: 'parallel' })).toBe(true);
+    expect(shown({ phase: 'phase_3', planned_enrollment: 200, design_type: 'parallel' }), 'N=200 is not large').toBe(false);
+    expect(shown({ phase: 'phase_3', planned_enrollment: 400, design_type: 'adaptive' }), 'the adaptive branch asks its own').toBe(false);
+    expect(shown({ phase: 'phase_2', planned_enrollment: 400, design_type: 'parallel' })).toBe(false);
+  });
+});
+
+/* ── A REMS with no defined elements, answered in the labeling interview ─── */
+describe('xn_rems_without_etasu, through the engine', () => {
+  it('reports the finding when the labeling answer is given — same node, no later question', () => {
+    /* rems_required and rems_elements share the entry node, so the finding has
+       to arrive on this answer, not one question later. */
+    const result = advanceFlow(
+      {
+        flowId: 'labeling-under-test',
+        flowCategory: 'labeling',
+        currentNodeId: 'product_regulatory_context',
+        answers: {},
+        completedNodes: [],
+        issues: [],
+        startedAt: '2026-11-02T00:00:00.000Z',
+        complete: false,
+        sectionProgress: {},
+      },
+      'product_regulatory_context',
+      { product_name: 'Acme Tablets', product_type: 'rx_drug', submission_type: 'initial', rems_required: 'yes' },
+      CTX,
+    );
+    const refused = (result.event?.newIssues ?? []).filter(i => i.checkId.startsWith('validation_'));
+    expect(refused.map(i => i.message), 'the answers must be accepted for this to mean anything').toEqual([]);
+    expect((result.event?.newIssues ?? []).map(i => i.checkId)).toContain('xn_rems_without_etasu');
   });
 });
