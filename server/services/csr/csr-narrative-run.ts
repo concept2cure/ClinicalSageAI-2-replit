@@ -190,7 +190,7 @@ export async function runNarrativeRun(id: number, organizationId: number, inject
       await finish(client, run, outcome.status, result, outcome.error);
     } catch (err) {
       const failure = failureOf(err);
-      if (failure.code === 'CSR_NARRATIVE_FAILED') log.error('CSR narrative build failed', { id, organizationId, err: err instanceof Error ? err.message : String(err) });
+      if (failure.code === 'CSR_NARRATIVE_FAILED') log.error('CSR narrative build failed', { id, organizationId, code: 'CSR_NARRATIVE_FAILED' });
       await finish(client, run, failure.code === 'CSR_NARRATIVE_BUILD_NOT_RUNNABLE' ? 'cancelled' : 'failed', null, failure);
     }
   });
@@ -199,8 +199,8 @@ export async function runNarrativeRun(id: number, organizationId: number, inject
 /** Start the worker off the request thread, as launchCSRBuildAsync starts a build. */
 export function startNarrativeRun(id: number, organizationId: number): void {
   setImmediate(() => {
-    runNarrativeRun(id, organizationId).catch(err => {
-      log.error('runNarrativeRun threw outside its own error handler', { id, organizationId, err: err instanceof Error ? err.message : String(err) });
+    runNarrativeRun(id, organizationId).catch(() => {
+      log.error('runNarrativeRun threw outside its own error handler', { id, organizationId, code: 'CSR_NARRATIVE_FAILED' });
     });
   });
 }
