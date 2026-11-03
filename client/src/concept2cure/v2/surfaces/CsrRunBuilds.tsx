@@ -36,6 +36,9 @@ const JOBS = '/api/csr/jobs';
 export const BUILD_POLL_MS = 5_000;
 /** The csr_build_jobs statuses that end a build (migrations/20260628_csr_job_state.sql). */
 const ENDED = new Set(['complete', 'failed', 'cancelled']);
+/** Matches the persisted csr_build_jobs.status check constraint. */
+const BUILD_STATUSES = new Set(['queued', 'loading_data', 'drafting', 'tabulating',
+  'cross_linking', 'complete', 'failed', 'cancelled']);
 
 /** One row of GET /api/csr/jobs?programId&runId (csr-jobs.ts). */
 interface RunBuild { jobId: number; studyId: string; status: string; progress: number; updatedAt: string }
@@ -44,7 +47,14 @@ const HEADING_STATES: ReadonlyArray<CsrBoardHeading['state']> = ['not_drafted', 
 
 function isBuild(value: unknown): value is RunBuild {
   const row = value as Partial<RunBuild> | null;
-  return !!row && Number.isSafeInteger(row.jobId) && Number(row.jobId) > 0 && typeof row.status === 'string';
+  // The whole response controls clinical review/import/assembly navigation.
+  // Reject a partial or malformed record rather than presenting an invented
+  // percentage, "Invalid Date", or an unknown state as a valid saved build.
+  return !!row && Number.isSafeInteger(row.jobId) && Number(row.jobId) > 0
+    && typeof row.studyId === 'string' && !!row.studyId.trim()
+    && typeof row.status === 'string' && BUILD_STATUSES.has(row.status)
+    && Number.isInteger(row.progress) && Number(row.progress) >= 0 && Number(row.progress) <= 100
+    && typeof row.updatedAt === 'string' && Number.isFinite(Date.parse(row.updatedAt));
 }
 
 /** One heading of GET /api/csr/jobs/:jobId/headings; a malformed row refuses the whole read. */
@@ -57,23 +67,36 @@ function isHeading(value: unknown): value is CsrBoardHeading {
 
 /** The builds bound to the run, newest first; re-read when `focus` changes and while a build is running. */
 function useRunBuilds(programId: string, runId: string, focus: number | null) {
-  const [state, setState] = useState<{ builds: RunBuild[] | null; error: string | null }>({ builds: null, error: null });
+  // The same mounted editor may change its project or frozen clinical-source
+  // run. A previous run's data must disappear during the very FIRST render
+  // of the new scope, before useEffect cleanup or the new HTTP read.
+  const scope = `${programId}::${runId}`;
+  const [state, setState] = useState<{ scope: string; builds: RunBuild[] | null; error: string | null }>({
+    scope, builds: null, error: null,
+  });
   const [reload, setReload] = useState(0);
   useEffect(() => {
     let live = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    setState(current => ({ builds: current.builds, error: null }));
+    setState(current => current.scope === scope
+      ? { ...current, error: null }
+      : { scope, builds: null, error: null });
     void apiCall<{ jobs?: unknown[] }>('GET', `${JOBS}?programId=${encodeURIComponent(programId)}&runId=${encodeURIComponent(runId)}`).then(result => {
       if (!live) return;
       const jobs = result.body?.jobs;
       if (result.ok && Array.isArray(jobs) && jobs.every(isBuild)) {
-        setState({ builds: jobs, error: null });
+        setState({ scope, builds: jobs, error: null });
         if (jobs.some(job => !ENDED.has(job.status))) timer = setTimeout(() => setReload(value => value + 1), BUILD_POLL_MS);
-      } else setState({ builds: null, error: apiErrorText(result, 'The CSR builds of this run could not be listed.') });
+      } else setState({ scope, builds: null, error: apiErrorText(result, 'The CSR builds of this run could not be listed.') });
     });
     return () => { live = false; if (timer) clearTimeout(timer); };
-  }, [programId, runId, focus, reload]);
-  return { ...state, retry: useCallback(() => setReload(value => value + 1), []) };
+  }, [programId, runId, focus, reload, scope]);
+  const current = state.scope === scope;
+  return {
+    builds: current ? state.builds : null,
+    error: current ? state.error : null,
+    retry: useCallback(() => setReload(value => value + 1), []),
+  };
 }
 
 /** The builds of the saved run, and the narrative and assembly controls for the selected one. */
@@ -105,17 +128,37 @@ function BuildPicker({ builds, selected, onChoose, onReload }: {
   </div>;
 }
 
-/** The build's ICH E3 headings, re-read when the polled build moves and after each review decision. `null` until read. */
+/** The build's ICH E3 headings, re-read when the build changes or a review decision is saved.
+ * A response from an older revision must never restore superseded approval state.
+ */
 function useBuildHeadings(jobId: number, updatedAt: string) {
-  const [state, setState] = useState<{ headings: CsrBoardHeading[] | null; error: string | null }>({ headings: null, error: null });
-  const load = useCallback(async () => {
-    const result = await apiCall<{ headings?: unknown }>('GET', `${JOBS}/${jobId}/headings`);
-    const headings = result.body?.headings;
-    if (result.ok && Array.isArray(headings) && headings.every(isHeading)) setState({ headings, error: null });
-    else setState({ headings: null, error: apiErrorText(result, 'The build’s sections could not be read for review.') });
-  }, [jobId]);
-  useEffect(() => { void load(); }, [load, updatedAt]);
-  return { ...state, reload: useCallback(() => { void load(); }, [load]) };
+  const [refresh, setRefresh] = useState(0);
+  const scope = `${jobId}::${updatedAt}::${refresh}`;
+  const [state, setState] = useState<{ scope: string; headings: CsrBoardHeading[] | null; error: string | null }>({
+    scope, headings: null, error: null,
+  });
+  useEffect(() => {
+    let active = true;
+    setState({ scope, headings: null, error: null });
+    void apiCall<{ headings?: unknown }>('GET', `${JOBS}/${jobId}/headings`).then(result => {
+      if (!active) return;
+      const headings = result.body?.headings;
+      if (result.ok && Array.isArray(headings) && headings.every(isHeading)) {
+        setState({ scope, headings, error: null });
+      } else {
+        setState({ scope, headings: null, error: apiErrorText(result, 'The build’s sections could not be read for review.') });
+      }
+    }).catch(() => {
+      if (active) setState({ scope, headings: null, error: 'The build’s sections could not be read for review.' });
+    });
+    return () => { active = false; };
+  }, [jobId, scope]);
+  const current = state.scope === scope;
+  return {
+    headings: current ? state.headings : null,
+    error: current ? state.error : null,
+    reload: useCallback(() => setRefresh(value => value + 1), []),
+  };
 }
 
 /** The open project's name, only when the open project is this program; otherwise the dialog names it by id. */
