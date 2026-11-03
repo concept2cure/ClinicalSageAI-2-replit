@@ -61,6 +61,15 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
       return ok({ data: { results: state.vault.filter(d => d.title.includes(q))
         .map(d => ({ ...d, current: true })) } });
     }
+    if (method === 'POST' && /^\/api\/c2c\/project-vault\/p1\/documents\/[^/]+\/details$/.test(url)) {
+      const documentId = url.split('/')[6];
+      const doc = state.vault.find(d => d.id === documentId);
+      if (!doc || !/source-catalog correction/i.test(body.reason) ||
+          !['PROTOCOL', 'SAP'].includes(body.documentType)) return ok({ success: false }, 403);
+      doc.documentType = body.documentType;
+      return ok({ success: true, unchanged: false, changes: [{ field: 'document_type',
+        from: 'OTHER', to: body.documentType }] });
+    }
     if (method === 'POST' && url === '/api/vault/ingest') {
       assert.ok(body instanceof FormData, 'use the existing multipart Vault endpoint');
       assert.equal(body.get('programId'), 'p1');
@@ -196,6 +205,47 @@ test('replaying the pack reuses governed records without rewriting existing data
   assert.equal(app.state.tasks.length, 3);
   assert.ok(run.records.tally.found['source-document'] >= 3);
   assert.equal(run.records.tally.found['authoring-document'], 1);
+});
+
+test('corrects only previously miscatalogued synthetic protocol/SAP through audited Vault details', async () => {
+  const app = fakeApplication();
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  const files = app.state.vault.filter(d => d.documentType === 'PROTOCOL' || d.documentType === 'SAP');
+  const originalHashes = files.map(d => d.contentHash);
+  files.forEach(d => { d.documentType = 'OTHER'; });
+  const beforeCalls = app.state.calls.length;
+  const run = app.run();
+  await seed({ api: app.api, identity: app.identity, run });
+  const newCalls = app.state.calls.slice(beforeCalls);
+  const edits = newCalls.filter(c => c.method === 'POST' && c.url.endsWith('/details'));
+  assert.equal(edits.length, 2);
+  assert.ok(edits.every(c => /source-catalog correction/i.test(c.body.reason)));
+  assert.ok(!newCalls.some(c => c.url === '/api/vault/ingest' && c.method === 'POST'));
+  assert.equal(app.state.vault.length, 3);
+  assert.deepEqual(app.state.vault.map(d => d.documentType), ['OTHER', 'PROTOCOL', 'SAP']);
+  assert.deepEqual(files.map(d => d.contentHash), originalHashes);
+  assert.equal(run.records.tally.created['source-metadata-correction'], 2);
+});
+
+test('refuses an inconsistent document type on an otherwise exact-hash existing source', async () => {
+  const app = fakeApplication();
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  app.state.vault.find(d => d.documentType === 'PROTOCOL').documentType = 'CSR';
+  const beforeCalls = app.state.calls.length;
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /incompatible or governed document type/);
+  assert.ok(app.state.calls.slice(beforeCalls).every(c => c.method === 'GET'));
+});
+
+test('does not edit a source that has entered an approved or other lifecycle stage', async () => {
+  const app = fakeApplication();
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  const protocol = app.state.vault.find(d => d.documentType === 'PROTOCOL');
+  protocol.documentType = 'OTHER'; protocol.lifecycleStage = 'approved';
+  const beforeCalls = app.state.calls.length;
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /incompatible or governed document type/);
+  assert.ok(app.state.calls.slice(beforeCalls).every(c => c.method === 'GET'));
 });
 
 test('refuses wrong organization before any project or source read/write', async () => {
