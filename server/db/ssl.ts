@@ -30,11 +30,12 @@ export const requiresSsl = (connectionString?: string): boolean => {
   const host = databaseHost(connectionString);
   const remote = host !== null && !isLoopbackHost(host);
 
-  // Explicitly disabled SSL is allowed ONLY for a local database. Remote
-  // configuration with sslmode=disable is a refusal, not a downgrade.
-  if (/([?&])sslmode=disable(?:&|$)/.test(normalized)) {
-    if (remote) throw new Error('TLS is required for remote PostgreSQL; sslmode=disable is refused.');
-    return false;
+  // Remote PostgreSQL must not use plaintext or intentionally unauthenticated
+  // SSL modes. Reject these even when a caller bypasses the Codespaces doctor.
+  const mode = databaseHost(connectionString) ? new URL(connectionString).searchParams.get('sslmode') : null;
+  if (['disable', 'prefer', 'allow', 'no-verify'].includes(mode ?? '')) {
+    if (remote) throw new Error('Verified TLS is required for remote PostgreSQL; insecure sslmode is refused.');
+    if (mode === 'disable') return false;
   }
 
   return remote || normalized.includes('sslmode=require') ||
@@ -45,8 +46,9 @@ export const shouldUseSsl = (
   connectionString?: string,
   nodeEnv: string | undefined = process.env.NODE_ENV
 ): boolean => {
+  const neededByUrl = requiresSsl(connectionString); // also refuses insecure remote modes
   if (nodeEnv === 'production') return true;
-  return requiresSsl(connectionString);
+  return neededByUrl;
 };
 
 export const getSslConfig = (
