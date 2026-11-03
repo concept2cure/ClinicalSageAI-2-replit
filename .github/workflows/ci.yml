@@ -67,6 +67,10 @@ jobs:
       # cli.mjs (which these tests spawn) imports ajv from node_modules — this
       # step sat before Install once and its failure skipped install, taking
       # every if:!cancelled() step below down with spurious module errors.
+      - name: Codespaces — Neon/OpenAI startup diagnostics self-tests
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run codespaces:doctor:test
+
       - name: Guardrails — release-evidence manifest gate self-tests
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run test:release-evidence
