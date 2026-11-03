@@ -14,7 +14,7 @@ concurrency:
 jobs:
   preview_db_test:
     # Skip if Neon secrets not configured or PR closed
-    if: github.event.action != 'closed' && vars.NEON_PROJECT_ID != ''
+    if: github.event.action != 'closed' && vars.NEON_PROJECT_ID != '' && vars.NEON_PREVIEW_ENABLED == 'true' && vars.NEON_SAFE_PARENT_BRANCH != ''
     runs-on: ubuntu-latest
     # Posts a preview-DB status comment on the PR (github-script createComment).
     permissions:
@@ -46,9 +46,9 @@ jobs:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch_name: ${{ steps.names.outputs.branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
-          # Optional for schema-only (no sensitive data):
-          # parent_branch: prod-v1-schema
-          # role: neondb_owner
+          # An explicit non-production parent is required; do not copy the
+          # project's default or production branch into a PR environment.
+          parent_branch: ${{ vars.NEON_SAFE_PARENT_BRANCH }}
 
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.check_secrets.outputs.skip != 'true'
