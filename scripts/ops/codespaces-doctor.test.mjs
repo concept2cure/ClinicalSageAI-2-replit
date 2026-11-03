@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { sslFor, verifiedPgConnectionString } from '../db/connection.mjs';
 import {
   checkDatabaseConfiguration, classifyDbError, classifyOpenAIResponse,
   checkOpenAI, probeDatabase, checkApplication, checkAuthConfiguration, runCodespacesDoctor,
@@ -58,6 +59,16 @@ test('Neon connection errors are classified without returning credential-bearing
   assert.equal(classifyDbError({ message: 'certificate revoked' }), 'DB_TLS_FAILED');
   assert.equal(classifyDbError({ code: '42501' }), 'DB_GRANTS_DENIED');
 });
+test('read-only Neon PostgreSQL probe verifies hostname and refuses remote plaintext', () => {
+  const uri = verifiedPgConnectionString(runtime);
+  assert.equal(new URL(uri).searchParams.get('sslmode'), 'verify-full');
+  assert.deepEqual(sslFor(uri), { rejectUnauthorized: true });
+  assert.throws(() => sslFor(runtime.replace('sslmode=require', 'sslmode=disable')), /Verified TLS/);
+  assert.throws(() => verifiedPgConnectionString(
+    runtime.replace('sslmode=require', 'sslmode=no-verify')), /verified TLS/i);
+  assert.equal(sslFor('postgresql://app_service:example@127.0.0.1/local?sslmode=disable'), false);
+});
+
 test('Codespaces startup reports missing or weak signing credentials before claiming readiness', () => {
   assert.equal(checkAuthConfiguration({}).code, 'JWT_SECRET_MISSING');
   assert.equal(checkAuthConfiguration({ JWT_SECRET: 'weak' }).code, 'JWT_SECRET_WEAK');
