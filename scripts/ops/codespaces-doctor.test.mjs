@@ -4,7 +4,7 @@ import { sslFor, verifiedPgConnectionString } from '../db/connection.mjs';
 import {
   checkDatabaseConfiguration, classifyDbError, classifyOpenAIResponse,
   checkOpenAI, probeDatabase, checkApplication, checkAuthConfiguration,
-  checkTenantIsolationConfiguration, runCodespacesDoctor,
+  checkTenantIsolationConfiguration, runtimeIsolationFailures, runCodespacesDoctor,
 } from './codespaces-doctor.mjs';
 
 const owner = 'postgresql://neondb_owner:secret@ep-example.neon.tech/neondb?sslmode=require';
@@ -100,6 +100,20 @@ test('Codespaces refuses a green database when tenant RLS is off or unset', asyn
     assert.equal(report.ready, false);
   }
   assert.equal(checkTenantIsolationConfiguration(env).status, 'passed');
+});
+
+test('an app role must actually run RLS and must not own unforced RLS tables', () => {
+  assert.deepEqual(runtimeIsolationFailures('on', []), []);
+  assert.match(runtimeIsolationFailures(null, [])[0], /did not activate/);
+  assert.match(runtimeIsolationFailures('off', [])[0], /did not activate/);
+  const findings = runtimeIsolationFailures('on', [
+    { schema_name: 'vault', table_name: 'documents' },
+    { schema_name: 'identity', table_name: 'users' },
+  ]);
+  assert.equal(findings.length, 1);
+  assert.match(findings[0], /vault.documents/);
+  assert.match(findings[0], /identity.users/);
+  assert.doesNotMatch(findings[0], /postgresql:\/\//);
 });
 
 test('OpenAI quota is distinct from a rate limit, auth failure or governance gate', () => {
