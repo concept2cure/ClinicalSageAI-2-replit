@@ -53,6 +53,21 @@ export function checkDatabaseConfiguration(env) {
   const configuredBaseOwner = env.DATABASE_URL ? parseDbTarget(env.DATABASE_URL) : null;
   const configuredExplicitOwner = env.DATABASE_OWNER_URL ? parseDbTarget(env.DATABASE_OWNER_URL) : null;
   const issues = [];
+  const isCodespace = env.C2C_CODESPACE === '1' || env.CODESPACES === 'true';
+  if (isCodespace) {
+    const ownerNames = [
+      'DATABASE_URL', 'DATABASE_URL_PROD', 'DATABASE_OWNER_URL',
+      'DATABASE_NEON_NEW_SECRET', 'NEON_DATABASE_URL',
+      'DATABASE_URL_ADMIN', 'NEON_DATABASE_URL_ADMIN', 'DATABASE_URL_DIRECT',
+      'APP_SERVICE_DB_PASSWORD',
+    ];
+    const inheritedOwner = ownerNames.filter(name => typeof env[name] === 'string' && !!env[name].trim());
+    if (inheritedOwner.length) {
+      issues.push(reason('DB_OWNER_CREDENTIAL_IN_APP',
+        'The request-serving Codespace contains owner or maintenance database secrets (' +
+        inheritedOwner.join(', ') + '). Remove them from this Codespace and keep them only in an authorized maintenance environment.'));
+    }
+  }
   // Readiness needs only APP_DATABASE_URL. Owner credentials belong in a
   // separate provision/migration session, not the request-serving Codespace.
   if (ownerRaw && !owner) issues.push(reason('DB_OWNER_URL_INVALID',
