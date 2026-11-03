@@ -18,7 +18,7 @@ Existing constraints retained: tenant/member authorization; immutable source-ver
 
 ## Repaired in this increment
 
-1. **Observed outcome ≠ study plan.** For ICH E3 §§10–13, `acceptEvidenceBoundDraft` no longer admits an observed number merely because the metadata contains the same number. An exact retained-table claim is required. Planned figures remain usable in methods/synopsis with their documented limitations.
+1. **Observed outcome ≠ study plan.** For ICH E3 §§10–13, `acceptEvidenceBoundDraft` no longer admits an observed number merely because the metadata contains the same number. An exact retained-table claim is required. In the mixed planned/actual §2 synopsis, the acceptance gate additionally rechecks observed-event, enrollment and completion clauses separately. Planned sample-size statements remain distinct from actual outcomes, both at drafting and saved-document re-review.
 2. **Numeric claims are not semantic approvals.** Explicit death/fatal-event counts require a matching death/fatal-event row *with the same number*, not an unrelated population count. This is intentionally narrow and does **not** mean all efficacy, AE severity, SAP estimands or medical judgments have been automatically validated.
 3. **No unsupported categorical verdicts.** Model-authored claims such as “the primary endpoint was met,” “no serious adverse events,” “well tolerated,” or unsupported superiority/equivalence are refused for human source-backed review. Explicitly unknown/unestablished results remain expressible. This does not prevent a qualified clinician from recording supported conclusions in the governed editor.
 4. **Stable identifiers remain identifiers.** The scanner exempts structured NCT, study and product identifiers such as `LMN-201` and `NCT05330182`, but not standalone counts, proportions, effect estimates or study outcomes.
@@ -30,7 +30,7 @@ Existing constraints retained: tenant/member authorization; immutable source-ver
 ## Regression coverage authored
 
 - `server/services/csr/__tests__/unsupplied-statistics.test.ts` — planned-vs-observed numeric collisions; categoric results refusals and nonassertive uncertainty; source-label checks for deaths; valid claimed counts and methods-plan allowance.
-- `server/services/csr/__tests__/csr-results-claim-provenance.test.ts` — drafting → import → historical saved CSR review; excludes study identifiers from quantitative claims.
+- `server/services/csr/__tests__/csr-results-claim-provenance.test.ts` — drafting → import → historical saved CSR review; excludes study identifiers from quantitative claims and blocks an actual completion count in §2 even when an older receipt exempts the same planned sample number.
 - `server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts` — unsourced numerical claim in an added uncoded section blocks saved-document verdict.
 - `server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts` — requester-less queued jobs do nothing; model/database exception details never persist; typed codes survive.
 - `server/services/csr/__tests__/adam-dataset-reader.test.ts` — 200,000 synthetic blank NDJSON lines and malformed UTF-8 refusal.
@@ -49,6 +49,8 @@ npx vitest run \
 NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p .
 npm run ci:one-design-plan
 ```
+
+**Isolated logic checks performed after the source changes:** nine categorical-outcome classification examples and six planned-vs-actual synopsis examples were exercised in a JavaScript isolate (using a minimal numerical-scanner stand-in for the latter). This is supporting logic inspection, **not** Vitest, database or workflow acceptance. The definitive test verdict remains open.
 
 **Qualification limits, explicitly recorded:** This connector session read and edited GitHub source and checked focused regular-expression behavior in a JS isolate; it did **not** execute native Vitest, the full TypeScript compiler, Git hooks, a Neon database, AnA live-model calls, or a browser/CSR export. GitHub Actions for the resulting commits were still queued when checked. Direct GitHub file writes do not execute the repository's local pre-push gate and some earlier connector-written commits lack the required `Plan: F1` and `Completes:` trailers. Future commits must carry those trailers; the historical findings are not erased by a new receipt.
 
