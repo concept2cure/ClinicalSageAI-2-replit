@@ -378,10 +378,25 @@ router.get('/:jobId/sections', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Job not found' });
     }
 
+    // A reviewer reading one heading should not need to download a 119-section
+    // build (which can be enormous). Preserve the existing all-sections response
+    // when no sectionNumber is specified, but fail closed on a bad or missing
+    // selected section instead of claiming a verified draft.
+    const sectionNumber = req.query.sectionNumber;
+    if (sectionNumber !== undefined && (typeof sectionNumber !== 'string' ||
+        !/^\\d+(\\.\\d+)*$/.test(sectionNumber))) {
+      return res.status(400).json({ code: 'CSR_SECTION_NUMBER_INVALID', error: 'Choose an exact ICH E3 heading.' });
+    }
     const sections = await getCSRSectionOutputs(jobId, organizationId);
-    // The review state a reader should see: an approval of since-redrafted
-    // text reads as a draft (csr-section-review.ts effectiveReviewState).
-    return res.json({ sections: sections.map(section => ({ ...section, review: effectiveReviewState(section) })) });
+    const selected = typeof sectionNumber === 'string'
+      ? sections.filter(section => section.sectionNumber === sectionNumber)
+      : sections;
+    if (typeof sectionNumber === 'string' && selected.length !== 1) {
+      return res.status(404).json({ code: 'CSR_SECTION_NOT_SAVED', error: 'No saved draft exists for this heading.' });
+    }
+    // The current saved body and hash must be inspectable before a human
+    // decides on this exact version. No signature or approval is inferred.
+    return res.json({ sections: selected.map(section => ({ ...section, review: effectiveReviewState(section) })) });
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to read CSR section outputs', {
