@@ -63,25 +63,27 @@ jobs:
         if: steps.check_secrets.outputs.skip != 'true'
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
-      - name: Resolve Neon DATABASE_URL
+      - name: Resolve direct Neon DATABASE_URL
         if: steps.check_secrets.outputs.skip != 'true'
         id: db_url
+        env:
+          DIRECT_DB_URL: ${{ steps.neon.outputs.db_url }}
         run: |
-          DB_URL='${{ steps.neon.outputs.db_url }}'
+          set -euo pipefail
+          DB_URL="$DIRECT_DB_URL"
           if [ -z "$DB_URL" ]; then
-            DB_URL='${{ steps.neon.outputs.db_url_pooled }}'
-          fi
-          if [ -z "$DB_URL" ]; then
-            DB_URL='${{ steps.neon.outputs.db_url_with_pooler }}'
-          fi
-
-          if [ -z "$DB_URL" ]; then
-            echo "::error::Neon preview returned no DB URL; schema verification cannot pass"
+            echo "::error::Neon did not supply a direct DB URL; migrations must not use a pooler"
             exit 1
-          else
-            echo "skip_db=false" >> $GITHUB_OUTPUT
-            echo "DATABASE_URL=$DB_URL" >> $GITHUB_ENV
           fi
+          # The Neon direct endpoint has no -pooler suffix. Session/DDL work
+          # via the pooler can appear to pass on the wrong connection.
+          if [[ "$DB_URL" == *-pooler.* ]]; then
+            echo "::error::Migration target is a pooled Neon endpoint; refusing DDL"
+            exit 1
+          fi
+          echo "::add-mask::$DB_URL"
+          echo "skip_db=false" >> "$GITHUB_OUTPUT"
+          echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
 
       - name: Apply migrations + verify schema
         if: steps.check_secrets.outputs.skip != 'true' && steps.db_url.outputs.skip_db != 'true'
