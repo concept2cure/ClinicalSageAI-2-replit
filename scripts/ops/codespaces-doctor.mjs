@@ -178,13 +178,14 @@ export async function probeDatabase({ config, connectDb }) {
 }
 
 async function nativeDatabaseProbe(connectionString) {
-  const [{ Client }, { sslFor }, { verifyReadinessContract },
+  const [{ Client }, { sslFor, verifiedPgConnectionString }, { verifyReadinessContract },
     { AUTHORING_SUBSYSTEM_TABLES }] = await Promise.all([
     import('pg'), import('../db/connection.mjs'),
     import('../db/readiness-contract.mjs'), import('../db/authoring-subsystem.mjs'),
   ]);
   const client = new Client({
-    connectionString, ssl: sslFor(connectionString),
+    connectionString: verifiedPgConnectionString(connectionString),
+    ssl: sslFor(connectionString),
     connectionTimeoutMillis: 15000, query_timeout: 15000,
   });
   try {
