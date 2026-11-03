@@ -161,6 +161,20 @@ beforeEach(() => {
 const sectionDraft = (number: string, content: string) => ({ number, content, source: 'template', model: null, tokenCost: 0, lineage: null });
 const progressValues = () => fake.jobUpdates.filter(update => typeof update.progress === 'number').map(update => update.progress);
 
+describe('runCSRBuildJob — requester identity is mandatory', () => {
+  it.each([null, 0, -1])('refuses a queued job with requestedBy=%s without model work or rewriting sections', async requestedBy => {
+    const retained = [{ sectionNumber: '13', content: 'Previously saved, unapproved section.' }];
+    fake = makeFakeDb({ ...makeJob(), requestedBy }, retained);
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({
+      status: 'failed',
+      error: { reason: 'requester_missing', code: 'CSR_BUILD_REQUESTER_MISSING' },
+    });
+    expect(draftMock).not.toHaveBeenCalled();
+    expect(fake.persisted.map(r => r.content)).toContain('Previously saved, unapproved section.');
+  });
+});
+
 describe('runCSRBuildJob — requested saved-output coverage', () => {
   it.each(['', ' \n\t '])('refuses completion when the requested draft has no usable content (%j)', async content => {
     fake = makeFakeDb({ ...makeJob(), sectionsToGenerate: ['6'] });
