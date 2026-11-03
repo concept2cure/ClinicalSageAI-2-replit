@@ -62,11 +62,20 @@ export function resolveDatabaseUrl(names = INSTALL_URL_VARS) {
  * rds-ca-bundle.pem` rather than turning verification off.
  */
 export function sslFor(url) {
-  const u = String(url).toLowerCase();
-  if (u.includes('sslmode=disable') || u.includes('@localhost') || u.includes('@127.0.0.1')) {
-    return false;
+  const value = String(url);
+  let uri;
+  try { uri = new URL(value); } catch { throw new Error('Invalid PostgreSQL URL for TLS verification'); }
+  if (!['postgres:', 'postgresql:'].includes(uri.protocol)) {
+    throw new Error('Invalid PostgreSQL scheme for TLS verification');
   }
-  return { rejectUnauthorized: true };
+  const host = uri.hostname.toLowerCase();
+  const local = ['localhost', '127.0.0.1', '::1', '[::1]'].includes(host);
+  const mode = uri.searchParams.get('sslmode');
+  if (!local && ['disable', 'prefer', 'allow', 'no-verify'].includes(mode)) {
+    throw new Error('Verified TLS required for a remote PostgreSQL connection');
+  }
+  if (local && (mode === 'disable' || mode === null)) return false;
+  return { rejectUnauthorized: !local };
 }
 
 /**
