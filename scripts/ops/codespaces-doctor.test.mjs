@@ -47,6 +47,20 @@ test('Codespaces never silently chooses a different DB, invalid TLS or the owner
     'postgresql://neondb_owner:secret@ep-example.neon.tech/neondb?sslmode=disable' })
     .issues.some(x => x.code === 'DB_NEON_OWNER_TLS'));
 });
+test('request-serving Codespaces fails closed on any inherited DB owner/maintenance secret', () => {
+  for (const name of ['DATABASE_URL', 'DATABASE_OWNER_URL', 'DATABASE_NEON_NEW_SECRET',
+    'NEON_DATABASE_URL', 'DATABASE_URL_ADMIN', 'NEON_DATABASE_URL_ADMIN',
+    'DATABASE_URL_DIRECT', 'APP_SERVICE_DB_PASSWORD']) {
+    const codespace = { C2C_CODESPACE: '1', C2C_DB_MODE: 'neon',
+      APP_DATABASE_URL: runtime, RLS_ENFORCE: 'on', JWT_SECRET: env.JWT_SECRET,
+      [name]: name === 'APP_SERVICE_DB_PASSWORD' ? 'a_secret' : owner };
+    const config = checkDatabaseConfiguration(codespace);
+    assert.ok(config.issues.some(issue => issue.code === 'DB_OWNER_CREDENTIAL_IN_APP'), name);
+    assert.equal(config.ok, false);
+    assert.doesNotMatch(JSON.stringify(config.issues), /neondb_owner:secret/);
+  }
+});
+
 test('a runtime-only Codespace can qualify without an owner credential in the API process', async () => {
   const runtimeOnly = { APP_DATABASE_URL: runtime, C2C_DB_MODE: 'neon' };
   const config = checkDatabaseConfiguration(runtimeOnly);
