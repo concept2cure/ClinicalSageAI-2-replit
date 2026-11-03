@@ -601,6 +601,10 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
   const [mine, setMine] = useState(false);
   const [mod, setMod] = useState('all');
   const [sel, setSel] = useState<TaskItem | null>(null);
+  // A task detail must close before the registered surface-leave guard will
+  // allow navigation. Keep the verified project+document target for that next
+  // render, not a free-floating docId that opens against the previous project.
+  const pendingEditorNav = useRef<{ docId: string; programId: string; programTitle: string } | null>(null);
   const selectedTask = useRef(sel);
   selectedTask.current = sel;
   const mounted = useRef(true);
@@ -662,6 +666,20 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
   const leaveGuard = useRef<() => string | null>(() => null);
   leaveGuard.current = () => boardBusyGuard()?.reason ?? (sel ? 'A task detail is open — close it first.' : null);
   useEffect(() => registerSurfaceLeaveGuard(() => leaveGuard.current()), []);
+  useEffect(() => {
+    const pending = pendingEditorNav.current;
+    if (!pending || sel !== null) return;
+    pendingEditorNav.current = null;
+    if (!currentTaskActor(taskActorScope(user), isCurrent)) return;
+    // The drawer is now gone. Reuse the normal leave guard so an open
+    // signature or unsaved form can still veto the transition.
+    const refusal = surfaceLeaveRefusal();
+    if (refusal) { setActionErr(refusal); return; }
+    publishShellProject({ id: pending.programId, title: pending.programTitle });
+    setEditorTarget({ docType: null, docId: pending.docId,
+      programId: pending.programId, programTitle: pending.programTitle });
+    onNav('document-authoring');
+  }, [sel, user, isCurrent, onNav]);
   const targetMessage = useTaskTarget({
     scope: taskActorScope(user), isCurrent, read: liveTasks, reloadKey,
     reload: () => setReloadKey(key => key + 1),
@@ -1538,12 +1556,22 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           projLabel={projLabel}
           onClose={() => setSel(null)}
           onOpenDocument={(documentId) => {
-            // The existing editor verifies project/document access after navigation.
             if (!currentTaskActor(taskActorScope(user), isCurrent)) return;
-            if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId)) return;
-            setEditorTarget({ docType: null, docId: documentId });
+            const task = tasks.find(t => t.taskId === sel.taskId);
+            const project = projectOpts.rows.filter(p => String(p.id) === String(task?.project));
+            const programId = project.length === 1 ? project[0].regulatoryProgramId : null;
+            if (liveTasks.error || liveTasks.loading || boardIncomplete ||
+                projectOpts.error || projectOpts.loading ||
+                task?.sourceDocumentId !== documentId ||
+                !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId) ||
+                typeof programId !== 'string' ||
+                !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(programId)) {
+              setActionErr('The task’s exact document and project could not be verified from the current Tasking and Projects records. Refresh both lists before opening the editor.');
+              return;
+            }
+            setActionErr('');
+            pendingEditorNav.current = { docId: documentId, programId, programTitle: project[0].name };
             setSel(null);
-            onNav('document-authoring');
           }}
           onAsk={onAsk}
           onMove={move}
