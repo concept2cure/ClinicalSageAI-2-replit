@@ -68,3 +68,26 @@ export function sslFor(url) {
   }
   return { rejectUnauthorized: true };
 }
+
+/**
+ * For a read-only runtime connection (e.g. Codespaces diagnosis), ensure
+ * node-postgres's URI parser requests full hostname and CA verification.
+ * Its connectionString sslmode overrides a separately passed SSL object.
+ * Do not apply this helper to local disposable development databases.
+ */
+export function verifiedPgConnectionString(url) {
+  let parsed;
+  try { parsed = new URL(url); } catch { return url; }
+  if (!['postgres:', 'postgresql:'].includes(parsed.protocol)) return url;
+  const host = parsed.hostname.toLowerCase();
+  if (['localhost', '127.0.0.1', '::1', '[::1]'].includes(host)) return url;
+  const mode = parsed.searchParams.get('sslmode');
+  if (['disable', 'no-verify', 'prefer', 'allow'].includes(mode)) {
+    throw new Error('Remote PostgreSQL requires verified TLS; insecure sslmode is refused.');
+  }
+  if (mode === 'require' || mode === 'verify-ca') {
+    parsed.searchParams.set('sslmode', 'verify-full');
+    return parsed.toString();
+  }
+  return url;
+}
