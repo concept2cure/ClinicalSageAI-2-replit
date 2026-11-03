@@ -561,12 +561,15 @@ main() {
     # The explicit app-role/schema doctor is the only Codespaces startup
     # preflight; it never provisions, rewrites credentials or bypasses RLS.
     if is_codespace; then
-        if [[ -z "${DATABASE_URL:-}" || -z "${APP_DATABASE_URL:-}" ]]; then
-            log_error "Codespaces requires explicit DATABASE_URL and APP_DATABASE_URL secrets; no local fallback."
+        # The API is only supposed to hold a least-privilege runtime URL.
+        # Owner DSNs are optional and, when needed, belong to a distinct
+        # provisioning session. Never require the owner secret to start AnA.
+        if [[ -z "${APP_DATABASE_URL:-}" ]]; then
+            log_error "Codespaces requires APP_DATABASE_URL for the non-owner runtime role; no owner/local fallback."
             return 1
         fi
-        if [[ "$DATABASE_URL" == "$DEFAULT_DATABASE_URL" ]]; then
-            log_error "Codespaces refuses the shared default local database URL."
+        if [[ "$APP_DATABASE_URL" == "$DEFAULT_DATABASE_URL" ]]; then
+            log_error "Codespaces refuses the shared default local database URL as its runtime role."
             return 1
         fi
         if ! node "$PROJECT_ROOT/scripts/ops/codespaces-doctor.mjs"; then
