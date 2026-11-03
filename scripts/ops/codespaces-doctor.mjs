@@ -50,11 +50,19 @@ export function checkDatabaseConfiguration(env) {
   const runtimeRaw = env.APP_DATABASE_URL;
   const owner = parseDbTarget(ownerRaw);
   const runtime = parseDbTarget(runtimeRaw);
+  const configuredBaseOwner = env.DATABASE_URL ? parseDbTarget(env.DATABASE_URL) : null;
+  const configuredExplicitOwner = env.DATABASE_OWNER_URL ? parseDbTarget(env.DATABASE_OWNER_URL) : null;
   const issues = [];
   if (!owner) issues.push(reason('DB_OWNER_URL_MISSING', 'Set DATABASE_URL or DATABASE_OWNER_URL to the intended PostgreSQL owner connection. No fallback is made.'));
   if (!runtime) issues.push(reason('DB_RUNTIME_URL_MISSING', 'Set APP_DATABASE_URL to the separate non-owner app_service connection for that SAME database.'));
   if (owner && runtime && !sameDatabase(owner, runtime)) {
     issues.push(reason('DB_TARGET_MISMATCH', 'The owner and application DSNs target different databases or hosts. Do not run migrations or the platform.'));
+  }
+  if (env.DATABASE_URL && env.DATABASE_OWNER_URL &&
+      (!configuredBaseOwner || !configuredExplicitOwner ||
+        !sameDatabase(configuredBaseOwner, configuredExplicitOwner))) {
+    issues.push(reason('DB_OWNER_TARGET_CONFLICT',
+      'DATABASE_URL and DATABASE_OWNER_URL target different Neon branches or databases. Align both before startup.'));
   }
   if (owner && runtime && owner.user === runtime.user) {
     issues.push(reason('DB_RUNTIME_ROLE_NOT_SEPARATE', 'The runtime and owner use the same database role. Configure a non-superuser app_service role before the regulated demo.'));
@@ -69,6 +77,9 @@ export function checkDatabaseConfiguration(env) {
     if (runtime.neon && runtime.ssl !== 'require' && runtime.ssl !== 'verify-full') {
       issues.push(reason('DB_NEON_TLS', 'The Neon runtime URL must explicitly require TLS (sslmode=require or verify-full).'));
     }
+  }
+  if (owner?.neon && owner.ssl !== 'require' && owner.ssl !== 'verify-full') {
+    issues.push(reason('DB_NEON_OWNER_TLS', 'The Neon owner URL must explicitly require TLS (sslmode=require or verify-full).'));
   }
   return {
     ok: issues.length === 0, issues,
@@ -170,7 +181,7 @@ async function nativeDatabaseProbe(connectionString) {
   ]);
   const client = new Client({
     connectionString, ssl: sslFor(connectionString),
-    connectionTimeoutMillis: 6000, query_timeout: 15000,
+    connectionTimeoutMillis: 15000, query_timeout: 15000,
   });
   try {
     await client.connect();
