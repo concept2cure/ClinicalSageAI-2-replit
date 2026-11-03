@@ -351,11 +351,20 @@ async function ensureProject({ api, run, tally }, clientWorkspaceId) {
       tally.created('project');
     } else tally.found('project');
     if (!row?.id) throw new Error('The CSR project had no recorded identifier.');
-    const detail = must(await api('GET', `/api/c2c/projects/${row.id}`), 200, 'read FBT-201 project').data ?? {};
-    if (detail.client_workspace_id != null && Number(detail.client_workspace_id) !== clientWorkspaceId) {
-      throw new Error('An existing FBT-201 demo project belongs to another client record. Nothing was moved or overwritten.');
+    // GET /api/c2c/projects/:id returns the project DETAIL directly, unlike
+    // POST /api/c2c/projects, whose creation receipt is nested under data.
+    // Do not mistake a valid unwrapped response for an empty object.
+    const detail = must(await api('GET', `/api/c2c/projects/${row.id}`), 200, 'read FBT-201 project');
+    if (String(detail.id ?? '') !== String(row.id)) {
+      throw new Error('Project Management returned another project identity. No demo records were attached.');
     }
-    if (String(detail.program_type ?? detail.programType ?? '') !== 'csr') {
+    // The existing PM anchor joins client_workspaces. An absent binding is a
+    // gap, not permission to proceed with data in an unanchored project.
+    if (!Number.isSafeInteger(Number(detail.client_workspace_id)) ||
+        Number(detail.client_workspace_id) !== clientWorkspaceId) {
+      throw new Error('The FBT-201 project is not recorded under this fictional client. Nothing was moved or overwritten.');
+    }
+    if (detail.program_type !== 'csr') {
       throw new Error('An existing FBT-201 project is not the CSR document type. Nothing was overwritten.');
     }
     result = { id: row.id, title: name, programType: 'csr', clientWorkspaceId };
