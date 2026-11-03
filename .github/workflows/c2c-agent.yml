@@ -61,12 +61,14 @@ jobs:
         id: neon
         if: github.event_name == 'pull_request' && steps.check_secrets.outputs.skip != 'true'
         continue-on-error: true
-        uses: neondatabase/create-branch-action@537d2f10d84e9de7cd2c2260ea176b5e4a8192d8 # v4
+        uses: neondatabase/create-branch-action@fb620d43d4c565abaf088b848a4e28e5c4ea4d9c # v6
         with:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
           api_key: ${{ secrets.NEON_API_KEY }}
           branch_name: preview-${{ github.head_ref }}
-          parent: ${{ vars.NEON_SAFE_PARENT_BRANCH }}
+          parent_branch: ${{ vars.NEON_SAFE_PARENT_BRANCH }}
+          # Copy schema only: no regulated/patient records enter a CI branch.
+          branch_type: schema-only
 
   # 2. TYPE CHECK + LINT — removed 2026-10-30 (MR-02 Stage 3, OPS-25). It ran
   # on every push and duplicated ci.yml's Lint job, steps "Run TypeScript check
