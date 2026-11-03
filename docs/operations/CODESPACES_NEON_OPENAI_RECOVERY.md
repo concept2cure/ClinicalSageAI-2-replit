@@ -92,7 +92,35 @@ Responses are reported as codes without credentials:
 
 The old Replit-era startup document's assertion that OpenAI quota "is currently exceeded" was historical and cannot establish your current API account balance.
 
-## 4. Regression and remaining acceptance
+## 4. Neon automated branch safety
+
+The GitHub agent configuration is no longer a second authority for AI model
+approval or database migrations. It uses `APP_DATABASE_URL` for the
+request-serving Codespace, does **not** auto-run migrations, and defers regulated
+model eligibility to `server/services/ai-governance/approved-models.ts`. A
+configured OpenAI API key cannot override the high-risk/PQ rules.
+
+For the existing GitHub Actions that create Neon branches, an operator must
+configure an expressly approved **non-production** parent as the repository
+variable `NEON_SAFE_PARENT_BRANCH`. The PR-preview workflow additionally
+requires `NEON_PREVIEW_ENABLED=true`, `NEON_PROJECT_ID` (the actual Neon
+project ID, **not** an `ep-...` endpoint identifier), and the existing
+`NEON_API_KEY` secret. The on-demand/weekly Neon provisioning proof similarly
+requires its Neon API/project credentials and the safe parent. Missing
+authorization means no branch is created or the proof fails; neither case is a
+verified database.
+
+A safe parent must contain only data approved to be copied to a development
+branch. Neon branching clones the parent's data even when the test later creates
+a separate blank database inside that branch. **Do not designate production as
+the parent merely to get a passing CI run.** Preview DDL must use the direct
+Neon endpoint with masked credentials, never the pooled URL.
+
+These changes to workflow source do not change Neon account settings, rotate
+historical credentials, create a branch, or prove a connected Neon project.
+Those operations require account access and a live run.
+
+## 5. Regression and remaining acceptance
 
 ```bash
 npm run codespaces:doctor:test
