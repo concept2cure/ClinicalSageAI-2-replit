@@ -94,7 +94,7 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
       const contentHash = sha256(bytes);
       const doc = { id: `v${nextDocumentId++}`,
         title: body.get('documentTitle'), contentHash, documentType: kind,
-        fileName: upload.name, bytes };
+        originalFileAvailable: true, fileName: upload.name, bytes };
       state.vault.push(doc);
       return ok({ document: doc }, 201);
     }
@@ -456,6 +456,31 @@ test('never adopts an existing project with a different document type', async ()
   await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }), /not the CSR document type/);
   assert.equal(app.state.vault.length, 0);
   assert.equal(app.state.tasks.length, 0);
+});
+
+test('matching catalog hash never substitutes for an unavailable original', async () => {
+  const app = fakeApplication();
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  const uploaded = app.state.vault.find(d => /clinical source JSON/.test(d.title));
+  assert.ok(uploaded);
+  uploaded.originalFileAvailable = false;
+  const before = app.state.calls.length;
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /original file is unavailable/);
+  assert.ok(app.state.calls.slice(before).every(c => c.method === 'GET'));
+  assert.equal(app.state.vault.length, 10);
+});
+
+test('a misclassified protocol cannot be corrected if its original was removed', async () => {
+  const app = fakeApplication();
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  const protocol = app.state.vault.find(d => d.documentType === 'PROTOCOL');
+  protocol.documentType = 'OTHER';
+  protocol.originalFileAvailable = false;
+  const before = app.state.calls.length;
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /original file is unavailable/);
+  assert.ok(app.state.calls.slice(before).every(c => c.method === 'GET'));
 });
 
 test('an altered current source hash refuses overwrite and stops other uploads', async () => {
