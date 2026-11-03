@@ -26,6 +26,16 @@ test('Neon automation never silently clones the previous production/default bran
     /parent_branch: \$\{\{ vars\.NEON_SAFE_PARENT_BRANCH \}\}/);
 });
 
+test('enabled PR preview migration never uses unmasked credentials or a pooled DDL endpoint', () => {
+  const workflow = read('.github/workflows/neon-preview-db.yml');
+  assert.match(workflow, /DIRECT_DB_URL: \$\{\{ steps\.neon\.outputs\.db_url \}\}/);
+  assert.match(workflow, /::add-mask::\$DB_URL/);
+  assert.match(workflow, /Migration target is a pooled Neon endpoint/);
+  assert.doesNotMatch(workflow, /DB_URL='\$\{\{ steps\.neon\.outputs\.db_url/);
+  assert.doesNotMatch(workflow, /npm run test:unit --if-present/);
+  assert.match(workflow, /npm run codespaces:doctor:test/);
+});
+
 test('Codespaces agent config has no committed production Neon parent or owner runtime secret', () => {
   const agent = read('.github/c2c-agent.yml');
   const container = read('.devcontainer/devcontainer.json');
