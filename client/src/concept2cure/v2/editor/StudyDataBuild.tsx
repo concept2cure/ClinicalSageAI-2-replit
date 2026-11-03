@@ -127,9 +127,14 @@ export function StudyDataBuild({ programId, documentId, onNav }: { programId: st
       {!error && studyData === null && <p role="status">Reading this document’s study data…</p>}
       {studyData && runs && <StudyDataChooser studyData={studyData} runs={runs} value={retainedId} onChange={setRetainedId} />}
       {studyData && (none || adding)
-        ? <StudyDataSource programId={programId} documentId={documentId} onFrozen={frozen} onNav={onNav} />
+        ? <>
+          {adding && <button type="button" className="btn ghost" onClick={() => setAdding(false)}>
+            Return to current frozen study data and CSR build
+          </button>}
+          <StudyDataSource programId={programId} documentId={documentId} onFrozen={frozen} onNav={onNav} />
+        </>
         : studyData && <button type="button" className="btn ghost" onClick={() => setAdding(true)}>Freeze newer study data</button>}
-      {retainedId && !adding && <RetainedBuild key={retainedId} programId={programId} retainedId={retainedId} onNav={onNav} />}
+      {retainedId && <RetainedBuild key={retainedId} programId={programId} retainedId={retainedId} onNav={onNav} />}
       <StudyPivotalDeclarations scope={{ programId }} />
     </div>
   </details>;
