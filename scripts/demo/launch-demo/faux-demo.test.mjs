@@ -168,8 +168,8 @@ test('seeds one CSR project, three Vault sources, a canonical CSR editor documen
   await seed({ api: app.api, identity: app.identity, run });
   assert.equal(app.state.projects.length, 1);
   assert.equal(app.state.projects[0].program_type, 'csr');
-  assert.equal(app.state.vault.length, 3);
-  assert.deepEqual(app.state.vault.map(d => d.documentType), ['OTHER', 'PROTOCOL', 'SAP']);
+  assert.equal(app.state.vault.length, 6);
+  assert.deepEqual(app.state.vault.map(d => d.documentType), ['OTHER', 'PROTOCOL', 'SAP', 'OTHER', 'REPORT', 'REPORT']);
   assert.equal(app.state.documents.length, 1);
   assert.equal(app.state.documents[0].template_id, '4331e7e3-7777-5c21-8c9b-0e2f56194e7e');
   assert.equal(app.state.documents[0].program_id, 'p1');
@@ -187,7 +187,28 @@ test('seeds one CSR project, three Vault sources, a canonical CSR editor documen
   assert.equal(run.records.sourceRevision.sha256, sha256(content));
   assert.ok(app.state.calls.every(call => !/approve|sign|dispatch|file-into/i.test(call.url)));
   assert.deepEqual(Object.values(run.records.tally.created)
-    .reduce((sum, n) => sum + n, 0), 9);
+    .reduce((sum, n) => sum + n, 0), 12);
+});
+
+test('Data Room records the original synthetic QC index and both reconciled TLF files by exact bytes', async () => {
+  const app = fakeApplication();
+  const run = app.run();
+  await seed({ api: app.api, identity: app.identity, run });
+  const sources = [
+    ['ADSL_160_SUBJECT_QC_INDEX.csv', 'QC index', 'OTHER', 'source.adsl-qc-v2'],
+    ['TLF_PRIMARY_EFFICACY.csv', 'efficacy TLF', 'REPORT', 'source.tl-f-efficacy-v2'],
+    ['TLF_SAFETY.csv', 'safety TLF', 'REPORT', 'source.tl-f-safety-v2'],
+  ];
+  for (const [filename, label, expectedType, manifestKey] of sources) {
+    const stored = app.state.vault.find(d => d.title.includes(label));
+    assert.ok(stored, `Missing synthetic Data Room record ${filename}`);
+    const original = readFileSync(path.join(root, 'docs/demo/faux-biotech-csr', filename));
+    assert.equal(stored.contentHash, sha256(original));
+    assert.equal(stored.documentType, expectedType);
+    assert.equal(stored.bytes.equals(original), true, `Changed original bytes: ${filename}`);
+    assert.equal(run.records[manifestKey]?.sha256, sha256(original));
+  }
+  assert.ok(app.state.vault.find(d => /QC index/.test(d.title)).title.includes('not ADaM'));
 });
 
 test('replaying the pack reuses governed records without rewriting existing data', async () => {
@@ -200,10 +221,10 @@ test('replaying the pack reuses governed records without rewriting existing data
     'second seed must be pure verification, not duplicate writes');
   assert.equal(app.state.clients.length, 1);
   assert.equal(app.state.projects.length, 1);
-  assert.equal(app.state.vault.length, 3);
+  assert.equal(app.state.vault.length, 6);
   assert.equal(app.state.documents.length, 1);
   assert.equal(app.state.tasks.length, 3);
-  assert.ok(run.records.tally.found['source-document'] >= 3);
+  assert.ok(run.records.tally.found['source-document'] >= 6);
   assert.equal(run.records.tally.found['authoring-document'], 1);
 });
 
@@ -221,8 +242,8 @@ test('corrects only previously miscatalogued synthetic protocol/SAP through audi
   assert.equal(edits.length, 2);
   assert.ok(edits.every(c => /source-catalog correction/i.test(c.body.reason)));
   assert.ok(!newCalls.some(c => c.url === '/api/vault/ingest' && c.method === 'POST'));
-  assert.equal(app.state.vault.length, 3);
-  assert.deepEqual(app.state.vault.map(d => d.documentType), ['OTHER', 'PROTOCOL', 'SAP']);
+  assert.equal(app.state.vault.length, 6);
+  assert.deepEqual(app.state.vault.map(d => d.documentType), ['OTHER', 'PROTOCOL', 'SAP', 'OTHER', 'REPORT', 'REPORT']);
   assert.deepEqual(files.map(d => d.contentHash), originalHashes);
   assert.equal(run.records.tally.created['source-metadata-correction'], 2);
 });
