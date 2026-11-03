@@ -103,6 +103,16 @@ export function checkDatabaseConfiguration(env) {
   };
 }
 
+/** The same canonical RLS gate as server/db/rlsEnforcement.ts at app boot. */
+export function checkTenantIsolationConfiguration(env) {
+  if ((env.RLS_ENFORCE ?? '').trim().toLowerCase() !== 'on') {
+    return { status: 'blocked', code: 'RLS_NOT_ENFORCED',
+      explanation: 'Codespaces runs tenant-scoped regulatory records. Set RLS_ENFORCE=on; off/shadow/unset are not accepted.' };
+  }
+  return { status: 'passed', code: 'RLS_ENFORCED_CONFIGURED',
+    explanation: 'RLS_ENFORCE=on is configured. Database policy execution must still be verified at runtime.' };
+}
+
 /** Mirror existing server/config/environment.ts JWT boot minima. */
 export function checkAuthConfiguration(env) {
   const stage = (env.NODE_ENV || 'development').trim().toLowerCase();
@@ -222,6 +232,9 @@ async function nativeDatabaseProbe(connectionString) {
     connectionString: verifiedPgConnectionString(connectionString),
     ssl: sslFor(connectionString),
     connectionTimeoutMillis: 15000, query_timeout: 15000,
+    // Match the application's RLS session startup packet; catalog queries in
+    // the read-only readiness contract do not require a tenant identity.
+    options: '-c app.rls_enforce=on',
   });
   try {
     await client.connect();
@@ -267,13 +280,18 @@ export async function runCodespacesDoctor({ env = process.env, args = [], fetche
     ana: { status: 'unverified', note: 'OPENAI_API_KEY alone does not authorize high-risk CSR or IND drafting; the saved-model PQ gate remains in force.' },
     application: { status: 'not_checked' },
     auth: checkAuthConfiguration(env),
+    tenantIsolation: checkTenantIsolationConfiguration(env),
   };
   report.database.live = await probeDatabase({ config, connectDb });
   if (args.includes('--probe-openai-usage')) report.openai = await checkOpenAI({ env, fetcher, probeUsage: true });
   else if (args.includes('--probe-openai')) report.openai = await checkOpenAI({ env, fetcher });
   if (args.includes('--check-app')) report.application = await checkApplication({
     fetcher, port: Number(env.PORT) || 5000 });
-  const required = [report.database.live.status === 'passed', report.auth.status === 'passed'];
+  const required = [
+    report.database.live.status === 'passed',
+    report.auth.status === 'passed',
+    report.tenantIsolation.status === 'passed',
+  ];
   if (args.includes('--probe-openai') || args.includes('--probe-openai-usage')) required.push(report.openai.status === 'passed');
   if (args.includes('--check-app')) required.push(report.application.status === 'passed');
   report.prerequisitesVerified = required.every(Boolean);
