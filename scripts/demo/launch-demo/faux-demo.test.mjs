@@ -64,13 +64,16 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
     if (method === 'POST' && url === '/api/vault/ingest') {
       assert.ok(body instanceof FormData, 'use the existing multipart Vault endpoint');
       assert.equal(body.get('programId'), 'p1');
-      assert.equal(body.get('documentType'), 'OTHER');
+      const kind = body.get('documentType');
+      const code = String(body.get('documentCode'));
+      const expected = code.includes('PROTOCOL') ? 'PROTOCOL' : code.includes('-SAP-') ? 'SAP' : 'OTHER';
+      assert.equal(kind, expected, 'use the existing Data Room taxonomy for the source type');
       const upload = body.get('file');
       assert.ok(upload && typeof upload.arrayBuffer === 'function');
       const bytes = Buffer.from(await upload.arrayBuffer());
       const contentHash = sha256(bytes);
       const doc = { id: `v${nextDocumentId++}`,
-        title: body.get('documentTitle'), contentHash,
+        title: body.get('documentTitle'), contentHash, documentType: kind,
         fileName: upload.name, bytes };
       state.vault.push(doc);
       return ok({ document: doc }, 201);
@@ -157,6 +160,7 @@ test('seeds one CSR project, three Vault sources, a canonical CSR editor documen
   assert.equal(app.state.projects.length, 1);
   assert.equal(app.state.projects[0].program_type, 'csr');
   assert.equal(app.state.vault.length, 3);
+  assert.deepEqual(app.state.vault.map(d => d.documentType), ['OTHER', 'PROTOCOL', 'SAP']);
   assert.equal(app.state.documents.length, 1);
   assert.equal(app.state.documents[0].template_id, '4331e7e3-7777-5c21-8c9b-0e2f56194e7e');
   assert.equal(app.state.documents[0].program_id, 'p1');
