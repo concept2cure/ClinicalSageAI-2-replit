@@ -102,7 +102,7 @@ describe('Demo Access verifies the existing authenticated destinations before st
     stubDemoReads();
     const result = await verifyDemoAccessReadiness('test-access', DEMO_ACCOUNT, 'DEV-ADMIN@LOCAL.TEST');
     expect(result).toEqual({ ready: true });
-    expect(fetchSpy.mock.calls.map(([url]) => String(url))).toEqual([
+    expect(fetchSpy.mock.calls.map((args: unknown[]) => String(args[0]))).toEqual([
       '/api/auth/session', '/api/c2c/projects?limit=1', '/api/task-management/board',
     ]);
     for (const [, options] of fetchSpy.mock.calls) {
@@ -143,7 +143,7 @@ describe('Demo Access verifies the existing authenticated destinations before st
     stubDemoReads({ projects });
     const result = await verifyDemoAccessReadiness('test-access', DEMO_ACCOUNT, DEMO_ACCOUNT.email);
     expect(result.ready).toBe(false);
-    expect(fetchSpy.mock.calls.map(([url]) => String(url))).not.toContain('/api/task-management/board');
+    expect(fetchSpy.mock.calls.map((args: unknown[]) => String(args[0]))).not.toContain('/api/task-management/board');
   });
 
   it.each([
@@ -180,7 +180,7 @@ describe.each(CASES)('%s unprepared demo', (_name, mount, button) => {
     await waitFor(() => expect(screen.getByText(/no accessible demo project/i)).toBeTruthy());
     expect(localStorage.getItem('trialsage_access_token')).toBeNull();
     expect(sessionStorage.getItem('trialsage_access_token')).toBeNull();
-    expect(fetchSpy.mock.calls.map(([url]) => String(url))).toEqual([
+    expect(fetchSpy.mock.calls.map((args: unknown[]) => String(args[0]))).toEqual([
       '/api/auth/dev-login', '/api/auth/session', '/api/c2c/projects?limit=1',
     ]);
   });
