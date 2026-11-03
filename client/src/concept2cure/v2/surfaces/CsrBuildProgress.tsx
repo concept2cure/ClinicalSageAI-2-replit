@@ -139,10 +139,9 @@ export function CsrHeadingReview({ jobId, headings, onChanged, onImport }: {
 /** A reviewer sees the exact persisted body before approving its hash, not just a title.
  * The existing org-scoped sections API accepts a single heading selection. */
 function readableCsrText(source: string): string {
-  return source.replace(/<\\/(?:p|li|tr|div|h[1-6])\\s*>/gi, '\\n')
-    .replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
+  return source.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"')
-    .replace(/[ \\t]+/g, ' ').trim();
+    .replace(/\s+/g, ' ').trim();
 }
 function HeadingRow({ jobId, heading, busy, onDecide }: {
   jobId: number; heading: CsrBoardHeading; busy: boolean; onDecide: (decision: Decision, reason?: string) => void;
