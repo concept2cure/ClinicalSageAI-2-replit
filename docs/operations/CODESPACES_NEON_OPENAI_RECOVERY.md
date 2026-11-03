@@ -17,6 +17,14 @@ Configure these as repository-accessible **Codespaces** secrets (not GitHub Acti
 
 The Codespaces image no longer hardcodes an old Neon production branch or overrides the application DSN with a local-environment secret variable. An old `DATABASE_NEON_NEW_SECRET` is not silently used as both owner and app credentials. Confirm the actual Neon endpoint and set the explicit names above.
 
+**Security note:** the repository's own `.gitleaksignore` currently still describes
+historical Neon owner credentials as `status: live — revoke`. This is not a
+live Neon-account verification; treat the credentials as exposed until rotation
+is confirmed in Neon. Rotate/revoke affected owner passwords in the Neon
+console, ensure the affected branches are reviewed, then replace the owner
+and runtime Codespaces secrets. A source-code commit **cannot** revoke a
+historical database password, and suppressing a scanner finding is not rotation.
+
 ## 2. Fail-closed checks before launch
 
 ```bash
