@@ -14,6 +14,7 @@
   "containerEnv": {
     "HOME": "/root",
     "C2C_ENVIRONMENT": "development",
+    "C2C_CODESPACE": "1",
     "C2C_AGENT_MODE": "active"
   },
 
