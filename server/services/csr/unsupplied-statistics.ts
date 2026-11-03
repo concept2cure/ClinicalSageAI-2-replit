@@ -197,7 +197,22 @@ export function findUnsupportedCsrOutcomeConclusion(sectionNumber: string, prose
     { code: 'safety_or_benefit_risk_verdict', pattern:
       /\b(?:well[- ]tolerated|no clinically meaningful (?:safety )?(?:differences?|changes?)|favo[u]?rable benefit[- ]risk)\b/i },
   ];
-  return conclusions.find(item => item.pattern.test(text))?.code ?? null;
+  // "Whether the primary endpoint was met is not established" identifies
+  // an UNKNOWN, not an affirmative conclusion. Evaluate clause by clause and
+  // exempt only a plainly nonassertive question/negative-evidence statement.
+  // An adversative clause ("however the endpoint WAS met") remains subject
+  // to the outcome refusal. Do not globally remove all negative words.
+  const clauses = text.split(/[;\n]+/);
+  for (const clause of clauses) {
+    const uncertain =
+      (/^\s*(?:whether|if)\b/i.test(clause) &&
+       /\b(?:is|was|remains)\s+(?:not\s+(?:established|confirmed|known|documented)|unknown|uncertain)\b/i.test(clause)) ||
+      (/^\s*(?:there\s+(?:is|was)\s+)?no\s+(?:evidence|record|documentation)\s+that\b/i.test(clause));
+    if (uncertain && !/\b(?:but|however|nevertheless|although)\b/i.test(clause)) continue;
+    const found = conclusions.find(item => item.pattern.test(clause));
+    if (found) return found.code;
+  }
+  return null;
 }
 
 /** A model's draft of one section: its prose and the claims it made about it. */
