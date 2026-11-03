@@ -41,7 +41,10 @@ concurrency:
 jobs:
   tier5-smoke:
     name: Authenticated app smoke (real browser + DB)
-    runs-on: ubuntu-latest
+    # Playwright 1.55.0 refuses Chromium installation on the ubuntu-latest
+    # image now resolving to Ubuntu 26.04 (Tier 5 run 41548770226).
+    # Use the supported, stable hosted image; keep the same DB/browser proof.
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
 
     services:
