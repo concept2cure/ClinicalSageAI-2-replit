@@ -210,6 +210,13 @@ test('seeds one CSR project, ten Data Room source records, one editor document a
   await seed({ api: app.api, identity: app.identity, run });
   assert.equal(app.state.projects.length, 1);
   assert.equal(app.state.projects[0].program_type, 'csr');
+  const projectCreate = app.state.calls.find(c => c.method === 'POST' && c.url === '/api/c2c/projects');
+  assert.ok(projectCreate, 'Existing Project Management creates the CSR document-type project');
+  assert.match(projectCreate.body.objective, /Fictional study hypothesis \(not a finding\)/);
+  assert.match(projectCreate.body.objective, /FBT-201-2026/);
+  assert.match(projectCreate.body.objective, /PASI 75 response at Week 12/);
+  assert.match(projectCreate.body.objective, /placebo/i);
+  assert.match(projectCreate.body.objective, /source data cut 2026-09-30/);
   assert.equal(app.state.vault.length, 10);
   assert.deepEqual(app.state.vault.map(d => d.documentType), ['OTHER', 'PROTOCOL', 'SAP', 'OTHER', 'REPORT', 'REPORT', 'OTHER', 'OTHER', 'OTHER', 'OTHER']);
   assert.equal(app.state.documents.length, 1);
