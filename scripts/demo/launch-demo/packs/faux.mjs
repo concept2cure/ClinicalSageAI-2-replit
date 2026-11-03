@@ -423,8 +423,15 @@ async function ensureSource({ api, run, tally }, project, spec) {
     }
     const existing = sameTitle[0] ?? null;
     if (existing) {
-      if (existing.current === false || existing.contentHash !== digest) {
+      if (existing.current !== true || existing.contentHash !== digest) {
         throw new Error(`A source titled "${name}" exists but its current SHA-256 does not match revision 2. Reconcile it in Vault; this seed will not overwrite governed data.`);
+      }
+      // A matching catalog checksum alone is not proof the original is
+      // available to Data Room/AnA. The existing search projects the governed
+      // binary-availability decision. Never claim this source is ready when its
+      // original was removed or cannot be supplied to the editor.
+      if (existing.originalFileAvailable !== true) {
+        throw new Error(`Source "${name}" has matching metadata but its original file is unavailable. Restore or re-ingest it through the existing governed Vault lifecycle; this seed will not claim success.`);
       }
       let metadataCorrected = false;
       if (existing.documentType !== spec.documentType) {
@@ -449,7 +456,8 @@ async function ensureSource({ api, run, tally }, project, spec) {
         const confirmed = await sourceCandidates(api, project.id, spec.label, name);
         if (confirmed.length !== 1 ||
             confirmed[0].documentType !== spec.documentType ||
-            confirmed[0].contentHash !== digest || confirmed[0].current === false) {
+            confirmed[0].contentHash !== digest || confirmed[0].current !== true ||
+            confirmed[0].originalFileAvailable !== true) {
           throw new Error('The corrected Vault document type or content hash could not be confirmed. Review its existing audit history before retrying.');
         }
         tally.created('source-metadata-correction');
