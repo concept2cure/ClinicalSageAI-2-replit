@@ -249,19 +249,39 @@ export async function checkApplication({ fetcher, port = 5000 }) {
     const result = await fetcher('http://127.0.0.1:' + port + '/readyz',
       { signal: AbortSignal.timeout(7000) });
     const data = await result.json().catch(() => null);
-    const dependencies = data && typeof data.dependencies === 'object' ? data.dependencies : {};
-    return { status: result.ok && data?.ready === true && data.anaState === 'ready'
-      ? 'passed' : 'blocked',
-      code: result.ok && data?.ready === true && data.anaState === 'ready'
-        ? 'APP_MODEL_AND_DEPENDENCIES_READY' : 'APP_NOT_READY',
-      httpStatus: result.status, dependencies, schemaState: data?.schemaState ?? 'unknown',
+    const dependencies = data && typeof data.dependencies === 'object' && data.dependencies !== null
+      ? data.dependencies : {};
+    // /readyz can legitimately serve 200 with schema=degraded. That is
+    // sufficient for some manual routes, but NOT a fully qualified Codespaces
+    // demo. Require exact dependency evidence; an empty or incomplete body
+    // must never become a green startup receipt.
+    const missing = ['database', 'schema', 'ana', 'storage']
+      .filter(name => dependencies[name] !== 'ok');
+    const ready = result.ok && data?.ready === true &&
+      data?.schemaState === 'ready' && data?.anaState === 'ready' &&
+      missing.length === 0 && data?.capabilityRegistry === 'seeded';
+    const code = ready ? 'APP_READINESS_REPORTED' :
+      data?.schemaState === 'degraded' ? 'APP_SCHEMA_DEGRADED' :
+      data?.capabilityRegistry !== 'seeded' ? 'APP_CAPABILITY_REGISTRY_NOT_SEEDED' :
+      missing.length > 0 ? 'APP_REQUIRED_DEPENDENCIES_MISSING' : 'APP_NOT_READY';
+    return { status: ready ? 'passed' : 'blocked', code,
+      httpStatus: result.status, dependencies, missing,
+      schemaState: data?.schemaState ?? 'unknown',
       anaState: data?.anaState ?? 'unknown',
+      capabilityRegistry: data?.capabilityRegistry ?? 'unknown',
       explanation: data?.anaState === 'deterministic'
         ? 'Deterministic demo text is NOT qualified AnA model authoring.'
         : data?.anaState === 'no_high_risk_model'
           ? 'Configured provider lacks an approved model for regulated drafting.'
-          : data?.anaState === 'ready' ? 'Inspect any other failed dependency.' :
-            'AnA readiness is unavailable. Review the server readiness detail without weakening the PQ gate.' };
+          : data?.schemaState === 'degraded'
+            ? 'A degraded schema cannot qualify a complete governed demo.'
+            : missing.length > 0
+              ? 'One or more required runtime dependencies are not confirmed healthy.'
+              : data?.capabilityRegistry !== 'seeded'
+                ? 'AnA capability inventory is not seeded; do not treat 200 /readyz as a complete authoring demo.'
+                : ready
+                  ? 'Server readiness is reported healthy. This is NOT a live AnA draft, scientific review or export qualification.'
+                  : 'App readiness is unavailable. Review its dependency status without weakening PQ or security gates.' };
   } catch {
     return { status: 'blocked', code: 'APP_NOT_RUNNING',
       explanation: 'Start Concept2Cure normally, then rerun with --check-app.' };
