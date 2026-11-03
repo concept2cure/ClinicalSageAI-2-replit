@@ -22,7 +22,7 @@ import { verifyCsrDocumentEvidence, type CsrDocumentSectionEvidence } from './cs
 import type { CsrClaimReceipt, CsrEvidenceFact } from './csr-claim-reconciliation';
 import { buildCsrAuthoringEvidence, type CsrAuthoringEvidence, type RetainedCsrTables } from '../csr/cortex-authoring-context';
 import { parseImportedCsrSectionEvidence, type CsrImportedSectionEvidence } from '../csr/csr-claim-receipts';
-import { findUnclaimedNumbers, isCsrObservedResultsSection } from '../csr/unsupplied-statistics';
+import { findUnclaimedNumbers, isCsrObservedResultsSection, unclaimedCsrSynopsisResults } from '../csr/unsupplied-statistics';
 import { editedClaimOutcome } from './csr-edited-section';
 
 export interface SavedCsrSection { code: string | null; content: string; text: string; title?: string }
@@ -109,7 +109,14 @@ function planSection(s: SavedCsrSection & { code: string }, receipts: CsrImporte
   // results the analysis can substantiate are exact claimed table cells.
   // No stored provenance flag can authorize an unclaimed observed result.
   const info = isCsrObservedResultsSection(s.code) ? [] : receipts?.studyInformationNumbers ?? [];
-  const unclaimed = findUnclaimedNumbers(figureText(s.text), { claimed, info }).map(n => n.text);
+  const currentText = figureText(s.text);
+  const unclaimed = [...new Set([
+    ...findUnclaimedNumbers(currentText, { claimed, info }).map(n => n.text),
+    // A legacy §2 receipt may list 300 as "planned sample size"; this does
+    // not justify "300 patients completed". Revalidate observed synopsis
+    // clauses without its metadata exemptions, just as drafting now does.
+    ...(s.code === '2' ? unclaimedCsrSynopsisResults(currentText, claimed) : []),
+  ])];
   const current = receipts ? sha(s.content) : null;
   // Added sections without an E3 code have no declared regulatory purpose or
   // analysis provenance. Their unsourced numbers are NOT safer than the same
