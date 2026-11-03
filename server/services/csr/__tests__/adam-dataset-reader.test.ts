@@ -47,6 +47,38 @@ describe('readAdamDataset', () => {
     }
   });
 
+  it('reads valid NDJSON with many blank lines without creating empty observations', () => {
+    const { rows, ...meta } = datasetJson('ADAE', [
+      ['USUBJID', 'string'], ['AESEQ', 'integer'],
+    ], [['SYN-A', 1], ['SYN-B', 2]]);
+    const ndjson = Buffer.from(JSON.stringify(meta) + '\n' +
+      '\n'.repeat(100_000) + JSON.stringify(rows[0]) + '\n' +
+      '\n'.repeat(100_000) + JSON.stringify(rows[1]) + '\n');
+    const result = readAdamDataset(ndjson, 'adae.ndjson');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.dataset.rows).toEqual([
+      { USUBJID: 'SYN-A', AESEQ: 1 }, { USUBJID: 'SYN-B', AESEQ: 2 },
+    ]);
+  });
+
+  it('refuses malformed UTF-8 in clinical observation cells, not a replacement character', () => {
+    const { rows: _rows, ...meta } = datasetJson('ADAE',
+      [['USUBJID', 'string'], ['AESEQ', 'integer']], [['SYN-A', 1]]);
+    const corruptNdjson = Buffer.concat([
+      Buffer.from(JSON.stringify(meta) + '\n["'),
+      Buffer.from([0xC3, 0x28]), // invalid UTF-8: lead byte not followed by continuation
+      Buffer.from('",1]\n'),
+    ]);
+    expect(readAdamDataset(corruptNdjson, 'adae.ndjson'))
+      .toEqual({ ok: false, reason: 'MALFORMED' });
+    const valid = Buffer.from(JSON.stringify(datasetJson('ADAE',
+      [['USUBJID', 'string'], ['AESEQ', 'integer']], [['SYN-A', 1]])));
+    const corruptJson = Buffer.concat([valid.subarray(0, valid.length - 1),
+      Buffer.from([0xC3, 0x28]), Buffer.from('}')]);
+    expect(readAdamDataset(corruptJson, 'adae.json').ok).toBe(false);
+  });
+
   it('refuses a row whose length differs from the columns, a non-dataset JSON, and a two-dataset file', () => {
     const doc = datasetJson('ADAE', [['USUBJID', 'string'], ['AESEQ', 'integer']], [['a']]);
     expect(readAdamDataset(json(doc), 'x.json')).toEqual({ ok: false, reason: 'ROW_SHAPE_INVALID' });
