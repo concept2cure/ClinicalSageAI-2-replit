@@ -153,6 +153,40 @@ test('doctor does not probe external provider or application without explicit fl
   assert.equal(report.openai.status, 'configured-not-probed');
   assert.equal(JSON.stringify(report).includes('othersecret'), false);
 });
+test('a misleading 200 /readyz cannot qualify degraded, unseeded or incomplete app state', async () => {
+  const base = {
+    ready: true, schemaState: 'ready', anaState: 'ready',
+    capabilityRegistry: 'seeded',
+    dependencies: { database: 'ok', schema: 'ok', ana: 'ok', storage: 'ok',
+      virusScan: 'skipped', redis: 'skipped', worker: 'skipped' },
+  };
+  const probe = data => checkApplication({ fetcher: async () => ({
+    ok: true, status: 200, json: async () => data,
+  }) });
+  const passed = await probe(base);
+  assert.equal(passed.status, 'passed');
+  assert.equal(passed.code, 'APP_READINESS_REPORTED');
+  assert.match(passed.explanation, /NOT a live AnA draft/);
+
+  const degraded = await probe({ ...base, schemaState: 'degraded' });
+  assert.equal(degraded.code, 'APP_SCHEMA_DEGRADED');
+  assert.equal(degraded.status, 'blocked');
+
+  const unseeded = await probe({ ...base, capabilityRegistry: 'failed' });
+  assert.equal(unseeded.code, 'APP_CAPABILITY_REGISTRY_NOT_SEEDED');
+  assert.equal(unseeded.status, 'blocked');
+
+  const missing = await probe({ ...base, dependencies: {
+    ...base.dependencies, storage: 'skipped',
+  } });
+  assert.equal(missing.code, 'APP_REQUIRED_DEPENDENCIES_MISSING');
+  assert.deepEqual(missing.missing, ['storage']);
+  assert.equal(missing.status, 'blocked');
+
+  const noEvidence = await probe({ ready: true, anaState: 'ready' });
+  assert.equal(noEvidence.status, 'blocked');
+});
+
 test('running app with simulated AnA is not accepted as real model readiness', async () => {
   const app = await checkApplication({ fetcher: async () => ({ status: 200, ok: true,
     json: async () => ({ ready: true, anaState: 'deterministic',
