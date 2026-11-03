@@ -112,6 +112,52 @@ The existing org-wide Tasking board's **Open linked document in editor** button 
 
 The customer demonstration remains unqualified until an actual authorized FBT-201 account opens the stored document from Tasking, confirms the correct project after refresh, uses AnA in the same editor and completes genuine review actions. Do not call a pending task a completed scientific review.
 
+## November 3 — end-to-end CSR acceptance harness (NOT qualified yet)
+
+The source-code verification now has a **separate operator-run acceptance probe**, `scripts/demo/launch-demo/qualify-csr.mjs`, which uses the same existing authenticated API client and workflow. It is **not** a new CSR application, writer, reviewer or signing endpoint, and it does not run on deployment. Its test is `scripts/demo/launch-demo/qualify-csr.test.mjs`.
+
+The probe reads one exact project, full-document Authoring draft, Vault clinical source and platform approval, and the saved frozen study-data receipt. Optional `--freeze` previews the already-approved source and invokes the EXISTING `POST /api/submission-orchestrator/csr/study-data`, then rereads the actual saved tables under their source version and hash. Optional `--start-draft` uses the EXISTING `POST /api/csr/jobs` with that exact retained evidence and returns **NOT_QUALIFIED** when the job is merely queued; it never silently retries a previous build or claims the job succeeded. After a real build finishes, the probe checks non-demo model identity, persisted section SHA-256 integrity, and the existing Authoring working copy imported from that precise job. The independent review must have current, recorded approvals from actors other than the author: the Tasking card does not count.
+
+With `--export`, the operator invokes the existing Authoring DOCX route as the authenticated actor, downloads the real bytes, checks ZIP CRC and opens `word/document.xml`, verifying that all substantive currently saved CSR sections occur in the delivered file. `--expected-text-file /secure/path/edited-excerpt.txt` also demands that an editor's specifically revised passage is both **saved** in Authoring and **preserved** in the exported Word document. The receipt and DOCX stay in the operator-specified output directory (default `/tmp/concept2cure-csr-acceptance`), not in git. A failed stage is included in `csr-acceptance.json` with stages that actually passed beforehand.
+
+**Use only an authorized, designated demonstration organization and real accounts.** Do not paste or commit the token. An operator first supplies the exact authenticated organization name and number and already recorded UUIDs; this probe does not guess identities, grant permissions, approve sources, sign, change a tier, add a second module or fabricate a reviewer.
+
+```sh
+export DEMO_BASE_URL="https://ACTUAL-DEPLOYMENT"
+export DEMO_SEED_TOKEN="AUTHORIZED-BEARER-TOKEN"  # store securely, never in a shared transcript
+
+# Stage 1: requires a previously approved source; optional --freeze performs
+# the existing governed document-bound freeze (not source approval).
+node scripts/demo/launch-demo/qualify-csr.mjs \
+  --base-url "$DEMO_BASE_URL" \
+  --organization-id YOUR_NUMERIC_ORG_ID \
+  --organization-name "EXACT AUTHENTICATED DEMO ORGANIZATION NAME" \
+  --program-id YOUR_EXISTING_PROGRAM_UUID \
+  --document-id YOUR_EXISTING_CANONICAL_CSR_DOCUMENT_UUID \
+  --source-id YOUR_APPROVED_VAULT_SOURCE_UUID \
+  --freeze
+
+# Stage 2 (separate, deliberate paid-model action): add --start-draft.
+# It returns a job ID and NOT_QUALIFIED; queued != drafted.
+# Let the actual provider model run through the existing governed gateway.
+
+# Stage 3: once AnA/CSR drafting, import and authorized independent scientific
+# review occurred in the one editor, qualify the real saved approved copy.
+node scripts/demo/launch-demo/qualify-csr.mjs \
+  --base-url "$DEMO_BASE_URL" \
+  --organization-id YOUR_NUMERIC_ORG_ID \
+  --organization-name "EXACT AUTHENTICATED DEMO ORGANIZATION NAME" \
+  --program-id YOUR_EXISTING_PROGRAM_UUID \
+  --document-id YOUR_EXISTING_CANONICAL_CSR_DOCUMENT_UUID \
+  --source-id YOUR_APPROVED_VAULT_SOURCE_UUID \
+  --job-id YOUR_RECORDED_BUILD_NUMBER \
+  --reviewed-document-id YOUR_EXISTING_APPROVED_IMPORT_UUID \
+  --expected-text-file /secure/path/edited-excerpt.txt \
+  --export
+```
+
+The result `QUALIFIED_API_PATH_ONLY_BROWSER_REQUIRED` is deliberately **not** a hosted browser pass, regulatory validation, new source approval or filing approval. It demands a real browser walk with the same authorized test users and saved records before anyone can call the demonstration ready. In particular, the production model PQ remains pending for high-risk text; missing provider configuration, unavailable source, reviewer denial or export mismatch must remain visible blockers. CI jobs for these changes also require actual completion.
+
 ## November 3 — Tasking identity and read-after-create verification
 
 The shared demo Tasking helper (`scripts/demo/launch-demo/packs/work-areas.mjs`) previously treated a partially readable board as an empty inventory and collapsed duplicate project task titles into one `Map` entry. It could therefore create a second task or silently reuse the wrong task in the same project. It now requires the existing Task Board's real `{success,data,meta:{partial:false,unreadSources:[]}}` response and a unique, nonblank title per existing project card; no task is created on an incomplete or ambiguous read.
