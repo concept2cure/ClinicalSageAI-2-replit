@@ -35,6 +35,25 @@ export function isCsrObservedResultsSection(sectionNumber: string): boolean {
   return /^1[0-3](?:\.|$)/.test(sectionNumber.trim());
 }
 
+/** ICH E3 §2 mixes planned design with actual outcomes. The plan's enrollment
+ * target cannot support an observed number elsewhere in the same synopsis.
+ * Inspect clinical-result clauses independently; a flat list of metadata
+ * digits is not enough to distinguish an actual count from a planned one.
+ */
+export function unclaimedCsrSynopsisResults(prose: string, claimed: string[]): string[] {
+  const observed = /\b(?:completed|reported|experienced|occurred|died|deaths?|fatal\w*|responders?|remission|cured|(?:were|was)\s+(?:randomi[sz]ed|enrolled|treated|observed))\b/i;
+  const planned = /\b(?:planned|targeted|intended|expected|proposed|anticipated)\b/i;
+  const findings = new Set<string>();
+  for (const clause of prose.split(/;|\n+|(?<=\.)\s+(?=[A-Z])/)) {
+    if (!observed.test(clause)) continue;
+    // A clause describing planned recruitment is not an observed finding.
+    // Actual-conduct verbs in that same clause still require receipts.
+    if (planned.test(clause) && !/\b(?:completed|reported|experienced|occurred|died|deaths?|fatal\w*|cured|remission)\b/i.test(clause)) continue;
+    for (const figure of findUnclaimedNumbers(clause, { claimed })) findings.add(figure.text);
+  }
+  return [...findings];
+}
+
 interface StatPattern {
   kind: string;
   re: RegExp;
@@ -299,6 +318,11 @@ export function acceptEvidenceBoundDraft(
     }
   }
   const claimed = (claims as Array<{ value: string }>).map((c) => c.value);
+  if (sectionNumber.trim() === '2' && unclaimedCsrSynopsisResults(prose, claimed).length) {
+    lineage.rejectedModelDraft = { reason: 'synopsis_observed_figures_unclaimed',
+      evidenceDigest: evidence.evidenceDigest };
+    return false;
+  }
   // Rule 2: only an engine cell can support a clinical RESULT. Before this
   // guard, the metadata's planned enrollment (e.g. sampleSize=300) made an
   // invented claim of "300 patients died" pass with zero cell receipts:
