@@ -165,7 +165,16 @@ it('records a review decision on the exact text, and shows a refused decision', 
   render(<CsrHeadingReview jobId={41} headings={headings} onChanged={changed} onImport={onImport} />);
   expect(screen.getByText('2 of 4 ICH E3 headings with saved text free of data placeholders · 0 still contain placeholders · 1 approved')).toBeTruthy();
   expect(screen.getByText('Prepared from records, not drafted by the build')).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: /Approve/ }));
+  const approve = screen.getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
+  expect(approve.disabled).toBe(true);
+  apiRequest.mockResolvedValueOnce(ok({ sections: [{
+    sectionNumber: '11.4.1', contentHash: HASH,
+    content: '<p>The verified Week-12 comparison was reviewed against the retained source table.</p>',
+  }] }));
+  fireEvent.click(within(screen.getByText('Analysis of efficacy').closest('li')!).getByRole('button', { name: 'Read saved section text' }));
+  await screen.findByLabelText('Saved text for §11.4.1');
+  expect(approve.disabled).toBe(false);
+  fireEvent.click(approve);
   await vi.waitFor(() => expect(changed).toHaveBeenCalled());
   expect(apiRequest).toHaveBeenCalledWith('POST', '/api/csr/jobs/41/sections/11.4.1/review', { decision: 'approve', expectedContentHash: HASH });
   apiRequest.mockRejectedValueOnce(refusal(409, { code: 'CSR_REVIEWER_IS_REQUESTER',
@@ -191,13 +200,33 @@ it('requires a stated reason to send a section back', async () => {
 it('the csr-workflow board shows the build headings with review state and re-reads after a decision', async () => {
   const board = { success: true, data: { program: { title: 'LMN-201 Phase 2/3', code: 'ICH E3', readiness: 100 },
     sections: [{ num: '11', label: 'Efficacy evaluation', status: 'draft' }], headings, meta: { jobId: 41, sourceRunId: RUN } } };
-  apiRequest.mockImplementation(async (method: string) => (method === 'GET' ? ok(board) : ok({ review: {} })));
+  apiRequest.mockImplementation(async (method: string, path: string) =>
+    method === 'GET' && path.includes('/sections?sectionNumber=') ? ok({ sections: [{
+      sectionNumber: '11.4.1', contentHash: HASH, content: '<p>Review the exact stored clinical result.</p>',
+    }] }) : method === 'GET' ? ok(board) : ok({ review: {} }));
   publishShellProject({ id: PROGRAM, title: 'LMN-201' });
   try {
     render(<CsrWorkflow surface={getSurface('csr-workflow')!} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />);
     const region = await screen.findByLabelText('Section review');
     expect(within(region).getByText('In review')).toBeTruthy();
-    fireEvent.click(within(region).getByRole('button', { name: /Approve/ }));
+    const approve = within(region).getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
+    expect(approve.disabled).toBe(true);
+    fireEvent.click(within(region).getByRole('button', { name: 'Read saved section text' }));
+    await screen.findByLabelText('Saved text for §11.4.1');
+    fireEvent.click(approve);
     await vi.waitFor(() => expect(apiRequest.mock.calls.filter(([m, p]) => m === 'GET' && String(p).startsWith('/api/csr-workflow/board')).length).toBe(2));
   } finally { publishShellProject({ id: '' }); }
+});
+
+it('refuses to approve when the section read is missing or its hash has changed', async () => {
+  render(<CsrHeadingReview jobId={41} headings={headings} onChanged={() => {}} onImport={() => {}} />);
+  const row = screen.getByText('Analysis of efficacy').closest('li')!;
+  const approve = within(row).getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
+  apiRequest.mockResolvedValueOnce(ok({ sections: [{
+    sectionNumber: '11.4.1', contentHash: 'c'.repeat(64), content: 'Another version',
+  }] }));
+  fireEvent.click(within(row).getByRole('button', { name: 'Read saved section text' }));
+  expect((await within(row).findByRole('alert')).textContent).toMatch(/content hash changed/);
+  expect(approve.disabled).toBe(true);
+  expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
 });
