@@ -294,7 +294,7 @@ export async function runCsrAssembly(id: number, organizationId: number, injecte
         completed_at = now(), updated_at = now() WHERE id = $1 AND status = 'assembling'`, [id, JSON.stringify(summary)]);
     } catch (err) {
       const recorded = failure(err);
-      if (recorded.code === 'CSR_ASSEMBLY_FAILED') log.error('CSR assembly failed', { id, organizationId, err: err instanceof Error ? err.message : String(err) });
+      if (recorded.code === 'CSR_ASSEMBLY_FAILED') log.error('CSR assembly failed', { id, organizationId, code: 'CSR_ASSEMBLY_FAILED' });
       await q.query(`UPDATE csr_assembly_runs SET status = 'failed', stage = 'Failed', error = $2::jsonb, completed_at = now(), updated_at = now()
         WHERE id = $1 AND status = 'assembling'`, [id, JSON.stringify(recorded)]);
     } finally {
@@ -306,8 +306,8 @@ export async function runCsrAssembly(id: number, organizationId: number, injecte
 /** Start the worker off the request thread, as launchCSRBuildAsync starts a build. */
 export function startCsrAssembly(id: number, organizationId: number): void {
   setImmediate(() => {
-    runCsrAssembly(id, organizationId).catch(err => {
-      log.error('runCsrAssembly threw outside its own error handler', { id, organizationId, err: err instanceof Error ? err.message : String(err) });
+    runCsrAssembly(id, organizationId).catch(() => {
+      log.error('runCsrAssembly threw outside its own error handler', { id, organizationId, code: 'CSR_ASSEMBLY_FAILED' });
     });
   });
 }
