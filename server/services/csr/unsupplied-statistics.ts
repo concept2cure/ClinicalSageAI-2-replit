@@ -142,7 +142,13 @@ const REFERENCE = /(?:\b(?:sections?|tables?|figures?|listings?|appendi(?:x|ces)
 export function findUnclaimedNumbers(prose: string, supplied: unknown): UnsuppliedStatistic[] {
   const known = suppliedNumbers(supplied);
   const found: UnsuppliedStatistic[] = [];
-  const text = prose.replace(REFERENCE, ' ').replace(/(\d),(?=\d{3}\b)/g, '$1');
+  // A protocol/product identifier is not a clinical figure. It may contain
+  // digits (LMN-201, PROTO-7, NCT05330182), and the synopsis/result text
+  // legitimately names its study while its outcomes must still cite cells.
+  // Exempt only visibly structured UPPERCASE identifiers, not bare metadata
+  // digits or quantitative phrases such as "300 patients" or "300mg".
+  const identifiers = /\b(?:NCT\d{8}|[A-Z]{2,}[A-Z0-9_-]*[-_][A-Z0-9_-]*\d[A-Z0-9_-]*)\b/g;
+  const text = prose.replace(REFERENCE, ' ').replace(identifiers, ' ').replace(/(\d),(?=\d{3}\b)/g, '$1');
   for (const m of text.matchAll(/\d+(?:\.\d+)?/g)) {
     if (known.has(String(Number(m[0]))) || found.some((f) => f.text === m[0])) continue;
     found.push({ kind: 'number', text: m[0] });
