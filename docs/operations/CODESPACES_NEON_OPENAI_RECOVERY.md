@@ -132,10 +132,11 @@ endpoint with masked credentials, never the pooled URL.
 Neon preview branches are created in **one** workflow: `.github/workflows/neon-preview-db.yml`.
 The general C2C agent no longer creates an untracked duplicate branch. The
 preview verifier fails if its Git merge-base cannot be resolved, and runs a
-read-only live schema-inventory check before reporting success. The preview
-cleanup runs only in the opted-in namespace and reports deletion only after
-the actual Neon action succeeds. If preview is disabled before a PR closes,
-previously created preview branches may require explicit manual cleanup.
+read-only live schema-inventory check before reporting success. Each PR check creates a **unique, schema-only branch** named for that
+GitHub run. It rejects an existing branch, then deletes exactly its own branch
+ID in the same job—even if validation fails. A failed deletion remains visible
+and cannot produce a successful cleanup receipt. A one-day server-side
+expiration is the final safeguard if the runner is lost.
 
 The weekly/on-demand provisioning proof refuses a reused branch and deletes
 only the branch ID the current run created. A failed deletion remains a
@@ -143,10 +144,10 @@ visible workflow failure, rather than a success receipt. Neither workflow
 provides scientific model qualification or a finished CSR demonstration.
 
 Neon schema-only proof branches now request a server-side expiration after
-**two hours**, and PR preview branches after **seven days**. Expiration is a
+**two hours**, and PR preview branches after **one day**. Expiration is a
 last-resort cost and data-minimization safeguard, not evidence that a branch
 was actually deleted; the explicit deletion result still governs cleanup
-receipts. A long-lived active PR may need its preview branch recreated.
+receipts. Each PR run creates its own temporary branch.
 
 These changes to workflow source do not change Neon account settings, rotate
 historical credentials, create a branch, or prove a connected Neon project.

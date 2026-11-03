@@ -2,7 +2,7 @@ name: Neon PR Preview DB + Schema Validation
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, closed]
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: read
@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   preview_db_test:
-    # Skip if Neon secrets not configured or PR closed
+    # Opt-in only. Each run creates, tests and deletes its own isolated schema branch.
     if: github.event.action != 'closed' && vars.NEON_PROJECT_ID != '' && vars.NEON_PREVIEW_ENABLED == 'true' && vars.NEON_SAFE_PARENT_BRANCH != ''
     runs-on: ubuntu-latest
     # Posts a preview-DB status comment on the PR (github-script createComment).
@@ -35,12 +35,12 @@ jobs:
       - name: Choose Neon branch name (safe + stable)
         if: steps.check_secrets.outputs.skip != 'true'
         id: names
-        run: echo "branch=preview/pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+        run: echo "branch=preview/pr-${{ github.event.pull_request.number }}-run-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
 
-      - name: Bound preview branch lifetime to seven days
+      - name: Bound ephemeral PR validation branch lifetime to one day
         if: steps.check_secrets.outputs.skip != 'true'
         id: expiry
-        run: echo "expires_at=$(date -u -d '+7 days' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+        run: echo "expires_at=$(date -u -d '+1 day' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
 
       - name: Create Neon branch for this PR
         if: steps.check_secrets.outputs.skip != 'true'
@@ -55,9 +55,17 @@ jobs:
           parent_branch: ${{ vars.NEON_SAFE_PARENT_BRANCH }}
           # Do not clone patient/client records into PR preview environments.
           branch_type: schema-only
-          # Auto-expire as a fail-safe even if a PR is abandoned or preview
-          # cleanup is disabled later; an active PR can recreate its branch.
+          # A one-day server-side expiration survives runner loss or cancelled
+          # workflows. PR checks must not retain a long-lived database.
           expires_at: ${{ steps.expiry.outputs.expires_at }}
+
+      - name: Require a freshly created PR validation branch
+        if: steps.check_secrets.outputs.skip != 'true'
+        run: |
+          if [[ "${{ steps.neon.outputs.created }}" != "true" || -z "${{ steps.neon.outputs.branch_id }}" ]]; then
+            echo "::error::Neon did not confirm a fresh isolated PR branch; refusing migration"
+            exit 1
+          fi
 
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.check_secrets.outputs.skip != 'true'
@@ -193,8 +201,19 @@ jobs:
         # tables. This is NOT full RLS or governed authoring qualification.
         run: npm run ci:tables-live-schema
 
+      - name: Delete exactly this run's PR validation branch
+        id: delete
+        # Always attempt cleanup after validation, including failures.
+        # The branch is unique to this run; never delete by a reusable PR name.
+        if: always() && steps.neon.outputs.created == 'true' && steps.neon.outputs.branch_id != ''
+        uses: neondatabase/delete-branch-action@4468d825d5a88ef4012f1705a82f02ec3072f776 # v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: ${{ steps.neon.outputs.branch_id }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
       - name: Post PR comment with preview DB info
-        if: success() && steps.check_secrets.outputs.skip != 'true'
+        if: success() && steps.delete.outcome == 'success'
         continue-on-error: true
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
@@ -208,36 +227,6 @@ jobs:
               // (scripts/db_verify.sql) was never authored, so its step is a
               // guarded no-op — a comment asserting "verification passed" was
               // reporting a check that did not happen.
-              body: `🗄️ **Neon Preview DB Created**\n\nBranch: \`${branch}\`\n\n✅ Newly added migration files applied (or none added)\n✅ Codespaces/Neon policy tests and live schema inventory completed (baseline no-regression)\n\n_This is not full database provisioning, RLS or regulatory qualification. The branch is scheduled for cleanup when the PR closes._`
+              body: `🗄️ **Neon PR Schema Validation — Branch Deleted**\n\nBranch: \`${branch}\`\n\n✅ Newly added migration files applied (or none added)\n✅ Codespaces/Neon policy tests and live schema inventory completed (baseline no-regression)\n\n_This is not full database provisioning, RLS or regulatory qualification. The ephemeral branch was deleted before this result was posted._`
             });
 
-  cleanup_preview_db:
-    # Only clean branches in the explicitly opted-in preview namespace.
-    # Do not delete a user-owned similarly named branch when preview is off.
-    if: github.event.action == 'closed' && vars.NEON_PROJECT_ID != '' && vars.NEON_PREVIEW_ENABLED == 'true' && vars.NEON_SAFE_PARENT_BRANCH != ''
-    runs-on: ubuntu-latest
-    # Posts a cleanup-confirmation comment on the PR (github-script createComment).
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Delete Neon branch for this PR
-        id: delete
-        # Failure is a real cleanup failure, not a successful deletion.
-        uses: neondatabase/delete-branch-action@4468d825d5a88ef4012f1705a82f02ec3072f776 # v3
-        with:
-          project_id: ${{ vars.NEON_PROJECT_ID }}
-          branch: preview/pr-${{ github.event.pull_request.number }}
-          api_key: ${{ secrets.NEON_API_KEY }}
-
-      - name: Post cleanup confirmation
-        if: success() && steps.delete.outcome == 'success'
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `🧹 **Neon Preview DB Cleaned Up**\n\nThe preview database branch \`preview/pr-${{ github.event.pull_request.number }}\` has been deleted.`
-            });

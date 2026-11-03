@@ -46,14 +46,17 @@ test('Neon proof refuses reused branch and fails if cleanup could not delete its
   assert.doesNotMatch(cleanup, /continue-on-error: true/);
 });
 
-test('PR cleanup never claims deletion when action fails or preview was disabled', () => {
+test('each PR preview validates an isolated branch and cleans its exact ID in the same run', () => {
   const w = read('.github/workflows/neon-preview-db.yml');
-  const cleanup = w.slice(w.indexOf('  cleanup_preview_db:'));
-  assert.match(cleanup, /vars\.NEON_PREVIEW_ENABLED == 'true'/);
-  assert.match(cleanup, /vars\.NEON_SAFE_PARENT_BRANCH != ''/);
-  assert.match(cleanup, /id: delete/);
-  assert.match(cleanup, /if: success\(\) && steps\.delete\.outcome == 'success'/);
-  assert.doesNotMatch(cleanup, /continue-on-error: true/);
+  assert.match(w, /preview\/pr-\$\{\{ github\.event\.pull_request\.number \}\}-run-\$\{\{ github\.run_id \}\}/);
+  assert.match(w, /Require a freshly created PR validation branch/);
+  assert.match(w, /steps\.neon\.outputs\.created/);
+  assert.match(w, /Delete exactly this run's PR validation branch/);
+  assert.match(w, /if: always\(\) && steps\.neon\.outputs\.created == 'true'/);
+  assert.match(w, /branch: \$\{\{ steps\.neon\.outputs\.branch_id \}\}/);
+  assert.match(w, /if: success\(\) && steps\.delete\.outcome == 'success'/);
+  assert.doesNotMatch(w, /cleanup_preview_db:/);
+  assert.doesNotMatch(w, /types: \[opened, reopened, synchronize, closed\]/);
   assert.match(w, /npm run ci:tables-live-schema/);
   assert.match(w, /No PR merge-base can be resolved; migration verification did not run/);
 });
@@ -74,10 +77,10 @@ test('CI-created Neon branches are schema-only and expire if a runner or PR clea
   for (const workflow of [proof, preview]) {
     assert.match(workflow, /branch_type: schema-only/);
     assert.match(workflow, /expires_at: \$\{\{ steps\.expiry\.outputs\.expires_at \}\}/);
-    assert.match(workflow, /date -u -d '\+[27] (?:hours|days)'/);
+    assert.match(workflow, /date -u -d '\+(?:2 hours|1 day)'/);
   }
   assert.match(proof, /Bound proof branch lifetime to two hours/);
-  assert.match(preview, /Bound preview branch lifetime to seven days/);
+  assert.match(preview, /Bound ephemeral PR validation branch lifetime to one day/);
 });
 
 test('Codespaces agent config has no committed production Neon parent or owner runtime secret', () => {
