@@ -1,90 +1,39 @@
-#!/bin/bash
-# ═══════════════════════════════════════════════════════════════════════════════
-# C2C Codespace Post-Start Hook
-# Runs each time the container starts
-# ═══════════════════════════════════════════════════════════════════════════════
-# Do NOT use set -e — a single failed optional step must not trigger recovery mode
-set +e
+#!/usr/bin/env bash
+# Concept2Cure Codespaces: report preparation, NEVER claim the app started.
+# A development container may be available while its database or AI are blocked.
+set -u
 
-echo "🔄 C2C Codespace starting..."
+echo "C2C Codespace post-start: checking the explicitly configured database."
+echo "Branch: $(git branch --show-current 2>/dev/null || echo unknown)"
+echo "No DB or AI secret is printed. No database is provisioned or switched."
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 1. Start local PostgreSQL (if installed) and ensure database exists
-# ─────────────────────────────────────────────────────────────────────────────
-if command -v pg_lsclusters &>/dev/null; then
-  PG_VER=$(pg_lsclusters -h 2>/dev/null | awk '{print $1; exit}')
-  PG_CLUSTER=$(pg_lsclusters -h 2>/dev/null | awk '{print $2; exit}')
-
-  if [ -n "$PG_VER" ] && [ -n "$PG_CLUSTER" ]; then
-    echo "🗄️  Configuring PostgreSQL ${PG_VER}/${PG_CLUSTER}..."
-
-    # Ensure trust auth for local dev (idempotent)
-    PG_HBA="/etc/postgresql/${PG_VER}/${PG_CLUSTER}/pg_hba.conf"
-    if [ -f "$PG_HBA" ]; then
-      sudo -n sed -i 's/\bpeer$/trust/' "$PG_HBA" 2>/dev/null || true
-      sudo -n sed -i 's/\bmd5$/trust/'  "$PG_HBA" 2>/dev/null || true
-      sudo -n sed -i 's/\bscram-sha-256$/trust/' "$PG_HBA" 2>/dev/null || true
-    fi
-
-    # Start cluster if not running
-    if ! pg_isready -h localhost -p 5432 -t 2 &>/dev/null; then
-      echo "  Starting PostgreSQL..."
-      sudo -n pg_ctlcluster "$PG_VER" "$PG_CLUSTER" start 2>/dev/null || true
-      sleep 2
-    else
-      # Reload to pick up any pg_hba changes
-      sudo -n pg_ctlcluster "$PG_VER" "$PG_CLUSTER" reload 2>/dev/null || true
-    fi
-
-    # Create database if missing
-    if pg_isready -h localhost -p 5432 -t 5 &>/dev/null; then
-      if ! psql -h localhost -U postgres -lqt 2>/dev/null | cut -d\| -f1 | grep -qw concept2cure-ri; then
-        psql -h localhost -U postgres -c "CREATE DATABASE concept2cure-ri" 2>/dev/null || true
+# Local PostgreSQL is opt-in only. Never rewrite pg_hba.conf to 'trust',
+# create a DB, or fall back to localhost when Neon is unavailable.
+if [[ "\${C2C_DB_MODE:-configured}" == "local" ]]; then
+  if [[ "\${DATABASE_URL:-}" == *"@localhost"* || "\${DATABASE_URL:-}" == *"@127.0.0.1"* ]]; then
+    if command -v pg_lsclusters >/dev/null 2>&1 &&
+       command -v pg_ctlcluster >/dev/null 2>&1; then
+      PG_VER="$(pg_lsclusters -h 2>/dev/null | awk 'NR == 1 {print $1}')"
+      PG_CLUSTER="$(pg_lsclusters -h 2>/dev/null | awk 'NR == 1 {print $2}')"
+      if [[ -n "$PG_VER" && -n "$PG_CLUSTER" ]]; then
+        sudo -n pg_ctlcluster "$PG_VER" "$PG_CLUSTER" start >/dev/null 2>&1 || true
       fi
-      # Enable vector extension if available
-      psql -h localhost -U postgres -d concept2cure-ri -c "CREATE EXTENSION IF NOT EXISTS vector" 2>/dev/null || true
-
-      # Set local DATABASE_URL fallback
-      export DATABASE_URL="${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/concept2cure-ri?sslmode=disable}"
-      echo "✅ Local PostgreSQL ready (concept2cure-ri database)"
-    else
-      echo "⚠️  PostgreSQL failed to start"
     fi
-  fi
-fi
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 1b. Verify remote database connectivity (if DATABASE_URL points externally)
-# ─────────────────────────────────────────────────────────────────────────────
-if [ -n "$DATABASE_URL" ] && echo "$DATABASE_URL" | grep -qv localhost; then
-  echo "🗄️  Testing remote DB connection..."
-  if pg_isready -d "$DATABASE_URL" -t 5 2>/dev/null; then
-    echo "✅ Remote DB connection healthy"
   else
-    echo "⚠️  Remote DB unreachable — falling back to local PostgreSQL"
-    export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/concept2cure-ri?sslmode=disable"
+    echo "BLOCKED: local DB mode was selected without an explicit loopback DATABASE_URL."
   fi
 fi
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 2. Add agent CLI to PATH
-# ─────────────────────────────────────────────────────────────────────────────
-AGENT_BIN="$(pwd)/.github/agents/commands"
-if [ -d "$AGENT_BIN" ] && [[ ":$PATH:" != *":$AGENT_BIN:"* ]]; then
-  export PATH="$AGENT_BIN:$PATH"
-  echo "✅ c2c-agent CLI available on PATH"
+# A report of DB readiness is not proof of a running Express app. The doctor
+# never tries an API billing call or changes model approval.
+if node scripts/ops/codespaces-doctor.mjs; then
+  echo "DB prerequisites verified. The platform has NOT been launched or browser-qualified."
+  echo "Start with npm run dev; then run npm run codespaces:doctor -- --check-app."
+else
+  echo "BLOCKED: Codespace is open for repair, but Concept2Cure is NOT ready."
+  echo "Read the diagnostic codes above and configure Neon/runtime secrets or schema."
+  echo "Then run npm run codespaces:doctor again."
 fi
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 3. Show agent status
-# ─────────────────────────────────────────────────────────────────────────────
-echo ""
-echo "═══════════════════════════════════════════"
-echo "  🧬 Concept2Cure Codespace Ready"
-echo "  Branch: $(git branch --show-current 2>/dev/null || echo 'unknown')"
-echo "  Agent:  c2c-regulatory-agent v1.0.0"
-echo "  Mode:   ${C2C_AGENT_MODE:-inactive}"
-echo "═══════════════════════════════════════════"
-echo ""
-echo "  Run 'c2c-agent help' for available commands"
-echo ""
+# Keep the development editor open for remediation even when the application
+# cannot start. This is NOT a success verdict for the application.
+exit 0
