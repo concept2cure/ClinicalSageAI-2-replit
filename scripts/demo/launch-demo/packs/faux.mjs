@@ -162,8 +162,8 @@ async function ensureSource({ api, run, tally }, project, spec) {
     const name = title(spec.label);
     const content = spec.bytes();
     const digest = sha256(content);
-    const search = must(await api('GET',
-      `/api/c2c/project-vault/${project.id}/search?q=${encodeURIComponent(spec.label)}&limit=50`), 200, 'search existing source');
+    const searchPath = `/api/c2c/project-vault/${project.id}/search?q=${encodeURIComponent(spec.label)}&limit=50`;
+    const search = must(await api('GET', searchPath), 200, 'search existing source');
     if (!Array.isArray(search.data?.results)) {
       throw new Error('The project Data Room did not return a verified source list. No duplicate upload was attempted.');
     }
@@ -176,9 +176,41 @@ async function ensureSource({ api, run, tally }, project, spec) {
       if (existing.current === false || existing.contentHash !== digest) {
         throw new Error(`A source titled "${name}" exists but its current SHA-256 does not match revision 2. Reconcile it in Vault; this seed will not overwrite governed data.`);
       }
+      let metadataCorrected = false;
+      if (existing.documentType !== spec.documentType) {
+        // A prior seed labelled all three files OTHER. This exact-byte,
+        // unpublished synthetic protocol or SAP can be reclassified through
+        // the EXISTING audited Vault Edit details action, never through SQL.
+        // Do not change an approved/frozen record or replace an unrelated type.
+        if (existing.documentType !== 'OTHER' || spec.documentType === 'OTHER' ||
+            existing.lifecycleStage != null) {
+          throw new Error(`The current source "${name}" has an incompatible or governed document type. Correct it through the existing Vault review controls.`);
+        }
+        const edited = must(await api('POST',
+          `/api/c2c/project-vault/${project.id}/documents/${existing.id}/details`, {
+            documentType: spec.documentType,
+            reason: 'Fictional FBT-201 demo source-catalog correction: classify the unchanged original bytes as the recorded protocol or statistical analysis plan.',
+          }), 200, 'audit the synthetic source type correction');
+        if (edited.success !== true) {
+          throw new Error('The Vault did not confirm the source metadata correction; do not assume it was saved.');
+        }
+        // The same governed search that located the source must confirm both
+        // its type AND digest before the seed can proceed.
+        const reread = must(await api('GET', searchPath), 200, 'verify corrected Vault source type');
+        const confirmed = Array.isArray(reread.data?.results) &&
+          reread.data.results.filter(row => row.title === name);
+        if (!confirmed || confirmed.length !== 1 ||
+            confirmed[0].documentType !== spec.documentType ||
+            confirmed[0].contentHash !== digest || confirmed[0].current === false) {
+          throw new Error('The corrected Vault document type or content hash could not be confirmed. Review its existing audit history before retrying.');
+        }
+        tally.created('source-metadata-correction');
+        metadataCorrected = true;
+      }
       tally.found('source-document');
-      run.record(`source.${spec.key}`, { id: existing.id, title: name, sha256: digest, action: 'found-and-hash-checked' });
-      return `found ${existing.id} (digest verified)`;
+      run.record(`source.${spec.key}`, { id: existing.id, title: name, sha256: digest,
+        documentType: spec.documentType, action: metadataCorrected ? 'audited-type-correction' : 'found-and-hash-checked' });
+      return `found ${existing.id} (digest and document type verified)`;
     }
 
     const form = new FormData();
@@ -195,7 +227,8 @@ async function ensureSource({ api, run, tally }, project, spec) {
       throw new Error('The Data Room ingestion returned no document or a different content hash; the source is not qualified.');
     }
     tally.created('source-document');
-    run.record(`source.${spec.key}`, { id: result.document.id, title: name, sha256: digest, action: 'uploaded', approval: 'not-assumed' });
+    run.record(`source.${spec.key}`, { id: result.document.id, title: name, sha256: digest,
+      documentType: spec.documentType, action: 'uploaded', approval: 'not-assumed' });
     return `uploaded ${result.document.id} (digest verified)`;
   });
 }
