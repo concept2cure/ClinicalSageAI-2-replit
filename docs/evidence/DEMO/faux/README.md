@@ -57,6 +57,21 @@ A repeatable **native Node test** was added and extended: `node --test scripts/d
 
 No full TypeScript/build, native Vitest/PGlite, customer browser, real database or hosted source-ingestion run is claimed. No deployment occurred here.
 
+## November 3 CI-confirmed fixes and source-catalog correction
+
+GitHub CI for `d692dc8` exposed **46 failed Node tests** and **three TypeScript errors**. The failures were attributable to two test blockers and an undefined variable, not a completed end-to-end product test:
+
+- `faux.mjs` mistakenly called `canonicalCsrTemplate(api)` from `seed(ctx)`, where `api` did not exist. It now calls **`ctx.api`**, using the current authorized session's existing API client. The earlier Faux project runner was unable to proceed past this call.
+- The isolated existing biotech recovery test fixture omitted new imports of `biotech-work-content.mjs` and `work-areas.mjs`. Its fixture now supplies the existing named exports and returns a synthetic protocol ID, so module loading reaches the assertions.
+- Three `TS7031` implicit-any destructuring errors in `devLoginUsesConfiguredIdentity.test.tsx` were corrected without changing runtime authentication.
+- Tier 5 Browser Smoke failed **before running a browser test** because Playwright 1.55 would not install Chromium on GitHub's Ubuntu 26.04 image. The existing workflow is pinned to `ubuntu-24.04`; no smoke test was bypassed.
+
+The existing Data Room ingest vocabulary includes **`PROTOCOL`** and **`SAP`**, but no regulatory-scientific-dataset type. This seed now stores the synthetic protocol and SAP under those existing types, while its supporting JSON remains `OTHER` rather than claiming a CDISC-validated dataset. If previous versions of exactly those two **unapproved** synthetic source files were miscatalogued as `OTHER`, the seed corrects their type through the existing, reasoned, Part 11-audited `POST /api/c2c/project-vault/:id/documents/:documentId/details` API and rereads the source and hash. It refuses approved, conflicting, foreign or unverifiable records; no original bytes or scientific observations change.
+
+The production source-level metadata-correction branch was executed against explicit simulated existing Vault API behavior: **5 cases passed**, including audited correction, clean replay, approved-record refusal, conflicting-type refusal and source-hash mismatch refusal. The native Node tests were extended but were not executed in this session's full checkout.
+
+**Not implied:** These commits have not yielded a new passing full CI result, real hosted provisioned organization, live Data Room import, authorized source approval, AnA-authored CSR or browser-qualified demonstration. CI/security jobs on new commits were queued at the last inspection; the older Semgrep workflow also lacked a passing baseline and the older Security Scan/Secret Scan reported failures unrelated to evidence of a successful demo.
+
 ## Acceptance — still OPEN
 
 1. Actual fictitious organization exists with appropriately admitted demo member; account can sign in and list a Project Management project of type CSR.
