@@ -127,6 +127,30 @@ it('permits retained document study data to build even when older package-run hi
   });
 });
 
+it('keeps the existing frozen CSR build accessible while a newer source is being selected', async () => {
+  apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: [] });
+    if (path.includes('/csr/study-data?')) return ok({ studyData: [{
+      studyDataId: RUN, createdAt: '2026-11-02T08:00:00Z', sources: [receipt],
+    }] });
+    if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM,
+      historical: true, studies: [{ source: receipt, tables }] });
+    if (path.includes('/csr/sources?')) return ok({
+      format: 'concept2cure.csr-source.v1', limitReached: false, sources: [],
+    });
+    if (path.startsWith('/api/csr/jobs?')) return ok({ jobs: [] });
+    return ok({});
+  });
+  render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
+  await screen.findByRole('button', { name: /Build CSR draft/ });
+  fireEvent.click(screen.getByRole('button', { name: 'Freeze newer study data' }));
+  expect(screen.getByRole('button', { name: /Build CSR draft/ })).toBeTruthy();
+  expect(screen.getByRole('button', { name: /Return to current frozen study data and CSR build/ })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: /Return to current frozen study data and CSR build/ }));
+  expect(screen.getByRole('button', { name: 'Freeze newer study data' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: /Build CSR draft/ })).toBeTruthy();
+});
+
 it('tells the user when package history is malformed instead of pretending there are no runs', async () => {
   apiRequest.mockImplementation(async (_method: string, path: string) => {
     if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: null });
