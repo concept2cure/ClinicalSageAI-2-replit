@@ -174,6 +174,32 @@ export function findUnclaimedNumbers(prose: string, supplied: unknown): Unsuppli
  * the reason goes to `lineage.rejectedModelDraft`; on acceptance the claim
  * receipts go to `lineage.reconciliation`.
  */
+/** High-consequence qualitative clinical conclusions require more than a
+ * model's interpretation of study metadata or an arbitrary numeric cell.
+ * The source table might show zero patients for one category, but whether
+ * "no safety signal" or "the endpoint was met" is justified still requires the
+ * recorded analysis population, SAP criteria and independent clinical review.
+ *
+ * Automated sections may instead state the verbatim cell count with a claim
+ * receipt. Human reviewers may author a justified conclusion in the governed
+ * editor using the actual verified source and their own sign-off.
+ */
+export function findUnsupportedCsrOutcomeConclusion(sectionNumber: string, prose: string): string | null {
+  if (sectionNumber.trim() !== '2' && !isCsrObservedResultsSection(sectionNumber)) return null;
+  const text = prose.replace(/\[[^\]]*\]/g, ' ');
+  const conclusions: Array<{ code: string; pattern: RegExp }> = [
+    { code: 'absence_of_safety_event', pattern:
+      /\b(?:no|zero)\s+(?:(?:treatment[- ](?:emergent|related)|serious|fatal|clinically significant)\s+){0,3}(?:deaths?|fatalities|adverse events?|saes?|safety signals?)\b/i },
+    { code: 'endpoint_success', pattern:
+      /\b(?:primary|secondary|co-primary)\s+(?:efficacy\s+)?endpoints?\s+(?:was|were|is|has been|have been)\s+(?:met|achieved|satisfied)\b/i },
+    { code: 'comparative_success', pattern:
+      /\b(?:demonstrated|established|confirmed|proved)\s+(?:non[- ]inferiority|superiority|equivalence)\b/i },
+    { code: 'safety_or_benefit_risk_verdict', pattern:
+      /\b(?:well[- ]tolerated|no clinically meaningful (?:safety )?(?:differences?|changes?)|favo[u]?rable benefit[- ]risk)\b/i },
+  ];
+  return conclusions.find(item => item.pattern.test(text))?.code ?? null;
+}
+
 /** A model's draft of one section: its prose and the claims it made about it. */
 export interface EvidenceBoundDraft {
   sectionNumber: string;
@@ -188,6 +214,15 @@ export function acceptEvidenceBoundDraft(
   lineage: Record<string, unknown>,
 ): boolean {
   if (!prose.trim()) return false;
+  // Neither matching a planned number nor citing an unrelated table cell can
+  // substantiate a categorical efficacy/safety verdict. Do not claim one as
+  // machine-authored medical writing; flag it for independent human review.
+  const unsupportedOutcome = findUnsupportedCsrOutcomeConclusion(sectionNumber, prose);
+  if (unsupportedOutcome) {
+    lineage.rejectedModelDraft = { reason: 'unsubstantiated_outcome_conclusion',
+      category: unsupportedOutcome, evidenceDigest: evidence.evidenceDigest };
+    return false;
+  }
   let reconciliation: ReturnType<typeof reconcileCsrTableClaims>;
   try {
     reconciliation = reconcileCsrTableClaims(evidence, claims);
