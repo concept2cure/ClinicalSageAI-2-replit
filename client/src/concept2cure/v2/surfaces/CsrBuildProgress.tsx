@@ -41,6 +41,7 @@ export interface CsrBoardHeading {
   placeholder?: boolean;
   state: 'not_drafted' | 'draft' | 'in_review' | 'approved';
   staleApproval?: boolean;
+  integrityFailure?: boolean;
   contentHash?: string;
   reviewerId?: number | null;
   decidedAt?: string | null;
@@ -109,11 +110,11 @@ export function CsrHeadingReview({ jobId, headings, onChanged, onImport }: {
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const approved = headings.filter(h => h.state === 'approved').map(h => h.num);
-  const drafted = headings.filter(h => h.state !== 'not_drafted' && !h.placeholder).length;
+  const approved = headings.filter(h => h.state === 'approved' && !h.integrityFailure).map(h => h.num);
+  const drafted = headings.filter(h => h.state !== 'not_drafted' && !h.placeholder && !h.integrityFailure).length;
   const incomplete = headings.filter(h => h.placeholder).length;
   const decide = async (heading: CsrBoardHeading, decision: Decision, reason?: string) => {
-    if (busy || !heading.contentHash) return;
+    if (busy || heading.integrityFailure || !heading.contentHash) return;
     setBusy(true); setError(null);
     const result = await apiCall('POST', `${JOBS}/${jobId}/sections/${encodeURIComponent(heading.num)}/review`,
       { decision, expectedContentHash: heading.contentHash, ...(reason !== undefined ? { reason } : {}) });
@@ -175,18 +176,20 @@ function HeadingRow({ jobId, heading, busy, onDecide }: {
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
       <span className="mono" style={{ color: 'var(--accent-200)' }}>{heading.num}</span>
       <span>{heading.label}</span>
-      <span className={`rd-chip tone-${STATE_TONE[heading.state]}`}>{heading.placeholder ? 'Template · data missing' : STATE_LABEL[heading.state]}</span>
+      <span className={`rd-chip tone-${STATE_TONE[heading.state]}`}>{heading.integrityFailure
+        ? 'Saved text integrity failed' : heading.placeholder ? 'Template · data missing' : STATE_LABEL[heading.state]}</span>
+      {heading.integrityFailure && <span role="alert">The saved section no longer matches its recorded SHA-256. Review and import are blocked until the source is repaired.</span>}
       {heading.manual && heading.state === 'not_drafted' && <span>Prepared from records, not drafted by the build</span>}
       {heading.staleApproval && <span>Redrafted after approval; review again</span>}
       {heading.state === 'draft' && heading.reason && <span>Sent back: {heading.reason}</span>}
-      {heading.state === 'draft' && <button type="button" className="btn" disabled={busy || heading.placeholder === true} title={heading.placeholder ? 'Complete source-data placeholders before review.' : undefined} onClick={() => onDecide('submit')}>{I.send} Send for review</button>}
-      {heading.state === 'in_review' && <button type="button" className="btn" disabled={busy || heading.placeholder === true || !inspected}
+      {heading.state === 'draft' && <button type="button" className="btn" disabled={busy || heading.placeholder === true || heading.integrityFailure === true} title={heading.placeholder ? 'Complete source-data placeholders before review.' : undefined} onClick={() => onDecide('submit')}>{I.send} Send for review</button>}
+      {heading.state === 'in_review' && <button type="button" className="btn" disabled={busy || heading.placeholder === true || heading.integrityFailure === true || !inspected}
         title={heading.placeholder ? 'Complete source-data placeholders before approval.' : !inspected ? 'Read this exact saved draft before approving its content hash.' : undefined}
         onClick={() => onDecide('approve')}>{I.check} Approve</button>}
       {(heading.state === 'in_review' || heading.state === 'approved') && reason === null &&
-        <button type="button" className="btn" disabled={busy} onClick={() => setReason('')}>{I.undo} Send back</button>}
+        <button type="button" className="btn" disabled={busy || heading.integrityFailure === true} onClick={() => setReason('')}>{I.undo} Send back</button>
     </div>
-    {heading.contentHash && <button type="button" className="btn ghost" disabled={busy || reading} onClick={() => void readSavedText()}>
+    {heading.contentHash && !heading.integrityFailure && <button type="button" className="btn ghost" disabled={busy || reading} onClick={() => void readSavedText()}>
       {reading ? 'Reading saved section…' : 'Read saved section text'}
     </button>}
     {readError && <p role="alert">{readError}</p>}
