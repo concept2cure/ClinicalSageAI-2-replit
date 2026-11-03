@@ -25,7 +25,8 @@ const identity = Object.freeze({ email: 'demo@fictional.example', organizationId
 
 const ok = (json, status = 200) => ({ status, json, text: JSON.stringify(json) });
 
-function fakeApplication({ organization = identity, otherType = false, missingTemplate = false, duplicateTemplate = false } = {}) {
+function fakeApplication({ organization = identity, otherType = false, missingTemplate = false,
+  duplicateTemplate = false, missingProjectAnchor = false, switchedProjectIdentity = false } = {}) {
   const state = { calls: [], clients: [], projects: [], vault: [], documents: [], tasks: [] };
   let nextDocumentId = 1;
   const api = async (method, url, body) => {
@@ -53,8 +54,13 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
       return ok({ data: entry }, 201);
     }
     if (method === 'GET' && url === '/api/c2c/projects/p1') {
-      return ok({ data: { ...state.projects.find(p => p.id === 'p1'),
-        program_type: otherType ? 'ind' : 'csr' } });
+      // Unlike create's {data}, the real detail route returns the program
+      // directly: res.json({ ...program, canChange }).
+      const project = state.projects.find(p => p.id === 'p1');
+      return ok({ ...project,
+        id: switchedProjectIdentity ? 'another-project' : project.id,
+        client_workspace_id: missingProjectAnchor ? null : project.client_workspace_id,
+        program_type: otherType ? 'ind' : 'csr' });
     }
     if (method === 'GET' && url.startsWith('/api/c2c/project-vault/p1/search?')) {
       const params = new URL(url, 'https://example.test').searchParams;
@@ -417,6 +423,31 @@ test('refuses wrong organization before any project or source read/write', async
   await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }), /organization/i);
   assert.equal(app.state.calls.length, 0);
 });
+
+test('Project Management detail is unwrapped and must match the same client anchor', async () => {
+  const valid = fakeApplication();
+  await seed({ api: valid.api, identity: valid.identity, run: valid.run() });
+  const reads = valid.state.calls.filter(c => c.method === 'GET' && c.url === '/api/c2c/projects/p1');
+  assert.equal(reads.length, 1);
+  assert.equal(valid.state.vault.length, 10);
+});
+
+for (const [label, overrides, message] of [
+  ['missing project client anchor', { missingProjectAnchor: true }, /not recorded under this fictional client/],
+  ['substituted project ID', { switchedProjectIdentity: true }, /another project identity/],
+]) {
+  test(`refuses ${label} before any Data Room or authoring write`, async () => {
+    const app = fakeApplication(overrides);
+    app.state.clients.push({ id: 7, slug: 'faux-biotech-therapeutics-demo' });
+    app.state.projects.push({ id: 'p1', title: PROJECT_NAME,
+      program_type: 'csr', client_workspace_id: 7 });
+    await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }), message);
+    assert.ok(app.state.calls.every(c => c.method === 'GET'));
+    assert.equal(app.state.vault.length, 0);
+    assert.equal(app.state.documents.length, 0);
+    assert.equal(app.state.tasks.length, 0);
+  });
+}
 
 test('never adopts an existing project with a different document type', async () => {
   const app = fakeApplication({ otherType: true });
