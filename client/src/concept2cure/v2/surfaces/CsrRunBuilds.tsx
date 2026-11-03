@@ -62,7 +62,8 @@ function isHeading(value: unknown): value is CsrBoardHeading {
   const row = value as Partial<CsrBoardHeading> | null;
   return !!row && typeof row.num === 'string' && typeof row.label === 'string' && Number.isSafeInteger(row.depth)
     && typeof row.manual === 'boolean' && HEADING_STATES.includes(row.state as CsrBoardHeading['state'])
-    && (row.contentHash === undefined || typeof row.contentHash === 'string');
+    && (row.contentHash === undefined || typeof row.contentHash === 'string')
+    && (row.integrityFailure === undefined || row.integrityFailure === true);
 }
 
 /** The builds bound to the run, newest first; re-read when `focus` changes and while a build is running. */
