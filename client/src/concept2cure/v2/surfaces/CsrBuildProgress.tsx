@@ -131,15 +131,47 @@ export function CsrHeadingReview({ jobId, headings, onChanged, onImport }: {
     </div>
     {error && <p role="alert">{error}</p>}
     <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0' }}>
-      {headings.map(h => <HeadingRow key={h.num} heading={h} busy={busy} onDecide={(d, r) => void decide(h, d, r)} />)}
+      {headings.map(h => <HeadingRow key={`${h.num}:${h.contentHash ?? ''}`} jobId={jobId} heading={h} busy={busy} onDecide={(d, r) => void decide(h, d, r)} />)}
     </ul>
   </section>;
 }
 
-function HeadingRow({ heading, busy, onDecide }: {
-  heading: CsrBoardHeading; busy: boolean; onDecide: (decision: Decision, reason?: string) => void;
+/** A reviewer sees the exact persisted body before approving its hash, not just a title.
+ * The existing org-scoped sections API accepts a single heading selection. */
+function readableCsrText(source: string): string {
+  return source.replace(/<\\/(?:p|li|tr|div|h[1-6])\\s*>/gi, '\\n')
+    .replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"')
+    .replace(/[ \\t]+/g, ' ').trim();
+}
+function HeadingRow({ jobId, heading, busy, onDecide }: {
+  jobId: number; heading: CsrBoardHeading; busy: boolean; onDecide: (decision: Decision, reason?: string) => void;
 }) {
   const [reason, setReason] = useState<string | null>(null);
+  const [savedText, setSavedText] = useState<{ hash: string; text: string } | null>(null);
+  const [reading, setReading] = useState(false);
+  const [readError, setReadError] = useState<string | null>(null);
+  const readSavedText = async () => {
+    if (reading || !heading.contentHash) return;
+    setReading(true); setReadError(null); setSavedText(null);
+    try {
+      const result = await apiCall<{ sections?: unknown }>('GET',
+        `${JOBS}/${jobId}/sections?sectionNumber=${encodeURIComponent(heading.num)}`);
+      const rows = result.body?.sections;
+      if (!result.ok || !Array.isArray(rows) || rows.length !== 1) {
+        throw new Error(apiErrorText(result, 'The exact saved section could not be read.'));
+      }
+      const row = rows[0] as { sectionNumber?: unknown; content?: unknown; contentHash?: unknown };
+      if (row.sectionNumber !== heading.num || row.contentHash !== heading.contentHash ||
+          typeof row.content !== 'string' || !row.content.trim()) {
+        throw new Error('The saved section or its content hash changed. Reload the build before review.');
+      }
+      setSavedText({ hash: heading.contentHash, text: readableCsrText(row.content) });
+    } catch (error) {
+      setReadError(error instanceof Error ? error.message : 'The saved draft is unavailable.');
+    } finally { setReading(false); }
+  };
+  const inspected = savedText?.hash === heading.contentHash && !!savedText.text;
   return <li style={{ display: 'grid', gap: 4, padding: `4px 0 4px ${(heading.depth - 1) * 16}px` }}>
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
       <span className="mono" style={{ color: 'var(--accent-200)' }}>{heading.num}</span>
@@ -149,10 +181,20 @@ function HeadingRow({ heading, busy, onDecide }: {
       {heading.staleApproval && <span>Redrafted after approval; review again</span>}
       {heading.state === 'draft' && heading.reason && <span>Sent back: {heading.reason}</span>}
       {heading.state === 'draft' && <button type="button" className="btn" disabled={busy || heading.placeholder === true} title={heading.placeholder ? 'Complete source-data placeholders before review.' : undefined} onClick={() => onDecide('submit')}>{I.send} Send for review</button>}
-      {heading.state === 'in_review' && <button type="button" className="btn" disabled={busy || heading.placeholder === true} title={heading.placeholder ? 'Complete source-data placeholders before approval.' : undefined} onClick={() => onDecide('approve')}>{I.check} Approve</button>}
+      {heading.state === 'in_review' && <button type="button" className="btn" disabled={busy || heading.placeholder === true || !inspected}
+        title={heading.placeholder ? 'Complete source-data placeholders before approval.' : !inspected ? 'Read this exact saved draft before approving its content hash.' : undefined}
+        onClick={() => onDecide('approve')}>{I.check} Approve</button>}
       {(heading.state === 'in_review' || heading.state === 'approved') && reason === null &&
         <button type="button" className="btn" disabled={busy} onClick={() => setReason('')}>{I.undo} Send back</button>}
     </div>
+    {heading.contentHash && <button type="button" className="btn ghost" disabled={busy || reading} onClick={() => void readSavedText()}>
+      {reading ? 'Reading saved section…' : 'Read saved section text'}
+    </button>}
+    {readError && <p role="alert">{readError}</p>}
+    {inspected && <pre aria-label={`Saved text for §${heading.num}`}
+      style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 360, overflowY: 'auto', padding: 12 }}>
+      {savedText.text}
+    </pre>}
     {reason !== null && <SendBackForm reason={reason} setReason={setReason} busy={busy} num={heading.num}
       onConfirm={() => { onDecide('send_back', reason); setReason(null); }} />}
   </li>;
