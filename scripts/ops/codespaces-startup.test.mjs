@@ -56,3 +56,14 @@ test('Codespaces main path gates on the doctor before any legacy mutation', () =
   assert.doesNotMatch(executableLines, /pg_hba\.conf|sed -i|ALTER USER postgres|export DATABASE_URL/);
   assert.match(post, /No database is provisioned or switched/);
 });
+
+test('Codespaces boot does not seed an admin using owner or app role', () => {
+  const source = readFileSync(resolve(root, 'server/db/bootstrap/index.ts'), 'utf8');
+  const start = source.indexOf('export async function seedDemoAdminOutsideProduction()');
+  const owner = source.indexOf('const ownerUrl = getDatabaseUrl()', start);
+  assert.ok(start >= 0 && owner > start);
+  const prelude = source.slice(start, owner);
+  assert.match(prelude, /C2C_CODESPACE/);
+  assert.match(prelude, /CODESPACES/);
+  assert.match(prelude, /return;/);
+});
