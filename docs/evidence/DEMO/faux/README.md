@@ -156,6 +156,42 @@ node scripts/demo/launch-demo/qualify-csr.mjs \
   --export
 ```
 
+### Real AnA drafting in the **same** DocumentWorkbench editor
+
+The CSR batch-builder path verifies that a real model wrote the saved report sections. A second, narrower acceptance probe covers the existing editor's AnA **section-draft / governed-accept** route itself: `scripts/demo/launch-demo/qualify-ana-editor.mjs` with `qualify-ana-editor.test.mjs`. It uses `POST /api/authoring/sections/:id/ai/draft` and `POST /api/authoring/sections/:id/ai/draft/accept`, **not** another editor or document-writer service.
+
+Generation requires a DRAFT full-document edit grant, real frozen approved study data, non-demo model output, project Data Room retrieval, a persistent candidate ID and recorded AnA turn. It writes the proposed words to a private local file but **does not save** them to Authoring or treat them as a reviewer decision. The operator reviews and, where necessary, edits the file. The second, explicit acceptance command requires the exact candidate ID, a human-inspected file, its SHA-256, a change reason and, if the original section already had content, the overt `--replace-existing-content` flag. The existing accept route then records model/author/source lineage, a revision, and the governed filing write, and the probe rereads the exact saved section. This is a guarded operator test: normal users accept drafts from the existing editor UI.
+
+```sh
+# Both commands also require a real DEMO_SEED_TOKEN supplied securely.
+node scripts/demo/launch-demo/qualify-ana-editor.mjs \
+  --base-url "$DEMO_BASE_URL" --organization-id YOUR_NUMERIC_ORG_ID \
+  --organization-name "EXACT AUTHENTICATED DEMO ORGANIZATION NAME" \
+  --program-id YOUR_EXISTING_PROGRAM_UUID \
+  --document-id YOUR_EXISTING_CANONICAL_CSR_DOCUMENT_UUID \
+  --section-id YOUR_EXISTING_EDITABLE_SECTION_UUID \
+  --generate
+
+# Inspect the generated text, record the draft-id from
+# /tmp/concept2cure-ana-editor-acceptance/ana-draft-receipt.json.
+# Any change to the inspected text requires computing its new SHA-256.
+# Acceptance intentionally requires a distinct, explicit operator action:
+node scripts/demo/launch-demo/qualify-ana-editor.mjs \
+  --base-url "$DEMO_BASE_URL" --organization-id YOUR_NUMERIC_ORG_ID \
+  --organization-name "EXACT AUTHENTICATED DEMO ORGANIZATION NAME" \
+  --program-id YOUR_EXISTING_PROGRAM_UUID \
+  --document-id YOUR_EXISTING_CANONICAL_CSR_DOCUMENT_UUID \
+  --section-id YOUR_EXISTING_EDITABLE_SECTION_UUID \
+  --accept --draft-id RECORDED_CANDIDATE_UUID \
+  --approved-text-file /secure/path/inspected-ana-draft.txt \
+  --expected-sha256 COMPUTED_SHA256_OF_THAT_FILE \
+  --change-reason "Human reviewed source-grounded medical narrative"
+# Add --replace-existing-content only if the saved section already contains
+# text and the authorized author intends to replace it.
+```
+
+AnA **generation** is not a completed save. **Governed acceptance** is not independent scientific review, an e-signature or release. Neither acceptance probe has executed in a provisioned hosted demonstration in this ChatGPT session; the production model's performance-qualification gate remains operative.
+
 The result `QUALIFIED_API_PATH_ONLY_BROWSER_REQUIRED` is deliberately **not** a hosted browser pass, regulatory validation, new source approval or filing approval. It demands a real browser walk with the same authorized test users and saved records before anyone can call the demonstration ready. In particular, the production model PQ remains pending for high-risk text; missing provider configuration, unavailable source, reviewer denial or export mismatch must remain visible blockers. CI jobs for these changes also require actual completion.
 
 ## November 3 — Tasking identity and read-after-create verification
