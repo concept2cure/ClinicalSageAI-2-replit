@@ -95,6 +95,33 @@ export function checkDatabaseConfiguration(env) {
   };
 }
 
+/** Mirror existing server/config/environment.ts JWT boot minima. */
+export function checkAuthConfiguration(env) {
+  const stage = (env.NODE_ENV || 'development').trim().toLowerCase();
+  const suffix = ({ development: 'DEV', test: 'DEV', staging: 'STAGING', production: 'PROD' })[stage];
+  if (!suffix) return { status: 'blocked', code: 'NODE_ENV_INVALID',
+    explanation: 'Use an explicitly supported NODE_ENV.' };
+  const jwt = env['JWT_SECRET_' + suffix] ?? env.JWT_SECRET;
+  if (!jwt) return { status: 'blocked', code: 'JWT_SECRET_MISSING',
+    explanation: 'Configure a random JWT_SECRET or JWT_SECRET_' + suffix + ' in the Codespaces secret scope.' };
+  if (jwt.length < 32) return { status: 'blocked', code: 'JWT_SECRET_WEAK',
+    explanation: 'JWT signing secret must contain at least 32 characters (use secure random material).' };
+  const prior = env['JWT_SECRET_PREVIOUS_' + suffix] ?? env.JWT_SECRET_PREVIOUS;
+  if (prior && (prior.length < 32 || prior === jwt)) {
+    return { status: 'blocked', code: 'JWT_ROTATION_INVALID',
+      explanation: 'Previous JWT secret must be different from current and at least 32 characters.' };
+  }
+  const refresh = env['REFRESH_TOKEN_SECRET_' + suffix] ?? env.REFRESH_TOKEN_SECRET;
+  if (stage === 'production' || stage === 'staging') {
+    if (!refresh || refresh.length < 32 || refresh === jwt) {
+      return { status: 'blocked', code: 'REFRESH_SECRET_INVALID',
+        explanation: 'Production/staging requires a separate refresh signing secret of at least 32 characters.' };
+    }
+  }
+  return { status: 'passed', code: 'JWT_CONFIGURATION_PRESENT',
+    explanation: 'Required secret presence/length verified; entropy and login delivery are not proven.' };
+}
+
 export function classifyDbError(error) {
   const code = String(error?.code ?? '');
   if (['28P01', '28000'].includes(code)) return 'DB_AUTH_REJECTED';
@@ -231,13 +258,14 @@ export async function runCodespacesDoctor({ env = process.env, args = [], fetche
       code: secretSet(env.OPENAI_API_KEY) ? 'OPENAI_KEY_PRESENT_NOT_TESTED' : 'OPENAI_KEY_MISSING' },
     ana: { status: 'unverified', note: 'OPENAI_API_KEY alone does not authorize high-risk CSR or IND drafting; the saved-model PQ gate remains in force.' },
     application: { status: 'not_checked' },
+    auth: checkAuthConfiguration(env),
   };
   report.database.live = await probeDatabase({ config, connectDb });
   if (args.includes('--probe-openai-usage')) report.openai = await checkOpenAI({ env, fetcher, probeUsage: true });
   else if (args.includes('--probe-openai')) report.openai = await checkOpenAI({ env, fetcher });
   if (args.includes('--check-app')) report.application = await checkApplication({
     fetcher, port: Number(env.PORT) || 5000 });
-  const required = [report.database.live.status === 'passed'];
+  const required = [report.database.live.status === 'passed', report.auth.status === 'passed'];
   if (args.includes('--probe-openai') || args.includes('--probe-openai-usage')) required.push(report.openai.status === 'passed');
   if (args.includes('--check-app')) required.push(report.application.status === 'passed');
   report.prerequisitesVerified = required.every(Boolean);
