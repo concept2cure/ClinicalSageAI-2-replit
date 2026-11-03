@@ -108,8 +108,18 @@ function RetainedBuild({ programId, retainedId, onNav }: { programId: string; re
 const describe = (entry: StudyDataEntry) =>
   `${entry.sources.map(source => `${source.protocolNumber} · ${source.documentTitle} v${source.version}`).join('; ')} · frozen ${new Date(entry.createdAt).toLocaleString()}`;
 
-/** Shown in the editor for a clinical study report only (its recorded template entry). */
-export function StudyDataBuild({ programId, documentId, onNav }: { programId: string; documentId: string; onNav?: (surface: string) => void }) {
+/** The document's clinical source, frozen tables and CSR operations are one
+ * context-bound session. A project or document switch must destroy that
+ * session synchronously during render, not after a useEffect reset. Otherwise
+ * the old project's source picker, preview, or selected build could briefly
+ * remain actionable in the new project's editor.
+ */
+export function StudyDataBuild(props: { programId: string; documentId: string; onNav?: (surface: string) => void }) {
+  return <StudyDataBuildScoped key={`${props.programId}::${props.documentId}`} {...props} />;
+}
+
+/** Shown only for the recorded clinical-study-report template entry. */
+function StudyDataBuildScoped({ programId, documentId, onNav }: { programId: string; documentId: string; onNav?: (surface: string) => void }) {
   const [refresh, setRefresh] = useState(0);
   const { studyData, runs, error, runsError } = useStudyDataChoices(programId, documentId, refresh);
   const [retainedId, setRetainedId] = useState('');
