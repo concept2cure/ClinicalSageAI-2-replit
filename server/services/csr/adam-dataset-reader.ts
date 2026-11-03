@@ -56,14 +56,40 @@ function parseJson(text: string): unknown {
   try { return JSON.parse(text); } catch { return undefined; }
 }
 
+/** Use strict decoding for participant-level text. Buffer.toString('utf8')
+ * substitutes U+FFFD for invalid bytes, which would silently alter an
+ * ADaM source value while preserving its source-file SHA-256 receipt. */
+const utf8 = new TextDecoder('utf-8', { fatal: true });
+
 /** The single dataset's column names and raw rows, in any Dataset-JSON shape. */
 function datasetJsonRows(bytes: Buffer, fileName: string): { columns: unknown; rows: unknown } | null {
   if (/\.ndjson$/i.test(fileName)) {
-    const lines = bytes.toString('utf8').split('\n').map(l => l.trim()).filter(Boolean);
-    const meta = parseJson(lines[0] ?? '');
-    return isObj(meta) ? { columns: meta.columns, rows: lines.slice(1).map(parseJson) } : null;
+    // Reuse the Data Room metadata reader's bounded-line principle: the old
+    // split/map/filter allocated one string per line, even for empty lines.
+    // A large NDJSON could exhaust memory before any CSR table was derived.
+    // Retain only nonblank parsed ROWS, never a second string copy of the file.
+    let at = 0;
+    let meta: unknown;
+    let headerSeen = false;
+    const rows: unknown[] = [];
+    while (at < bytes.length) {
+      const newline = bytes.indexOf(0x0a, at);
+      const end = newline < 0 ? bytes.length : newline;
+      let from = at;
+      let until = end;
+      while (from < until && (bytes[from] === 0x20 || bytes[from] === 0x09 || bytes[from] === 0x0d)) from++;
+      while (until > from && (bytes[until - 1] === 0x20 || bytes[until - 1] === 0x09 || bytes[until - 1] === 0x0d)) until--;
+      if (from < until) {
+        if (!headerSeen && until - from > 4 * 1024 * 1024) return null;
+        const record = parseJson(utf8.decode(bytes.subarray(from, until)));
+        if (!headerSeen) { meta = record; headerSeen = true; }
+        else rows.push(record);
+      }
+      at = end + 1;
+    }
+    return isObj(meta) ? { columns: meta.columns, rows } : null;
   }
-  const doc = parseJson(bytes.toString('utf8').replace(/^\uFEFF/, ''));
+  const doc = parseJson(utf8.decode(bytes).replace(/^\uFEFF/, ''));
   if (!isObj(doc)) return null;
   if ('columns' in doc) return { columns: doc.columns, rows: doc.rows ?? [] };
   const group = [doc.clinicalData, doc.referenceData].filter(isObj)
