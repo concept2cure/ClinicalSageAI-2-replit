@@ -24,7 +24,7 @@ fi
 
 # Native self-tests do not use a credential or a database. A failed control
 # is a setup failure, not an optional warning.
-node --test scripts/ops/codespaces-doctor.test.mjs
+npm run codespaces:doctor:test
 
 echo "Dependencies installed and Codespaces diagnostics self-tested."
 echo "Neon connections, schema, OpenAI billing and the running app are NOT assumed ready."
