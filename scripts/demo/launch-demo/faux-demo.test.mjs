@@ -32,7 +32,8 @@ const ok = (json, status = 200) => ({ status, json, text: JSON.stringify(json) }
 
 function fakeApplication({ organization = identity, otherType = false, missingTemplate = false,
   duplicateTemplate = false, missingProjectAnchor = false, switchedProjectIdentity = false,
-  cannotEditDocument = false, changedAuthoringDetail = false } = {}) {
+  cannotEditDocument = false, changedAuthoringDetail = false,
+  taskBoardPartial = false, taskBoardUnread = false } = {}) {
   const state = { calls: [], clients: [], projects: [], vault: [], documents: [], tasks: [] };
   let nextDocumentId = 1;
   const api = async (method, url, body) => {
@@ -142,7 +143,9 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
       return ok({ data: [{ id: 11, regulatoryProgramId: 'p1' }] });
     }
     if (method === 'GET' && url === '/api/task-management/board') {
-      return ok({ data: state.tasks });
+      return ok({ success: true, data: state.tasks,
+        meta: { partial: taskBoardPartial || taskBoardUnread,
+          unreadSources: taskBoardUnread ? ['unified_tasks'] : [] } });
     }
     if (method === 'POST' && url === '/api/tasks/tasks') {
       assert.equal(body.projectId, 11);
@@ -684,6 +687,27 @@ test('an existing reviewer task whose origin no longer matches the document is n
     /does not link to its expected authoring document/);
   assert.equal(app.state.documents.length, 1);
   assert.equal(app.state.tasks.length, 3);
+});
+
+test('no demo task is created when the existing Task Board reports missing stores', async () => {
+  for (const options of [{ taskBoardPartial: true }, { taskBoardUnread: true }]) {
+    const app = fakeApplication(options);
+    await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+      /Task Board is incomplete or has unread sources/);
+    assert.equal(app.state.tasks.length, 0);
+    assert.equal(app.state.calls.filter(c => c.method === 'POST' && c.url === '/api/tasks/tasks').length, 0);
+  }
+});
+
+test('ambiguous task titles cannot silently reuse another task in the same project', async () => {
+  const app = fakeApplication();
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  app.state.tasks.push({ ...app.state.tasks[0], taskId: 'another-task-row' });
+  const before = app.state.calls.length;
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /malformed or duplicate task titles/);
+  assert.ok(app.state.calls.slice(before).every(c => c.method === 'GET'));
+  assert.equal(app.state.tasks.length, 4);
 });
 
 test('all review tasks remain pending; the seed never uses a review or approval ceremony', async () => {
