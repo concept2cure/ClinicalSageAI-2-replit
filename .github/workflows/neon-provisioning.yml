@@ -114,9 +114,10 @@ jobs:
             *.pooler.*) echo "::error::db_url is a POOLER host; this job must use the direct endpoint"; exit 1 ;;
           esac
 
-          # A Neon branch is a copy-on-write clone of its parent, so its database
-          # is NOT blank. Provisioning from scratch needs an empty one, so make
-          # one inside the branch. The branch is deleted at the end regardless.
+          # The schema-only branch carries the parent's schema but not its
+          # patient/client rows. Fresh-install proof still needs a completely
+          # empty database, so create one inside this ephemeral branch.
+          # This workflow is never permitted to write to the parent.
           SCRATCH="c2c_provisioning_proof_${{ github.run_id }}"
           psql "$BRANCH_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE \"$SCRATCH\""
 
