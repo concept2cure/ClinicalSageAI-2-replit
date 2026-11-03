@@ -96,6 +96,22 @@ describe('CSR clinical outcomes always require retained analysis-cell claims', (
     expect(imported?.studyInformationNumbers).toContain('300');
   });
 
+  it('blocks actual completion figures in a legacy synopsis even when the same number was planned', () => {
+    const code = '2';
+    const prose = 'Enrollment of 300 participants was planned. 300 participants completed treatment in SYN-300.';
+    const legacy = oldReceipt(code, prose); // explicitly includes a legacy metadata exemption for 300
+    const verdict = assessSavedCsrEvidence([{
+      code, title: 'Synopsis', content: prose, text: prose,
+    }], new Map([[code, legacy]]),
+    new Map([[PROGRAM.toLowerCase() + ':' + RUN.toLowerCase(), {
+      ok: true as const, tables: retained(),
+    }]]));
+    expect(verdict.status).toBe('blocked');
+    expect(verdict.unclaimedFigures).toContainEqual({
+      section: '2', figure: '300', blocking: true,
+    });
+  });
+
   it('rechecks legacy imports instead of honoring stale metadata exemptions', () => {
     const code = '12.2';
     const prose = '300 patients experienced an adverse event in SYN-300.';
