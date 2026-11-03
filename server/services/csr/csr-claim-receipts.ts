@@ -12,7 +12,7 @@
  */
 import { createHash } from 'node:crypto';
 import type { CsrAuthoringEvidence } from './cortex-authoring-context.js';
-import { findUnclaimedNumbers } from './unsupplied-statistics.js';
+import { findUnclaimedNumbers, isCsrObservedResultsSection } from './unsupplied-statistics.js';
 
 export const CSR_CLAIM_RECEIPTS_SCHEMA = 'c2c.csr-claim-receipts.v1' as const;
 
