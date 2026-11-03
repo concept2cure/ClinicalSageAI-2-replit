@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { sslFor, verifiedPgConnectionString } from '../db/connection.mjs';
 import {
   checkDatabaseConfiguration, classifyDbError, classifyOpenAIResponse,
-  checkOpenAI, probeDatabase, checkApplication, checkAuthConfiguration,
+  checkOpenAI, checkAnthropic, classifyAnthropicResponse,
+  probeDatabase, checkApplication, checkAuthConfiguration,
   checkTenantIsolationConfiguration, runtimeIsolationFailures, runCodespacesDoctor,
 } from './codespaces-doctor.mjs';
 
@@ -151,6 +152,71 @@ test('OpenAI auth probe is no-charge GET; billable POST requires explicit reques
   assert.equal(use.billingVerified, true);
   assert.equal(paths[1].method, 'POST');
 });
+test('Anthropic authentication checks models without a drafting or billable request', async () => {
+  let calls = 0;
+  const fake = 'sk-ant-test-not-a-real-credential';
+  const observed = await checkAnthropic({
+    env: { ANTHROPIC_API_KEY: fake, ANTHROPIC_WORKSPACE_ID: 'wrkspc_test' },
+    fetcher: async (url, opts) => {
+      calls += 1;
+      assert.equal(url, 'https://api.anthropic.com/v1/models?limit=100');
+      assert.equal(opts.method, 'GET');
+      assert.equal(opts.headers['x-api-key'], fake);
+      assert.equal(opts.headers['anthropic-version'], '2026-10-21');
+      assert.equal(opts.headers['anthropic-workspace-id'], 'wrkspc_test');
+      assert.equal(opts.body, undefined);
+      return { ok: true, status: 200, json: async () => ({
+        data: [{ id: 'claude-opus-example' }],
+      }) };
+    },
+  });
+  assert.equal(calls, 1);
+  assert.equal(observed.status, 'passed');
+  assert.equal(observed.modelsVisible, 1);
+  assert.equal(observed.billingVerified, false);
+  assert.doesNotMatch(JSON.stringify(observed), /sk-ant-test/);
+  assert.match(observed.explanation, /PQ are NOT verified/);
+});
+test('Anthropic missing or empty models never reports provider readiness', async () => {
+  const missing = await checkAnthropic({ env: {}, fetcher: () => { throw Error('Unexpected network call'); } });
+  assert.equal(missing.code, 'ANTHROPIC_KEY_MISSING');
+  const empty = await checkAnthropic({ env: { ANTHROPIC_API_KEY: 'test-only-key' },
+    fetcher: async () => ({ ok: true, status: 200, json: async () => ({ data: [] }) }) });
+  assert.equal(empty.code, 'ANTHROPIC_NO_MODELS_VISIBLE');
+  assert.equal(empty.status, 'blocked');
+});
+test('Anthropic provider responses distinguish auth, policy, billing and rate limits', () => {
+  assert.equal(classifyAnthropicResponse(401, { error: { type: 'authentication_error' } }),
+    'ANTHROPIC_KEY_INVALID');
+  assert.equal(classifyAnthropicResponse(403, { error: { type: 'permission_error' } }),
+    'ANTHROPIC_WORKSPACE_OR_POLICY');
+  assert.equal(classifyAnthropicResponse(400, { error: { message: 'credit balance is too low' } }),
+    'ANTHROPIC_QUOTA_OR_BILLING');
+  assert.equal(classifyAnthropicResponse(429, { error: { type: 'rate_limit_error' } }),
+    'ANTHROPIC_RATE_LIMIT');
+});
+test('Anthropic model discovery is opt-in and is required only when requested', async () => {
+  let count = 0;
+  const fetcher = async (url, opts) => {
+    count += 1;
+    assert.equal(opts.method, 'GET');
+    assert.match(url, /api\.anthropic\.com/);
+    return { ok: true, status: 200, json: async () => ({ data: [{ id: 'example' }] }) };
+  };
+  const environment = { APP_DATABASE_URL: runtime, RLS_ENFORCE: 'on',
+    JWT_SECRET: env.JWT_SECRET, ANTHROPIC_API_KEY: 'sk-ant-test-only' };
+  const database = async () => ({ ok: true, role: 'app_service', failures: [] });
+  const ordinary = await runCodespacesDoctor({ env: environment, fetcher, connectDb: database });
+  assert.equal(count, 0);
+  assert.equal(ordinary.anthropic.status, 'configured-not-probed');
+  const probed = await runCodespacesDoctor({
+    env: environment, args: ['--probe-anthropic'], fetcher, connectDb: database,
+  });
+  assert.equal(count, 1);
+  assert.equal(probed.anthropic.status, 'passed');
+  assert.equal(probed.prerequisitesVerified, true);
+});
+
 test('missing key never triggers OpenAI request', async () => {
   const result = await checkOpenAI({ env: {}, fetcher: () => { throw Error('called'); } });
   assert.equal(result.code, 'OPENAI_KEY_MISSING');

@@ -76,7 +76,16 @@ Authentication-only (no model-generation charge):
 npm run codespaces:doctor -- --probe-openai
 ```
 
-For a deliberately **billable**, minimal API call to distinguish an exhausted quota from a transient rate limit, only when the operator approves:
+To verify the existing **Anthropic/Claude** key and list accessible models without generating text, run:
+
+```bash
+npm run codespaces:doctor -- --probe-anthropic
+```
+
+This does **not** establish billing headroom or authorize a high-risk model. Model
+approval, tenant placement and performance qualification remain separate.
+
+For a deliberately **billable**, minimal OpenAI API call to distinguish an exhausted quota from a transient rate limit, only when the operator approves:
 
 ```bash
 npm run codespaces:doctor -- --probe-openai-usage
@@ -87,6 +96,8 @@ Responses are reported as codes without credentials:
 - `OPENAI_QUOTA_OR_BILLING` — available project credits, payment method or spending limit.
 - `OPENAI_RATE_LIMIT` — throughput limit, which does not necessarily imply no credits.
 - `OPENAI_ORGANIZATION_OR_PROJECT_POLICY` — organization/project access rules.
+- `ANTHROPIC_KEY_MISSING`, `ANTHROPIC_KEY_INVALID`, `ANTHROPIC_NO_MODELS_VISIBLE` — Claude credential or model-list access cannot be established.
+- `ANTHROPIC_WORKSPACE_OR_POLICY`, `ANTHROPIC_QUOTA_OR_BILLING`, `ANTHROPIC_RATE_LIMIT` — Anthropic account, billing or throughput needs operator attention; only actual provider requests can establish usage success.
 - `APP_NOT_READY` with `anaState: no_high_risk_model` — **Concept2Cure's** own high-risk approval gate, not an OpenAI API ban.
 - `NO_PQ_QUALIFIED_MODEL` — production performance qualification required before model-backed regulatory drafting; NEVER bypass by changing `approvedForHighRisk` without evidence.
 

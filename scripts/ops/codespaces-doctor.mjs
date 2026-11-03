@@ -9,6 +9,7 @@
  * unqualified AI model as a regulatory author.
  *
  * --probe-openai         : no-charge GET /v1/models, authentication only.
+ * --probe-anthropic      : no-generation-charge GET /v1/models for Claude auth/model discovery.
  * --probe-openai-usage   : EXPLICIT, BILLABLE one-response API smoke; may
  *                          identify quota/billing without claiming CSR PQ.
  * --check-app            : requests existing http://127.0.0.1:5000/readyz.
@@ -221,6 +222,72 @@ export async function checkOpenAI({ env, fetcher, probeUsage = false, timeoutMs 
   }
 }
 
+/** A no-generation-charge check of the Anthropic credential and model list.
+ * Does not invoke AnA, confirm billing headroom, make a drafting call, or
+ * convert a model's PQ status into passed. Raw SDK error messages are never
+ * printed (they can contain account/workspace-specific details).
+ */
+export function classifyAnthropicResponse(status, data) {
+  const type = typeof data?.error?.type === 'string' ? data.error.type.toLowerCase() : '';
+  const message = typeof data?.error?.message === 'string' ? data.error.message.toLowerCase() : '';
+  if (status >= 200 && status < 300) return 'ANTHROPIC_REACHABLE';
+  if (status === 401 || type === 'authentication_error') return 'ANTHROPIC_KEY_INVALID';
+  if (status === 403 || type === 'permission_error') return 'ANTHROPIC_WORKSPACE_OR_POLICY';
+  if (/credit balance|insufficient credits?|billing|payment required/.test(message)) return 'ANTHROPIC_QUOTA_OR_BILLING';
+  if (status === 429 || type === 'rate_limit_error') return 'ANTHROPIC_RATE_LIMIT';
+  if (status === 400) return 'ANTHROPIC_REQUEST_REJECTED';
+  if (status >= 500) return 'ANTHROPIC_PROVIDER_UNAVAILABLE';
+  return 'ANTHROPIC_UNKNOWN_FAILURE';
+}
+
+export async function checkAnthropic({ env, fetcher, timeoutMs = 10000 }) {
+  if (!secretSet(env.ANTHROPIC_API_KEY)) {
+    return { status: 'missing', code: 'ANTHROPIC_KEY_MISSING',
+      explanation: 'Set ANTHROPIC_API_KEY in GitHub Codespaces secrets for an authorized Claude provider. A key alone does not qualify regulated drafting.' };
+  }
+  try {
+    const response = await fetcher('https://api.anthropic.com/v1/models?limit=100', {
+      method: 'GET',
+      headers: {
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2026-10-21',
+        'Accept': 'application/json',
+        ...(secretSet(env.ANTHROPIC_WORKSPACE_ID)
+          ? { 'anthropic-workspace-id': env.ANTHROPIC_WORKSPACE_ID } : {}),
+      },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    const body = await response.json().catch(() => null);
+    const code = classifyAnthropicResponse(response.status, body);
+    const count = response.ok && Array.isArray(body?.data)
+      ? body.data.filter(x => typeof x?.id === 'string').length : 0;
+    if (response.ok && count === 0) {
+      return { status: 'blocked', code: 'ANTHROPIC_NO_MODELS_VISIBLE',
+        httpStatus: response.status, authenticationVerified: true,
+        modelsVisible: 0, billingVerified: false,
+        explanation: 'The key was accepted but no accessible models were returned; verify project/workspace model permissions.' };
+    }
+    return { status: response.ok ? 'passed' : 'blocked', code,
+      httpStatus: response.status, authenticationVerified: response.ok,
+      modelsVisible: count, billingVerified: false,
+      explanation: response.ok
+        ? 'Anthropic accepted this key and listed accessible models. Billing headroom, model calls, approved provider placement and PQ are NOT verified.'
+        : code === 'ANTHROPIC_KEY_INVALID'
+          ? 'Replace the invalid or revoked Anthropic key in the Codespaces secret scope.'
+          : code === 'ANTHROPIC_QUOTA_OR_BILLING'
+            ? 'Review Anthropic Console API credits and billing for the selected workspace.'
+            : code === 'ANTHROPIC_RATE_LIMIT'
+              ? 'Request was rate-limited; this is not proof of exhausted credits.'
+              : 'Review Anthropic account/workspace permissions and provider network access.' };
+  } catch (error) {
+    // Never echo a network/client error containing a credential or URL.
+    return { status: 'blocked', code: String(error?.name) === 'TimeoutError'
+      ? 'ANTHROPIC_NETWORK_TIMEOUT' : 'ANTHROPIC_NETWORK_FAILURE',
+      authenticationVerified: false, billingVerified: false,
+      explanation: 'Codespaces could not query the Anthropic models endpoint; check DNS/networking.' };
+  }
+}
+
 /** Run the existing, exhaustive schema/grant audit AS the request-serving role. */
 export async function probeDatabase({ config, connectDb }) {
   if (!config.ok) return { status: 'blocked', code: 'DB_CONFIGURATION_INVALID' };
@@ -349,6 +416,8 @@ export async function runCodespacesDoctor({ env = process.env, args = [], fetche
       owner: config.owner, runtime: config.runtime } },
     openai: { status: secretSet(env.OPENAI_API_KEY) ? 'configured-not-probed' : 'missing',
       code: secretSet(env.OPENAI_API_KEY) ? 'OPENAI_KEY_PRESENT_NOT_TESTED' : 'OPENAI_KEY_MISSING' },
+    anthropic: { status: secretSet(env.ANTHROPIC_API_KEY) ? 'configured-not-probed' : 'missing',
+      code: secretSet(env.ANTHROPIC_API_KEY) ? 'ANTHROPIC_KEY_PRESENT_NOT_TESTED' : 'ANTHROPIC_KEY_MISSING' },
     ana: { status: 'unverified', note: 'OPENAI_API_KEY alone does not authorize high-risk CSR or IND drafting; the saved-model PQ gate remains in force.' },
     application: { status: 'not_checked' },
     auth: checkAuthConfiguration(env),
@@ -357,6 +426,7 @@ export async function runCodespacesDoctor({ env = process.env, args = [], fetche
   report.database.live = await probeDatabase({ config, connectDb });
   if (args.includes('--probe-openai-usage')) report.openai = await checkOpenAI({ env, fetcher, probeUsage: true });
   else if (args.includes('--probe-openai')) report.openai = await checkOpenAI({ env, fetcher });
+  if (args.includes('--probe-anthropic')) report.anthropic = await checkAnthropic({ env, fetcher });
   if (args.includes('--check-app')) report.application = await checkApplication({
     fetcher, port: Number(env.PORT) || 5000 });
   const required = [
@@ -365,6 +435,7 @@ export async function runCodespacesDoctor({ env = process.env, args = [], fetche
     report.tenantIsolation.status === 'passed',
   ];
   if (args.includes('--probe-openai') || args.includes('--probe-openai-usage')) required.push(report.openai.status === 'passed');
+  if (args.includes('--probe-anthropic')) required.push(report.anthropic.status === 'passed');
   if (args.includes('--check-app')) required.push(report.application.status === 'passed');
   report.prerequisitesVerified = required.every(Boolean);
   report.applicationVerified = args.includes('--check-app') && report.application.status === 'passed';
