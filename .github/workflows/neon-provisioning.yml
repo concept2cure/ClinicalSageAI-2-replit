@@ -57,6 +57,7 @@ jobs:
           missing=""
           [ -n "${{ secrets.NEON_API_KEY }}" ] || missing="$missing NEON_API_KEY"
           [ -n "$PROJECT_ID" ]                 || missing="$missing NEON_PROJECT_ID(secret or variable)"
+          [ -n "${{ vars.NEON_SAFE_PARENT_BRANCH }}" ] || missing="$missing NEON_SAFE_PARENT_BRANCH(approved non-production parent)"
           if [ -n "$missing" ]; then
             echo "::error::Missing Neon credential(s):$missing — this job proves Neon provisioning and must not report green without a Neon to prove it against."
             exit 1
@@ -88,10 +89,10 @@ jobs:
           project_id: ${{ steps.creds.outputs.project_id }}
           api_key: ${{ secrets.NEON_API_KEY }}
           branch_name: provisioning-proof-${{ github.run_id }}
-          # Empty is fine: the action then branches from the project default.
-          # Whatever the parent is, nothing here writes to its database — the
-          # next step creates a separate, blank one inside the branch.
-          parent: ${{ secrets.NEON_PROD_BRANCH }}
+          # No default/production-parent fallback: require an explicitly approved
+          # non-production Neon branch. Even a copy-on-write clone of production
+          # would inherit sensitive data, despite provisioning a blank database later.
+          parent: ${{ vars.NEON_SAFE_PARENT_BRANCH }}
 
       - name: Derive a BLANK database on the DIRECT host
         id: target
