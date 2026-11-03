@@ -15,7 +15,7 @@ test -d node_modules || { echo "BLOCKED: node_modules missing after npm ci"; exi
 
 # Local PostgreSQL is an EXPLICIT development option. For Neon users the
 # database lives remotely; compiling pgvector locally does not fix Neon.
-if [[ "\${C2C_DB_MODE:-configured}" == "local" ]]; then
+if [[ "${C2C_DB_MODE:-configured}" == "local" ]]; then
   if ! command -v pg_isready >/dev/null 2>&1; then
     echo "BLOCKED: local PostgreSQL not installed. Use the documented local database setup."
     exit 1
