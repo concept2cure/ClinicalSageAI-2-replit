@@ -131,6 +131,12 @@ only the branch ID the current run created. A failed deletion remains a
 visible workflow failure, rather than a success receipt. Neither workflow
 provides scientific model qualification or a finished CSR demonstration.
 
+Neon schema-only proof branches now request a server-side expiration after
+**two hours**, and PR preview branches after **seven days**. Expiration is a
+last-resort cost and data-minimization safeguard, not evidence that a branch
+was actually deleted; the explicit deletion result still governs cleanup
+receipts. A long-lived active PR may need its preview branch recreated.
+
 These changes to workflow source do not change Neon account settings, rotate
 historical credentials, create a branch, or prove a connected Neon project.
 Those operations require account access and a live run.

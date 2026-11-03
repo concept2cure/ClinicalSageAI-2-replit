@@ -37,6 +37,11 @@ jobs:
         id: names
         run: echo "branch=preview/pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
 
+      - name: Bound preview branch lifetime to seven days
+        if: steps.check_secrets.outputs.skip != 'true'
+        id: expiry
+        run: echo "expires_at=$(date -u -d '+7 days' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+
       - name: Create Neon branch for this PR
         if: steps.check_secrets.outputs.skip != 'true'
         id: neon
@@ -50,6 +55,9 @@ jobs:
           parent_branch: ${{ vars.NEON_SAFE_PARENT_BRANCH }}
           # Do not clone patient/client records into PR preview environments.
           branch_type: schema-only
+          # Auto-expire as a fail-safe even if a PR is abandoned or preview
+          # cleanup is disabled later; an active PR can recreate its branch.
+          expires_at: ${{ steps.expiry.outputs.expires_at }}
 
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.check_secrets.outputs.skip != 'true'

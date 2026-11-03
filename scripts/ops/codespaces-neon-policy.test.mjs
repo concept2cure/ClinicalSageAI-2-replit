@@ -68,6 +68,18 @@ test('enabled PR preview migration never uses unmasked credentials or a pooled D
   assert.match(workflow, /npm run codespaces:doctor:test/);
 });
 
+test('CI-created Neon branches are schema-only and expire if a runner or PR cleanup is lost', () => {
+  const proof = read('.github/workflows/neon-provisioning.yml');
+  const preview = read('.github/workflows/neon-preview-db.yml');
+  for (const workflow of [proof, preview]) {
+    assert.match(workflow, /branch_type: schema-only/);
+    assert.match(workflow, /expires_at: \$\{\{ steps\.expiry\.outputs\.expires_at \}\}/);
+    assert.match(workflow, /date -u -d '\+[27] (?:hours|days)'/);
+  }
+  assert.match(proof, /Bound proof branch lifetime to two hours/);
+  assert.match(preview, /Bound preview branch lifetime to seven days/);
+});
+
 test('Codespaces agent config has no committed production Neon parent or owner runtime secret', () => {
   const agent = read('.github/c2c-agent.yml');
   const container = read('.devcontainer/devcontainer.json');
