@@ -37,9 +37,25 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
   await run.step(`Tasks: ${tasks.length} tasks on ${label}`, async () => {
     const projectId = await boardProjectId(api, program);
     const board = must(await api('GET', '/api/task-management/board'), 200, 'read task board');
-    // Plain titles (each card names its project), so an earlier run is found by
-    // title within this project, not across the organisation.
-    const have = new Map(rowsOf(board).filter((t) => String(t.project) === String(projectId)).map((t) => [t.title, t]));
+    // Task Board already declares whether ALL its contributing stores were
+    // readable. A partial/unverified board is not an empty project: treating
+    // it as complete would mint duplicate tasks and false "nothing pending"
+    // outcomes on repeat demos.
+    if (board.success !== true || !Array.isArray(board.data) ||
+        board.meta?.partial !== false || !Array.isArray(board.meta.unreadSources) ||
+        board.meta.unreadSources.length > 0) {
+      throw new Error('The existing Task Board is incomplete or has unread sources. Reconcile the board before demo tasks are created or reused.');
+    }
+    // A title is an idempotency key only when unique within this project's
+    // actual board rows. Never pick an arbitrary duplicate by Map overwrite.
+    const withinProject = board.data.filter((t) => String(t.project) === String(projectId));
+    const have = new Map();
+    for (const row of withinProject) {
+      if (typeof row.title !== 'string' || !row.title.trim() || have.has(row.title)) {
+        throw new Error('The project Task Board contains malformed or duplicate task titles. Reconcile the task records before demo seeding.');
+      }
+      have.set(row.title, row);
+    }
     let created = 0;
     for (const t of tasks) {
       const existing = have.get(t.title);
