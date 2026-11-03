@@ -44,6 +44,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { createHash } from 'node:crypto';
 import { and, desc, eq, notInArray, sql } from 'drizzle-orm';
 
 import { db } from '../db';
@@ -393,6 +394,17 @@ router.get('/:jobId/sections', async (req: Request, res: Response) => {
       : sections;
     if (typeof sectionNumber === 'string' && selected.length !== 1) {
       return res.status(404).json({ code: 'CSR_SECTION_NOT_SAVED', error: 'No saved draft exists for this heading.' });
+    }
+    if (typeof sectionNumber === 'string') {
+      const saved = selected[0];
+      if (typeof saved.content !== 'string' || !saved.content.trim() ||
+          typeof saved.contentHash !== 'string' ||
+          createHash('sha256').update(saved.content, 'utf8').digest('hex') !== saved.contentHash) {
+        return res.status(409).json({
+          code: 'CSR_SECTION_INTEGRITY_FAILED',
+          error: 'The saved CSR section does not match its recorded content hash. Reconcile the build before review.',
+        });
+      }
     }
     // The current saved body and hash must be inspectable before a human
     // decides on this exact version. No signature or approval is inferred.
