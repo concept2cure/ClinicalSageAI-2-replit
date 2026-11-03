@@ -48,6 +48,13 @@ Common codes:
 
 If the database is truly new, use the existing [DB readiness procedure](DB_READINESS.md) against an **authorized empty development database** with owner and app roles. Do not run `install-fresh` against a production or shared Neon branch to make a green test appear.
 
+**Authentication:** Codespaces startup does not automatically create a privileged
+demo administrator or use the owner DSN to seed users. Sign in using an
+existing authorized test account. For a new empty development database, use
+the repository's existing controlled provisioning and account setup workflow
+from a **separate authorized maintenance environment**. Do not put a Neon
+owner password in the request-serving app to make a demo login work.
+
 Once the doctor passes:
 
 ```bash
