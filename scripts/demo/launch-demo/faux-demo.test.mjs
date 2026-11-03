@@ -122,6 +122,7 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
         id: 'df541fa2-594e-48d7-b451-3a5a3d994d39',
         title: body.title, template_id: body.template_id,
         program_id: body.client_program_id, section_count: 16, status: 'draft',
+        readScope: 'document',
       };
       state.documents.push(doc);
       return ok({ success: true, document: doc, sections_seeded: 16 }, 201);
@@ -616,6 +617,34 @@ test('a prior CSR working document with a non-canonical template is never adopte
     /wrong project or template/i);
   assert.equal(app.state.documents.length, 1);
   assert.equal(app.state.tasks.length, 0);
+});
+
+for (const status of ['IN_REVIEW', 'APPROVED', 'FROZEN']) {
+  test(`refuses a ${status} CSR as the reusable working draft`, async () => {
+    const app = fakeApplication();
+    await seed({ api: app.api, identity: app.identity, run: app.run() });
+    const doc = app.state.documents[0];
+    doc.status = status;
+    const before = app.state.calls.length;
+    await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+      /not an editable working draft with full document access/);
+    assert.ok(app.state.calls.slice(before).every(call => call.method === 'GET'));
+    assert.equal(app.state.documents.length, 1);
+    assert.equal(app.state.tasks.length, 3);
+  });
+}
+
+test('refuses a section-only CSR rather than pretending it is an accessible working document', async () => {
+  const app = fakeApplication();
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  const doc = app.state.documents[0];
+  doc.readScope = 'sections';
+  const before = app.state.calls.length;
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /not an editable working draft with full document access/);
+  assert.ok(app.state.calls.slice(before).every(call => call.method === 'GET'));
+  assert.equal(app.state.documents.length, 1);
+  assert.equal(app.state.tasks.length, 3);
 });
 
 test('an existing reviewer task whose origin no longer matches the document is not reused', async () => {
