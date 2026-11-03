@@ -47,6 +47,10 @@ function poolTarget(files: Record<string, string>, shellEnv: Record<string, stri
   );
 
   const env: NodeJS.ProcessEnv = { ...process.env };
+  // This suite's baseline cases are explicitly non-Codespaces .env precedence.
+  // Codespaces ignores env files, and has its own regression below.
+  delete env.C2C_CODESPACE;
+  delete env.CODESPACES;
   for (const key of ['DATABASE_URL', 'APP_DATABASE_URL', 'NEON_DATABASE_URL', 'DATABASE_NEON_NEW_SECRET']) {
     delete env[key];
   }
