@@ -15,6 +15,7 @@
     "HOME": "/root",
     "C2C_ENVIRONMENT": "development",
     "C2C_CODESPACE": "1",
+    "RLS_ENFORCE": "on",
     "C2C_AGENT_MODE": "active"
   },
 
