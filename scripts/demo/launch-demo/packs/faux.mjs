@@ -603,6 +603,19 @@ async function ensureCsrWorkingDocument({ api, run, tally }, project, template) 
         saved.readScope !== 'document') {
       throw new Error('The editor did not return an accessible, editable CSR draft with the canonical template and seeded ICH E3 sections. The demo is not ready.');
     }
+    // A whole-document read grant is not necessarily an EDIT grant. The
+    // existing document-detail endpoint resolves the caller's current
+    // Authoring permissions and project scope, without making a write.
+    const detail = must(await api('GET',
+      `/api/authoring/docs/${id}?programId=${encodeURIComponent(project.id)}`), 200, 'verify governed CSR editing access');
+    if (detail.success !== true || String(detail.document?.id ?? '') !== id ||
+        String(detail.document?.client_program_id ?? '') !== String(project.id) ||
+        String(detail.document?.template_id ?? '') !== String(template.id) ||
+        String(detail.document?.status ?? '').trim().toUpperCase() !== 'DRAFT' ||
+        detail.document?.readScope !== 'document' ||
+        detail.access?.edit?.allowed !== true) {
+      throw new Error('The current account cannot edit this CSR document in the one editor. Resolve its governed Authoring permissions before creating a review task.');
+    }
     document = {
       id,
       title: titleText,
