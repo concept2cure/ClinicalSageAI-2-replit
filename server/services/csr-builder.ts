@@ -510,8 +510,11 @@ export async function draftCSRSectionWithProvenance(
       });
       const accepted = acceptSectionReply(section.number, reply, info, lineage, evidence);
       if (accepted) return done(accepted.content, 'ai', accepted.model, accepted.tokenCost);
-    } catch (err) {
-      console.warn(`[CSR Builder] AI drafting failed for section ${section.number}, using template:`, err);
+    } catch {
+      // Never log an SDK error object: its message/response may contain
+      // the clinical prompt, source-table cells or provider credentials.
+      // The source-grounded template below explicitly marks missing data.
+      console.warn(`[CSR Builder] AI drafting failed for section ${section.number}; a needs-data template will be used.`);
     }
   }
   // Template fallback. ai_generated MUST be false for this row.
