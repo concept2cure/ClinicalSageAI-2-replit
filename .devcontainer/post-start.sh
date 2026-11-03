@@ -9,8 +9,8 @@ echo "No DB or AI secret is printed. No database is provisioned or switched."
 
 # Local PostgreSQL is opt-in only. Never rewrite pg_hba.conf to 'trust',
 # create a DB, or fall back to localhost when Neon is unavailable.
-if [[ "\${C2C_DB_MODE:-configured}" == "local" ]]; then
-  if [[ "\${DATABASE_URL:-}" == *"@localhost"* || "\${DATABASE_URL:-}" == *"@127.0.0.1"* ]]; then
+if [[ "${C2C_DB_MODE:-configured}" == "local" ]]; then
+  if [[ "${DATABASE_URL:-}" == *"@localhost"* || "${DATABASE_URL:-}" == *"@127.0.0.1"* ]]; then
     if command -v pg_lsclusters >/dev/null 2>&1 &&
        command -v pg_ctlcluster >/dev/null 2>&1; then
       PG_VER="$(pg_lsclusters -h 2>/dev/null | awk 'NR == 1 {print $1}')"
