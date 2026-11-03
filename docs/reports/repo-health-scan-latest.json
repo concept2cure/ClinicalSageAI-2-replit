@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-02T20:24:07.766Z",
+  "generatedAt": "2026-11-03T06:49:19.762Z",
   "git": {
-    "sha": "0b89821bbf012af85d2d93cc25adcf41d4ff9c48",
+    "sha": "d692dc80397ec2be43f6c97e3d38d484cab82297",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2587,7 +2587,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "bytes": 114430
+        "bytes": 115402
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
@@ -2717,7 +2717,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2952
+        "lines": 2970
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
