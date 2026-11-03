@@ -211,7 +211,8 @@ it('the csr-workflow board shows the build headings with review state and re-rea
     expect(within(region).getByText('In review')).toBeTruthy();
     const approve = within(region).getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
     expect(approve.disabled).toBe(true);
-    fireEvent.click(within(region).getByRole('button', { name: 'Read saved section text' }));
+    const reviewRow = within(region).getByText('Analysis of efficacy').closest('li')!;
+    fireEvent.click(within(reviewRow).getByRole('button', { name: 'Read saved section text' }));
     await screen.findByLabelText('Saved text for §11.4.1');
     fireEvent.click(approve);
     await vi.waitFor(() => expect(apiRequest.mock.calls.filter(([m, p]) => m === 'GET' && String(p).startsWith('/api/csr-workflow/board')).length).toBe(2));
