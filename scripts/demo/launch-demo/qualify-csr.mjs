@@ -131,21 +131,37 @@ const entities = text => text.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
 const normalized = text => entities(String(text)).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
 
 /** A generated file must reopen and contain distinctive words from this saved version. */
-export function qualifyDocxXml(xml, savedSections) {
+export function qualifyDocxXml(xml, savedSections, expectedText = '') {
   if (typeof xml !== 'string' || !xml.includes('<w:document')) refuse('The exported DOCX has no Word document body.');
+  // Word frequently splits text across XML runs; compare normalized characters
+  // rather than assuming an entire paragraph is emitted as one <w:t> node.
   const wordText = normalized([...xml.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)]
-    .map(m => m[1]).join(''));
+    .map(m => m[1]).join(' '));
+  const compact = value => normalized(value).replace(/[^\p{L}\p{N}]/gu, '');
+  const wordChars = compact(wordText);
   const candidates = savedSections.filter(s => typeof s.content === 'string' &&
     normalized(s.content).length >= 100 && !PLACEHOLDER.test(s.content));
   if (!candidates.length) refuse('No substantial saved CSR section is available for export-content comparison.');
-  const found = candidates.filter(s => wordText.includes(normalized(s.content).slice(0, 80)));
-  if (!found.length) refuse('The downloaded Word file does not contain a substantive, saved CSR section.');
-  return { compared: candidates.length, matchingSections: found.length, documentTextLength: wordText.length };
+  const missing = candidates.filter(s => !wordChars.includes(compact(s.content).slice(0, 100)));
+  if (missing.length) {
+    refuse('The reopened Word file is missing saved CSR text for ' + missing.length +
+      ' section(s): ' + missing.map(s => s.code ?? s.sectionNumber ?? s.id ?? 'unknown').join(', ') + '.');
+  }
+  if (expectedText) {
+    const excerpt = compact(expectedText);
+    if (excerpt.length < 25) refuse('An edited-text comparison must contain at least 25 alphanumeric characters.');
+    if (!savedSections.some(s => compact(s.content).includes(excerpt))) {
+      refuse('The specified edited excerpt is not in the currently saved CSR; verify editor Save before export.');
+    }
+    if (!wordChars.includes(excerpt)) refuse('The exported Word file does not preserve the saved edited excerpt.');
+  }
+  return { compared: candidates.length, matchingSections: candidates.length,
+    editedTextVerified: expectedText ? true : 'not_supplied', documentTextLength: wordText.length };
 }
 
 /** Exact auth session, live APIs, and explicit human-review records; no simulated service doubles. */
 export async function qualifyLive({ api, downloadDocx, options }) {
-  const { programId, documentId, sourceId, jobId, reviewedDocumentId, freeze, startDraft, exportFile } = options;
+  const { programId, documentId, sourceId, jobId, reviewedDocumentId, freeze, startDraft, exportFile, expectedText } = options;
   const get = async path => {
     const r = await api('GET', path);
     if (r.status !== 200 || !r.json) refuse('GET ' + path + ': HTTP ' + r.status + ' ' + String(r.text ?? '').slice(0, 250));
@@ -160,11 +176,15 @@ export async function qualifyLive({ api, downloadDocx, options }) {
   const stages = {};
   const report = { verdict: 'NOT_QUALIFIED', stages, projectId: programId, documentId,
     assessedAt: new Date().toISOString(), completedByHuman: false };
+  let currentStage = 'source';
+  try {
   const source = qualifySource(await get('/api/submission-orchestrator/csr/sources' + params), sourceId);
   stages.source = { passed: true, documentId: source.documentId, sha256: source.sha256, version: source.version, platformApproved: true };
+  currentStage = 'workingDocument';
   const draftDoc = await get('/api/authoring/docs/' + encodeURIComponent(documentId) + params);
   if (draftDoc.success !== true || String(draftDoc.document?.client_program_id).toLowerCase() !== programId ||
       draftDoc.document?.readScope !== 'document') refuse('The working document is not the full document in the correct project.');
+  currentStage = 'freeze';
   let studyData = await get('/api/submission-orchestrator/csr/study-data' + params + '&documentId=' + documentId);
   const already = studyData.studyData?.filter(x => x.sources?.some(s => s.documentId === source.documentId && s.sha256 === source.sha256)) ?? [];
   if (!already.length && freeze) {
@@ -179,6 +199,7 @@ export async function qualifyLive({ api, downloadDocx, options }) {
   }
   const frozen = qualifyFrozen(studyData, source);
   stages.freeze = { passed: true, studyDataId: frozen.studyDataId, exactSourceSha256: source.sha256 };
+  currentStage = 'retainedTables';
   const retained = await get('/api/submission-orchestrator/runs/' + frozen.studyDataId +
     '/clinical-tables' + params);
   if (retained.runId !== frozen.studyDataId || retained.programId !== programId || retained.historical !== true ||
@@ -187,6 +208,7 @@ export async function qualifyLive({ api, downloadDocx, options }) {
     refuse('The editor cannot reopen frozen source tables with the same receipt.');
   }
   stages.retainedTables = { passed: true, studyId: frozen.sources[0].studyId };
+  currentStage = 'draft';
   const jobsPath = '/api/csr/jobs' + params + '&runId=' + frozen.studyDataId;
   let jobs = await get(jobsPath);
   if (!Array.isArray(jobs.jobs)) refuse('CSR job history is unreadable.');
@@ -209,6 +231,7 @@ export async function qualifyLive({ api, downloadDocx, options }) {
     await get('/api/csr/jobs/' + chosen + '/sections'));
   stages.draft = { passed: true, jobId: chosen, ...verified };
   report.jobId = chosen;
+  currentStage = 'review';
   if (!reviewedDocumentId) refuse('An exact imported and independently approved CSR document ID is required for human review and export qualification.');
   const finalParams = '?programId=' + encodeURIComponent(programId);
   const detail = await get('/api/authoring/docs/' + reviewedDocumentId + finalParams);
@@ -216,6 +239,7 @@ export async function qualifyLive({ api, downloadDocx, options }) {
   const reviews = await get('/api/authoring/documents/' + reviewedDocumentId + '/reviews');
   stages.review = { passed: true, ...qualifyHumanReview(detail, reviews, sections, programId, chosen) };
   report.completedByHuman = true;
+  currentStage = 'export';
   if (!exportFile) refuse('Export and reopen have not been exercised. Run with --export in the same environment.');
   const bytes = await downloadDocx(reviewedDocumentId);
   if (!Buffer.isBuffer(bytes) || bytes.length < 2000) refuse('The DOCX export returned no substantial file.');
@@ -223,11 +247,17 @@ export async function qualifyLive({ api, downloadDocx, options }) {
   const reopened = await JSZip.loadAsync(bytes, { checkCRC32: true });
   const doc = reopened.file('word/document.xml');
   if (!doc) refuse('The downloaded DOCX cannot reopen its Word document.xml.');
-  const compare = qualifyDocxXml(await doc.async('string'), sections.sections);
+  const compare = qualifyDocxXml(await doc.async('string'), sections.sections, expectedText);
   stages.export = { passed: true, sha256: digest(bytes), size: bytes.length, ...compare };
   report.exportBytes = bytes; // discarded before receipt serialization; caller may write exact file locally
   report.verdict = 'QUALIFIED_API_PATH_ONLY_BROWSER_REQUIRED';
   return report;
+  } catch (cause) {
+    const error = cause instanceof Error ? cause : new Error(String(cause));
+    stages[currentStage] = { passed: false, reason: error.message };
+    error.partialReport = { ...report, blocker: error.message, failedStage: currentStage };
+    throw error;
+  }
 }
 
 const flag = (args, option) => args.includes('--' + option);
@@ -248,12 +278,15 @@ export async function main(args = process.argv.slice(2)) {
   const { connect } = await import('./lib.mjs');
   const connection = await connect({ baseUrl, token: process.env.DEMO_SEED_TOKEN,
     expectedOrganizationId: organizationId });
-  if (!/Faux Biotech Therapeutics/i.test(connection.identity.organizationName)) {
-    refuse('This is not the dedicated authorized Faux Biotech demonstration organization.');
+  const expectedName = option(args, 'organization-name');
+  if (!expectedName || expectedName.trim() !== connection.identity.organizationName.trim()) {
+    refuse('The exact organization name does not match the authenticated tenant. --organization-name is required.');
   }
   const outputDir = resolve(option(args, 'output-dir') || '/tmp/concept2cure-csr-acceptance');
   mkdirSync(outputDir, { recursive: true });
-  const options = { programId, documentId, sourceId, reviewedDocumentId,
+  const excerptFile = option(args, 'expected-text-file');
+  const expectedText = excerptFile ? readFileSync(resolve(excerptFile), 'utf8').trim() : '';
+  const options = { programId, documentId, sourceId, reviewedDocumentId, expectedText,
     jobId: option(args, 'job-id') ? requiredId(option(args, 'job-id'), 'job-id') : undefined,
     freeze: flag(args, 'freeze'), startDraft: flag(args, 'start-draft'), exportFile: flag(args, 'export') };
   let report;
@@ -270,8 +303,9 @@ export async function main(args = process.argv.slice(2)) {
         return Buffer.from(await response.arrayBuffer());
       } });
   } catch (error) {
-    report = { verdict: 'NOT_QUALIFIED', assessedAt: new Date().toISOString(), projectId: programId, documentId,
-      blocker: error instanceof Error ? error.message : String(error), browserQualification: 'NOT_EXECUTED' };
+    report = error?.partialReport ?? { verdict: 'NOT_QUALIFIED', assessedAt: new Date().toISOString(),
+      projectId: programId, documentId, blocker: error instanceof Error ? error.message : String(error) };
+    report.browserQualification = 'NOT_EXECUTED';
   }
   if (report.exportBytes) {
     const bytes = report.exportBytes; delete report.exportBytes;
