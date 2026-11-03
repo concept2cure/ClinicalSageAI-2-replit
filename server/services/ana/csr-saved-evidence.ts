@@ -22,7 +22,7 @@ import { verifyCsrDocumentEvidence, type CsrDocumentSectionEvidence } from './cs
 import type { CsrClaimReceipt, CsrEvidenceFact } from './csr-claim-reconciliation';
 import { buildCsrAuthoringEvidence, type CsrAuthoringEvidence, type RetainedCsrTables } from '../csr/cortex-authoring-context';
 import { parseImportedCsrSectionEvidence, type CsrImportedSectionEvidence } from '../csr/csr-claim-receipts';
-import { findUnclaimedNumbers } from '../csr/unsupplied-statistics';
+import { findUnclaimedNumbers, isCsrObservedResultsSection } from '../csr/unsupplied-statistics';
 import { editedClaimOutcome } from './csr-edited-section';
 
 export interface SavedCsrSection { code: string | null; content: string; text: string; title?: string }
