@@ -48,7 +48,7 @@ vi.mock('../../../db', () => ({
   },
 }));
 
-import { acceptEvidenceBoundDraft, findUnclaimedNumbers, findUnsuppliedStatistics, findUnsupportedCsrOutcomeConclusion, isStatisticalSection, isCsrObservedResultsSection } from '../unsupplied-statistics';
+import { acceptEvidenceBoundDraft, findUnclaimedNumbers, findUnsuppliedStatistics, findUnsupportedCsrOutcomeConclusion, unsupportedCsrDeathCounts, isStatisticalSection, isCsrObservedResultsSection } from '../unsupplied-statistics';
 import { draftCSRSectionWithProvenance, type CSRBuildRequest, type CSRSection } from '../../csr-builder';
 import { loadCsrInputsForProject } from '../load-csr-inputs-for-project';
 
@@ -212,6 +212,56 @@ describe('qualitative clinical outcome claims require independent source-backed 
       claims: [{ table: 'deathsSAEsDiscontinuations', row: 0, column: 1, value: '0' }],
     }, evidence, STUDY, lineage)).toBe(true);
     expect(lineage.reconciliation).toMatchObject({ status: 'matches' });
+  });
+});
+
+describe('death count semantic receipts', () => {
+  const evidence = {
+    evidenceDigest: 'd'.repeat(64),
+    tables: [{
+      key: 'analysisPopulations', title: 'Analysis populations',
+      headers: ['Population', 'Treatment'], rows: [['Safety population', '300']],
+      sha256: 'e'.repeat(64),
+    }, {
+      key: 'deathsSAEsDiscontinuations', title: 'Death and serious event counts',
+      headers: ['Outcome', 'Treatment'], rows: [['Fatal AEs', '1']],
+      sha256: 'f'.repeat(64),
+    }],
+  } as unknown as Parameters<typeof acceptEvidenceBoundDraft>[1];
+  const population = { table: 'analysisPopulations', row: 0, column: 1, value: '300' };
+  const death = { table: 'deathsSAEsDiscontinuations', row: 0, column: 1, value: '1' };
+
+  it('does not present the safety population as the number of deaths', () => {
+    const lineage: Record<string, unknown> = {};
+    const prose = '300 patients died during treatment.';
+    expect(unsupportedCsrDeathCounts(prose, [population], evidence)).toEqual(['300']);
+    expect(acceptEvidenceBoundDraft({
+      sectionNumber: '12.3.3', prose, claims: [population],
+    }, evidence, { plannedSampleSize: 300 }, lineage)).toBe(false);
+    expect(lineage.rejectedModelDraft).toMatchObject({
+      reason: 'outcome_cell_mismatch', category: 'death_count',
+    });
+  });
+
+  it('permits exact fatal-event counts from the correct source row', () => {
+    const lineage: Record<string, unknown> = {};
+    const prose = '1 patient died during treatment.';
+    expect(unsupportedCsrDeathCounts(prose, [death], evidence)).toEqual([]);
+    expect(acceptEvidenceBoundDraft({
+      sectionNumber: '12.3', prose, claims: [death],
+    }, evidence, {}, lineage)).toBe(true);
+    expect(lineage.reconciliation).toMatchObject({ status: 'matches' });
+  });
+
+  it('does not infer zero deaths from an absence of data', () => {
+    const lineage: Record<string, unknown> = {};
+    const prose = 'No deaths were reported.';
+    expect(acceptEvidenceBoundDraft({
+      sectionNumber: '12.3', prose, claims: [],
+    }, evidence, {}, lineage)).toBe(false);
+    expect(lineage.rejectedModelDraft).toMatchObject({
+      reason: 'unsubstantiated_outcome_conclusion',
+    });
   });
 });
 
