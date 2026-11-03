@@ -328,8 +328,19 @@ async function listProjects(api) {
   throw new Error('Project pagination exceeded the search limit; refusing duplicate creation.');
 }
 
-async function ensureProject({ api, run, tally }, clientWorkspaceId) {
+async function ensureProject({ api, run, tally }, clientWorkspaceId, clinicalSource) {
   const name = title(TITLE);
+  // Put the study's goal, proposed hypothesis and trial context in the
+  // EXISTING Project Management charter objective at creation. The user does
+  // not have to reconstruct that context from PDFs in a separate CSR app.
+  // This is entirely FICTIONAL, not a clinical conclusion or approval.
+  const info = clinicalSource.studyInfo;
+  const objective = [
+    'Synthetic study and medical-writing objective: author an evidence-linked ICH E3 Clinical Study Report for FBT-201; report unknown fields rather than fabricate results.',
+    `Fictional protocol ${info.protocolNumber}: ${info.studyDesign}; indication ${info.indication}; planned randomized population ${info.sampleSize}.`,
+    `Fictional study hypothesis (not a finding): ${info.investigationalProduct} increases ${info.primaryEndpoint} versus ${info.comparator}.`,
+    `Recorded source data cut ${clinicalSource.dataCutDate}; maintain all original versions, statistical source links and independent human review.`,
+  ].join(' ');
   let result;
   await run.step('Project Management: create/reopen FBT-201 (document type CSR)', async () => {
     const matchingProjects = (await listProjects(api)).filter(p => (p.title ?? p.name) === name);
@@ -344,7 +355,7 @@ async function ensureProject({ api, run, tally }, clientWorkspaceId) {
         productType: 'biologic', primaryAgency: 'ICH / Global',
         clientWorkspaceId,
         indication: 'Moderate-to-severe plaque psoriasis (fictional)',
-        objective: 'Create a draft ICH E3 clinical study report for the fictional FBT-201 Phase 2 trial, trace each result to the synthetic source, and identify missing evidence before any human review.',
+        objective,
         objectiveSources: [], priority: 'high', teamMembers: [],
       }), 201, 'create FBT-201 CSR project');
       row = j.data;
@@ -587,7 +598,7 @@ export async function seed(ctx) {
   const canonicalTemplate = await canonicalCsrTemplate(ctx.api);
 
   const clientWorkspaceId = await ensureClient(c);
-  const project = await ensureProject(c, clientWorkspaceId);
+  const project = await ensureProject(c, clientWorkspaceId, source.envelope);
   await ensureSource(c, project, {
     key: 'csr-source-v2', label: 'FBT-201 clinical source JSON · synthetic v2',
     fileName: 'fbt201-csr-source-synthetic-v2.json', mime: 'application/json',
