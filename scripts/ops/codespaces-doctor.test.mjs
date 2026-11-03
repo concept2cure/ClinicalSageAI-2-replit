@@ -29,6 +29,10 @@ test('Codespaces never silently chooses a different DB, invalid TLS or the owner
   assert.ok(checkDatabaseConfiguration({ ...env, APP_DATABASE_URL:
     'postgresql://neondb_owner:secret@ep-example-pooler.neon.tech/neondb?sslmode=require' })
     .issues.some(x => x.code === 'DB_RUNTIME_ROLE_NOT_SEPARATE'));
+  assert.ok(checkDatabaseConfiguration({
+    APP_DATABASE_URL: 'postgresql://neondb_owner:secret@ep-example-pooler.neon.tech/neondb?sslmode=require',
+    C2C_DB_MODE: 'neon',
+  }).issues.some(x => x.code === 'DB_RUNTIME_OWNER_ROLE'));
   assert.ok(checkDatabaseConfiguration({ ...env, APP_DATABASE_URL:
     'postgresql://app_service:secret@ep-example-pooler.neon.tech/neondb?sslmode=disable' })
     .issues.some(x => x.code === 'DB_NEON_TLS'));
