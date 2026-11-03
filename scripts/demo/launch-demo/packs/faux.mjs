@@ -290,7 +290,7 @@ export async function seed(ctx) {
   const c = { ...ctx, tally };
   ctx.run.note('The fictional client and FBT-201 project use the platform\'s existing Project Management, Data Room, Tasking and single editor. No CSR application, parallel workflow, study approval, signature or clinical trial is created.');
   ctx.run.record('sourceRevision', { revision: 2, sha256: source.digest, synthetic: true, clinicalVerification: 'not-established' });
-  const canonicalTemplate = await canonicalCsrTemplate(api);
+  const canonicalTemplate = await canonicalCsrTemplate(ctx.api);
 
   const clientWorkspaceId = await ensureClient(c);
   const project = await ensureProject(c, clientWorkspaceId);
