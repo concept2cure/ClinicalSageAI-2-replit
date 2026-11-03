@@ -76,6 +76,14 @@ export function checkDatabaseConfiguration(env) {
     issues.push(reason('DB_MODE_INVALID', 'C2C_DB_MODE must be neon, local or configured.'));
   }
   if (runtime) {
+    // Neon normally grants the provisioner's ownership to neondb_owner.
+    // A non-superuser table owner can still bypass RLS, so looking only at
+    // rolcanlogin/rolbypassrls is insufficient. The live contract additionally
+    // checks ownership of append-only stores and all runtime grants.
+    if (runtime.neon && (runtime.user === 'neondb_owner' || runtime.user === 'postgres')) {
+      issues.push(reason('DB_RUNTIME_OWNER_ROLE',
+        'APP_DATABASE_URL names a Neon owner-like role; use the separate app_service runtime credential.'));
+    }
     if (mode === 'neon' && !runtime.neon) issues.push(reason('DB_NEON_EXPECTED', 'C2C_DB_MODE=neon but the app DSN does not target Neon.'));
     if (mode === 'local' && !runtime.local) issues.push(reason('DB_LOCAL_EXPECTED', 'C2C_DB_MODE=local but the app DSN is not a local address.'));
     if (runtime.neon && runtime.ssl !== 'require' && runtime.ssl !== 'verify-full') {
