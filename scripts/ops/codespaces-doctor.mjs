@@ -222,6 +222,26 @@ export async function probeDatabase({ config, connectDb }) {
   }
 }
 
+/**
+ * A configured RLS flag is not proof of filtering. An application role that
+ * owns an RLS-enabled, non-FORCE table bypasses its policies even when the
+ * session reports app.rls_enforce=on. Refuse that combination on the actual
+ * request-serving connection; catalog inspection is read-only.
+ */
+export function runtimeIsolationFailures(rlsSetting, ownerExemptTables = []) {
+  const issues = [];
+  if (rlsSetting !== 'on') {
+    issues.push('PostgreSQL runtime session did not activate app.rls_enforce=on; the RLS startup option may not have reached the Neon connection.');
+  }
+  if (ownerExemptTables.length) {
+    const preview = ownerExemptTables.slice(0, 5)
+      .map(row => String(row.schema_name) + '.' + String(row.table_name)).join(', ');
+    issues.push('The app role owns RLS-enabled tables without FORCE ROW LEVEL SECURITY: ' +
+      preview + '. Connect as a non-owner runtime role or correct the RLS policies in an authorized maintenance session.');
+  }
+  return issues;
+}
+
 async function nativeDatabaseProbe(connectionString) {
   const [{ Client }, { sslFor, verifiedPgConnectionString }, { verifyReadinessContract },
     { AUTHORING_SUBSYSTEM_TABLES }] = await Promise.all([
@@ -240,7 +260,24 @@ async function nativeDatabaseProbe(connectionString) {
     await client.connect();
     const result = await verifyReadinessContract(client,
       { authoringTables: AUTHORING_SUBSYSTEM_TABLES, asRuntimeRole: true });
-    return { ok: result.ok, role: result.role, failures: result.failures };
+    const rlsSession = await client.query(
+      "SELECT current_setting('app.rls_enforce', true) AS active_rls",
+    );
+    const exempt = await client.query(
+      `SELECT n.nspname AS schema_name, c.relname AS table_name
+         FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relkind IN ('r', 'p')
+          AND c.relrowsecurity AND NOT c.relforcerowsecurity
+          AND pg_get_userbyid(c.relowner) = current_user
+          AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+          AND n.nspname !~ '^pg_'
+        ORDER BY n.nspname, c.relname LIMIT 12`,
+    );
+    const failures = [
+      ...result.failures,
+      ...runtimeIsolationFailures(rlsSession.rows[0]?.active_rls, exempt.rows),
+    ];
+    return { ok: result.ok && failures.length === 0, role: result.role, failures };
   } finally { await client.end().catch(() => {}); }
 }
 
