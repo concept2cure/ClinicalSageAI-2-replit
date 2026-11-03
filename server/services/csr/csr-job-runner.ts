@@ -28,7 +28,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { CsrScopeError, resolveCsrBuildContext, resolveCsrScope } from './project-scope';
 import { verifySavedCsrSectionIntegrity } from './csr-output-integrity';
-import { safeCsrJobFailure } from './csr-job-error';
+
 import {
   csrBuildJobs,
   csrSectionOutputs,
@@ -187,6 +187,21 @@ async function verifySavedTargetEvidence(
 // ═══════════════════════════════════════════════════════════════════════════════
 // PUBLIC API
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/** Existing CSR worker's error-receipt boundary. Raw SDK, SQL and upload
+ * errors may contain sensitive observations or credentials, so a persisted
+ * job receipt or log may report ONLY a bounded typed CSR code. Kept here in
+ * the established worker, not in a new service or parallel pipeline. */
+const CSR_JOB_SAFE_CODE = /^CSR_[A-Z0-9_]{3,80}$/;
+function safeCsrJobFailure(error: unknown): { message: string; code?: string } {
+  const value = error && typeof error === 'object'
+    ? error as { code?: unknown; message?: unknown } : null;
+  const code = typeof value?.code === 'string' && CSR_JOB_SAFE_CODE.test(value.code)
+    ? value.code
+    : typeof value?.message === 'string' && CSR_JOB_SAFE_CODE.test(value.message)
+      ? value.message : null;
+  return code ? { message: code, code } : { message: 'CSR_BUILD_STEP_FAILED' };
+}
 
 /**
  * Enqueue a CSR build job for async execution. Returns immediately with the
