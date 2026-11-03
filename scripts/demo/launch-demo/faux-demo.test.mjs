@@ -13,7 +13,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { seed } from './packs/faux.mjs';
+import { seed, validateSyntheticDemoRows } from './packs/faux.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(HERE, '../../..');
@@ -161,6 +161,37 @@ test('checked-in synthetic source is complete and remains explicitly artificial'
   assert.match(String(data.studyInfo.sponsor), /fictional|synthetic/i);
   assert.equal(Object.hasOwn(data, 'sourceApproval'), false);
   assert.equal(Object.hasOwn(data, 'organizationId'), false);
+});
+
+test('reconciles the synthetic QC index and both TLFs with the source before admitting data', () => {
+  const data = JSON.parse(gunzipSync(readFileSync(sourcePath)).toString('utf8'));
+  const base = path.join(root, 'docs/demo/faux-biotech-csr');
+  const files = Object.fromEntries([
+    'ADSL_160_SUBJECT_QC_INDEX.csv', 'TLF_PRIMARY_EFFICACY.csv', 'TLF_SAFETY.csv',
+  ].map(name => [name, readFileSync(path.join(base, name))]));
+  assert.equal(validateSyntheticDemoRows(data, files), files);
+
+  const edit = (name, oldText, newText) => {
+    const original = files[name].toString('utf8');
+    assert.ok(original.includes(oldText), 'Test source must contain the expected original record');
+    return { ...files, [name]: Buffer.from(original.replace(oldText, newText), 'utf8') };
+  };
+  assert.throws(() => validateSyntheticDemoRows(data, edit(
+    'ADSL_160_SUBJECT_QC_INDEX.csv',
+    'FBT201-A003,FBT-201 200 mg,Y,Y,N,N,Y,N,Y,',
+    'FBT201-A003,FBT-201 200 mg,Y,Y,N,Y,Y,N,Y,',
+  )), /QC index conflicts/);
+  assert.throws(() => validateSyntheticDemoRows(data, edit(
+    'TLF_PRIMARY_EFFICACY.csv', 'Placebo,80,30,37.5,76', 'Placebo,80,31,37.5,76',
+  )), /source disagree/);
+  assert.throws(() => validateSyntheticDemoRows(data, edit(
+    'TLF_SAFETY.csv', 'Placebo,80,37,2,1,0', 'Placebo,80,36,2,1,0',
+  )), /source disagree/);
+  assert.throws(() => validateSyntheticDemoRows(data, edit(
+    'TLF_PRIMARY_EFFICACY.csv',
+    'arm,ITT,responders,response_rate_pct,treatment_complete',
+    'arm,ITT,responders,response_rate_pct',
+  )), /CSV headers changed/);
 });
 
 test('seeds one CSR project, three Vault sources, a canonical CSR editor document and pending tasks', async () => {
