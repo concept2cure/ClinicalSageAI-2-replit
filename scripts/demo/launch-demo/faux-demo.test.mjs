@@ -13,7 +13,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { seed, validateSyntheticDemoRows } from './packs/faux.mjs';
+import { seed, validateSyntheticDemoRows, validateOriginalDemoCsvBundle } from './packs/faux.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(HERE, '../../..');
@@ -194,13 +194,13 @@ test('reconciles the synthetic QC index and both TLFs with the source before adm
   )), /CSV headers changed/);
 });
 
-test('seeds one CSR project, three Vault sources, a canonical CSR editor document and pending tasks', async () => {
+test('seeds one CSR project, ten Data Room source records, one editor document and pending tasks', async () => {
   const app = fakeApplication(), run = app.run();
   await seed({ api: app.api, identity: app.identity, run });
   assert.equal(app.state.projects.length, 1);
   assert.equal(app.state.projects[0].program_type, 'csr');
-  assert.equal(app.state.vault.length, 6);
-  assert.deepEqual(app.state.vault.map(d => d.documentType), ['OTHER', 'PROTOCOL', 'SAP', 'OTHER', 'REPORT', 'REPORT']);
+  assert.equal(app.state.vault.length, 10);
+  assert.deepEqual(app.state.vault.map(d => d.documentType), ['OTHER', 'PROTOCOL', 'SAP', 'OTHER', 'REPORT', 'REPORT', 'OTHER', 'OTHER', 'OTHER', 'OTHER']);
   assert.equal(app.state.documents.length, 1);
   assert.equal(app.state.documents[0].template_id, '4331e7e3-7777-5c21-8c9b-0e2f56194e7e');
   assert.equal(app.state.documents[0].program_id, 'p1');
@@ -218,7 +218,7 @@ test('seeds one CSR project, three Vault sources, a canonical CSR editor documen
   assert.equal(run.records.sourceRevision.sha256, sha256(content));
   assert.ok(app.state.calls.every(call => !/approve|sign|dispatch|file-into/i.test(call.url)));
   assert.deepEqual(Object.values(run.records.tally.created)
-    .reduce((sum, n) => sum + n, 0), 12);
+    .reduce((sum, n) => sum + n, 0), 16);
 });
 
 test('Data Room records the original synthetic QC index and both reconciled TLF files by exact bytes', async () => {
@@ -242,6 +242,59 @@ test('Data Room records the original synthetic QC index and both reconciled TLF 
   assert.ok(app.state.vault.find(d => /QC index/.test(d.title)).title.includes('not ADaM'));
 });
 
+test('the exact fictional ADSL/ADEFF/ADAE/ADLB sources remain available with pinned bytes', async () => {
+  const app = fakeApplication();
+  const run = app.run();
+  await seed({ api: app.api, identity: app.identity, run });
+  const originals = [
+    ['01_ADSL_synthetic_v2.csv', 'ADSL-inspired', 'source.adsl-original-v2'],
+    ['02_ADEFF_synthetic.csv', 'ADEFF-inspired', 'source.adeff-original-v2'],
+    ['03_ADAE_synthetic.csv', 'ADAE-inspired', 'source.adae-original-v2'],
+    ['04_ADLB_synthetic.csv', 'ADLB-inspired', 'source.adlb-original-v2'],
+  ];
+  const source = JSON.parse(gunzipSync(readFileSync(sourcePath)).toString('utf8'));
+  const dir = path.join(root, 'docs/demo/faux-biotech-csr');
+  const qc = Object.fromEntries([
+    'ADSL_160_SUBJECT_QC_INDEX.csv', 'TLF_PRIMARY_EFFICACY.csv', 'TLF_SAFETY.csv',
+  ].map(name => [name, readFileSync(path.join(dir, name))]));
+  const bundle = readFileSync(path.join(dir, 'FBT201_ADAM_INSPIRED_SOURCE_CSV_BUNDLE_v2.json.gz'));
+  const entries = validateOriginalDemoCsvBundle(source, qc, bundle);
+  assert.equal(Object.keys(entries).length, 4);
+  for (const [fileName, namePart, receiptKey] of originals) {
+    const stored = app.state.vault.find(d => d.title.includes(namePart));
+    assert.ok(stored, `Missing synthetic observation source: ${fileName}`);
+    assert.equal(stored.documentType, 'OTHER', 'No CDISC conformity or official dataset type is implied');
+    assert.ok(stored.title.includes('not CDISC'));
+    assert.equal(stored.bytes.equals(entries[fileName]), true);
+    assert.equal(stored.contentHash, sha256(entries[fileName]));
+    assert.equal(run.records[receiptKey]?.sha256, sha256(entries[fileName]));
+  }
+  assert.equal(app.state.vault.length, 10);
+});
+
+test('original fictional analysis archive refuses tampering or a mismatched derived source', () => {
+  const source = JSON.parse(gunzipSync(readFileSync(sourcePath)).toString('utf8'));
+  const dir = path.join(root, 'docs/demo/faux-biotech-csr');
+  const qc = Object.fromEntries([
+    'ADSL_160_SUBJECT_QC_INDEX.csv', 'TLF_PRIMARY_EFFICACY.csv', 'TLF_SAFETY.csv',
+  ].map(name => [name, readFileSync(path.join(dir, name))]));
+  const bundle = readFileSync(path.join(dir, 'FBT201_ADAM_INSPIRED_SOURCE_CSV_BUNDLE_v2.json.gz'));
+  assert.throws(() => validateOriginalDemoCsvBundle(source, qc, Buffer.from('a modified archive')),
+    /pinned version-2 SHA-256/);
+  const person = { ...source.studyData.demographics[0], age: 117 };
+  const alteredDemographics = { ...source,
+    studyData: { ...source.studyData,
+      demographics: [person, ...source.studyData.demographics.slice(1)] } };
+  assert.throws(() => validateOriginalDemoCsvBundle(alteredDemographics, qc, bundle),
+    /ADSL observations contradict/);
+  const event = { ...source.studyData.adverseEvents[0], pt: 'Not a recorded source AE' };
+  const alteredSafety = { ...source,
+    studyData: { ...source.studyData,
+      adverseEvents: [event, ...source.studyData.adverseEvents.slice(1)] } };
+  assert.throws(() => validateOriginalDemoCsvBundle(alteredSafety, qc, bundle),
+    /AE listing contradicts/);
+});
+
 test('replaying the pack reuses governed records without rewriting existing data', async () => {
   const app = fakeApplication();
   await seed({ api: app.api, identity: app.identity, run: app.run() });
@@ -252,10 +305,10 @@ test('replaying the pack reuses governed records without rewriting existing data
     'second seed must be pure verification, not duplicate writes');
   assert.equal(app.state.clients.length, 1);
   assert.equal(app.state.projects.length, 1);
-  assert.equal(app.state.vault.length, 6);
+  assert.equal(app.state.vault.length, 10);
   assert.equal(app.state.documents.length, 1);
   assert.equal(app.state.tasks.length, 3);
-  assert.ok(run.records.tally.found['source-document'] >= 6);
+  assert.ok(run.records.tally.found['source-document'] >= 10);
   assert.equal(run.records.tally.found['authoring-document'], 1);
 });
 
@@ -273,8 +326,8 @@ test('corrects only previously miscatalogued synthetic protocol/SAP through audi
   assert.equal(edits.length, 2);
   assert.ok(edits.every(c => /source-catalog correction/i.test(c.body.reason)));
   assert.ok(!newCalls.some(c => c.url === '/api/vault/ingest' && c.method === 'POST'));
-  assert.equal(app.state.vault.length, 6);
-  assert.deepEqual(app.state.vault.map(d => d.documentType), ['OTHER', 'PROTOCOL', 'SAP', 'OTHER', 'REPORT', 'REPORT']);
+  assert.equal(app.state.vault.length, 10);
+  assert.deepEqual(app.state.vault.map(d => d.documentType), ['OTHER', 'PROTOCOL', 'SAP', 'OTHER', 'REPORT', 'REPORT', 'OTHER', 'OTHER', 'OTHER', 'OTHER']);
   assert.deepEqual(files.map(d => d.contentHash), originalHashes);
   assert.equal(run.records.tally.created['source-metadata-correction'], 2);
 });
