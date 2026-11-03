@@ -215,6 +215,46 @@ export function findUnsupportedCsrOutcomeConclusion(sectionNumber: string, prose
   return null;
 }
 
+/** Narrow clinical-meaning check for a high-consequence misattribution.
+ *
+ * Exact-cell numerical reconciliation alone would allow "300 patients died"
+ * when the model claimed 300 from the Safety population row (and the death
+ * table actually reports 1). This checks that every explicit death/fatal-event
+ * count is tied to a death/fatal-event row with that SAME count. It does not
+ * pretend to resolve all endpoint semantics; human scientific review remains
+ * mandatory for interpretation and risk conclusions.
+ */
+export function unsupportedCsrDeathCounts(
+  prose: string,
+  claims: unknown,
+  evidence: CsrAuthoringEvidence,
+): string[] {
+  if (!Array.isArray(claims)) return [];
+  const figures = new Set<string>();
+  for (const match of prose.matchAll(
+    /\b(?:([0-9][0-9,]*)\s+(?:patients?|subjects?|participants?)\s+(?:died|were\s+deceased)|([0-9][0-9,]*)\s+(?:deaths?|fatalities|fatal\s+(?:adverse\s+)?events?))\b/gi,
+  )) {
+    const count = (match[1] ?? match[2]).replace(/,/g, '');
+    figures.add(count);
+  }
+  const supported = new Set<string>();
+  for (const claim of claims) {
+    if (!claim || typeof claim !== 'object') continue;
+    const c = claim as { table?: unknown; row?: unknown; column?: unknown; value?: unknown };
+    if (typeof c.table !== 'string' || !Number.isSafeInteger(c.row) ||
+        !Number.isSafeInteger(c.column) || typeof c.value !== 'string') continue;
+    const table = evidence.tables.find(t => t.key === c.table);
+    if (!table || !/^(?:deathsSAEsDiscontinuations|aeOverallSummary|aeBySOC|aeTopPT)$/.test(c.table)) continue;
+    const row = table.rows[c.row as number];
+    const label = row?.[0] ?? '';
+    if (!/\b(?:deaths?|fatal\w*|mortality)\b/i.test(label)) continue;
+    if (row?.[c.column as number] !== c.value) continue;
+    const first = c.value.match(/^\s*([0-9][0-9,]*)\b/);
+    if (first) supported.add(first[1].replace(/,/g, ''));
+  }
+  return [...figures].filter(n => !supported.has(n));
+}
+
 /** A model's draft of one section: its prose and the claims it made about it. */
 export interface EvidenceBoundDraft {
   sectionNumber: string;
@@ -249,6 +289,14 @@ export function acceptEvidenceBoundDraft(
   if (unreconciled.length > 0) {
     lineage.rejectedModelDraft = { reason: 'unreconciled_claims', evidenceDigest: evidence.evidenceDigest, findings: unreconciled.slice(0, 20) };
     return false;
+  }
+  if (isCsrObservedResultsSection(sectionNumber) || sectionNumber.trim() === '2') {
+    const unsupportedDeaths = unsupportedCsrDeathCounts(prose, claims, evidence);
+    if (unsupportedDeaths.length) {
+      lineage.rejectedModelDraft = { reason: 'outcome_cell_mismatch',
+        category: 'death_count', evidenceDigest: evidence.evidenceDigest };
+      return false;
+    }
   }
   const claimed = (claims as Array<{ value: string }>).map((c) => c.value);
   // Rule 2: only an engine cell can support a clinical RESULT. Before this
