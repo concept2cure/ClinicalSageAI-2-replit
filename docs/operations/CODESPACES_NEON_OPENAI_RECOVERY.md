@@ -12,6 +12,7 @@ Configure these as repository-accessible **Codespaces** secrets (not GitHub Acti
 | `APP_DATABASE_URL` | **Required**: intended Neon branch/database through the non-owner `app_service` role, with `sslmode=require` or `verify-full`; the driver enforces hostname and CA verification. |
 | `DATABASE_OWNER_URL` | **Optional maintenance-only** owner DSN. Runtime readiness never requires this credential. When present, it must identify the same database as `APP_DATABASE_URL`. |
 | `C2C_DB_MODE` | Recommended `neon` for a Neon-backed Codespace; `local` is only for explicit local development |
+| `RLS_ENFORCE` | Must equal `on`; the Codespaces image sets it by default. Startup refuses any off/shadow/unset override and activates PostgreSQL tenant isolation for the app session. |
 | `JWT_SECRET` or `JWT_SECRET_DEV` | Required for application auth; securely generated value of at least 32 characters. The doctor checks presence/length but never prints it. |
 | `REFRESH_TOKEN_SECRET` | Optional in development; a separate, strong secret is required in staging/production. |
 | `ANTHROPIC_API_KEY` | If using approved-category Anthropic model routes for regulated drafting; production still requires PQ |
@@ -44,6 +45,7 @@ Common codes:
 - `DB_TARGET_MISMATCH`: owner and app accounts point to different databases or branches.
 - `DB_NEON_TLS`, `DB_NEON_OWNER_TLS`, `DB_DNS_FAILED`, `DB_AUTH_REJECTED` or `DB_UNREACHABLE`: inspect the actual Neon connection; do not disable TLS verification.
 - `DB_SCHEMA_OR_GRANTS_NOT_READY`: schema, RLS-sensitive runtime permissions, audit store or pgvector are not qualified.
+- `RLS_NOT_ENFORCED`: Codespaces RLS is disabled or merely in shadow mode; it is not safe to qualify tenant-scoped authoring. Rebuild with `RLS_ENFORCE=on` and verify tenant policies.
 - `JWT_SECRET_MISSING`, `JWT_SECRET_WEAK` or `JWT_ROTATION_INVALID`: configure a distinct, strong Codespaces secret; a database passing does not imply the API can authenticate users.
 
 If the database is truly new, use the existing [DB readiness procedure](DB_READINESS.md) against an **authorized empty development database** with owner and app roles. Do not run `install-fresh` against a production or shared Neon branch to make a green test appear.
@@ -63,7 +65,7 @@ npm run dev
 npm run codespaces:doctor -- --check-app
 ```
 
-`/readyz` must establish real dependencies; `/healthz` or a Codespaces "ready" banner is not enough. The app start path no longer changes the DB URL from a stale `.env`, prints DSN passwords, creates a local database, or suppresses failed remote connectivity.
+`/readyz` must establish real dependencies. The Codespaces diagnostic further requires `schemaState=ready`, `anaState=ready`, `capabilityRegistry=seeded`, and `database`, `schema`, `ana`, and `storage` dependencies each equal to `ok`. A `200` response with a degraded schema or missing component cannot qualify the application. `/healthz` or a Codespaces "ready" banner is not enough. The app start path no longer changes the DB URL from a stale `.env`, prints DSN passwords, creates a local database, or suppresses failed remote connectivity.
 
 ## 3. Distinguish OpenAI billing from Concept2Cure governance
 
