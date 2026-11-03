@@ -1,0 +1,98 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  checkDatabaseConfiguration, classifyDbError, classifyOpenAIResponse,
+  checkOpenAI, probeDatabase, checkApplication, runCodespacesDoctor,
+} from './codespaces-doctor.mjs';
+
+const owner = 'postgresql://neondb_owner:secret@ep-example.neon.tech/neondb?sslmode=require';
+const runtime = 'postgresql://app_service:othersecret@ep-example-pooler.neon.tech/neondb?sslmode=require';
+const env = { DATABASE_URL: owner, APP_DATABASE_URL: runtime,
+  OPENAI_API_KEY: 'sk-not-a-real-secret', C2C_DB_MODE: 'neon' };
+
+test('Neon owner + pooler runtime on the same database are eligible for a read-only check', () => {
+  const c = checkDatabaseConfiguration(env);
+  assert.equal(c.ok, true);
+  assert.equal(c.runtime.provider, 'neon');
+  assert.equal(c.runtime.role, 'app_service');
+  assert.equal(JSON.stringify({ owner: c.owner, runtime: c.runtime }).includes('secret'), false);
+});
+test('Codespaces never silently chooses a different DB, invalid TLS or the owner for runtime', () => {
+  assert.deepEqual(checkDatabaseConfiguration({}).issues.map(x => x.code),
+    ['DB_OWNER_URL_MISSING', 'DB_RUNTIME_URL_MISSING']);
+  assert.ok(checkDatabaseConfiguration({ DATABASE_URL: owner }).issues.some(x => x.code === 'DB_RUNTIME_URL_MISSING'));
+  assert.ok(checkDatabaseConfiguration({ ...env, APP_DATABASE_URL:
+    'postgresql://app_service:secret@ep-wrong.neon.tech/neondb?sslmode=require' })
+    .issues.some(x => x.code === 'DB_TARGET_MISMATCH'));
+  assert.ok(checkDatabaseConfiguration({ ...env, APP_DATABASE_URL:
+    'postgresql://neondb_owner:secret@ep-example-pooler.neon.tech/neondb?sslmode=require' })
+    .issues.some(x => x.code === 'DB_RUNTIME_ROLE_NOT_SEPARATE'));
+  assert.ok(checkDatabaseConfiguration({ ...env, APP_DATABASE_URL:
+    'postgresql://app_service:secret@ep-example-pooler.neon.tech/neondb?sslmode=disable' })
+    .issues.some(x => x.code === 'DB_NEON_TLS'));
+  assert.ok(checkDatabaseConfiguration({ ...env, C2C_DB_MODE: 'local' })
+    .issues.some(x => x.code === 'DB_LOCAL_EXPECTED'));
+});
+test('Neon connection errors are classified without returning credential-bearing messages', () => {
+  assert.equal(classifyDbError({ code: '28P01', message: owner }), 'DB_AUTH_REJECTED');
+  assert.equal(classifyDbError({ code: 'ENOTFOUND', message: owner }), 'DB_DNS_FAILED');
+  assert.equal(classifyDbError({ message: 'certificate revoked' }), 'DB_TLS_FAILED');
+  assert.equal(classifyDbError({ code: '42501' }), 'DB_GRANTS_DENIED');
+});
+test('OpenAI quota is distinct from a rate limit, auth failure or governance gate', () => {
+  assert.equal(classifyOpenAIResponse(401, { error: { code: 'invalid_api_key' } }), 'OPENAI_KEY_INVALID');
+  assert.equal(classifyOpenAIResponse(429, { error: { code: 'insufficient_quota' } }), 'OPENAI_QUOTA_OR_BILLING');
+  assert.equal(classifyOpenAIResponse(429, { error: { type: 'rate_limit_exceeded' } }), 'OPENAI_RATE_LIMIT');
+  assert.equal(classifyOpenAIResponse(403, { error: {} }), 'OPENAI_ORGANIZATION_OR_PROJECT_POLICY');
+  assert.equal(classifyOpenAIResponse(200, {}), 'OPENAI_REACHABLE');
+});
+test('OpenAI auth probe is no-charge GET; billable POST requires explicit request', async () => {
+  let paths = [];
+  const fetcher = async (path, opts) => {
+    paths.push({ path, method: opts.method });
+    return { status: 200, ok: true, json: async () => ({ data: [] }) };
+  };
+  const auth = await checkOpenAI({ env, fetcher });
+  assert.equal(auth.authenticationVerified, true);
+  assert.equal(auth.billingVerified, false);
+  assert.equal(paths[0].method, 'GET');
+  const use = await checkOpenAI({ env, fetcher, probeUsage: true });
+  assert.equal(use.billingVerified, true);
+  assert.equal(paths[1].method, 'POST');
+});
+test('missing key never triggers OpenAI request', async () => {
+  const result = await checkOpenAI({ env: {}, fetcher: () => { throw Error('called'); } });
+  assert.equal(result.code, 'OPENAI_KEY_MISSING');
+});
+test('DB contract failures never imply readiness', async () => {
+  const config = checkDatabaseConfiguration(env);
+  const failed = await probeDatabase({ env, config, connectDb: async () => ({
+    ok: false, failures: ['audit.tamper_proof_log missing'],
+  }) });
+  assert.equal(failed.status, 'blocked');
+  assert.match(failed.problems[0], /tamper_proof_log/);
+});
+test('overall startup cannot be marked ready on a missing DB even when OpenAI key exists', async () => {
+  let called = false;
+  const report = await runCodespacesDoctor({ env: { OPENAI_API_KEY: 'sk-present' },
+    connectDb: async () => { called = true; return { ok: true }; } });
+  assert.equal(called, false);
+  assert.equal(report.ready, false);
+  assert.equal(report.openai.status, 'configured-not-probed');
+  assert.equal(JSON.stringify(report).includes('sk-present'), false);
+});
+test('doctor does not probe external provider or application without explicit flags', async () => {
+  const report = await runCodespacesDoctor({ env, connectDb: async () => ({
+    ok: true, role: 'app_service' }), fetcher: async () => { throw Error('unexpected fetch'); } });
+  assert.equal(report.ready, true);
+  assert.equal(report.application.status, 'not_checked');
+  assert.equal(report.openai.status, 'configured-not-probed');
+  assert.equal(JSON.stringify(report).includes('othersecret'), false);
+});
+test('running app with simulated AnA is not accepted as real model readiness', async () => {
+  const app = await checkApplication({ fetcher: async () => ({ status: 200, ok: true,
+    json: async () => ({ ready: true, anaState: 'deterministic',
+      dependencies: { schema: 'ok', ana: 'ok' } }) }) });
+  assert.equal(app.status, 'blocked');
+  assert.match(app.explanation, /NOT qualified/);
+});
