@@ -155,7 +155,7 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
         ...(body.sourceEntityType === 'authoring_document'
           ? { sourceDocumentId: body.sourceEntityId } : {}) };
       state.tasks.push(row);
-      return ok({ data: row }, 201);
+      return ok({ success: true, data: row }, 201);
     }
     throw new Error(`Unexpected application request: ${method} ${url}`);
   };
@@ -708,6 +708,51 @@ test('ambiguous task titles cannot silently reuse another task in the same proje
     /malformed or duplicate task titles/);
   assert.ok(app.state.calls.slice(before).every(c => c.method === 'GET'));
   assert.equal(app.state.tasks.length, 4);
+});
+
+test('the existing Task Board reread confirms each created task and its exact authoring document', async () => {
+  const app = fakeApplication();
+  const run = app.run();
+  await seed({ api: app.api, identity: app.identity, run });
+  const boardCalls = app.state.calls.filter(c => c.method === 'GET' && c.url === '/api/task-management/board');
+  assert.equal(boardCalls.length, 2, 'read before and after creating three pending tasks');
+  const reviewerTask = app.state.tasks.find(t => t.title.includes('Human-review'));
+  assert.equal(reviewerTask.sourceDocumentId, app.state.documents[0].id);
+  assert.equal(run.records.tally.created.task, 3);
+});
+
+test('a task creation acknowledgement without a saved task identity is not counted as complete', async () => {
+  const app = fakeApplication();
+  const originalApi = app.api;
+  app.api = async (method, url, body) => {
+    if (method === 'POST' && url === '/api/tasks/tasks') {
+      app.state.calls.push({ method, url, body });
+      return ok({ success: true, data: {} }, 200);
+    }
+    return originalApi(method, url, body);
+  };
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /did not confirm the saved identity/);
+  assert.equal(app.state.tasks.length, 0);
+});
+
+test('a task acknowledged but not visible in the refreshed board is not reported as verified', async () => {
+  const app = fakeApplication();
+  const originalApi = app.api;
+  let boardReads = 0;
+  app.api = async (method, url, body) => {
+    if (method === 'GET' && url === '/api/task-management/board') {
+      boardReads++;
+      if (boardReads === 2) {
+        app.state.calls.push({ method, url, body });
+        return ok({ success: true, data: [], meta: { partial: false, unreadSources: [] } });
+      }
+    }
+    return originalApi(method, url, body);
+  };
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /did not reopen the exact persisted task/);
+  assert.equal(app.state.tasks.length, 3, 'stored tasks are not deleted on a failed verification');
 });
 
 test('all review tasks remain pending; the seed never uses a review or approval ceremony', async () => {
