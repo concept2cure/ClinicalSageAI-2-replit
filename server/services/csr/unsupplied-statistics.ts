@@ -44,7 +44,7 @@ export function unclaimedCsrSynopsisResults(prose: string, claimed: string[]): s
   const observed = /\b(?:completed|reported|experienced|occurred|died|deaths?|fatal\w*|responders?|remission|cured|(?:were|was)\s+(?:randomi[sz]ed|enrolled|treated|observed))\b/i;
   const planned = /\b(?:planned|targeted|intended|expected|proposed|anticipated)\b/i;
   const findings = new Set<string>();
-  for (const clause of prose.split(/;|\n+|(?<=\.)\s+(?=[A-Z])/)) {
+  for (const clause of prose.split(/;|\n+|(?<=\.)\s+(?=[A-Z0-9])/)) {
     if (!observed.test(clause)) continue;
     // A clause describing planned recruitment is not an observed finding.
     // Actual-conduct verbs in that same clause still require receipts.
