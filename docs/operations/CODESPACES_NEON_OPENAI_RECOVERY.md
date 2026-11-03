@@ -8,14 +8,14 @@ Configure these as repository-accessible **Codespaces** secrets (not GitHub Acti
 
 | Name | Meaning |
 |---|---|
-| `DATABASE_URL` | Exact approved Neon **owner** connection, including the correct project/branch/database and `sslmode=require` |
-| `APP_DATABASE_URL` | The SAME branch/database via a separate **non-owner** `app_service` runtime account, with TLS |
-| `DATABASE_OWNER_URL` | Optional override for the owner connection; otherwise `DATABASE_URL` is the owner |
+| `DATABASE_URL` | **Optional owner/maintenance DSN**. Do not put the owner password in the running Codespace unless an explicitly approved maintenance operation requires it. |
+| `APP_DATABASE_URL` | **Required**: intended Neon branch/database through the non-owner `app_service` role, with `sslmode=require` or `verify-full`; the driver enforces hostname and CA verification. |
+| `DATABASE_OWNER_URL` | **Optional maintenance-only** owner DSN. Runtime readiness never requires this credential. When present, it must identify the same database as `APP_DATABASE_URL`. |
 | `C2C_DB_MODE` | Recommended `neon` for a Neon-backed Codespace; `local` is only for explicit local development |
 | `ANTHROPIC_API_KEY` | If using approved-category Anthropic model routes for regulated drafting; production still requires PQ |
 | `OPENAI_API_KEY` | OpenAI API for authorized tasks. It **does not by itself unlock high-risk AnA/CSR/IND drafting** |
 
-The Codespaces image no longer hardcodes an old Neon production branch or overrides the application DSN with a local-environment secret variable. An old `DATABASE_NEON_NEW_SECRET` is not silently used as both owner and app credentials. Confirm the actual Neon endpoint and set the explicit names above.
+The Codespaces image no longer hardcodes an old Neon production branch or overrides the application DSN with a local-environment secret variable. For normal development, provision the database in a separate authorized maintenance session; leave owner credentials out of the running Codespace entirely. An old `DATABASE_NEON_NEW_SECRET` is not silently used as both owner and app credentials. Confirm the actual Neon endpoint and set the explicit names above.
 
 **Security note:** the repository's own `.gitleaksignore` currently still describes
 historical Neon owner credentials as `status: live — revoke`. This is not a
@@ -38,9 +38,9 @@ npm run codespaces:doctor   # read-only: DB target, vector/schema, app-role gran
 The database diagnostic calls the **existing** `scripts/db/readiness-contract.mjs` as the request-serving role. It does not create tables, run migrations, rotate credentials, repair passwords, or fall back from Neon to local PostgreSQL.
 
 Common codes:
-- `DB_OWNER_URL_MISSING` or `DB_RUNTIME_URL_MISSING`: set the intended Codespaces secrets.
+- `DB_RUNTIME_URL_MISSING`: set the app_service Codespaces secret; the owner's credential is not a runtime prerequisite.
 - `DB_TARGET_MISMATCH`: owner and app accounts point to different databases or branches.
-- `DB_NEON_TLS`, `DB_DNS_FAILED`, `DB_AUTH_REJECTED` or `DB_UNREACHABLE`: inspect the actual Neon connection.
+- `DB_NEON_TLS`, `DB_NEON_OWNER_TLS`, `DB_DNS_FAILED`, `DB_AUTH_REJECTED` or `DB_UNREACHABLE`: inspect the actual Neon connection; do not disable TLS verification.
 - `DB_SCHEMA_OR_GRANTS_NOT_READY`: schema, RLS-sensitive runtime permissions, audit store or pgvector are not qualified.
 
 If the database is truly new, use the existing [DB readiness procedure](DB_READINESS.md) against an **authorized empty development database** with owner and app roles. Do not run `install-fresh` against a production or shared Neon branch to make a green test appear.
