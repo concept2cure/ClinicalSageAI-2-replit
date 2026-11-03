@@ -28,6 +28,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { CsrScopeError, resolveCsrBuildContext, resolveCsrScope } from './project-scope';
 import { verifySavedCsrSectionIntegrity } from './csr-output-integrity';
+import { safeCsrJobFailure } from './csr-job-error';
 import {
   csrBuildJobs,
   csrSectionOutputs,
@@ -654,12 +655,15 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       console.warn('[csr-job-runner] CSR completed; submission continuation is temporarily unavailable', { jobId, organizationId: job.organizationId });
     }
   } catch (err) {
-    // 7. Failure — record the failing section + message ONLY (never payload content)
-    const message = err instanceof Error ? err.message : String(err);
+    // 7. Failure: SDK/DB errors can include study observations, prompt text or
+    // credential-bearing connection strings. Neither logs nor the persisted
+    // job error (returned to the client) may include raw Error.message.
+    // Preserve only a stable, bounded CSR_* machine code.
+    const refusal = safeCsrJobFailure(err);
     console.error(
       `[csr-job-runner] Job ${jobId} failed on section '${
         currentSection.number || '<setup>'
-      }': ${message}`
+      }': ${refusal.message}`
     );
     await d
       .update(csrBuildJobs)
@@ -667,8 +671,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         status: 'failed',
         updatedAt: new Date(),
         error: {
-          message,
-          ...(err instanceof CsrAuthoringContextError || err instanceof CsrScopeError ? { code: err.code } : {}),
+          ...refusal,
           section: currentSection.number || null,
           at: new Date().toISOString(),
         },
