@@ -35,6 +35,11 @@ async function boardProjectId(api, program) {
  */
 export async function ensureTasks({ api, run, tally }, program, tasks, label) {
   await run.step(`Tasks: ${tasks.length} tasks on ${label}`, async () => {
+    // Seed definitions themselves must be unambiguous before ANY write.
+    if (tasks.some(t => typeof t.title !== 'string' || !t.title.trim()) ||
+        new Set(tasks.map(t => t.title)).size !== tasks.length) {
+      throw new Error('The demonstration contains duplicate or unnamed task definitions. No Tasking records were written.');
+    }
     const projectId = await boardProjectId(api, program);
     const board = must(await api('GET', '/api/task-management/board'), 200, 'read task board');
     // Task Board already declares whether ALL its contributing stores were
@@ -57,6 +62,7 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
       have.set(row.title, row);
     }
     let created = 0;
+    const newlyCreated = [];
     for (const t of tasks) {
       const existing = have.get(t.title);
       if (existing) {
@@ -68,7 +74,7 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
         }
         tally.found('task'); continue;
       }
-      must(await api('POST', '/api/tasks/tasks', {
+      const acknowledgement = must(await api('POST', '/api/tasks/tasks', {
         title: t.title,
         description: t.description,
         moduleType: t.moduleType,
@@ -85,8 +91,35 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
         regulatoryImpact: true,
         reason: `Demo seed: plan the ${label} work so the task board shows it.`,
       }), [200, 201], `create task "${t.title}"`);
+      // The real POST returns {success:true,data:{taskId,...}} after the
+      // transaction. An HTTP 200 without a committed task identity is not
+      // proof that a review task exists.
+      if (acknowledgement.success !== true ||
+          typeof acknowledgement.data?.taskId !== 'string' || !acknowledgement.data.taskId.trim()) {
+        throw new Error(`Tasking did not confirm the saved identity for "${t.title}". Recheck the existing board before retrying.`);
+      }
+      newlyCreated.push({ task: t, id: acknowledgement.data.taskId });
       tally.created('task');
       created += 1;
+    }
+    if (newlyCreated.length) {
+      // One post-create board read makes the actual Tasking → editor handoff
+      // an observed persisted record, not merely a 200 from task create.
+      const settled = must(await api('GET', '/api/task-management/board'), 200, 'reopen saved demo tasks');
+      if (settled.success !== true || !Array.isArray(settled.data) ||
+          settled.meta?.partial !== false || !Array.isArray(settled.meta.unreadSources) ||
+          settled.meta.unreadSources.length > 0) {
+        throw new Error('Tasking creation was acknowledged but the complete saved board could not be verified. Inspect real task IDs before retrying.');
+      }
+      const scoped = settled.data.filter(card => String(card.project) === String(projectId));
+      for (const { task, id } of newlyCreated) {
+        const matches = scoped.filter(card => card.title === task.title);
+        if (matches.length !== 1 || String(matches[0].taskId ?? '') !== id ||
+            (task.sourceEntityType === 'authoring_document' &&
+              String(matches[0].sourceDocumentId ?? '') !== String(task.sourceEntityId))) {
+          throw new Error(`Tasking did not reopen the exact persisted task and authoring-document link for "${task.title}". Inspect Tasking before retrying.`);
+        }
+      }
     }
     return `${created} created, ${tasks.length - created} already there (board project ${projectId})`;
   });
