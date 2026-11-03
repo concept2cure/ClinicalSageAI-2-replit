@@ -1,66 +1,31 @@
-#!/bin/bash
-# ═══════════════════════════════════════════════════════════════════════════════
-# C2C Codespace Post-Create Setup
-# Runs once when the container is first created
-# ═══════════════════════════════════════════════════════════════════════════════
-# Do NOT use set -e — a single failed optional step must not trigger recovery mode
-set +e
+#!/usr/bin/env bash
+# Codespace creation: install dependencies reproducibly and disclose blockers.
+# No secrets, database mutations, automatic credential replacement, or
+# 'app ready' claim. The Codespace editor can be open while C2C is blocked.
+set -Eeuo pipefail
 
-echo "🚀 C2C Codespace Post-Create Setup..."
+echo "C2C Codespace dependency setup (Node.js 22)"
+node -e "if (Number(process.versions.node.split('.')[0]) !== 22) { console.error('Node.js 22 is required'); process.exit(1) }"
+test -f package-lock.json || { echo "BLOCKED: package-lock.json is missing"; exit 1; }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 0. Install PostgreSQL server + pgvector (permanent for this container)
-# ─────────────────────────────────────────────────────────────────────────────
-if ! command -v pg_lsclusters &>/dev/null; then
-  echo "🗄️  Installing PostgreSQL 15 server..."
-  sudo -n apt-get update -y && sudo -n apt-get install -y postgresql-15 postgresql-server-dev-15 2>/dev/null || true
+# Match CI: fail rather than allowing a partially installed npm tree to look
+# complete. Do not delete/change the lockfile to hide an install error.
+npm ci
+test -d node_modules || { echo "BLOCKED: node_modules missing after npm ci"; exit 1; }
+
+# Local PostgreSQL is an EXPLICIT development option. For Neon users the
+# database lives remotely; compiling pgvector locally does not fix Neon.
+if [[ "\${C2C_DB_MODE:-configured}" == "local" ]]; then
+  if ! command -v pg_isready >/dev/null 2>&1; then
+    echo "BLOCKED: local PostgreSQL not installed. Use the documented local database setup."
+    exit 1
+  fi
 fi
 
-# Install pgvector from source if not already present
-if [ ! -f /usr/share/postgresql/15/extension/vector.control ] 2>/dev/null; then
-  echo "🧩 Installing pgvector extension..."
-  sudo -n apt-get install -y postgresql-server-dev-15 2>/dev/null || true
-  (cd /tmp && rm -rf pgvector && git clone --branch v0.7.0 --depth 1 https://github.com/pgvector/pgvector.git && cd pgvector && make -j"$(nproc)" && sudo -n make install && rm -rf /tmp/pgvector) || echo "⚠️  pgvector build failed (non-fatal)"
-fi
+# Native self-tests do not use a credential or a database. A failed control
+# is a setup failure, not an optional warning.
+node --test scripts/ops/codespaces-doctor.test.mjs
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 1. Install Node dependencies
-# ─────────────────────────────────────────────────────────────────────────────
-echo "📦 Installing Node.js dependencies..."
-npm install --ignore-scripts
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 2. Install Python agent dependencies
-# ─────────────────────────────────────────────────────────────────────────────
-echo "🐍 Installing Python agent dependencies..."
-if command -v pip &> /dev/null; then
-  pip install --quiet pyyaml requests psycopg2-binary openai boto3 pytest 2>/dev/null || true
-fi
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 3. Install Neon CLI (if not present)
-# ─────────────────────────────────────────────────────────────────────────────
-if ! command -v neonctl &> /dev/null; then
-  echo "📡 Installing Neon CLI..."
-  npm install -g neonctl 2>/dev/null || true
-fi
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 4. Make agent CLI executable
-# ─────────────────────────────────────────────────────────────────────────────
-if [ -f ".github/agents/commands/c2c-agent" ]; then
-  chmod +x .github/agents/commands/c2c-agent
-  echo "✅ c2c-agent CLI made executable"
-fi
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 5. Verify critical environment variables
-# ─────────────────────────────────────────────────────────────────────────────
-echo ""
-echo "═══ Environment Verification ═══"
-[ -n "$DATABASE_URL" ] && echo "✅ DATABASE_URL set" || echo "⚠️  DATABASE_URL not set"
-[ -n "$OPENAI_API_KEY" ] && echo "✅ OPENAI_API_KEY set" || echo "⚠️  OPENAI_API_KEY not set"
-[ -n "$NEON_PROJECT_ID" ] && echo "✅ NEON_PROJECT_ID: $NEON_PROJECT_ID" || echo "⚠️  NEON_PROJECT_ID not set"
-
-echo ""
-echo "✅ C2C Codespace post-create setup complete"
+echo "Dependencies installed and Codespaces diagnostics self-tested."
+echo "Neon connections, schema, OpenAI billing and the running app are NOT assumed ready."
+echo "Post-start will report database readiness without switching any DB."
