@@ -19,7 +19,7 @@ test('Neon owner + pooler runtime on the same database are eligible for a read-o
 });
 test('Codespaces never silently chooses a different DB, invalid TLS or the owner for runtime', () => {
   assert.deepEqual(checkDatabaseConfiguration({}).issues.map(x => x.code),
-    ['DB_OWNER_URL_MISSING', 'DB_RUNTIME_URL_MISSING']);
+    ['DB_RUNTIME_URL_MISSING']);
   assert.ok(checkDatabaseConfiguration({ DATABASE_URL: owner }).issues.some(x => x.code === 'DB_RUNTIME_URL_MISSING'));
   assert.ok(checkDatabaseConfiguration({ ...env, APP_DATABASE_URL:
     'postgresql://app_service:secret@ep-wrong.neon.tech/neondb?sslmode=require' })
@@ -39,6 +39,18 @@ test('Codespaces never silently chooses a different DB, invalid TLS or the owner
     'postgresql://neondb_owner:secret@ep-example.neon.tech/neondb?sslmode=disable' })
     .issues.some(x => x.code === 'DB_NEON_OWNER_TLS'));
 });
+test('a runtime-only Codespace can qualify without an owner credential in the API process', async () => {
+  const runtimeOnly = { APP_DATABASE_URL: runtime, C2C_DB_MODE: 'neon' };
+  const config = checkDatabaseConfiguration(runtimeOnly);
+  assert.equal(config.ok, true);
+  assert.equal(config.owner, null);
+  assert.equal(config.runtime.role, 'app_service');
+  const result = await probeDatabase({ config, connectDb: async () =>
+    ({ ok: true, role: 'app_service', failures: [] }) });
+  assert.equal(result.status, 'passed');
+  assert.equal(JSON.stringify(result).includes('secret'), false);
+});
+
 test('Neon connection errors are classified without returning credential-bearing messages', () => {
   assert.equal(classifyDbError({ code: '28P01', message: owner }), 'DB_AUTH_REJECTED');
   assert.equal(classifyDbError({ code: 'ENOTFOUND', message: owner }), 'DB_DNS_FAILED');
