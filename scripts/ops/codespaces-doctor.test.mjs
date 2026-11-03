@@ -84,7 +84,8 @@ test('overall startup cannot be marked ready on a missing DB even when OpenAI ke
 test('doctor does not probe external provider or application without explicit flags', async () => {
   const report = await runCodespacesDoctor({ env, connectDb: async () => ({
     ok: true, role: 'app_service' }), fetcher: async () => { throw Error('unexpected fetch'); } });
-  assert.equal(report.ready, true);
+  assert.equal(report.prerequisitesVerified, true);
+  assert.equal(report.ready, false, 'a checked database does not qualify an app that was never started');
   assert.equal(report.application.status, 'not_checked');
   assert.equal(report.openai.status, 'configured-not-probed');
   assert.equal(JSON.stringify(report).includes('othersecret'), false);
