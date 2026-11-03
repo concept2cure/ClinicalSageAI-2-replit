@@ -295,7 +295,9 @@ export async function main(args = process.argv.slice(2)) {
       downloadDocx: async id => {
         const response = await fetch(connection.baseUrl + '/api/authoring/docs/' + id + '/export?fmt=docx', {
           method: 'POST', headers: { Authorization: 'Bearer ' + process.env.DEMO_SEED_TOKEN,
-            Origin: connection.baseUrl, Accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+            Origin: connection.baseUrl, 'Content-Type': 'application/json',
+            Accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+          body: JSON.stringify({ format: 'docx' }),
         });
         if (!response.ok || !(response.headers.get('content-type') ?? '').includes('officedocument')) {
           refuse('Controlled DOCX export failed HTTP ' + response.status + ': ' + (await response.text()).slice(0, 250));
