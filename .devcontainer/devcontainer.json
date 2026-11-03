@@ -13,8 +13,6 @@
 
   "containerEnv": {
     "HOME": "/root",
-    "NEON_PROJECT_ID": "ep-frosty-salad-afl93crk",
-    "NEON_PROD_BRANCH": "ep-wild-forest-ahbojhu4-pooler",
     "C2C_ENVIRONMENT": "development",
     "C2C_AGENT_MODE": "active"
   },
@@ -85,8 +83,7 @@
   "remoteUser": "root",
 
   "remoteEnv": {
-    "NODE_ENV": "development",
-    "DATABASE_URL": "${localEnv:DATABASE_NEON_NEW_SECRET}"
+    "NODE_ENV": "development"
   },
 
   "mounts": []
