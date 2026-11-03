@@ -173,6 +173,120 @@ function validatedDemoCsvFiles(source) {
   return validateSyntheticDemoRows(source, files);
 }
 
+
+const ORIGINAL_CSV_BUNDLE = 'FBT201_ADAM_INSPIRED_SOURCE_CSV_BUNDLE_v2.json.gz';
+const ORIGINAL_CSV_BUNDLE_SHA256 = 'a4d5f423c98f3bd9ef0fe17ce0bb44e8fc05ccd5e6baeeabf479d9bf01d49590';
+const ORIGINAL_CSV_NAMES = [
+  '01_ADSL_synthetic_v2.csv', '02_ADEFF_synthetic.csv',
+  '03_ADAE_synthetic.csv', '04_ADLB_synthetic.csv',
+];
+
+/** Load the original fictional rows, not a replacement synthetic re-generation.
+ * This validates the exact bytes before upload; it never treats text CSVs as
+ * CDISC-qualified SDTM/ADaM transport files or laboratory interpretation. */
+export function validateOriginalDemoCsvBundle(source, qcFiles, bundleBytes) {
+  if (sha256(bundleBytes) !== ORIGINAL_CSV_BUNDLE_SHA256) {
+    throw new Error('The original fictional analysis CSV bundle does not match its pinned version-2 SHA-256. Nothing was seeded.');
+  }
+  const bundle = JSON.parse(gunzipSync(bundleBytes).toString('utf8'));
+  if (bundle.synthetic !== true || bundle.sourceRevision !== 2 ||
+      bundle.clinicalVerification !== 'not-established' ||
+      !bundle.files || Object.keys(bundle.files).length !== ORIGINAL_CSV_NAMES.length ||
+      ORIGINAL_CSV_NAMES.some(name => typeof bundle.files[name]?.contents !== 'string')) {
+    throw new Error('The original fictional analysis CSV bundle is incomplete or was changed. Nothing was seeded.');
+  }
+  const files = Object.fromEntries(ORIGINAL_CSV_NAMES.map(name => {
+    const bytes = Buffer.from(bundle.files[name].contents, 'utf8');
+    if (sha256(bytes) !== bundle.files[name].sha256) {
+      throw new Error('The original synthetic analysis file digest changed: ' + name + '. Nothing was seeded.');
+    }
+    return [name, bytes];
+  }));
+
+  const adsl = syntheticRows(ORIGINAL_CSV_NAMES[0], files[ORIGINAL_CSV_NAMES[0]],
+    ['STUDYID', 'USUBJID', 'TRT01A', 'SAFFL', 'ITTFL', 'AGE', 'SEX', 'BASEPASI', 'COMPLTRT', 'PASI75W12']);
+  const adeff = syntheticRows(ORIGINAL_CSV_NAMES[1], files[ORIGINAL_CSV_NAMES[1]],
+    ['USUBJID', 'AVISIT', 'AVISITN', 'PASI', 'PASI75']);
+  const adae = syntheticRows(ORIGINAL_CSV_NAMES[2], files[ORIGINAL_CSV_NAMES[2]],
+    ['USUBJID', 'TRTA', 'AEDECOD', 'AESER', 'AESEV', 'AEREL', 'AEOUT', 'AEWITH']);
+  const adlb = syntheticRows(ORIGINAL_CSV_NAMES[3], files[ORIGINAL_CSV_NAMES[3]],
+    ['USUBJID', 'PARAM', 'AVISIT', 'AVAL']);
+  const qc = syntheticRows(DEMO_CSV_NAMES[0], qcFiles[DEMO_CSV_NAMES[0]],
+    ['STUDYID', 'USUBJID', 'TRT01A', 'ITTFL', 'SAFFL', 'PASI75W12', 'COMPLTRT', 'TEAEFL', 'SAEFL', 'AEWITHFL', 'PROVENANCE']);
+  const qcBySubject = new Map(qc.map(r => [r.USUBJID, r]));
+  const demographics = new Map(source.studyData.demographics.map(r => [r.subjectId, r]));
+  const original = new Map(adsl.map(r => [r.USUBJID, r]));
+  if (adsl.length !== 160 || original.size !== 160 || adeff.length !== 320 ||
+      adae.length !== source.studyData.adverseEvents.length || adlb.length !== 320) {
+    throw new Error('The synthetic ADSL/ADEFF/ADAE/ADLB rows no longer match the recorded trial size. Nothing was seeded.');
+  }
+  for (const row of adsl) {
+    const q = qcBySubject.get(row.USUBJID);
+    const demographic = demographics.get(row.USUBJID);
+    if (!q || !demographic || row.STUDYID !== q.STUDYID || row.TRT01A !== q.TRT01A ||
+        row.ITTFL !== q.ITTFL || row.SAFFL !== q.SAFFL ||
+        row.PASI75W12 !== q.PASI75W12 || row.COMPLTRT !== q.COMPLTRT ||
+        Number(row.AGE) !== demographic.age ||
+        row.SEX !== ({ M: 'Male', F: 'Female', Other: 'Other' }[demographic.sex]) ||
+        !Number.isFinite(Number(row.BASEPASI)) || Number(row.BASEPASI) <= 0) {
+      throw new Error('The original synthetic ADSL observations contradict the QC index or source for ' + row.USUBJID + '. Nothing was seeded.');
+    }
+  }
+  const visits = new Set();
+  for (const row of adeff) {
+    const p = original.get(row.USUBJID);
+    const q = qcBySubject.get(row.USUBJID);
+    const key = row.USUBJID + ':' + row.AVISITN;
+    if (!p || !q || visits.has(key) ||
+        !((row.AVISIT === 'Baseline' && row.AVISITN === '0' && row.PASI75 === '' &&
+            Number(row.PASI) === Number(p.BASEPASI)) ||
+           (row.AVISIT === 'Week 12' && row.AVISITN === '12' && row.PASI75 === q.PASI75W12)) ||
+        !Number.isFinite(Number(row.PASI)) || Number(row.PASI) < 0) {
+      throw new Error('The synthetic efficacy observations do not reconcile to ADSL/QC for ' + row.USUBJID + '. Nothing was seeded.');
+    }
+    visits.add(key);
+  }
+  const events = new Map(source.studyData.adverseEvents.map(r => [r.subjectId, r]));
+  if (events.size !== adae.length) throw new Error('This synthetic AE listing no longer has one record per event subject. Nothing was seeded.');
+  const related = { Related: 'related', 'Not related': 'unrelated', 'Not assessed': 'unknown' };
+  const outcomes = { Recovered: 'recovered', Recovering: 'recovering', 'Not recovered': 'not-recovered', Fatal: 'fatal' };
+  const matchedAes = new Set();
+  for (const row of adae) {
+    const e = events.get(row.USUBJID);
+    const p = original.get(row.USUBJID);
+    if (!e || !p || matchedAes.has(row.USUBJID) || row.TRTA !== p.TRT01A ||
+        row.AEDECOD !== e.pt || (row.AESER === 'Y') !== e.serious ||
+        row.AESEV.toLowerCase() !== e.severity || related[row.AEREL] !== e.related ||
+        outcomes[row.AEOUT] !== e.outcome ||
+        (row.AEWITH === 'Y') !== e.ledToDiscontinuation) {
+      throw new Error('The synthetic AE listing contradicts the structured safety source for ' + row.USUBJID + '. Nothing was seeded.');
+    }
+    matchedAes.add(row.USUBJID);
+  }
+  const labVisits = new Set();
+  for (const row of adlb) {
+    const key = row.USUBJID + ':' + row.AVISIT;
+    if (!original.has(row.USUBJID) || labVisits.has(key) || row.PARAM !== 'ALT (U/L)' ||
+        !['Baseline', 'Week 12'].includes(row.AVISIT) ||
+        !Number.isFinite(Number(row.AVAL)) || Number(row.AVAL) < 0) {
+      throw new Error('The synthetic ALT lab CSV has a missing, duplicate or invalid observation. Nothing was seeded.');
+    }
+    labVisits.add(key);
+  }
+  for (const subjectId of original.keys()) {
+    if (!visits.has(subjectId + ':0') || !visits.has(subjectId + ':12') ||
+        !labVisits.has(subjectId + ':Baseline') || !labVisits.has(subjectId + ':Week 12')) {
+      throw new Error('The synthetic efficacy/lab source omits a recorded subject or visit. Nothing was seeded.');
+    }
+  }
+  return files;
+}
+
+function validatedOriginalCsvFiles(source, qcFiles) {
+  return validateOriginalDemoCsvBundle(source, qcFiles,
+    fs.readFileSync(path.join(DOC_ROOT, ORIGINAL_CSV_BUNDLE)));
+}
+
 function checkDemoOrg(identity) {
   // The organization is an existing authorized tenant, NOT a product-specific
   // workspace. Never post fictional clinical documents to a different tenant.
@@ -424,6 +538,7 @@ export async function seed(ctx) {
   checkDemoOrg(ctx.identity);
   const source = sourceBytes(); // fail before any write on a wrong revision
   const csvFiles = validatedDemoCsvFiles(source.envelope); // compare all six sources before any write
+  const originalCsvFiles = validatedOriginalCsvFiles(source.envelope, csvFiles);
   const tally = makeTally(ctx.run);
   const c = { ...ctx, tally };
   ctx.run.note('The fictional client and FBT-201 project use the platform\'s existing Project Management, Data Room, Tasking and single editor. No CSR application, parallel workflow, study approval, signature or clinical trial is created.');
@@ -463,6 +578,22 @@ export async function seed(ctx) {
       fileName: `fbt201-${key}-synthetic.csv`, mime: 'text/csv',
       code: `FBT-201-${key.toUpperCase()}-SYNTHETIC.csv`,
       bytes: () => csvFiles[fileName],
+    });
+  }
+  // These ORIGINAL fictional analysis rows are source observations, not
+  // trusted clinical statistics or qualified CDISC transports. Each is opened
+  // through the existing Data Room and preserved byte-for-byte with its digest.
+  for (const [key, fileName, label] of [
+    ['adsl-original-v2', '01_ADSL_synthetic_v2.csv', 'FBT-201 synthetic ADSL-inspired participant observations · v2 (not CDISC)'],
+    ['adeff-original-v2', '02_ADEFF_synthetic.csv', 'FBT-201 synthetic ADEFF-inspired efficacy observations · v2 (not CDISC)'],
+    ['adae-original-v2', '03_ADAE_synthetic.csv', 'FBT-201 synthetic ADAE-inspired safety observations · v2 (not CDISC)'],
+    ['adlb-original-v2', '04_ADLB_synthetic.csv', 'FBT-201 synthetic ADLB-inspired ALT observations · v2 (not CDISC)'],
+  ]) {
+    await ensureSource(c, project, {
+      key, label, documentType: 'OTHER',
+      fileName: `fbt201-${key}-synthetic.csv`, mime: 'text/csv',
+      code: `FBT-201-${key.toUpperCase()}-SYNTHETIC.csv`,
+      bytes: () => originalCsvFiles[fileName],
     });
   }
   const workingDocument = await ensureCsrWorkingDocument(c, project, canonicalTemplate);
