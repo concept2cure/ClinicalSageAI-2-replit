@@ -48,7 +48,7 @@ vi.mock('../../../db', () => ({
   },
 }));
 
-import { acceptEvidenceBoundDraft, findUnclaimedNumbers, findUnsuppliedStatistics, isStatisticalSection, isCsrObservedResultsSection } from '../unsupplied-statistics';
+import { acceptEvidenceBoundDraft, findUnclaimedNumbers, findUnsuppliedStatistics, findUnsupportedCsrOutcomeConclusion, isStatisticalSection, isCsrObservedResultsSection } from '../unsupplied-statistics';
 import { draftCSRSectionWithProvenance, type CSRBuildRequest, type CSRSection } from '../../csr-builder';
 import { loadCsrInputsForProject } from '../load-csr-inputs-for-project';
 
@@ -171,6 +171,47 @@ describe('evidence-bound clinical result figures cannot borrow planned numbers',
     expect(attempt('9.7.1', 'Enrollment of 300 participants was planned.')).toMatchObject({
       accepted: true, lineage: { reconciliation: { status: 'not_assessed' } },
     });
+  });
+});
+
+describe('qualitative clinical outcome claims require independent source-backed interpretation', () => {
+  const evidence = {
+    evidenceDigest: 'f'.repeat(64),
+    tables: [{
+      key: 'deathsSAEsDiscontinuations',
+      title: 'Deaths and serious events',
+      headers: ['Outcome', 'Treatment'], rows: [['Fatal adverse events', '0']],
+      sha256: 'a'.repeat(64),
+    }],
+  } as unknown as Parameters<typeof acceptEvidenceBoundDraft>[1];
+
+  it.each([
+    ['12.3', 'No deaths were reported in the treatment arm.', 'absence_of_safety_event'],
+    ['12.2', 'No serious adverse events occurred.', 'absence_of_safety_event'],
+    ['11.4.1', 'The primary endpoint was met.', 'endpoint_success'],
+    ['13', 'The treatment demonstrated noninferiority.', 'comparative_success'],
+    ['13', 'Treatment was well tolerated.', 'safety_or_benefit_risk_verdict'],
+    ['2', 'The primary endpoint was achieved.', 'endpoint_success'],
+  ])('refuses unsubstantiated §%s categorical assertion', (section, prose, category) => {
+    expect(findUnsupportedCsrOutcomeConclusion(section, prose)).toBe(category);
+    const lineage: Record<string, unknown> = {};
+    expect(acceptEvidenceBoundDraft({ sectionNumber: section, prose, claims: [] }, evidence, STUDY, lineage)).toBe(false);
+    expect(lineage.rejectedModelDraft).toMatchObject({ reason: 'unsubstantiated_outcome_conclusion', category });
+  });
+
+  it('retains truthful unknown-source prose rather than claiming no events', () => {
+    expect(findUnsupportedCsrOutcomeConclusion('12.3', 'The number of fatal events was not supplied.')).toBeNull();
+    expect(findUnsupportedCsrOutcomeConclusion('11.4.1', 'Whether the primary endpoint was met is not established.')).toBeNull();
+    expect(findUnsupportedCsrOutcomeConclusion('9.7.1', 'The primary endpoint was met in the prior literature.')).toBeNull();
+  });
+
+  it('still accepts an exact source-backed count rather than an ungrounded absence verdict', () => {
+    const lineage: Record<string, unknown> = {};
+    expect(acceptEvidenceBoundDraft({
+      sectionNumber: '12.3', prose: 'Fatal adverse events: 0 in the retained table.',
+      claims: [{ table: 'deathsSAEsDiscontinuations', row: 0, column: 1, value: '0' }],
+    }, evidence, STUDY, lineage)).toBe(true);
+    expect(lineage.reconciliation).toMatchObject({ status: 'matches' });
   });
 });
 
