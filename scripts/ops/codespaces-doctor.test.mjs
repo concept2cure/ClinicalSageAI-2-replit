@@ -2,13 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   checkDatabaseConfiguration, classifyDbError, classifyOpenAIResponse,
-  checkOpenAI, probeDatabase, checkApplication, runCodespacesDoctor,
+  checkOpenAI, probeDatabase, checkApplication, checkAuthConfiguration, runCodespacesDoctor,
 } from './codespaces-doctor.mjs';
 
 const owner = 'postgresql://neondb_owner:secret@ep-example.neon.tech/neondb?sslmode=require';
 const runtime = 'postgresql://app_service:othersecret@ep-example-pooler.neon.tech/neondb?sslmode=require';
 const env = { DATABASE_URL: owner, APP_DATABASE_URL: runtime,
-  OPENAI_API_KEY: 'sk-not-a-real-secret', C2C_DB_MODE: 'neon' };
+  OPENAI_API_KEY: 'sk-not-a-real-secret', C2C_DB_MODE: 'neon',
+  JWT_SECRET: 'test_only_dev_key_not_for_use_in_real_account_123456' };
 
 test('Neon owner + pooler runtime on the same database are eligible for a read-only check', () => {
   const c = checkDatabaseConfiguration(env);
@@ -57,6 +58,18 @@ test('Neon connection errors are classified without returning credential-bearing
   assert.equal(classifyDbError({ message: 'certificate revoked' }), 'DB_TLS_FAILED');
   assert.equal(classifyDbError({ code: '42501' }), 'DB_GRANTS_DENIED');
 });
+test('Codespaces startup reports missing or weak signing credentials before claiming readiness', () => {
+  assert.equal(checkAuthConfiguration({}).code, 'JWT_SECRET_MISSING');
+  assert.equal(checkAuthConfiguration({ JWT_SECRET: 'weak' }).code, 'JWT_SECRET_WEAK');
+  assert.equal(checkAuthConfiguration(env).status, 'passed');
+  assert.equal(checkAuthConfiguration({
+    JWT_SECRET: 'a'.repeat(40), JWT_SECRET_PREVIOUS: 'a'.repeat(40),
+  }).code, 'JWT_ROTATION_INVALID');
+  assert.equal(checkAuthConfiguration({
+    NODE_ENV: 'production', JWT_SECRET_PROD: 'a'.repeat(40),
+  }).code, 'REFRESH_SECRET_INVALID');
+});
+
 test('OpenAI quota is distinct from a rate limit, auth failure or governance gate', () => {
   assert.equal(classifyOpenAIResponse(401, { error: { code: 'invalid_api_key' } }), 'OPENAI_KEY_INVALID');
   assert.equal(classifyOpenAIResponse(429, { error: { code: 'insufficient_quota' } }), 'OPENAI_QUOTA_OR_BILLING');
