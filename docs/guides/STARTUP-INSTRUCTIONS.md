@@ -7,7 +7,7 @@ The old Replit startup/dependency-repair instructions and the statement
 
 For `concept2cure-v2` on GitHub Codespaces:
 
-1. Configure explicit `DATABASE_URL` (owner) and `APP_DATABASE_URL` (separate non-owner runtime) as repository-accessible Codespaces secrets for the same Neon branch and database.
+1. Configure **`APP_DATABASE_URL`** as a repository-accessible Codespaces secret for the non-owner runtime role, pointing to the intended Neon branch/database. Keep `DATABASE_URL` / `DATABASE_OWNER_URL` out of the running app; they are optional and reserved for separate authorized database maintenance.
 2. Use Node.js 22, `npm ci`, then `npm run codespaces:doctor`. Repair its named blockers; do not silently create a replacement local PostgreSQL database.
 3. Start using `npm run dev`. Then run `npm run codespaces:doctor -- --check-app` to verify actual server dependencies and AnA readiness.
 4. `--probe-openai` checks key authentication without a generation charge. `--probe-openai-usage` performs a small, deliberately billable API usage check. Neither allows an unqualified model to write regulated text.
