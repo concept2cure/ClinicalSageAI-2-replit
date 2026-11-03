@@ -48,6 +48,8 @@ jobs:
           # An explicit non-production parent is required; do not copy the
           # project's default or production branch into a PR environment.
           parent_branch: ${{ vars.NEON_SAFE_PARENT_BRANCH }}
+          # Do not clone patient/client records into PR preview environments.
+          branch_type: schema-only
 
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.check_secrets.outputs.skip != 'true'
