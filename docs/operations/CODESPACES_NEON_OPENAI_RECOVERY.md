@@ -45,7 +45,7 @@ Common codes:
 - `DB_TARGET_MISMATCH`: owner and app accounts point to different databases or branches.
 - `DB_NEON_TLS`, `DB_NEON_OWNER_TLS`, `DB_DNS_FAILED`, `DB_AUTH_REJECTED` or `DB_UNREACHABLE`: inspect the actual Neon connection; do not disable TLS verification.
 - `DB_SCHEMA_OR_GRANTS_NOT_READY`: schema, RLS-sensitive runtime permissions, audit store or pgvector are not qualified.
-- `RLS_NOT_ENFORCED`: Codespaces RLS is disabled or merely in shadow mode; it is not safe to qualify tenant-scoped authoring. Rebuild with `RLS_ENFORCE=on` and verify tenant policies.
+- `RLS_NOT_ENFORCED`: Codespaces RLS is disabled or merely in shadow mode; it is not safe to qualify tenant-scoped authoring. Rebuild with `RLS_ENFORCE=on` and verify tenant policies. The doctor also reads `current_setting('app.rls_enforce')` from the **actual app_service connection** and refuses an RLS-enabled table the runtime role owns without FORCE ROW LEVEL SECURITY. These are read-only checks: any required role/policy repair must occur in an approved maintenance session.
 - `JWT_SECRET_MISSING`, `JWT_SECRET_WEAK` or `JWT_ROTATION_INVALID`: configure a distinct, strong Codespaces secret; a database passing does not imply the API can authenticate users.
 
 If the database is truly new, use the existing [DB readiness procedure](DB_READINESS.md) against an **authorized empty development database** with owner and app roles. Do not run `install-fresh` against a production or shared Neon branch to make a green test appear.
