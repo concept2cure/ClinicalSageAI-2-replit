@@ -57,9 +57,14 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
         program_type: otherType ? 'ind' : 'csr' } });
     }
     if (method === 'GET' && url.startsWith('/api/c2c/project-vault/p1/search?')) {
-      const q = new URL(url, 'https://example.test').searchParams.get('q') ?? '';
-      return ok({ data: { results: state.vault.filter(d => d.title.includes(q))
-        .map(d => ({ ...d, current: true })) } });
+      const params = new URL(url, 'https://example.test').searchParams;
+      const q = params.get('q') ?? '';
+      const limit = Number(params.get('limit') ?? 50);
+      const offset = Number(params.get('offset') ?? 0);
+      const found = state.vault.filter(d => d.title.includes(q));
+      return ok({ data: { results: found.slice(offset, offset + limit)
+        .map(d => ({ ...d, current: d.current !== false })),
+        total: found.length, limit, offset } });
     }
     if (method === 'POST' && /^\/api\/c2c\/project-vault\/p1\/documents\/[^/]+\/details$/.test(url)) {
       const documentId = url.split('/')[6];
@@ -293,6 +298,60 @@ test('original fictional analysis archive refuses tampering or a mismatched deri
       adverseEvents: [event, ...source.studyData.adverseEvents.slice(1)] } };
   assert.throws(() => validateOriginalDemoCsvBundle(alteredSafety, qc, bundle),
     /AE listing contradicts/);
+});
+
+test('replays an exact source on a later Data Room search page without uploading a duplicate', async () => {
+  const app = fakeApplication();
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  const known = app.state.vault.find(d => /clinical source JSON/.test(d.title));
+  assert.ok(known);
+  const unrelated = Array.from({ length: 50 }, (_, n) => ({
+    id: `filler-${n}`,
+    title: `${known.title} — unrelated indexed note ${n}`,
+    documentType: 'OTHER',
+    contentHash: 'f'.repeat(64),
+    current: true,
+  }));
+  // All 50 records match the source query but not its exact title.
+  app.state.vault.unshift(...unrelated);
+  const before = app.state.calls.length;
+  const run = app.run();
+  await seed({ api: app.api, identity: app.identity, run });
+  const calls = app.state.calls.slice(before);
+  assert.ok(calls.some(c => c.method === 'GET' &&
+    c.url.includes('/api/c2c/project-vault/p1/search?') && c.url.includes('offset=50')));
+  assert.ok(calls.every(c => c.method === 'GET'), 'A later-page exact source must be reused, never reuploaded');
+  assert.equal(app.state.vault.filter(d => d.title === known.title).length, 1);
+  assert.equal(run.records['source.csr-source-v2'].id, known.id);
+});
+
+test('a second same-title project is a refusal, not an arbitrary project selection', async () => {
+  const app = fakeApplication();
+  app.state.clients.push({ id: 7, slug: 'faux-biotech-therapeutics-demo' });
+  app.state.projects.push(
+    { id: 'p1', title: PROJECT_NAME, client_workspace_id: 7, program_type: 'csr' },
+    { id: 'p2', title: PROJECT_NAME, client_workspace_id: 7, program_type: 'csr' },
+  );
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /More than one FBT-201 project/);
+  assert.ok(app.state.calls.every(c => c.method === 'GET'));
+  assert.equal(app.state.vault.length, 0);
+});
+
+test('a stalled paginated source search never silently assumes the source was absent', async () => {
+  const app = fakeApplication();
+  const originalApi = app.api;
+  app.api = async (method, url, body) => {
+    if (method === 'GET' && url.startsWith('/api/c2c/project-vault/p1/search?')) {
+      app.state.calls.push({ method, url, body });
+      return ok({ data: { results: [], total: 2, limit: 50, offset: 0 } });
+    }
+    return originalApi(method, url, body);
+  };
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /paging made no progress/);
+  assert.ok(!app.state.calls.some(c => c.method === 'POST' && c.url === '/api/vault/ingest'));
+  assert.equal(app.state.vault.length, 0);
 });
 
 test('replaying the pack reuses governed records without rewriting existing data', async () => {
