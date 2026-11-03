@@ -53,8 +53,12 @@ export function checkDatabaseConfiguration(env) {
   const configuredBaseOwner = env.DATABASE_URL ? parseDbTarget(env.DATABASE_URL) : null;
   const configuredExplicitOwner = env.DATABASE_OWNER_URL ? parseDbTarget(env.DATABASE_OWNER_URL) : null;
   const issues = [];
-  if (!owner) issues.push(reason('DB_OWNER_URL_MISSING', 'Set DATABASE_URL or DATABASE_OWNER_URL to the intended PostgreSQL owner connection. No fallback is made.'));
-  if (!runtime) issues.push(reason('DB_RUNTIME_URL_MISSING', 'Set APP_DATABASE_URL to the separate non-owner app_service connection for that SAME database.'));
+  // Readiness needs only APP_DATABASE_URL. Owner credentials belong in a
+  // separate provision/migration session, not the request-serving Codespace.
+  if (ownerRaw && !owner) issues.push(reason('DB_OWNER_URL_INVALID',
+    'Optional owner DSN is invalid. Remove it from the app environment or correct the separate maintenance connection.'));
+  if (!runtime) issues.push(reason('DB_RUNTIME_URL_MISSING',
+    'Set APP_DATABASE_URL to the non-owner app_service connection. This Codespace never falls back to an owner or local database.'));
   if (owner && runtime && !sameDatabase(owner, runtime)) {
     issues.push(reason('DB_TARGET_MISMATCH', 'The owner and application DSNs target different databases or hosts. Do not run migrations or the platform.'));
   }
