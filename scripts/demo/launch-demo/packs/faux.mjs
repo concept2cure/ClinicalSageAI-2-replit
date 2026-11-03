@@ -346,6 +346,23 @@ export async function seed(ctx) {
       bytes: () => pdfFromMarkdown(filename, label),
     });
   }
+  // These original/reconciled fictional tabulations already exist alongside
+  // the structured source. Admit them into the SAME project's Data Room, so
+  // Biostatistics, the one editor and AnA can inspect their real Vault records.
+  // The ADSL file is only a synthetic QC INDEX, not an ADaM XPT, SDTM dataset
+  // or a CDISC conformity receipt. TLFs are descriptive and unapproved.
+  for (const [key, fileName, label, documentType] of [
+    ['adsl-qc-v2', 'ADSL_160_SUBJECT_QC_INDEX.csv', 'FBT-201 synthetic subject QC index · v2 (not ADaM)', 'OTHER'],
+    ['tl-f-efficacy-v2', 'TLF_PRIMARY_EFFICACY.csv', 'FBT-201 synthetic PASI75 efficacy TLF · v2', 'REPORT'],
+    ['tl-f-safety-v2', 'TLF_SAFETY.csv', 'FBT-201 synthetic adverse-event safety TLF · v2', 'REPORT'],
+  ]) {
+    await ensureSource(c, project, {
+      key, label, documentType,
+      fileName: `fbt201-${key}-synthetic.csv`, mime: 'text/csv',
+      code: `FBT-201-${key.toUpperCase()}-SYNTHETIC.csv`,
+      bytes: () => fs.readFileSync(path.join(DOC_ROOT, fileName)),
+    });
+  }
   const workingDocument = await ensureCsrWorkingDocument(c, project, canonicalTemplate);
   // The original Tasking and one-editor navigation already understand the
   // authoring_document origin. This is a pending work item, not an executed
