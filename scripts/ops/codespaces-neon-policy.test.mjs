@@ -17,6 +17,9 @@ test('Neon automation never silently clones the previous production/default bran
     const workflow = read(path);
     assert.doesNotMatch(workflow, /\$\{\{\s*secrets\.NEON_PROD_BRANCH\s*\}\}/, path);
     assert.match(workflow, /NEON_SAFE_PARENT_BRANCH/, path);
+    assert.match(workflow, /branch_type: schema-only/, path);
+    assert.match(workflow, /parent_branch: \$\{\{ vars\.NEON_SAFE_PARENT_BRANCH \}\}/, path);
+    assert.match(workflow, /create-branch-action@fb620d43d4c565abaf088b848a4e28e5c4ea4d9c/, path);
   }
   assert.match(read('.github/workflows/neon-provisioning.yml'),
     /missing="\$missing NEON_SAFE_PARENT_BRANCH/);
