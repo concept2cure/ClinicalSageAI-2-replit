@@ -69,7 +69,108 @@ function sourceBytes() {
       throw new Error('Faux Biotech source and current revised statistical totals differ. Nothing was seeded.');
     }
   }
-  return { bytes, digest };
+  return { bytes, digest, envelope: source };
+}
+
+
+/** Fixed, deliberately simple fictional CSVs: no quoting or embedded commas.
+ * Refuse any changed shape rather than silently misreading a clinical result. */
+function syntheticRows(name, bytes, expectedColumns) {
+  const value = bytes.toString('utf8').trimEnd();
+  if (!value || value.includes('"')) throw new Error('Synthetic demo CSV contains an unsupported or empty row: ' + name);
+  const lines = value.split(/\r?\n/);
+  const headers = lines.shift();
+  if (headers !== expectedColumns.join(',')) throw new Error('Synthetic demo CSV headers changed: ' + name);
+  return lines.map((line, index) => {
+    const fields = line.split(',');
+    if (fields.length !== expectedColumns.length) throw new Error('Synthetic demo CSV column count changed: ' + name + ' row ' + (index + 2));
+    return Object.fromEntries(expectedColumns.map((key, i) => [key, fields[i]]));
+  });
+}
+
+const DEMO_CSV_NAMES = [
+  'ADSL_160_SUBJECT_QC_INDEX.csv',
+  'TLF_PRIMARY_EFFICACY.csv',
+  'TLF_SAFETY.csv',
+];
+
+/** This is synthetic demonstration reconciliation only, NOT a clinical
+ * statistics engine, ADaM parser or CDISC/FDA conformance checker. The caller
+ * uploads THESE validated bytes, not freshly opened copies. */
+export function validateSyntheticDemoRows(source, files) {
+  const qc = syntheticRows(DEMO_CSV_NAMES[0], files[DEMO_CSV_NAMES[0]],
+    ['STUDYID', 'USUBJID', 'TRT01A', 'ITTFL', 'SAFFL', 'PASI75W12', 'COMPLTRT', 'TEAEFL', 'SAEFL', 'AEWITHFL', 'PROVENANCE']);
+  const efficacy = syntheticRows(DEMO_CSV_NAMES[1], files[DEMO_CSV_NAMES[1]],
+    ['arm', 'ITT', 'responders', 'response_rate_pct', 'treatment_complete']);
+  const safety = syntheticRows(DEMO_CSV_NAMES[2], files[DEMO_CSV_NAMES[2]],
+    ['arm', 'safety_n', 'subjects_with_teae', 'subjects_with_sae', 'subjects_ae_withdrawal', 'deaths']);
+  const participants = new Map(source.participants.map(p => [p.subjectId, p]));
+  const events = new Map();
+  for (const event of source.studyData.adverseEvents) {
+    if (!events.has(event.subjectId)) events.set(event.subjectId, []);
+    events.get(event.subjectId).push(event);
+  }
+  if (qc.length !== participants.size || efficacy.length !== source.studyData.treatmentArms.length ||
+      safety.length !== source.studyData.treatmentArms.length) {
+    throw new Error('Synthetic FBT-201 source and CSV row counts disagree; nothing was seeded.');
+  }
+  const seen = new Set();
+  const flags = ['ITTFL', 'SAFFL', 'PASI75W12', 'COMPLTRT', 'TEAEFL', 'SAEFL', 'AEWITHFL'];
+  for (const row of qc) {
+    const subject = participants.get(row.USUBJID);
+    const arm = source.studyData.treatmentArms.find(a => a.armId === subject?.armId);
+    const adverseEvents = events.get(row.USUBJID) ?? [];
+    if (!subject || !arm || seen.has(row.USUBJID) || row.STUDYID !== source.studyInfo.protocolNumber ||
+        row.TRT01A !== arm.armName || row.PROVENANCE !== 'SYNTHETIC_REVISION_2_NOT_CLINICAL_EVIDENCE' ||
+        flags.some(key => row[key] !== 'Y' && row[key] !== 'N') ||
+        row.ITTFL !== (subject.itt ? 'Y' : 'N') ||
+        row.SAFFL !== (subject.safety ? 'Y' : 'N') ||
+        row.COMPLTRT !== (subject.completed ? 'Y' : 'N') ||
+        row.TEAEFL !== (adverseEvents.length ? 'Y' : 'N') ||
+        row.SAEFL !== (adverseEvents.some(e => e.serious) ? 'Y' : 'N') ||
+        row.AEWITHFL !== (adverseEvents.some(e => e.ledToDiscontinuation) ? 'Y' : 'N')) {
+      throw new Error('Synthetic subject QC index conflicts with the structured source at ' + row.USUBJID + '; nothing was seeded.');
+    }
+    seen.add(row.USUBJID);
+  }
+
+  for (const arm of source.studyData.treatmentArms) {
+    const members = qc.filter(row => row.TRT01A === arm.armName);
+    const eff = efficacy.filter(row => row.arm === arm.armName);
+    const safe = safety.filter(row => row.arm === arm.armName);
+    const primary = source.studyData.efficacy.filter(item => item.armId === arm.armId && item.endpointType === 'primary');
+    const count = (name, value) => members.filter(row => row[name] === value).length;
+    const randomized = count('ITTFL', 'Y');
+    const responders = count('PASI75W12', 'Y');
+    const teae = count('TEAEFL', 'Y');
+    const sae = count('SAEFL', 'Y');
+    const withdrawals = count('AEWITHFL', 'Y');
+    const deaths = new Set(source.studyData.adverseEvents.filter(e => e.armId === arm.armId && e.outcome === 'fatal')
+      .map(e => e.subjectId)).size;
+    if (eff.length !== 1 || safe.length !== 1 || primary.length !== 1 ||
+        members.length !== arm.randomized || randomized !== arm.populations.itt ||
+        count('COMPLTRT', 'Y') !== arm.populations.completed ||
+        Number(eff[0].ITT) !== randomized ||
+        Number(eff[0].responders) !== responders ||
+        Number(eff[0].response_rate_pct) !== Number(primary[0].value) ||
+        Number(eff[0].response_rate_pct) !== 100 * responders / randomized ||
+        Number(eff[0].treatment_complete) !== count('COMPLTRT', 'Y') ||
+        Number(safe[0].safety_n) !== arm.populations.safety ||
+        Number(safe[0].subjects_with_teae) !== teae ||
+        Number(safe[0].subjects_with_sae) !== sae ||
+        Number(safe[0].subjects_ae_withdrawal) !== withdrawals ||
+        Number(safe[0].deaths) !== deaths) {
+      throw new Error('Synthetic QC, efficacy TLF, safety TLF and structured source disagree for ' + arm.armId + '; nothing was seeded.');
+    }
+  }
+  return files;
+}
+
+/** Preserve the exact bytes that passed reconciliation until governed upload. */
+function validatedDemoCsvFiles(source) {
+  const files = Object.fromEntries(DEMO_CSV_NAMES.map(name =>
+    [name, fs.readFileSync(path.join(DOC_ROOT, name))]));
+  return validateSyntheticDemoRows(source, files);
 }
 
 function checkDemoOrg(identity) {
@@ -322,6 +423,7 @@ async function ensureCsrWorkingDocument({ api, run, tally }, project, template) 
 export async function seed(ctx) {
   checkDemoOrg(ctx.identity);
   const source = sourceBytes(); // fail before any write on a wrong revision
+  const csvFiles = validatedDemoCsvFiles(source.envelope); // compare all six sources before any write
   const tally = makeTally(ctx.run);
   const c = { ...ctx, tally };
   ctx.run.note('The fictional client and FBT-201 project use the platform\'s existing Project Management, Data Room, Tasking and single editor. No CSR application, parallel workflow, study approval, signature or clinical trial is created.');
@@ -360,7 +462,7 @@ export async function seed(ctx) {
       key, label, documentType,
       fileName: `fbt201-${key}-synthetic.csv`, mime: 'text/csv',
       code: `FBT-201-${key.toUpperCase()}-SYNTHETIC.csv`,
-      bytes: () => fs.readFileSync(path.join(DOC_ROOT, fileName)),
+      bytes: () => csvFiles[fileName],
     });
   }
   const workingDocument = await ensureCsrWorkingDocument(c, project, canonicalTemplate);
