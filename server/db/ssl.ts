@@ -61,3 +61,30 @@ export const getSslConfig = (
   // All REMOTE endpoints, including Neon in Codespaces, verify their cert.
   return { rejectUnauthorized: isProduction || !isLoopbackHost(databaseHost(connectionString)) };
 };
+
+/**
+ * node-postgres replaces the explicit `ssl` object when the DSN includes
+ * `sslmode`. A Neon copy-button URL normally contains `sslmode=require`:
+ * make the connection-string parser request hostname/CA verification itself,
+ * including if its semantics change between pg versions. Never silently
+ * downgrade remote TLS. Preserve non-SSL query options and credentials.
+ */
+export function verifiedPgConnectionString(connectionString: string): string {
+  let uri: URL;
+  try {
+    uri = new URL(connectionString);
+  } catch {
+    return connectionString; // connection creation will reject an invalid URI
+  }
+  if (!['postgres:', 'postgresql:'].includes(uri.protocol) ||
+      isLoopbackHost(uri.hostname.toLowerCase())) return connectionString;
+  const mode = uri.searchParams.get('sslmode');
+  if (mode === 'disable' || mode === 'no-verify' || mode === 'prefer' || mode === 'allow') {
+    throw new Error('Remote PostgreSQL requires verified TLS; insecure sslmode is refused.');
+  }
+  if (mode === 'require' || mode === 'verify-ca') {
+    uri.searchParams.set('sslmode', 'verify-full');
+    return uri.toString();
+  }
+  return connectionString;
+}
