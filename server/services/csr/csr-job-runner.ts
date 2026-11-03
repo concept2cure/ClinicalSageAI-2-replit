@@ -42,7 +42,7 @@ import {
   type CSRBuildRequest,
   type CSRSection,
 } from '../csr-builder';
-import { CsrAuthoringContextError, csrSectionTableKeys, parseCsrEvidenceSelection,
+import { csrSectionTableKeys, parseCsrEvidenceSelection,
   type CsrAuthoringEvidence } from './cortex-authoring-context';
 import { assertCsrJobEvidenceUnchanged, assertSavedCsrJobEvidence, readCsrJobEvidence,
   verifyCsrJobWriteScope, type CsrJobEvidenceScope } from './csr-job-evidence';
