@@ -175,6 +175,28 @@ describe('runCSRBuildJob — requester identity is mandatory', () => {
   });
 });
 
+describe('runCSRBuildJob — sensitive error text is never persisted', () => {
+  it('stores a safe generic receipt for an SDK/SQL failure that contains clinical details', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockRejectedValueOnce(new Error('Patient SYN-004 DOB and postgresql://owner:password@host/db'));
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed', error: { message: 'CSR_BUILD_STEP_FAILED' } });
+    expect(JSON.stringify(fake.job.error)).not.toMatch(/SYN-004|DOB|password|host\/db/);
+  });
+
+  it('preserves a stable CSR refusal code while dropping its untrusted message', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockRejectedValueOnce(Object.assign(new Error('Untrusted subject SYN-004'), {
+      code: 'CSR_SOURCE_CHANGED',
+    }));
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed', error: {
+      code: 'CSR_SOURCE_CHANGED', message: 'CSR_SOURCE_CHANGED',
+    } });
+    expect(JSON.stringify(fake.job.error)).not.toContain('SYN-004');
+  });
+});
+
 describe('runCSRBuildJob — requested saved-output coverage', () => {
   it.each(['', ' \n\t '])('refuses completion when the requested draft has no usable content (%j)', async content => {
     fake = makeFakeDb({ ...makeJob(), sectionsToGenerate: ['6'] });
