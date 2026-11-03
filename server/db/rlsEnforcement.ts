@@ -19,9 +19,10 @@
  *   RLS_ENFORCE=shadow    — alias for off; intent: "I'm watching"
  *   RLS_ENFORCE=on        — policy filters. The flip.
  *
- * Outside production an unset RLS_ENFORCE defaults to off so dev/test keep
- * working with zero configuration. Production requires `on`; unset, invalid,
- * `off`, and `shadow` all refuse startup.
+ * Outside production and Codespaces an unset RLS_ENFORCE defaults to off so
+ * standalone dev/test keep working with zero configuration. Production AND
+ * Codespaces require canonical `on`; unset, invalid, `off`, and `shadow`
+ * all refuse startup.
  *
  * The setting is applied in the PostgreSQL startup packet so it is active
  * before a pooled connection can be checked out or execute its first query.
