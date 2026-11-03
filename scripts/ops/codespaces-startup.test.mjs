@@ -52,6 +52,7 @@ test('Codespaces main path gates on the doctor before any legacy mutation', () =
   assert.doesNotMatch(codespace, /write_env_file|ensure_native_postgres|ensure_database|DATABASE_URL="\$DEFAULT_DATABASE_URL"/);
   assert.match(source, /if ! is_codespace && \[\[ -f "\$PROJECT_ROOT\/\.env" \]\]/);
   const post = readFileSync(postStart, 'utf8');
-  assert.doesNotMatch(post, /pg_hba\.conf|sed -i|ALTER USER postgres|export DATABASE_URL/);
+  const executableLines = post.split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+  assert.doesNotMatch(executableLines, /pg_hba\.conf|sed -i|ALTER USER postgres|export DATABASE_URL/);
   assert.match(post, /No database is provisioned or switched/);
 });
