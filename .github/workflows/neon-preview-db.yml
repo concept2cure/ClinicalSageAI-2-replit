@@ -90,8 +90,8 @@ jobs:
       - name: Apply migrations + verify schema
         if: steps.check_secrets.outputs.skip != 'true' && steps.db_url.outputs.skip_db != 'true'
         run: |
-          # The Neon preview branch inherits from the project's default
-          # parent (which already has the full migration history applied).
+          # The schema-only Neon preview inherits the explicitly approved
+          # non-production parent's SCHEMA (no client data).
           # Running `scripts/db_migrate.sh` here would re-apply all ~166
           # migrations from scratch — most aren't idempotent, so the
           # whole step fails on something like a duplicate CREATE TABLE.
