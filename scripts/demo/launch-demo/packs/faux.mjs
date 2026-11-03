@@ -296,15 +296,36 @@ function checkDemoOrg(identity) {
   }
 }
 
-async function ensureClient({ api, run, tally }) {
+async function ensureClient({ api, run, tally, identity }) {
   let id;
   await run.step('Project Management: fictional client record', async () => {
     const j = must(await api('GET', '/api/clients'), 200, 'list client records');
-    const found = asRows(j).find(c => c.slug === CLIENT.slug);
-    if (found) { id = Number(found.id); tally.found('client-record'); }
-    else {
+    if (!Array.isArray(j.clients)) {
+      throw new Error('The client catalog was unavailable. No new fictional client was created.');
+    }
+    const candidates = asRows(j).filter(c => c.slug === CLIENT.slug);
+    if (candidates.length > 1) {
+      throw new Error('Multiple client records have the Faux Biotech slug. Reconcile client identity before seeding.');
+    }
+    const found = candidates[0] ?? null;
+    if (found) {
+      // The existing endpoint returns name, status and organizationId for each
+      // client. The slug alone does not authorize adopting an unrelated,
+      // inactive or renamed client as this fictional project's parent.
+      if (found.name !== CLIENT.name || String(found.organizationId ?? '') !== String(identity.organizationId) ||
+          String(found.status ?? '').toLowerCase() !== 'active') {
+        throw new Error('The Faux Biotech client record has a mismatched tenant, name or inactive status. No project/data was attached.');
+      }
+      id = Number(found.id);
+      tally.found('client-record');
+    } else {
       const created = must(await api('POST', '/api/clients', CLIENT), [200, 201], 'create fictional client record');
-      id = Number(created.client?.id ?? created.data?.id ?? created.id);
+      const saved = created.client ?? created.data ?? created;
+      if (saved.name !== CLIENT.name || saved.slug !== CLIENT.slug ||
+          String(saved.organizationId ?? '') !== String(identity.organizationId)) {
+        throw new Error('The new client receipt did not confirm the fictional tenant and identity. No project was created.');
+      }
+      id = Number(saved.id);
       tally.created('client-record');
     }
     if (!Number.isSafeInteger(id) || id <= 0) throw new Error('Client record did not return a valid identifier.');
