@@ -32,6 +32,12 @@ test('Codespaces never silently chooses a different DB, invalid TLS or the owner
     .issues.some(x => x.code === 'DB_NEON_TLS'));
   assert.ok(checkDatabaseConfiguration({ ...env, C2C_DB_MODE: 'local' })
     .issues.some(x => x.code === 'DB_LOCAL_EXPECTED'));
+  assert.ok(checkDatabaseConfiguration({ ...env, DATABASE_OWNER_URL:
+    'postgresql://neondb_owner:secret@ep-other.neon.tech/neondb?sslmode=require' })
+    .issues.some(x => x.code === 'DB_OWNER_TARGET_CONFLICT'));
+  assert.ok(checkDatabaseConfiguration({ ...env, DATABASE_OWNER_URL:
+    'postgresql://neondb_owner:secret@ep-example.neon.tech/neondb?sslmode=disable' })
+    .issues.some(x => x.code === 'DB_NEON_OWNER_TLS'));
 });
 test('Neon connection errors are classified without returning credential-bearing messages', () => {
   assert.equal(classifyDbError({ code: '28P01', message: owner }), 'DB_AUTH_REJECTED');
