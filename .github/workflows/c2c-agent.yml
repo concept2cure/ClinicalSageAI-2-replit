@@ -50,9 +50,9 @@ jobs:
           # We gracefully skip the preview-branch creation in that case
           # instead of failing the whole `setup` job (which then cascades
           # into downstream jobs that depend on it).
-          if [ -z "${{ secrets.NEON_API_KEY }}" ] || [ -z "${{ secrets.NEON_PROJECT_ID }}" ]; then
+          if [ -z "${{ secrets.NEON_API_KEY }}" ] || [ -z "${{ secrets.NEON_PROJECT_ID }}" ] || [ -z "${{ vars.NEON_SAFE_PARENT_BRANCH }}" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::Neon secrets not configured; skipping preview branch creation"
+            echo "::notice::Neon API/project or approved non-production parent is missing; no preview branch was created"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
@@ -66,7 +66,7 @@ jobs:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
           api_key: ${{ secrets.NEON_API_KEY }}
           branch_name: preview-${{ github.head_ref }}
-          parent: ${{ secrets.NEON_PROD_BRANCH }}
+          parent: ${{ vars.NEON_SAFE_PARENT_BRANCH }}
 
   # 2. TYPE CHECK + LINT — removed 2026-10-30 (MR-02 Stage 3, OPS-25). It ran
   # on every push and duplicated ci.yml's Lint job, steps "Run TypeScript check
