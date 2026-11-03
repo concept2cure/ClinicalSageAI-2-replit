@@ -77,9 +77,15 @@ test('independent current review must approve the exact imported CSR, not a Task
 
 test('the reopened DOCX must contain actual saved prose from the approved version', () => {
   assert.equal(qualifyDocxXml(wordXml, finalSections.sections).matchingSections, 1);
-  assert.throws(() => qualifyDocxXml('<w:document/>', finalSections.sections), /does not contain/);
+  assert.throws(() => qualifyDocxXml('<w:document/>', finalSections.sections), /missing saved CSR text/);
   assert.throws(() => qualifyDocxXml('not a Word document', finalSections.sections), /no Word document/);
   assert.throws(() => qualifyDocxXml(wordXml, [{ content: '[DATA TO BE INSERTED]' }]), /No substantial/);
+  assert.equal(qualifyDocxXml(wordXml, finalSections.sections, text.slice(0, 100)).editedTextVerified, true);
+  assert.throws(() => qualifyDocxXml(wordXml, finalSections.sections, 'Unrecorded fabricated edited wording in the document.'),
+    /not in the currently saved CSR/);
+  const absent = 'Another very long unique CSR source section was entered and saved in the governed editor but not exported.';
+  assert.throws(() => qualifyDocxXml(wordXml, [...finalSections.sections, { code: '12.3', content: absent }]),
+    /missing saved CSR text for 1 section/);
 });
 
 test('the real API path does not create a model build unless explicitly requested', async () => {
