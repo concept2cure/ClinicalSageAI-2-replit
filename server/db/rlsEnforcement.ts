@@ -78,7 +78,12 @@ export function assertRlsEnforcementForProduction(
 ): RlsEnforcementMode {
   const mode = readEnforcementMode(env);
   const isProduction = (env.NODE_ENV ?? '').toLowerCase() === 'production';
-  if (!isProduction) return mode;
+  const isCodespace = env.C2C_CODESPACE === '1' || env.CODESPACES === 'true';
+  // A Codespace used for a regulated development demonstration must enforce
+  // tenant isolation just like production. All other local/test environments
+  // retain their existing configurable off/shadow behavior.
+  if (!isProduction && !isCodespace) return mode;
+  const environmentLabel = isProduction ? 'production' : 'Codespaces';
 
   const raw = (env.RLS_ENFORCE ?? '').trim();
   if (raw.toLowerCase() === 'on') return 'on';
@@ -91,16 +96,16 @@ export function assertRlsEnforcementForProduction(
     // authorities-consolidation refactor briefly accepted aliases here,
     // silently weakening the boot contract this module's tests pin.)
     throw new Error(
-      `[rls-enforcement] REFUSING TO BOOT: RLS_ENFORCE is set to "${raw}" in production. ` +
-        'Aliases are not accepted for the production kill-switch. Set RLS_ENFORCE=on (canonical form).'
+      `[rls-enforcement] REFUSING TO BOOT: RLS_ENFORCE is set to "${raw}" in ${environmentLabel}. ` +
+        'Aliases are not accepted for the tenant-isolation kill-switch. Set RLS_ENFORCE=on (canonical form).'
     );
   }
 
   const configured = raw === '' ? 'not set' : `set to "${raw}"`;
   throw new Error(
     `[rls-enforcement] FAIL-CLOSED: REFUSING TO BOOT because RLS_ENFORCE is ${configured} ` +
-      `in production (resolved mode "${mode}"). Production requires RLS_ENFORCE=on; ` +
-      'off and shadow modes are restricted to non-production environments.'
+      `in ${environmentLabel} (resolved mode "${mode}"). The regulated runtime requires RLS_ENFORCE=on; ` +
+      'off and shadow modes are restricted to non-Codespaces local development environments.'
   );
 }
 
