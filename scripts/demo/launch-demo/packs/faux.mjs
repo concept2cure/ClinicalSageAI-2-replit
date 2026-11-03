@@ -562,6 +562,16 @@ async function ensureCsrWorkingDocument({ api, run, tally }, project, template) 
         !UUID_RE.test(String(already[0].id ?? '')))) {
       throw new Error('An existing CSR working document has the wrong project or template. No record was replaced.');
     }
+    // The one editor projects the current document's stored status and
+    // permission scope. A frozen, approved or review-locked record is NOT a
+    // working draft; a section-only reader cannot open the whole document.
+    // Reusing either would leave a pending Tasking review linked to a record
+    // the current actor may not edit or even open.
+    if (already.length && (
+        String(already[0].status ?? '').trim().toUpperCase() !== 'DRAFT' ||
+        already[0].readScope !== 'document')) {
+      throw new Error('The existing CSR is not an editable working draft with full document access. Resolve its status or access in the existing editor; no pending review task was attached.');
+    }
 
     let id;
     if (already.length) {
@@ -588,8 +598,10 @@ async function ensureCsrWorkingDocument({ api, run, tally }, project, template) 
     const saved = matching.find(row => String(row.id) === id);
     if (matching.length !== 1 || !saved || String(saved.program_id ?? '') !== String(project.id) ||
         String(saved.template_id ?? '') !== String(template.id) ||
-        !(Number(saved.section_count) > 0)) {
-      throw new Error('The editor did not return the CSR document with the canonical template and seeded ICH E3 sections. The demo is not ready.');
+        !(Number(saved.section_count) > 0) ||
+        String(saved.status ?? '').trim().toUpperCase() !== 'DRAFT' ||
+        saved.readScope !== 'document') {
+      throw new Error('The editor did not return an accessible, editable CSR draft with the canonical template and seeded ICH E3 sections. The demo is not ready.');
     }
     document = {
       id,
