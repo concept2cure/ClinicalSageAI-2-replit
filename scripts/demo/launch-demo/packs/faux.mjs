@@ -186,7 +186,10 @@ async function ensureSource({ api, run, tally }, project, spec) {
     form.append('programId', project.id);
     form.append('documentCode', spec.code);
     form.append('documentTitle', name);
-    form.append('documentType', 'OTHER');
+    // Preserve the source's existing Vault document taxonomy rather than
+    // flattening every protocol/SAP into 'Other'. The synthetic JSON remains
+    // OTHER because the current ingest enum has no scientific-dataset token.
+    form.append('documentType', spec.documentType);
     const result = must(await api('POST', '/api/vault/ingest', form), 201, `ingest ${spec.label}`);
     if (!result.document?.id || result.document?.contentHash !== digest) {
       throw new Error('The Data Room ingestion returned no document or a different content hash; the source is not qualified.');
@@ -297,7 +300,7 @@ export async function seed(ctx) {
   await ensureSource(c, project, {
     key: 'csr-source-v2', label: 'FBT-201 clinical source JSON · synthetic v2',
     fileName: 'fbt201-csr-source-synthetic-v2.json', mime: 'application/json',
-    code: 'FBT-201-CSR-SOURCE-v2.json', bytes: () => source.bytes,
+    code: 'FBT-201-CSR-SOURCE-v2.json', documentType: 'OTHER', bytes: () => source.bytes,
   });
   for (const [key, filename, label] of [
     ['protocol', 'PROTOCOL_FBT-201-2026_v2.md', 'FBT-201 study protocol · synthetic v2'],
@@ -306,6 +309,7 @@ export async function seed(ctx) {
     await ensureSource(c, project, {
       key, label, fileName: `fbt201-${key}-synthetic.pdf`, mime: 'application/pdf',
       code: `FBT-201-${key.toUpperCase()}-SYNTHETIC.pdf`,
+      documentType: key === 'protocol' ? 'PROTOCOL' : 'SAP',
       bytes: () => pdfFromMarkdown(filename, label),
     });
   }
