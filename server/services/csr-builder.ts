@@ -273,11 +273,10 @@ export async function launchCSRBuildAsync(
   // runCSRBuildJob's own catch block; we still attach a .catch handler
   // here as a safety net so an unhandled rejection can't crash the process.
   setImmediate(() => {
-    runCSRBuildJob(enqueued.jobId).catch(err => {
-      console.error(
-        `[CSR Builder] runCSRBuildJob(${enqueued.jobId}) threw outside its own error handler:`,
-        err
-      );
+    runCSRBuildJob(enqueued.jobId).catch(() => {
+      // The job stores its own typed refusal; raw worker exceptions may carry
+      // uploaded study values or provider response details. Never echo them.
+      console.error(`[CSR Builder] runCSRBuildJob(${enqueued.jobId}) failed outside its own handler.`);
     });
   });
 
@@ -645,8 +644,8 @@ async function generateSectionWithAI(
       return template();
     }
     return { content, isAI: Boolean(content?.trim()) };
-  } catch (err) {
-    console.warn(`[CSR Builder] AI drafting failed for section ${section.number}, using template:`, err);
+  } catch {
+    console.warn(`[CSR Builder] AI drafting failed for section ${section.number}; using needs-data template.`);
     return template();
   }
 }
@@ -734,8 +733,8 @@ export async function compareWithExistingCSRs(
       outcome: 'Unknown',
       similarity: indication.toLowerCase() === String(row.indication || '').toLowerCase() ? 0.95 : 0.6,
     }));
-  } catch (err) {
-    console.warn('[CSR Builder] Cross-study comparison query failed:', err);
+  } catch {
+    console.warn('[CSR Builder] Cross-study comparison query failed; no external rows returned.');
     return [];
   }
 }
