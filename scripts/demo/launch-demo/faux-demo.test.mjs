@@ -22,6 +22,11 @@ const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const PROJECT_NAME = '[Demo · Faux] FBT-201 Phase 2 Clinical Study Report — SYNTHETIC';
 const identity = Object.freeze({ email: 'demo@fictional.example', organizationId: '42',
   organizationName: 'Faux Biotech Therapeutics (fictional demo)' });
+const CLIENT_EXAMPLE = Object.freeze({
+  name: 'Faux Biotech Therapeutics — fictional demonstration',
+  slug: 'faux-biotech-therapeutics-demo',
+  organizationId: '42', status: 'active',
+});
 
 const ok = (json, status = 200) => ({ status, json, text: JSON.stringify(json) });
 
@@ -33,7 +38,7 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
     state.calls.push({ method, url, body });
     if (method === 'GET' && url === '/api/clients') return ok({ clients: state.clients });
     if (method === 'POST' && url === '/api/clients') {
-      const entry = { ...body, id: 7 };
+      const entry = { ...body, id: 7, organizationId: identity.organizationId, status: 'active' };
       state.clients.push(entry);
       return ok({ client: entry }, 201);
     }
@@ -338,9 +343,32 @@ test('replays an exact source on a later Data Room search page without uploading
   assert.equal(run.records['source.csr-source-v2'].id, known.id);
 });
 
+test('an inactive or foreign client record is never adopted by the Faux seed', async () => {
+  for (const mismatch of [
+    { status: 'inactive' },
+    { organizationId: '84' },
+    { name: 'A different sponsor' },
+  ]) {
+    const app = fakeApplication();
+    app.state.clients.push({ id: 7, ...CLIENT_EXAMPLE, ...mismatch });
+    await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+      /mismatched tenant, name or inactive status/);
+    assert.ok(app.state.calls.every(c => c.method === 'GET'));
+    assert.equal(app.state.projects.length, 0);
+  }
+});
+
+test('duplicate slugged client records fail before any project or source write', async () => {
+  const app = fakeApplication();
+  app.state.clients.push({ id: 7, ...CLIENT_EXAMPLE }, { id: 8, ...CLIENT_EXAMPLE });
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /Multiple client records/);
+  assert.ok(app.state.calls.every(c => c.method === 'GET'));
+});
+
 test('a second same-title project is a refusal, not an arbitrary project selection', async () => {
   const app = fakeApplication();
-  app.state.clients.push({ id: 7, slug: 'faux-biotech-therapeutics-demo' });
+  app.state.clients.push({ id: 7, ...CLIENT_EXAMPLE });
   app.state.projects.push(
     { id: 'p1', title: PROJECT_NAME, client_workspace_id: 7, program_type: 'csr' },
     { id: 'p2', title: PROJECT_NAME, client_workspace_id: 7, program_type: 'csr' },
@@ -445,7 +473,7 @@ for (const [label, overrides, message] of [
 ]) {
   test(`refuses ${label} before any Data Room or authoring write`, async () => {
     const app = fakeApplication(overrides);
-    app.state.clients.push({ id: 7, slug: 'faux-biotech-therapeutics-demo' });
+    app.state.clients.push({ id: 7, ...CLIENT_EXAMPLE });
     app.state.projects.push({ id: 'p1', title: PROJECT_NAME,
       program_type: 'csr', client_workspace_id: 7 });
     await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }), message);
@@ -458,7 +486,7 @@ for (const [label, overrides, message] of [
 
 test('never adopts an existing project with a different document type', async () => {
   const app = fakeApplication({ otherType: true });
-  app.state.clients.push({ ...{ name: 'Faux Biotech Therapeutics', slug: 'faux-biotech-therapeutics-demo' }, id: 7 });
+  app.state.clients.push({ id: 7, ...CLIENT_EXAMPLE });
   app.state.projects.push({ id: 'p1', title: PROJECT_NAME, program_type: 'ind', client_workspace_id: 7 });
   await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }), /not the CSR document type/);
   assert.equal(app.state.vault.length, 0);
