@@ -172,6 +172,23 @@ describe('a saved CSR gets a number-to-source verdict from its retained run', ()
     expect(issues(v)).toEqual(expect.arrayContaining([expect.objectContaining({ section: '11.4', code: 'MISSING_SECTION' })]));
   });
 
+  it('does not let an uncoded added section carry an unsupported result without a source conflict', async () => {
+    await seedCsr();
+    await pg.query(`INSERT INTO authoring_sections(id,doc_id,tenant_id,code,title,order_index,created_at,updated_at,content)
+      VALUES($1,$2,7,NULL,'Added efficacy commentary',3,'2026-10-01','2026-10-02','<p>Improvement was observed in 300 participants.</p>')`, [sectionId(3), DOCUMENT]);
+    const v = await critique();
+    expect(v.csrEvidence.status).toBe('blocked');
+    expect(v.verdict).toBe('revise');
+    expect(v.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        kind: 'csr-unclaimed-figures',
+        section: '(uncoded section 3: Added efficacy commentary)',
+        blocking: true,
+        figures: ['300'],
+      }),
+    ]));
+  });
+
   it('checks a section with no code too: its numbers are listed and a contradicting n/N blocks', async () => {
     await seedCsr();
     await pg.query(`INSERT INTO authoring_sections(id,doc_id,tenant_id,code,title,order_index,created_at,updated_at,content)
