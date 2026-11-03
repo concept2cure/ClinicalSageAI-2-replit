@@ -112,6 +112,14 @@ The existing org-wide Tasking board's **Open linked document in editor** button 
 
 The customer demonstration remains unqualified until an actual authorized FBT-201 account opens the stored document from Tasking, confirms the correct project after refresh, uses AnA in the same editor and completes genuine review actions. Do not call a pending task a completed scientific review.
 
+## November 3 — Tasking identity and read-after-create verification
+
+The shared demo Tasking helper (`scripts/demo/launch-demo/packs/work-areas.mjs`) previously treated a partially readable board as an empty inventory and collapsed duplicate project task titles into one `Map` entry. It could therefore create a second task or silently reuse the wrong task in the same project. It now requires the existing Task Board's real `{success,data,meta:{partial:false,unreadSources:[]}}` response and a unique, nonblank title per existing project card; no task is created on an incomplete or ambiguous read.
+
+Task creation now validates the actual API's `{success:true,data:{taskId}}` acknowledgement rather than equating HTTP 200/201 with saved identity. After new tasks have been created, the helper rereads the same authenticated board and verifies **exactly one card with the expected title, task ID, project and authoring-document origin** for each new task. A task not visible after creation is reported as unverified; existing governed rows are **not** deleted, fabricated or marked approved. The Faux human-review task remains a **pending work item**, not a human review completed, a signature or a generated clinical report.
+
+The existing `scripts/demo/launch-demo/faux-demo.test.mjs` was extended for partial/unread boards, duplicate titles, missing POST receipts, missing reread tasks and exact document links. The actual modified Tasking helper's JavaScript control flow was executed with controlled API doubles: **9 of 9 focused scenarios passed**, including the normal create and idempotent replay. This is **not** a native repository `node --test` verdict, a database test, a deployed UI session or a regulated-source approval. GitHub CI and authenticated browser smoke still require complete results.
+
 ## Acceptance — still OPEN
 
 1. Actual fictitious organization exists with appropriately admitted demo member; account can sign in and list a Project Management project of type CSR.
