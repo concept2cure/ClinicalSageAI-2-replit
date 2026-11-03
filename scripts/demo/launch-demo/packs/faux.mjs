@@ -332,7 +332,11 @@ async function ensureProject({ api, run, tally }, clientWorkspaceId) {
   const name = title(TITLE);
   let result;
   await run.step('Project Management: create/reopen FBT-201 (document type CSR)', async () => {
-    let row = (await listProjects(api)).find(p => (p.title ?? p.name) === name);
+    const matchingProjects = (await listProjects(api)).filter(p => (p.title ?? p.name) === name);
+    if (matchingProjects.length > 1) {
+      throw new Error('More than one FBT-201 project has this exact title. Reconcile the existing projects before creating or reusing a record.');
+    }
+    let row = matchingProjects[0];
     if (!row) {
       const j = must(await api('POST', '/api/c2c/projects', {
         name, productName: 'FBT-201',
@@ -372,17 +376,39 @@ function pdfFromMarkdown(filename, label) {
   });
 }
 
+/** Search ALL current Vault results for this source label before creating
+ * another version. A page of 50 results is not evidence that a source on page
+ * two does not exist. The existing project search returns an exact total and
+ * bounded offset; incomplete/malformed search fails closed. */
+async function sourceCandidates(api, programId, label, exactTitle) {
+  const matches = [];
+  let offset = 0;
+  for (let page = 0; page < 100; page += 1) {
+    const path = `/api/c2c/project-vault/${programId}/search?q=${encodeURIComponent(label)}&limit=50${offset ? `&offset=${offset}` : ''}`;
+    const response = must(await api('GET', path), 200, 'search existing project Data Room source');
+    const data = response.data;
+    if (!Array.isArray(data?.results) || !Number.isSafeInteger(data.total) ||
+        data.total < 0 || data.results.length > 50) {
+      throw new Error('The project Data Room did not return a complete, paginated source list. No duplicate upload was attempted.');
+    }
+    for (const entry of data.results) {
+      if (entry.title === exactTitle) matches.push(entry);
+    }
+    offset += data.results.length;
+    if (offset === data.total) return matches;
+    if (data.results.length === 0 || offset > data.total) {
+      throw new Error('Project Data Room search paging made no progress or changed during the read. No duplicate upload was attempted.');
+    }
+  }
+  throw new Error('Project Data Room search exceeded 100 pages. Reconcile the existing catalog rather than risk a duplicate upload.');
+}
+
 async function ensureSource({ api, run, tally }, project, spec) {
   await run.step(`Project Data Room: ${spec.label}`, async () => {
     const name = title(spec.label);
     const content = spec.bytes();
     const digest = sha256(content);
-    const searchPath = `/api/c2c/project-vault/${project.id}/search?q=${encodeURIComponent(spec.label)}&limit=50`;
-    const search = must(await api('GET', searchPath), 200, 'search existing source');
-    if (!Array.isArray(search.data?.results)) {
-      throw new Error('The project Data Room did not return a verified source list. No duplicate upload was attempted.');
-    }
-    const sameTitle = search.data.results.filter(doc => doc.title === name);
+    const sameTitle = await sourceCandidates(api, project.id, spec.label, name);
     if (sameTitle.length > 1) {
       throw new Error(`The project Data Room has duplicate current candidates titled "${name}". Reconcile their versions before a demo seed.`);
     }
@@ -411,10 +437,8 @@ async function ensureSource({ api, run, tally }, project, spec) {
         }
         // The same governed search that located the source must confirm both
         // its type AND digest before the seed can proceed.
-        const reread = must(await api('GET', searchPath), 200, 'verify corrected Vault source type');
-        const confirmed = Array.isArray(reread.data?.results) &&
-          reread.data.results.filter(row => row.title === name);
-        if (!confirmed || confirmed.length !== 1 ||
+        const confirmed = await sourceCandidates(api, project.id, spec.label, name);
+        if (confirmed.length !== 1 ||
             confirmed[0].documentType !== spec.documentType ||
             confirmed[0].contentHash !== digest || confirmed[0].current === false) {
           throw new Error('The corrected Vault document type or content hash could not be confirmed. Review its existing audit history before retrying.');
