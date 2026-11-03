@@ -48,7 +48,7 @@ vi.mock('../../../db', () => ({
   },
 }));
 
-import { findUnclaimedNumbers, findUnsuppliedStatistics, isStatisticalSection } from '../unsupplied-statistics';
+import { acceptEvidenceBoundDraft, findUnclaimedNumbers, findUnsuppliedStatistics, isStatisticalSection, isCsrObservedResultsSection } from '../unsupplied-statistics';
 import { draftCSRSectionWithProvenance, type CSRBuildRequest, type CSRSection } from '../../csr-builder';
 import { loadCsrInputsForProject } from '../load-csr-inputs-for-project';
 
@@ -122,6 +122,55 @@ describe('findUnsuppliedStatistics', () => {
   it('treats methods and results sections as statistical, and ethics as not', () => {
     for (const n of ['2', '9.7', '10.1', '11.4', '12.2', '13', '14.2']) expect(isStatisticalSection(n)).toBe(true);
     for (const n of ['5', '7', '8.1', '9.1', '9.3']) expect(isStatisticalSection(n)).toBe(false);
+  });
+});
+
+describe('evidence-bound clinical result figures cannot borrow planned numbers', () => {
+  // Every record is synthetic. These tests distinguish the plan/metadata from
+  // observed outcomes; a matching decimal is not an analysis provenance link.
+  const evidence = {
+    evidenceDigest: 'e'.repeat(64),
+    tables: [{
+      key: 'deathsSAEsDiscontinuations',
+      title: 'Serious-event results', headers: ['Outcome', 'Study treatment'],
+      rows: [['Deaths', '300']],
+      sha256: 'f'.repeat(64),
+    }],
+  } as unknown as Parameters<typeof acceptEvidenceBoundDraft>[1];
+  const base = { sampleSize: 300, phase: '3', protocolNumber: 'SYN-300',
+    studyDesign: 'Phase 3, randomized', primaryEndpoint: 'Responder rate 95%' };
+  const attempt = (sectionNumber: string, prose: string, claims: unknown[] = []) => {
+    const lineage: Record<string, unknown> = {};
+    const accepted = acceptEvidenceBoundDraft({ sectionNumber, prose, claims },
+      evidence, base, lineage);
+    return { accepted, lineage };
+  };
+
+  it.each([
+    ['10.1', '300 participants completed the study.'],
+    ['11.4.1', 'The response rate was 95%.'],
+    ['12.2', 'A total of 300 patients died.'],
+    ['13', 'An odds ratio of 3 was observed.'],
+  ])('does not use planned metadata to support observed clinical facts in §%s', (section, prose) => {
+    expect(isCsrObservedResultsSection(section)).toBe(true);
+    expect(attempt(section, prose)).toMatchObject({
+      accepted: false, lineage: { rejectedModelDraft: { reason: 'unreconciled_figures' } },
+    });
+  });
+
+  it('allows a result figure only when a claimed cell matches the retained table', () => {
+    const claim = { table: 'deathsSAEsDiscontinuations', row: 0, column: 1, value: '300' };
+    expect(attempt('12.3', 'The source table records 300 deaths.', [claim])).toMatchObject({
+      accepted: true,
+      lineage: { reconciliation: { status: 'matches', basis: 'exact_retained_table_cell' } },
+    });
+  });
+
+  it('does not prevent the documented planned enrollment in the statistical-methods section', () => {
+    expect(isCsrObservedResultsSection('9.7.1')).toBe(false);
+    expect(attempt('9.7.1', 'Enrollment of 300 participants was planned.')).toMatchObject({
+      accepted: true, lineage: { reconciliation: { status: 'not_assessed' } },
+    });
   });
 });
 
