@@ -90,6 +90,17 @@ function cleanDatabaseUrl(url: string | undefined): string | undefined {
 
 // Centralize access to environment-specific secrets
 const getDatabaseUrl = (): string => {
+  // Codespaces is an application runtime, not a migration worker. Even when
+  // legacy Neon owner credentials are inherited, expose only APP_DATABASE_URL
+  // to application services. The canonical db runtime applies the same rule.
+  if (process.env.C2C_CODESPACE === '1' || process.env.CODESPACES === 'true') {
+    const appUrl = cleanDatabaseUrl(process.env.APP_DATABASE_URL);
+    if (!appUrl) {
+      throw new Error('[FATAL] Codespaces requires APP_DATABASE_URL for the non-owner runtime role.');
+    }
+    return appUrl;
+  }
+
   // First priority: DATABASE_NEON_NEW_SECRET (new unified connection)
   if (process.env.DATABASE_NEON_NEW_SECRET) {
     return cleanDatabaseUrl(process.env.DATABASE_NEON_NEW_SECRET) || '';
