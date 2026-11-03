@@ -24,6 +24,17 @@ export function isStatisticalSection(sectionNumber: string): boolean {
   return STATISTICAL_SECTION.test(sectionNumber.trim());
 }
 
+/**
+ * ICH E3 sections 10–13 report OBSERVED clinical disposition, efficacy,
+ * safety and interpretation. A planned sample size, phase, protocol number or
+ * study-metadata digit is never a substitute for an observed result's
+ * retained analysis-table cell. §2 (synopsis) and §9.7 (methods) also contain
+ * planned design facts, so their metadata allowance is handled separately.
+ */
+export function isCsrObservedResultsSection(sectionNumber: string): boolean {
+  return /^1[0-3](?:\.|$)/.test(sectionNumber.trim());
+}
+
 interface StatPattern {
   kind: string;
   re: RegExp;
@@ -184,7 +195,14 @@ export function acceptEvidenceBoundDraft(
     return false;
   }
   const claimed = (claims as Array<{ value: string }>).map((c) => c.value);
-  const known = { supplied, claimed };
+  // Rule 2: only an engine cell can support a clinical RESULT. Before this
+  // guard, the metadata's planned enrollment (e.g. sampleSize=300) made an
+  // invented claim of "300 patients died" pass with zero cell receipts:
+  // findUnsuppliedStatistics and findUnclaimedNumbers both searched the
+  // metadata's digits and mistook that unrelated number for support.
+  // Preserve the metadata allowance for synopsis/methods/planned design; it
+  // must NOT authorize observed results in E3 §§10–13.
+  const known = isCsrObservedResultsSection(sectionNumber) ? { claimed } : { supplied, claimed };
   const statistics = isStatisticalSection(sectionNumber) ? findUnsuppliedStatistics(prose, known) : [];
   const unsupplied = statistics.length > 0 ? statistics : findUnclaimedNumbers(prose, known);
   if (unsupplied.length > 0) {
