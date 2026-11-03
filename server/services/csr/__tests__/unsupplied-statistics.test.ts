@@ -48,7 +48,7 @@ vi.mock('../../../db', () => ({
   },
 }));
 
-import { acceptEvidenceBoundDraft, findUnclaimedNumbers, findUnsuppliedStatistics, findUnsupportedCsrOutcomeConclusion, unsupportedCsrDeathCounts, isStatisticalSection, isCsrObservedResultsSection } from '../unsupplied-statistics';
+import { acceptEvidenceBoundDraft, findUnclaimedNumbers, findUnsuppliedStatistics, findUnsupportedCsrOutcomeConclusion, unsupportedCsrDeathCounts, unclaimedCsrSynopsisResults, isStatisticalSection, isCsrObservedResultsSection } from '../unsupplied-statistics';
 import { draftCSRSectionWithProvenance, type CSRBuildRequest, type CSRSection } from '../../csr-builder';
 import { loadCsrInputsForProject } from '../load-csr-inputs-for-project';
 
@@ -212,6 +212,26 @@ describe('qualitative clinical outcome claims require independent source-backed 
       claims: [{ table: 'deathsSAEsDiscontinuations', row: 0, column: 1, value: '0' }],
     }, evidence, STUDY, lineage)).toBe(true);
     expect(lineage.reconciliation).toMatchObject({ status: 'matches' });
+  });
+});
+
+describe('ICH E3 synopsis separates planned study numbers from actual outcomes', () => {
+  it('does not mistake planned enrollment for observed completion even when both use 300', () => {
+    const prose = 'An enrollment of 300 was planned. 300 participants completed treatment.';
+    expect(unclaimedCsrSynopsisResults(prose, [])).toEqual(['300']);
+  });
+  it('permits clearly planned recruitment but requires current completion receipts', () => {
+    expect(unclaimedCsrSynopsisResults('We planned to enroll 300 participants.', [])).toEqual([]);
+    expect(unclaimedCsrSynopsisResults('Of 300 participants, 114 completed treatment.', ['114']))
+      .toEqual([]);
+    expect(unclaimedCsrSynopsisResults('114 participants completed treatment.', []))
+      .toEqual(['114']);
+  });
+  it('preserves study identifiers and reference numbers when inspecting actual outcomes', () => {
+    expect(unclaimedCsrSynopsisResults(
+      'In SYN-300 (NCT05330182), 114 participants completed treatment (Table 14.1.1).',
+      [],
+    )).toEqual(['114']);
   });
 });
 
