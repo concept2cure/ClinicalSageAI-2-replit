@@ -31,7 +31,8 @@ const CLIENT_EXAMPLE = Object.freeze({
 const ok = (json, status = 200) => ({ status, json, text: JSON.stringify(json) });
 
 function fakeApplication({ organization = identity, otherType = false, missingTemplate = false,
-  duplicateTemplate = false, missingProjectAnchor = false, switchedProjectIdentity = false } = {}) {
+  duplicateTemplate = false, missingProjectAnchor = false, switchedProjectIdentity = false,
+  cannotEditDocument = false, changedAuthoringDetail = false } = {}) {
   const state = { calls: [], clients: [], projects: [], vault: [], documents: [], tasks: [] };
   let nextDocumentId = 1;
   const api = async (method, url, body) => {
@@ -112,6 +113,16 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
     }
     if (method === 'GET' && url === '/api/authoring/docs?status=all&programId=p1') {
       return ok({ success: true, documents: state.documents });
+    }
+    if (method === 'GET' && url ===
+        '/api/authoring/docs/df541fa2-594e-48d7-b451-3a5a3d994d39?programId=p1') {
+      const d = state.documents.find(d => d.id === 'df541fa2-594e-48d7-b451-3a5a3d994d39');
+      if (!d) return ok({ error: 'Document not found' }, 404);
+      return ok({ success: true, document: {
+        ...d,
+        id: changedAuthoringDetail ? 'd0d64e58-e1ae-48f4-beba-bf6a4e996399' : d.id,
+        client_program_id: d.program_id,
+      }, access: { edit: { allowed: !cannotEditDocument, reason: cannotEditDocument ? 'permission-denied' : null } } });
     }
     if (method === 'POST' && url === '/api/authoring/docs') {
       if (body.client_program_id !== 'p1' ||
@@ -645,6 +656,23 @@ test('refuses a section-only CSR rather than pretending it is an accessible work
   assert.ok(app.state.calls.slice(before).every(call => call.method === 'GET'));
   assert.equal(app.state.documents.length, 1);
   assert.equal(app.state.tasks.length, 3);
+});
+
+test('an actor without existing Authoring edit permission cannot seed a pending CSR review task', async () => {
+  const app = fakeApplication({ cannotEditDocument: true });
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /current account cannot edit this CSR document/);
+  assert.equal(app.state.documents.length, 1);
+  assert.equal(app.state.tasks.length, 0);
+  assert.ok(app.state.calls.some(c => c.method === 'GET' &&
+    c.url.includes('/api/authoring/docs/df541fa2-')));
+});
+
+test('a changed document identity on the existing Authoring detail read is refused', async () => {
+  const app = fakeApplication({ changedAuthoringDetail: true });
+  await assert.rejects(seed({ api: app.api, identity: app.identity, run: app.run() }),
+    /current account cannot edit this CSR document/);
+  assert.equal(app.state.tasks.length, 0);
 });
 
 test('an existing reviewer task whose origin no longer matches the document is not reused', async () => {
