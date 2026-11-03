@@ -7,7 +7,6 @@ const root = resolve(import.meta.dirname, '../..');
 const read = path => readFileSync(resolve(root, path), 'utf8');
 
 const NEON_WORKFLOWS = [
-  '.github/workflows/c2c-agent.yml',
   '.github/workflows/neon-provisioning.yml',
   '.github/workflows/neon-preview-db.yml',
 ];
@@ -27,6 +26,36 @@ test('Neon automation never silently clones the previous production/default bran
     /vars\.NEON_PREVIEW_ENABLED == 'true'/);
   assert.match(read('.github/workflows/neon-preview-db.yml'),
     /parent_branch: \$\{\{ vars\.NEON_SAFE_PARENT_BRANCH \}\}/);
+});
+
+test('general C2C agent does not create a second untracked Neon PR branch', () => {
+  const workflow = read('.github/workflows/c2c-agent.yml');
+  assert.doesNotMatch(workflow, /neondatabase\/create-branch-action@/);
+  assert.doesNotMatch(workflow, /neon_branch:\s*\$\{\{/);
+  assert.match(workflow, /branching is owned exclusively by neon-preview-db\.yml/);
+});
+
+test('Neon proof refuses reused branch and fails if cleanup could not delete its created ID', () => {
+  const w = read('.github/workflows/neon-provisioning.yml');
+  assert.match(w, /Require a newly created proof branch/);
+  assert.match(w, /steps\.neon\.outputs\.created/);
+  assert.match(w, /\*-pooler\.\*/);
+  assert.match(w, /if: always\(\) && steps\.neon\.outputs\.created == 'true'/);
+  assert.match(w, /branch: \$\{\{ steps\.neon\.outputs\.branch_id \}\}/);
+  const cleanup = w.slice(w.lastIndexOf('- name: Delete the Neon branch'));
+  assert.doesNotMatch(cleanup, /continue-on-error: true/);
+});
+
+test('PR cleanup never claims deletion when action fails or preview was disabled', () => {
+  const w = read('.github/workflows/neon-preview-db.yml');
+  const cleanup = w.slice(w.indexOf('  cleanup_preview_db:'));
+  assert.match(cleanup, /vars\.NEON_PREVIEW_ENABLED == 'true'/);
+  assert.match(cleanup, /vars\.NEON_SAFE_PARENT_BRANCH != ''/);
+  assert.match(cleanup, /id: delete/);
+  assert.match(cleanup, /if: success\(\) && steps\.delete\.outcome == 'success'/);
+  assert.doesNotMatch(cleanup, /continue-on-error: true/);
+  assert.match(w, /npm run ci:tables-live-schema/);
+  assert.match(w, /No PR merge-base can be resolved; migration verification did not run/);
 });
 
 test('enabled PR preview migration never uses unmasked credentials or a pooled DDL endpoint', () => {

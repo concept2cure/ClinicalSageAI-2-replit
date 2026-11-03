@@ -118,6 +118,19 @@ database to validate a fresh installation. **Do not designate production as
 the parent merely to get a passing CI run.** PR preview DDL uses the direct Neon
 endpoint with masked credentials, never the pooled URL.
 
+Neon preview branches are created in **one** workflow: `.github/workflows/neon-preview-db.yml`.
+The general C2C agent no longer creates an untracked duplicate branch. The
+preview verifier fails if its Git merge-base cannot be resolved, and runs a
+read-only live schema-inventory check before reporting success. The preview
+cleanup runs only in the opted-in namespace and reports deletion only after
+the actual Neon action succeeds. If preview is disabled before a PR closes,
+previously created preview branches may require explicit manual cleanup.
+
+The weekly/on-demand provisioning proof refuses a reused branch and deletes
+only the branch ID the current run created. A failed deletion remains a
+visible workflow failure, rather than a success receipt. Neither workflow
+provides scientific model qualification or a finished CSR demonstration.
+
 These changes to workflow source do not change Neon account settings, rotate
 historical credentials, create a branch, or prove a connected Neon project.
 Those operations require account access and a live run.

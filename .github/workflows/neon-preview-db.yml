@@ -114,8 +114,8 @@ jobs:
             BASE_SHA="$BASE_SHA_HINT"
           fi
           if [ -z "$BASE_SHA" ]; then
-            echo "::notice::No merge-base resolvable; skipping migration apply."
-            exit 0
+            echo "::error::No PR merge-base can be resolved; migration verification did not run"
+            exit 1
           fi
           NEW_MIGRATIONS=$(git diff --name-only --diff-filter=A "$BASE_SHA" HEAD -- 'db/migrations/*.sql' 'migrations/*.sql' | sort)
           if [ -z "$NEW_MIGRATIONS" ]; then
@@ -179,6 +179,12 @@ jobs:
           npm ci
           npm run codespaces:doctor:test
 
+      - name: Verify preview's live schema inventory (baseline no-regression)
+        if: steps.check_secrets.outputs.skip != 'true' && steps.db_url.outputs.skip_db != 'true'
+        # Read-only: a schema-only copy must still contain the app's baseline
+        # tables. This is NOT full RLS or governed authoring qualification.
+        run: npm run ci:tables-live-schema
+
       - name: Post PR comment with preview DB info
         if: success() && steps.check_secrets.outputs.skip != 'true'
         continue-on-error: true
@@ -194,11 +200,13 @@ jobs:
               // (scripts/db_verify.sql) was never authored, so its step is a
               // guarded no-op — a comment asserting "verification passed" was
               // reporting a check that did not happen.
-              body: `🗄️ **Neon Preview DB Created**\n\nBranch: \`${branch}\`\n\n✅ Newly added migration files applied (or none added)\n✅ Codespaces/Neon policy tests completed\n\n_This is not full database provisioning, RLS or regulatory qualification. The branch is scheduled for cleanup when the PR closes._`
+              body: `🗄️ **Neon Preview DB Created**\n\nBranch: \`${branch}\`\n\n✅ Newly added migration files applied (or none added)\n✅ Codespaces/Neon policy tests and live schema inventory completed (baseline no-regression)\n\n_This is not full database provisioning, RLS or regulatory qualification. The branch is scheduled for cleanup when the PR closes._`
             });
 
   cleanup_preview_db:
-    if: github.event.action == 'closed' && vars.NEON_PROJECT_ID != ''
+    # Only clean branches in the explicitly opted-in preview namespace.
+    # Do not delete a user-owned similarly named branch when preview is off.
+    if: github.event.action == 'closed' && vars.NEON_PROJECT_ID != '' && vars.NEON_PREVIEW_ENABLED == 'true' && vars.NEON_SAFE_PARENT_BRANCH != ''
     runs-on: ubuntu-latest
     # Posts a cleanup-confirmation comment on the PR (github-script createComment).
     permissions:
@@ -206,14 +214,16 @@ jobs:
       pull-requests: write
     steps:
       - name: Delete Neon branch for this PR
+        id: delete
+        # Failure is a real cleanup failure, not a successful deletion.
         uses: neondatabase/delete-branch-action@4468d825d5a88ef4012f1705a82f02ec3072f776 # v3
-        continue-on-error: true # Don't fail if branch doesn't exist
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch: preview/pr-${{ github.event.pull_request.number }}
           api_key: ${{ secrets.NEON_API_KEY }}
 
       - name: Post cleanup confirmation
+        if: success() && steps.delete.outcome == 'success'
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |

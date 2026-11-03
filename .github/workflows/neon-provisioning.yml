@@ -96,6 +96,15 @@ jobs:
           # Copy schema only: no regulated/patient records enter a CI branch.
           branch_type: schema-only
 
+      - name: Require a newly created proof branch
+        # Never adopt a pre-existing named branch. It could contain data or
+        # have an owner unrelated to this exact workflow run.
+        run: |
+          if [[ "${{ steps.neon.outputs.created }}" != "true" || -z "${{ steps.neon.outputs.branch_id }}" ]]; then
+            echo "::error::Neon did not confirm a newly created isolated branch; refusing provisioning"
+            exit 1
+          fi
+
       - name: Derive a BLANK database on the DIRECT host
         id: target
         env:
@@ -110,9 +119,11 @@ jobs:
           # endpoint and db_url_with_pooler is the pooled one; assert it rather
           # than trust it, because a pooled URL would silently change what this
           # job proves (and drizzle.config.ts would refuse it anyway).
-          case "$BRANCH_URL" in
-            *.pooler.*) echo "::error::db_url is a POOLER host; this job must use the direct endpoint"; exit 1 ;;
-          esac
+          # Neon's actual pooled hostname uses '-pooler.', not just '.pooler.'.
+          if [[ "$BRANCH_URL" == *-pooler.* || "$BRANCH_URL" == *.pooler.* ]]; then
+            echo "::error::db_url is a POOLER host; this job must use the direct endpoint"
+            exit 1
+          fi
 
           # The schema-only branch carries the parent's schema but not its
           # patient/client rows. Fresh-install proof still needs a completely
@@ -238,10 +249,11 @@ jobs:
         # are billed and quota-limited; leaking one per failed run is how a
         # project runs out of them. Same pinned action neon-preview-db.yml uses
         # for its PR cleanup.
-        if: always()
-        continue-on-error: true
+        if: always() && steps.neon.outputs.created == 'true' && steps.neon.outputs.branch_id != ''
+        # Deletion must fail visibly when Neon refuses it; do not claim cleanup
+        # if the action errored. Delete only the branch ID actually created.
         uses: neondatabase/delete-branch-action@4468d825d5a88ef4012f1705a82f02ec3072f776 # v3
         with:
           project_id: ${{ steps.creds.outputs.project_id }}
-          branch: provisioning-proof-${{ github.run_id }}
+          branch: ${{ steps.neon.outputs.branch_id }}
           api_key: ${{ secrets.NEON_API_KEY }}
