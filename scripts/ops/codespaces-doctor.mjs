@@ -14,10 +14,8 @@
  * --check-app            : requests existing http://127.0.0.1:5000/readyz.
  * --json                 : machine-readable results (no secrets).
  */
-import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
-const URL_FIELDS = ['DATABASE_URL', 'DATABASE_OWNER_URL', 'APP_DATABASE_URL'];
 const isLoopback = host => ['localhost', '127.0.0.1', '::1', '[::1]'].includes(host);
 const isNeon = host => host === 'neon.tech' || host.endsWith('.neon.tech');
 const secretSet = value => typeof value === 'string' && !!value.trim() &&
@@ -149,7 +147,7 @@ export async function checkOpenAI({ env, fetcher, probeUsage = false, timeoutMs 
 }
 
 /** Run the existing, exhaustive schema/grant audit AS the request-serving role. */
-export async function probeDatabase({ env, config, connectDb }) {
+export async function probeDatabase({ config, connectDb }) {
   if (!config.ok) return { status: 'blocked', code: 'DB_CONFIGURATION_INVALID' };
   try {
     const result = await connectDb(config.runtimeUrl);
@@ -190,7 +188,8 @@ export async function checkApplication({ fetcher, port = 5000 }) {
     const dependencies = data && typeof data.dependencies === 'object' ? data.dependencies : {};
     return { status: result.ok && data?.ready === true && data.anaState === 'ready'
       ? 'passed' : 'blocked',
-      code: result.ok && data?.ready === true ? 'APP_READY_CHECK_MODEL_MODE' : 'APP_NOT_READY',
+      code: result.ok && data?.ready === true && data.anaState === 'ready'
+        ? 'APP_MODEL_AND_DEPENDENCIES_READY' : 'APP_NOT_READY',
       httpStatus: result.status, dependencies, schemaState: data?.schemaState ?? 'unknown',
       anaState: data?.anaState ?? 'unknown',
       explanation: data?.anaState === 'deterministic'
@@ -217,7 +216,7 @@ export async function runCodespacesDoctor({ env = process.env, args = [], fetche
     ana: { status: 'unverified', note: 'OPENAI_API_KEY alone does not authorize high-risk CSR or IND drafting; the saved-model PQ gate remains in force.' },
     application: { status: 'not_checked' },
   };
-  report.database.live = await probeDatabase({ env, config, connectDb });
+  report.database.live = await probeDatabase({ config, connectDb });
   if (args.includes('--probe-openai-usage')) report.openai = await checkOpenAI({ env, fetcher, probeUsage: true });
   else if (args.includes('--probe-openai')) report.openai = await checkOpenAI({ env, fetcher });
   if (args.includes('--check-app')) report.application = await checkApplication({
@@ -225,7 +224,10 @@ export async function runCodespacesDoctor({ env = process.env, args = [], fetche
   const required = [report.database.live.status === 'passed'];
   if (args.includes('--probe-openai') || args.includes('--probe-openai-usage')) required.push(report.openai.status === 'passed');
   if (args.includes('--check-app')) required.push(report.application.status === 'passed');
-  report.ready = required.every(Boolean);
+  report.prerequisitesVerified = required.every(Boolean);
+  report.applicationVerified = args.includes('--check-app') && report.application.status === 'passed';
+  report.ready = report.prerequisitesVerified && report.applicationVerified;
+  report.regulatedCsrQualified = false; // Browser and independent scientific review still required.
   return report;
 }
 
@@ -233,13 +235,16 @@ async function main() {
   const args = process.argv.slice(2);
   const report = await runCodespacesDoctor({ args });
   console.log(JSON.stringify(report, null, 2));
-  if (!report.ready) {
+  if (!report.prerequisitesVerified) {
     console.error('\nCodespace prerequisites are NOT verified. No migration, provider-policy change, or local database fallback was attempted.');
     process.exitCode = 1;
   } else if (!args.includes('--check-app')) {
-    console.log('\nDatabase verified. The APPLICATION is not yet verified; start it and rerun with --check-app.');
+    console.log('\nDatabase prerequisites verified. The APPLICATION is not yet verified; start it and rerun with --check-app.');
+  } else if (!report.ready) {
+    console.error('\nApp readiness is BLOCKED; check the dependency and AnA status above.');
+    process.exitCode = 1;
   } else {
-    console.log('\nCodespace database and running application readiness checks passed; browser/CSR qualification is still separate.');
+    console.log('\nCodespace database and running application readiness passed; browser/CSR qualification is still separate.');
   }
 }
 if (process.argv[1] && import.meta.url === new URL('file://' + resolve(process.argv[1])).href) {
