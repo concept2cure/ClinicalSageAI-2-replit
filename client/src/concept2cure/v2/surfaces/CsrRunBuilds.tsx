@@ -174,12 +174,18 @@ function BuildOnCard({ build, programId, onNav }: { build: RunBuild; programId: 
   const [importSource, setImportSource] = useState<ImportSource | null>(null);
   return <div style={{ display: 'grid', gap: 4 }}>
     <p role="status">CSR build {build.jobId} · {build.status} · {build.progress}% · last updated {new Date(build.updatedAt).toLocaleString()}</p>
-    {error && <p role="alert">{error}</p>}
+    {error && <p role="alert">{error}{' '}
+      <button type="button" className="btn ghost" onClick={reload}>Retry reading sections</button>
+    </p>}
     {!error && headings === null && <p role="status">Reading the build’s sections…</p>}
-    {headings && <CsrHeadingReview jobId={build.jobId} headings={headings} onChanged={reload}
-      onImport={sectionNumbers => setImportSource({ kind: 'csr', jobId: build.jobId, sectionNumbers })} />}
-    <CsrNarrativeBuild jobId={build.jobId} headings={headings ?? []} onChanged={reload} />
-    <CsrAssemblyControl jobId={build.jobId} />
+    {/* If section provenance cannot be read, the next governed action must
+        not appear as though it is ready. The server enforces admission too. */}
+    {headings && <>
+      <CsrHeadingReview jobId={build.jobId} headings={headings} onChanged={reload}
+        onImport={sectionNumbers => setImportSource({ kind: 'csr', jobId: build.jobId, sectionNumbers })} />
+      <CsrNarrativeBuild jobId={build.jobId} headings={headings} onChanged={reload} />
+      <CsrAssemblyControl jobId={build.jobId} />
+    </>}
     {importSource && <SourceImportDialog programId={programId} programName={programName} source={importSource} title={`CSR build ${build.jobId} · ${build.studyId}`}
       onClose={() => setImportSource(null)}
       onOpenDocument={onNav ? (docId, code) => openImportedDocument(docId, programId, onNav, code) : undefined} />}
