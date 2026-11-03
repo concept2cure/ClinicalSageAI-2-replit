@@ -222,8 +222,10 @@ describe('ICH E3 synopsis separates planned study numbers from actual outcomes',
   });
   it('permits clearly planned recruitment but requires current completion receipts', () => {
     expect(unclaimedCsrSynopsisResults('We planned to enroll 300 participants.', [])).toEqual([]);
-    expect(unclaimedCsrSynopsisResults('Of 300 participants, 114 completed treatment.', ['114']))
+    expect(unclaimedCsrSynopsisResults('Of 300 participants, 114 completed treatment.', ['300', '114']))
       .toEqual([]);
+    expect(unclaimedCsrSynopsisResults('Of 300 participants, 114 completed treatment.', ['114']))
+      .toEqual(['300']);
     expect(unclaimedCsrSynopsisResults('114 participants completed treatment.', []))
       .toEqual(['114']);
   });
