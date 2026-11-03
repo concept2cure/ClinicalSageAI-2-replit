@@ -21,7 +21,7 @@
 import { Pool } from 'pg';
 import { getPool } from '../runtime';
 import { getDatabaseUrl } from '../getDatabaseUrl';
-import { getSslConfig } from '../ssl';
+import { getSslConfig, verifiedPgConnectionString } from '../ssl';
 import { createScopedLogger } from '../../utils/logger';
 import { seedGaDemoUser } from './seed-default-org';
 
@@ -38,7 +38,7 @@ export async function seedDemoAdminOutsideProduction(): Promise<void> {
   let ownerPool: Pool | null = null;
   if (runtimeSplit && ownerUrl) {
     ownerPool = new Pool({
-      connectionString: ownerUrl,
+      connectionString: verifiedPgConnectionString(ownerUrl),
       ssl: getSslConfig(ownerUrl),
       max: 1,
     });
