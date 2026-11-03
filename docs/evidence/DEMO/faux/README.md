@@ -90,6 +90,16 @@ Two further concrete disconnects were corrected inside **the existing Faux data 
 
 These 11 focused source-level checks are **not** full native Node execution, CI clearance, hosted app seeding or regulatory qualification. Their purpose is to prevent half-populated or duplicate demonstrations when actual application data exists.
 
+## November 3 — source availability, client admission, and study charter
+
+The existing project Data Room search provides `current`, `contentHash`, `documentType`, `lifecycleStage` and `originalFileAvailable` for each record. A matching hash alone previously caused the Faux seeder to count a source as found even when its original file was unavailable for review, Data Room download or AnA context. **Replay now requires an explicitly current version and `originalFileAvailable === true`.** The same condition is rechecked after any governed protocol/SAP metadata correction. Inaccessible originals require remediation through the existing Vault lifecycle; no substitute or fabricated source is generated.
+
+The internal client anchor is now checked against the **existing** GET/POST `/api/clients` response: exact Faux slug and name, the authenticated organization ID, an active client status, and one matching record. An inactive, renamed, foreign-tenant or ambiguous record is refused before the project or clinical sources are attached. New-client create receipts must confirm the recorded sponsor and organization. This does not create a new UI "biotech workspace": it enforces the parent binding Project Management already requires.
+
+The ordinary Project Management **objective/charter** at project creation now carries the pinned synthetic study's protocol `FBT-201-2026`, Phase 2 randomized double-blind placebo-controlled design, moderate-to-severe plaque psoriasis indication, 160-person planned randomized population, data cut `2026-09-30`, ICH E3 reporting goal and a **clearly fictional hypothesis**: FBT-201 increases Week-12 PASI75 response versus placebo. This hypothesis is NOT a scientific inference from clinical evidence, nor a clinically verified result or a performed trial. Existing charter audit and owner controls remain unchanged; an existing project is not silently re-written.
+
+**Focused source checks executed against retrieved production function bodies and explicit API doubles:** Vault source availability **5/5**, internal client admission **8/8**, and a new-project charter creation verified the protocol, design, comparator, endpoint, data cut and hypothetical status. These checks are *not* the full native Node test suite, live authenticated Data Room, permitted source approval, or a passing full CI. The corresponding existing Node regression fixture was extended. GitHub CI/Tier 5 Browser/CodeQL/Semgrep remained **queued** when the branch was inspected. The hosted demonstration remains **OPEN**, pending the actual Project Management → Data Room → Canvas/Editor with AnA → independent review journey.
+
 ## Acceptance — still OPEN
 
 1. Actual fictitious organization exists with appropriately admitted demo member; account can sign in and list a Project Management project of type CSR.
