@@ -110,11 +110,13 @@ requires its Neon API/project credentials and the safe parent. Missing
 authorization means no branch is created or the proof fails; neither case is a
 verified database.
 
-A safe parent must contain only data approved to be copied to a development
-branch. Neon branching clones the parent's data even when the test later creates
-a separate blank database inside that branch. **Do not designate production as
-the parent merely to get a passing CI run.** Preview DDL must use the direct
-Neon endpoint with masked credentials, never the pooled URL.
+All three automated branch jobs use a pinned Neon create-branch action v6
+with `branch_type: schema-only`, starting from an expressly approved non-production
+parent. Schema-only branching avoids copying clinical or client data rows into
+the CI/PR branch; the provisioning proof subsequently creates a genuinely blank
+database to validate a fresh installation. **Do not designate production as
+the parent merely to get a passing CI run.** PR preview DDL uses the direct Neon
+endpoint with masked credentials, never the pooled URL.
 
 These changes to workflow source do not change Neon account settings, rotate
 historical credentials, create a branch, or prove a connected Neon project.
