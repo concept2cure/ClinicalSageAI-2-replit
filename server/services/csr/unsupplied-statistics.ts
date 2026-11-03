@@ -191,9 +191,9 @@ export function findUnsupportedCsrOutcomeConclusion(sectionNumber: string, prose
     { code: 'absence_of_safety_event', pattern:
       /\b(?:no|zero)\s+(?:(?:treatment[- ](?:emergent|related)|serious|fatal|clinically significant)\s+){0,3}(?:deaths?|fatalities|adverse events?|saes?|safety signals?)\b/i },
     { code: 'endpoint_success', pattern:
-      /\b(?:primary|secondary|co-primary)\s+(?:efficacy\s+)?endpoints?\s+(?:was|were|is|has been|have been)\s+(?:met|achieved|satisfied)\b/i },
+      /\b(?:(?:primary|secondary|co-primary)\s+(?:efficacy\s+)?)?endpoints?\s+(?:was|were|is|has been|have been)\s+(?:met|achieved|satisfied)\b/i },
     { code: 'comparative_success', pattern:
-      /\b(?:demonstrated|established|confirmed|proved)\s+(?:non[- ]inferiority|superiority|equivalence)\b/i },
+      /\b(?:demonstrated|established|confirmed|proved)\s+(?:non[- ]?inferiority|superiority|equivalence)\b/i },
     { code: 'safety_or_benefit_risk_verdict', pattern:
       /\b(?:well[- ]tolerated|no clinically meaningful (?:safety )?(?:differences?|changes?)|favo[u]?rable benefit[- ]risk)\b/i },
   ];
