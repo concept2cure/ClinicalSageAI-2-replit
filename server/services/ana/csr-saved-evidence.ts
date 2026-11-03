@@ -104,7 +104,11 @@ interface SectionPlan {
 
 function planSection(s: SavedCsrSection & { code: string }, receipts: CsrImportedSectionEvidence | undefined): SectionPlan {
   const claimed = receipts?.claims.map(c => c.value) ?? [];
-  const info = receipts?.studyInformationNumbers ?? [];
+  // Re-review legacy imported CSR sections against today's Rule 2, not the
+  // metadata-exemption list they once carried. For §§10–13, the only numeric
+  // results the analysis can substantiate are exact claimed table cells.
+  // No stored provenance flag can authorize an unclaimed observed result.
+  const info = isCsrObservedResultsSection(s.code) ? [] : receipts?.studyInformationNumbers ?? [];
   const unclaimed = findUnclaimedNumbers(figureText(s.text), { claimed, info }).map(n => n.text);
   const current = receipts ? sha(s.content) : null;
   return { code: s.code, content: s.content, text: s.text, receipts: receipts ?? null, unclaimed, results: RESULTS.test(s.code),
