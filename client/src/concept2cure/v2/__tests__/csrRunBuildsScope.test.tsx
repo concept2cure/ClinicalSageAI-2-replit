@@ -128,6 +128,35 @@ it('does not let an older headings reply restore superseded review state', async
   expect(screen.getByText(/Revised current heading/)).toBeTruthy();
 });
 
+it('withholds narrative and assembly actions on a failed section read, then retries into the current headings', async () => {
+  let headingsReads = 0;
+  apiRequest.mockImplementation(async (method: string, path: string) => {
+    if (method === 'GET' && path === pathFor(PROGRAM_A, RUN_A))
+      return ok({ jobs: [job(81)] });
+    if (method === 'GET' && path === '/api/csr/jobs/81/headings') {
+      headingsReads += 1;
+      return headingsReads === 1
+        ? { ok: false, status: 503, json: async () => ({ error: 'Cannot read the current CSR headings.' }) }
+        : ok({ headings: [heading('Current source-approved heading')] });
+    }
+    throw new Error(`Unexpected API call: ${method} ${path}`);
+  });
+  render(view(PROGRAM_A, RUN_A));
+  const retry = await screen.findByRole('button', { name: 'Retry reading sections' });
+  expect(screen.getByRole('alert')).toBeTruthy();
+  expect(screen.queryByTestId('scoped-section-review')).toBeNull();
+  expect(screen.queryByTestId('scoped-narrative')).toBeNull();
+  expect(screen.queryByTestId('scoped-assembly')).toBeNull();
+
+  fireEvent.click(retry);
+  expect(await screen.findByText(/Current source-approved heading/)).toBeTruthy();
+  expect(headingsReads).toBe(2);
+  expect(screen.getByTestId('scoped-section-review')).toBeTruthy();
+  expect(screen.getByTestId('scoped-narrative').textContent).toContain('81');
+  expect(screen.getByTestId('scoped-assembly').textContent).toContain('81');
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
 it('rejects malformed or unrecognized saved build records without exposing review controls', async () => {
   apiRequest.mockImplementation(async (method: string, path: string) => {
     if (method === 'GET' && path === pathFor(PROGRAM_A, RUN_A))
