@@ -3,13 +3,15 @@ import assert from 'node:assert/strict';
 import { sslFor, verifiedPgConnectionString } from '../db/connection.mjs';
 import {
   checkDatabaseConfiguration, classifyDbError, classifyOpenAIResponse,
-  checkOpenAI, probeDatabase, checkApplication, checkAuthConfiguration, runCodespacesDoctor,
+  checkOpenAI, probeDatabase, checkApplication, checkAuthConfiguration,
+  checkTenantIsolationConfiguration, runCodespacesDoctor,
 } from './codespaces-doctor.mjs';
 
 const owner = 'postgresql://neondb_owner:secret@ep-example.neon.tech/neondb?sslmode=require';
 const runtime = 'postgresql://app_service:othersecret@ep-example-pooler.neon.tech/neondb?sslmode=require';
 const env = { DATABASE_URL: owner, APP_DATABASE_URL: runtime,
   OPENAI_API_KEY: 'sk-not-a-real-secret', C2C_DB_MODE: 'neon',
+  RLS_ENFORCE: 'on',
   JWT_SECRET: 'test_only_dev_key_not_for_use_in_real_account_123456' };
 
 test('Neon owner + pooler runtime on the same database are eligible for a read-only check', () => {
@@ -83,6 +85,21 @@ test('Codespaces startup reports missing or weak signing credentials before clai
   assert.equal(checkAuthConfiguration({
     NODE_ENV: 'production', JWT_SECRET_PROD: 'a'.repeat(40),
   }).code, 'REFRESH_SECRET_INVALID');
+});
+
+test('Codespaces refuses a green database when tenant RLS is off or unset', async () => {
+  for (const value of [undefined, 'off', 'shadow', 'enforce', 'true']) {
+    const isolatedEnv = { ...env };
+    if (value === undefined) delete isolatedEnv.RLS_ENFORCE;
+    else isolatedEnv.RLS_ENFORCE = value;
+    assert.equal(checkTenantIsolationConfiguration(isolatedEnv).code, 'RLS_NOT_ENFORCED');
+    const report = await runCodespacesDoctor({ env: isolatedEnv,
+      connectDb: async () => ({ ok: true, role: 'app_service', failures: [] }) });
+    assert.equal(report.prerequisitesVerified, false);
+    assert.equal(report.tenantIsolation.status, 'blocked');
+    assert.equal(report.ready, false);
+  }
+  assert.equal(checkTenantIsolationConfiguration(env).status, 'passed');
 });
 
 test('OpenAI quota is distinct from a rate limit, auth failure or governance gate', () => {
