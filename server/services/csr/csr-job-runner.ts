@@ -319,6 +319,24 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     return;
   }
 
+  // A queued legacy job can have requested_by=NULL. Without an actor,
+  // resolveCsrScope's optional-actor branch could treat a job as system work
+  // and allow metadata-only drafting without the user who commissioned it.
+  // CSR authoring is user-governed; never substitute a service or default user.
+  if (!Number.isSafeInteger(job.requestedBy) || Number(job.requestedBy) <= 0) {
+    await d.update(csrBuildJobs).set({
+      status: 'failed',
+      updatedAt: new Date(),
+      error: {
+        reason: 'requester_missing',
+        code: 'CSR_BUILD_REQUESTER_MISSING',
+        message: 'The saved CSR job has no currently identifiable requester. Nothing was drafted; existing sections were preserved.',
+      },
+    }).where(and(eq(csrBuildJobs.id, job.id),
+      eq(csrBuildJobs.organizationId, job.organizationId), eq(csrBuildJobs.status, job.status)));
+    return;
+  }
+
   // Permission is checked again when work starts, not retained from enqueue.
   // Refuse before section/source reads or AI calls; preserve prior outputs.
   try {
