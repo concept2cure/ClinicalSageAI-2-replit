@@ -111,7 +111,12 @@ function planSection(s: SavedCsrSection & { code: string }, receipts: CsrImporte
   const info = isCsrObservedResultsSection(s.code) ? [] : receipts?.studyInformationNumbers ?? [];
   const unclaimed = findUnclaimedNumbers(figureText(s.text), { claimed, info }).map(n => n.text);
   const current = receipts ? sha(s.content) : null;
-  return { code: s.code, content: s.content, text: s.text, receipts: receipts ?? null, unclaimed, results: RESULTS.test(s.code),
+  // Added sections without an E3 code have no declared regulatory purpose or
+  // analysis provenance. Their unsourced numbers are NOT safer than the same
+  // figures in §11/§12. A free-form uncoded section must not bypass the claim
+  // gate merely because its E3 status cannot be classified.
+  const numbersRequireEvidence = RESULTS.test(s.code) || /^\(uncoded section \d+/.test(s.code);
+  return { code: s.code, content: s.content, text: s.text, receipts: receipts ?? null, unclaimed, results: numbersRequireEvidence,
     editedSha256: current && current !== receipts?.sectionSha256 ? current : null };
 }
 
