@@ -11,10 +11,9 @@
  * job has no output for it, else its effective review state (an approval of
  * since-redrafted text reads as a draft, csr-section-review.ts).
  */
-import { createHash } from 'node:crypto';
 import { flattenICHE3Sections, hasUnresolvedPlaceholders, type CSRSection } from '../csr-builder.js';
 import type { getCSRSectionOutputs } from './csr-job-runner.js';
-import { effectiveReviewState, type CsrSectionReviewState } from './csr-section-review';
+import { effectiveSavedCsrReviewState, type CsrSectionReviewState } from './csr-section-review';
 
 /** One heading of the canonical ICH E3 tree, with the job's output state for it. */
 export interface CsrWorkflowHeading {
@@ -53,20 +52,14 @@ export function buildHeadings(structure: CSRSection[], outputs: readonly Partial
     };
     const output = bySection.get(node.number);
     if (!output) return heading;
-    // A review may have been approved for a recorded hash, but that does not
-    // establish the currently saved bytes still have that hash. The review
-    // write gate verifies it; the *read* must not show a false green approval.
-    const body = typeof output.content === 'string' ? output.content : null;
-    const hash = typeof output.contentHash === 'string' ? output.contentHash : '';
-    const intact = body !== null && !!body.trim() &&
-      /^[a-f0-9]{64}$/.test(hash) &&
-      createHash('sha256').update(body, 'utf8').digest('hex') === hash;
-    if (!intact) {
+    const review = effectiveSavedCsrReviewState(output);
+    if (review.integrityFailure) {
+      const hash = typeof output.contentHash === 'string' ? output.contentHash : '';
       return { ...heading, state: 'draft' as const, integrityFailure: true as const,
         ...(hash ? { contentHash: hash } : {}) };
     }
-    const { state, staleApproval } = effectiveReviewState(output);
-    const placeholder = hasUnresolvedPlaceholders(body ?? '');
+    const { state, staleApproval } = review;
+    const placeholder = hasUnresolvedPlaceholders(typeof output.content === 'string' ? output.content : '');
     return {
       ...heading, state, ...(placeholder ? { placeholder: true } : {}), ...(staleApproval ? { staleApproval: true as const } : {}),
       contentHash: typeof output.contentHash === 'string' ? output.contentHash : undefined,
