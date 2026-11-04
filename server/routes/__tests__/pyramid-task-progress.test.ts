@@ -107,13 +107,20 @@ describe('PATCH /pyramids/:type/progress/:taskId', () => {
 
   it('inserts the org’s first progress row for a type', async () => {
     query.mockResolvedValue([]);
-    const res = await request(app()).patch(`/api/v1/pyramids/IND/progress/${realTaskId}`).send({ status: 'in_progress' });
+    const res = await request(app()).patch(`/api/v1/pyramids/IND/progress/${realTaskId}`).send({ status: 'in-progress' });
     expect(res.status).toBe(200);
     expect(insert).toHaveBeenCalled();
     const [orgId, subcategory, , payload] = insert.mock.calls[0];
     expect(orgId).toBe(7);
     expect(subcategory).toBe('IND');
-    expect(payload.statuses).toEqual({ [realTaskId]: 'in_progress' });
+    expect(payload.statuses).toEqual({ [realTaskId]: 'in-progress' });
+  });
+
+  it("takes the engine's statuses, the ones the dropdown offers, and refuses the old 'in_progress'", async () => {
+    for (const status of ['in-progress', 'review', 'blocked', 'done']) {
+      expect((await request(app()).patch(`/api/v1/pyramids/IND/progress/${realTaskId}`).send({ status })).status, status).toBe(200);
+    }
+    expect((await request(app()).patch(`/api/v1/pyramids/IND/progress/${realTaskId}`).send({ status: 'in_progress' })).status).toBe(400);
   });
 
   it('merges into the existing row rather than replacing the map', async () => {

@@ -1,0 +1,153 @@
+/**
+ * The project's pyramid (S11, P-82; docs/design/THE_PROGRAM_2026-11-01.md §7.2).
+ *
+ * Progress was kept per organisation and submission type, so every project of
+ * one filing type shared one board: two NDAs, one set of statuses. These routes
+ * key it on the project. They hold that:
+ *   • the pyramid is the one the project's recorded filing resolves to, and a
+ *     filing with none is said, never given another type's plan;
+ *   • a status is recorded under the project's own key, never the type's, and
+ *     the per-type rows stay as they are;
+ *   • the project is admitted (read for GET, write for PATCH) before anything
+ *     is read or written, and a refusal writes nothing;
+ *   • a task that is not in the project's pyramid is refused.
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import express, { type Request, type Response, type NextFunction } from 'express';
+import request from 'supertest';
+
+const { query, insert, update, admission, programRow, projectRef, programSql } = vi.hoisted(() => ({
+  query: vi.fn(), insert: vi.fn(), update: vi.fn(),
+  admission: vi.fn(), programRow: vi.fn(), projectRef: vi.fn(), programSql: [] as string[],
+}));
+vi.mock('../../utils/feature-persistence.js', () => ({
+  createFeatureStore: () => ({ query, insert, update, getById: vi.fn(), remove: vi.fn() }),
+}));
+vi.mock('../../auth.js', () => ({ authMiddleware: (_req: Request, _res: Response, next: NextFunction) => next() }));
+vi.mock('../../middleware/tenantLifecycleGuard.js', () => ({
+  enforceTenantLifecycle: (_req: Request, _res: Response, next: NextFunction) => next(),
+}));
+vi.mock('../../db/requestDb', () => ({
+  requestDb: () => ({}),
+  requestPgClient: () => ({ query: async (sql: string) => { programSql.push(sql); return { rows: programRow() }; } }),
+}));
+vi.mock('../../services/c2c/program-project-anchor.js', () => ({ strictProjectRowForRef: (...a: unknown[]) => projectRef(...a) }));
+vi.mock('../c2c/project-access', async (original) => {
+  const real = await original<typeof import('../c2c/project-access')>();
+  return { ...real, requireProjectAdmission: (...a: unknown[]) => admission(...a) };
+});
+
+import pyramidRouter from '../pyramid.routes';
+import { ProjectAdmissionRefusal } from '../c2c/project-access';
+
+const PROGRAM = '7abb1c22-1111-4222-8333-444455556666';
+const PATH = `/api/v1/pyramids/by-project/${PROGRAM}`;
+function app() {
+  const a = express();
+  a.use(express.json());
+  a.use((req: Request, _res: Response, next: NextFunction) => { (req as unknown as { user: unknown }).user = { organizationId: 7, id: 3 }; next(); });
+  a.use('/api/v1', pyramidRouter);
+  return a;
+}
+let indTask: string;
+
+beforeEach(async () => {
+  for (const f of [query, insert, update, admission, programRow, projectRef]) f.mockReset();
+  programSql.length = 0;
+  query.mockResolvedValue([]);
+  admission.mockResolvedValue(undefined);
+  projectRef.mockResolvedValue(51);
+  programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind' }]);
+  indTask = (await request(app()).get('/api/v1/pyramids/IND')).body.data.tasks[0].id;
+});
+
+describe('GET /pyramids/by-project/:ref', () => {
+  it("gives the project's own pyramid, from its recorded filing, with its own statuses", async () => {
+    query.mockResolvedValue([{ id: 9, statuses: { [indTask]: 'done' } }]);
+    const res = await request(app()).get(PATH);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ programId: PROGRAM, type: 'IND', filing: 'us_ind', statuses: { [indTask]: 'done' } });
+    expect(res.body.data.pyramid.tasks.length).toBeGreaterThan(0);
+    expect(query).toHaveBeenCalledWith(7, `project:${PROGRAM}:IND`);
+    expect(admission.mock.calls[0][2]).toBe(false);
+  });
+
+  it("reads the recorded filing where intake keeps it: metadata.submissionTypeId, else program_type", async () => {
+    // regulatory_programs has no submission_type_id column (the read model lifts it from metadata,
+    // projects.ts serializeProgramDetail); naming one failed every read in the running app (2026-11-04).
+    await request(app()).get(PATH);
+    expect(programSql.join('\n')).toMatch(/COALESCE\(NULLIF\(rp\.metadata->>'submissionTypeId', ''\), rp\.program_type\)/);
+    expect(programSql.join('\n')).not.toMatch(/rp\.submission_type_id/);
+  });
+
+  it('says a filing has no work breakdown rather than giving it another type', async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'ca_nds' }]);
+    const res = await request(app()).get(PATH);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ programId: PROGRAM, type: null, filing: 'ca_nds' });
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('says the progress store is not provisioned when its table is absent, even through the ORM\'s wrapper', async () => {
+    // Drizzle wraps the driver's error: the 42P01 is on `cause`.
+    query.mockRejectedValue(Object.assign(new Error('Failed query: select … from project_memory_entries'), { cause: { code: '42P01' } }));
+    const res = await request(app()).get(PATH);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ type: 'IND', statuses: {}, pendingStore: true });
+    const write = await request(app()).patch(`${PATH}/progress/${indTask}`).send({ status: 'done' });
+    expect(write.status).toBe(503);
+    expect(write.body.error.code).toBe('PROGRESS_STORE_UNPROVISIONED');
+  });
+
+  it('reads nothing for a project the person is not admitted to', async () => {
+    admission.mockRejectedValue(new ProjectAdmissionRefusal(403, 'PROJECT_ACCESS_DENIED', 'You do not have access to this project.'));
+    const res = await request(app()).get(PATH);
+    expect(res.status).toBe(403);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('404s an unknown project', async () => {
+    projectRef.mockResolvedValue(null);
+    expect((await request(app()).get(PATH)).status).toBe(404);
+  });
+});
+
+describe('PATCH /pyramids/by-project/:ref/progress/:taskId', () => {
+  it("records the status under the project's key, admitted for write", async () => {
+    const res = await request(app()).patch(`${PATH}/progress/${indTask}`).send({ status: 'in-progress' });
+    expect(res.status).toBe(200);
+    expect(admission.mock.calls[0][2]).toBe(true);
+    expect(insert).toHaveBeenCalledWith(7, `project:${PROGRAM}:IND`, expect.any(String),
+      { type: 'IND', programId: PROGRAM, statuses: { [indTask]: 'in-progress' } });
+    // The per-type row ('IND') is never touched.
+    expect(query.mock.calls.every((c) => c[1] !== 'IND')).toBe(true);
+  });
+
+  it("updates the project's existing row, and 'todo' clears the task", async () => {
+    query.mockResolvedValue([{ id: 9, statuses: { [indTask]: 'done', other: 'blocked' } }]);
+    const res = await request(app()).patch(`${PATH}/progress/${indTask}`).send({ status: 'todo' });
+    expect(res.status).toBe(200);
+    expect(update).toHaveBeenCalledWith(9, 7, { type: 'IND', programId: PROGRAM, statuses: { other: 'blocked' } });
+  });
+
+  it('refuses a task that is not in the project pyramid, and an unknown status, writing nothing', async () => {
+    expect((await request(app()).patch(`${PATH}/progress/not-a-task`).send({ status: 'done' })).status).toBe(404);
+    expect((await request(app()).patch(`${PATH}/progress/${indTask}`).send({ status: 'finished' })).status).toBe(400);
+    expect(insert).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('writes nothing when the person may not change the project', async () => {
+    admission.mockRejectedValue(new ProjectAdmissionRefusal(403, 'PROJECT_ARCHIVED', 'This project is archived.'));
+    const res = await request(app()).patch(`${PATH}/progress/${indTask}`).send({ status: 'done' });
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('PROJECT_ARCHIVED');
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it('refuses a filing with no pyramid', async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'ca_nds' }]);
+    expect((await request(app()).patch(`${PATH}/progress/${indTask}`).send({ status: 'done' })).status).toBe(409);
+    expect(insert).not.toHaveBeenCalled();
+  });
+});
