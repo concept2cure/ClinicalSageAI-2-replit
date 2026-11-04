@@ -143,6 +143,26 @@ describe('per-section review state', () => {
     });
   });
 
+  it('refuses independent approval when a legacy completed job has no recorded requester', async () => {
+    await db.query(`INSERT INTO csr_build_jobs
+      (id, organization_id, project_id, study_id, status, study_info_snapshot, requested_by)
+      VALUES (10, 7, 11, 'SYN-LEGACY', 'complete', '{}'::jsonb, NULL)`);
+    await db.query(`INSERT INTO csr_section_outputs
+      (organization_id, project_id, job_id, section_number, content, content_hash)
+      VALUES (7, 11, 10, '11.4.1', $1, $2)`, [TEXT, sha(TEXT)]);
+    const input = {
+      organizationId: 7, jobId: 10, sectionNumber: '11.4.1',
+      expectedContentHash: sha(TEXT), reviewerId: 6,
+    };
+    const submitted = await decideCsrSectionReview(q, { ...input, decision: 'submit' });
+    expect(submitted.state).toBe('in_review');
+    await expect(decideCsrSectionReview(q, { ...input, decision: 'approve' }))
+      .rejects.toMatchObject({ code: 'CSR_REVIEW_REQUESTER_MISSING', status: 409 });
+    const current = await db.query<{ review_status: string }>(
+      `SELECT review_status FROM csr_section_outputs WHERE job_id = 10`);
+    expect(current.rows[0].review_status).toBe('in_review');
+  });
+
   it('refuses tampered text, a foreign tenant and a missing section', async () => {
     await db.query(`UPDATE csr_section_outputs SET content = 'edited outside the runner' WHERE job_id = 1`);
     await expect(decide({ decision: 'approve', expectedContentHash: sha(REDRAFT) })).rejects.toMatchObject({ code: 'CSR_SECTION_HASH_MISMATCH' });
