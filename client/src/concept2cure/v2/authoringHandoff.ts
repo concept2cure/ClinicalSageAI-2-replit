@@ -181,7 +181,7 @@ export function workflowSourceKey(source: WorkflowImportSource): string {
   if (source.kind === 'study-design-crf') return `${source.kind}:${source.studyId}`;
   if (source.kind !== 'csr') return `${source.kind}:${source.documentId}`;
   if (source.sectionNumbers !== undefined && (!Array.isArray(source.sectionNumbers) || !source.sectionNumbers.every(s => typeof s === 'string'))) return 'invalid-selection';
-  return `csr:${source.jobId}:${[...new Set(source.sectionNumbers?.map(s => s.trim()) ?? [])].sort().join(',')}`;
+  return `csr:${source.jobId}:${source.approvedOnly === true ? 'approved-only' : 'working-draft'}:${[...new Set(source.sectionNumbers?.map(s => s.trim()) ?? [])].sort().join(',')}`;
 }
 const importHash = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{64}$/i.test(value);
 const importUuid = (value: unknown): value is string => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
