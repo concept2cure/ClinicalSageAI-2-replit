@@ -306,11 +306,22 @@ const workflowInteger = (value: unknown) => Number.isSafeInteger(value) && Numbe
 
 function csrWorkflowSelector(selected: Record<string, unknown>): WorkflowImportSource {
   if (selected.kind !== 'csr' || !workflowInteger(selected.jobId)) return abort(400, 'SOURCE_REQUIRED', 'Choose an exact saved workflow source.');
+  // The CSR review card explicitly requests approved-only source sections.
+  // A normal working-draft import remains allowed for controlled authoring,
+  // but must not silently erase an approved-only selection's intent.
+  if (selected.approvedOnly !== undefined && selected.approvedOnly !== true) {
+    return abort(400, 'SOURCE_REQUIRED', 'Choose a valid CSR source approval requirement.');
+  }
+  const approvedOnly = selected.approvedOnly === true;
   const selection = selected.sectionNumbers;
-  if (selection === undefined) return { kind: 'csr', jobId: Number(selected.jobId) };
+  if (selection === undefined) {
+    if (approvedOnly) return abort(400, 'SOURCE_REQUIRED', 'Select the exact approved CSR sections to import.');
+    return { kind: 'csr', jobId: Number(selected.jobId) };
+  }
   if (!Array.isArray(selection) || !selection.length || selection.length > MAX_SECTIONS
     || selection.some(v => typeof v !== 'string' || !/^\d+(?:\.\d+)*$/.test(v))) return abort(400, 'SOURCE_REQUIRED', 'Choose valid saved CSR section numbers.');
-  return { kind: 'csr', jobId: Number(selected.jobId), sectionNumbers: [...new Set(selection as string[])].sort() };
+  return { kind: 'csr', jobId: Number(selected.jobId), sectionNumbers: [...new Set(selection as string[])].sort(),
+    ...(approvedOnly ? { approvedOnly: true as const } : {}) };
 }
 
 function workflowSelector(selected: Record<string, unknown>): WorkflowImportSource {
