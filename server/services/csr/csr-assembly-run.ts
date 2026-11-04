@@ -197,8 +197,21 @@ async function defaultDeps(): Promise<CsrAssemblyWorkerDeps> {
 
 const progressOf = (done: number) => Math.max(1, Math.min(99, Math.round(done)));
 
-async function writeProgress(q: Queryable, id: number, progress: number, stage: string): Promise<void> {
-  await q.query(`UPDATE csr_assembly_runs SET progress = $2, stage = $3, updated_at = now() WHERE id = $1 AND status = 'assembling'`, [id, progressOf(progress), stage]);
+/**
+ * Fence updates to the EXACT worker claim. A startup recovery may requeue a
+ * stalled assembly while an older process still lives. Both workers can see
+ * "assembling" after the replacement claims it; status alone is not a lease.
+ * started_at is already persisted on this row and is refreshed at claim, with
+ * millisecond precision so its ISO representation round-trips through JS.
+ */
+async function writeProgress(q: Queryable, id: number, organizationId: number, startedAt: string, progress: number, stage: string): Promise<void> {
+  const { rows } = await q.query(`UPDATE csr_assembly_runs SET progress = $4, stage = $5, updated_at = now()
+    WHERE id = $1 AND organization_id = $2 AND started_at = $3::timestamptz
+      AND status = 'assembling' RETURNING id`, [id, organizationId, startedAt, progressOf(progress), stage]);
+  if (rows.length !== 1) {
+    throw new CsrAssemblyRunError('CSR_ASSEMBLY_SUPERSEDED', 409,
+      'Another worker owns this CSR assembly. The earlier worker cannot change its progress or result.');
+  }
 }
 
 /** Retain one leaf through storeRenderedLeafFile; the stored digest must be the assembled one. */
@@ -214,10 +227,10 @@ async function retainLeaf(run: { organizationId: number; userId: number }, leaf:
  * shipAs), so the body can link to the name each one ships under; the body is
  * retained last. Each leaf is stored once.
  */
-function retention(q: Queryable, run: { id: number; organizationId: number; userId: number }, deps: CsrAssemblyWorkerDeps) {
+function retention(q: Queryable, run: { id: number; organizationId: number; userId: number; startedAt: string }, deps: CsrAssemblyWorkerDeps) {
   const stored = new Map<string, StoredRenderedLeafFile>();
   const shipAs = async (leaf: AssembledCsrJob['leaves'][number]) => {
-    await writeProgress(q, run.id, 79, `Retaining ${leaf.fileName}`);
+    await writeProgress(q, run.id, run.organizationId, run.startedAt, 79, `Retaining ${leaf.fileName}`);
     const kept = await retainLeaf(run, leaf, deps);
     stored.set(leaf.fileName, kept);
     return renderedLeafPackageName(leaf.fileName, kept.id);
@@ -227,7 +240,7 @@ function retention(q: Queryable, run: { id: number; organizationId: number; user
     for (const leaf of result.leaves) {
       let kept = stored.get(leaf.fileName);
       if (!kept) {
-        await writeProgress(q, run.id, 95, `Retaining ${leaf.fileName}`);
+        await writeProgress(q, run.id, run.organizationId, run.startedAt, 95, `Retaining ${leaf.fileName}`);
         kept = await retainLeaf(run, leaf, deps);
       }
       leaves.push({ appendix: leaf.appendix, title: leaf.title, fileName: leaf.fileName, packageFileName: renderedLeafPackageName(leaf.fileName, kept.id),
@@ -260,7 +273,7 @@ function failure(err: unknown): { code: string; message: string } {
 
 async function claim(q: Queryable, id: number, organizationId: number) {
   const { rows } = await q.query(`UPDATE csr_assembly_runs SET status = 'assembling', progress = 1, stage = 'Reading the build and its retained run',
-      started_at = now(), updated_at = now() WHERE id = $1 AND organization_id = $2 AND status = 'queued' RETURNING id, job_id, status, progress, stage, requested_by, not_applicable, supplied, result, error, placement,
+      started_at = date_trunc('milliseconds', clock_timestamp()), updated_at = now() WHERE id = $1 AND organization_id = $2 AND status = 'queued' RETURNING id, job_id, status, progress, stage, requested_by, not_applicable, supplied, result, error, placement,
   created_at, updated_at, started_at, completed_at`, [id, organizationId]);
   return rows[0] ? toRow(rows[0]) : null;
 }
@@ -272,11 +285,12 @@ async function assembleClaimed(q: Queryable & RequestSqlClient, run: CsrAssembly
   const supplied = await (deps.materializeSupplied ?? materializeSupplied)(q, { organizationId, programId: binding.programId }, run.supplied, path.join(workDir, 'supplied'));
   const outDir = path.join(workDir, 'out');
   await fs.mkdir(outDir, { recursive: true });
-  const kept = retention(q, { id: run.id, organizationId, userId }, deps);
+  if (!run.startedAt) throw new CsrAssemblyRunError('CSR_ASSEMBLY_CLAIM_FAILED', 503, 'Assembly attempt has no recorded start time.');
+  const kept = retention(q, { id: run.id, organizationId, userId, startedAt: run.startedAt }, deps);
   const result = await deps.assemble(q, {
     organizationId, userId, programId: binding.programId, projectId: binding.projectId, jobId: run.jobId, outDir, supplied,
     notApplicable: Object.fromEntries(Object.entries(run.notApplicable).map(([n, d]) => [n, d.reason])),
-    onStage: (stage, done) => writeProgress(q, run.id, 5 + 75 * done, stage), shipAs: kept.shipAs,
+    onStage: (stage, done) => writeProgress(q, run.id, organizationId, run.startedAt!, 5 + 75 * done, stage), shipAs: kept.shipAs,
   });
   return summarise(result, await kept.finish(result), result.leaves[0]?.studyId ?? '');
 }
@@ -291,12 +305,15 @@ export async function runCsrAssembly(id: number, organizationId: number, injecte
     try {
       const summary = await assembleClaimed(q, run, organizationId, workDir, deps);
       await q.query(`UPDATE csr_assembly_runs SET status = 'assembled', progress = 100, stage = 'Assembled', result = $2::jsonb,
-        completed_at = now(), updated_at = now() WHERE id = $1 AND status = 'assembling'`, [id, JSON.stringify(summary)]);
+        completed_at = now(), updated_at = now() WHERE id = $1 AND organization_id = $3
+          AND started_at = $4::timestamptz AND status = 'assembling'`,
+      [id, JSON.stringify(summary), organizationId, run.startedAt]);
     } catch (err) {
       const recorded = failure(err);
       if (recorded.code === 'CSR_ASSEMBLY_FAILED') log.error('CSR assembly failed', { id, organizationId, code: 'CSR_ASSEMBLY_FAILED' });
       await q.query(`UPDATE csr_assembly_runs SET status = 'failed', stage = 'Failed', error = $2::jsonb, completed_at = now(), updated_at = now()
-        WHERE id = $1 AND status = 'assembling'`, [id, JSON.stringify(recorded)]);
+        WHERE id = $1 AND organization_id = $3 AND started_at = $4::timestamptz
+          AND status = 'assembling'`, [id, JSON.stringify(recorded), organizationId, run.startedAt]);
     } finally {
       await fs.rm(workDir, { recursive: true, force: true });
     }
