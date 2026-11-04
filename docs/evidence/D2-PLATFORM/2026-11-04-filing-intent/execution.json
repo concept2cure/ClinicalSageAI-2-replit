@@ -1,0 +1,276 @@
+{
+  "baselineCommit": "0fc881c16fa344573ae55f5e882b1ca1c9d3631a",
+  "runtime": {
+    "node": "22.16.0",
+    "typescript": "5.8.3"
+  },
+  "boundaries": "Actual resolver executed. Registry, aliases, gateways and module-shape statements are declared test substitutes; no live filing or native integration acceptance.",
+  "files": {
+    "baseline/submission-resolver.ts": {
+      "gitBlob": "d1391ea4c8fd42a82b9f6e5f6d03024efc013b94",
+      "sha256": "6868c9474e463ddb69cec86a6da5d9b8e6b5778563f2c4070f167cc393d8c2cf"
+    },
+    "server/services/regulatory/submission-resolver.ts": {
+      "gitBlob": "c0f66e3618b4637df6b70b2239f3d3bff9213f6d",
+      "sha256": "0db7ffbfb57ed7528b185feb334a0161bfadf9cc1aa19bc0eb95ae7a4df21730"
+    },
+    "tests/services/regulatory/submission-resolver-intent.test.ts": {
+      "gitBlob": "2ca68e468928cfbd9e5ea6455f9cf4e9eb0053b4",
+      "sha256": "e6a1b0152dc2748b237ac0e02805486c807912ed337b95c9ea067b3943b83b66"
+    },
+    "tests/services/regulatory/submission-resolver-registry.test.ts": {
+      "gitBlob": "502df08b2c2d77c598e6e02a7e7005070ed91a2d",
+      "sha256": "7909c1d60255e3f831b2fabfd17269c4a9c6da08986cf1c63464d96d9099b5fe"
+    },
+    "docs/evidence/D2-PLATFORM/2026-11-04-filing-intent/offline-runner.cjs": {
+      "gitBlob": "26adafdf540ee103888460c3a8950a86fb980ab7",
+      "sha256": "5c25ab657000a554a5df088ddb556a41d25016e2f4cb87633e462e43f4bae8cb"
+    }
+  },
+  "runs": {
+    "baseline": {
+      "summary": {
+        "tests": 44,
+        "pass": 6,
+        "fail": 38,
+        "skipped": 0
+      },
+      "logSha256": "9d5fdf2c8980a711c578a2802412dfec35bd8e0c62b0b5da8cfc1e596b49c83a"
+    },
+    "patched": {
+      "summary": {
+        "tests": 44,
+        "pass": 44,
+        "fail": 0,
+        "skipped": 0
+      },
+      "logSha256": "64d20b4915fd71d9f7c9d7da843c0be1e4bb6b8b59c03f4c441e3a733ca7707c"
+    }
+  },
+  "cases": [
+    {
+      "name": "keeps explicitly selected US_505B2 in its recorded US region",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "keeps explicitly selected US_DE_NOVO in its recorded US region",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "keeps explicitly selected US_EUA in its recorded US region",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "keeps explicitly selected US_IND_AMENDMENT in its recorded US region",
+      "baselinePassed": true,
+      "repairedPassed": true
+    },
+    {
+      "name": "keeps explicitly selected EU_VARIATION_IB in its recorded EU region",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "keeps explicitly selected JP_SELECTED in its recorded JP region",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "keeps explicitly selected CA_SELECTED in its recorded CA region",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "keeps explicitly selected AU_CTA in its recorded AU region",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "uses the existing bridge for alias denovo rather than its own fuzzy selection",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "uses the existing bridge for alias  DE_NOVO  rather than its own fuzzy selection",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "uses the existing bridge for alias ind-amend rather than its own fuzzy selection",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "uses the existing bridge for alias type ib rather than its own fuzzy selection",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "uses the existing bridge for alias 505(b)(2) rather than its own fuzzy selection",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "unknown selection not-a-filing remains a gap",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "unknown selection partial marketing name remains a gap",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "does not use a family hint to overwrite an unrecognized explicit filing",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "an explicit small-molecule filing does not silently change to fit biologic",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "an explicit small-molecule filing does not silently change to fit medical_device",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "an explicit small-molecule filing does not silently change to fit ivd",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "never returns an incompatible marketing candidate for medical_device",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "never returns an incompatible marketing candidate for ivd",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "never returns an incompatible marketing candidate for generic",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "retains an explicitly generic registry row for a matching family",
+      "baselinePassed": true,
+      "repairedPassed": true
+    },
+    {
+      "name": "prefers a compatible exact product over a generic row",
+      "baselinePassed": true,
+      "repairedPassed": true
+    },
+    {
+      "name": "does not substitute a specific marketing product when no product is established",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "does not advertise an inactive selected filing as a live candidate",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "skips inactive entries in family-level discovery",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "does not convert an amendment into an initial filing in another region",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "uses a compatible same-stage regional candidate when one is recorded",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "does not infer a eSTAR build from the FDA eCTD backbone",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "does not infer a regional build from the FDA eCTD backbone",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "does not infer a none build from the FDA eCTD backbone",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "coverage cannot count a non-eCTD device filing as an eCTD build",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "coverage does not borrow a drug filing for an unsupported IVD marketing combination",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "retains established eCTD build and channel distinctions without enabling new gateways",
+      "baselinePassed": true,
+      "repairedPassed": true
+    },
+    {
+      "name": "does not convert a catalogued CA selection into a new build or gateway claim",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "does not convert a catalogued AU selection into a new build or gateway claim",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "continues to report a portal-only filing without a transmission gateway",
+      "baselinePassed": true,
+      "repairedPassed": true
+    },
+    {
+      "name": "does not let returned default regions mutate subsequent plans",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "caller region changes cannot rewrite the already resolved plan intent",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "returned methodology cannot alter a later plan",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "coverage dimensions are detached from caller arrays",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "an empty coverage request is not fully covered",
+      "baselinePassed": false,
+      "repairedPassed": true
+    },
+    {
+      "name": "retains the established default comparison regions rather than expanding release scope",
+      "baselinePassed": true,
+      "repairedPassed": true
+    }
+  ],
+  "nativeCatalogCases": {
+    "count": 12,
+    "executed": false
+  }
+}
