@@ -1,0 +1,103 @@
+{
+  "baseline_commit": "6c167eb4efc6a34a5baabf9918632bfd02387232",
+  "plan": "F1",
+  "source_scope": "Complete fetched source files; all baseline Git blob hashes verified. Not a whole repository checkout.",
+  "node": "v22.16.0",
+  "typescript": "5.8.3",
+  "suite": "tests/services/regulatory/submission-plan-tool-schema.test.cjs",
+  "results": {
+    "original": {
+      "tests": 10,
+      "passed": 3,
+      "failed": 7,
+      "skipped": 0,
+      "cases": [
+        {"name": "product choices exactly match the existing canonical ProductClass union", "passed": false},
+        {"name": "family choices exactly match the existing canonical ApplicationFamily union", "passed": false},
+        {"name": "all previously exposed medicine product and family choices remain available", "passed": true},
+        {"name": "the existing eight-region selector and order are unchanged", "passed": true},
+        {"name": "tool identity, field names and omitted-argument shape remain compatible", "passed": true},
+        {"name": "the tool distinguishes registry candidates from legal equivalence", "passed": false},
+        {"name": "the tool separates planning from readiness, entitlement, acceptance and authorization", "passed": false},
+        {"name": "the tool exposes returned support limitations instead of hiding a gap", "passed": false},
+        {"name": "the skill preserves specific product settings and discloses comparison defaults", "passed": false},
+        {"name": "the skill agrees with the tool about candidates, support gaps and human authorization", "passed": false}
+      ],
+      "raw_tap_sha256": "a93eaa77fac7b06f47c4db2dc858eb19ca46e4bf4666ce0f2c4f51fe60a169cc"
+    },
+    "patched": {
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "cases": [
+        {"name": "product choices exactly match the existing canonical ProductClass union", "passed": true},
+        {"name": "family choices exactly match the existing canonical ApplicationFamily union", "passed": true},
+        {"name": "all previously exposed medicine product and family choices remain available", "passed": true},
+        {"name": "the existing eight-region selector and order are unchanged", "passed": true},
+        {"name": "tool identity, field names and omitted-argument shape remain compatible", "passed": true},
+        {"name": "the tool distinguishes registry candidates from legal equivalence", "passed": true},
+        {"name": "the tool separates planning from readiness, entitlement, acceptance and authorization", "passed": true},
+        {"name": "the tool exposes returned support limitations instead of hiding a gap", "passed": true},
+        {"name": "the skill preserves specific product settings and discloses comparison defaults", "passed": true},
+        {"name": "the skill agrees with the tool about candidates, support gaps and human authorization", "passed": true}
+      ],
+      "raw_tap_sha256": "704329d7efd8f4c47e370d9b547f68414a71d4614fc15fc627d47d53f8bd4d9d"
+    }
+  },
+  "files": {
+    "server/services/ana/bla-biologics-tool-defs.ts": {
+      "original": {
+        "git_blob": "41285a0e4baa54c6a59633d8f5f116b060a07c82",
+        "sha256": "0bad13a32189a97371f61024961dac37ec06002ca4329ef79a2e4b47e596f3c8",
+        "bytes": 46233
+      },
+      "patched": {
+        "git_blob": "1c1c39015670159d73ca971558f7daab8d6063e3",
+        "sha256": "a20a6205c995011bc7f7fef373b2c9ce14778c8f257e978dd4ec95ce1bc8e520",
+        "bytes": 47799
+      }
+    },
+    "server/services/ana/skills/library/submissions.ts": {
+      "original": {
+        "git_blob": "7aadf7f5748831ecb6452b313aa64086ff19e1e8",
+        "sha256": "4f1eca2e9650b0c962a5c4b19591d08180d0d334543be727e6830d008b06db62",
+        "bytes": 52144
+      },
+      "patched": {
+        "git_blob": "5f7ee663e1123e25c8b9cf930b41f2288f668923",
+        "sha256": "a30291fdc178590f521e4ea9f92b3d88b314706d034ec2f282fc19980b182016",
+        "bytes": 52779
+      }
+    },
+    "shared/regulatory/document-taxonomy.ts": {
+      "original": {
+        "git_blob": "0cacf4f089557d0f1d9fd6ee1bc61e996937b729",
+        "sha256": "e92f728ba2aa3a30c8b13dedbd1a7ffb76c7c088b717dfbf3a9de8cd6e129fed",
+        "bytes": 10934
+      },
+      "patched": {
+        "git_blob": "0cacf4f089557d0f1d9fd6ee1bc61e996937b729",
+        "sha256": "e92f728ba2aa3a30c8b13dedbd1a7ffb76c7c088b717dfbf3a9de8cd6e129fed",
+        "bytes": 10934
+      }
+    }
+  },
+  "compatibility": {
+    "status": "passed",
+    "node": "v22.16.0",
+    "typescript": "5.8.3",
+    "completeModulesTranspiledAndEvaluated": 4,
+    "unchangedToolDefinitions": 24,
+    "unchangedSpecialistSkills": 8,
+    "changedSkillInstructionLines": 1,
+    "toolIdentityUnchanged": true,
+    "collaboratorSubstitutions": ["skill registration factory only"],
+    "notVerified": [
+      "whole-repository semantic types", "provider schema acceptance", "tool handler dispatch", "authenticated chat", "deployment"
+    ]
+  },
+  "not_executed": [
+    "full repository semantic typecheck", "production build", "local pre-push gates", "provider schema acceptance", "handler integration", "authenticated browser", "deployment"
+  ]
+}
