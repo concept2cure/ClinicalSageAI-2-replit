@@ -80,6 +80,21 @@ export function effectiveReviewState(row: {
   return { state: 'draft', staleApproval: recorded === 'approved' };
 }
 
+/** The persisted-review read contract. A stored approval/hash pair is not
+ * proof that the bytes retained in csr_section_outputs still match it.
+ * Used by both the launch-scoped sections API and the ICH E3 headings board;
+ * the writable review transition also checks SHA-256 independently. */
+export function effectiveSavedCsrReviewState(row: {
+  content?: unknown; contentHash?: unknown; reviewStatus?: unknown; reviewedContentHash?: unknown;
+}): { state: CsrSectionReviewState; staleApproval: boolean; integrityFailure?: true } {
+  const content = typeof row.content === 'string' ? row.content : null;
+  const hash = typeof row.contentHash === 'string' ? row.contentHash : '';
+  const intact = content !== null && !!content.trim() && HASH.test(hash) &&
+    createHash('sha256').update(content, 'utf8').digest('hex') === hash;
+  if (!intact) return { state: 'draft', staleApproval: false, integrityFailure: true };
+  return effectiveReviewState(row);
+}
+
 export function csrSectionReviewView(row: Record<string, unknown>): CsrSectionReviewView {
   const { state, staleApproval } = effectiveReviewState({
     reviewStatus: row.review_status, contentHash: row.content_hash, reviewedContentHash: row.reviewed_content_hash,
