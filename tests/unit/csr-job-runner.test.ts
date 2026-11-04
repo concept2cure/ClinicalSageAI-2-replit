@@ -144,6 +144,7 @@ vi.mock('drizzle-orm', async (importOriginal) => {
       val,
     }),
     and: (...preds: any[]) => ({ __kind: 'and', preds }),
+    isNull: (col: any) => ({ __kind: 'null', colName: col?.name ?? String(col) }),
   };
 });
 
@@ -158,9 +159,14 @@ vi.mock('../../server/db', async () => {
       // verbatim hit (in case the runtime exposes a camelCase .name).
       const k = pred.colName;
       const camel = k.replace(/_([a-z])/g, (_m: string, c: string) => c.toUpperCase());
-      if (camel in row) return row[camel] === pred.val;
-      if (k in row) return row[k] === pred.val;
+      const expected = pred.val instanceof Date ? pred.val.getTime() : pred.val;
+      const value = row[camel] ?? row[k];
+      if (camel in row || k in row) return (value instanceof Date ? value.getTime() : value) === expected;
       return false;
+    }
+    if (pred.__kind === 'null') {
+      const camel = pred.colName.replace(/_([a-z])/g, (_m: string, c: string) => c.toUpperCase());
+      return row[camel] == null;
     }
     if (pred.__kind === 'and') {
       return pred.preds.every((p: any) => evalPred(p, row));
@@ -335,8 +341,16 @@ vi.mock('../../server/db', async () => {
     },
   };
 
+  const transactional = Object.assign(db, {
+    transaction: async <T>(fn: (tx: typeof db) => Promise<T>): Promise<T> => {
+      const before = structuredClone({ jobs: state.jobs, sections: state.sections,
+        nextJobId: state.nextJobId, nextSectionId: state.nextSectionId });
+      try { return await fn(db); }
+      catch (error) { Object.assign(state, before); throw error; }
+    },
+  });
   return {
-    db,
+    db: transactional,
     pool: null,
     getPool: () => null,
     getDb: () => db,
@@ -470,7 +484,8 @@ describe('runCSRBuildJob — state machine', () => {
     expect(job.status).toBe('failed');
     expect(job.error).toBeTruthy();
     const err = job.error as Record<string, unknown>;
-    expect(err.message).toBe('boom-section-2');
+    expect(err.message).toBe('CSR_BUILD_STEP_FAILED');
+    expect(JSON.stringify(err)).not.toContain('boom-section-2');
     expect(typeof err.at).toBe('string');
     // Section field should record which section was being drafted when it threw
     expect(err.section).toBe('2');

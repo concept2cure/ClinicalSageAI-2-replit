@@ -1,0 +1,32 @@
+{
+  "node": "v22.16.0",
+  "typescript": "5.8.3",
+  "scope": "Syntax/transpilation only; not a full project TypeScript type-check.",
+  "files": [
+    {
+      "file": "server/services/csr/csr-job-runner.ts",
+      "gitBlob": "660eebed47e707f107199f7129d246253d3cd8d0",
+      "transpileDiagnostics": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-job-runner.attempt-fence.test.ts",
+      "gitBlob": "5e00290ee7c2b5c5c9bb6a097501b0a10df24dbe",
+      "transpileDiagnostics": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts",
+      "gitBlob": "2783259f975593758d07f9cf396297be75a6a021",
+      "transpileDiagnostics": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-job-runner.evidence.test.ts",
+      "gitBlob": "aefb1fa68921ed01a371078575c6946681823fc0",
+      "transpileDiagnostics": []
+    },
+    {
+      "file": "tests/unit/csr-job-runner.test.ts",
+      "gitBlob": "e0968031ec4acdbe3d28e313c0e9abd5bc4569de",
+      "transpileDiagnostics": []
+    }
+  ]
+}

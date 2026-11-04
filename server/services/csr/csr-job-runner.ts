@@ -23,7 +23,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 import { db } from '../../db';
 import { CsrScopeError, resolveCsrBuildContext, resolveCsrScope } from './project-scope';
@@ -166,9 +166,19 @@ async function loadSectionEvidence(
   return readCsrJobEvidence(job, source, sectionNumber);
 }
 
-async function isJobDrafting(d: NonNullable<typeof db>, jobId: number, organizationId: number): Promise<boolean> {
+/** A restarted job may be drafting again while its earlier model call is
+ * still alive. Status alone is not ownership. started_at is the existing
+ * immutable-per-attempt token; updated_at remains the recovery heartbeat. */
+function draftingAttempt(jobId: number, organizationId: number, startedAt: Date) {
+  return and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId),
+    eq(csrBuildJobs.status, 'drafting'), eq(csrBuildJobs.startedAt, startedAt));
+}
+
+async function isJobDrafting(
+  d: NonNullable<typeof db>, jobId: number, organizationId: number, startedAt: Date,
+): Promise<boolean> {
   const rows = await d.select({ id: csrBuildJobs.id }).from(csrBuildJobs)
-    .where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId), eq(csrBuildJobs.status, 'drafting')))
+    .where(draftingAttempt(jobId, organizationId, startedAt))
     .limit(1);
   return rows.length === 1;
 }
@@ -320,6 +330,13 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     return;
   }
 
+  // Bind pre-claim refusals and the claim to the exact runnable generation
+  // read above. queued/failed may recur after another attempt (the ABA race).
+  const previousStartedAt = job.startedAt ?? null;
+  const runnable = and(eq(csrBuildJobs.id, jobId),
+    eq(csrBuildJobs.organizationId, job.organizationId), eq(csrBuildJobs.status, job.status),
+    previousStartedAt === null ? isNull(csrBuildJobs.startedAt) : eq(csrBuildJobs.startedAt, previousStartedAt));
+
   // Legacy unanchored jobs cannot resume into a regulated dossier.
   // Refuse before any source reads or model calls.
   if (job.projectId == null) {
@@ -330,7 +347,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         reason: 'project_anchor_missing',
         message: 'This CSR job has no project anchor. Select a project and start a new build.',
       },
-    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId), eq(csrBuildJobs.status, job.status)));
+    }).where(runnable);
     return;
   }
 
@@ -347,8 +364,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         code: 'CSR_BUILD_REQUESTER_MISSING',
         message: 'The saved CSR job has no currently identifiable requester. Nothing was drafted; existing sections were preserved.',
       },
-    }).where(and(eq(csrBuildJobs.id, job.id),
-      eq(csrBuildJobs.organizationId, job.organizationId), eq(csrBuildJobs.status, job.status)));
+    }).where(runnable);
     return;
   }
 
@@ -360,7 +376,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     await d.update(csrBuildJobs).set({ status: 'failed', updatedAt: new Date(), error: {
       reason: error instanceof CsrScopeError ? 'project_access_refused' : 'project_access_verification_failed',
       code: error instanceof CsrScopeError ? error.code : 'CSR_PROJECT_ACCESS_UNAVAILABLE',
-    } }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId), eq(csrBuildJobs.status, job.status)));
+    } }).where(runnable);
     return;
   }
 
@@ -380,109 +396,108 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         reason: 'study_identity_mismatch',
         message: 'The saved CSR study identity does not match this job. No additional sections were drafted.',
       },
-    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId), eq(csrBuildJobs.status, job.status)));
+    }).where(runnable);
     return;
   }
 
-  // Claim the job only after identity validation, and only if its state
-  // remains runnable. A competing runner must not draft the same job.
+  // Strictly increase the existing attempt timestamp, even if a retry starts
+  // within the same millisecond or the process clock moves backwards. The
+  // conditional claim prevents two contenders from sharing this token.
+  const attemptStartedAt = new Date(Math.max(Date.now(), (previousStartedAt?.getTime() ?? 0) + 1));
   const [claimed] = await d.update(csrBuildJobs).set({
     status: 'drafting',
-    startedAt: new Date(),
+    startedAt: attemptStartedAt,
     updatedAt: new Date(),
+    completedAt: null,
     error: null,
-  }).where(and(
-    eq(csrBuildJobs.id, jobId),
-    eq(csrBuildJobs.organizationId, job.organizationId),
-    eq(csrBuildJobs.status, job.status),
-  )).returning({ id: csrBuildJobs.id });
+  }).where(runnable).returning({ id: csrBuildJobs.id });
   if (!claimed) return;
+  const ownsAttempt = draftingAttempt(jobId, job.organizationId, attemptStartedAt);
 
-  const persistedSubset = job.sectionsToGenerate ?? null;
-  // Empty arrays retain the existing full-build meaning. An unusable retained
-  // selection must never become a vacuously complete job or discard unknown slots.
-  const allTargets = retainedDraftTargets(persistedSubset);
-  if (!allTargets) {
-    await d.update(csrBuildJobs).set({ status: 'failed', progress: 0, updatedAt: new Date(),
-      error: { reason: 'invalid_section_selection', message: 'The retained CSR selection does not identify supported report sections.' },
-    }).where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, job.organizationId), eq(csrBuildJobs.status, 'drafting')));
-    return;
-  }
-  const request: CSRBuildRequest = {
-    organizationId: job.organizationId,
-    userId: job.requestedBy ?? 0,
-    projectId: job.projectId ?? undefined,
-    studyInfo,
-    deepResearchJobId,
-    sectionsToGenerate:
-      persistedSubset && persistedSubset.length > 0
-        ? persistedSubset
-        : undefined,
-  };
-  const aiCtx = {
-    organizationId: job.organizationId,
-    projectId: job.projectId ?? undefined,
-    userId: job.requestedBy ?? undefined,
-  };
-
-  // 5. Resume only missing/blank targets; preserve every nonblank saved target.
-  const targetNumbers = new Set(allTargets.map(section => section.number));
-
-  const alreadyPersisted = await d
-    .select({ sectionNumber: csrSectionOutputs.sectionNumber, content: csrSectionOutputs.content,
-      contentHash: csrSectionOutputs.contentHash, lineage: csrSectionOutputs.lineage })
-    .from(csrSectionOutputs)
-    .where(and(eq(csrSectionOutputs.jobId, job.id), eq(csrSectionOutputs.organizationId, job.organizationId)));
-  // Resume only verified, non-placeholder content. A damaged or incomplete
-  // output must not be treated as finished merely because its row exists.
-  const persistedSet = new Set(alreadyPersisted.filter(row =>
-    targetNumbers.has(row.sectionNumber) &&
-    typeof row.content === 'string' &&
-    Boolean(row.content.trim()) &&
-    !hasUnresolvedPlaceholders(row.content) &&
-    typeof row.contentHash === 'string' &&
-    row.contentHash === sha256Hex(row.content)
-  ).map(row => row.sectionNumber));
-
-  // A stored hash mismatch is evidence of changed or damaged source output.
-  // Never overwrite that record during a resume: preserve it for investigation
-  // and require a governed correction rather than silently regenerating it.
-  const damaged = alreadyPersisted.filter(row =>
-    targetNumbers.has(row.sectionNumber) &&
-    (typeof row.content !== 'string' ||
-      typeof row.contentHash !== 'string' ||
-      row.contentHash !== sha256Hex(row.content))
-  );
-  if (damaged.length > 0) {
-    await d.update(csrBuildJobs).set({
-      status: 'failed',
-      updatedAt: new Date(),
-      error: {
-        reason: 'saved_section_integrity_failed',
-        sections: damaged.map(row => row.sectionNumber),
-        message: 'Saved CSR section integrity verification failed. Existing content was preserved; review the affected sections before restarting.',
-      },
-    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId), eq(csrBuildJobs.status, 'drafting')));
-    return;
-  }
-
-  const totalSections = allTargets.length;
-  let sectionsCompleted = persistedSet.size;
   const currentSection = { number: '' as string };
-
-  // Seed initial progress so a resumed run reports the right number
-  if (totalSections > 0) {
-    const initialProgress = Math.floor(
-      (sectionsCompleted / totalSections) * 100
-    );
-    await d
-      .update(csrBuildJobs)
-      .set({ progress: initialProgress, updatedAt: new Date() })
-      .where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, job.organizationId),
-        eq(csrBuildJobs.status, 'drafting')));
-  }
-
   try {
+    const persistedSubset = job.sectionsToGenerate ?? null;
+    // Empty arrays retain the existing full-build meaning. An unusable retained
+    // selection must never become a vacuously complete job or discard unknown slots.
+    const allTargets = retainedDraftTargets(persistedSubset);
+    if (!allTargets) {
+      await d.update(csrBuildJobs).set({ status: 'failed', progress: 0, updatedAt: new Date(),
+        error: { reason: 'invalid_section_selection', message: 'The retained CSR selection does not identify supported report sections.' },
+      }).where(ownsAttempt);
+      return;
+    }
+    const request: CSRBuildRequest = {
+      organizationId: job.organizationId,
+      userId: job.requestedBy ?? 0,
+      projectId: job.projectId ?? undefined,
+      studyInfo,
+      deepResearchJobId,
+      sectionsToGenerate:
+        persistedSubset && persistedSubset.length > 0
+          ? persistedSubset
+          : undefined,
+    };
+    const aiCtx = {
+      organizationId: job.organizationId,
+      projectId: job.projectId ?? undefined,
+      userId: job.requestedBy ?? undefined,
+    };
+
+    // 5. Resume only missing/blank targets; preserve every nonblank saved target.
+    const targetNumbers = new Set(allTargets.map(section => section.number));
+
+    const alreadyPersisted = await d
+      .select({ sectionNumber: csrSectionOutputs.sectionNumber, content: csrSectionOutputs.content,
+        contentHash: csrSectionOutputs.contentHash, lineage: csrSectionOutputs.lineage })
+      .from(csrSectionOutputs)
+      .where(and(eq(csrSectionOutputs.jobId, job.id), eq(csrSectionOutputs.organizationId, job.organizationId)));
+    // Resume only verified, non-placeholder content. A damaged or incomplete
+    // output must not be treated as finished merely because its row exists.
+    const persistedSet = new Set(alreadyPersisted.filter(row =>
+      targetNumbers.has(row.sectionNumber) &&
+      typeof row.content === 'string' &&
+      Boolean(row.content.trim()) &&
+      !hasUnresolvedPlaceholders(row.content) &&
+      typeof row.contentHash === 'string' &&
+      row.contentHash === sha256Hex(row.content)
+    ).map(row => row.sectionNumber));
+
+    // A stored hash mismatch is evidence of changed or damaged source output.
+    // Never overwrite that record during a resume: preserve it for investigation
+    // and require a governed correction rather than silently regenerating it.
+    const damaged = alreadyPersisted.filter(row =>
+      targetNumbers.has(row.sectionNumber) &&
+      (typeof row.content !== 'string' ||
+        typeof row.contentHash !== 'string' ||
+        row.contentHash !== sha256Hex(row.content))
+    );
+    if (damaged.length > 0) {
+      await d.update(csrBuildJobs).set({
+        status: 'failed',
+        updatedAt: new Date(),
+        error: {
+          reason: 'saved_section_integrity_failed',
+          sections: damaged.map(row => row.sectionNumber),
+          message: 'Saved CSR section integrity verification failed. Existing content was preserved; review the affected sections before restarting.',
+        },
+      }).where(ownsAttempt);
+      return;
+    }
+
+    const totalSections = allTargets.length;
+    let sectionsCompleted = persistedSet.size;
+
+    // Seed initial progress so a resumed run reports the right number
+    if (totalSections > 0) {
+      const initialProgress = Math.floor(
+        (sectionsCompleted / totalSections) * 100
+      );
+      await d
+        .update(csrBuildJobs)
+        .set({ progress: initialProgress, updatedAt: new Date() })
+        .where(ownsAttempt);
+    }
+
     const source = evidenceSource !== undefined ? parseEvidenceSource(evidenceSource) : undefined;
     let admission: CsrAuthoringEvidence | undefined;
     if (source) {
@@ -508,7 +523,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         : undefined;
       // Source reads can themselves outlive cancellation. Do not start a
       // billable model call when the job became terminal during that await.
-      if (!await isJobDrafting(d, jobId, job.organizationId)) return;
+      if (!await isJobDrafting(d, jobId, job.organizationId, attemptStartedAt)) return;
       const drafted = await draftCSRSectionWithProvenance(
         section,
         request,
@@ -524,7 +539,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
 
       // Model calls are long-running. A cancelled or superseded job cannot
       // save a late model result into its previously governed section set.
-      if (!await isJobDrafting(d, jobId, job.organizationId)) return;
+      if (!await isJobDrafting(d, jobId, job.organizationId, attemptStartedAt)) return;
 
       // A model call can outlive project membership or source availability.
       // Recheck current write permission and the same pack before any upsert.
@@ -537,7 +552,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         }
       }
       // Cancellation while those asynchronous checks run is still terminal.
-      if (!await isJobDrafting(d, jobId, job.organizationId)) return;
+      if (!await isJobDrafting(d, jobId, job.organizationId, attemptStartedAt)) return;
 
       // Missing output remains retryable work; never persist whitespace as a draft.
       if (typeof drafted.content !== 'string' || !drafted.content.trim()) {
@@ -547,45 +562,47 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       const contentHash = sha256Hex(drafted.content);
       const isAI = drafted.source === 'ai';
 
-      await d
-        .insert(csrSectionOutputs)
-        .values({
-          organizationId: job.organizationId,
-          projectId: job.projectId ?? null,
-          jobId: job.id,
-          sectionNumber: drafted.number,
-          content: drafted.content,
-          contentHash,
-          aiGenerated: isAI,
-          model: drafted.model,
-          tokenCost: drafted.tokenCost,
-          lineage: drafted.lineage as Record<string, unknown> | null,
-        })
-        .onConflictDoUpdate({
-          target: [csrSectionOutputs.jobId, csrSectionOutputs.sectionNumber],
-          set: {
+      const progress = Math.floor(((sectionsCompleted + 1) / totalSections) * 100);
+      // The conditional UPDATE takes a row lock on the parent job until the
+      // same transaction commits its section. Cancellation/recovery cannot
+      // slip between the ownership check and the output write. No model call
+      // or evidence fetch runs under this lock. An insert failure rolls back
+      // progress too; a lost attempt makes no output write at all.
+      const saved = await d.transaction(async tx => {
+        const owner = await tx.update(csrBuildJobs)
+          .set({ progress, updatedAt: new Date() })
+          .where(ownsAttempt).returning({ id: csrBuildJobs.id });
+        if (owner.length !== 1) return false;
+        await tx
+          .insert(csrSectionOutputs)
+          .values({
+            organizationId: job.organizationId,
+            projectId: job.projectId ?? null,
+            jobId: job.id,
+            sectionNumber: drafted.number,
             content: drafted.content,
             contentHash,
             aiGenerated: isAI,
             model: drafted.model,
             tokenCost: drafted.tokenCost,
             lineage: drafted.lineage as Record<string, unknown> | null,
-            generatedAt: new Date(),
-          },
-        });
-
+          })
+          .onConflictDoUpdate({
+            target: [csrSectionOutputs.jobId, csrSectionOutputs.sectionNumber],
+            set: {
+              content: drafted.content,
+              contentHash,
+              aiGenerated: isAI,
+              model: drafted.model,
+              tokenCost: drafted.tokenCost,
+              lineage: drafted.lineage as Record<string, unknown> | null,
+              generatedAt: new Date(),
+            },
+          });
+        return true;
+      });
+      if (!saved) return;
       sectionsCompleted += 1;
-      const progress =
-        totalSections === 0
-          ? 100
-          : Math.floor((sectionsCompleted / totalSections) * 100);
-
-      await d
-        .update(csrBuildJobs)
-        .set({ progress, updatedAt: new Date() })
-        .where(and(eq(csrBuildJobs.id, jobId),
-          eq(csrBuildJobs.organizationId, job.organizationId),
-          eq(csrBuildJobs.status, 'drafting')));
     }
 
     // 6. Re-read saved target coverage, including prior attempts. Missing rows
@@ -607,17 +624,14 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       await d.update(csrBuildJobs).set({ status: 'failed', progress: finalProgress, updatedAt: new Date(),
         error: { reason: 'saved_section_integrity_failed', sections: integrity.mismatched,
           message: 'A saved CSR section changed or failed checksum verification. No completed report was issued.' },
-      }).where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, job.organizationId),
-        eq(csrBuildJobs.status, 'drafting')));
+      }).where(ownsAttempt);
       return;
     }
     if (missingSections.length) {
       await d.update(csrBuildJobs).set({ status: 'failed', progress: finalProgress, updatedAt: new Date(),
         error: { reason: 'missing_section_outputs', sections: missingSections,
           message: 'Requested CSR sections have no nonblank saved output; retained sections are preserved for resume.' },
-      }).where(and(eq(csrBuildJobs.id, jobId),
-          eq(csrBuildJobs.organizationId, job.organizationId),
-          eq(csrBuildJobs.status, 'drafting')));
+      }).where(ownsAttempt);
       return;
     }
     const placeholderSections = savedTargets
@@ -646,9 +660,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
             at: new Date().toISOString(),
           },
         })
-        .where(and(eq(csrBuildJobs.id, jobId),
-          eq(csrBuildJobs.organizationId, job.organizationId),
-          eq(csrBuildJobs.status, 'drafting')));
+        .where(ownsAttempt);
       return;
     }
 
@@ -670,9 +682,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         completedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(and(eq(csrBuildJobs.id, jobId),
-        eq(csrBuildJobs.organizationId, job.organizationId),
-        eq(csrBuildJobs.status, 'drafting')))
+      .where(ownsAttempt)
       .returning({ id: csrBuildJobs.id });
     if (completed.length !== 1) return;
     // Continue dependent submission work only after the CSR completion is durable.
@@ -693,12 +703,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     // job error (returned to the client) may include raw Error.message.
     // Preserve only a stable, bounded CSR_* machine code.
     const refusal = safeCsrJobFailure(err);
-    console.error(
-      `[csr-job-runner] Job ${jobId} failed on section '${
-        currentSection.number || '<setup>'
-      }': ${refusal.message}`
-    );
-    await d
+    const failed = await d
       .update(csrBuildJobs)
       .set({
         status: 'failed',
@@ -709,9 +714,14 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
           at: new Date().toISOString(),
         },
       })
-      .where(and(eq(csrBuildJobs.id, jobId),
-        eq(csrBuildJobs.organizationId, job.organizationId),
-        eq(csrBuildJobs.status, 'drafting')));
+      .where(ownsAttempt).returning({ id: csrBuildJobs.id });
+    if (failed.length === 1) {
+      console.error(
+        `[csr-job-runner] Job ${jobId} failed on section '${
+          currentSection.number || '<setup>'
+        }': ${refusal.message}`
+      );
+    }
   }
 }
 

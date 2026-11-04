@@ -127,7 +127,12 @@ function makeFakeDb(job: Record<string, unknown>, retained: SavedOutput[] = []) 
       };
     },
   };
-  return { db, inserted, persisted, jobUpdates, job };
+  // This fixture tests output/placeholder behavior. The dedicated attempt
+  // suite evaluates conditional predicates and transactional rollback.
+  const transactional = Object.assign(db, {
+    transaction: async <T>(fn: (tx: typeof db) => Promise<T>): Promise<T> => fn(db),
+  });
+  return { db: transactional, inserted, persisted, jobUpdates, job };
 }
 
 let fake: ReturnType<typeof makeFakeDb>;

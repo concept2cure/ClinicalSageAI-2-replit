@@ -1,0 +1,79 @@
+TAP version 13
+# [csr-job-runner] Job 42 failed on section '<setup>': CSR_BUILD_STEP_FAILED
+# [csr-job-runner] Job 42 failed on section '13': CSR_BUILD_STEP_FAILED
+# [csr-job-runner] Job 42 has unresolved placeholders in section(s) 13; marking failed instead of complete
+# Subtest: saves the section and its progress in one short transaction before completing
+ok 1 - saves the section and its progress in one short transaction before completing
+  ---
+  duration_ms: 6.677926
+  type: 'test'
+  ...
+# Subtest: discards a late model response after recovery has started a replacement attempt
+ok 2 - discards a late model response after recovery has started a replacement attempt
+  ---
+  duration_ms: 1.743763
+  type: 'test'
+  ...
+# Subtest: does not let an old provider failure fail the replacement drafting attempt
+ok 3 - does not let an old provider failure fail the replacement drafting attempt
+  ---
+  duration_ms: 3.086105
+  type: 'test'
+  ...
+# Subtest: discards model output after cancellation, preserving cancellation as terminal
+ok 4 - discards model output after cancellation, preserving cancellation as terminal
+  ---
+  duration_ms: 0.994639
+  type: 'test'
+  ...
+# Subtest: closes the final ownership-check-to-section-write gap
+ok 5 - closes the final ownership-check-to-section-write gap
+  ---
+  duration_ms: 1.224145
+  type: 'test'
+  ...
+# Subtest: does not claim a recurring queued state from an obsolete pre-claim read
+ok 6 - does not claim a recurring queued state from an obsolete pre-claim read
+  ---
+  duration_ms: 0.721997
+  type: 'test'
+  ...
+# Subtest: records an initial saved-output read failure instead of stranding the claimed job
+ok 7 - records an initial saved-output read failure instead of stranding the claimed job
+  ---
+  duration_ms: 1.481698
+  type: 'test'
+  ...
+# Subtest: rolls progress back when the section upsert fails
+ok 8 - rolls progress back when the section upsert fails
+  ---
+  duration_ms: 1.486213
+  type: 'test'
+  ...
+# Subtest: preserves valid retained sections during an explicit resume
+ok 9 - preserves valid retained sections during an explicit resume
+  ---
+  duration_ms: 3.065563
+  type: 'test'
+  ...
+# Subtest: does not complete or continue a replacement job after delayed final authorization
+ok 10 - does not complete or continue a replacement job after delayed final authorization
+  ---
+  duration_ms: 1.119352
+  type: 'test'
+  ...
+# Subtest: retains the placeholder completion refusal under attempt fencing
+ok 11 - retains the placeholder completion refusal under attempt fencing
+  ---
+  duration_ms: 1.505869
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 603.68375
