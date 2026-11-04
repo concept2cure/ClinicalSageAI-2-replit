@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-03T06:49:19.762Z",
+  "generatedAt": "2026-11-04T17:35:44.091Z",
   "git": {
-    "sha": "d692dc80397ec2be43f6c97e3d38d484cab82297",
+    "sha": "7e098c7eb603f062be677eb01343ae96f03d73ad",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2514,12 +2514,12 @@
         "bytes": 136488
       },
       {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "bytes": 132755
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "bytes": 133974
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "bytes": 132146
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "bytes": 132755
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2772,16 +2772,16 @@
         "lines": 2397
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 2391
+      },
+      {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
         "lines": 2386
       },
       {
         "file": "server/routes/c2c/reviews.ts",
         "lines": 2372
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 2363
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
