@@ -172,7 +172,7 @@ it('imports exactly the approved sections into Authoring and opens the saved cop
   fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into Authoring/ }));
   const dialog = await screen.findByTestId('csr-import');
   // No open project in the shell: the dialog names the target by its id (programName absent).
-  expect(JSON.parse(dialog.firstChild!.textContent!)).toEqual({ programId: PROGRAM, source: { kind: 'csr', jobId: 41, sectionNumbers: ['11.4.1', '12.2'] } });
+  expect(JSON.parse(dialog.firstChild!.textContent!)).toEqual({ programId: PROGRAM, source: { kind: 'csr', jobId: 41, sectionNumbers: ['11.4.1', '12.2'], approvedOnly: true } });
   fireEvent.click(within(dialog).getByRole('button', { name: 'Open confirmed copy' }));
   expect(nav).toHaveBeenCalledWith('document-authoring');
   expect(peekEditorTarget()).toMatchObject({ docId: 'saved-csr-copy', programId: PROGRAM, sectionCode: '11.4.1' });
