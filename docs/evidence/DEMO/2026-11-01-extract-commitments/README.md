@@ -145,19 +145,19 @@ Line numbers are at HEAD. For the agency files that is ff7fc490b7, their last co
    `biotech.mjs` imports seven other pack modules (`Cannot find module …/biotech-work-content.mjs`). This change
    adds no import that HEAD's `biotech.mjs` did not already have.
 
-## Resolved (2026-11-01, same day)
+## Resolved
 
-Every defect above is fixed on `concept2cure-v2`, each with a test that fails on the old code:
+Re-landed on `concept2cure-v2` on 2026-11-04, after this session reconciled onto trunk; each fix has a test that fails on the old code.
 
 | # | Defect | Fixed in |
 |---|---|---|
-| 1 | Meetings & commitments did not list a commitment recorded from a letter until re-read | `7f0a09a359`: `onCommitmentRecorded` from `AgencyResponses` through the inbox to Communication's register version |
-| 2 | At 390 wide each commitment's text was 0px wide | `3819decf71` (D0): `.cc-q-proposal` wraps, the text keeps a 16ch minimum. Re-shot: `screenshots/09-mobile-390-commitments.png` |
-| 3 | Received date as a raw ISO instant; visibility tier "shared client c2c" | `85591ed4d8`: "received Oct 12, 2026"; "Your team and Concept2Cure" |
-| 4 | Commitment rows "due 2030-06-30", and no word of the letter they came from | `85591ed4d8`: "due Jun 30, 2030 · recorded from Approval letter" |
-| 5 | A letter that asks nothing told to record its questions by hand | `85591ed4d8`: it says it needs no response; the hint is on letters that owe one |
-| 6 | The half-width basis field cut off "PREA (FDCA 505B) · 471…" | `85591ed4d8`: basis on a full row in both forms |
-| 7 | A link opened in a fresh tab: the top bar said "Open project" | `cc17ddb1d4`: the top bar's chip names the project on whichever screen the link opened |
-| 8 | `demo-recovery.test.mjs` failed 35/35 | `93f375639b`: the fixture supplies the pack's work areas; 35/35 pass |
+| 1 | Meetings & commitments did not list a commitment recorded from a letter until re-read | `d9edfb1da3`: `onCommitmentRecorded` from `AgencyResponses` through the inbox to Communication's register version |
+| 2 | At 390 wide each commitment's text was 0px wide | Handed to the stylesheet holder (`.design/claude-convergence/COORDINATION.md`): `.cc-q-proposal` wraps and the text keeps a 16ch minimum. Not yet on trunk |
+| 3 | Received date as a raw ISO instant; visibility tier "shared client c2c" | `ee7c051bca`: "received Oct 12, 2026"; "Your team and Concept2Cure" |
+| 4 | Commitment rows "due 2030-06-30", and no word of the letter they came from | `ee7c051bca`: "due Jun 30, 2030 · recorded from Approval letter" |
+| 5 | A letter that asks nothing told to record its questions by hand | `ee7c051bca`: it says it needs no response; the hint is on letters that owe one |
+| 6 | The half-width basis field cut off "PREA (FDCA 505B) · 471…" | `ee7c051bca`: basis on a full row in both forms |
+| 7 | A link opened in a fresh tab: the top bar had no name for the project | `7a1ee8fec7`: the top bar names the project in the shell's channel on whichever screen the link opened |
+| 8 | `demo-recovery.test.mjs` failed 35/35 | On trunk from another session before this one re-landed |
 
 The re-shoot (`walk.cjs --narrow-only`) records nothing; `walk-narrow.json` is its output.
