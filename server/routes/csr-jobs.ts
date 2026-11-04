@@ -385,7 +385,7 @@ router.get('/:jobId/sections', async (req: Request, res: Response) => {
     // selected section instead of claiming a verified draft.
     const sectionNumber = req.query.sectionNumber;
     if (sectionNumber !== undefined && (typeof sectionNumber !== 'string' ||
-        !/^\\d+(\\.\\d+)*$/.test(sectionNumber))) {
+        !/^\d+(\.\d+)*$/.test(sectionNumber))) {
       return res.status(400).json({ code: 'CSR_SECTION_NUMBER_INVALID', error: 'Choose an exact ICH E3 heading.' });
     }
     const sections = await getCSRSectionOutputs(jobId, organizationId);
