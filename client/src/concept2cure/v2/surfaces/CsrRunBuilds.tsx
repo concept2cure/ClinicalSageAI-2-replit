@@ -183,7 +183,7 @@ function BuildOnCard({ build, programId, onNav }: { build: RunBuild; programId: 
         not appear as though it is ready. The server enforces admission too. */}
     {headings && <>
       <CsrHeadingReview jobId={build.jobId} headings={headings} onChanged={reload}
-        onImport={sectionNumbers => setImportSource({ kind: 'csr', jobId: build.jobId, sectionNumbers })} />
+        onImport={sectionNumbers => setImportSource({ kind: 'csr', jobId: build.jobId, sectionNumbers, approvedOnly: true })} />
       <CsrNarrativeBuild jobId={build.jobId} headings={headings} onChanged={reload} />
       <CsrAssemblyControl jobId={build.jobId} />
     </>}
