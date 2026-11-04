@@ -24,6 +24,28 @@ function copy(): AuthoringSourceImportData {
 }
 const read = (data: AuthoringSourceImportData) => readWorkflowImportResult({ success: true, data }, programId, source, preview);
 
+describe('approved CSR selection is not interchangeable with a working-draft import', () => {
+  it('pins the approval requirement in the preview identity and refuses mode confusion', () => {
+    const approvedSource: WorkflowImportSource = { ...source, approvedOnly: true };
+    const approvedOrigin: WorkflowImportOrigin = { ...origin, selection: approvedSource };
+    const approvedPreview: AuthoringSourceImportPreviewData = {
+      ...preview, origin: approvedOrigin,
+    };
+    expect(workflowSourceKey(approvedSource)).not.toBe(workflowSourceKey(source));
+    expect(readWorkflowPreview({ success: true, data: approvedPreview }, programId, approvedSource))
+      .not.toBeNull();
+    expect(readWorkflowPreview({ success: true, data: approvedPreview }, programId, source))
+      .toBeNull();
+    expect(readWorkflowPreview({ success: true, data: preview }, programId, approvedSource))
+      .toBeNull();
+    // An explicit false value is not an approved-only source flag and is
+    // refused rather than silently downgraded to a working-draft import.
+    const invalid = { ...source, approvedOnly: false } as unknown as WorkflowImportSource;
+    expect(readWorkflowPreview({ success: true, data: preview }, programId, invalid))
+      .toBeNull();
+  });
+});
+
 describe('a verified reused workflow copy keeps its actual saved structure', () => {
   it.each(['renamed', 'added', 'removed', 'reordered'] as const)('admits legitimate %s saved sections without replacing them with the source preview', change => {
     const data = copy();
