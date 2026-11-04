@@ -15,6 +15,7 @@
  * organizationId path without touching the real auth stack.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createHash } from 'node:crypto';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 vi.mock('../../server/services/csr/project-scope', async importOriginal => ({ ...(await importOriginal<typeof import('../../server/services/csr/project-scope')>()), requireCsrJobAccess: async () => true }));
@@ -281,6 +282,8 @@ describe('GET /api/csr/jobs/:jobId', () => {
   });
 });
 
+const sha = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex');
+
 describe('GET /api/csr/jobs/:jobId/sections', () => {
   it('returns the section array', async () => {
     // The sections route probes existence first, then loads sections.
@@ -291,10 +294,10 @@ describe('GET /api/csr/jobs/:jobId/sections', () => {
       error: null,
     });
     const sections = [
-      { id: 1, jobId: 42, sectionNumber: '1', content: 'Section 1', organizationId: 100 },
-      { id: 2, jobId: 42, sectionNumber: '2', content: 'Section 2', organizationId: 100 },
-      { id: 3, jobId: 42, sectionNumber: '3', content: 'Redrafted', organizationId: 100, reviewStatus: 'approved', contentHash: 'h2', reviewedContentHash: 'h1' },
-      { id: 4, jobId: 42, sectionNumber: '4', content: 'Approved', organizationId: 100, reviewStatus: 'approved', contentHash: 'h3', reviewedContentHash: 'h3' },
+      { id: 1, jobId: 42, sectionNumber: '1', content: 'Section 1', contentHash: sha('Section 1'), organizationId: 100 },
+      { id: 2, jobId: 42, sectionNumber: '2', content: 'Section 2', contentHash: sha('Section 2'), organizationId: 100 },
+      { id: 3, jobId: 42, sectionNumber: '3', content: 'Redrafted', organizationId: 100, reviewStatus: 'approved', contentHash: sha('Redrafted'), reviewedContentHash: sha('Earlier text') },
+      { id: 4, jobId: 42, sectionNumber: '4', content: 'Approved', organizationId: 100, reviewStatus: 'approved', contentHash: sha('Approved'), reviewedContentHash: sha('Approved') },
     ];
     hoisted.getCSRSectionOutputs.mockResolvedValue(sections);
 
@@ -314,6 +317,23 @@ describe('GET /api/csr/jobs/:jobId/sections', () => {
     ];
     expect(res.body).toEqual({ sections: sections.map((section, i) => ({ ...section, review: reviews[i] })) });
     expect(hoisted.getCSRSectionOutputs).toHaveBeenCalledWith(42, 100);
+  });
+
+  it('does not report a damaged saved section as approved on the bulk read', async () => {
+    hoisted.getCSRBuildJobStatus.mockResolvedValue({
+      status: 'failed', progress: 0, sectionsComplete: 0, error: null,
+    });
+    const approvedText = 'Approved treatment outcome narrative';
+    const row = { jobId: 42, sectionNumber: '12.2', content: 'Modified without saving a new digest',
+      contentHash: sha(approvedText), reviewStatus: 'approved',
+      reviewedContentHash: sha(approvedText), organizationId: 100 };
+    hoisted.getCSRSectionOutputs.mockResolvedValue([row]);
+    const res = await request(makeApp({ organizationId: 100, userId: 7 }))
+      .get('/api/csr/jobs/42/sections');
+    expect(res.status).toBe(200);
+    expect(res.body.sections[0].review).toEqual({
+      state: 'draft', staleApproval: false, integrityFailure: true,
+    });
   });
 });
 
