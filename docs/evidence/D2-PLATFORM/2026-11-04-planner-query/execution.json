@@ -1,0 +1,27 @@
+{
+  "baselineCommit": "75a1e5ba40dfa860100d6d2dca8dc6e1aa823aec",
+  "baselineGitBlob": "0857f5753919f21434e550d3454677d2d895455f",
+  "node": "22.16.0",
+  "typescript": "5.8.3",
+  "boundaries": ["Express route registration substituted", "Shared resolver functions substituted", "No native HTTP, gateway, license or database acceptance"],
+  "files": {
+    "server/routes/biopharma/submissions.ts": {"gitBlob": "af073e6b324122dfcb8523b55110a6a2c8582e6f", "sha256": "b3590a366feb496b0db05fe924c38a572eaa09d3f399b98c0190a9f20c249b6d"},
+    "tests/services/regulatory/submission-query.test.ts": {"gitBlob": "16cf9d7aa028da0482791a4b9eb68591e160e751", "sha256": "0ee5d126d5779c75f8217434a8b5dc77cdbdc950beec0a7319c448f9f1944288"},
+    "tests/services/regulatory/submission-query.http.test.ts": {"gitBlob": "4e63a40f26591c48c3af2aa07266e44a518f61fa", "sha256": "df3e8bafc6624c33a9d0d1886ece55136f1cabd95e174091c3165f52585e1150"},
+    "docs/evidence/D2-PLATFORM/2026-11-04-planner-query/offline-runner.cjs": {"gitBlob": "e3f9f09a990b928503eb467093c83884c3ec51fb", "sha256": "817fd2c059f64c605d1bb46d83f64a6a9754bf4e7e48a9a0fd0a3f206264a10a"}
+  },
+  "baseline": {
+    "passed": 11, "failed": 53, "skipped": 0,
+    "sha256": "a2ee1a4181bb03e851d31119ade81e635a129b2915e4e0bcc88f0ab775cec3bb",
+    "passedCaseNumbers": [1,2,3,4,5,6,7,8,9,10,62],
+    "failedCaseNumbers": [11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,63,64]
+  },
+  "repaired": {
+    "passed": 64, "failed": 0, "skipped": 0,
+    "sha256": "2847e464c04f293d3d4cc8d653c136c40095adafc11746836165c2a248d7bea1",
+    "passedCaseNumbers": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64],
+    "failedCaseNumbers": []
+  },
+  "nativeHttpCases": {"authored": 12, "executed": 0},
+  "caseOrder": "Order of node:test cases in the committed submission-query.test.ts, 1 through 64; zero skipped."
+}
