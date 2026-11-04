@@ -94,8 +94,18 @@ describe('stored CSR output through canonical verified source intake', () => {
       });
       const fingerprint = current.body.data.fingerprint;
       expect(fingerprint).toMatch(/^[a-f0-9]{64}$/);
+      const created = await requested().send({
+        ...selected, expectedFingerprint: fingerprint, reason,
+      });
+      expect(created.status, JSON.stringify(created.body)).toBe(201);
+      expect(created.body.data.doc.status).toMatch(/^draft$/i);
+      expect(created.body.data.origin.selection.approvedOnly).toBe(true);
+      // The new working copy must not inherit a signed/approved status.
+      expect(created.body.data.doc.provenance).toMatchObject({ source: 'import', governedWrite: 'unverified' });
 
-      // Revoke the approval before create. A source preview is not a
+      // Revoke the approval before another import/reuse. An earlier preview
+      // and existing draft do not authorize a now-changed source.
+      // A source preview is not a
       // permission to import a later, different review state.
       await db.pool.query(`UPDATE csr_section_outputs SET review_status = 'in_review'
         WHERE job_id = $1`, [jobId]);
