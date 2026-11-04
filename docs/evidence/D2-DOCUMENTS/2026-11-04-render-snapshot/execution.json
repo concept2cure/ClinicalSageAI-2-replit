@@ -1,0 +1,40 @@
+{
+  "baselineCommit": "b72c0f274e7a988e6976be7d091652084e8a42e1",
+  "node": "v22.16.0",
+  "typescript": "5.8.3",
+  "runner": "node:test with test-declared collaborators; NOT native Vitest/DOCX/PDF",
+  "baselineGitBlobSha": "31aeeff4a141c0608dbb372b0a21d56059159f5c",
+  "baseline": { "tests": 25, "passed": 4, "failed": 21, "skipped": 0, "stdoutSha256": "ebc174320d20c442766c6f2b55fd3b0300f2612e0316c2847cccc213fbceb3d0" },
+  "patched": { "tests": 25, "passed": 25, "failed": 0, "skipped": 0, "stdoutSha256": "24e86f0a2b45dde6c0e4ea8e69c1b01daa6ea9d0750bfc411a6c1eebd3e1ffa8" },
+  "testedFiles": [
+    { "path": "server/services/authoring/authoring-export.ts", "gitBlobSha": "7465899429bf37e27eb24a941e84f286ca5042f8", "diagnostics": [] },
+    { "path": "server/services/authoring/__tests__/authoring-export-snapshot.test.ts", "gitBlobSha": "3ce252d0bc56a4994efa1ed9fe101a2cf5d8bac5", "diagnostics": [] }
+  ],
+  "cases": [
+    { "name": "renders an unchanged document and an accurate artifact hash without changing inputs", "baseline": true, "patched": true },
+    { "name": "pins the same input boundary for Protocol, with no CSR-only admission", "baseline": false, "patched": true },
+    { "name": "pins the same input boundary for IND summary, with no CSR-only admission", "baseline": false, "patched": true },
+    { "name": "pins the same input boundary for CMC manufacturing, with no CSR-only admission", "baseline": false, "patched": true },
+    { "name": "pins the same input boundary for Investigator brochure, with no CSR-only admission", "baseline": false, "patched": true },
+    { "name": "pins the same input boundary for Device clinical evaluation, with no CSR-only admission", "baseline": false, "patched": true },
+    { "name": "pins the same input boundary for Quality SOP, with no CSR-only admission", "baseline": false, "patched": true },
+    { "name": "pins the same input boundary for Agency response, with no CSR-only admission", "baseline": false, "patched": true },
+    { "name": "pins the same input boundary for Clinical study report, with no CSR-only admission", "baseline": false, "patched": true },
+    { "name": "keeps XML content and its signature verdict on the same captured revision", "baseline": false, "patched": true },
+    { "name": "keeps docx body, section headings and manifest in one revision across asset resolution", "baseline": false, "patched": true },
+    { "name": "keeps pdf body, section headings and manifest in one revision across asset resolution", "baseline": false, "patched": true },
+    { "name": "does not let a later array replacement remove or insert sections during source verification", "baseline": false, "patched": true },
+    { "name": "pins nested provenance and actor scope before the first asynchronous read", "baseline": false, "patched": true },
+    { "name": "captures signature identities and mutable Date instances, not only the signatures array", "baseline": false, "patched": true },
+    { "name": "does not silently adopt a changed working-copy warning during preparation", "baseline": false, "patched": true },
+    { "name": "captures a QMS controlled-copy manifest deeply instead of relabeling a later approval", "baseline": false, "patched": true },
+    { "name": "pins internally resolved correspondence presentation and ignores a caller override", "baseline": false, "patched": true },
+    { "name": "rejects an unsupported format before any source or branding lookup", "baseline": false, "patched": true },
+    { "name": "rejects contradictory copy modes rather than combining controlled and uncontrolled labels", "baseline": false, "patched": true },
+    { "name": "refuses uncopyable provenance with a safe message instead of losing fields", "baseline": false, "patched": true },
+    { "name": "retains source refusal and never renders around unavailable evidence", "baseline": true, "patched": true },
+    { "name": "retains formatted-PDF refusal instead of falling back to text", "baseline": true, "patched": true },
+    { "name": "keeps null content distinct from empty content in the unchanged source digest", "baseline": true, "patched": true },
+    { "name": "two overlapping exports do not share a mutable document snapshot", "baseline": false, "patched": true }
+  ]
+}
