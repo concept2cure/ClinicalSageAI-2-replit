@@ -27,6 +27,40 @@ Existing constraints retained: tenant/member authorization; immutable source-ver
 7. **Private failures remain private.** The existing CSR worker now records only bounded typed refusal codes or a generic failure marker. The legacy CSR drafting path and narrative/assembly workers no longer log raw provider/database exceptions. No clinical observations or secret-bearing DSNs are returned in new generic job-error receipts.
 8. **Bounded, strict observations ingestion.** The existing ADaM NDJSON reader scans row boundaries without copying every blank line into an array; JSON and NDJSON use fatal UTF-8 decoding so invalid source bytes fail instead of altering clinical text.
 
+## Additional fixes: saved review integrity and assembly recovery
+
+9. **Review status must match actual saved bytes.** The existing
+   `csr-section-review.ts` now owns one shared SHA-256 read verifier,
+   `effectiveSavedCsrReviewState`. Both `csr-jobs.ts`'s bulk section read
+   and `csr-headings.ts`'s ICH E3 review board use it. A saved body that is
+   blank, missing or changed without updating its digest can no longer be
+   represented as approved merely because `reviewed_content_hash` still
+   matches `content_hash`. The client marks the record as damaged and
+   blocks inspection, review and import. The original review-write integrity
+   requirement remains unchanged. Regression cases were added to
+   `server/routes/__tests__/csr-workflow-headings.test.ts`,
+   `tests/unit/csr-jobs-routes.test.ts` and
+   `client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx`.
+
+10. **Assembly retries cannot be overwritten by older workers.**
+    `csr-assembly-run.ts` now treats the EXISTING `started_at` value as
+    the claim identity. It rounds the new claim to milliseconds (matching
+    JavaScript timestamp serialization) and predicates progress, success
+    and failure writes on the same `id`, `organization_id`,
+    `started_at` and `status='assembling'`. A late worker from before
+    queue recovery receives `CSR_ASSEMBLY_SUPERSEDED` instead of changing
+    the replacement worker's record. The new
+    `csr-assembly-run.pglite.test.ts` scenario emulates an old worker
+    paused while a newer worker claims the same row; the old update must
+    not alter the new attempt's stage or outcome. No new queue column,
+    table, migration, endpoint or storage was added.
+
+**Limit:** The build-job worker (distinct from CSR assembly) still lacks
+a database-enforced attempt fence for the narrow case of a live but
+stalled second-instance worker. The narrative queue already has a
+separate incrementing `attempt` token. A full multi-instance replay
+test with the actual PostgreSQL app role and RLS remains required.
+
 ## Regression coverage authored
 
 - `server/services/csr/__tests__/unsupplied-statistics.test.ts` — planned-vs-observed numeric collisions; categoric results refusals and nonassertive uncertainty; source-label checks for deaths; valid claimed counts and methods-plan allowance.
