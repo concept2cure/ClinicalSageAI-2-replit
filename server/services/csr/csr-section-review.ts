@@ -179,9 +179,20 @@ function assertReviewable(row: Record<string, unknown>, input: CsrSectionReviewI
     throw new CsrSectionReviewError('CSR_SECTION_CHANGED', 409,
       `CSR section ${input.sectionNumber} was redrafted since it was opened. Reload it and review the current text.`);
   }
-  if (input.decision === 'approve' && Number(row.requested_by) === input.reviewerId) {
-    throw new CsrSectionReviewError('CSR_REVIEWER_IS_REQUESTER', 409,
-      'The person who requested this build cannot approve its sections. Ask another reviewer.');
+  if (input.decision === 'approve') {
+    // A legacy job may have a NULL requester. Number(null) === 0, so the
+    // previous equality-only test could silently treat independence as
+    // established. No identified requester => no defensible independent
+    // approval; retain the draft/review for explicit reconciliation.
+    const requester = Number(row.requested_by);
+    if (!Number.isSafeInteger(requester) || requester <= 0) {
+      throw new CsrSectionReviewError('CSR_REVIEW_REQUESTER_MISSING', 409,
+        'The saved CSR job has no identified requester. Independent review cannot be established.');
+    }
+    if (requester === input.reviewerId) {
+      throw new CsrSectionReviewError('CSR_REVIEWER_IS_REQUESTER', 409,
+        'The person who requested this build cannot approve its sections. Ask another reviewer.');
+    }
   }
 }
 
