@@ -119,7 +119,53 @@ const NavEntitlementsContext = React.createContext<NavEntitlementsValue>(EMPTY);
 function isNavEntitlementsPayload(value: unknown): value is NavEntitlementsPayload {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const v = value as Record<string, unknown>;
-  return typeof v.resolved === 'boolean' && Array.isArray(v.surfaces);
+  const nonempty = (text: unknown): text is string => typeof text === 'string' && !!text.trim();
+  const nullableText = (text: unknown) => text === null || nonempty(text);
+  if (!Number.isSafeInteger(v.organizationId) || Number(v.organizationId) <= 0 ||
+      Number(v.organizationId) > 2_147_483_647 || !nullableText(v.tier) || !nullableText(v.industryMode) ||
+      typeof v.masterAdmin !== 'boolean' || typeof v.resolved !== 'boolean' || !Array.isArray(v.surfaces) ||
+      (v.platformAdmin !== undefined && typeof v.platformAdmin !== 'boolean')) return false;
+  if (v.launchScope !== undefined) {
+    if (!v.launchScope || typeof v.launchScope !== 'object' || Array.isArray(v.launchScope) ||
+        typeof (v.launchScope as Record<string, unknown>).enforced !== 'boolean') return false;
+  }
+  // An unresolved read is not a set of licensing decisions. Independent
+  // platform-admin/release facts may still be present in that valid response.
+  if (!v.resolved && v.surfaces.length !== 0) return false;
+  const seen = new Set<string>();
+  for (const row of v.surfaces) {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return false;
+    const surface = row as Record<string, unknown>;
+    if (!nonempty(surface.id) || surface.id.trim() !== surface.id || seen.has(surface.id) ||
+        !nonempty(surface.label) || typeof surface.entitled !== 'boolean' ||
+        !nullableText(surface.requiredTier)) return false;
+    seen.add(surface.id);
+    // The reason selects both the message and the recovery action. Unknown
+    // reasons and contradictory outcomes must not become a fabricated upsell,
+    // an unlocked release boundary, or a last-row-wins license decision.
+    switch (surface.source) {
+      case 'master_admin':
+        if (!v.masterAdmin || !surface.entitled) return false;
+        break;
+      case 'subscribed':
+      case 'included':
+        if (!surface.entitled) return false;
+        break;
+      case 'disabled':
+      case 'tier':
+      case 'industry':
+        if (surface.entitled) return false;
+        break;
+      case 'launch-scope':
+        // The platform owner's license override does not waive release scope.
+        if (surface.entitled ||
+            (v.launchScope as { enforced: boolean } | undefined)?.enforced === false) return false;
+        break;
+      default:
+        return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -137,7 +183,9 @@ export function NavEntitlementsProvider({ children }: { children: React.ReactNod
   );
 
   const value = React.useMemo<NavEntitlementsValue>(() => {
-    const payload = state.data;
+    // Validate the complete set at the presentation boundary too: a stale or
+    // malformed cache value cannot carry a partial catalog/admin verdict.
+    const payload = isNavEntitlementsPayload(state.data) ? state.data : null;
     // Independent of the catalog read, so it survives resolved:false.
     const platformAdmin = payload?.platformAdmin === true;
     const launchScopeEnforced = typeof payload?.launchScope?.enforced === 'boolean' ? payload.launchScope.enforced : null;
@@ -147,7 +195,11 @@ export function NavEntitlementsProvider({ children }: { children: React.ReactNod
     }
     const byId = new Map<string, NavSurfaceEntitlement>();
     for (const s of payload.surfaces) {
-      if (s && typeof s.id === 'string') byId.set(s.id, s);
+      // This provider owns its answer. Mutating a response/cache object or a
+      // consumer's returned verdict must not change another work area's
+      // licensing explanation without a fresh validated provider value.
+      byId.set(s.id, Object.freeze({ id: s.id, label: s.label, entitled: s.entitled,
+        source: s.source, requiredTier: s.requiredTier }));
     }
     return {
       // Rule 2: an id the catalog does not carry is not licensable.
