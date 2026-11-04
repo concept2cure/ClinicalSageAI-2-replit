@@ -145,6 +145,55 @@ describe('POST /api/csr/jobs/:jobId/sections/:sectionNumber/review', () => {
   });
 });
 
+describe('GET /api/csr/jobs/:jobId/sections — inspect exact persisted CSR text before approval', () => {
+  it('accepts a valid dotted ICH E3 section code and returns the saved bytes for human inspection', async () => {
+    const result = await request(app).get('/api/csr/jobs/1/sections?sectionNumber=11.4.1');
+    expect(result.status).toBe(200);
+    expect(result.body.sections).toHaveLength(1);
+    expect(result.body.sections[0]).toMatchObject({
+      sectionNumber: '11.4.1', content: TEXT, contentHash: sha(TEXT),
+    });
+    expect(result.body.sections[0].review.integrityFailure).not.toBe(true);
+  });
+
+  it.each([
+    'abc', '11-4-1', '11.4.', '11.4.1x', '11.4.1\\\\x',
+  ])('refuses malformed section code %s instead of reading the wrong section', async code => {
+    const result = await request(app).get('/api/csr/jobs/1/sections')
+      .query({ sectionNumber: code });
+    expect(result.status).toBe(400);
+    expect(result.body.code).toBe('CSR_SECTION_NUMBER_INVALID');
+  });
+
+  it('refuses a missing selected heading and a foreign-tenant build', async () => {
+    const missing = await request(app).get('/api/csr/jobs/1/sections?sectionNumber=11.4.99');
+    expect(missing.status).toBe(404);
+    expect(missing.body.code).toBe('CSR_SECTION_NOT_SAVED');
+    const foreign = await request(app).get('/api/csr/jobs/3/sections?sectionNumber=11.4.1');
+    expect(foreign.status).toBe(404);
+    expect(foreign.body).not.toHaveProperty('sections');
+  });
+
+  it('blocks inspection of corrupted saved text, even if its approval hash still matches the stored hash', async () => {
+    await pg.query(`UPDATE csr_section_outputs SET content = $1
+      WHERE job_id = 1 AND section_number = '11.4.1'`, ['Tampered bytes without a new hash']);
+    try {
+      const result = await request(app).get('/api/csr/jobs/1/sections?sectionNumber=11.4.1');
+      expect(result.status).toBe(409);
+      expect(result.body.code).toBe('CSR_SECTION_INTEGRITY_FAILED');
+      expect(result.body).not.toHaveProperty('sections');
+      const completeList = await request(app).get('/api/csr/jobs/1/sections');
+      expect(completeList.status).toBe(200);
+      expect(completeList.body.sections[0].review).toMatchObject({
+        state: 'draft', integrityFailure: true,
+      });
+    } finally {
+      await pg.query(`UPDATE csr_section_outputs SET content = $1
+        WHERE job_id = 1 AND section_number = '11.4.1'`, [TEXT]);
+    }
+  });
+});
+
 describe('GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30)', () => {
   it('lists only this organization\'s builds bound to the run, newest first', async () => {
     const res = await request(app).get(`/api/csr/jobs?programId=${PROGRAM}&runId=${RUN}`);
