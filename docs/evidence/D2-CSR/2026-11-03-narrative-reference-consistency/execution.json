@@ -1,0 +1,201 @@
+{
+  "scope": "Executed Node adapter with actual TypeScript reader/walker and declared SQL/store doubles; NOT native Vitest/PGlite or hosted qualification",
+  "node": "v22.16.0",
+  "typescript": "5.8.3",
+  "baselineCommit": "e3b05b8c0c2d0bc4ea17fb7e4ca75f4f8830400c",
+  "baselineReaderGitBlob": "3077f093197507eec9ac85d7829daee1c66ee9bb",
+  "runs": [
+    {
+      "implementation": "baseline",
+      "exitCode": 1,
+      "tests": 17,
+      "pass": 7,
+      "fail": 10,
+      "skipped": 0,
+      "stdoutSha256": "04fd2ab236f1aefaeb1aa336d56f1a2e332c8f7075c0fe41317c868c772ddc16",
+      "cases": [
+        {
+          "number": 1,
+          "name": "verifies an unchanged section and keeps its exact source hash and opening",
+          "passed": true
+        },
+        {
+          "number": 2,
+          "name": "verifies unchanged narratives over multiple pages without whole-section selection",
+          "passed": true
+        },
+        {
+          "number": 3,
+          "name": "preserves the valid zero-subject selection with its exact opening hash",
+          "passed": true
+        },
+        {
+          "number": 4,
+          "name": "does not return a narrative reference for another tenant",
+          "passed": true
+        },
+        {
+          "number": 5,
+          "name": "continues refusing a section corrupted before its first read",
+          "passed": true
+        },
+        {
+          "number": 6,
+          "name": "continues reporting an invalid individual narrative hash",
+          "passed": true
+        },
+        {
+          "number": 7,
+          "name": "continues refusing a changed narrative-store digest",
+          "passed": true
+        },
+        {
+          "number": 8,
+          "name": "never mixes old section metadata with newly replaced section and narrative bytes",
+          "passed": false
+        },
+        {
+          "number": 9,
+          "name": "pins slices to the source hash rather than silently reading a replacement revision",
+          "passed": false
+        },
+        {
+          "number": 10,
+          "name": "refuses an opening edited after the final narrative window was read",
+          "passed": false
+        },
+        {
+          "number": 11,
+          "name": "refuses section text appended after the final store-digest read",
+          "passed": false
+        },
+        {
+          "number": 12,
+          "name": "refuses a landed section deleted during verification instead of certifying a ghost",
+          "passed": false
+        },
+        {
+          "number": 13,
+          "name": "rejects final content corruption even when its stored hash was not updated",
+          "passed": false
+        },
+        {
+          "number": 14,
+          "name": "also rechecks the opening for a zero-subject report",
+          "passed": false
+        },
+        {
+          "number": 15,
+          "name": "rejects streamed text whose reconstructed SHA-256 differs from the pinned section digest",
+          "passed": false
+        },
+        {
+          "number": 16,
+          "name": "rejects an opening-only stream with an incorrect pinned hash",
+          "passed": false
+        },
+        {
+          "number": 17,
+          "name": "rejects unhashed body replacement even when the newly supplied subject text is internally valid",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "implementation": "patched",
+      "exitCode": 0,
+      "tests": 17,
+      "pass": 17,
+      "fail": 0,
+      "skipped": 0,
+      "stdoutSha256": "6b0628e7d2b064c9edbba47b3b1f2b171cafe830a034bf4639aca5cbd7a8cdd3",
+      "cases": [
+        {
+          "number": 1,
+          "name": "verifies an unchanged section and keeps its exact source hash and opening",
+          "passed": true
+        },
+        {
+          "number": 2,
+          "name": "verifies unchanged narratives over multiple pages without whole-section selection",
+          "passed": true
+        },
+        {
+          "number": 3,
+          "name": "preserves the valid zero-subject selection with its exact opening hash",
+          "passed": true
+        },
+        {
+          "number": 4,
+          "name": "does not return a narrative reference for another tenant",
+          "passed": true
+        },
+        {
+          "number": 5,
+          "name": "continues refusing a section corrupted before its first read",
+          "passed": true
+        },
+        {
+          "number": 6,
+          "name": "continues reporting an invalid individual narrative hash",
+          "passed": true
+        },
+        {
+          "number": 7,
+          "name": "continues refusing a changed narrative-store digest",
+          "passed": true
+        },
+        {
+          "number": 8,
+          "name": "never mixes old section metadata with newly replaced section and narrative bytes",
+          "passed": true
+        },
+        {
+          "number": 9,
+          "name": "pins slices to the source hash rather than silently reading a replacement revision",
+          "passed": true
+        },
+        {
+          "number": 10,
+          "name": "refuses an opening edited after the final narrative window was read",
+          "passed": true
+        },
+        {
+          "number": 11,
+          "name": "refuses section text appended after the final store-digest read",
+          "passed": true
+        },
+        {
+          "number": 12,
+          "name": "refuses a landed section deleted during verification instead of certifying a ghost",
+          "passed": true
+        },
+        {
+          "number": 13,
+          "name": "rejects final content corruption even when its stored hash was not updated",
+          "passed": true
+        },
+        {
+          "number": 14,
+          "name": "also rechecks the opening for a zero-subject report",
+          "passed": true
+        },
+        {
+          "number": 15,
+          "name": "rejects streamed text whose reconstructed SHA-256 differs from the pinned section digest",
+          "passed": true
+        },
+        {
+          "number": 16,
+          "name": "rejects an opening-only stream with an incorrect pinned hash",
+          "passed": true
+        },
+        {
+          "number": 17,
+          "name": "rejects unhashed body replacement even when the newly supplied subject text is internally valid",
+          "passed": true
+        }
+      ]
+    }
+  ]
+}

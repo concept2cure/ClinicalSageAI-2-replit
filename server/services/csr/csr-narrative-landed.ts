@@ -78,8 +78,12 @@ export async function sqlLandedNarratives(q: NarrativeQueryable, job: Job): Prom
   return { length: Number(row.length), opening: String(row.opening ?? ''), sha256: row.content_hash,
     async slice(start, count) {
       if (count <= 0) return '';
+      // A replacement section must not supply pages to an earlier section's
+      // receipt. Returning no text makes the existing walker report a mismatch
+      // (and lets the renderer close/remove its incomplete leaf normally).
       const part = await q.query(`SELECT substr(content, $3::int, $4::int) AS text FROM csr_section_outputs
-        WHERE organization_id = $1 AND job_id = $2 AND section_number = '14.3.3'`, [job.organizationId, job.jobId, start + 1, count]);
+        WHERE organization_id = $1 AND job_id = $2 AND section_number = '14.3.3'
+          AND content_hash = $5`, [job.organizationId, job.jobId, start + 1, count, row.content_hash]);
       return String(part.rows[0]?.text ?? '');
     } };
 }
@@ -108,6 +112,11 @@ const blockOf = (row: SavedNarrative & { content: string }) =>
 export async function walkLandedNarratives(landed: LandedNarratives, source: NarrativePages,
   visit?: (n: WalkedNarrative) => void | Promise<void>, afterPage?: () => Promise<void>): Promise<NarrativeWalk> {
   const walk: NarrativeWalk = { matched: 0, subjects: [], findings: [], complete: false, offset: landed.opening.length };
+  // The matched blocks themselves must reproduce the admitted section hash.
+  // Matching current rows to current slices alone can mix revisions when a
+  // concurrent writer changes both after the initial metadata read. Hash one
+  // block at a time: no whole-section text or per-page SQL hashing is needed.
+  const matchedDigest = createHash('sha256').update(landed.opening, 'utf8');
   let after: NarrativePageCursor | null = null;
   for (;;) {
     const rows = await source.page(after, NARRATIVES_PAGE);
@@ -121,6 +130,7 @@ export async function walkLandedNarratives(landed: LandedNarratives, source: Nar
     for (const c of candidates) {
       if (!window.startsWith(c.block, local)) continue;
       if (c.row.contentHash !== sha256(c.row.content)) walk.findings.push(`The stored narrative of subject ${c.row.subjectId} does not match its recorded SHA-256.`);
+      matchedDigest.update(c.block, 'utf8');
       await visit?.(c);
       local += c.block.length;
       walk.matched++;
@@ -130,6 +140,9 @@ export async function walkLandedNarratives(landed: LandedNarratives, source: Nar
     await afterPage?.();
   }
   walk.complete = walk.offset === landed.length;
+  if (walk.complete && matchedDigest.digest('hex') !== landed.sha256) {
+    walk.findings.push('The streamed Section 14.3.3 does not match its recorded SHA-256. Its saved text changed or is inconsistent; no verified reference may be issued.');
+  }
   if (!walk.complete) {
     walk.findings.unshift(`The landed Section 14.3.3 does not match the stored narratives: no stored narrative has the text of ${await unmatchedAt(landed, walk.offset)} (edited or recomposed after it was landed).`);
   }
@@ -161,6 +174,15 @@ export async function readCsrNarrativeReference(q: NarrativeQueryable, job: Job)
   if (walk.findings.length) return { state: 'mismatch', findings: walk.findings };
   // Read twice around the walk: a store written to during it is not the store that was matched.
   if (await storeDigest(q, job) !== before) return { state: 'mismatch', findings: ['The narrative store changed while Section 14.3.3 was being checked against it.'] };
+  // The per-subject store can be unchanged while the landed opening, body or
+  // whole row is edited/deleted. Revalidate its database-checked digest at
+  // the final read boundary, including the zero-narrative case with no pages.
+  // This remains on the caller's connection/snapshot; it is not a new lock or
+  // permission to reuse a reference after a later source change.
+  const current = await sqlLandedNarratives(q, job);
+  if (!current || current.sha256 !== landed.sha256 || current.length !== landed.length || current.opening !== landed.opening) {
+    return { state: 'mismatch', findings: ['The saved Section 14.3.3 changed while its narrative reference was being verified. Re-read the source before importing or assembling it.'] };
+  }
   return { state: 'verified', opening: landed.opening, reference: { schema: CSR_NARRATIVE_REFERENCE_SCHEMA, jobId: job.jobId, sectionNumber: '14.3.3',
     narratives: walk.matched, storeDigest: before, landedSha256: landed.sha256, landedLength: landed.length, openingSha256: sha256(landed.opening) } };
 }
