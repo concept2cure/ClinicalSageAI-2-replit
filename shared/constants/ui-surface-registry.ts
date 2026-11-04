@@ -851,7 +851,10 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'sigma',
     group: 'clinical',
     uiKit: null,
-    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge'],
+    // '/api/biostat-bridge/designs', not the bridge's root: the screens call only its designs. The broad claim
+    // served /computation-runs and /filing-placements, which no screen calls and the launch re-proof excluded
+    // (launch-reproof-narrowing.test.ts), once Biostatistics joined the catalog (0edd864728, 2026-10-31).
+    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge/designs'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
