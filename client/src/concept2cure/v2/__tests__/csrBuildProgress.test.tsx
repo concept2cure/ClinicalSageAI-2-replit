@@ -183,6 +183,43 @@ const headings: CsrBoardHeading[] = [
   { num: '16.1.1', label: 'Protocol and amendments', depth: 3, manual: true, state: 'not_drafted' },
 ];
 
+it('does not offer review, inspection or import for a section whose saved bytes failed SHA-256', () => {
+  const onImport = vi.fn();
+  const bad: CsrBoardHeading = {
+    num: '12.3', label: 'Safety outcomes', depth: 2, manual: false,
+    state: 'draft', integrityFailure: true, contentHash: HASH,
+  };
+  const good: CsrBoardHeading = {
+    num: '10.1', label: 'Verified disposition', depth: 2, manual: false,
+    state: 'approved', contentHash: 'b'.repeat(64),
+  };
+  render(<CsrHeadingReview jobId={41} headings={[bad, good]}
+    onChanged={vi.fn()} onImport={onImport} />);
+  const damaged = screen.getByText('Safety outcomes').closest('li')!;
+  expect(within(damaged).getByText('Saved text integrity failed')).toBeTruthy();
+  expect(within(damaged).getByRole('alert').textContent).toMatch(/review and import are blocked/i);
+  const submit = within(damaged).getByRole('button', { name: 'Send for review' }) as HTMLButtonElement;
+  expect(submit.disabled).toBe(true);
+  expect(within(damaged).queryByRole('button', { name: 'Read saved section text' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: /Import approved sections into Authoring/ }));
+  expect(onImport).toHaveBeenCalledWith(['10.1']);
+  expect(apiRequest).not.toHaveBeenCalled();
+});
+
+it('excludes a corrupted record from approved-section imports even if it falsely carries an approved state', () => {
+  const onImport = vi.fn();
+  const damaged: CsrBoardHeading = {
+    num: '11.4.1', label: 'Damaged efficacy', depth: 3, manual: false,
+    state: 'approved', integrityFailure: true, contentHash: HASH,
+  };
+  render(<CsrHeadingReview jobId={41} headings={[damaged]}
+    onChanged={vi.fn()} onImport={onImport} />);
+  const importButton = screen.getByRole('button', { name: /Import approved sections into Authoring/ }) as HTMLButtonElement;
+  expect(importButton.disabled).toBe(true);
+  fireEvent.click(importButton);
+  expect(onImport).not.toHaveBeenCalled();
+});
+
 it('records a review decision on the exact text, and shows a refused decision', async () => {
   const changed = vi.fn();
   const onImport = vi.fn();
