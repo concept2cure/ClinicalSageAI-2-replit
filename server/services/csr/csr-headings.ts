@@ -62,11 +62,11 @@ export function buildHeadings(structure: CSRSection[], outputs: readonly Partial
       /^[a-f0-9]{64}$/.test(hash) &&
       createHash('sha256').update(body, 'utf8').digest('hex') === hash;
     if (!intact) {
-      return { ...heading, state: 'draft', integrityFailure: true,
+      return { ...heading, state: 'draft' as const, integrityFailure: true as const,
         ...(hash ? { contentHash: hash } : {}) };
     }
     const { state, staleApproval } = effectiveReviewState(output);
-    const placeholder = hasUnresolvedPlaceholders(body);
+    const placeholder = hasUnresolvedPlaceholders(body ?? '');
     return {
       ...heading, state, ...(placeholder ? { placeholder: true } : {}), ...(staleApproval ? { staleApproval: true as const } : {}),
       contentHash: typeof output.contentHash === 'string' ? output.contentHash : undefined,
