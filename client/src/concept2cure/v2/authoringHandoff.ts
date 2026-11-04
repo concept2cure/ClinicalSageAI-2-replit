@@ -198,8 +198,10 @@ function validWorkflowSource(source: unknown): source is WorkflowImportSource {
   if (source.kind === 'study-design-crf') return nonempty(source.studyId) && studyDesignImportId(source.studyId) === source.studyId;
   if (source.kind === 'protocol') return importInteger(source.documentId);
   if (source.kind !== 'csr') return importUuid(source.documentId);
-  return importInteger(source.jobId) && (source.sectionNumbers === undefined || (Array.isArray(source.sectionNumbers)
-    && source.sectionNumbers.length > 0 && source.sectionNumbers.length <= 200 && source.sectionNumbers.every(nonempty)));
+  return importInteger(source.jobId) && (source.approvedOnly === undefined || source.approvedOnly === true)
+    && (source.sectionNumbers === undefined || (Array.isArray(source.sectionNumbers)
+      && source.sectionNumbers.length > 0 && source.sectionNumbers.length <= 200 && source.sectionNumbers.every(nonempty)))
+    && (source.approvedOnly !== true || (Array.isArray(source.sectionNumbers) && source.sectionNumbers.length > 0));
 }
 function validBinarySource(source: unknown): source is BinaryImportSource {
   const value = record(source);
