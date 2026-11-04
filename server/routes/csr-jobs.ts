@@ -64,7 +64,7 @@ import { CsrAuthoringContextError } from '../services/csr/cortex-authoring-conte
 import {
   CsrSectionReviewError,
   decideCsrSectionReview,
-  effectiveReviewState,
+  effectiveSavedCsrReviewState,
   type CsrReviewDecision,
 } from '../services/csr/csr-section-review';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
@@ -408,7 +408,7 @@ router.get('/:jobId/sections', async (req: Request, res: Response) => {
     }
     // The current saved body and hash must be inspectable before a human
     // decides on this exact version. No signature or approval is inferred.
-    return res.json({ sections: selected.map(section => ({ ...section, review: effectiveReviewState(section) })) });
+    return res.json({ sections: selected.map(section => ({ ...section, review: effectiveSavedCsrReviewState(section) })) });
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to read CSR section outputs', {
