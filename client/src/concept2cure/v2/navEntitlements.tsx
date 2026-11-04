@@ -33,7 +33,8 @@
  *      buy a subscription that changes nothing.
  */
 import React from 'react';
-import { useLiveData } from './dataConnect';
+import { useLiveData, type DataReadOwner } from './dataConnect';
+import { useAuth } from '@/services/portal/authService';
 
 /** Mirrors NavEntitlementSource (server/services/entitlements/navigation-entitlements.ts). */
 export type NavEntitlementSource =
@@ -169,23 +170,63 @@ function isNavEntitlementsPayload(value: unknown): value is NavEntitlementsPaylo
 }
 
 /**
- * Fetch the verdict set once for the session and provide it to the shell.
+ * Bind the existing read-ownership contract to the shell's signed-in account.
+ * An organization is compared only when the authenticated profile supplies it;
+ * older profiles without that field still use the authenticated server answer,
+ * never a browser-persisted organization guess. This is presentation ownership,
+ * not authorization: the existing server guards remain authoritative.
+ */
+function useNavigationReadOwner() {
+  const { user } = useAuth();
+  const actor = user?.id == null ? '' : String(user.id).trim();
+  const rawOrganization = user?.organizationId;
+  const organizationId = rawOrganization == null ? null : Number(rawOrganization);
+  const validOrganization = rawOrganization == null ||
+    ((typeof rawOrganization === 'number' || (typeof rawOrganization === 'string' && /^[1-9]\d*$/.test(rawOrganization))) &&
+      Number.isSafeInteger(organizationId) && Number(organizationId) > 0 && Number(organizationId) <= 2_147_483_647);
+  const identity = JSON.stringify([actor, rawOrganization ?? null]);
+  const visit = React.useRef<{ account: typeof user; identity: string; generation: number; active: boolean } | null>(null);
+  const previous = visit.current;
+  if (!previous || previous.account !== user || previous.identity !== identity) {
+    if (previous) previous.active = false;
+    visit.current = { account: user, identity, generation: (previous?.generation ?? 0) + 1, active: true };
+  }
+  const captured = visit.current!;
+  React.useEffect(() => {
+    captured.active = true;
+    return () => { captured.active = false; };
+  }, [captured]);
+  const owner = React.useMemo<DataReadOwner>(() => ({
+    key: `${identity}:${captured.generation}`,
+    current: () => !!actor && validOrganization && captured.active && visit.current === captured,
+  }), [actor, validOrganization, identity, captured]);
+  return { owner, organizationId };
+}
+
+/**
+ * Fetch one verdict set per current account visit and provide it to the shell.
  *
  * Mounted above the rail rather than inside it so the rail and the locked-state
  * panel read the same answer — two independent fetches could disagree about
  * whether a destination is locked while the panel explaining it is open.
  */
 export function NavEntitlementsProvider({ children }: { children: React.ReactNode }) {
+  const { owner, organizationId } = useNavigationReadOwner();
+  const path = owner.current() ? '/api/module-subscriptions/navigation' : null;
+  const matchesAccount = React.useCallback((payload: unknown): payload is NavEntitlementsPayload =>
+    isNavEntitlementsPayload(payload) && (organizationId === null || payload.organizationId === organizationId),
+  [organizationId]);
   const state = useLiveData<NavEntitlementsPayload>(
-    '/api/module-subscriptions/navigation',
-    ['/api/module-subscriptions/navigation'],
-    isNavEntitlementsPayload,
+    path,
+    [path, owner.key],
+    matchesAccount,
+    owner,
   );
 
   const value = React.useMemo<NavEntitlementsValue>(() => {
     // Validate the complete set at the presentation boundary too: a stale or
     // malformed cache value cannot carry a partial catalog/admin verdict.
-    const payload = isNavEntitlementsPayload(state.data) ? state.data : null;
+    const payload = owner.current() && matchesAccount(state.data) ? state.data : null;
     // Independent of the catalog read, so it survives resolved:false.
     const platformAdmin = payload?.platformAdmin === true;
     const launchScopeEnforced = typeof payload?.launchScope?.enforced === 'boolean' ? payload.launchScope.enforced : null;
@@ -203,14 +244,14 @@ export function NavEntitlementsProvider({ children }: { children: React.ReactNod
     }
     return {
       // Rule 2: an id the catalog does not carry is not licensable.
-      verdictFor: (id: string) => byId.get(id) ?? null,
+      verdictFor: (id: string) => owner.current() ? byId.get(id) ?? null : null,
       resolved: true,
       masterAdmin: payload.masterAdmin === true,
       platformAdmin,
       tier: typeof payload.tier === 'string' ? payload.tier : null,
       launchScopeEnforced,
     };
-  }, [state.data]);
+  }, [state.data, owner, matchesAccount]);
 
   return (
     <NavEntitlementsContext.Provider value={value}>{children}</NavEntitlementsContext.Provider>

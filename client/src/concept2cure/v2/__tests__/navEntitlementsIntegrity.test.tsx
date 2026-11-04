@@ -9,8 +9,15 @@ const h = vi.hoisted(() => ({ raw: null as unknown, bypassHookGuard: false }));
 vi.mock('react', () => ({ default: {
   createContext: () => ({ Provider: 'TestNavigationContext' }),
   useMemo: (compute: () => unknown) => compute(),
+  useCallback: (fn: unknown) => fn,
+  useRef: (current: unknown) => ({ current }),
+  useEffect: (setup: () => unknown) => { setup(); },
   createElement: (type: unknown, props: unknown) => ({ type, props }),
 } }));
+vi.mock('@/services/portal/authService', () => {
+  const user = { id: 5, organizationId: 7 };
+  return { useAuth: () => ({ user }) };
+});
 // Keep the same explicit element boundary under classic and automatic JSX.
 vi.mock('react/jsx-runtime', () => ({
   jsx: (type: unknown, props: unknown) => ({ type, props }),
