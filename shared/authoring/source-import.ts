@@ -6,7 +6,7 @@ export type BinaryImportSource =
 
 export type WorkflowImportSource =
   | { kind: 'protocol'; documentId: number }
-  | { kind: 'csr'; jobId: number; sectionNumbers?: string[] }
+  | { kind: 'csr'; jobId: number; sectionNumbers?: string[]; approvedOnly?: true }
   | { kind: 'study-design-crf'; studyId: string }
   | { kind: 'agency-response'; eventId: string; questionId: number }
   | { kind: 'ivd-assessment'; documentId: string }
