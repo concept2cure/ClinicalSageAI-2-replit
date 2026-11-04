@@ -55,6 +55,17 @@ Existing constraints retained: tenant/member authorization; immutable source-ver
     not alter the new attempt's stage or outcome. No new queue column,
     table, migration, endpoint or storage was added.
 
+11. **CSR job API operational logs are redacted.** The existing
+    `server/routes/csr-jobs.ts` previously logged raw exception messages
+    from the source-admission, enqueue, list, status, sections, headings,
+    cancellation and review handlers. Those messages can carry SQL strings,
+    upstream SDK errors or source-related details. The operational logs
+    now identify the event using fixed `CSR_*_INTERNAL_ERROR` codes and
+    organization/job identifiers; typed user-facing refusals and HTTP
+    status semantics are preserved. This does not replace centralized
+    security incident tracing and must be exercised with production logging
+    sinks during acceptance.
+
 **Limit:** The build-job worker (distinct from CSR assembly) still lacks
 a database-enforced attempt fence for the narrow case of a live but
 stalled second-instance worker. The narrative queue already has a
