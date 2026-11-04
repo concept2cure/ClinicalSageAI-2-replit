@@ -196,7 +196,7 @@ async function evidenceSourceRefusal(
     if (err instanceof CsrAuthoringContextError) {
       return refuse(err.status, err.code, 'The retained run’s clinical tables could not be read for this build.');
     }
-    log.error('CSR evidence source check failed', { err: err instanceof Error ? err.message : String(err), organizationId });
+    log.error('CSR evidence source check failed', { code: 'CSR_SOURCE_CHECK_INTERNAL_ERROR', organizationId });
     return refuse(503, 'CSR_EVIDENCE_UNAVAILABLE', 'The retained run’s clinical tables could not be verified.');
   }
 }
@@ -269,7 +269,7 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(err.status).json({ error: err.message, code: err.code });
     }
     log.error('Failed to enqueue CSR build job', {
-      err: err instanceof Error ? err.message : String(err),
+      code: 'CSR_INTERNAL_ERROR',
       organizationId,
     });
     return res.status(500).json({ error: 'Failed to enqueue CSR build job' });
@@ -314,7 +314,7 @@ router.get('/', async (req: Request, res: Response) => {
     })) });
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
-    log.error('Failed to list CSR builds for a run', { err: err instanceof Error ? err.message : String(err), organizationId });
+    log.error('Failed to list CSR builds for a run', { code: 'CSR_BUILD_LIST_INTERNAL_ERROR', organizationId });
     return res.status(500).json({ error: 'Failed to list CSR builds' });
   }
 });
@@ -345,7 +345,7 @@ router.get('/:jobId', async (req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to read CSR build job status', {
-      err: err instanceof Error ? err.message : String(err),
+      code: 'CSR_INTERNAL_ERROR',
       organizationId,
       jobId,
     });
@@ -412,7 +412,7 @@ router.get('/:jobId/sections', async (req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to read CSR section outputs', {
-      err: err instanceof Error ? err.message : String(err),
+      code: 'CSR_INTERNAL_ERROR',
       organizationId,
       jobId,
     });
@@ -442,7 +442,7 @@ router.get('/:jobId/headings', async (req: Request, res: Response) => {
     return res.json({ headings: buildHeadings(getICHE3Structure(), outputs) });
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
-    log.error('Failed to read CSR headings', { err: err instanceof Error ? err.message : String(err), organizationId, jobId });
+    log.error('Failed to read CSR headings', { code: 'CSR_HEADINGS_INTERNAL_ERROR', organizationId, jobId });
     return res.status(500).json({ error: 'Failed to read the build’s headings' });
   }
 });
@@ -521,7 +521,7 @@ router.post('/:jobId/cancel', async (req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to cancel CSR build job', {
-      err: err instanceof Error ? err.message : String(err),
+      code: 'CSR_INTERNAL_ERROR',
       organizationId,
       jobId,
     });
@@ -564,7 +564,7 @@ router.post('/:jobId/sections/:sectionNumber/review', async (req: Request, res: 
       return res.status(err.status).json({ error: err.message, code: err.code });
     }
     log.error('Failed to record CSR section review', {
-      err: err instanceof Error ? err.message : String(err), organizationId, jobId, sectionNumber,
+      code: 'CSR_INTERNAL_ERROR', organizationId, jobId, sectionNumber,
     });
     return res.status(500).json({ error: 'The review decision was not recorded' });
   }
