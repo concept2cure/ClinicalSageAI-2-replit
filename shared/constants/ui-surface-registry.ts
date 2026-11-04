@@ -220,7 +220,12 @@ export const UI_SURFACES: UiSurface[] = [
     // retired device-workstream: the Client Review Room is drawn on the device
     // project's Review step (ProjectClientReview), for that project, and the
     // route admits the project before anything is read (P-61 item 5).
-    apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review'],
+    // 2026-11-04 (R1): the project's own reads under other namespaces, each project-admitted, claimed narrowly so
+    // the rest of the namespace stays unclaimed. '/api/charters/by-project': the objective of record
+    // (useProjectObjective, S1); nothing claimed it, so production refused it as unmapped. '/api/v1/pyramids/by-project':
+    // the program plan in the Plan step (PyramidProject.tsx, S11); longest prefix wins over the out-of-catalog
+    // 'pyramid' surface's '/api/v1/pyramids'.
+    apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review', '/api/charters/by-project', '/api/v1/pyramids/by-project'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
