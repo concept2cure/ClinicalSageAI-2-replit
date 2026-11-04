@@ -200,10 +200,11 @@ export async function decideCsrSectionReview(q: CsrReviewQueryable, input: CsrSe
             reviewed_content_hash = content_hash
       WHERE id = $4 AND organization_id = $5 AND content_hash = $6
         AND review_status = $7 AND reviewed_content_hash IS NOT DISTINCT FROM $8
+        AND content = $9
       RETURNING section_number, content_hash, review_status, reviewer_id, review_decided_at,
                 review_reason, reviewed_content_hash`,
     [to, input.reviewerId, reason, row.id, input.organizationId, input.expectedContentHash,
-      row.review_status, row.reviewed_content_hash ?? null],
+      row.review_status, row.reviewed_content_hash ?? null, row.content],
   );
   if (rows.length !== 1) {
     throw new CsrSectionReviewError('CSR_SECTION_CHANGED', 409,
