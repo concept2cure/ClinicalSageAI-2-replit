@@ -138,9 +138,10 @@ async function claim(q: NarrativeQueryable, id: number, organizationId: number):
 function progressWriter(q: NarrativeQueryable, run: Claimed) {
   return async (done: number, total: number): Promise<boolean> => {
     const { rows } = await q.query(`UPDATE csr_narrative_runs SET subjects_done = $3, subjects_total = $4, updated_at = now()
-      WHERE id = $1 AND status = 'running' AND attempt = $2
-        AND EXISTS (SELECT 1 FROM csr_build_jobs b WHERE b.id = csr_narrative_runs.job_id AND b.status <> 'cancelled')
-      RETURNING id`, [run.id, run.attempt, done, total]);
+      WHERE id = $1 AND status = 'running' AND attempt = $2 AND organization_id = $5 AND job_id = $6
+        AND EXISTS (SELECT 1 FROM csr_build_jobs b WHERE b.id = csr_narrative_runs.job_id
+          AND b.organization_id = csr_narrative_runs.organization_id AND b.status <> 'cancelled')
+      RETURNING id`, [run.id, run.attempt, done, total, run.organizationId, run.jobId]);
     return rows.length === 1;
   };
 }
@@ -171,9 +172,9 @@ function failureOf(err: unknown): CsrNarrativeRunFailure {
 async function finish(q: NarrativeQueryable, run: Claimed, status: CsrNarrativeRunStatus, result: NarrativeJobResult | null, error: CsrNarrativeRunFailure | null) {
   await q.query(`UPDATE csr_narrative_runs SET status = $3, result = $4::jsonb, error = $5::jsonb, completed_at = now(), updated_at = now(),
       subjects_done = COALESCE($6, subjects_done), subjects_total = COALESCE($7, subjects_total)
-    WHERE id = $1 AND status = 'running' AND attempt = $2`,
+    WHERE id = $1 AND status = 'running' AND attempt = $2 AND organization_id = $8 AND job_id = $9`,
   [run.id, run.attempt, status, result ? JSON.stringify(result) : null, error ? JSON.stringify(error) : null,
-    result && status !== 'cancelled' ? result.selected : null, result ? result.selected : null]);
+    result && status !== 'cancelled' ? result.selected : null, result ? result.selected : null, run.organizationId, run.jobId]);
 }
 
 /** The worker: claim a queued run, compose as its requester, record the outcome. */
@@ -185,7 +186,8 @@ export async function runNarrativeRun(id: number, organizationId: number, inject
     try {
       if (run.requestedBy == null) throw new CsrNarrativeRunError('CSR_NARRATIVE_REQUESTER_MISSING', 409, 'The user who asked for these narratives no longer exists, so the build cannot run as them.');
       const result = await deps.build({ q: client, sql: client, connectable: connectableOf(client) },
-        { organizationId, jobId: run.jobId, userId: run.requestedBy, onProgress: progressWriter(client, run) });
+        { organizationId, jobId: run.jobId, userId: run.requestedBy,
+          narrativeAttempt: { runId: run.id, attempt: run.attempt }, onProgress: progressWriter(client, run) });
       const outcome = outcomeOf(result);
       await finish(client, run, outcome.status, result, outcome.error);
     } catch (err) {
