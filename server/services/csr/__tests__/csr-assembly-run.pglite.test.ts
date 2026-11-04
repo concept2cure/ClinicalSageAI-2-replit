@@ -108,6 +108,67 @@ it('queues, runs off the request, and retains every leaf with its page count and
   expect(run.result!.missing.some(m => !m.blocking)).toBe(true);
 }, 120_000);
 
+it('fences a delayed worker after recovery reclaims the same assembly ID', async () => {
+  const queued = await enqueue();
+  let releaseOld!: () => void;
+  let releaseNew!: () => void;
+  let startedOld!: () => void;
+  let startedNew!: () => void;
+  const oldBlocked = new Promise<void>(resolve => { releaseOld = resolve; });
+  const newBlocked = new Promise<void>(resolve => { releaseNew = resolve; });
+  const oldStage = new Promise<void>(resolve => { startedOld = resolve; });
+  const newStage = new Promise<void>(resolve => { startedNew = resolve; });
+  const oldWorker = runCsrAssembly(queued.assemblyId, 7, deps({
+    assemble: async (_q, input) => {
+      await input.onStage?.('Older worker stage', 0.2);
+      startedOld();
+      await oldBlocked;
+      // The recovery claimed this SAME row under a new started_at; it must
+      // refuse an older writer even though its status is again "assembling".
+      await input.onStage?.('Older worker resumed after recovery', 0.3);
+      throw new Error('An obsolete assembly was allowed to keep working');
+    },
+  }));
+  await oldStage;
+  const before = (await readLatestCsrAssembly(q, 7, 41))!;
+  expect(before).toMatchObject({ status: 'assembling', stage: 'Older worker stage' });
+  // Emulate the existing queue-recovery UPDATE: the abandoned/stalled
+  // "assembling" row becomes "queued", then a second worker claims it.
+  await pg.query(`UPDATE csr_assembly_runs SET status='queued', updated_at=now()
+    WHERE id=$1 AND organization_id=7 AND status='assembling'`, [queued.assemblyId]);
+  // Millisecond precision is deliberate, so the second start is guaranteed
+  // distinct from the first claim even under a fast PGlite loop.
+  await new Promise(resolve => setTimeout(resolve, 12));
+  const newWorker = runCsrAssembly(queued.assemblyId, 7, deps({
+    assemble: async (_q, input) => {
+      await input.onStage?.('Replacement worker stage', 0.4);
+      startedNew();
+      await newBlocked;
+      throw new Error('Synthetic replacement assembly failed');
+    },
+  }));
+  try {
+    await newStage;
+    const replacement = (await readLatestCsrAssembly(q, 7, 41))!;
+    expect(replacement).toMatchObject({ status: 'assembling', stage: 'Replacement worker stage' });
+    expect(replacement.startedAt).not.toBe(before.startedAt);
+    releaseOld();
+    await oldWorker;
+    const afterOld = (await readLatestCsrAssembly(q, 7, 41))!;
+    // The old failure/progress must not turn the replacement worker's row
+    // into a failed or completed assembly.
+    expect(afterOld).toMatchObject({ status: 'assembling', stage: 'Replacement worker stage', result: null });
+    expect(afterOld.startedAt).toBe(replacement.startedAt);
+  } finally {
+    releaseOld();
+    releaseNew();
+    await Promise.allSettled([oldWorker, newWorker]);
+  }
+  expect(await readLatestCsrAssembly(q, 7, 41)).toMatchObject({
+    status: 'failed', error: { code: 'CSR_ASSEMBLY_FAILED' },
+  });
+}, 120_000);
+
 it('records a stored copy that differs from the assembled file as a failure, not an assembly', async () => {
   corruptStore = true;
   const queued = await enqueue();
