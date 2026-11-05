@@ -18,8 +18,18 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+/* The signed-in account: an id (the navigation verdicts are read only for an account with one, navEntitlements.tsx
+   useNavigationReadOwner), and the same object on every render, as the session gives it. */
+const stableUser = vi.hoisted(() => {
+  const seen = new Map<string, Record<string, unknown>>();
+  return (u: Record<string, unknown>) => {
+    const key = JSON.stringify(u);
+    if (!seen.has(key)) seen.set(key, { id: 21, ...u });
+    return seen.get(key)!;
+  };
+});
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: auth.roles }, logout: vi.fn() }),
+  useAuth: () => ({ user: stableUser({ firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: auth.roles }), logout: vi.fn() }),
 }));
 vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ tenant: null, organizationId: 7 }) }));
 

@@ -37,7 +37,21 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest: vi.fn(),
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { firstName: 'Dana' } }) }));
+/* The signed-in account: an id (the navigation verdicts are read only for an account with one, navEntitlements.tsx
+   useNavigationReadOwner), and the same object on every render, as the session gives it. */
+const stableUser = vi.hoisted(() => {
+  const seen = new Map<string, Record<string, unknown>>();
+  return (u: Record<string, unknown>) => {
+    const key = JSON.stringify(u);
+    if (!seen.has(key)) seen.set(key, { id: 21, ...u });
+    return seen.get(key)!;
+  };
+});
+vi.mock('@/services/portal/authService', () => ({
+  useAuth: () => ({ user: stableUser({ firstName: 'Dana' }) }),
+  /* The editor's reads capture the session's account and revision (editor/authoringCurrentRead.ts). */
+  authService: { getUser: () => stableUser({ firstName: 'Dana' }), captureSessionReadGuard: () => ({ sameRevision: () => true }), on: () => () => {} },
+}));
 vi.mock('@/hooks/useGlobalRiCatalog', () => ({
   useGlobalRiCatalog: () => ({ catalog: null, loading: false, error: undefined }),
 }));
