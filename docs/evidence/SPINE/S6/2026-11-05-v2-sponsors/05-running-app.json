@@ -1,0 +1,39 @@
+[
+ {
+  "project": "biotech",
+  "asked": [
+   "/api/c2c/project-vault/search?q=summary&limit=50&sameClientAs=f935c59e-4749-4547-941e-13d66a850538",
+   "/api/c2c/project-vault/search?q=summary&limit=50&sameClientAs=f935c59e-4749-4547-941e-13d66a850538"
+  ],
+  "headline": "4 documents in Concept2Cure Therapeutics projects you can access match “summary”.",
+  "rows": [
+   "[Demo · Biotech] Nonclinical Toxicology Summary — C2C-101 · v1.0 | [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (this project)",
+   "[Demo · Biotech] CMC Quality Summary (3.2.S / 3.2.P overview) — C2C-101 · v1.0 | [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (this project)",
+   "[Demo · Biotech] Investigator's Brochure C2C-101 v3.0 · v1.0 | [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (this project)",
+   "[Demo · Biotech] Statistical Analysis Plan C2C-101-201 v1.0 · v1.0 | [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (this project)"
+  ],
+  "errors": {
+   "console": [],
+   "pageErrors": [],
+   "failed": []
+  }
+ },
+ {
+  "project": "mdx",
+  "asked": [
+   "/api/c2c/project-vault/search?q=summary&limit=50&sameClientAs=b200e032-5bbe-4cf8-b273-3371c7247702",
+   "/api/c2c/project-vault/search?q=summary&limit=50&sameClientAs=b200e032-5bbe-4cf8-b273-3371c7247702"
+  ],
+  "headline": "3 documents in Northwind Diagnostics projects you can access match “summary”.",
+  "rows": [
+   "[Demo · MDX] Risk Management File Summary (ISO 14971) · v1.0 | [Demo · MDX] NeuroPanel-Dx 510(k) (this project)",
+   "[Demo · MDX] Labeling and Instructions for Use (Draft) · v1.0 | [Demo · MDX] NeuroPanel-Dx 510(k) (this project)",
+   "[Demo · MDX] Software Description and Level of Concern · v1.0 | [Demo · MDX] NeuroPanel-Dx 510(k) (this project)"
+  ],
+  "errors": {
+   "console": [],
+   "pageErrors": [],
+   "failed": []
+  }
+ }
+]

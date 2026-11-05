@@ -1,0 +1,8 @@
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > finds matches in every project the organisation holds, each named with its project, and never another organisation's 36ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > lists an earlier version only when asked 30ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > an empty query answers no results and says why 16ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > from inside a project, lists only its sponsor's projects, and names the sponsor 30ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > across every project, each hit names its own sponsor 29ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > refuses a project that is not the caller's to scope by, and never widens to it 14ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > the project search still searches its project only 34ms
+      Tests  7 passed (7)

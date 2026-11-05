@@ -2,8 +2,9 @@
 /**
  * Execute the complete production job, not a copy of its implementation.
  * Database/transaction responses, acceptance verdicts, embedding, scheduler
- * lease and logging are explicit controlled collaborators. This does not run
- * PostgreSQL, prove RLS/locks, validate the acceptance algorithm or call a model.
+ * lease and logging are explicit controlled collaborators. Review-disposition
+ * cases marked realGate execute the unchanged production acceptance gate too.
+ * This does not run PostgreSQL, prove RLS/locks or call a model.
  * Run: node --test tests/services/ana/memory-consolidation-outcomes.test.cjs
  * C2C_CONSOLIDATION_SOURCE_ROOT selects a baseline checkout for the same tests.
  */
@@ -28,6 +29,18 @@ const compiled = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true },
 });
 assert.deepEqual((compiled.diagnostics || []).filter(d => d.category === ts.DiagnosticCategory.Error), []);
+// Exercise the actual gate and its caller together, not only injected verdicts.
+const gatePath = path.join(root, 'server/services/ana-ri/memory-acceptance.ts');
+const gateCompiled = ts.transpileModule(fs.readFileSync(gatePath, 'utf8'), {
+  fileName: gatePath, reportDiagnostics: true,
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+});
+assert.deepEqual((gateCompiled.diagnostics || []).filter(d => d.category === ts.DiagnosticCategory.Error), []);
+const gateModule = { exports: {} };
+new Function('require', 'module', 'exports', gateCompiled.outputText)(id => {
+  assert.equal(id, 'node:crypto', 'unexpected production gate dependency');
+  return require(id);
+}, gateModule, gateModule.exports);
 const PRIVATE = 'SYNTHETIC_PRIVATE_RECORD_ALPHA';
 const err = () => Object.assign(new Error(`SQL/provider payload ${PRIVATE}`), { detail: PRIVATE });
 const memory = (id = 1, overrides = {}) => ({
@@ -38,7 +51,7 @@ const memory = (id = 1, overrides = {}) => ({
 const counters = r => Object.fromEntries(['threadsProcessed', 'memoriesConsolidated', 'skipped', 'rejectedByGate', 'quarantined', 'errors'].map(k => [k, r[k]]));
 const expected = (overrides = {}) => ({ threadsProcessed: 0, memoriesConsolidated: 0, skipped: 0, rejectedByGate: 0, quarantined: 0, errors: 0, ...overrides });
 function harness(rows = [memory()], options = {}) {
-  const state = { scopes: [], queries: [], logs: [], stored: [], embedCalls: [], gateCalls: [], leased: [], callbacks: [], visit: 0 };
+  const state = { scopes: [], queries: [], logs: [], stored: [], embedCalls: [], gateCalls: [], gateVerdicts: [], leased: [], callbacks: [], visit: 0 };
   const failures = options.failures || {};
   const fail = (id, phase) => {
     if ((failures[id] || []).includes(phase)) throw (options.throwValue === undefined ? err() : options.throwValue);
@@ -76,7 +89,8 @@ function harness(rows = [memory()], options = {}) {
         if (sql.startsWith('SELECT id, content, category')) {
           fail(row.id, 'comparison');
           assert.deepEqual(params, [row.project_id, row.organization_id, 50]);
-          return { rows: [], rowCount: 0 };
+          const existing = options.existing || [];
+          return { rows: existing, rowCount: existing.length };
         }
         if (sql === 'BEGIN') { fail(row.id, 'begin'); return { rows: [] }; }
         if (sql.startsWith('SELECT pg_advisory_xact_lock')) { fail(row.id, 'lock'); return { rows: [] }; }
@@ -110,6 +124,12 @@ function harness(rows = [memory()], options = {}) {
       const row = rows[state.visit - 1];
       fail(row.id, 'gate');
       state.gateCalls.push(input);
+      if (options.realGate) {
+        const verdict = gateModule.exports.evaluateMemoryCandidate(input);
+        state.gateVerdicts.push(verdict);
+        return verdict;
+      }
+      if (options.gateResult) return options.gateResult;
       const decision = (options.verdicts || {})[row.id] || 'accepted';
       return {
         acceptance_status: decision === 'contradiction' ? 'pending_review' : decision,
@@ -178,9 +198,10 @@ test('contradiction remains a stored quarantine rather than a successful promoti
   assert.deepEqual(counters(r), expected({ threadsProcessed: 1, quarantined: 1 }));
   assert.equal(h.state.stored[0].values.status, 'pending_review'); balanced(r);
 });
-test('existing noncontradiction low-confidence disposition is unchanged, not newly approved', async () => {
+test('noncontradiction pending-review disposition survives storage without confidence inflation', async () => {
   const h = harness([memory()], { verdicts: { 1: 'pending_review' } }); const r = await h.runConsolidation();
-  assert.equal(r.memoriesConsolidated, 1); assert.equal(h.state.stored[0].values.status, 'active');
+  assert.deepEqual(counters(r), expected({ threadsProcessed: 1, quarantined: 1 }));
+  assert.equal(h.state.stored[0].values.status, 'pending_review');
   assert.equal(h.state.stored[0].values.confidence_score, 0.55); balanced(r);
 });
 test('best-effort embedding failure retains durable unembedded content without provider payload logging', async () => {
@@ -270,3 +291,104 @@ test('cron initialization remains single-registration with the existing cadence'
   const h = harness([]); h.initMemoryConsolidationScheduler(); h.initMemoryConsolidationScheduler();
   assert.equal(h.state.callbacks.length, 1); assert.equal(h.state.callbacks[0].expression, '0 2 * * *');
 });
+
+// The first group uses BOTH real production modules, with only I/O controlled.
+for (const [label, overrides] of [
+  ['plain conversation', {}],
+  ['structured conversation', { structured_data: { objective: 'Retain the source record for review', lockedFacts: ['Source table remains preliminary'] } }],
+  ['all six fields with KNOWN labels', { structured_data: {
+    objective: 'Retain [KNOWN] source identity for review', lockedFacts: ['Source version three'],
+    decisions: ['Request independent review'], openQuestions: ['Check the source'],
+    nextActions: ['Reconcile the reference'], createdArtifacts: ['Draft only'],
+  } }],
+  ['matching negative assessments', { summary: 'The package is incomplete; retain the outstanding source list.' }],
+]) {
+  test(`real gate: ${label} remains pending without a contradiction`, async () => {
+    const row = memory(1, overrides);
+    const existing = label === 'matching negative assessments'
+      ? [{ id: 8, category: 'insight', content: 'The package is incomplete and requires more work.' }] : [];
+    const h = harness([row], { realGate: true, existing }); const r = await h.runConsolidation();
+    const v = h.state.gateVerdicts[0];
+    assert.equal(v.acceptance_status, 'pending_review');
+    assert.equal(v.human_review_required, true);
+    assert.equal(v.contradiction_check_result.has_contradiction, false);
+    assert.deepEqual(counters(r), expected({ threadsProcessed: 1, quarantined: 1 }));
+    const stored = h.state.stored[0].values;
+    assert.equal(stored.status, 'pending_review');
+    assert.equal(stored.confidence_score, v.confidence_score);
+    assert.equal(stored.content, v.content);
+    assert.equal(stored.embedding, '[0.25,0.5,0.75]');
+    assert.equal(stored.is_verified_by_user, undefined, 'no invented human verification');
+    assert.equal(h.state.gateCalls[0].provenance.evidence_validated, false); balanced(r);
+  });
+}
+test('real gate: a genuine contradiction remains quarantined', async () => {
+  const h = harness([memory(1, { summary: 'The source is insufficient to support the planned claim.' })], {
+    realGate: true, existing: [{ id: 8, category: 'insight', content: 'The source is sufficient to support the planned claim.' }],
+  });
+  const r = await h.runConsolidation();
+  assert.equal(h.state.gateVerdicts[0].contradiction_check_result.has_contradiction, true);
+  assert.deepEqual(counters(r), expected({ threadsProcessed: 1, quarantined: 1 }));
+  assert.equal(h.state.stored[0].values.status, 'pending_review');
+});
+for (const [label, summary, existing] of [
+  ['short', 'OK', []],
+  ['inferred only', '[INFERRED] A preliminary conclusion with no checked source.', []],
+  ['duplicate', memory().summary, [{ id: 8, category: 'conversation_summary', content: memory().summary }]],
+]) {
+  test(`real gate: ${label} is rejected without embedding or storage`, async () => {
+    const h = harness([memory(1, { summary })], { realGate: true, existing });
+    const r = await h.runConsolidation();
+    assert.deepEqual(counters(r), expected({ threadsProcessed: 1, rejectedByGate: 1 }));
+    assert.equal(h.state.embedCalls.length, 0); assert.equal(h.state.stored.length, 0);
+  });
+}
+for (const phase of ['embed', 'insert', 'commit-after']) {
+  test(`real gate: pending review is not lost during ${phase} failure`, async () => {
+    const failures = { 1: [phase] };
+    const h = harness([memory()], { realGate: true, failures }); const r = await h.runConsolidation();
+    assert.deepEqual(counters(r), expected({ threadsProcessed: 1, ...(phase === 'embed' ? { quarantined: 1 } : { errors: 1 }) }));
+    if (phase !== 'insert') assert.equal(h.state.stored[0].values.status, 'pending_review');
+    if (phase === 'embed') assert.equal(h.state.stored[0].values.embedding, undefined);
+    if (phase === 'commit-after') {
+      failures[1] = [];
+      assert.equal((await h.runConsolidation()).skipped, 1);
+      assert.equal(h.state.stored.length, 1);
+    }
+    noPayload(h);
+  });
+}
+test('real gate: scheduled mixed-tenant batch retains both scopes and pending outcomes', async () => {
+  const h = harness([memory(1), memory(2, { organization_id: 8, project_id: 52 })], { realGate: true });
+  const r = await h.runScheduledConsolidation();
+  assert.equal(r.ran, true);
+  assert.deepEqual(counters(r.value), expected({ threadsProcessed: 2, quarantined: 2 }));
+  assert.deepEqual(h.state.stored.map(x => [x.values.organization_id, x.values.project_id, x.values.status]),
+    [[7, 42, 'pending_review'], [8, 52, 'pending_review']]);
+});
+
+// Controlled verdict combinations test the caller's admission boundary.
+const acceptedVerdict = () => ({ acceptance_status: 'accepted', human_review_required: false,
+  contradiction_check_result: { has_contradiction: false }, confidence_score: 0.8, decision_reason: 'Test verdict' });
+for (const [label, overrides] of [
+  ['accepted with human review', { human_review_required: true }],
+  ['accepted with a contradiction', { contradiction_check_result: { has_contradiction: true } }],
+  ['pending with contradictory false flags', { acceptance_status: 'pending_review' }],
+  ['accepted without a review flag', { human_review_required: undefined }],
+  ['accepted without a contradiction flag', { contradiction_check_result: {} }],
+]) {
+  test(`controlled verdict: ${label} cannot become active`, async () => {
+    const h = harness([memory()], { gateResult: { ...acceptedVerdict(), ...overrides } });
+    const r = await h.runConsolidation();
+    assert.deepEqual(counters(r), expected({ threadsProcessed: 1, quarantined: 1 }));
+    assert.equal(h.state.stored[0].values.status, 'pending_review');
+  });
+}
+for (const disposition of ['unknown', '', undefined]) {
+  test(`controlled verdict: unavailable disposition ${String(disposition)} is a failure, not active memory`, async () => {
+    const h = harness([memory()], { gateResult: { ...acceptedVerdict(), acceptance_status: disposition } });
+    const r = await h.runConsolidation();
+    assert.deepEqual(counters(r), expected({ threadsProcessed: 1, errors: 1 }));
+    assert.equal(h.state.embedCalls.length, 0); assert.equal(h.state.stored.length, 0);
+  });
+}

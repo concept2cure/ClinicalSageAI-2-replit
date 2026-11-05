@@ -119,6 +119,16 @@ function RiskRow({ r, open, onPick }: { r: Row; open: boolean; onPick: () => voi
   );
 }
 
+/** The register's line from the QRM engine's summary (the view's riskSummary).
+ *  It used to count "extreme" with the screen's own threshold (l x i >= 15). */
+function riskRegisterLine(count: number, summary: unknown): string {
+  const s = (summary ?? null) as { openHighOrExtreme?: unknown; unscored?: unknown } | null;
+  const parts = [count + ' risks'];
+  if (s && typeof s.openHighOrExtreme === 'number') parts.push(s.openHighOrExtreme + ' open high or extreme');
+  if (s && typeof s.unscored === 'number' && s.unscored > 0) parts.push(s.unscored + ' not scored');
+  return parts.join(' · ');
+}
+
 export function RiskTab({ doc, onAdd, onEdit }: RegisterTabProps) {
   const risks = asRows(doc.risks);
   const [sel, setSel] = useState<Row | null>(null);
@@ -153,10 +163,9 @@ export function RiskTab({ doc, onAdd, onEdit }: RegisterTabProps) {
     });
   }
 
-  const extreme = risks.filter((r) => (Number(r.l) || 0) * (Number(r.i) || 0) >= 15).length;
   return (
     <div className="pd-pane">
-      <PaneHead title="Risk register" sub={risks.length + ' risks · ' + extreme + ' extreme'} actions={actions.length ? actions : undefined} />
+      <PaneHead title="Risk register" sub={riskRegisterLine(risks.length, doc.riskSummary)} actions={actions.length ? actions : undefined} />
       {onEdit && !sel && risks.length > 0 && (
         <div className="pde-note">Select a risk to record the rating that remains once its mitigation is in place.</div>
       )}

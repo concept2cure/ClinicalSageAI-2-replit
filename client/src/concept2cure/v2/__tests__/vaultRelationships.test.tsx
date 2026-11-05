@@ -103,7 +103,8 @@ describe('related documents (critique 15)', () => {
     expect((await within(p).findByRole('status')).textContent).toBe(
       "Related: based on Investigator brochure v2.0. Recorded in both documents' histories.");
     expect(apiRequest).toHaveBeenCalledWith('POST', REL_URL, { toDocumentId: IB, type: 'based_on' });
-    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/project-vault/search?q=brochure&limit=10`, undefined);
+    /* Within this project's sponsor (F1, S6 V2): a CRO never relates one sponsor's document to another's. */
+    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/project-vault/search?q=brochure&limit=10&sameClientAs=${PID}`, undefined);
     await within(p).findByText('Based on');
   });
 
