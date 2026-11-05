@@ -8,6 +8,7 @@ import { renderPassageBlock } from './authoring-draft-passage';
 import { savedTemplateReview, type SavedTemplateReview } from '../ana/saved-template-review';
 import { e3ReferenceDraftingMode } from '../ind/ctd/csr-e3-guidance';
 import { writingAgencyOf } from '../../../shared/authoring/writing-regions';
+import { isCsrTemplateId } from '../../../shared/authoring/csr-scientific-review';
 
 export const MAX_DRAFT_TEMPLATE_REFERENCE_BYTES = 16 * 1024;
 
@@ -100,7 +101,11 @@ function renderDraftReference(review: SavedTemplateReview, scope: DraftTemplateS
   const { source, sectionManual, reference } = savedSectionTemplateReference(review, scope);
   const { region, recordedRegion } = admitDraftReference(source, requestedRegion, sectionManual);
   const filing = source?.filingContext as Record<string, unknown> | undefined;
-  const documentKind = filing?.registryId === 'ICH_CSR' ? 'csr' : filing?.registryId === 'ICH_PROTOCOL' ? 'protocol' : 'ctd';
+  // A CSR whatever template it was made from: the recorded filing, or one of the built-in CSR templates (the same
+  // rule the editor's study-data build and the scientific review use). The component CSR New document offers records
+  // no registryId, so it drafted as a generic CTD document (2026-11-05).
+  const csr = filing?.registryId === 'ICH_CSR' || isCsrTemplateId(review.template.id);
+  const documentKind = csr ? 'csr' : filing?.registryId === 'ICH_PROTOCOL' ? 'protocol' : 'ctd';
   return { region, recordedRegion, documentKind: documentKind as 'csr' | 'protocol' | 'ctd', referenceBlock: renderSavedSectionTemplateReference(reference) };
 }
 
