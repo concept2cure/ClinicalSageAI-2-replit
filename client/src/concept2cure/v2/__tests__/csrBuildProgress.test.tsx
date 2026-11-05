@@ -30,6 +30,10 @@ const tables = Object.fromEntries(['disposition', 'analysisPopulations', 'demogr
 const ok = (body: unknown, status = 200) => ({ ok: true, status, json: async () => body });
 const refusal = (status: number, payload: unknown) => Object.assign(new Error('refused'), { name: 'ApiRequestError', status, payload });
 let studies: unknown[] = [{ source: receipt, tables }];
+/* The editor's study-data section also mounts the pivotal declarations and the build list. A test that asserts the
+   one alert a failed read raises answers those reads healthily, so any other alert on the page is a real one. */
+const healthyNeighbours = (path: string) => (path.startsWith('/api/csr-workflow/pivotal?') ? ok({ projectId: 1, studies: [] })
+  : path.startsWith('/api/csr/jobs?') ? ok({ jobs: [] }) : null);
 const nav = vi.fn();
 
 beforeEach(() => {
@@ -89,6 +93,8 @@ it('shows the server refusal as stated, never a silent empty or a queued build',
 
 it('does not block the document CSR source picker when optional package-run history is unavailable', async () => {
   apiRequest.mockImplementation(async (_method: string, path: string) => {
+    const neighbour = healthyNeighbours(path);
+    if (neighbour) return neighbour;
     if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) {
       throw refusal(503, { code: 'PACKAGE_HISTORY_UNAVAILABLE',
         message: 'Submission-package history is unavailable.' });
@@ -107,6 +113,8 @@ it('does not block the document CSR source picker when optional package-run hist
 
 it('permits retained document study data to build even when older package-run history fails', async () => {
   apiRequest.mockImplementation(async (_method: string, path: string) => {
+    const neighbour = healthyNeighbours(path);
+    if (neighbour) return neighbour;
     if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) throw new Error('Package history read failed');
     if (path.includes('/csr/study-data?')) return ok({ studyData: [{
       studyDataId: RUN, createdAt: '2026-11-02T08:00:00Z', sources: [receipt],
@@ -153,6 +161,8 @@ it('keeps the existing frozen CSR build accessible while a newer source is being
 
 it('tells the user when package history is malformed instead of pretending there are no runs', async () => {
   apiRequest.mockImplementation(async (_method: string, path: string) => {
+    const neighbour = healthyNeighbours(path);
+    if (neighbour) return neighbour;
     if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: null });
     if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
     if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1',
@@ -166,6 +176,8 @@ it('tells the user when package history is malformed instead of pretending there
 
 it('does not expose the source picker after the document study-data read itself fails', async () => {
   apiRequest.mockImplementation(async (_method: string, path: string) => {
+    const neighbour = healthyNeighbours(path);
+    if (neighbour) return neighbour;
     if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: [] });
     if (path.includes('/csr/study-data?')) throw refusal(503, { code: 'CSR_DATA_UNAVAILABLE',
       message: 'Current document study data could not be read.' });

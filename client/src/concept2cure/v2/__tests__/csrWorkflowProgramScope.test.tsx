@@ -23,7 +23,8 @@ describe('CSR board program changes', () => {
     publishShellProject({ id: A, title: 'Program A' });
     render(<CsrWorkflow {...props} />);
     expect(await screen.findByText(/Study A/)).toBeTruthy();
-    expect(api).toHaveBeenCalledWith('GET', `/api/csr-workflow/board?programId=${A}`);
+    // The read carries its own abort signal (a later program's navigation cancels it), so only method and path are pinned.
+    expect(api.mock.calls.some(([method, path]) => method === 'GET' && path === `/api/csr-workflow/board?programId=${A}`)).toBe(true);
     act(() => publishShellProject({ id: B, title: 'Program B' }));
     expect(screen.queryByText(/Study A/)).toBeNull();
     expect(screen.getByText('Loading CSR workflow…')).toBeTruthy();

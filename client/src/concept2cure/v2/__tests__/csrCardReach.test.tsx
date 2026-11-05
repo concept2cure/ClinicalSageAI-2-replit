@@ -68,6 +68,9 @@ function jobRoutes(method: string, path: string) {
   if (method === 'POST' && path === '/api/csr/jobs') { builds = [build(42, 'queued'), ...builds]; return ok({ jobId: 42, status: 'queued' }, 202); }
   if (method === 'GET' && /\/api\/csr\/jobs\/\d+\/headings$/.test(path)) return ok({ headings });
   if (method === 'POST' && /\/sections\/[\d.]+\/review$/.test(path)) return ok({ review: { state: 'approved' } });
+  if (method === 'GET' && path === '/api/csr/jobs/41/sections?sectionNumber=10.1') {
+    return ok({ sections: [{ sectionNumber: '10.1', content: '<p>Of 46 randomized, 44 completed.</p>', contentHash: HASH_10 }] });
+  }
   if (/\/narratives\/status$/.test(path)) return ok({ run: null });
   if (/\/narratives$/.test(path)) return ok({ subjects: [] });
   if (/\/assembly$/.test(path)) return ok({ assembly: null });
@@ -155,10 +158,16 @@ it('reviews the selected build section by section, with the ICH E3 labels, and a
   await card();
   const region = await screen.findByLabelText('CSR builds from this study data');
   const review = await within(region).findByLabelText('Section review');
-  expect(within(review).getByText('4 of 5 ICH E3 headings drafted · 2 approved')).toBeTruthy();
+  expect(within(review).getByText('4 of 5 ICH E3 headings with saved text free of data placeholders · 0 still contain placeholders · 2 approved')).toBeTruthy();
   const row = within(review).getByText('Disposition of patients').closest('li')!;
+  // Approve waits until the reviewer has read the exact saved text whose hash it approves.
+  const approve = within(row).getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
+  expect(approve.disabled).toBe(true);
+  fireEvent.click(within(row).getByRole('button', { name: 'Read saved section text' }));
+  expect((await within(row).findByLabelText('Saved text for §10.1')).textContent).toBe('Of 46 randomized, 44 completed.');
+  expect(approve.disabled).toBe(false);
   const before = headingReads(41);
-  fireEvent.click(within(row).getByRole('button', { name: /Approve/ }));
+  fireEvent.click(approve);
   await vi.waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/csr/jobs/41/sections/10.1/review',
     { decision: 'approve', expectedContentHash: HASH_10 }));
   // The decision is re-read from the server, never assumed.
@@ -204,5 +213,5 @@ it('states a refused headings read as an alert, never an empty review', async ()
   const alert = await within(region).findByText(/does not have access to this project/);
   expect(alert.getAttribute('role')).toBe('alert');
   expect(within(region).queryByLabelText('Section review')).toBeNull();
-  expect(within(region).queryByText(/ICH E3 headings drafted/)).toBeNull();
+  expect(within(region).queryByText(/ICH E3 headings with saved text/)).toBeNull();
 });
