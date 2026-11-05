@@ -30,7 +30,9 @@ describe('required deliverables — native coverage and scope', () => {
     const url = new URL(String(calls[0][1]), 'https://fixture.invalid');
     expect(url.pathname).toBe('/api/submissions/sequences/21/pathway-manifest');
     expect(Object.fromEntries(url.searchParams)).toEqual({ programId: PROGRAM_A, submissionId: '41' });
-    expect(apiRequest.mock.calls.filter(([method]) => method !== 'GET')).toEqual([['POST', '/api/510k/estar/assemble', { pathway: '510k', variant: 'device' }]]);
+    // Program A's record names no device or diagnostic filing, so no eSTAR
+    // assembly verdict is asked for (B4, 2026-11-05): nothing but reads.
+    expect(apiRequest.mock.calls.filter(([method]) => method !== 'GET')).toEqual([]);
   });
 
   it('shows all five structural states and keeps coverage separate from governed dispatch', async () => {

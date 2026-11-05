@@ -28,7 +28,7 @@ import { reviewStanding, type ReviewStandingGroup } from './reviewStanding';
 import { openReviewDocument } from './Review';
 import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
-import { DEVICE_FAMILY_PRODUCT_TYPES, productTypeForFilingType } from '@shared/constants/domain/product-types';
+import { isDeviceFamily, isDeviceOrDiagnosticProgram } from '@shared/constants/domain/product-types';
 import { isUsInd, useProgramMarkets } from './programSequence';
 import { StageBand, StageTracker } from './ProjectStages';
 import { STEP_DOORS } from '../projectDoors';
@@ -136,8 +136,6 @@ const REGULATORY_PATH_LABEL: Record<string, string> = {
   '510k': '510(k)', de_novo: 'De Novo', pma: 'PMA', hde: 'HDE', ide: 'IDE', exempt: '510(k)-exempt',
 };
 const DEVICE_FLAG_LABEL: Record<string, string> = Object.fromEntries(DEVICE_FLAGS.map((f) => [f.id, f.label]));
-const isDeviceProgram = (productType: string | null | undefined): boolean =>
-  (DEVICE_FAMILY_PRODUCT_TYPES as readonly string[]).includes(String(productType ?? '').toLowerCase());
 
 /** GET /api/c2c/projects/:id/activity → { activity: [...] } (audit_logs). */
 interface ActivityRow {
@@ -1778,12 +1776,14 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
      its class, path, product code, regulation, panel, predicate and flags —
      each field stated as absent when the row lacks it; a drug program shows
      the drug facts and no device block. */
-  const deviceProgram = isDeviceProgram(prog?.product_type);
-  /* A device or diagnostic filing: the program's product type, or a
-     selection made from the MDX workspace (the old Workspace grid's medtech
-     segment). Only a project that is read and is neither is an eCTD filing. */
+  const deviceProgram = isDeviceFamily(prog?.product_type);
+  /* A device or diagnostic filing: the program's own record (its product
+     type or filing class, isDeviceOrDiagnosticProgram, the rule Submission
+     Center and the market refusal read), or a selection made from the MDX
+     workspace (the old Workspace grid's medtech segment). Only a project that
+     is read and is neither is an eCTD filing. */
   const regionalApplication = regionalDeviceApplicationClassOf(prog?.program_type);
-  const deviceFiling = deviceProgram || isDeviceProgram(productTypeForFilingType(prog?.program_type)) || clientType === 'MDX' || !!regionalApplication;
+  const deviceFiling = isDeviceOrDiagnosticProgram(prog) || clientType === 'MDX';
   const lifecycle = deviceFiling ? PJ_LIFECYCLE.map(item => item.id === 'plan' ? { ...item, now: item.nowDevice ?? item.now } : item.id === 'author'
     ? { ...item, blurb: 'Author filing documents from the project’s device or diagnostic evidence', now: item.nowDevice ?? item.now }
     : item.id === 'submit' ? { ...item, blurb: 'Assemble eSTAR or the applicable technical documentation', now: item.nowDevice ?? item.now } : item) : PJ_LIFECYCLE;

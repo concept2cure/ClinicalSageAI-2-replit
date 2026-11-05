@@ -1,0 +1,24 @@
+B4 red: the new tests run against trunk's SubmissionCenter.tsx and product-types.ts (before the fix).
+
+ × client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings follow the open project > a drug IND shows no device filings and asks for no device assembly verdict 88ms
+   → expected 'SubmissionSubmission CenterPlan, buil…' not to contain 'Device filings'
+ × client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings follow the open project > a biologic BLA shows no device filings either 83ms
+   → expected 'SubmissionSubmission CenterPlan, buil…' not to contain 'Device filings'
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings follow the open project > a 510(k) device project shows its device filings and the assembly verdict 26ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings follow the open project > a diagnostic recorded only by its filing class (a Japanese IVD approval) is a device filing 23ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings follow the open project > an unreadable project record shows no device filings, rather than guessing 83ms
+   → expected 'SubmissionSubmission CenterPlan, buil…' not to contain 'Device filings'
+ × shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a drug IND, an NDA and a biologic BLA are not device filings 5ms
+   → isDeviceOrDiagnosticProgram is not a function
+ × shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a recorded device-family product type is a device filing 1ms
+   → isDeviceOrDiagnosticProgram is not a function
+ × shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a device filing class decides when the product type is not recorded 0ms
+   → isDeviceOrDiagnosticProgram is not a function
+ × shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > no record is not a device filing 0ms
+   → isDeviceOrDiagnosticProgram is not a function
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'SubmissionSubmission CenterPlan, buil…' not to contain 'Device filings'
+AssertionError: expected 'SubmissionSubmission CenterPlan, buil…' not to contain 'Device filings'
+AssertionError: expected 'SubmissionSubmission CenterPlan, buil…' not to contain 'Device filings'
+ Test Files  2 failed (2)
+      Tests  7 failed | 73 passed (80)
