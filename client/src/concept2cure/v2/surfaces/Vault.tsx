@@ -1477,7 +1477,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      open; read only when a person opens it while a project is. */
   const [orgOpen, setOrgOpen] = useState(false);
   const orgActive = !projectId || orgOpen;
-  const orgRead = useOrganizationArtifacts(orgActive);
+  /* Inside a project, its sponsor's projects only (F1, S6 V4): a CRO's sponsors never mix in one list. */
+  const orgRead = useOrganizationArtifacts(orgActive, projectId);
   const [orgFocusId, setOrgFocusId] = useState<string | null>(null);
   const downloadOrganizationArtifact = async (row: OrganizationArtifactRow) => {
     if (downloading) return;

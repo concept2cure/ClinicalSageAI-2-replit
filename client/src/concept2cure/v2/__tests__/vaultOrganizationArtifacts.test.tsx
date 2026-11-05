@@ -284,15 +284,18 @@ describe('AnA reads the organization view', () => {
 describe('with a project open, the organization view is one click away and reads nothing until opened', () => {
   it('reads the listing only when asked', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-301' };
-    mockApi((m, url) => (m === 'GET' && url === `/api/c2c/project-vault/${PID}` ? ok({ success: true, data: { program: 'BX-301', tree: [], documentCount: 0, unfiledCount: 0 } }) : undefined));
+    /* Inside a project the listing is that project's sponsor's projects' (F1, S6 V4). */
+    const within_ = `${ORG}?sameClientAs=${PID}`;
+    mockApi((m, url) => (m === 'GET' && url === `/api/c2c/project-vault/${PID}` ? ok({ success: true, data: { program: 'BX-301', tree: [], documentCount: 0, unfiledCount: 0 } })
+      : m === 'GET' && url === within_ ? ok(orgBody()) : undefined));
     render(<Vault {...props()} />);
     const panel = await orgPanel();
-    expect(urls()).not.toContain(ORG);
+    expect(urls().some((u) => u.startsWith(ORG))).toBe(false);
     // D6-3: with a project open, the listing is a section of the Governed artifacts view (D6 §C.4 step 5).
     fireEvent.click(screen.getByRole('tab', { name: 'Governed artifacts' }));
     fireEvent.click(within(panel).getByRole('button', { name: /Show governed artifacts across your projects/ }));
     await within(panel).findByText('IND cover letter');
-    expect(urls()).toContain(ORG);
+    expect(urls()).toContain(within_);
   });
 });
 
@@ -402,3 +405,39 @@ describe('vault.focus-document selects an artifact by its id', () => {
     expect(run({})).toEqual({ status: 'failed', reason: 'No document named.' });
   });
 });
+
+/* F1, S6 V4 (2026-11-05): a CRO's sponsors never mix. Inside a project, the governed artifacts across your projects
+   are that project's sponsor's projects', and the heading says whose; with no project open, each row names its
+   sponsor. The server half: server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts. */
+describe("a CRO's sponsors never mix in the governed artifacts listing", () => {
+  const NORTHWIND = { id: 7, name: 'Northwind Bio' };
+  const CONTOSO = { id: 9, name: 'Contoso Pharma' };
+  const WITHIN = `${ORG}?sameClientAs=${PID}`;
+
+  it("inside a project, reads its sponsor's projects only, and the heading names the sponsor once", async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
+    mockApi((_m, url) => (url === WITHIN ? ok(orgBody([orgRow({ client: NORTHWIND })], { client: NORTHWIND })) : undefined));
+    render(<Vault {...props()} />);
+    fireEvent.click(await screen.findByRole('tab', { name: /Governed artifacts/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Show governed artifacts across your projects/ }));
+    const panel = await orgPanel();
+    await within(panel).findByText('IND cover letter');
+    expect(urls()).toContain(WITHIN);
+    expect(urls()).not.toContain(ORG);
+    expect(panel.textContent).toMatch(/1 governed artifact in the Northwind Bio projects you can open/);
+    expect(within(panel).getByTestId('vault-org-artifact-artifact_9').textContent).not.toMatch(/Northwind/);
+  });
+
+  it('with no project open, each row says whose project it is', async () => {
+    mockApi((_m, url) => (url === ORG
+      ? ok(orgBody([orgRow({ client: NORTHWIND }), orgRow({ id: 'artifact_10', name: 'Clinical overview', prog: 'BX-301', client: CONTOSO })]))
+      : undefined));
+    render(<Vault {...props()} />);
+    const panel = await orgPanel();
+    await within(panel).findByText('IND cover letter');
+    expect(panel.textContent).toMatch(/2 governed artifacts in the projects you can open/);
+    expect(within(panel).getByTestId('vault-org-artifact-artifact_9').textContent).toMatch(/BX-204 · Northwind Bio/);
+    expect(within(panel).getByTestId('vault-org-artifact-artifact_10').textContent).toMatch(/BX-301 · Contoso Pharma/);
+  });
+});
+

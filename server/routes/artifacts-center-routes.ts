@@ -77,6 +77,59 @@ import type { ArtifactOrigin } from '../../shared/artifact-governance.js';
 import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access.js';
 import { canAccessReportProject, getAccessibleReportProjectIds } from '../services/report-os/project-access.js';
 
+/** A sponsor (client workspace) as a governed artifact names it. */
+type ArtifactSponsor = { id: number; name: string };
+const PROGRAM_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** `sameClientAs`: '' when not asked, the project id when asked, null when it is not a project id. */
+function sameClientAsParam(raw: unknown): string | null {
+  const value = typeof raw === 'string' ? raw.trim() : '';
+  return !value || PROGRAM_ID.test(value) ? value : null;
+}
+
+/** The projects the caller can open, narrowed to one project's sponsor's when asked from inside that project. */
+async function accessibleArtifactProjects(orgId: number, userId: number | null | undefined, sameClientAs: string): Promise<{
+  projectIds: number[]; scoped: { client?: ArtifactSponsor | null };
+}> {
+  const actor = await readCurrentProgramActor(pool, { organizationId: orgId, userId: userId ?? undefined });
+  const projectIds = await getAccessibleReportProjectIds(orgId, actor, pool);
+  if (!sameClientAs) return { projectIds, scoped: {} };
+  const narrowed = await narrowToSponsorOf(orgId, projectIds, sameClientAs);
+  return { projectIds: narrowed.projectIds, scoped: { client: narrowed.client } };
+}
+
+/** The sponsor named as the organisation records it, or none; a sponsor that cannot be named is a failure, never none. */
+function artifactSponsor(id: number | string | null | undefined, name: string | null | undefined): ArtifactSponsor | null {
+  if (id === null || id === undefined) return null;
+  if (typeof name !== 'string' || !name.trim()) throw new Error('A sponsor of an accessible project could not be named.');
+  return { id: Number(id), name };
+}
+
+/**
+ * A CRO's sponsors never mix (F1, S6 V4, 2026-11-05). A CRO is one organisation working for several sponsors, each a
+ * client workspace, and this listing named only each artifact's project, so inside sponsor A's project the Vault's
+ * "governed artifacts across your projects" listed sponsor B's too. Asked from inside a project (`sameClientAs`), the
+ * accessible projects are narrowed to that project's sponsor's, read from the organisation's own project records; the
+ * narrowing only ever removes projects the caller can open. A project outside them is not found.
+ */
+async function narrowToSponsorOf(orgId: number, projectIds: readonly number[], programId: string): Promise<{ projectIds: number[]; client: ArtifactSponsor | null }> {
+  const { rows } = await pool.query<{ id: number; program_id: string | null; client_workspace_id: number | null; client_name: string | null }>(
+    `SELECT p.id, p.regulatory_program_id::text AS program_id, p.client_workspace_id, cw.name AS client_name
+       FROM projects p
+       LEFT JOIN client_workspaces cw ON cw.id = p.client_workspace_id AND cw.organization_id = p.organization_id
+      WHERE p.organization_id = $1 AND p.id = ANY($2::int[])`,
+    [orgId, [...projectIds]],
+  );
+  const workspaceOf = (r: { client_workspace_id: number | null }) => (r.client_workspace_id == null ? null : Number(r.client_workspace_id));
+  const own = rows.filter((r) => (r.program_id ?? '').toLowerCase() === programId.toLowerCase());
+  if (own.length === 0) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+  if (new Set(own.map(workspaceOf)).size !== 1) {
+    throw new ProgramReadAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This project needs one verified tracking record before its records can be supplied.');
+  }
+  const sponsor = workspaceOf(own[0]);
+  return { projectIds: rows.filter((r) => workspaceOf(r) === sponsor).map((r) => Number(r.id)), client: artifactSponsor(sponsor, own[0].client_name) };
+}
+
 const logger = createScopedLogger('artifacts-center-routes');
 
 /** The listing's window. The response says when there are more (meta.truncated). */
@@ -102,6 +155,8 @@ interface ArtifactCenterRow {
   reviewed: boolean;
   sourceCount: number;
   prog: string;
+  /** The project's sponsor (client workspace), or null when it has none (F1, S6 V4). */
+  client: ArtifactSponsor | null;
   /* The row facts the converged CSV manifest writes, from the same read the
      project Vault's leaves are built from (fold F3 slice B, 2026-10-29). Null
      where the row records none. */
@@ -200,11 +255,14 @@ export default function createArtifactsCenterRoutes(): Router {
          installProjectRouteAccess). Bound into the read before the window and
          the count, so neither says anything about a project the caller cannot
          open. A refusal, or a check that could not run, is not "none". */
+      const sameClientAs = sameClientAsParam(req.query.sameClientAs);
+      if (sameClientAs === null) {
+        return res.status(400).json({ success: false, error: 'INVALID_PROJECT', message: 'The project the listing is scoped by must be a project id.' });
+      }
       let projectIds: number[];
+      let scoped: { client?: ArtifactSponsor | null };
       try {
-        const userId = authedUserId(req);
-        const actor = await readCurrentProgramActor(pool, { organizationId: orgId, userId: userId ?? undefined });
-        projectIds = await getAccessibleReportProjectIds(orgId, actor, pool);
+        ({ projectIds, scoped } = await accessibleArtifactProjects(orgId, authedUserId(req), sameClientAs));
       } catch (accessError) {
         const failure = accessError instanceof ProgramReadAccessError
           ? accessError
@@ -240,6 +298,7 @@ export default function createArtifactsCenterRoutes(): Router {
           sigVersion: g.sigVersion,
           sigStale: g.sigStale,
           prog: r.program || `proj_${r.project_id}`,
+          client: artifactSponsor(r.client_workspace_id, r.client_name),
           ctdSection: artifactCtdSection(r.ctd_section),
           status: artifactRegistryStatus(r.status),
           origin: g.origin,
@@ -252,7 +311,7 @@ export default function createArtifactsCenterRoutes(): Router {
         success: true,
         data,
         total,
-        meta: { scope: 'accessible-projects', total, listed: data.length, truncated },
+        meta: { scope: 'accessible-projects', total, listed: data.length, truncated, ...scoped },
       });
     } catch (error) {
       if (error instanceof Error && error.message.startsWith('NO_TENANT')) {

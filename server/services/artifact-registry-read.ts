@@ -70,6 +70,9 @@ export interface ArtifactRegistryRow {
   compiled_from: string | null;
   recorded_source: string | null;
   program: string | null;
+  /** The project's sponsor (client workspace), and its name, as the organisation records them (F1, S6 V4). */
+  client_workspace_id: number | string | null;
+  client_name: string | null;
   author_name: string | null;
   is_signed: boolean;
   is_reviewed: boolean;
@@ -116,6 +119,8 @@ export async function readArtifactRegistry(scope: ArtifactRegistryScope): Promis
        a.metadata ->> 'compiledFrom'                   AS compiled_from,
        a.metadata ->> 'source'                         AS recorded_source,
        COALESCE(p.code, p.name)                        AS program,
+       p.client_workspace_id                           AS client_workspace_id,
+       cw.name                                         AS client_name,
        COALESCE(au.name, au.email)                     AS author_name,
        EXISTS (
          SELECT 1
@@ -154,6 +159,7 @@ export async function readArtifactRegistry(scope: ArtifactRegistryScope): Promis
        (COUNT(*) OVER ())::int                         AS total_rows
      FROM concept2cure_artifacts a
      LEFT JOIN projects p ON p.id = a.project_id AND p.organization_id = a.organization_id
+     LEFT JOIN client_workspaces cw ON cw.id = p.client_workspace_id AND cw.organization_id = a.organization_id
      LEFT JOIN LATERAL public.actor_name(a.created_by_id) au ON TRUE
      WHERE a.organization_id = $1
        AND a.status <> 'archived'
