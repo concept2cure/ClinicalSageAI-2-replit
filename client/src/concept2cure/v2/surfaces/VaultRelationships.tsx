@@ -128,7 +128,8 @@ function AddForm({ projectId, documentId, onAdded }: { projectId: string; docume
     setFound(null);
     try {
       const d = await call<{ scope?: string; results?: Candidate[] }>(
-        'GET', `/api/c2c/project-vault/search?q=${encodeURIComponent(q.trim())}&limit=10`, undefined, 'The library could not be searched.');
+        /* Within this project's sponsor (F1, S6 V2): a CRO never links one sponsor's document to another's. */
+        'GET', `/api/c2c/project-vault/search?q=${encodeURIComponent(q.trim())}&limit=10&sameClientAs=${encodeURIComponent(projectId)}`, undefined, 'The library could not be searched.');
       if (d.scope !== 'verified-accessible-programs' || !Array.isArray(d.results) || !d.results.every(isCandidate)) {
         throw new Error('The library could not be searched. No confirmed accessible result list was returned.');
       }
