@@ -55,7 +55,10 @@ describe('MemoryContextAssembler', () => {
     mockProjectSearch.mockResolvedValue({ entries: [], totalCount: 0, query: 'q' });
   });
 
-  it('assembles working + client + project memory with metadata diagnostics', async () => {
+  // Since cc1607c3a3 (isolated project recall) a project's context holds working and
+  // project memory and never the organization-wide client layer; that layer is recalled
+  // only when no project is selected.
+  it('assembles working + project memory for a project, and client memory only without one, with metadata diagnostics', async () => {
     mockClientSearch.mockResolvedValue({
       entries: [
         {
@@ -111,11 +114,27 @@ describe('MemoryContextAssembler', () => {
     expect(result.memoryBlock).toContain('PERSISTENT MEMORY CONTEXT');
     expect(result.memoryBlock).toContain('Working Memory');
     expect(result.memoryBlock).toContain('Project Memory (semantic matches)');
-    expect(result.memoryBlock).toContain('Client Memory (semantic matches)');
+    expect(result.memoryBlock).not.toContain('Client Memory (semantic matches)');
+    expect(mockClientSearch).not.toHaveBeenCalled();
     expect(result.atoms.some(a => a.layer === 'working_memory')).toBe(true);
-    expect(result.atoms.some(a => a.metadata?.source?.documentName === 'communications_playbook.pdf')).toBe(true);
+    expect(result.atoms.some(a => a.metadata?.source?.documentName === 'm3_gap_notes.docx')).toBe(true);
+    expect(result.atoms.some(a => a.metadata?.source?.documentName === 'communications_playbook.pdf')).toBe(false);
     expect(result.diagnostics.droppedByForgetting).toBe(0);
     expect(result.diagnostics.droppedByDeduplication).toBe(0);
+
+    const organizationWide = await buildMemoryContextForChat({
+      threadId: 'thread-123',
+      organizationId: 77,
+      query: 'risk summary',
+      limitPerLayer: 4,
+      maxChars: 3500,
+    });
+    expect(organizationWide.memoryBlock).toContain('Working Memory');
+    expect(organizationWide.memoryBlock).toContain('Client Memory (semantic matches)');
+    expect(organizationWide.memoryBlock).not.toContain('Project Memory (semantic matches)');
+    expect(organizationWide.atoms.some(a => a.metadata?.source?.documentName === 'communications_playbook.pdf')).toBe(true);
+    expect(organizationWide.diagnostics.droppedByForgetting).toBe(0);
+    expect(organizationWide.diagnostics.droppedByDeduplication).toBe(0);
   });
 
   it('applies structured forgetting to stale, unverified, low-importance memory', async () => {
