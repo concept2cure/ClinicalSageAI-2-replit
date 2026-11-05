@@ -611,14 +611,17 @@ in the running app where a screen changed. Where either was not possible, its RE
   scope. The shared SQL fragments of the reads were written out, so SQL text carries no interpolation (F1,
   `67e6d2da94`).
 - **The Data Room's filing proposal reads the project's region,** as the Vault's ingest does (F1, `0f583e995b`;
-  `docs/evidence/F1/2026-11-05-data-room-region/`).
+  `docs/evidence/F1/2026-11-05-data-room-region/`). So do the CTD filename detector's Module 1 documents: an EMA
+  project's cover letter is proposed at 1.0 and its RMP at 1.8.2, a J-NDA's patent status at 1.4, and an FDA form
+  number never another region's heading (F1, `303485d77d`; `docs/evidence/F1/2026-11-05-ctd-detector-region/`).
 - **Trunk red fixed:** `catalog-actor-scope-wrapper.test.ts` (7 of 11) had a stale mock (S6, `81fbd0702b`;
   `…/2026-11-05-catalog-actor-scope-mock/`).
 
 **Found**
 
-- **Region is not read everywhere.** The CTD filename detector (`ctd-ingestion-service.ts` `m1Section`) gives a cover
-  letter, form or patent the US heading in every region.
+- **A pharma "Risk management plan" is left unfiled.** The device risk-file rule claims the name first and has no
+  pharma folder; "RMP" reaches the CTD detector. An ISO 14971 plan and a Module 1 RMP share the name, so which rule
+  claims it is a classifier decision, not a one-line fix.
 - **A device project is offered CTD vocabulary** at upload and in the filters, and the Vault cannot place a document
   at an eSTAR section (`filingVocabularyRefusal`). This is the MDX journey's lane.
 - **Founder questions:**
@@ -632,7 +635,7 @@ in the running app where a screen changed. Where either was not possible, its RE
 
 **Next**
 
-1. F1: the CTD filename detector's Module 1 headings follow the project's region.
+1. S6: the Vault offers a device project its own vocabulary at upload and in the filters, with the MDX journey lane.
 
 ## 4. How everyone works
 
