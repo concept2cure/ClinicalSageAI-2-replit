@@ -94,7 +94,8 @@ const findings = [];
    is pinned so the catalog cannot grow or shrink without a decision being
    written down. */
 // P-76, 2026-10-30: RBM is the eighth central-service launch app; no new module grant.
-if (apps.length !== 8) findings.push({ rule: 'shape', detail: `expected 8 launch apps, parsed ${apps.length}` });
+// P-77, 2026-10-31 (amended by P-79): Biostatistics is the ninth, reached from the project; surfaces only.
+if (apps.length !== 9) findings.push({ rule: 'shape', detail: `expected 9 launch apps, parsed ${apps.length}` });
 
 // ── 2. Routable + registered ───────────────────────────────────────────────
 const viewsSrc = read(VIEWS);

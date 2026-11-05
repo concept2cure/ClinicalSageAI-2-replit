@@ -68,6 +68,7 @@ const CARRIED = [
   // Fold F6 (P-61 item 5): the kit portfolio folded into Projects with its MDX
   // filter; its address opens filtered Projects.
   { source: 'device-workstream', target: 'projects', fold: 'F6', tier: 'standard' },
+  { source: 'agency-meetings', target: 'communication-center', fold: 'P-39', tier: 'standard' },
 ] as const;
 
 /** Folded screens that never had a catalogue row: nothing to carry. */
