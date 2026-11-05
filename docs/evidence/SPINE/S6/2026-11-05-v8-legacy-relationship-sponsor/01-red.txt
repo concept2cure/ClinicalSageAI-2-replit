@@ -1,0 +1,32 @@
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > relates two versions, and both ends list it in their own words 228ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > relates to a version in another project of the organisation, and names that project 91ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > refuses a document of another sponsor's project, and records nothing 97ms
+ × tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > names a relationship to another sponsor's document recorded before that was refused 203ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > says when the related version has since been superseded 110ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > refuses a self relationship, two versions of one document, a duplicate and an unknown kind 83ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > refuses another organisation's document, a viewer, and another organisation's project 47ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > removing one requires a reason, keeps the row, and cannot be done twice 105ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > each relate and unrelate is a chained row on both documents' histories 137ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > the table refuses every other change, for every role, and another organisation reads none of it 41ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > the tenant purge takes an organisation's relationships with its documents, and no one else's 85ms
+AssertionError: expected [ [ …(2) ], [ …(2) ] ] to deeply equal ArrayContaining{…}
+- Expected
++ Received
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > lists both directions in their own words, with the project and a later version named 225ms
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > names a relationship to another client's project as one the Vault no longer allows 129ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a list that could not be read says so, and never reads as no related documents 263ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > finds a document in the library, relates it, and claims it only once the server recorded it 322ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a refused relate says so and claims nothing 194ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an empty related list makes no claim about inaccessible documents 109ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an empty search is limited to other accessible documents 152ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > a successful search with no results field reports failure instead of no matches 134ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an unverified search scope undefined offers no empty finding or candidate 140ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an unverified search scope organization-wide offers no empty finding or candidate 91ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > governed relationship removal > removing one needs a reason of the required length, sends it, and then re-reads the list 168ms
+AssertionError: expected 'Supported byInvestigator brochure v2.…' to contain 'Investigator brochure v2.0 (in NW-110…'
+Expected: "Investigator brochure v2.0 (in NW-110, another client’s project). It relates two clients’ records, which the Vault no longer allows; it was recorded before that rule"
+Received: "Supported byInvestigator brochure v2.0 (in NW-110)Remove"
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)

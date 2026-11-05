@@ -96,4 +96,17 @@ describe('Vault coverage', () => {
       cleanup();
     }
   });
+
+  /* S6 (2026-11-05): a device filing's required sections are its own outline, marked in the Library. */
+  it("a device filing's coverage opens its outline in the Library", async () => {
+    const coverage = { state: 'not_applicable', outlineInLibrary: true,
+      reason: 'This project’s filing (510(k) · 21 CFR 807) has its own outline, not CTD sections. Its required sections are marked Required in the Library.' };
+    mockVaultApi(apiRequest, () => ok(vaultPayload({ coverage })));
+    render(<Vault {...props()} />);
+    fireEvent.click(await screen.findByRole('tab', { name: /Required documents/ }));
+    const block = await screen.findByTestId('vault-coverage');
+    expect(block.textContent).toContain('has its own outline');
+    fireEvent.click(screen.getByRole('button', { name: 'Show the outline in the Library' }));
+    await waitFor(() => expect(screen.getByRole('tab', { name: /Library/ }).getAttribute('aria-selected')).toBe('true'));
+  });
 });

@@ -1,0 +1,43 @@
+# 2026-11-05. The two seal suites, with the new cases, against the unchanged vault-seal.service.ts and VaultSeals.tsx.
+# npx vitest run server/services/vault/__tests__/vault-seal.service.test.ts client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx --reporter=verbose
+# ANSI stripped. Kept: each case, each failure's first line, and the totals. Dropped: testing-library's DOM dumps (1,715 lines in all).
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > lists each seal with when, who, how many documents, its hash and why 57ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > says a Vault never sealed is not sealed, and a failed read is a failure, never "not sealed" 15ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > seals through the ceremony with approval or responsibility, and lists the new seal 206ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > offers no seal to a role that may not write the Vault 8ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > verifies on demand and says the verdict in words, naming what changed 13ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is offered once the seal verifies intact, is checked against the recorded SHA-256, saved, and the hash stated 23ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > says when a sealed document’s file was removed under a data disposition and is not in the archive 17ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is not saved when the file received does not match the recorded hash, or no hash was stated 61ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is not offered for a seal that does not verify, and a refusal says the server's verdict 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the verdict sentence > never reads intact when anything could not be read 1ms
+ × client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > what a seal holds (S6, binders as a view) > lists each sealed document and version under a closed disclosure, as the seal recorded it 5009ms
+   → Unable to find an element by: [data-testid="vault-seal-holds"]
+ × client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > what a seal holds (S6, binders as a view) > opens a sealed version through the Vault's audited download, the viewer its Versions use 5005ms
+   → Unable to find an element by: [data-testid="vault-seal-holds"]
+ × client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > what a seal holds (S6, binders as a view) > says a seal of a Vault with no current documents holds none 5004ms
+   → Unable to find an element by: [data-testid="vault-seal-holds-none"]
+ × client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > what a seal holds (S6, binders as a view) > says a seal whose record of its documents could not be read was not read, and never shows it as empty 10ms
+   → Unable to find an element by: [data-testid="vault-seal-holds-unread"]
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > is the same record, and the same hash, whatever order the rows are read in 3ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > records the hash in lower case and the index number the tree gives 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > a seal needs a reason, and nothing is written without one 2ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > intact when every sealed document is recorded with its sealed hash 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > changed, naming the document, when its recorded hash differs 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > changed when a sealed document is no longer recorded 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > could not verify, never intact, when the stored manifest no longer hashes to its record 0ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > could not verify when a stored file cannot be read, whatever else matches 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > a seal of another project is not found 1ms
+ × server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > lists each seal's documents from its stored manifest, and reads no document as it is now 7ms
+   → expected undefined to deeply equal [ { id: 'a', …(5) }, …(1) ]
+ × server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > lists a seal of a Vault with no current documents as holding none 1ms
+   → expected undefined to deeply equal []
+ × server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > says a manifest it cannot read, or one that no longer hashes to its record, was not read, and never that it holds nothing 4ms
+   → expected [ [ 's-missing', undefined ], …(4) ] to deeply equal [ [ 's-missing', null ], …(4) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  7 failed | 19 passed (26)
+   Start at  14:04:46
+   Duration  19.03s (transform 1.57s, setup 237ms, import 2.31s, tests 15.49s, environment 584ms)

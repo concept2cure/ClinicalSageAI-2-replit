@@ -47,6 +47,7 @@ vi.mock('../../services/vault/vault-filing.service.js', async (importOriginal) =
     status: 'unfiled', confidence: null, rationale: null, placedBy: null,
   }),
   resolveVaultView: async () => 'pharma',
+  resolveVaultFilingContext: async () => ({ view: 'pharma', jurisdiction: 'US', applicationKind: null }),
   isFolderInView: () => true,
   folderLabel: () => 'Unfiled',
 }));

@@ -1055,6 +1055,11 @@ function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolde
   };
 }
 
+/** Whether the Library holds a filing document whose rule pack lists its sections: the outline coverage points to (S6). */
+function hasFilingOutline(docs: ReadonlyArray<DocRow>): boolean {
+  return docs.some((d) => Array.isArray(d.required_sections) && d.required_sections.length > 0);
+}
+
 /** Missing table (42P01) / missing column (42703) — a store this environment
  *  has not provisioned. The branch degrades honestly instead of 500ing. */
 function isMissingStore(err: unknown): boolean {
@@ -1970,6 +1975,7 @@ export default function createProjectVaultRoutes(): Router {
         primaryAgency: project.primary_agency,
         programId: id,
         organizationId: orgId,
+        filingOutlineInLibrary: hasFilingOutline(docsRes.rows as DocRow[]),
       });
       // 9) Legal holds (MR-08 Stage 5): an unread hold is reported, never shown as none.
       const legalHolds = await readHoldNoticesOrUnavailable(id, orgId, unavailable);

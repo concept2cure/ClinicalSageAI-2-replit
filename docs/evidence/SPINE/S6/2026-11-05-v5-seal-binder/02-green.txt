@@ -1,0 +1,77 @@
+# 2026-11-05. The same two suites with the change to vault-seal.service.ts and VaultSeals.tsx.
+# npx vitest run server/services/vault/__tests__/vault-seal.service.test.ts client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx --reporter=verbose
+# ANSI stripped, complete. The stderr lines are the test setup's own start-up logs (mocked pg, audit service); the red run has them too.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > lists each seal with when, who, how many documents, its hash and why 47ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > says a Vault never sealed is not sealed, and a failed read is a failure, never "not sealed" 15ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > seals through the ceremony with approval or responsibility, and lists the new seal 224ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > offers no seal to a role that may not write the Vault 8ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > verifies on demand and says the verdict in words, naming what changed 12ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is offered once the seal verifies intact, is checked against the recorded SHA-256, saved, and the hash stated 21ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > says when a sealed document’s file was removed under a data disposition and is not in the archive 21ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is not saved when the file received does not match the recorded hash, or no hash was stated 37ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is not offered for a seal that does not verify, and a refusal says the server's verdict 35ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the verdict sentence > never reads intact when anything could not be read 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > what a seal holds (S6, binders as a view) > lists each sealed document and version under a closed disclosure, as the seal recorded it 14ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > what a seal holds (S6, binders as a view) > opens a sealed version through the Vault's audited download, the viewer its Versions use 80ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > what a seal holds (S6, binders as a view) > says a seal of a Vault with no current documents holds none 8ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > what a seal holds (S6, binders as a view) > says a seal whose record of its documents could not be read was not read, and never shows it as empty 9ms
+stdout | server/services/vault/__tests__/vault-seal.service.test.ts
+{
+  "timestamp": "2026-11-05T14:08:53.472Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:08:53.474Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-seal.service.test.ts
+{
+  "timestamp": "2026-11-05T14:08:53.474Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-seal.service.test.ts
+[database] Database connection successful
+
+stderr | server/services/vault/__tests__/vault-seal.service.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/vault-seal.service.test.ts
+{
+  "timestamp": "2026-11-05T14:08:53.504Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > is the same record, and the same hash, whatever order the rows are read in 3ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > records the hash in lower case and the index number the tree gives 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > a seal needs a reason, and nothing is written without one 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > intact when every sealed document is recorded with its sealed hash 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > changed, naming the document, when its recorded hash differs 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > changed when a sealed document is no longer recorded 0ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > could not verify, never intact, when the stored manifest no longer hashes to its record 0ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > could not verify when a stored file cannot be read, whatever else matches 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > a seal of another project is not found 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > lists each seal's documents from its stored manifest, and reads no document as it is now 2ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > lists a seal of a Vault with no current documents as holding none 0ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > says a manifest it cannot read, or one that no longer hashes to its record, was not read, and never that it holds nothing 1ms
+
+ Test Files  2 passed (2)
+      Tests  26 passed (26)
+   Start at  14:08:49
+   Duration  3.98s (transform 1.48s, setup 215ms, import 2.23s, tests 555ms, environment 578ms)
+

@@ -1,0 +1,30 @@
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_vault_documents lists each open project of every sponsor, never a private project 38ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > each listed artifact names its project and its sponsor 7ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_vault_document, get_document_versions and compare_vault_versions answer a private artifact as a missing one 24ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > an artifact of an open project still reads, with its versions 14ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_governed_documents lists each open project of every sponsor, naming its project, never a private one 11ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_governed_document answers a private project's document as a missing one 47ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > global_search finds programs and artifact titles of open projects only 18ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a program uuid) 10ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a project id) 9ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > the three artifact reads answer another sponsor's artifact as a missing one 58ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > governed documents: only the open project's sponsor's are listed or read 34ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > global_search finds only the open project's sponsor's programs and artifacts 26ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > an open project the person cannot open is refused, and nothing is listed 6ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the sharing policy cannot be read: every tool says so 8ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the projects' program anchors cannot be read: the governed-document reads and global_search say so 12ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > a caller who is not a current member, or no identified caller, is refused 8ms
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > a private project's artifact is answered as a missing one, and nothing is written 29ms
+   → expected 'undefined' to be 'No Artifacts Center document \'<id>\'…' // Object.is equality
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > inside a project, another sponsor's artifact is answered as a missing one, and nothing is written 6ms
+   → expected true to be undefined
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > a project the person can open but not change is refused, and nothing is written 8ms
+   → expected { ok: true, id: 1, version: 3, …(2) } to match object { code: 'PROJECT_WRITE_ACCESS_DENIED' }
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > with the project's edit right, the new version is written 10ms
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > a check that cannot run writes nothing, and says so 5ms
+   → expected true to be undefined
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > assemble_ectd_module_from_artifacts assembles only a project the person can open > an open project of the open sponsor assembles 2ms
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > assemble_ectd_module_from_artifacts assembles only a project the person can open > a private project, or another sponsor's from inside a project, reads as a project with no such artifacts 2ms
+   → expected 'undefined' to match /No artifacts found for module 3\.2\.S…/
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > assemble_ectd_module_from_artifacts assembles only a project the person can open > another organization's project reads as a project with no such artifacts 1ms
+      Tests  5 failed | 19 passed (24)

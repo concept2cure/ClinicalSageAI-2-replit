@@ -1,0 +1,25 @@
+# npx eslint shared/constants/domain/vault-taxonomy.ts server/services/vault/vault-filing.service.ts server/services/vault/vault-ingest.service.ts server/services/vault/vault-placement.service.ts
+
+## Before the change
+
+server/services/vault/vault-filing.service.ts
+  332:1  warning  Function 'classifyByName' has a complexity of 34. Maximum allowed is 15  complexity
+
+server/services/vault/vault-ingest.service.ts
+  169:1  warning  Async function 'admitVaultDocument' has too many lines (412). Maximum allowed is 100  max-lines-per-function
+  169:1  warning  Async function 'admitVaultDocument' has a complexity of 101. Maximum allowed is 15    complexity
+
+✖ 3 problems (0 errors, 3 warnings)
+
+
+## After the change
+
+server/services/vault/vault-filing.service.ts
+  346:1  warning  Function 'classifyByName' has a complexity of 34. Maximum allowed is 15  complexity
+
+server/services/vault/vault-ingest.service.ts
+  169:1  warning  Async function 'admitVaultDocument' has too many lines (412). Maximum allowed is 100  max-lines-per-function
+  169:1  warning  Async function 'admitVaultDocument' has a complexity of 101. Maximum allowed is 15    complexity
+
+✖ 3 problems (0 errors, 3 warnings)
+

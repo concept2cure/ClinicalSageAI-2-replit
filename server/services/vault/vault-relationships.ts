@@ -23,7 +23,7 @@
 import type { PoolClient } from 'pg';
 import { pool } from '../../db.js';
 import { writeChainedAuditRow } from '../auditService.js';
-import { getCurrentAccessibleProgramScope,requireCurrentProgramAccess,requireProgramScopeStillCurrent,ProgramReadAccessError } from '../c2c/current-program-access';
+import { getCurrentAccessibleProgramScope,requireCurrentProgramAccess,requireProgramScopeStillCurrent,verifiedProgramAnchors,ProgramReadAccessError } from '../c2c/current-program-access';
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { requireGovernedReason } from '../../routes/governed-reason';
 import { readVersionFamily, supersededSql } from './vault-version-family.js';
@@ -55,6 +55,12 @@ export interface RelatedVersion {
   programName: string | null;
   /** A later version of it exists: the relationship names this one. */
   superseded: boolean;
+  /**
+   * It belongs to another client's project. Relating across clients is refused (OTHER_CLIENT); this marks one
+   * recorded before that, so it is said and can be removed (S6, 2026-11-05). Compared as addRelationship compares
+   * them: no sponsor and a sponsor differ. False when either project's anchor is not in the verified scope.
+   */
+  otherClient: boolean;
 }
 
 export interface Relationship {
@@ -229,6 +235,19 @@ export async function removeRelationship(
   }));
 }
 
+/**
+ * Whether a program's sponsor differs from this one's, by the client workspace each verified anchor records. A
+ * program with no anchor in the scope is not claimed to differ.
+ */
+function sponsorDiffers(anchors: ReadonlyArray<{ programId: string; clientWorkspaceId: number | null }>, programId: string) {
+  const sponsor = new Map(anchors.map((a) => [a.programId.toLowerCase(), a.clientWorkspaceId]));
+  const mine = sponsor.get(programId.toLowerCase());
+  return (other: string): boolean => {
+    const theirs = sponsor.get(String(other).toLowerCase());
+    return mine !== undefined && theirs !== undefined && mine !== theirs;
+  };
+}
+
 /** Every live relationship of a version, both directions, oldest first. */
 export async function listRelationships(
   q: { query: PoolClient['query'] } | typeof pool,
@@ -267,6 +286,7 @@ export async function listRelationships(
     [p.documentId, p.organizationId, scope.programIds],
   );
   await requireProgramScopeStillCurrent(q,identity,scope);
+  const otherClient = sponsorDiffers(verifiedProgramAnchors(q,identity,scope), p.programId);
   return {
     ok: true,
     scope:'verified-accessible-related-programs',
@@ -289,6 +309,7 @@ export async function listRelationships(
           programId: r.other_program_id,
           programName: r.other_program_name ?? null,
           superseded: Boolean(r.other_superseded),
+          otherClient: otherClient(r.other_program_id),
         },
       };
     }),

@@ -1,0 +1,5 @@
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-region.test.ts > the Data Room's filing proposal follows the project's region > an EMA project is proposed its own Module 1 heading for labeling, not the US one
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-region.test.ts > the Data Room's filing proposal follows the project's region > an FDA project keeps the US heading
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-region.test.ts > the Data Room's filing proposal follows the project's region > a region whose Module 1 is not modelled is proposed no section, and marked for review
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-region.test.ts > the Data Room's filing proposal follows the project's region > a capture with no project is proposed as before, with no region
+      Tests  4 passed (4)

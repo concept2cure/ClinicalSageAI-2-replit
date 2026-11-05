@@ -62,7 +62,7 @@
 
 import { pool } from '../../db.js';
 import { writeChainedAuditRow } from '../auditService.js';
-import { resolveVaultView, isFolderInView, folderLabel, filingVocabularyRefusal, classifyForFiling } from './vault-filing.service.js';
+import { resolveVaultView, resolveVaultFilingContext, isFolderInView, folderLabel, filingVocabularyRefusal, classifyForFiling } from './vault-filing.service.js';
 import { requireCurrentVaultProgramWrite } from './vault-write-authority.js';
 import { ProgramReadAccessError } from '../c2c/current-program-access.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
@@ -471,13 +471,16 @@ export async function proposeFilingFromReadText(
   if (!before || before.placement_status !== 'unfiled' || before.placed_by != null || before.supersedes_id || before.decided) {
     return { proposed: false, reason: 'not_the_classifiers' };
   }
-  const view = await resolveVaultView(programId, organizationId, client);
+  // The project's region and application select its Module 1 heading (S6).
+  const { view, jurisdiction, applicationKind } = await resolveVaultFilingContext(programId, organizationId, client);
   const classified = classifyForFiling({
     fileName: before.file_name ?? '',
     title: before.document_title,
     mimeType: before.mime_type,
     extractedText: args.text,
     view,
+    jurisdiction,
+    applicationKind,
     documentType: before.document_type,
   });
   if (!classified.folderId) return { proposed: false, reason: 'no_match' };

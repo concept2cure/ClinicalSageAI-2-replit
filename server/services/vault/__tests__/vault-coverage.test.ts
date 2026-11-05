@@ -103,6 +103,31 @@ describe('readVaultCoverage', () => {
     }
   });
 
+  /* S6 (2026-11-05): the project's settings select the words. A device or diagnostic filing has its own outline,
+     which the Library already marks Required; the reason names the filing and points there, instead of reading as
+     "there is no required-section list". It still claims no count. */
+  it("a device or diagnostic filing names itself and points to its outline in the Library, with no figure", async () => {
+    for (const [view, programType] of [['device', '510k'], ['ivd', '510k'], ['device', 'pma']] as const) {
+      const c = await readVaultCoverage(client({}), { ...INPUT, view, programType, filingOutlineInLibrary: true });
+      expect(c.state, `${view}/${programType}`).toBe('not_applicable');
+      if (c.state !== 'not_applicable') continue;
+      expect(c.reason).not.toMatch(/there is no required-section list/);
+      expect(c.reason).toMatch(/own outline/);
+      expect(c.reason).toMatch(/marked Required in the Library/);
+      expect(c.outlineInLibrary).toBe(true);
+      expect(JSON.stringify(c)).not.toMatch(/"required"|"covered"/);
+    }
+    /* With no filing document in the Library there is no outline to point to, so none is claimed. */
+    const none = await readVaultCoverage(client({}), { ...INPUT, view: 'device', programType: '510k' });
+    expect(none).toMatchObject({ state: 'not_applicable' });
+    expect((none as { reason: string }).reason).toMatch(/once the project has the filing’s document/);
+    expect((none as { reason: string }).reason).not.toMatch(/marked Required in the Library/);
+    expect((none as { outlineInLibrary?: boolean }).outlineInLibrary).toBeUndefined();
+    const service = await readVaultCoverage(client({}), { ...INPUT, view: 'service' });
+    expect(service).toMatchObject({ state: 'not_applicable' });
+    expect((service as { outlineInLibrary?: boolean }).outlineInLibrary).toBeUndefined();
+  });
+
   it.each(['hde', 'mdl', 'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx'])('%s counts no medicinal CTD requirement even in a pharma view', async programType => {
     const query = vi.fn(async () => ({ rows: [] }));
     const result = await readVaultCoverage({ query } as never, { ...INPUT, programType });

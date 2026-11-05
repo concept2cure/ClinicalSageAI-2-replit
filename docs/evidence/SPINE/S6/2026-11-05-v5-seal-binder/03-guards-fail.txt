@@ -1,0 +1,23 @@
+# 2026-11-05. Each guard of the change removed in turn, its suite run, and the source restored (checked with cmp).
+# ANSI stripped. Kept: the failing case, its first line, and the totals.
+
+## M1. The hash check removed: sealHoldings lists a manifest that no longer hashes to its record.
+## sed: line 214 'if (!sameDigest(sealManifestSha256(...), manifestSha256)) return null;' deleted
+ × server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > says a manifest it cannot read, or one that no longer hashes to its record, was not read, and never that it holds nothing 9ms
+   → expected [ [ 's-missing', null ], …(5) ] to deeply equal [ [ 's-missing', null ], …(5) ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+
+## M2. The schema check removed: sealHoldings reads a manifest of a recipe it does not know.
+## sed: line 212 becomes 'const docs = m?.documents;'
+ × server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > says a manifest it cannot read, or one that no longer hashes to its record, was not read, and never that it holds nothing 10ms
+   → expected [ [ 's-missing', null ], …(5) ] to deeply equal [ [ 's-missing', null ], …(5) ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+
+## M3. The client shows a record it could not read as empty: holdingOf returns [] instead of null.
+## sed: line 94 ': null;' becomes ': [];'
+ × client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > what a seal holds (S6, binders as a view) > says a seal whose record of its documents could not be read was not read, and never shows it as empty 30ms
+   → Unable to find an element by: [data-testid="vault-seal-holds-unread"]
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)

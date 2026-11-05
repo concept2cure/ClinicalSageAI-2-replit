@@ -34,6 +34,7 @@ import type { DomainEntry } from './types.js';
 import type { ClientSegmentType, OrganizationType } from './organization-types.js';
 import { orgToClientSegment } from './organization-types.js';
 import { TMF_ZONE_REFS } from './tmf-reference-model.js';
+import { pathwayKey, REGULATORY_PATH_TO_PATHWAY } from '../mdx.js';
 
 // ─── Vault views ─────────────────────────────────────────────────────────────
 
@@ -306,9 +307,19 @@ export function filingTypesForView(view: VaultViewId): VaultFilingTypeEntry[] {
  * type instead, so every Pharmaceutical vault read "IND · 21 CFR 312", an NDA
  * project's included. A type the view does not list names the view: no
  * regulation is guessed.
+ *
+ * A program_type is written in the portfolio's vocabulary ('510k', 'de_novo',
+ * 'mdr', 'ivdr') and the filing values here are not ('k510', 'denovo', 'cer',
+ * 'ivdr_pe'), so the seeded NeuroPanel-Dx 510(k) read "IVD / Diagnostics"
+ * (F1, 2026-11-05). It is read through the portfolio's one alias map
+ * (REGULATORY_PATH_TO_PATHWAY); the two pathways this table spells otherwise
+ * are named below. A segment ('ivd', 'device') is not a filing and names the view.
  */
 export function vaultSpineLabel(view: VaultViewId, programType: string | null | undefined): string {
-  const key = String(programType ?? '').trim().toLowerCase();
+  const raw = pathwayKey(programType);
+  const pathway = !isVaultViewId(raw) && Object.hasOwn(REGULATORY_PATH_TO_PATHWAY, raw) ? REGULATORY_PATH_TO_PATHWAY[raw] : raw;
+  const spelledHere: Readonly<Record<string, VaultFilingType>> = { de_novo: 'denovo', ivdr: 'ivdr_pe' };
+  const key = Object.hasOwn(spelledHere, pathway) ? spelledHere[pathway] : pathway;
   const own = key ? filingTypesForView(view).find(f => f.value === key) : undefined;
   if (!own) return VAULT_VIEWS.find(v => v.value === view)?.label ?? view;
   const refs = (own as { regulatoryRefs?: string[] }).regulatoryRefs;
