@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-04T17:35:44.091Z",
+  "generatedAt": "2026-11-05T09:35:13.728Z",
   "git": {
-    "sha": "7e098c7eb603f062be677eb01343ae96f03d73ad",
+    "sha": "d20e013e723c5da215df3de048f16f1c15f3f5c7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2407,7 +2407,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 343816
+        "bytes": 344503
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2454,16 +2454,16 @@
         "bytes": 160504
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "bytes": 160441
+      },
+      {
         "file": "server/services/submission-package-orchestrator.ts",
         "bytes": 158012
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 156444
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 154398
+        "bytes": 155988
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2567,11 +2567,11 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 120157
+        "bytes": 120166
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 117975
+        "bytes": 118198
       },
       {
         "file": "server/routes/submissions.ts",
@@ -2583,7 +2583,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 115653
+        "bytes": 115501
       },
       {
         "file": "server/routes/auth.ts",
@@ -2598,12 +2598,12 @@
         "bytes": 103626
       },
       {
-        "file": "server/routes/knowledge-base.ts",
-        "bytes": 101286
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "bytes": 102532
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "bytes": 100598
+        "file": "server/routes/knowledge-base.ts",
+        "bytes": 101286
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
@@ -2625,7 +2625,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6667
+        "lines": 6674
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2693,19 +2693,19 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 3210
+        "lines": 3228
       },
       {
         "file": "server/src/routes/stability.router.ts",
         "lines": 3197
       },
       {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "lines": 3119
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 3175
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 3107
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "lines": 3119
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2821,7 +2821,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2212
+        "lines": 2214
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2841,15 +2841,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2152
+        "lines": 2151
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
         "lines": 2133
-      },
-      {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 2101
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2866,6 +2862,10 @@
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 2068
+      },
+      {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 2064
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
@@ -2892,16 +2892,16 @@
         "lines": 2002
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1997
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 1992
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
         "lines": 1975
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 1968
       },
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
