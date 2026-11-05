@@ -27,6 +27,8 @@
  *   disposition      PATCH /api/protocol-reviews/assignments/:id/disposition
  *   comment          POST  /api/protocol-reviews/documents/:id/comments
  *   comment resolve  PATCH /api/protocol-reviews/comments/:id/resolve
+ *   amendment change POST  /api/protocol-amendments/amendments/:id/changes
+ *   amendment status PATCH /api/protocol-amendments/amendments/:id/status
  *   cover page       PATCH /api/protocol-development/documents/:id
  *   start protocol   POST  /api/protocol-development/documents
  *
@@ -241,6 +243,32 @@ export async function updateProtocolRisk(
     status: v.status,
     reason,
   }), 'update the risk');
+}
+
+/* ── Amendments ────────────────────────────────────────────────────────── */
+
+/** Add a line item to an amendment's changeset: the section, what changed and the text before and after. */
+export async function addAmendmentChange(
+  amendmentId: number,
+  v: { sectionRef?: string; changeDescription: string; previousText?: string; proposedText?: string; reason: string },
+): Promise<Record<string, unknown>> {
+  const reason = requireReason(v.reason);
+  const changeDescription = (v.changeDescription ?? '').trim();
+  if (!changeDescription) throw new Error('Describe the change. Nothing was written.');
+  return send('POST', `/api/protocol-amendments/amendments/${amendmentId}/changes`, compact({
+    sectionRef: (v.sectionRef ?? '').trim(),
+    changeDescription,
+    previousText: v.previousText,
+    proposedText: v.proposedText,
+    reason,
+  }), 'add the change');
+}
+
+/** Move an amendment to its next status. The server holds the transition table and refuses any other move. */
+export async function setAmendmentStatus(amendmentId: number, status: string, rawReason: string): Promise<Record<string, unknown>> {
+  const reason = requireReason(rawReason);
+  if (!status) throw new Error('Choose the status. Nothing was written.');
+  return send('PATCH', `/api/protocol-amendments/amendments/${amendmentId}/status`, { status, reason }, 'change the amendment status');
 }
 
 /* ── Deviations ────────────────────────────────────────────────────────── */
