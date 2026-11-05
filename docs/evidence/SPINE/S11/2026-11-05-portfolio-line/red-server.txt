@@ -1,0 +1,70 @@
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > gives the project's own pyramid, from its recorded filing, with its own statuses 42ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > reads the recorded filing where intake keeps it: metadata.submissionTypeId, else program_type 11ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > says a filing has no work breakdown rather than giving it another type 10ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > says the progress store is not provisioned when its table is absent, even through the ORM's wrapper 27ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > reads nothing for a project the person is not admitted to 14ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > 404s an unknown project 7ms
+ ✓ pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > records the status under the project's key, admitted for write 8ms
+ ✓ pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > updates the project's existing row, and 'todo' clears the task 8ms
+ ✓ pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > refuses a task that is not in the project pyramid, and an unknown status, writing nothing 11ms
+ ✓ pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > writes nothing when the person may not change the project 7ms
+ ✓ pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > refuses a filing with no pyramid 7ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > back-schedules every task from the recorded target date 12ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > reads the target as a calendar date, in the tenant-scoped project query 7ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no dates when no target date is recorded, rather than assuming one 8ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no schedule to a person not admitted to the project 7ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no schedule for another organisation's project: it is not found in this one 7ms
+ × pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives each phase its completing task, the workstream's milestone 10ms
+ × pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives an IND the 30-day review from its own pyramid, dated from the target 11ms
+ × pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives a 510(k) the published MDUFA goal and its interim milestones, from regulatory-timelines 6ms
+ × pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives no clock without a target date 5ms
+ × pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > gives each admitted project its plan in a few figures, from the engine's summary 6ms
+ × pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > admits each project on its own: a refused one says only that it is unavailable 5ms
+ × pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > says a project of another organisation is unavailable, resolved in the session's organisation only 4ms
+ × pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > says a filing with no work breakdown has none, and an unscheduled project is unscheduled 4ms
+ × pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > refuses an empty or oversized batch 5ms
+ × pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > is never read as a submission type ('by-project' is not a pyramid) 4ms
+ ✓ pyramidBackSchedule.test.ts > taskWorkingDays > uses the engine's typical duration, five working days a week 2ms
+ ✓ pyramidBackSchedule.test.ts > taskWorkingDays > else the estimated hours at an eight-hour day, at least one day 0ms
+ ✓ pyramidBackSchedule.test.ts > backSchedule > makes the task that completes the submission due on the target date 1ms
+ ✓ pyramidBackSchedule.test.ts > backSchedule > makes each task due the working day before the earliest start of what depends on it 1ms
+ ✓ pyramidBackSchedule.test.ts > backSchedule > moves a weekend target back to the Friday before it 0ms
+ ✓ pyramidBackSchedule.test.ts > backSchedule > lays the tasks after the submission forward from it (the PMA's post-submission readiness) 1ms
+ ✓ pyramidBackSchedule.test.ts > backSchedule > schedules every task of every pyramid, each due no later than what depends on it starts 26ms
+ ✓ pyramidBackSchedule.test.ts > backSchedule > uses the IND's typical durations 1ms
+ ✓ pyramidBackSchedule.test.ts > backSchedule > refuses a target that is not a calendar date 1ms
+ ✓ pyramidBackSchedule.test.ts > backSchedule > refuses a cycle rather than giving dates 0ms
+ ✓ pyramidBackSchedule.test.ts > backSchedule > refuses a work breakdown with no single task that completes it 0ms
+ × pyramidBackSchedule.test.ts > taskStanding > is overdue past its due date, late to start past its start and not started, else nothing 4ms
+   → taskStanding is not a function
+ × pyramidBackSchedule.test.ts > taskStanding > a done task, or one with no dates, stands nowhere 1ms
+   → taskStanding is not a function
+ × pyramidBackSchedule.test.ts > phaseGate > is each phase's completing task, in every pyramid 1ms
+   → phaseGate is not a function
+ × pyramidBackSchedule.test.ts > phaseGate > else the phase's one task nothing in the phase depends on, else none 1ms
+   → phaseGate is not a function
+ × pyramidBackSchedule.test.ts > scheduleSummary > is on track when nothing is behind, and names the next phase to complete 0ms
+   → scheduleSummary is not a function
+ × pyramidBackSchedule.test.ts > scheduleSummary > is at risk when an unfinished task is past its dates, and counts them 0ms
+   → scheduleSummary is not a function
+ × pyramidBackSchedule.test.ts > scheduleSummary > is blocked when a task is recorded blocked, before anything else 0ms
+   → scheduleSummary is not a function
+ × pyramidBackSchedule.test.ts > scheduleSummary > is unscheduled without a schedule, with no dates 0ms
+   → scheduleSummary is not a function
+ × pyramidBackSchedule.test.ts > scheduleSummary > is complete when every task is done, with no next milestone 1ms
+   → scheduleSummary is not a function
+ × pyramidBackSchedule.test.ts > scheduleSummary > skips a phase already complete for the next milestone 0ms
+   → scheduleSummary is not a function
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: taskStanding is not a function
+TypeError: taskStanding is not a function
+TypeError: phaseGate is not a function
+TypeError: phaseGate is not a function
+TypeError: scheduleSummary is not a function
+TypeError: scheduleSummary is not a function
+TypeError: scheduleSummary is not a function
+TypeError: scheduleSummary is not a function
+TypeError: scheduleSummary is not a function
+TypeError: scheduleSummary is not a function
+ Test Files  2 failed (2)
+      Tests  20 failed | 27 passed (47)

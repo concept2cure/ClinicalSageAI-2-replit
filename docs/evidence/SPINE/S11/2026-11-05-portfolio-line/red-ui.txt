@@ -1,0 +1,35 @@
+ × projectProgramPlan.test.tsx > the project's program plan > reads the project's own pyramid and states its progress from the project's statuses 193ms
+ × projectProgramPlan.test.tsx > the project's program plan > records a task's status on the project's route 5008ms
+ × projectProgramPlan.test.tsx > the project's program plan > reverts a refused status and says it was not saved 5007ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > says a filing has no work breakdown, and invents none 6ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > says the plan could not be read when the read fails 7ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > says the schedule is built back from the target date, when the work starts, what is behind, and who owns what 24ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > puts each task's owner and due date on its row, with a word when it is behind 5006ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > makes an owner's task through the existing Assign, under the pyramid task's own origin, due on the schedule's date 5006ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > shows the owner's task and says when the schedule has moved since it was assigned 5006ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > gives no due dates when no target date is recorded, and says where to set one 5013ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > reads the schedule again when the project's target date changes 21ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > keeps a deliverable's tasks and a work-breakdown task's apart 0ms
+ ✓ projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > reads a catalogue document's producing task from its id, and only from the catalogue's two shapes 0ms
+ ✓ projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > lists only the person's open tasks of this project's plan, by due date, none last 1ms
+ ✓ projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > says a past-due task in words, and an unread list as unread 6ms
+ × projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > lists one row per workstream: lead, tasks done, completion date and a status word 5005ms
+ × projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > says Blocked when a task is recorded blocked, and Not scheduled without a target date 5004ms
+ × projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > opens a workstream to its own tasks only 5005ms
+ × projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > says, under a device plan, that its workstreams have no work-breakdown key 5005ms
+ × projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > draws the schedule: phase completions as dots, the submission, the review clock and today, the critical path darker 5006ms
+ × projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > says when the engines hold no review clock for the filing 5005ms
+ ✓ projectProgramPlan.test.tsx > the client's schedule rule matches the engine's > pyStanding equals taskStanding on every combination 279ms
+ × projectProgramPlan.test.tsx > the client's schedule rule matches the engine's > pyWorkStatus gives the engine's summary status for a whole pyramid 4ms
+   → pyWorkStatus is not a function
+ × projectsPortfolioLine.test.tsx > the portfolio line on Projects > reads every card's plan in one request for the page 5061ms
+ × projectsPortfolioLine.test.tsx > the portfolio line on Projects > says where each plan stands, colour only beside the words where it is behind 5016ms
+ × projectsPortfolioLine.test.tsx > the portfolio line on Projects > puts the same line under the target date in the list view 5013ms
+ × projectsPortfolioLine.test.tsx > the portfolio line on Projects > says once that the plans could not be read, rather than showing calm cards 5011ms
+ × projectsPortfolioLine.test.tsx > the portfolio line on Projects > words a late start, an unreadable plan and an unavailable one 1ms
+   → portfolioWords is not a function
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: pyWorkStatus is not a function
+TypeError: portfolioWords is not a function
+ Test Files  2 failed (2)
+      Tests  19 failed | 9 passed (28)

@@ -77,9 +77,11 @@ async function openPlan(page, programId) {
   return plan;
 }
 
+/** Opens every workstream (S11's later step replaced the one "work breakdown" block with a row per workstream). */
 async function openBreakdown(plan) {
-  const details = plan.locator('details.pj-more');
-  if (!(await details.evaluate((d) => d.open))) await details.locator('summary').click();
+  for (const d of await plan.locator('details.py-ws-row').all()) {
+    if (!(await d.evaluate((e) => e.open))) await d.locator('summary').click();
+  }
 }
 
 (async () => {
