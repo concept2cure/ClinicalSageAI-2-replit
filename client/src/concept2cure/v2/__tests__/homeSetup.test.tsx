@@ -82,7 +82,7 @@ describe('Home: set up your organisation', () => {
       org: ok({ success: true, organization: { activeUsers: 3 } }), projects: [{ id: 'p-1', title: 'BX-401' }] });
     mount();
     await screen.findByText('BX-401');
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/organizations/4'));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/organizations/4', undefined, undefined, expect.any(AbortSignal)));
     await new Promise((r) => setTimeout(r, 30));
     expect(screen.queryByTestId('home-setup')).toBeNull();
   });
@@ -92,7 +92,7 @@ describe('Home: set up your organisation', () => {
     mount();
     await screen.findByRole('heading', { name: 'Your projects' });
     expect(screen.queryByTestId('home-setup')).toBeNull();
-    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/organizations/4');
+    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/organizations/4', undefined, undefined, expect.any(AbortSignal));
   });
 
   it('is not offered to an administrator role the server refuses the steps to', async () => {
@@ -103,7 +103,7 @@ describe('Home: set up your organisation', () => {
     serve({ company: ok({ data: { revision: 0, address: '' }, canManage: false }) });
     mount();
     await screen.findByRole('heading', { name: 'Your projects' });
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/client-branding/company-documents?includeLegal=false'));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/client-branding/company-documents?includeLegal=false', undefined, undefined, expect.any(AbortSignal)));
     await new Promise((r) => setTimeout(r, 30));
     expect(screen.queryByTestId('home-setup')).toBeNull();
   });

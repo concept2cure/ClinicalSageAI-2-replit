@@ -53,7 +53,7 @@ async function mount(): Promise<string> {
      rejects outright (TS2698). `props` is already shaped to the surface's
      contract above, so it spreads as itself. */
   render(<UsageBilling {...props} />);
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/billing/usage/limits'));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/billing/usage/limits', undefined, undefined, expect.any(AbortSignal)));
   let seen = '';
   for (const name of TABS) {
     const tab = screen.getAllByRole('button').find((b) => (b.textContent ?? '').trim() === name);
@@ -71,7 +71,7 @@ describe('credits are not presented as metered', () => {
     expect(screen.queryByRole('button', { name: /buy more/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /turn on|turn off/i })).toBeNull();
     expect(seen).not.toMatch(/\$42\.00|Current balance|Auto-reload/i);
-    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/billing/credits');
+    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/billing/credits', undefined, undefined, expect.any(AbortSignal));
   });
 
   it('makes no price claim it cannot honour', async () => {

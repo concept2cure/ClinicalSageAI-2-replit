@@ -97,7 +97,7 @@ function wire(trials: unknown[], over: { post?: (u: string) => Promise<Response>
 async function mount(trials: unknown[], over?: { post?: (u: string) => Promise<Response> }) {
   wire(trials, over);
   render(<TrialsPanel />);
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', TRIALS));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', TRIALS, undefined, undefined, expect.any(AbortSignal)));
   await screen.findByTestId('ml-trial-open');
 }
 

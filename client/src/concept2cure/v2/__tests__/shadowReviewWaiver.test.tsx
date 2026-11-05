@@ -228,7 +228,7 @@ describe('Shadow review tab — waived and failed runs', () => {
     expect(text()).not.toContain('0.00');
     expect(text()).not.toMatch(/recorded no findings/);
     expect(text()).not.toMatch(/Complete/);
-    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/submissions/shadow-review/92/findings');
+    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/submissions/shadow-review/92/findings', undefined, undefined, expect.any(AbortSignal));
   });
 
   it('a failed run names its failure and, when eligible, points at the waiver on the Dispatch tab', async () => {
@@ -246,7 +246,7 @@ describe('Shadow review tab — waived and failed runs', () => {
     ]);
     render(<ShadowReviewWorkspace seq={SEQ} />);
     await waitFor(() => expect(text()).toMatch(/Run #91 failed because the model's reply was not an assessment/));
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/21/dispatch-readiness'));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/21/dispatch-readiness', undefined, undefined, expect.any(AbortSignal)));
     expect(text()).not.toMatch(/offers a signed waiver/);
   });
 });

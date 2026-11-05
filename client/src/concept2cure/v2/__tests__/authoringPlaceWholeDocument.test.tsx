@@ -81,7 +81,7 @@ async function openAndTarget() {
   fireEvent.click(screen.getByRole('button', { name: /Place into filing/ }));
   await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
   fireEvent.change(screen.getByLabelText('Target submission'), { target: { value: '9' } });
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/9/sequences'));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/9/sequences', undefined, undefined, expect.any(AbortSignal)));
   await waitFor(() => expect(document.body.textContent).toContain('0000'));
   fireEvent.change(screen.getByLabelText(/^Reason for this placement/), { target: { value: REASON } });
 }
