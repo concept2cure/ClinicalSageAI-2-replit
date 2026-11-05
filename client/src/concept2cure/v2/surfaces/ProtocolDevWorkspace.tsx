@@ -262,7 +262,7 @@ function RegisterTabBody({ tab, doc, canWrite, onReg, onEdit, onSign }: BodyProp
     case 'objectives': return <ObjectivesTab doc={doc} onAdd={() => onReg('objective')} />;
     case 'eligibility': return <EligibilityTab doc={doc} onAdd={() => onReg('eligibility')} />;
     case 'risks': return <RiskTab doc={doc} onAdd={() => onReg('risk')} onEdit={onEdit} />;
-    case 'milestones': return <MilestonesTab doc={doc} onAdd={() => onReg('milestone')} />;
+    case 'milestones': return <MilestonesTab doc={doc} onAdd={() => onReg('milestone')} onEdit={canWrite ? onEdit : undefined} />;
     case 'budget': return <BudgetTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
     case 'amendments': return <AmendmentsTab doc={doc} onAdd={() => onReg('amendment')} onEdit={canWrite ? onEdit : undefined} />;
     case 'deviations': return <DeviationsBody doc={doc} canWrite={canWrite} onReg={onReg} onEdit={onEdit} onSign={onSign} />;
@@ -565,6 +565,7 @@ const FORM_DONE: Record<PdevFormKind, string> = {
   'amendment-status': 'Status recorded — the amendment is re-read from the record.',
   'capa-add': 'CAPA action added — the deviation is re-read from the record.',
   'capa-status': 'CAPA status recorded — the deviation is re-read from the record.',
+  'milestone-status': 'Milestone recorded — the timeline is re-read from the record.',
   'cover-page': 'Cover page saved.',
   'start-protocol': 'Protocol started — its sections are seeded and on the record.',
 };

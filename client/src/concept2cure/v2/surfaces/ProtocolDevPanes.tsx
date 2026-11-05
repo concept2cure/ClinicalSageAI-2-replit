@@ -149,12 +149,18 @@ export function EligibilityTab({ doc, onAdd }: ListPaneProps) {
 }
 
 /* ---- Milestones ---- */
+/** The timeline engine's buckets (protocol-milestones-logic.ts milestoneBucket). */
 const URG: Record<string, { l: string; t: string }> = {
-  done: { l: 'Complete', t: 'ok' }, overdue: { l: 'Overdue', t: 'err' },
-  soon: { l: 'Due ≤30d', t: 'warn' }, normal: { l: 'Upcoming', t: 'idle' },
+  done: { l: 'Done', t: 'ok' }, overdue: { l: 'Overdue', t: 'err' },
+  due_30: { l: 'Due ≤30d', t: 'warn' }, due_90: { l: 'Due ≤90d', t: 'idle' },
+  upcoming: { l: 'Upcoming', t: 'idle' }, undated: { l: 'No target date', t: 'idle' },
 };
+/** The node's existing style hooks: met is done, in progress is active. */
+const NODE: Record<string, string> = { met: 'done', in_progress: 'active' };
 
-export function MilestonesTab({ doc, onAdd }: ListPaneProps) {
+export function MilestonesTab({ doc, onAdd, onEdit }: ListPaneProps & {
+  onEdit?: (kind: 'milestone-status', target: { id: number; label: string; defaults?: Record<string, string> }) => void;
+}) {
   const ms = asRows(doc.milestones);
   return (
     <div className="pd-pane">
@@ -163,12 +169,19 @@ export function MilestonesTab({ doc, onAdd }: ListPaneProps) {
       <div className="pd-timeline">{ms.map((m, idx) => (
         <div key={str(m.id)} className="pd-tl-row" data-status={str(m.status)}>
           <div className="pd-tl-rail">
-            <span className="pd-tl-node" data-status={str(m.status)}>{m.status === 'complete' ? '✓' : ''}</span>
+            <span className="pd-tl-node" data-status={NODE[str(m.status)] ?? str(m.status)}>{m.status === 'met' ? '✓' : ''}</span>
             {idx < ms.length - 1 ? <span className="pd-tl-line" /> : null}
           </div>
           <div className="pd-tl-card">
             <div className="pd-tl-date">{str(m.date)}</div><div className="pd-tl-label">{str(m.label)}</div>
-            <span className="pg-badge" data-tone={(URG[str(m.urgency)] || URG.normal).t}>{(URG[str(m.urgency)] || URG.normal).l}</span>
+            <span className="pg-badge" data-tone={(URG[str(m.urgency)] || URG.upcoming).t}>{(URG[str(m.urgency)] || URG.upcoming).l}</span>
+            <PG.StatusBadge status={str(m.status)} />
+            {onEdit && (
+              <button type="button" className="pde-rowbtn" aria-label={'Update status: ' + str(m.label)}
+                onClick={() => onEdit('milestone-status', { id: Number(m.id), label: str(m.label), defaults: { status: str(m.status) } })}>
+                Update status
+              </button>
+            )}
           </div>
         </div>))}</div>
     </div>);
