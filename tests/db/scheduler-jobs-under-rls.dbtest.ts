@@ -230,9 +230,9 @@ describe('AnA memory consolidation', () => {
     );
   });
 
-  async function summaries(): Promise<Array<{ title: string; organization_id: number }>> {
+  async function summaries(): Promise<Array<{ title: string; organization_id: number; status: string }>> {
     const { rows } = await env.owner.query(
-      `SELECT title, organization_id FROM ${env.t('project_memory_entries')}
+      `SELECT title, organization_id, status FROM ${env.t('project_memory_entries')}
         WHERE category = 'conversation_summary' ORDER BY id`,
     );
     return rows;
@@ -244,10 +244,12 @@ describe('AnA memory consolidation', () => {
     const result = await consolidation.runConsolidation();
 
     expect(result.errors, 'the cycle must not fail closed at checkout').toBe(0);
-    expect(result.memoriesConsolidated).toBe(1);
+    expect(result.memoriesConsolidated).toBe(0);
+    expect(result.quarantined).toBe(1);
     const rows = await summaries();
     expect(rows).toHaveLength(1);
     expect(rows[0].organization_id).toBe(ORG);
+    expect(rows[0].status).toBe('pending_review');
   });
 
   it('two cycles at once (three processes at 02:00) write the summary ONCE — idempotent write', async () => {
@@ -277,7 +279,8 @@ describe('AnA memory consolidation', () => {
 
     const result = await consolidation.runConsolidation();
 
-    expect(result.memoriesConsolidated).toBe(1);
+    expect(result.memoriesConsolidated).toBe(0);
+    expect(result.quarantined).toBe(1);
     expect((await summaries()).map(r => r.title).filter(t => t.includes('[cwm_1]'))).toHaveLength(1);
   });
 
