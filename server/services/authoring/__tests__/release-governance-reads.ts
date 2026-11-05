@@ -1,5 +1,5 @@
 /**
- * The two governance reads every Authoring release route now makes, answered
+ * The governance reads every Authoring release route now makes, answered
  * truthfully for a fake database, for suites that test something else.
  *
  * 1. Is this document a CSR? Every freeze, signature, export and filing to
@@ -13,6 +13,13 @@
  *    answer here is: created by member AUTHOR_ID, with no other contributor,
  *    so every other signer is independent. The document id must be a UUID,
  *    as it is in production; any other id leaves the author unresolved.
+ * 3. Was a CSR build's content imported into it? A document with no genesis
+ *    receipt is asked for the CSR_IMPORT receipts and section UPDATE rows a
+ *    build import writes (workflow-import-governance.ts
+ *    importedIntoDocumentOrigin, F6, 49b7521569). Any row there without a
+ *    receipt covering it is refused WORKFLOW_ORIGIN_UNVERIFIED, so a fake that
+ *    answers with whatever row it returns for everything is refused. The
+ *    answer here is: no build was imported into this document.
  *
  * The CSR case and the independence refusals have their own suites
  * (csr-scientific-release-order.test.ts, workflow-import-governance.pglite.test.ts,
@@ -29,5 +36,6 @@ export function releaseGovernanceRead(sql: unknown): Answer | null {
   if (/SELECT d\.created_by FROM authoring_documents d/.test(s)) return { rowCount: 1, rows: [{ created_by: AUTHOR_ID }] };
   if (/SELECT DISTINCT r\.created_by FROM doc_revisions/.test(s)) return { rowCount: 0, rows: [] };
   if (/SELECT actor_id, operation_type, metadata FROM authoring_audit_trail/.test(s)) return { rowCount: 0, rows: [] };
+  if (/FROM authoring_audit_trail/.test(s) && /'csrBuildImport'/.test(s)) return { rowCount: 0, rows: [] };
   return null;
 }
