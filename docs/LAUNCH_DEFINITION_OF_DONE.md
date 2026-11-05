@@ -1929,3 +1929,21 @@ slice 1 (`090f62af1`, its evidence README, "Owed, not built here").
   Vault and linked to the act. Neither path invents a leaf the bytes or the statement do not name.
 - **What is not decided.** A re-filing is not required. Nothing restores a sequence silently.
 - **Owner.** RIM, under F1, after slice 2.
+
+### P-100 — While the coordinator is unavailable, each session records its own progress in the plan
+
+The founder, 2026-11-05: **"The coordinator is out of tokens so you need to be proactive and update the plan with your
+work achievements."**
+
+- **What is decided.** A session records what it delivered under its package in the plan's progress log
+  (`docs/design/ONE_DESIGN_PLAN.md` §3a), in a `Plan: PLAN` commit carrying `Founder-Decision: P-100`. An entry states
+  facts only:
+  - the commits, by SHA;
+  - the evidence, by path;
+  - what was found;
+  - what is next.
+- **What is not decided.** A progress entry changes no package's scope, paths, status or ownership. It adds no screen,
+  mount or table. Closing a package is still the founder's or the lead's act (§3, step 5). Any other change to the plan
+  still needs its own founder decision.
+- **Owner.** Each session, for its own package.
+

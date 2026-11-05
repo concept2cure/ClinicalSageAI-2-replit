@@ -1,0 +1,11 @@
+# workbenchCsrStudyData.test.tsx on the old editor gate (templateSource.entryId === 'component:clinical_study_report')
+ × workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > registry:ICH_CSR 5438ms
+ ✓ workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > component:clinical_study_report 199ms
+ × workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > section:m5.3.5.1 5184ms
+ × workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > section:m5.3.5.2 5197ms
+ ✓ workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > a document that is not a CSR does not show it 199ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > registry:ICH_CSR
+ FAIL  workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > section:m5.3.5.1
+ FAIL  workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > section:m5.3.5.2
+      Tests  3 failed | 2 passed (5)

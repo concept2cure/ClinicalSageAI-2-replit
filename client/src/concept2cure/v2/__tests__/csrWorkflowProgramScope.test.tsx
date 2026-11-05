@@ -23,8 +23,8 @@ describe('CSR board program changes', () => {
     publishShellProject({ id: A, title: 'Program A' });
     render(<CsrWorkflow {...props} />);
     expect(await screen.findByText(/Study A/)).toBeTruthy();
-    // The read carries its own abort signal (a later program's navigation cancels it), so only method and path are pinned.
-    expect(api.mock.calls.some(([method, path]) => method === 'GET' && path === `/api/csr-workflow/board?programId=${A}`)).toBe(true);
+    // The board is a live read (useLiveData), which passes its headers slot and an abort signal since 2026-10-30.
+    expect(api).toHaveBeenCalledWith('GET', `/api/csr-workflow/board?programId=${A}`, undefined, undefined, expect.any(AbortSignal));
     act(() => publishShellProject({ id: B, title: 'Program B' }));
     expect(screen.queryByText(/Study A/)).toBeNull();
     expect(screen.getByText('Loading CSR workflow…')).toBeTruthy();

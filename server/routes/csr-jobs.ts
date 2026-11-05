@@ -6,7 +6,8 @@
  *   POST   /api/csr/jobs                  — enqueue + kick off worker
  *   GET    /api/csr/jobs?programId&runId  — the builds bound to one retained run,
  *                                            newest first (the Submission Center
- *                                            CSR card, 2026-10-30)
+ *                                            CSR card, 2026-10-30); a failed one
+ *                                            carries why, in plain words (`failure`)
  *   GET    /api/csr/jobs/:jobId           — org-scoped status read
  *   GET    /api/csr/jobs/:jobId/sections  — org-scoped section listing
  *   GET    /api/csr/jobs/:jobId/headings  — the canonical ICH E3 tree with each
@@ -55,6 +56,7 @@ import {
   type CSRBuildRequest,
 } from '../services/csr-builder.js';
 import {
+  csrBuildFailureText,
   getCSRBuildJobStatus,
   getCSRSectionOutputs,
 } from '../services/csr/csr-job-runner.js';
@@ -303,14 +305,17 @@ router.get('/', async (req: Request, res: Response) => {
     if (scope.projectId === undefined) return res.status(400).json({ code: 'CSR_PROJECT_REQUIRED', error: 'Select a project to list its CSR builds.' });
     const rows = await database.select({
       id: csrBuildJobs.id, studyId: csrBuildJobs.studyId, status: csrBuildJobs.status,
-      progress: csrBuildJobs.progress, updatedAt: csrBuildJobs.updatedAt,
+      progress: csrBuildJobs.progress, updatedAt: csrBuildJobs.updatedAt, error: csrBuildJobs.error,
     }).from(csrBuildJobs).where(and(
       eq(csrBuildJobs.organizationId, organizationId), eq(csrBuildJobs.projectId, scope.projectId),
       sql`${csrBuildJobs.studyInfoSnapshot} -> 'evidenceSource' ->> 'runId' = ${runId}`,
     )).orderBy(desc(csrBuildJobs.updatedAt), desc(csrBuildJobs.id)).limit(25);
+    // A failed build says why it stopped, in plain words from its receipt's typed reason (csrBuildFailureText);
+    // the receipt's stored message is never sent.
     return res.json({ jobs: rows.map(row => ({
       jobId: row.id, studyId: row.studyId, status: row.status, progress: row.progress,
       updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+      failure: row.status === 'failed' ? csrBuildFailureText(row.error) : null,
     })) });
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });

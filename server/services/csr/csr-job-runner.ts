@@ -44,7 +44,7 @@ import {
 } from '../csr-builder';
 import { csrSectionTableKeys, parseCsrEvidenceSelection,
   type CsrAuthoringEvidence } from './cortex-authoring-context';
-import { assertCsrJobEvidenceUnchanged, assertSavedCsrJobEvidence, readCsrJobEvidence,
+import { RECOVERY_MESSAGES, assertCsrJobEvidenceUnchanged, assertSavedCsrJobEvidence, readCsrJobEvidence,
   verifyCsrJobWriteScope, type CsrJobEvidenceScope } from './csr-job-evidence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -200,8 +200,10 @@ async function verifySavedTargetEvidence(
 
 /** Existing CSR worker's error-receipt boundary. Raw SDK, SQL and upload
  * errors may contain sensitive observations or credentials, so a persisted
- * job receipt or log may report ONLY a bounded typed CSR code. Kept here in
- * the established worker, not in a new service or parallel pipeline. */
+ * job receipt or log may report ONLY a bounded typed CSR code, with, for the
+ * evidence refusals that name a next step, that code's fixed sentence from
+ * csr-job-evidence.ts (never the error's own text). Kept here in the
+ * established worker, not in a new service or parallel pipeline. */
 const CSR_JOB_SAFE_CODE = /^CSR_[A-Z0-9_]{3,80}$/;
 function safeCsrJobFailure(error: unknown): { message: string; code?: string } {
   const value = error && typeof error === 'object'
@@ -210,7 +212,79 @@ function safeCsrJobFailure(error: unknown): { message: string; code?: string } {
     ? value.code
     : typeof value?.message === 'string' && CSR_JOB_SAFE_CODE.test(value.message)
       ? value.message : null;
-  return code ? { message: code, code } : { message: 'CSR_BUILD_STEP_FAILED' };
+  if (!code) return { message: 'CSR_BUILD_STEP_FAILED' };
+  return { message: recoveryMessage(code) ?? code, code };
+}
+
+const recoveryMessage = (code: string): string | null => (Object.prototype.hasOwnProperty.call(RECOVERY_MESSAGES, code)
+  ? RECOVERY_MESSAGES[code as keyof typeof RECOVERY_MESSAGES] : null);
+
+/** A failed build's receipt, as the build list states it (F10 of the 2026-11-02 demo walk): fixed sentences chosen
+ * by the receipt's typed `reason` or `code` and its section numbers. The stored `message` is never read, because a
+ * receipt written before the 2026-11-03 redaction can hold a raw driver or provider error. */
+const FAILURE_BY_CODE: Readonly<Record<string, string>> = {
+  CSR_BUILD_REQUESTER_MISSING: 'The person who started this build can no longer be identified, so it was not run as anyone else. Start a new build.',
+  CSR_PROJECT_ARCHIVED: 'The project was archived, so this build was not resumed. Its saved sections can still be read.',
+  CSR_PROJECT_ACCESS_UNAVAILABLE: 'Access to this project could not be checked when the build started, so nothing was drafted. Build again.',
+};
+const FAILURE_BY_REASON: Readonly<Record<string, string>> = {
+  project_anchor_missing: 'This build is not tied to a project, so nothing was drafted. Start a new build from the CSR document.',
+  requester_missing: FAILURE_BY_CODE.CSR_BUILD_REQUESTER_MISSING,
+  project_access_refused: 'The person who started this build no longer has access to this project, so nothing more was drafted.',
+  project_access_verification_failed: FAILURE_BY_CODE.CSR_PROJECT_ACCESS_UNAVAILABLE,
+  study_identity_mismatch: 'The study recorded on this build no longer matches its study data, so nothing more was drafted.',
+  invalid_section_selection: 'The build’s section selection does not name ICH E3 report sections, so nothing was drafted.',
+};
+const SECTION_CODE = /^\d+(?:\.\d+)*$/;
+
+/** "§2, §5.1 and §9.8" (at most 12 named), and whether it names one section or several; null when none is valid. */
+function sectionList(value: unknown): { text: string; one: boolean } | null {
+  const codes = Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string' && SECTION_CODE.test(v)) : [];
+  if (!codes.length) return null;
+  const named = codes.slice(0, 12).map(code => `§${code}`);
+  const rest = codes.length - named.length;
+  const text = rest > 0 ? `${named.join(', ')} and ${rest} more`
+    : named.length === 1 ? named[0] : `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
+  return { text, one: codes.length === 1 };
+}
+
+/** The reasons that name the sections they concern. */
+function sectionFailure(reason: string, sections: ReturnType<typeof sectionList>): string | null {
+  if (reason === 'saved_section_integrity_failed') {
+    return sections
+      ? `The saved text of ${sections.text} no longer matches its recorded checksum. Nothing was overwritten; review ${sections.one ? 'it' : 'them'} before building again.`
+      : 'Saved sections no longer match their recorded checksums. Nothing was overwritten; review them before building again.';
+  }
+  if (!sections) return null;
+  if (reason === 'unresolved_placeholders') {
+    return `Not complete: ${sections.text} still ${sections.one ? 'holds' : 'hold'} a data placeholder (“[…]”) where the study’s data is missing.`;
+  }
+  if (reason === 'missing_section_outputs') {
+    return `Not complete: ${sections.text} ${sections.one ? 'has' : 'have'} no saved text. The sections already saved are kept.`;
+  }
+  return null;
+}
+
+/** The typed fields of a receipt; anything malformed reads as absent. */
+function receiptOf(error: unknown) {
+  const receipt = error && typeof error === 'object' && !Array.isArray(error) ? error as Record<string, unknown> : {};
+  return {
+    reason: typeof receipt.reason === 'string' ? receipt.reason : '',
+    code: typeof receipt.code === 'string' && CSR_JOB_SAFE_CODE.test(receipt.code) ? receipt.code : '',
+    section: typeof receipt.section === 'string' && SECTION_CODE.test(receipt.section) ? receipt.section : '',
+    sections: sectionList(receipt.sections),
+  };
+}
+
+/** Why a failed build stopped, in plain words, from its recorded receipt (csr_build_jobs.error). */
+export function csrBuildFailureText(error: unknown): string {
+  const { reason, code, section, sections } = receiptOf(error);
+  const known = sectionFailure(reason, sections) ?? (code ? recoveryMessage(code) ?? FAILURE_BY_CODE[code] : undefined)
+    ?? FAILURE_BY_REASON[reason];
+  if (known) return known;
+  const where = section ? ` while drafting §${section}` : '';
+  const reference = code && code !== 'CSR_BUILD_STEP_FAILED' ? ` (refusal ${code})` : '';
+  return `The build stopped${where}${reference}. The sections already saved are kept.`;
 }
 
 /**

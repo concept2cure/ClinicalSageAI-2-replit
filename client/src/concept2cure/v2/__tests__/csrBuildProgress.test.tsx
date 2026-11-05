@@ -35,6 +35,10 @@ let studies: unknown[] = [{ source: receipt, tables }];
 const healthyNeighbours = (path: string) => (path.startsWith('/api/csr-workflow/pivotal?') ? ok({ projectId: 1, studies: [] })
   : path.startsWith('/api/csr/jobs?') ? ok({ jobs: [] }) : null);
 const nav = vi.fn();
+/* The study's pivotal declarations sit with its data in the editor (StudyPivotalDeclarations, since 2026-10-31), and
+   a read it cannot parse is an alert of its own. Every mock below answers it, so the alert a case finds is its own. */
+const PIVOTAL = '/api/csr-workflow/pivotal?';
+const pivotal = () => ok({ projectId: 7, studies: [] });
 
 beforeEach(() => {
   studies = [{ source: receipt, tables }];
@@ -44,6 +48,7 @@ beforeEach(() => {
     if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
     if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies });
     if (path === '/api/csr/jobs') return ok({ jobId: 41, status: 'queued' }, 202);
+    if (path.startsWith(PIVOTAL)) return pivotal();
     return ok({});
   });
 });
@@ -102,6 +107,7 @@ it('does not block the document CSR source picker when optional package-run hist
     if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
     if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1',
       limitReached: false, sources: [] });
+    if (path.startsWith(PIVOTAL)) return pivotal();
     return ok({});
   });
   render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
@@ -122,6 +128,7 @@ it('permits retained document study data to build even when older package-run hi
     if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM,
       historical: true, studies: [{ source: receipt, tables }] });
     if (path === '/api/csr/jobs') return ok({ jobId: 42, status: 'queued' }, 202);
+    if (path.startsWith(PIVOTAL)) return pivotal();
     return ok({});
   });
   render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
@@ -167,6 +174,7 @@ it('tells the user when package history is malformed instead of pretending there
     if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
     if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1',
       limitReached: false, sources: [] });
+    if (path.startsWith(PIVOTAL)) return pivotal();
     return ok({});
   });
   render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
@@ -181,6 +189,7 @@ it('does not expose the source picker after the document study-data read itself 
     if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: [] });
     if (path.includes('/csr/study-data?')) throw refusal(503, { code: 'CSR_DATA_UNAVAILABLE',
       message: 'Current document study data could not be read.' });
+    if (path.startsWith(PIVOTAL)) return pivotal();
     return ok({});
   });
   render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
@@ -236,7 +245,7 @@ it('records a review decision on the exact text, and shows a refused decision', 
   const changed = vi.fn();
   const onImport = vi.fn();
   render(<CsrHeadingReview jobId={41} headings={headings} onChanged={changed} onImport={onImport} />);
-  expect(screen.getByText('2 of 4 ICH E3 headings with saved text free of data placeholders · 0 still contain placeholders · 1 approved')).toBeTruthy();
+  expect(screen.getByText('2 of 4 ICH E3 headings drafted · 1 approved')).toBeTruthy();
   expect(screen.getByText('Prepared from records, not drafted by the build')).toBeTruthy();
   const approve = screen.getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
   expect(approve.disabled).toBe(true);
@@ -256,6 +265,45 @@ it('records a review decision on the exact text, and shows a refused decision', 
   expect((await screen.findByRole('alert')).textContent).toMatch(/cannot approve its sections/);
   fireEvent.click(screen.getByRole('button', { name: /Import approved sections/ }));
   expect(onImport).toHaveBeenCalledWith(['10.1']);
+});
+
+it('reads a template row as template text with data missing: not drafted, not counted, not offered for review', () => {
+  // F2 of the 2026-11-02 demo walk: "18 of 119 … drafted" and "Draft · Send for review" on template rows whose saved
+  // text still held "[…]" placeholders (the server's `placeholder`, csr-headings.ts, CSR_DATA_PLACEHOLDER).
+  const template: CsrBoardHeading = { num: '9.8', label: 'Changes in the conduct of the study or planned analyses', depth: 2,
+    manual: false, state: 'draft', placeholder: true, contentHash: 'd'.repeat(64) };
+  const queued: CsrBoardHeading = { num: '5.1', label: 'Independent ethics committee', depth: 2,
+    manual: false, state: 'in_review', placeholder: true, contentHash: 'e'.repeat(64) };
+  const drafted: CsrBoardHeading = { num: '10.1', label: 'Disposition of patients', depth: 2, manual: false, state: 'draft', contentHash: 'b'.repeat(64) };
+  const approved: CsrBoardHeading = { num: '11.4.1', label: 'Analysis of efficacy', depth: 3, manual: false, state: 'approved', contentHash: HASH };
+  render(<CsrHeadingReview jobId={41} headings={[template, queued, drafted, approved]} onChanged={vi.fn()} onImport={vi.fn()} />);
+  expect(screen.getByText('2 of 4 ICH E3 headings drafted · 2 are template text with data missing · 1 approved')).toBeTruthy();
+  for (const label of ['Changes in the conduct of the study or planned analyses', 'Independent ethics committee']) {
+    const row = screen.getByText(label).closest('li')!;
+    expect(within(row).getByText('Template · data missing')).toBeTruthy();
+    expect(within(row).queryByText('Draft')).toBeNull();
+    expect(within(row).getByText(/the study’s data is still missing, so it is not offered for review/)).toBeTruthy();
+    expect(within(row).queryByRole('button', { name: /Send for review/ })).toBeNull();
+    expect(within(row).queryByRole('button', { name: /Approve/ })).toBeNull();
+    // Its text can still be read.
+    expect(within(row).getByRole('button', { name: 'Read saved section text' })).toBeTruthy();
+  }
+  // One sent for review before the rule can still be sent back.
+  expect(within(screen.getByText('Independent ethics committee').closest('li')!).getByRole('button', { name: /Send back/ })).toBeTruthy();
+  const draftRow = screen.getByText('Disposition of patients').closest('li')!;
+  expect(within(draftRow).getByText('Draft')).toBeTruthy();
+  expect((within(draftRow).getByRole('button', { name: /Send for review/ }) as HTMLButtonElement).disabled).toBe(false);
+});
+
+it('shows the saved text as saved, with its lines and paragraphs, before an approval', async () => {
+  // F9: the approver reads the heading's exact saved text. The read kept the words but ran every line together.
+  render(<CsrHeadingReview jobId={41} headings={headings} onChanged={vi.fn()} onImport={vi.fn()} />);
+  apiRequest.mockResolvedValueOnce(ok({ sections: [{ sectionNumber: '11.4.1', contentHash: HASH,
+    content: 'The secondary objectives were:\n1. To evaluate cure\n2. To evaluate recurrence\n\n<p>The sponsor&#8217;s table: AE rate &amp;lt;5%.</p><p>Second   paragraph.</p>' }] }));
+  fireEvent.click(within(screen.getByText('Analysis of efficacy').closest('li')!).getByRole('button', { name: 'Read saved section text' }));
+  const text = await screen.findByLabelText('Saved text for §11.4.1');
+  expect(text.textContent).toBe('The secondary objectives were:\n1. To evaluate cure\n2. To evaluate recurrence\n\n'
+    + 'The sponsor’s table: AE rate &lt;5%.\n\nSecond paragraph.');
 });
 
 it('requires a stated reason to send a section back', async () => {
