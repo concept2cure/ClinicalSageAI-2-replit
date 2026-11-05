@@ -21,7 +21,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
-import { useLiveData } from '../dataConnect';
+import { useLiveData, type DataState } from '../dataConnect';
 import { setEditorTarget } from '../editorTarget';
 import {
   pyProgress, pyStanding, PY_STANDING_WORDS, type PyPyramid, type PySchedule, type PyScheduledTask, type PyStanding, type PyTask,
@@ -29,7 +29,7 @@ import {
 import { PyTaskSheet, PyWorkBreakdown, statusRefusal, workDocumentAsk } from './Pyramid';
 import { AssignAction, AssignmentLine, buildPyramidTaskBody, type PlanAssignment } from './PlanAssign';
 
-interface ProjectPyramidRead {
+export interface ProjectPyramidRead {
   programId: string;
   /** The engine's pyramid type, or null when the project's filing has none. */
   type: string | null;
@@ -45,6 +45,8 @@ interface ProjectPyramidRead {
   schedule?: PySchedule | null;
   scheduleRefusal?: string;
 }
+export const projectPyramidPath = (programId: string) => `/api/v1/pyramids/by-project/${encodeURIComponent(programId)}`;
+
 const isRead = (v: unknown): v is ProjectPyramidRead =>
   !!v && typeof v === 'object' && 'type' in v && (((v as ProjectPyramidRead).type === null) || Array.isArray((v as ProjectPyramidRead).pyramid?.tasks));
 
@@ -130,8 +132,50 @@ function TaskPlan({ slot, standing, owner, ownersUnread, assign }: {
   );
 }
 
-export function ProjectProgramPlan({ programId, projectId = null, owners, ownersUnread = false, onAssigned, targetKey, onNav, onAsk }: {
+/** The project's pyramid read (step 2 and 3's route), read once by the Plan step and shared by its sections. The target
+ *  date is a dependency, so a change in Project settings reads it again. */
+export function useProjectPyramid(programId: string, targetKey?: string | null): DataState<ProjectPyramidRead> {
+  const path = projectPyramidPath(programId);
+  return useLiveData<ProjectPyramidRead>(path, [path, targetKey ?? ''], isRead);
+}
+
+/** The work-breakdown task an IND catalogue document comes from. The catalogue derives each document from the IND
+ *  pyramid and ids it '<task id>:deliverable:<n>' or '<task id>:subtask:<id>'
+ *  (server/services/authoring/ind-document-catalog-source.ts); any other id has none. */
+export function producingTaskId(deliverableId: string): string | null {
+  const m = /^(.+?):(?:deliverable|subtask):[^:]+$/.exec(deliverableId);
+  return m ? m[1] : null;
+}
+
+/** The producing task, where it is in this project's pyramid. */
+export function producingTask(deliverableId: string, read: ProjectPyramidRead | null): PyTask | null {
+  const taskId = producingTaskId(deliverableId);
+  return (taskId && read?.pyramid?.tasks.find((t) => t.id === taskId)) || null;
+}
+
+/**
+ * The content plan's join (THE_PROGRAM §3.5): beside a document the filing needs, the work-breakdown task that produces
+ * it, with that task's due date and owner. Said only where the document's task is in this project's pyramid: a
+ * document with none, or a plan not yet read, shows nothing rather than a guessed task.
+ */
+export function ProducedBy({ deliverableId, read, owners }: {
+  deliverableId: string; read: ProjectPyramidRead | null; owners?: Map<string, PlanAssignment>;
+}) {
+  const task = producingTask(deliverableId, read);
+  if (!task) return null;
+  const slot = read?.schedule?.tasks[task.id];
+  const owner = owners?.get(task.id);
+  return (
+    <span className="pj-plan-producedby" data-testid="plan-produced-by">
+      Work: {task.name}{slot ? ` · due ${dayWords(slot.due)}` : ''} · {owner ? owner.assigneeName ?? 'owner not returned' : 'no owner'}
+    </span>
+  );
+}
+
+export function ProjectProgramPlan({ programId, read: shared, projectId = null, owners, ownersUnread = false, onAssigned, targetKey, onNav, onAsk }: {
   programId: string;
+  /** The Plan step's read of the project's pyramid (useProjectPyramid), so it is read once; read here when absent. */
+  read?: DataState<ProjectPyramidRead>;
   /** projects.id behind the program (useProjectTeam), the key the owner's task is scoped by; null until verified. */
   projectId?: number | null;
   /** This project's work-breakdown tasks that have an owner (usePlanAssignments().byPyramidTask). */
@@ -143,8 +187,9 @@ export function ProjectProgramPlan({ programId, projectId = null, owners, owners
   onNav: (id: string) => void;
   onAsk: (text: string) => void;
 }) {
-  const path = `/api/v1/pyramids/by-project/${encodeURIComponent(programId)}`;
-  const read = useLiveData<ProjectPyramidRead>(path, [path, targetKey ?? ''], isRead);
+  const path = projectPyramidPath(programId);
+  const own = useLiveData<ProjectPyramidRead>(shared ? null : path, [shared ? '' : path, targetKey ?? ''], isRead);
+  const read = shared ?? own;
   const data = read.data;
   const { statuses, refusal, setStatus } = useProjectTaskStatuses(path, data);
   const tasks = useMemo<PyTask[]>(

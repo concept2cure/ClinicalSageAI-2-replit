@@ -12,8 +12,8 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 // No signed-in user: canGovernedWrite admits it, as for a writer (shared/constants/permissions.ts).
 vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
-import { ProjectProgramPlan } from '../surfaces/PyramidProject';
-import { planAssignments, PYRAMID_TASK_ENTITY, PLAN_TASK_ENTITY } from '../surfaces/PlanAssign';
+import { ProjectProgramPlan, producingTaskId } from '../surfaces/PyramidProject';
+import { planAssignments, planDueFor, DueForYou, PYRAMID_TASK_ENTITY, PLAN_TASK_ENTITY } from '../surfaces/PlanAssign';
 
 const PROGRAM = '7abb1c22-1111-4222-8333-444455556666';
 const PATH = `/api/v1/pyramids/by-project/${PROGRAM}`;
@@ -185,5 +185,38 @@ describe("the program plan's owners and due dates", () => {
     const rows = [owned('t2'), { ...owned('t2'), sourceEntityType: PLAN_TASK_ENTITY, taskId: 'deliv' }];
     expect(planAssignments(rows, PROGRAM, PYRAMID_TASK_ENTITY).get('t2')?.taskId).toBe('task-9');
     expect(planAssignments(rows, PROGRAM).get('t2')?.taskId).toBe('deliv');
+  });
+});
+
+// S11 step 4: the content plan's key and "Due for you".
+describe('the content plan join and due-for-you, as functions', () => {
+  it("reads a catalogue document's producing task from its id, and only from the catalogue's two shapes", () => {
+    expect(producingTaskId('phase1.product_profile:deliverable:0')).toBe('phase1.product_profile');
+    expect(producingTaskId('phase5.design:subtask:sap')).toBe('phase5.design');
+    expect(producingTaskId('device-workstream-3')).toBeNull();
+  });
+
+  it("lists only the person's open tasks of this project's plan, by due date, none last", () => {
+    const row = (taskId: string, over: Record<string, unknown>) => ({ taskId, title: taskId, sourceEntityType: PYRAMID_TASK_ENTITY,
+      sourceEntityId: `${PROGRAM}:${taskId}`, assigneeId: 3, status: 'pending', dueDate: null, ...over });
+    const items = planDueFor([
+      row('late', { dueDate: '2027-01-02T17:00:00Z' }),
+      row('early', { dueDate: '2026-12-01T17:00:00Z', sourceEntityType: PLAN_TASK_ENTITY }),
+      row('undated', {}),
+      row('someone-else', { assigneeId: 4 }),
+      row('other-project', { sourceEntityId: 'another:x' }),
+      row('done', { status: 'completed' }),
+      row('not-plan', { sourceEntityType: 'review' }),
+    ], PROGRAM, '3');
+    expect(items.map((i) => `${i.taskId}/${i.kind}`)).toEqual(['early/document', 'late/work', 'undated/work']);
+    expect(planDueFor([row('late', {})], PROGRAM, null)).toEqual([]);
+  });
+
+  it('says a past-due task in words, and an unread list as unread', () => {
+    const { rerender } = render(<DueForYou today={new Date(2026, 10, 5)} unread={false}
+      items={[{ taskId: 'a', kind: 'work', title: 'Submit IND', dueDate: '2026-11-03T17:00:00Z', status: 'in-progress' }]} />);
+    expect(screen.getByTestId('pj-due-for-you').querySelector('.pj-due-d')?.textContent).toMatch(/^Due Nov 3, 2026 · past due · /);
+    rerender(<DueForYou unread items={[]} />);
+    expect(screen.getByText('Your tasks in this project could not be read.')).toBeTruthy();
   });
 });
