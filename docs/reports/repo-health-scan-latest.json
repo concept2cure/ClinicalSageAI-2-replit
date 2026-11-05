@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-05T09:35:13.728Z",
+  "generatedAt": "2026-11-05T21:48:25.410Z",
   "git": {
-    "sha": "d20e013e723c5da215df3de048f16f1c15f3f5c7",
+    "sha": "cca6035612beaa337c80b16ab14aa39e8be73a99",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2387,7 +2387,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1180771
+        "bytes": 1193615
       },
       {
         "file": "shared/schema.ts",
@@ -2450,12 +2450,12 @@
         "bytes": 161965
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 160504
+        "file": "server/routes/c2c/project-vault.ts",
+        "bytes": 160807
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 160441
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 160504
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2463,7 +2463,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 155988
+        "bytes": 157673
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2613,7 +2613,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22328
+        "lines": 22508
       },
       {
         "file": "shared/schema.ts",
@@ -2688,12 +2688,12 @@
         "lines": 3283
       },
       {
-        "file": "server/routes/report-os.ts",
-        "lines": 3256
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 3257
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 3228
+        "file": "server/routes/report-os.ts",
+        "lines": 3256
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2701,7 +2701,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "lines": 3175
+        "lines": 3181
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2976,12 +2976,12 @@
         "lines": 1814
       },
       {
-        "file": "server/services/cmc-write-through.ts",
-        "lines": 1802
+        "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "lines": 1804
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
-        "lines": 1799
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1802
       },
       {
         "file": "ui_kits/home/Projects.jsx",
