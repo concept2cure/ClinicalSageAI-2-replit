@@ -129,6 +129,11 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
 
   // ── Module workstreams (project-scoped) ──
   { id: 'cmc', label: 'CMC / Quality (Module 3)', description: 'The CMC workstream (specifications, stability, batch, etc.).', scope: 'project', group: 'module' },
+  /* Risk-based monitoring joined the launch catalog by founder decision P-76 (2026-10-30, b602ecad97) and is
+     on the rail's work areas, but it had no target here, so AnA could not take a person to it and the full
+     product training never reached it. Global, as the rail opens it: the screen chooses its own project
+     (Rbm.tsx), and a project scope would send a person with none open to "Open a project" instead. */
+  { id: 'rbm', label: 'Risk-based monitoring', description: 'Risk-based monitoring for a project\'s study: the critical-to-quality risk assessment, key risk indicators and quality tolerance limits, site risk, monitoring signals and actions, and the monitoring plan. An assessment or a plan is active only once a person approves it under Part 11.', scope: 'global', group: 'module' },
   { id: 'protocol-dev', label: 'Protocol workspace', description: 'The clinical protocol authoring workspace — sections, objectives, risk/milestone/amendment/deviation registers, and completeness findings.', scope: 'global', group: 'module' },
   { id: 'labeling', label: 'Labeling', description: 'The labeling workstream (documents, symbols, translations).', scope: 'project', group: 'module' },
   { id: 'risk', label: 'Risk Management', description: 'The risk workstream (register, matrix, controls).', scope: 'project', group: 'module' },
