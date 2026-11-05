@@ -1,0 +1,56 @@
+{
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "baselineCommit": "b7e854ed33fe5d65ae575f1d19286338d106d8ba",
+  "plan": "F1",
+  "completes": "server/services/lumen-context/intelligence-prefix.ts",
+  "node": "22.16.0",
+  "typescript": "5.8.3",
+  "sources": {
+    "before": {
+      "bytes": 10376,
+      "gitBlobSha": "23bb98054680c464e59412d2d7cb5fec6afc51d3",
+      "sha256": "eb8f45292b836015338041ec65846b7d57d2aa2619c7cd7c1152df0797385a74"
+    },
+    "after": {
+      "bytes": 12990,
+      "gitBlobSha": "d5900e8803df3f385054e607d6216b094ed1a205",
+      "sha256": "394e52118fcbf7293d9c39388b116871672e353b7d8fb7a1ce26a9ce799452f5"
+    }
+  },
+  "results": {
+    "before": {
+      "tests": 37,
+      "passed": 15,
+      "failed": 22,
+      "skipped": 0,
+      "rawTapSha256": "dcadad2b240f128bde2ca6b705c925e3785cc579344385f90a6462f72208b279"
+    },
+    "after": {
+      "tests": 37,
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0,
+      "rawTapSha256": "64fb2a416102aaaa3dbb90f2e728d5b2edfefcb997e1c962349b305fabd964d0"
+    }
+  },
+  "executedSuite": {
+    "path": "tests/services/ana/intelligence-prefix-ownership.test.cjs",
+    "bytes": 16264,
+    "gitBlobSha": "46b08a2c2599462b0386bbdfbd34cce9743026c6",
+    "sha256": "ab63dcc6c4a7a93922aa46c8bcf253d94b073ea90e74f09336bfad2478262084"
+  },
+  "nativeSuite": {
+    "path": "server/services/lumen-context/__tests__/intelligence-prefix-ownership.test.ts",
+    "cases": 8,
+    "executed": false,
+    "bytes": 5471,
+    "gitBlobSha": "2b1b0a3b60371bc3db05ecf2dd90dec46737c3cb",
+    "sha256": "1f24bc3c11d202213616b53fd953c723105a3fc341cd2a64bd9d902be01235fc"
+  },
+  "collaborators": "Controlled source readers, project-reference resolver, database module and clock; actual complete production prefix, cache, budget and formatting execute.",
+  "syntaxDiagnostics": 0,
+  "fullRepositoryTypecheck": false,
+  "realDatabaseOrProvider": false,
+  "deploymentVerified": false
+}
