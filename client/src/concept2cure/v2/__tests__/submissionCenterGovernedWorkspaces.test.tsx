@@ -689,7 +689,8 @@ describe('shadow review — real runs and persisted findings', () => {
     expect(document.body.textContent).toContain('Basis: 21 CFR 314.50');
     expect(document.body.textContent).toContain('Critical');
     expect(document.body.textContent).toContain('Open');
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/shadow-review/91/findings');
+    // A live read carries its read-deadline signal (c3794c8fef, liveGetOrNull).
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/shadow-review/91/findings', undefined, undefined, expect.any(AbortSignal));
   });
 
   it('a failed run POST surfaces the server error and records nothing locally', async () => {
