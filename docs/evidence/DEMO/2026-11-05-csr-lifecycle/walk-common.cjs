@@ -153,6 +153,8 @@ async function openNewDocument(page) {
   const select = page.locator('select:has(option:text("(blank document)"))');
   await select.waitFor();
   await page.getByRole('radio', { name: 'M5', exact: true }).click();
+  // The template list loads after the sheet opens ("Loading templates…"); count only once it has loaded.
+  await page.getByText(/Loading templates/).waitFor({ state: 'detached', timeout: 60_000 });
   await select.locator('option', { hasText: CSR_ENTRY }).first().waitFor({ state: 'attached', timeout: 30_000 }).catch(() => {});
   return select;
 }
