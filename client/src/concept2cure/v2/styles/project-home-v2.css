@@ -444,7 +444,7 @@
 .c2c-v2 .pj-quality > div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;font-size:13px;}
 .c2c-v2 .pj-quality dt{color:var(--text-200);}
 .c2c-v2 .pj-quality dd{margin:0;font-variant-numeric:tabular-nums;text-align:right;}
-.c2c-v2 .pj-quality dd[data-tone="error"]{color:var(--danger-000, var(--text-200));}
+.c2c-v2 .pj-quality dd[data-tone="error"]{color:var(--error);}
 .c2c-v2 .pj-rv-n{font-weight:400;color:var(--text-400);}
 /* Submit tab: one row per market, each with its own server verdict, and the
    line under the project header that states them (FILING_SPINE.md F9). The
