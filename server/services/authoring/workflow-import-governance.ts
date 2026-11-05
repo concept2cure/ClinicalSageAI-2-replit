@@ -57,11 +57,35 @@ function sourceVerificationStatus(error: unknown): 403 | 404 | 409 | 503 {
   return status === 403 ? 403 : status === 404 ? 404 : status === 503 ? 503 : 409;
 }
 
+type RetainedOrigin = { origin: WorkflowImportOrigin; sourceCodes: Map<string, string> };
+
+/** A CSR document that a build's approved headings were imported into (csr-import-into-document.ts, F6) has no
+ * genesis receipt for them. Each import records a document-level CSR_IMPORT receipt with its origin, and each section
+ * it wrote an UPDATE row naming its heading. The newest receipt's origin covers every heading that build wrote here
+ * (the import selects them all again), so it is the one verified, as a working copy's genesis origin is. A written
+ * section the newest origin does not cover is refused, never skipped. */
+async function importedIntoDocumentOrigin(q: Queryable, input: WorkflowGovernanceInput): Promise<RetainedOrigin | null> {
+  const rows = await q.query(`SELECT section_id::text, operation_type, metadata->'provenance'->'importSource' AS origin,
+      metadata->>'section_code' AS source_code
+    FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2 AND operation_type IN ('UPDATE','CSR_IMPORT') AND metadata ? 'csrBuildImport'
+    ORDER BY created_at, id`, [input.doc.id, input.organizationId]);
+  const all = rows.rows as Array<{ section_id: string | null; operation_type: string; origin: WorkflowImportOrigin; source_code: string }>;
+  const receipts = all.filter(row => row.operation_type === 'CSR_IMPORT');
+  const written = all.filter(row => row.operation_type === 'UPDATE');
+  if (!all.length) return null;
+  const latest = receipts[receipts.length - 1]?.origin;
+  const covered = new Set(Array.isArray(latest?.sectionOrigins) ? latest.sectionOrigins.map(origin => origin.code) : []);
+  if (!latest || !isWorkflowImportOrigin(latest) || latest.kind !== 'csr' || !covered.size
+    || String(input.doc.client_program_id ?? '').toLowerCase() !== latest.programId.toLowerCase()
+    || written.some(row => !covered.has(row.source_code))) {
+    refusal('WORKFLOW_ORIGIN_UNVERIFIED', 'The imported CSR sections of this document are not covered by one retained build origin. Nothing was released.');
+  }
+  return { origin: latest, sourceCodes: new Map(written.map(row => [String(row.section_id), row.source_code])) };
+}
+
 /** The immutable genesis receipt is authoritative. Editing the document's
  * displayed provenance cannot turn a known machine source into a human one. */
-async function retainedOrigin(q: Queryable, input: WorkflowGovernanceInput): Promise<{
-  origin: WorkflowImportOrigin; sourceCodes: Map<string, string>;
-} | null> {
+async function retainedOrigin(q: Queryable, input: WorkflowGovernanceInput): Promise<RetainedOrigin | null> {
   const rows = await q.query(`SELECT section_id::text, metadata->'provenance'->'importSource' AS origin,
       metadata->>'section_code' AS source_code
     FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2 AND operation_type='CREATE'
@@ -69,6 +93,8 @@ async function retainedOrigin(q: Queryable, input: WorkflowGovernanceInput): Pro
     ORDER BY created_at, id`, [input.doc.id, input.organizationId]);
   const first = rows.rows[0]?.origin as WorkflowImportOrigin | undefined;
   if (!first) {
+    const intoDocument = await importedIntoDocumentOrigin(q, input);
+    if (intoDocument) return intoDocument;
     const visible = (input.doc.provenance as { importSource?: WorkflowImportOrigin } | undefined)?.importSource;
     if (visible && isWorkflowImportOrigin(visible)) refusal('WORKFLOW_ORIGIN_UNVERIFIED', 'The workflow copy has no retained creation receipt. Its origin must be reconciled before release.');
     return null;
