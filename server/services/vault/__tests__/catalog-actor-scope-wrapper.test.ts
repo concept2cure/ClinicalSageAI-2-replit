@@ -38,6 +38,16 @@ describe('pooled interactive actor source reads', () => {
     const run = vi.fn(); await expect(withAnaSourceReadScope(input(), run)).rejects.toMatchObject({ code: 'ANA_PROJECT_ACCESS_DENIED' });
     expect(run).not.toHaveBeenCalled(); expect(h.query.mock.calls.at(-1)?.[0]).toBe('ROLLBACK'); expect(h.release).toHaveBeenCalledOnce();
   });
+  // P-72: a platform role is never stamped on a tenant source read; disabling that refusal fails this case alone.
+  it('the platform role is never stamped on a tenant source read: refused before the protected read', async () => {
+    h.role.mockResolvedValue('app_super_admin');
+    const run = vi.fn();
+    await expect(withAnaSourceReadScope(input(), run)).rejects.toMatchObject({ code: 'ANA_SOURCE_ACCESS_UNAVAILABLE' });
+    expect(run).not.toHaveBeenCalled();
+    expect(h.query.mock.calls.some(c => String(c[0]).includes('app.current_user_role'))).toBe(false);
+    expect(h.query.mock.calls.at(-1)?.[0]).toBe('ROLLBACK');
+  });
+
   it('revocation after the protected read refuses the loaded result', async () => {
     h.revalidate.mockRejectedValue(new AnaProjectScopeError(403, 'ANA_SOURCE_SCOPE_CHANGED', 'Revoked'));
     await expect(withAnaSourceReadScope(input(), async () => 'private source')).rejects.toMatchObject({ code: 'ANA_SOURCE_SCOPE_CHANGED' });
