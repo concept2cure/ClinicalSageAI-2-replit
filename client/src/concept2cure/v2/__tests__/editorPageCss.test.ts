@@ -256,3 +256,24 @@ describe("the one editor's outline, page and ribbon (D4-1, .design/claude-conver
     }
   });
 });
+
+/* B5 (demo walk 2026-11-05, 43-390-csr-build-panel.png): at 390 wide the CSR's "Build from the study's data"
+   panel was cut off at the right edge, its paragraph and its Study data select not wrapped. `.ed-source-detail`
+   is a one-column grid with an `auto` track, so its longest unbreakable item (the select, naming the manifest
+   file and version) set the track wider than the panel. Four of its other hosts carried an inline `minWidth: 0`
+   to get round it (AuthoringAssemblyBuild, AssemblySourcesNotice, SavedAssemblySourcesNotice). */
+describe("the editor's source panels at phone width (B5)", () => {
+  it('sizes the one column to the panel, so no item can set it wider', () => {
+    expect(value(AUTH, '.c2c-v2 .ed-source-detail', 'grid-template-columns')).toBe('minmax(0, 1fr)');
+  });
+
+  it('keeps a select inside the panel', () => {
+    expect(value(AUTH, '.c2c-v2 .ed-source-detail select', 'max-width')).toBe('100%');
+  });
+
+  /* Measured in the running app at 390 wide: the CSR build, assembly and review blocks are inline grids whose
+     `auto` track took a sequence select's longest option (458px in a 334px panel). */
+  it("lets the items of the panel's inline grids be as narrow as the panel", () => {
+    expect(value(AUTH, ".c2c-v2 .ed-source-detail [style*='display: grid'] > *", 'min-width')).toBe('0');
+  });
+});

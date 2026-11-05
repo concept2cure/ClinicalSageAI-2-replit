@@ -103,10 +103,11 @@ function StudyBuildRow({ source, outcome, disabled, busy, onStart }: {
 
 type Decision = 'submit' | 'approve' | 'send_back';
 
-/** The job's headings with their review state, and the review actions. */
-export function CsrHeadingReview({ jobId, headings, onChanged, onImport }: {
+/** The job's headings with their review state, and the review actions. The CSR document's own panel imports the
+ * approved headings into that document (CsrRunBuilds.tsx); the csr-workflow board imports them as a working copy. */
+export function CsrHeadingReview({ jobId, headings, onChanged, onImport, importLabel = 'Import approved sections into Authoring' }: {
   jobId: number; headings: CsrBoardHeading[]; onChanged: () => void;
-  onImport: (sectionNumbers: string[]) => void;
+  onImport: (sectionNumbers: string[]) => void; importLabel?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -129,7 +130,7 @@ export function CsrHeadingReview({ jobId, headings, onChanged, onImport }: {
       <span>{drafted} of {headings.length} ICH E3 headings drafted{templates > 0
         ? ` · ${templates} ${templates === 1 ? 'is' : 'are'} template text with data missing` : ''} · {approved.length} approved</span>
       <button type="button" className="btn" disabled={busy || approved.length === 0} onClick={() => onImport(approved)}>
-        {I.fileCheck} Import approved sections into Authoring
+        {I.fileCheck} {importLabel}
       </button>
     </div>
     {error && <p role="alert">{error}</p>}

@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { prepareScientificReviewReceipt, scientificSha256, scientificTablesSha256 } from '../../../../../../server/services/authoring/csr-scientific-review-core';
-import type { RetainedScientificRun } from '@shared/authoring/csr-scientific-review';
+import { studyDesignNumberAt, type RetainedScientificRun } from '@shared/authoring/csr-scientific-review';
 import {
   browserSha256, buildSubmission, claimableCells, figureOccurrences, mapGaps,
   type CellRef, type ReviewerMap, type SavedSection,
@@ -153,5 +153,52 @@ describe('a section still holding a data placeholder is named', () => {
 
   it('a section without one is not named', () => {
     expect(mapGaps(map, occurrences).join(' ')).not.toMatch(/11\.4 Efficacy results still holds/);
+  });
+});
+
+/* B6 (demo walk 2026-11-05): the review offered "Phase 2", "Weeks 8 and 16", "Week 4 to Week 24" and "(11)", as in
+   "ADAS-Cog (11)", as figures to map, each with unrelated table cells (a disposition count for "Phase 2"). A design
+   phase, a visit schedule and an instrument's item count are not results. Real results beside them still are. */
+describe('figureOccurrences: study design is not a result (B6)', () => {
+  const designRuns: RetainedScientificRun[] = [{
+    runId: RUN, programId: PROGRAM, releaseEligibilityVerified: true,
+    studies: [{
+      source: { documentId: '9c3d4e5f-6a7b-4c8d-8e9f-1a2b3c4d5e6f', sha256: 'a'.repeat(64), version: '1',
+        studyId: 'CDISCPILOT01', protocolNumber: 'H2Q-MC-LZZT', clinicalVerification: 'not-established', sourceApproval: 'canonical-lifecycle' },
+      tables: {
+        disposition: { title: 'Disposition', headers: ['Arm', 'Randomized', 'Discontinued', 'Completed (%)', 'Phase', 'Week', 'Items', 'Visits', 'Weeks'],
+          rows: [['Placebo', '86', '12', '33.9', '2', '24', '11', '8', '16'], ['Total', '254', '4', '2', '2', '4', '11', '8', '16']] },
+        primaryEfficacy: { title: 'ADAS-Cog (11) change from baseline at Week 24', headers: ['Comparison', 'Difference', 'p'],
+          rows: [['High dose vs placebo', '-2.5', '0.001']] },
+      },
+    }],
+  }];
+  const text = '<p>In this Phase 2 study, the ADAS-Cog (11) was assessed at Weeks 8 and 16 and from Week 4 to Week 24. '
+    + 'Of 254 randomized, 86 (33.9%) received placebo and 12 discontinued; Placebo (86) is the arm count. '
+    + 'At Week 24 the difference was -2.5 (p=0.001).</p>';
+  const section: SavedSection = { id: S_EFF, code: '11.4', title: 'Efficacy results', content: text };
+  const found = figureOccurrences(section, claimableCells(designRuns));
+  const at = (o: { start: number; end: number }) => text.slice(Math.max(0, o.start - 12), o.end + 1);
+
+  it('offers no trial phase, scheduled week or instrument item count', () => {
+    const design = found.filter((o) => /Phase $|Weeks? (\d+ and )?$|Week \d+ to Week $|ADAS-Cog \($/.test(text.slice(Math.max(0, o.start - 20), o.start)));
+    expect(design.map(at)).toEqual([]);
+  });
+
+  it('still offers every result: counts, a percentage, a difference and a p-value, including a count after an arm name', () => {
+    const displays = found.map((o) => o.display);
+    expect(displays).toEqual(expect.arrayContaining(['254', '86', '33.9', '12', '-2.5', '0.001']));
+    expect(found.filter((o) => o.display === '86')).toHaveLength(2);
+  });
+
+  it('reads only the word before the number: a count in brackets after an arm or a population is a result', () => {
+    const design = (s: string, n: string) => studyDesignNumberAt(s, s.indexOf(n), s.indexOf(n) + n.length);
+    expect(design('Non-completers (12) left early.', '12')).toBe(false);
+    expect(design('Placebo (86) and Xanomeline (84).', '86')).toBe(false);
+    expect(design('8 weeks of treatment', '8')).toBe(false);
+    expect(design('the HAM-D (17) total', '17')).toBe(true);
+    expect(design('Phase 2/3 enrolment', '3')).toBe(true);
+    expect(design('on Days 1-14 only', '14')).toBe(true);
+    expect(design('at Week 24 -2.5 was seen', '2.5')).toBe(false);
   });
 });

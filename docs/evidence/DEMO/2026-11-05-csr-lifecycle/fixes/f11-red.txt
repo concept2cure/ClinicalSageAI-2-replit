@@ -1,0 +1,9 @@
+F11 red: client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx (its first case, which pinned the old
+sentence, now asks for what is true) against trunk's CsrNarrativeReadiness.tsx.
+
+ × client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx > shows real summary reuse, says where narratives are composed, and connects recovery 83ms
+   → expected 'Clinical narrative inputs2 completed …' not to match /remains unavailable|not linked to the…/
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx > reports a failed or malformed response without claiming zero studies and offers read-only retry 281ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx > discards a former program response and fences recovery during a governed operation 29ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

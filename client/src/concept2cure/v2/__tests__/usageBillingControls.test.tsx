@@ -71,7 +71,8 @@ describe('credits are not presented as metered', () => {
     expect(screen.queryByRole('button', { name: /buy more/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /turn on|turn off/i })).toBeNull();
     expect(seen).not.toMatch(/\$42\.00|Current balance|Auto-reload/i);
-    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/billing/credits', undefined, undefined, expect.any(AbortSignal));
+    // By method and path, whatever follows: a live read also carries its read-deadline signal (c3794c8fef).
+    expect(apiRequest.mock.calls.map(([method, url]) => `${method} ${url}`)).not.toContain('GET /api/billing/credits');
   });
 
   it('makes no price claim it cannot honour', async () => {

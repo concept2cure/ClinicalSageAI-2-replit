@@ -1,0 +1,5 @@
+# F6 server test after the change
+ ✓ server/routes/__tests__/authoringCsrImportIntoDocument.pglite.integration.test.ts (5 tests) 18407ms
+     ✓ refuses, by name, a target in another organization, in another project, or whose study data is not the build’s  1771ms
+     ✓ keeps the CSR scientific review’s study data, and puts the imported text under the release controls of an import  412ms
+      Tests  5 passed (5)

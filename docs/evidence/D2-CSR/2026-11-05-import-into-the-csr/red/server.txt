@@ -1,0 +1,8 @@
+# F6 server test against HEAD authoring-source-import.ts and workflow-import-governance.ts
+     × previews, then writes each heading into the matching section of this document, and creates no document 71ms
+     × leaves a section a person edited untouched, and says so 222ms
+     ✓ refuses a heading whose approval was revoked, or whose saved text changed after its approval, and writes nothing 55ms
+     × refuses, by name, a target in another organization, in another project, or whose study data is not the build’s 1701ms
+     × keeps the CSR scientific review’s study data, and puts the imported text under the release controls of an import 237ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed (5)

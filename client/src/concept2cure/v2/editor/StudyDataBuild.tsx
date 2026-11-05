@@ -6,7 +6,8 @@
  * study's data enters here too: choose the study's clinical source in the project's Vault, preview it, and freeze
  * it as this document's study data (StudyDataSource). No Submission Center package run and no filing are needed
  * first. Then the build, its section review and import, the patient narratives, and the assembly with eCTD
- * placement (CsrBuildDraftControl, CsrRunBuilds) run on that frozen data. Builds already made on an earlier
+ * placement (CsrBuildDraftControl, CsrRunBuilds) run on that frozen data. The approved sections are imported into
+ * this document itself (F6, 2026-11-05). Builds already made on an earlier
  * package run's tables stay reachable here. The study's pivotal declarations are kept with its data.
  * A failed read is an alert, never an empty list.
  */
@@ -93,7 +94,9 @@ function useRetainedTables(programId: string, retainedId: string) {
 }
 
 /** The build on one frozen study data (a document's, or an earlier package run's: the same id field). */
-function RetainedBuild({ programId, retainedId, onNav }: { programId: string; retainedId: string; onNav?: (surface: string) => void }) {
+function RetainedBuild({ programId, documentId, retainedId, onDocumentChanged }: {
+  programId: string; documentId: string; retainedId: string; onDocumentChanged?: () => void;
+}) {
   const { tables, error } = useRetainedTables(programId, retainedId);
   const [queued, setQueued] = useState<number | null>(null);
   if (error) return <p role="alert">{error}</p>;
@@ -101,7 +104,7 @@ function RetainedBuild({ programId, retainedId, onNav }: { programId: string; re
   if (!tables.studies.length) return <p>This earlier package run holds no study data. Freeze the study’s clinical source for this document instead.</p>;
   return <>
     <CsrBuildDraftControl programId={programId} runId={retainedId} studies={tables.studies} blocked={false} onQueued={setQueued} />
-    <CsrRunBuilds programId={programId} runId={retainedId} focus={queued} onNav={onNav} />
+    <CsrRunBuilds programId={programId} runId={retainedId} documentId={documentId} focus={queued} onDocumentChanged={onDocumentChanged} />
   </>;
 }
 
@@ -114,12 +117,16 @@ const describe = (entry: StudyDataEntry) =>
  * the old project's source picker, preview, or selected build could briefly
  * remain actionable in the new project's editor.
  */
-export function StudyDataBuild(props: { programId: string; documentId: string; onNav?: (surface: string) => void }) {
+export function StudyDataBuild(props: { programId: string; documentId: string; onNav?: (surface: string) => void;
+  /** The editor re-reads this document's sections after the build's approved sections are imported into it (F6). */
+  onDocumentChanged?: () => void }) {
   return <StudyDataBuildScoped key={`${props.programId}::${props.documentId}`} {...props} />;
 }
 
 /** Shown only for the recorded clinical-study-report template entry. */
-function StudyDataBuildScoped({ programId, documentId, onNav }: { programId: string; documentId: string; onNav?: (surface: string) => void }) {
+function StudyDataBuildScoped({ programId, documentId, onNav, onDocumentChanged }: {
+  programId: string; documentId: string; onNav?: (surface: string) => void; onDocumentChanged?: () => void;
+}) {
   const [refresh, setRefresh] = useState(0);
   const { studyData, runs, error, runsError } = useStudyDataChoices(programId, documentId, refresh);
   const [retainedId, setRetainedId] = useState('');
@@ -144,7 +151,7 @@ function StudyDataBuildScoped({ programId, documentId, onNav }: { programId: str
           <StudyDataSource programId={programId} documentId={documentId} onFrozen={frozen} onNav={onNav} />
         </>
         : studyData && <button type="button" className="btn ghost" onClick={() => setAdding(true)}>Freeze newer study data</button>}
-      {retainedId && <RetainedBuild key={retainedId} programId={programId} retainedId={retainedId} onNav={onNav} />}
+      {retainedId && <RetainedBuild key={retainedId} programId={programId} documentId={documentId} retainedId={retainedId} onDocumentChanged={onDocumentChanged} />}
       <StudyPivotalDeclarations scope={{ programId }} />
     </div>
   </details>;

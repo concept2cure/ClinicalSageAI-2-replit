@@ -178,7 +178,8 @@ describe('UsageBilling — the invoice list moved to Licensing', () => {
     expect(screen.queryByText(/Auto-reload/)).toBeNull();
     expect(screen.queryByText('Current balance')).toBeNull();
     expect(screen.queryByRole('button', { name: /buy more/i })).toBeNull();
-    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/billing/credits');
+    // By method and path, whatever follows: a live read also carries its read-deadline signal (c3794c8fef).
+    expect(apiRequest.mock.calls.map(([method, url]) => `${method} ${url}`)).not.toContain('GET /api/billing/credits');
   });
 
   it('the usage tab shows no per-category credit card', async () => {

@@ -19,8 +19,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 
 const h = vi.hoisted(() => ({ database: null as unknown, client: null as unknown, tables: vi.fn(), adam: vi.fn() }));
 vi.mock('../../db', () => ({ get db() { return h.database; } }));
-// The worker's tenant connection is the test database (one connection, as withTenantConnection gives).
-vi.mock('../../db/withTenantConnection.js', () => ({ withTenantConnection: async (_o: unknown, fn: (c: unknown) => Promise<unknown>) => fn(h.client) }));
+// The worker's tenant connection is the test database (one connection, as withOrganizationTenantConnection gives).
+// Its scope under row security, as a non-owner role, is proven in services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts.
+vi.mock('../../db/withTenantConnection.js', () => ({
+  withTenantConnection: async (_o: unknown, fn: (c: unknown) => Promise<unknown>) => fn(h.client),
+  withOrganizationTenantConnection: async (_org: number, _caller: string, fn: (c: unknown) => Promise<unknown>) => fn(h.client),
+}));
 vi.mock('../../services/csr-builder.js', () => ({ launchCSRBuildAsync: vi.fn() }));
 vi.mock('../../services/csr/saved-clinical-tables.js', () => ({ readSavedClinicalTables: h.tables }));
 vi.mock('../../services/csr/vault-source-input.js', () => ({ readCsrAdamDatasets: h.adam }));

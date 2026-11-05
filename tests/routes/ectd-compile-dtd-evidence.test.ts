@@ -16,7 +16,9 @@ import { assembledResult, handlerOf, makeFdaPackageZip, makeReq, mockSpineOn, OR
 
 const EXPECTED = ['index.xml', 'm1/us/us-regional.xml', 'm5/stf-study-101.xml'];
 const REQUIRED = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd', 'ich-stf-v2-2.dtd'];
-const STYLES = ['ectd-2-0.xsl', 'us-regional.xsl'];
+// The package ships an STF (m5/stf-study-101.xml), so it carries the STF stylesheet too, as the packager
+// requires (requiredStylesheetsForRegion(region, true); a pass without it is refused since 1e928c801e).
+const STYLES = ['ectd-2-0.xsl', 'us-regional.xsl', 'ich-stf-stylesheet-2-3.xsl'];
 const mockSpine = mockSpineOn(poolQuery);
 const tempDirs = new Set<string>();
 function proof(): DtdValidationEvidence {

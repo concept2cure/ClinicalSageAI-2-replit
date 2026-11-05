@@ -226,12 +226,14 @@ const FAILURE_BY_CODE: Readonly<Record<string, string>> = {
   CSR_BUILD_REQUESTER_MISSING: 'The person who started this build can no longer be identified, so it was not run as anyone else. Start a new build.',
   CSR_PROJECT_ARCHIVED: 'The project was archived, so this build was not resumed. Its saved sections can still be read.',
   CSR_PROJECT_ACCESS_UNAVAILABLE: 'Access to this project could not be checked when the build started, so nothing was drafted. Build again.',
+  CSR_TENANT_SCOPE_UNAVAILABLE: 'This organization has no tenant key, so its Vault sources cannot be read. The build was not resumed; its saved sections can still be read.',
 };
 const FAILURE_BY_REASON: Readonly<Record<string, string>> = {
   project_anchor_missing: 'This build is not tied to a project, so nothing was drafted. Start a new build from the CSR document.',
   requester_missing: FAILURE_BY_CODE.CSR_BUILD_REQUESTER_MISSING,
   project_access_refused: 'The person who started this build no longer has access to this project, so nothing more was drafted.',
   project_access_verification_failed: FAILURE_BY_CODE.CSR_PROJECT_ACCESS_UNAVAILABLE,
+  tenant_scope_unavailable: FAILURE_BY_CODE.CSR_TENANT_SCOPE_UNAVAILABLE,
   study_identity_mismatch: 'The study recorded on this build no longer matches its study data, so nothing more was drafted.',
   invalid_section_selection: 'The build’s section selection does not name ICH E3 report sections, so nothing was drafted.',
 };

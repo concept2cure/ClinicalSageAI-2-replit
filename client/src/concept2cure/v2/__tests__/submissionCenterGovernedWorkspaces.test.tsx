@@ -689,6 +689,7 @@ describe('shadow review — real runs and persisted findings', () => {
     expect(document.body.textContent).toContain('Basis: 21 CFR 314.50');
     expect(document.body.textContent).toContain('Critical');
     expect(document.body.textContent).toContain('Open');
+    // A live read carries its read-deadline signal (c3794c8fef, liveGetOrNull).
     expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/shadow-review/91/findings', undefined, undefined, expect.any(AbortSignal));
   });
 

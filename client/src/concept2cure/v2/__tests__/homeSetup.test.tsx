@@ -92,7 +92,8 @@ describe('Home: set up your organisation', () => {
     mount();
     await screen.findByRole('heading', { name: 'Your projects' });
     expect(screen.queryByTestId('home-setup')).toBeNull();
-    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/organizations/4', undefined, undefined, expect.any(AbortSignal));
+    // By method and path, whatever follows: a live read also carries its read-deadline signal (c3794c8fef).
+    expect(apiRequest.mock.calls.map(([method, url]) => `${method} ${url}`)).not.toContain('GET /api/organizations/4');
   });
 
   it('is not offered to an administrator role the server refuses the steps to', async () => {

@@ -93,7 +93,7 @@ describe('GET /:projectIdent/status — ident resolution', () => {
     // read 0%, which looked measured.
     expect(payload).toMatchObject({ projectId: null, projectIdent: UUID, programId: UUID, overallReadiness: null, readinessBasis: 'no-sequence', submissionReady: false });
     // The blocker names WHY nothing is counted — no silent empty, no fabrication.
-    expect(payload.submissionBlockers.join(' ')).toContain('no linked section-tracking store');
+    expect(payload.submissionBlockers.join(' ')).toContain('No document has been placed in a sequence of this project yet');
     // The lookup was UUID-keyed and org-scoped.
     const programCall = poolQuery.mock.calls.find((c) => String(c[0]).includes('FROM regulatory_programs'));
     expect(String(programCall![0])).toContain('id = $1');
@@ -147,7 +147,14 @@ describe('POST /:projectIdent/validate — program idents get the unlinked-store
 
     const payload = res.json.mock.calls[0][0];
     expect(payload.valid).toBe(false);
-    expect(payload.results[0]).toMatchObject({ rule: 'SECTION_STORE_UNLINKED', severity: 'error' });
+    // What the package would be refused for comes first (B3, 2026-11-05): the
+    // program records no application number or applicant here. Then why every
+    // required section reads as missing.
+    const rules = payload.results.map((r: { rule: string }) => r.rule);
+    expect(rules[0]).toBe('PACKAGE_IDENTITY_MISSING');
+    const unlinked = rules.indexOf('SECTION_STORE_UNLINKED');
+    expect(rules.slice(0, unlinked).every((r: string) => r === 'PACKAGE_IDENTITY_MISSING')).toBe(true);
+    expect(payload.results[unlinked]).toMatchObject({ rule: 'SECTION_STORE_UNLINKED', severity: 'error' });
     expect(payload).toMatchObject({ projectId: null, programId: UUID });
     // The finding explains the unlinked store without naming a schema object —
     // table names must never reach a response body (BP-W0-5).
@@ -166,7 +173,9 @@ describe('POST /:projectIdent/compile — program idents compile honestly (faile
     const payload = res.json.mock.calls[0][0];
     // Every required section is genuinely missing → failed, never a fabricated success.
     expect(payload).toMatchObject({ projectId: null, projectIdent: UUID, programId: UUID, status: 'failed', submissionReady: false });
-    expect(payload.submissionBlockers.join(' ')).toContain('no linked section-tracking store');
+    expect(payload.submissionBlockers.join(' ')).toContain('No document has been placed in a sequence of this project yet');
+    // No table or internal path reaches the reader (B3, 2026-11-05).
+    expect(payload.submissionBlockers.join(' ')).not.toMatch(/submissions →|submission spine|section-tracking store/);
     // The record is keyed by the program label so /history can find it.
     const insertCall = poolQuery.mock.calls.find((c) => String(c[0]).includes('INSERT INTO ectd_compilations'));
     expect(insertCall![1][1]).toBe('IND Compilation — Program BX-204');

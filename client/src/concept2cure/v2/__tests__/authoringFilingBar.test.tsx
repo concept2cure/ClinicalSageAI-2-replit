@@ -254,8 +254,8 @@ describe('AuthoringFilingBar — real filing actions', () => {
 
     it('sends the acknowledgement only when the user deliberately chooses to seal, under a fresh signature', async () => {
       stubSignerChecks();
-      apiRequest.mockRejectedValueOnce(notSettled());
       const { onChanged } = renderBar('draft');
+      apiRequest.mockRejectedValueOnce(notSettled());
       await signFreeze();
       await waitFor(() => expect(screen.getByTestId('form-fields').textContent).toBe('acknowledge'));
 
@@ -280,8 +280,8 @@ describe('AuthoringFilingBar — real filing actions', () => {
 
     it('sends nothing at all when the user chooses to go back and resolve', async () => {
       stubSignerChecks();
-      apiRequest.mockRejectedValueOnce(notSettled());
       renderBar('draft');
+      apiRequest.mockRejectedValueOnce(notSettled());
       await signFreeze();
       await waitFor(() => expect(screen.getByTestId('form-fields').textContent).toBe('acknowledge'));
       const callsBefore = apiRequest.mock.calls.length;
@@ -327,8 +327,8 @@ describe('AuthoringFilingBar — real filing actions', () => {
 
     it('re-asks, naming what is outstanding, and sends the acknowledgement only on a deliberate, re-signed approval', async () => {
       stubSignerChecks();
-      apiRequest.mockRejectedValueOnce(notSettled());
       const { onChanged } = renderBar('draft');
+      apiRequest.mockRejectedValueOnce(notSettled());
       await approve();
       await waitFor(() => expect(screen.getByTestId('form-title').textContent).toMatch(/not settled/i));
       expect(screen.getByTestId('form-sub').textContent).toMatch(/2 unresolved comments and 1 tracked change.*approval seals/);
@@ -350,8 +350,8 @@ describe('AuthoringFilingBar — real filing actions', () => {
 
     it('sends nothing more when the approver chooses to go back and resolve', async () => {
       stubSignerChecks();
-      apiRequest.mockRejectedValueOnce(notSettled());
       renderBar('draft');
+      apiRequest.mockRejectedValueOnce(notSettled());
       await approve();
       await waitFor(() => expect(screen.getByTestId('form-fields').textContent).toBe('acknowledge'));
       const callsBefore = apiRequest.mock.calls.length;
@@ -582,3 +582,4 @@ describe('workflow adoption is a deliberate reviewer act in the existing ceremon
     fireEvent.click(within(dialog).getByRole('radio', { name: /^Review$/ })); expect((within(dialog).getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
   });
 });
+

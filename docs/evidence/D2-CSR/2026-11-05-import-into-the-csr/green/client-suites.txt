@@ -1,0 +1,30 @@
+# Client CSR, import and panel suites after the change
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx (11 tests) 2530ms
+ ✓ client/src/concept2cure/v2/__tests__/csrWorkflowProgramScope.test.tsx (2 tests) 179ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx (10 tests) 8694ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx (87 tests) 7769ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbenchFreshness.test.tsx (10 tests) 7346ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx (12 tests) 4668ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx (16 tests) 2021ms
+ ✓ client/src/concept2cure/v2/__tests__/studyDataSource.test.tsx (15 tests) 1915ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx (13 tests) 2056ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx (4 tests) 2092ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleCsrInformationAmendment.test.tsx (5 tests) 1908ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx (16 tests) 1218ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx (12 tests) 1073ms
+ ✓ client/src/concept2cure/v2/__tests__/csrRunBuildsScope.test.tsx (5 tests) 511ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx (7 tests) 647ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPivotalDeclarations.test.tsx (5 tests) 527ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeReferenceView.test.tsx (3 tests) 510ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts (67 tests) 99ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx (3 tests) 395ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx (10 tests) 422ms
+ ✓ client/src/concept2cure/v2/__tests__/studyDataBuildScope.test.tsx (3 tests) 164ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx (31 tests) 137ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts (21 tests) 21ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts (10 tests) 29ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts (12 tests) 16ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts (3 tests) 28ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts (18 tests) 23ms
+ Test Files  27 passed (27)
+      Tests  411 passed (411)

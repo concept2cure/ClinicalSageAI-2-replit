@@ -103,6 +103,6 @@ describe('GET /:projectIdent/status with no sequence', () => {
     // The first blocker says why nothing is counted, and the program's missing
     // section store is still named.
     expect(payload.submissionBlockers[0]).toBe(payload.readinessNote);
-    expect(payload.submissionBlockers.join(' ')).toContain('no linked section-tracking store');
+    expect(payload.submissionBlockers.join(' ')).toContain('No document has been placed in a sequence of this project yet');
   });
 });

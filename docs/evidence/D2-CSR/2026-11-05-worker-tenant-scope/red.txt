@@ -1,0 +1,41 @@
+# Red: csr-worker-tenant-scope.pglite.test.ts against 8e3a265312 (the workers unchanged), 2026-11-05
+# npx vitest run --config vitest.config.ts server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts
+ ✓ server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts > the database the workers run on (the condition B1 was measured under) > runs them as a role that is neither superuser nor owner, under forced row security, where the Vault reads only through the uuid 39ms
+ × server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts > narratives and assembly, through their own default deps > the narrative worker reads its source in its organization’s scope and composes; no other organization’s row is visible to it 76ms
+ × server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts > narratives and assembly, through their own default deps > the assembly worker reads its source in its organization’s scope and assembles; no other organization’s row is visible to it 60ms
+ × server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts > narratives and assembly, through their own default deps > another organization’s worker sees its own source and not organization 7’s 38ms
+ × server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts > narratives and assembly, through their own default deps > a job whose organization has no uuid is refused by name and reads nothing: never run in the integer scope alone 53ms
+ × server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts > the boot sweep (jobs/csrQueueRecovery.ts), through its own default deps > resumes a stalled build in its organization’s full scope, and refuses by name the one whose organization has no uuid 69ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts > narratives and assembly, through their own default deps > the narrative worker reads its source in its organization’s scope and composes; no other organization’s row is visible to it
+-     "documents": [
+-       "22222222-2222-4333-8444-000000000007",
+-     ],
+-     "orgUuid": "a7a7a7a7-0000-4000-8000-000000000007",
++     "documents": [],
++     "orgUuid": null,
+ FAIL  server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts > narratives and assembly, through their own default deps > the assembly worker reads its source in its organization’s scope and assembles; no other organization’s row is visible to it
+-     "documents": [
+-       "22222222-2222-4333-8444-000000000007",
+-     ],
+-     "orgUuid": "a7a7a7a7-0000-4000-8000-000000000007",
++     "documents": [],
++     "orgUuid": null,
+ FAIL  server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts > narratives and assembly, through their own default deps > another organization’s worker sees its own source and not organization 7’s
+-     "documents": [
+-       "22222222-2222-4333-8444-000000000008",
+-     ],
+-     "orgUuid": "b8b8b8b8-0000-4000-8000-000000000008",
++     "documents": [],
++     "orgUuid": null,
+ FAIL  server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts > narratives and assembly, through their own default deps > a job whose organization has no uuid is refused by name and reads nothing: never run in the integer scope alone
+-     "code": "CSR_TENANT_SCOPE_UNAVAILABLE",
++     "code": "CSR_SOURCE_DATA_UNAVAILABLE",
+ FAIL  server/services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts > the boot sweep (jobs/csrQueueRecovery.ts), through its own default deps > resumes a stalled build in its organization’s full scope, and refuses by name the one whose organization has no uuid
+- ArrayContaining [
++ [
+-     "code": "CSR_TENANT_SCOPE_UNAVAILABLE",
+-     "outcome": "refused",
++     "outcome": "resumed",
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)

@@ -259,6 +259,8 @@ interface Props {
   onLifecycleChanged?: () => void;
   /** Open the editor at a section that cites a version (slice G7). */
   onOpenSection?: (documentId: string, sectionCode: string | null) => void;
+  /** The Versions list starts open (a search hit on an earlier version); its next step shows either way. */
+  open?: boolean;
 }
 
 interface ExportManifestSummary {
@@ -349,11 +351,29 @@ function EarlierVersionRestore({ version, current, projectId, onRestored }: {
   );
 }
 
+/**
+ * The current version's one next step for this person (Send for review, Sign review, Approve), above the
+ * collapsed Versions list (B8, demo walk 2026-11-05: it sat inside that list, so a person saw "In review" on the
+ * row and had to know to open Versions). From the list's own read; nothing when no step is the person's.
+ */
+function NextStep({ confirmed, title, projectId, onLifecycleChanged }: {
+  confirmed: { versions: VaultVersion[]; signing?: VaultSigningPosture } | null; title: string; projectId: string; onLifecycleChanged?: () => void;
+}) {
+  const versions = confirmed?.versions ?? [];
+  const v = versions.find((x) => x.current);
+  if (!v || !onLifecycleChanged) return null;
+  const label = v.version ? `v${v.version}` : '';
+  return (
+    <VersionLifecycleActions vaultId={v.id} versionLabel={label} title={title} lifecycle={v.lifecycle} uploaderId={v.uploaderId}
+      contentHash={v.contentHash} supersedes={supersededBy(versions)} onChanged={onLifecycleChanged} projectId={projectId}
+      signing={confirmed?.signing ?? null} lead={<span className="vd-ver-v">Next step{label ? ` · ${label}` : ''}</span>} />
+  );
+}
+
 /** Every version, newest first, each downloadable through the page's audited download. */
-function VersionRows({ versions, title, onDownload, downloadingId, onView, viewingId, onLifecycleChanged, onCompare, projectId, signing, onOpenSection }: {
+function VersionRows({ versions, title, onDownload, downloadingId, onView, viewingId, onLifecycleChanged, onCompare, projectId, onOpenSection }: {
   versions: VaultVersion[];
   onOpenSection?: Props['onOpenSection'];
-  signing?: VaultSigningPosture | null;
   title: string;
   onDownload: Props['onDownload'];
   downloadingId: string;
@@ -408,20 +428,6 @@ function VersionRows({ versions, title, onDownload, downloadingId, onView, viewi
           ) : null}
           <EarlierVersionRestore version={v} current={current} projectId={projectId} onRestored={onLifecycleChanged} />
           {v.current ? <EarlierVersionCitations versions={versions} onOpenSection={onOpenSection} /> : null}
-          {v.current && onLifecycleChanged ? (
-            <VersionLifecycleActions
-              vaultId={v.id}
-              versionLabel={v.version ? `v${v.version}` : ''}
-              title={title}
-              lifecycle={v.lifecycle}
-              uploaderId={v.uploaderId}
-              contentHash={v.contentHash}
-              supersedes={supersededBy(versions)}
-              onChanged={onLifecycleChanged}
-              projectId={projectId}
-              signing={signing}
-              />
-          ) : null}
         </div>
       ))}
     </div>
@@ -491,7 +497,7 @@ function NewVersionButton({ uploading, onPick }: { uploading: boolean; onPick: (
 }
 
 export function VaultVersions({
-  projectId, documentId, title, onDownload, downloadingId, onUploadNewVersion, uploading, onLifecycleChanged, onOpenSection,
+  projectId, documentId, title, onDownload, downloadingId, onUploadNewVersion, uploading, onLifecycleChanged, onOpenSection, open,
 }: Props) {
   const path = versionsPath(projectId, documentId);
   const st = useLiveData<VersionsShape>(path, [path], isVersionsShape);
@@ -524,13 +530,15 @@ export function VaultVersions({
         onLifecycleChanged={onLifecycleChanged}
         onCompare={setComparing}
         projectId={projectId}
-        signing={confirmed.signing ?? null}
         onOpenSection={onOpenSection}
       />
     );
   }
 
-  return (
+  return (<>
+    <NextStep confirmed={confirmed} title={title} projectId={projectId} onLifecycleChanged={onLifecycleChanged} />
+    <details className="pj-more vd-sec" open={open}>
+    <summary>Versions</summary>
     <div data-testid="vault-versions">
       <div className="vd-d-seclbl">Versions</div>
       {confirmed ? (
@@ -565,5 +573,6 @@ export function VaultVersions({
         </div>
       )}
     </div>
-  );
+    </details>
+  </>);
 }

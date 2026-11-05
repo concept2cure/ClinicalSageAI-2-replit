@@ -27,7 +27,13 @@ beforeEach(() => {
 });
 describe('selected canonical program orchestration', () => {
   it('uses recorded sequence identity and governed inputs with the current tenant/actor, never supplied body arrays', async () => {
-    const res = await request(app()).post('/api/submission-orchestrator/runs/for-program').send({ programId: PROGRAM, sequenceId: 4, organizationId: 99, userId: 100, applicationNumber: 'forged', cmcSources: [{ forged: true }] });
+    // The body is strict (6fe917060c): a supplied tenant, actor, number or source corpus is refused before anything is read.
+    for (const forged of [{ organizationId: 99 }, { userId: 100 }, { applicationNumber: 'forged' }, { cmcSources: [{ forged: true }] }]) {
+      const refused = await request(app()).post('/api/submission-orchestrator/runs/for-program').send({ programId: PROGRAM, sequenceId: 4, ...forged });
+      expect(refused.status).toBe(400); expect(refused.body.error).toBe('invalid_request');
+    }
+    expect(m.access).not.toHaveBeenCalled(); expect(m.identity).not.toHaveBeenCalled(); expect(m.cmc).not.toHaveBeenCalled(); expect(m.start).not.toHaveBeenCalled();
+    const res = await request(app()).post('/api/submission-orchestrator/runs/for-program').send({ programId: PROGRAM, sequenceId: 4 });
     expect(res.status).toBe(200); expect(m.access).toHaveBeenCalledWith(42, PROGRAM, 7);
     expect(m.cmc).toHaveBeenCalledWith(42, PROGRAM, '7'); expect(m.csr).toHaveBeenCalledWith(42, 88, { actorUserId: 7 });
     expect(m.start).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 42, userId: 7, programId: PROGRAM, projectId: 88, submissionId: '91', submissionFk: 91, applicationNumber: 'IND-123', region: 'US', sequenceNumber: '0002', cmcSources: [{ id: 'approved-source' }] }));

@@ -222,7 +222,8 @@ describe('Shadow review tab — what is offered on which finding', () => {
     expect(screen.queryByRole('button', { name: ACCEPT })).toBeNull();
     expect(text()).not.toMatch(/Mark fixed/);
     // Nothing offered, so the signer was not even asked.
-    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/submissions/sequences/21/dispatch-readiness');
+    // By method and path, whatever follows: a live read also carries its read-deadline signal (c3794c8fef).
+    expect(apiRequest.mock.calls.map(([method, url]) => `${method} ${url}`)).not.toContain('GET /api/submissions/sequences/21/dispatch-readiness');
   });
 });
 
