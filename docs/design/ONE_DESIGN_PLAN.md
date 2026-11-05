@@ -351,6 +351,23 @@ status or ownership; closing a package stays §3 step 5.
     the reason and password authentication.
   - The first walk caught a request-shape error: the shared ceremony takes `password` at the top level. The unit
     test had encoded my assumption, and now asserts the ceremony's contract.
+- **F1 repair** (2026-11-05), `72e36cb06`. The view assembler:
+  - derived a milestone's status from its dates, so missed and cancelled read as pending;
+  - ran a second urgency rule beside the timeline engine;
+  - printed DATE columns as `Date.toString()`.
+
+  It now reads the recorded status, uses `milestoneBucket` (and the second rule is deleted), and prints
+  YYYY-MM-DD.
+- **Reach: milestone status** (2026-11-05), `6bbd1bafe`, `docs/evidence/DESIGN/R1/2026-11-05-protocol-milestones/`.
+  "Update status" on each milestone, with the engine's buckets and the recorded status. Used in the running app:
+  First patient in recorded as Met (201).
+- **Reach: the protocol's engine reads** (2026-11-05), `docs/evidence/DESIGN/R1/2026-11-05-protocol-engine-reads/`.
+  - **Risk register:** the `summarizeRiskRegister` line; the screen's own "extreme" threshold is deleted.
+  - **Deviation trends:** `trendDeviations` signals.
+  - **EU substantiality:** per amendment, the engine's own sentence, never "non-substantial".
+
+  All three were used in the running app. The trend read's shape was wrong in the first test, and the running app
+  caught it.
 - **Handed to D4** (2026-11-05). Informed consent exists twice: the `informed_consent` document type, and
   `/api/protocol-consent`, whose 7 routes have no caller. Its element checklist, completeness and signed approval
   are that document type's validation. Under Rule 4 they belong in the one editor, not a protocol panel. Whether
@@ -369,13 +386,20 @@ The D1 spec was written on top of it, and D1 owns those files.
 
 **Next**
 
-R1 reaches in S3's protocol records, in `ProtocolDev*` files only:
-1. the milestone timeline and milestone status;
-2. deviation trends;
-3. the protocol risk register view;
-4. amendment substantiality under EU CTR, worded so that it never reads as a finding of non-substantiality.
+S3's protocol records are reached:
+- review comments;
+- amendments: changes, status and substantiality;
+- deviations: CAPA and the signed close, and trends;
+- milestones;
+- the risk summary.
 
-Reaches that land in a design package's files are handed to its owner as route, caller and test.
+Informed consent is with D4.
+
+Correction to the line written here at first: S5's behaviour is held by RIM (`COORDINATION.md`). So R1's S5
+reaches go to RIM as route, caller and test; they are not built here. S3's remaining candidates (the statistics
+thread and the SAP's versions, comments and lock in `biostatPlatform.ts`) are a statistical analysis plan, which is a
+document type. Under Rule 4 they are a convergence with the one editor, which is D4's or the founder's call, as
+informed consent was.
 
 #### F1 — Repairs, for spine step 2: the data room's lineage (session `session_01QoxbLcnW5jPvJSjjKQtvTA`)
 

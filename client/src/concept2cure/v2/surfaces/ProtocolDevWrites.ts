@@ -29,6 +29,7 @@
  *   comment resolve  PATCH /api/protocol-reviews/comments/:id/resolve
  *   amendment change POST  /api/protocol-amendments/amendments/:id/changes
  *   amendment status PATCH /api/protocol-amendments/amendments/:id/status
+ *   milestone status PATCH /api/protocol-milestones/milestones/:id/status
  *   CAPA action      POST  /api/protocol-deviations/deviations/:id/capa
  *   CAPA status      PATCH /api/protocol-deviations/capa/:id/status
  *   deviation close  POST  /api/protocol-deviations/deviations/:id/close   (signed, below)
@@ -246,6 +247,19 @@ export async function updateProtocolRisk(
     status: v.status,
     reason,
   }), 'update the risk');
+}
+
+/* ── Milestones ────────────────────────────────────────────────────────── */
+
+/** Record a milestone's status. "Met" stamps today when no actual date is given. */
+export async function setMilestoneStatus(
+  milestoneId: number,
+  v: { status: string; actualDate?: string; reason: string },
+): Promise<Record<string, unknown>> {
+  const reason = requireReason(v.reason);
+  if (!v.status) throw new Error('Choose the status. Nothing was written.');
+  return send('PATCH', `/api/protocol-milestones/milestones/${milestoneId}/status`,
+    compact({ status: v.status, actualDate: v.actualDate, reason }), 'update the milestone');
 }
 
 /* ── CAPA ──────────────────────────────────────────────────────────────── */
