@@ -25,6 +25,7 @@ import { pool } from '../../db.js';
 import { sha256Bytes } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { sha256Hex } from '../../services/ana/uploaded-file-access';
+import { discardUploadObject, durableOrganizationId, putUploadObject, type UploadObject } from '../../services/ana/upload-object-store';
 import { programInOrganization } from '../../services/c2c/program-access.js';
 import { resolveUploadCaptureScope } from '../../services/chat-uploads/capture-scope.js';
 import { projectBelongsToTenant } from '../../services/cmc/project-membership.js';
@@ -161,11 +162,26 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // Store the original bytes before metadata, extraction or Data Room
     // capture. A failed write must not leave a record claiming usable evidence
     // at a dangling storage_path. Missing/empty buffers were refused above.
+    //
+    // DURABLY (LX-02, 2026-11-05). The only copy used to be the file at
+    // storagePath, on the serving task's own container disk: production runs
+    // two API tasks with no volume there, so the other task could not read it
+    // and every deploy erased it, while the rows below kept its checksum
+    // (DR-ANA-11). An organization's upload now goes first to the one byte
+    // store (STORAGE_PROVIDER, s3 in production), which loadUploadedFile reads.
+    // The file at storagePath stays as the task's working copy for AnA's
+    // path-based tools, and is the only copy of an upload with no organization.
+    // Only an organization that resolves to a numeric id owns a durable copy,
+    // the same rule the source identity below applies (numericOrgId).
+    const durableOrgId = durableOrganizationId(orgId);
+    let durable: UploadObject | null = null;
     try {
+      if (durableOrgId != null) durable = await putUploadObject(durableOrgId, fileId, mimeType, fileBuffer);
       const resolved = path.resolve(process.cwd(), storagePath);
       await fs.mkdir(path.dirname(resolved), { recursive: true });
       await fs.writeFile(resolved, fileBuffer);
     } catch (err) {
+      if (durable && durableOrgId != null) await discardUploadObject(durable, durableOrgId);
       logger.warn('Upload rejected — original bytes could not be stored', {
         fileId,
         reason: err instanceof Error ? err.message : 'unknown',
@@ -184,8 +200,9 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // INSERT previously did — made every `WHERE organization_id = $n` lookup in
     // the chat/stream paths match zero rows, silently dropping attachments.
     await pool.query(
-      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW())`,
+      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at,
+                                 storage_provider, storage_object_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW(), $9, $10)`,
       [
         fileId,
         userId,
@@ -200,6 +217,9 @@ export const uploadHandler = async (req: Request, res: Response) => {
         // after the fact (GA ledger L25). Null only if this route ever runs
         // without a buffer — the checksum must describe real bytes or nothing.
         fileBuffer ? sha256Hex(fileBuffer) : null,
+        // Where the durable copy is (LX-02); null for an upload with no organization.
+        durable?.provider ?? null,
+        durable?.objectId ?? null,
       ]
     );
 

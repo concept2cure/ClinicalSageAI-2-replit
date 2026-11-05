@@ -1573,6 +1573,8 @@ function adoptionRefusalResponse(res: Response, err: unknown): Response | null {
     UPLOAD_NOT_FOUND: { status: 404, error: 'File not found' },
     UPLOAD_BYTES_MISSING: { status: 410, error: 'The file bytes are no longer available. Upload it again with the project open.' },
     UPLOAD_INTEGRITY_FAILED: { status: 409, error: 'The file failed its integrity check. Nothing was captured. Upload it again with the project open.' },
+    // The byte store holding the file could not be read now (LX-02); the bytes may well exist.
+    UPLOAD_STORE_UNAVAILABLE: { status: 503, error: 'The file could not be read just now. Nothing was captured. Try again.' },
   };
   const failure = failures[err.code];
   return res.status(failure.status).json({ error: failure.error, code: err.code });
