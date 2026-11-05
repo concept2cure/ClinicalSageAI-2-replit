@@ -12,13 +12,14 @@
  * a confirmed write, so the screen shows the record and not the form.
  */
 import React, { useEffect, useState } from 'react';
-import { C2CForm, type C2CFormConfig, type C2CFormField } from '../C2CForm';
+import { C2CForm, type C2CFormConfig, type C2CFormField, type C2CFormFieldOption } from '../C2CForm';
 import { memberLabels } from '@shared/utils/member-labels';
 import { useAuthUser } from '@/services/portal/authService';
 import {
   addBudgetItem, addScheduleVisit, addSoaAssessment, assessProtocolDeviation, listReviewerCandidates, optionalNumber,
   removeScheduleVisit, removeSoaAssessment, renameScheduleVisit, requestProtocolReview,
   addProtocolReviewComment, resolveProtocolReviewComment, addAmendmentChange, setAmendmentStatus,
+  addCapaAction, setCapaStatus,
   setBudgetParams, startProtocolDocument, updateProtocolHeader, updateProtocolRisk,
   type ReviewerCandidate,
 } from './ProtocolDevWrites';
@@ -30,7 +31,7 @@ export type PdevFormKind =
   | 'deviation-assess'
   | 'budget-item' | 'budget-params'
   | 'review-request' | 'review-disposition' | 'review-comment' | 'comment-resolve'
-  | 'amendment-change' | 'amendment-status'
+  | 'amendment-change' | 'amendment-status' | 'capa-add' | 'capa-status'
   | 'cover-page'
   | 'start-protocol';
 
@@ -62,6 +63,11 @@ const BUDGET_CATEGORY = ['personnel', 'procedure', 'lab', 'imaging', 'overhead',
 const REVIEW_ROLE = ['scientific', 'statistical', 'ethics', 'safety', 'regulatory', 'general'];
 const DISPOSITION = ['approve', 'approve_with_changes', 'reject', 'abstain'];
 const COMMENT_SEVERITY = ['blocking', 'major', 'minor', 'info'];
+/** A CAPA action's statuses, as the server's vocabulary has them. */
+const CAPA_STATUS: C2CFormFieldOption[] = [
+  { value: 'open', label: 'Open' }, { value: 'in_progress', label: 'In progress' },
+  { value: 'completed', label: 'Completed' }, { value: 'verified', label: 'Verified' },
+];
 /** The amendment lifecycle's statuses in words (the server's values stay the values). */
 const AMENDMENT_STATUS_LABEL: Record<string, string> = {
   draft: 'Draft', submitted: 'Submitted', under_review: 'Under review', approved: 'Approved', rejected: 'Rejected', implemented: 'Implemented',
@@ -223,6 +229,26 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
       REASON,
     ],
   },
+  'capa-add': {
+    eyebrow: 'Protocol · deviation', title: 'Add a CAPA action',
+    sub: 'A corrective or preventive action. The deviation can be closed once every action is completed or verified.',
+    governed: true, submitLabel: 'Add action',
+    fields: [
+      { key: 'action', label: 'Action', type: 'textarea', required: true, placeholder: 'For example: retrain site staff on the visit window' },
+      { key: 'owner', label: 'Owner', type: 'text', half: true },
+      { key: 'dueDate', label: 'Due date', type: 'date', half: true },
+      REASON,
+    ],
+  },
+  'capa-status': {
+    eyebrow: 'Protocol · deviation', title: 'Update CAPA status',
+    sub: 'Records the action\u2019s status. Recorded as a governed action with your reason.',
+    governed: true, submitLabel: 'Record status',
+    fields: [
+      { key: 'status', label: 'Status', type: 'select', options: CAPA_STATUS, default: 'in_progress' },
+      REASON,
+    ],
+  },
   'cover-page': {
     eyebrow: 'Protocol · cover page', title: 'Sponsor and principal investigator',
     sub: 'The cover-page record. An empty field clears the stored value; the roster is unchanged either way.',
@@ -368,6 +394,12 @@ async function submitReviewAndAmendment(
       return true;
     case 'amendment-status':
       await setAmendmentStatus(Number(target?.id), v.status, v.reason);
+      return true;
+    case 'capa-add':
+      await addCapaAction(Number(target?.id), { action: v.action, owner: v.owner, dueDate: v.dueDate, reason: v.reason });
+      return true;
+    case 'capa-status':
+      await setCapaStatus(Number(target?.id), v.status, v.reason);
       return true;
     case 'review-comment':
       await addProtocolReviewComment(documentId, { comment: v.comment, sectionRef: v.sectionRef, severity: v.severity, reason: v.reason });
