@@ -1,0 +1,65 @@
+{
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "baseline_commit": "43b0f26a228c3c683f8a5cf25d41a7ce874ae5e9",
+  "baseline_source_git_blob": "0bad5540fb8d663267506ef49e426cf2af4f3f39",
+  "baseline_source_sha256": "3dd1def7aa37544da6b4ba785d52a01c972b448c25214004c23e3e86fd78108c",
+  "runtime": {
+    "node": "v22.16.0",
+    "typescript": "Version 5.8.3"
+  },
+  "commands": {
+    "baseline": "C2C_CONSOLIDATION_SOURCE_ROOT=/path/to/baseline node --test tests/services/ana/memory-consolidation-outcomes.test.cjs",
+    "repaired": "node --test tests/services/ana/memory-consolidation-outcomes.test.cjs"
+  },
+  "results": {
+    "baseline": {
+      "passed": 10,
+      "failed": 22,
+      "skipped": 0,
+      "exit_code": 1
+    },
+    "repaired": {
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0
+    }
+  },
+  "files": {
+    "server/services/memory-consolidation-job.ts": {
+      "git_blob": "d2088e3c220e56b81824614325e0ecd2a676191d",
+      "sha256": "f13e20f998b4fdae4810552a9cb59535fdc61d5b8366fdac05082d76aeafd852"
+    },
+    "tests/services/ana/memory-consolidation-outcomes.test.cjs": {
+      "git_blob": "c4cfecc69719131c4db8344bfe36f218deef90cd",
+      "sha256": "f008e0da429f08093a37189d43783f24b29152b8b3b5d204a3d936cae3f7ab9d"
+    }
+  },
+  "unchanged_blocks_sha256": {
+    "scan_query": "088e02a310fdbf072f97c5fa9a959da1f0543270f133ccbc2ff6da4af09203b0",
+    "transaction_and_duplicate_guard": "8ac6d91ae075f5203e8a4c578c9f3e62cd4d5c4b441384707fd800fec8fcea55",
+    "acceptance_and_persisted_values": "8471da80eaf407b33c2bcd68989210c60c57e60c8ffbdf97776b54407212f2d1"
+  },
+  "raw_logs_sha256": {
+    "baseline.tap": "8615b6465480274e2d9317e8c7392d69641beee6abccd61868f227c7e94bd9db",
+    "patched.tap": "989c271780dfebea9954f43eb3be7fb42f9822da4c2251a35f783f911a9faf15"
+  },
+  "archive_sha256": "b5acecebf3d17016fe627a7abf52bd6f8a84f9c8c15550d81168d4f562d7f69c",
+  "validation": {
+    "production_typescript_transpile_diagnostics": 0,
+    "node_test_syntax_check": "passed",
+    "whole_repository_typecheck": "not run",
+    "full_ci": "not established",
+    "postgresql_rls_concurrency": "not executed",
+    "hosted_acceptance": "not executed"
+  },
+  "controlled_collaborators": [
+    "database queries and transaction responses",
+    "tenant connection lifecycle",
+    "acceptance verdicts",
+    "embedding service",
+    "scheduler lease and cron",
+    "logger"
+  ]
+}

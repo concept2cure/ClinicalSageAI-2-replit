@@ -111,12 +111,11 @@ describe('exact canonical Vault supporting source', () => {
     const f = fixture(); f.control.storeError = true;
     await expect(listCsrVaultSources(f.connectable, scope)).rejects.toMatchObject({ status: 503 });
   });
-  it('lists metadata only and requires the exact approval hash', async () => {
-    const f = fixture();
-    expect(await listCsrVaultSources(f.connectable, scope)).toMatchObject({ limitReached: false, sources: [{ documentId: SOURCE, approved: true }] });
+  it('lists the source and requires the exact approval hash', async () => {
+    const f = fixture(); const deps = { readBytes: f.readBytes };
+    expect(await listCsrVaultSources(f.connectable, scope, deps)).toMatchObject({ limitReached: false, sources: [{ documentId: SOURCE, approved: true }] });
     f.control.approvedHash = 'd'.repeat(64);
-    expect(await listCsrVaultSources(f.connectable, scope)).toMatchObject({ sources: [{ approved: false }] });
-    expect(f.readBytes).not.toHaveBeenCalled();
+    expect(await listCsrVaultSources(f.connectable, scope, deps)).toMatchObject({ sources: [{ approved: false }] });
   });
   it('does not echo participant cell values or unknown uploaded keys in schema validation issues', async () => {
     const f = fixture(); const raw = sourceFixture();
@@ -132,5 +131,81 @@ describe('exact canonical Vault supporting source', () => {
       expect(JSON.stringify(issues)).not.toContain(sentinel);
       expect(JSON.stringify(issues)).toContain('studyData.demographics.0.sex');
     }
+  });
+});
+
+/**
+ * D2-CSR F5 (2026-11-05, the CDISC pilot demo walk): the "Clinical source" picker offered every JSON file in the
+ * project's Vault, the bundle's efficacy results file among them, which preview then refuses. The list now
+ * offers what preview and freeze accept, by the same rule (`load`): a file whose JSON declares the ADaM bundle
+ * manifest format or the supporting-source format. A file it cannot read is named, never dropped.
+ */
+describe('the clinical source list offers clinical sources only', () => {
+  const id = (n: number) => `11111111-2222-4333-8444-0000000001${String(n).padStart(2, '0')}`;
+  const json = (value: unknown) => Buffer.from(JSON.stringify(value));
+  const digest = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
+  function vault() {
+    const f = fixture();
+    const stored = new Map<string, Buffer>();
+    const rows: Array<Record<string, unknown>> = [];
+    const add = (n: number, title: string, bytes: Buffer, extra: Record<string, unknown> = {}) => {
+      stored.set(id(n), bytes);
+      rows.push({ ...f.record, id: id(n), document_id: id(n), document_title: title, content_hash: digest(bytes), file_size: bytes.length,
+        stage: 'approved', approved_hash: digest(bytes), ...extra });
+    };
+    const normal = f.query.getMockImplementation()!;
+    f.query.mockImplementation(async (sql: string, values?: unknown[]) => sql.includes('LIMIT 101')
+      ? { rows } as unknown as Awaited<ReturnType<typeof normal>> : normal(sql, values));
+    const readBytes = vi.fn(async (row: { id: string }) => {
+      const bytes = stored.get(row.id);
+      if (!bytes) throw new Error('Synthetic store outage');
+      return bytes;
+    });
+    return { f, add, stored, readBytes, list: () => listCsrVaultSources(f.connectable, scope, { readBytes }) };
+  }
+
+  it('offers the bundle manifest and a supporting source, and not the efficacy results, a dataset or other JSON', async () => {
+    const v = vault();
+    v.add(1, 'cdiscpilot01-adam-bundle', json({ format: 'concept2cure.csr-adam-bundle.v1', dataCutDate: '2015-03-05' }));
+    v.add(2, 'cdiscpilot01-efficacy-results', json({ format: 'concept2cure.csr-efficacy-results.v1', protocolNumber: 'CDISCPILOT01', results: [] }));
+    v.add(3, 'Synthetic supporting extract', json(sourceFixture()));
+    v.add(4, 'adsl (Dataset-JSON)', json({ datasetJSONVersion: '1.1.0', itemGroupOID: 'IG.ADSL', rows: [] }));
+    v.add(5, 'notes', Buffer.from('{not json'));
+    v.add(6, 'large export', json({ format: 'concept2cure.csr-source.v1' }), { file_size: 6 * 1024 * 1024 });
+    const listed = await v.list();
+    expect(listed.sources.map(source => source.documentTitle)).toEqual(['cdiscpilot01-adam-bundle', 'Synthetic supporting extract']);
+    expect(listed).toMatchObject({ limitReached: false, unreadable: [], notClinicalSources: 4 });
+    // A file larger than a clinical source may be (preview refuses it by size) is not read at all.
+    expect(v.readBytes.mock.calls.map(([row]) => row.id)).not.toContain(id(6));
+  });
+
+  it('offers a manifest that declares its format but breaks its contract, so its preview names the issues', async () => {
+    const v = vault();
+    v.add(1, 'manifest with a missing dataset', json({ format: 'concept2cure.csr-adam-bundle.v1' }));
+    expect((await v.list()).sources.map(source => source.documentId)).toEqual([id(1)]);
+  });
+
+  it('names a file it could not read, or whose bytes fail their digest, instead of leaving it out', async () => {
+    const v = vault();
+    v.add(1, 'cdiscpilot01-adam-bundle', json({ format: 'concept2cure.csr-adam-bundle.v1' }));
+    v.add(2, 'unreadable manifest', json({ format: 'concept2cure.csr-adam-bundle.v1' }));
+    v.add(3, 'changed manifest', json({ format: 'concept2cure.csr-adam-bundle.v1' }));
+    v.stored.delete(id(2));
+    v.stored.set(id(3), json({ format: 'concept2cure.csr-adam-bundle.v1', changed: true }));
+    const listed = await v.list();
+    expect(listed.sources.map(source => source.documentId)).toEqual([id(1)]);
+    expect(listed.unreadable).toEqual([
+      { documentId: id(2), documentTitle: 'unreadable manifest', version: '1.0' },
+      { documentId: id(3), documentTitle: 'changed manifest', version: '1.0' }]);
+    expect(listed.notClinicalSources).toBe(0);
+  });
+
+  it('reads at most a bounded number of bytes, and says the list reached its limit beyond them', async () => {
+    const v = vault();
+    for (let n = 1; n <= 7; n++) v.add(n, `source ${n}`, json(sourceFixture()), { file_size: 5 * 1024 * 1024 });
+    const listed = await v.list();
+    expect(listed.sources).toHaveLength(5);
+    expect(listed.limitReached).toBe(true);
+    expect(v.readBytes).toHaveBeenCalledTimes(5);
   });
 });

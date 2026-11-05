@@ -1,0 +1,18 @@
+# studyDataSource.test.tsx on the old picker
+ ✓ studyDataSource.test.tsx > previews the exact version and hash, and freezes only on an explicit action, for this document 444ms
+ ✓ studyDataSource.test.tsx > names the study’s ClinicalTrials.gov number from its source, or says the source states none (D5, 2026-10-29) 144ms
+ ✓ studyDataSource.test.tsx > keeps an unapproved source preview read-only: it cannot be frozen 73ms
+ ✓ studyDataSource.test.tsx > separates a failed or malformed source list from a confirmed empty one, and retries 44ms
+ × studyDataSource.test.tsx > names a Vault file it could not read beside the sources it offers, and counts the JSON files that are not sources 5021ms
+ × studyDataSource.test.tsx > with no source offered, a file it could not read is an alert, not only "no clinical source" 5012ms
+ × studyDataSource.test.tsx > treats a list with an unreadable entry without its id as incomplete, never as a list 5008ms
+ × studyDataSource.test.tsx > treats a list with a negative count as incomplete, never as a list 5036ms
+ ✓ studyDataSource.test.tsx > refuses a preview with another source hash instead of offering to freeze incomplete or changed inputs 94ms
+ ✓ studyDataSource.test.tsx > refuses a preview with missing required table instead of offering to freeze incomplete or changed inputs 98ms
+ ✓ studyDataSource.test.tsx > refuses a preview with unrecorded source approval instead of offering to freeze incomplete or changed inputs 85ms
+ ✓ studyDataSource.test.tsx > paginates large aggregate tables and shows the clinical source format 224ms
+ ✓ studyDataSource.test.tsx > the CSR document with no study data offers the source, and builds on the data once frozen (no package run) 169ms
+ ✓ studyDataSource.test.tsx > keeps the study’s pivotal declarations with its data, in the editor (D5, 2026-10-29) 8ms
+ ✓ studyDataSource.test.tsx > Submission Center’s package run takes no clinical source: none is offered, and none is sent 27ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 11 passed (15)

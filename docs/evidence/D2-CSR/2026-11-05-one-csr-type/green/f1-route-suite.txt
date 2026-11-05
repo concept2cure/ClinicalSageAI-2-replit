@@ -1,0 +1,24 @@
+# Route suite (globalBiotechTemplateEditor.pglite.integration.test.ts) with this change
+## Run 1 (01:31, whole file)
+ Test Files  1 passed (1)
+      Tests  34 passed (34)
+
+## The CSR and listing cases (01:33)
+ ✓ globalBiotechTemplateEditor.pglite.integration.test.ts > the full CSR remains one editable saved report > is one New document entry, the E3 component 184ms
+ ✓ globalBiotechTemplateEditor.pglite.integration.test.ts > the full CSR remains one editable saved report > saves and reopens every canonical E3 heading from registry:ICH_CSR with its section policy 7165ms
+ ✓ globalBiotechTemplateEditor.pglite.integration.test.ts > the full CSR remains one editable saved report > saves and reopens every canonical E3 heading from component:clinical_study_report with its section policy 6766ms
+ ✓ globalBiotechTemplateEditor.pglite.integration.test.ts > the full CSR remains one editable saved report > pages the entire canonical CSR through the actual AnA reference tool 449ms
+ ✓ globalBiotechTemplateEditor.pglite.integration.test.ts > the full CSR remains one editable saved report > keeps source-only E3 rows manual in a regional IND report assembly 1372ms
+ ✓ globalBiotechTemplateEditor.pglite.integration.test.ts > every supported active medicinal, device and diagnostics filing and component reaches the one editor > lists exact registry and component identities with explicit regional scope, without writes 150ms
+
+## Runs 2-4 (01:38, 02:09, 02:13; host shared with three dev servers and browsers, load 3.5-7 on 4 cores)
+Every case passes except 'creates and reopens all registry filings and existing document components',
+which hit its own 180 s limit (it.timeout 180_000) after creating 242 of its 244 documents (190 listed
+registry filings + 54 components; counted from its audit log in run 4). On HEAD the same case fails at
+ICH_CSR after 54 s (red/f1-integration-suite-on-head.txt). This change gives it one document less to make.
+ Test Files  1 failed (1)
+      Tests  1 failed | 33 passed (34)
+   Duration  221.47s (transform 6.56s, setup 93ms, import 4.23s, tests 216.82s, environment 0ms)
+
+## Service suites with it (02:09)
+builtin-authoring-templates.test.ts and csr-template-identity.pglite.test.ts: all pass (301 of 302 tests in the 3-file run; the one failure is the timed-out case above)
