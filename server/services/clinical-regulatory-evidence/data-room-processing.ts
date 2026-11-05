@@ -162,9 +162,12 @@ export async function describeCapture(
 ): Promise<CaptureDescription> {
   let dossier: Record<string, unknown> | null = null;
   try {
-    const { classifyForFiling, resolveVaultView, resolveOrgVaultView } = await import('../vault/vault-filing.service.js');
-    const view = programId ? await resolveVaultView(programId, orgId) : await resolveOrgVaultView(orgId);
-    const c = classifyForFiling({ fileName: input.fileName, title: input.fileName, mimeType: input.mimeType, extractedText: input.text, view });
+    const { classifyForFiling, resolveVaultFilingContext, resolveOrgVaultView } = await import('../vault/vault-filing.service.js');
+    /* A project's region and application select its Module 1 heading, as at the Vault's ingest (F1, 2026-11-05).
+       A capture with no project has no region, and is proposed as before. */
+    const context = programId ? await resolveVaultFilingContext(programId, orgId) : { view: await resolveOrgVaultView(orgId) };
+    const view = context.view;
+    const c = classifyForFiling({ fileName: input.fileName, title: input.fileName, mimeType: input.mimeType, extractedText: input.text, ...context });
     dossier = {
       view, evidenceKind: c.evidenceKind, suggestedFolder: c.folderId, ctdSection: c.ctdSection,
       confidence: c.confidence, needsReview: c.needsReview, rationale: c.rationale,
