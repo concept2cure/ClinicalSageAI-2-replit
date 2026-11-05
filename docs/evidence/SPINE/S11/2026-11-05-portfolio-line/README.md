@@ -142,3 +142,28 @@ WALK-IND-301's Planning tasks were marked done, and one WALK-510K-401 task was m
 
 §8 item 1 (the objective card, S1's). AnA's program-manager questions (S4). A RACI per deliverable (§3.4) beyond the
 one owner.
+
+## §8 item 1, the objective and strategy at the head of the Plan step: what it needs (not built)
+
+Asked: show S1's objective at the top of the Plan step through the existing read, if that is all it takes; otherwise
+write what it needs and stop. It is not all it takes, for three reasons.
+
+1. **The read exists, but nothing on trunk renders it.** `useProjectObjective` (`surfaces/projectSettingsRequest.ts:156`,
+   `GET /api/charters/by-project/:ref/objectives`) is tested (`__tests__/projectObjectiveRead.test.tsx`). At
+   `cca60356` it has no caller. The About card and New project commits named for S1 (`d516b97167`, `76eae6309d`) are
+   not in this clone's history, which is shallow. Whatever they rendered is not at HEAD: no surface imports the hook.
+2. **Where it sits is an open design decision.** D3 §4.3 specifies `ProjectObjective`, a function in `ProjectHome.tsx`
+   (D3's file), under the project's name. It is "said once" and kept out of the About card. D3 §8 open item 1 leaves
+   its place to the design lead. THE_PROGRAM §8 item 1 puts it at the head of the Plan step. Adding it to the Plan
+   step as well would say it twice. Adding it only there contradicts D3's spec. That is the lead's call (or the
+   founder's, while the lead is out), not this session's.
+3. **"The strategy" has no read.** The charter's `regulatory_strategy` and `critical_success_factors`
+   (`shared/schema/project-charter.ts:118–119`) are reached by no project read. `server/routes/charters.ts` serves
+   `/by-project/:ref/objectives` only. Showing the strategy needs a `regulatory_strategy` section read beside the
+   objectives one (S1, in `charters.ts` and `charter-objectives.ts`), admitted the same way.
+
+Once the place is decided:
+- **Under the name (D3 §4.3):** D3 renders `ProjectObjective` with the hook as specified, and the Plan step adds nothing.
+- **At the head of the Plan step (THE_PROGRAM §8):** `ProjectObjective` is written once (D3's markup) and rendered
+  first in `ProjectPlan.tsx` (S11/D3), before "Due for you", and D3's place under the name is dropped. The strategy
+  line follows when (3) exists.
