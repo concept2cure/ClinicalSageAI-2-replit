@@ -149,6 +149,22 @@ it('follows a drafting build until it ends, then stops re-reading the list', asy
   } finally { vi.useRealTimers(); }
 });
 
+it('says why a failed build stopped, as the list states it, and refuses a list whose reason is not text', async () => {
+  // F10 of the 2026-11-02 demo walk: the build showed only "CSR build N · failed · NN%".
+  const why = 'Not complete: §9.8 still holds a data placeholder (“[…]”) where the study’s data is missing.';
+  builds = [{ ...build(44, 'failed'), progress: 15, failure: why }];
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  expect(await within(region).findByText(/CSR build 44 · failed · 15%/)).toBeTruthy();
+  const reason = await within(region).findByText(why);
+  expect(reason.getAttribute('role')).toBe('alert');
+  cleanup();
+  builds = [{ ...build(44, 'failed'), progress: 15, failure: { stack: 'Error: at Pool.query' } }];
+  await card();
+  expect((await screen.findByText(/The CSR builds of this run could not be listed/)).getAttribute('role')).toBe('alert');
+  expect(screen.queryByText(/Pool\.query/)).toBeNull();
+});
+
 const headingReads = (jobId: number) => apiRequest.mock.calls.filter(([m, p]) => m === 'GET' && p === `/api/csr/jobs/${jobId}/headings`).length;
 
 it('reviews the selected build section by section, with the ICH E3 labels, and approves against the content hash', async () => {

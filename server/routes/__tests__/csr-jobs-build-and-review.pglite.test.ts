@@ -204,6 +204,42 @@ describe('GET /api/csr/jobs?programId&runId — the builds bound to one retained
     expect(typeof res.body.jobs[0].updatedAt).toBe('string');
   });
 
+  // F10 of the 2026-11-02 demo walk: a failed build showed only "CSR build N · failed · NN%". The list now carries
+  // the recorded reason, in plain words read from the receipt's typed reason or code, never its stored message text.
+  describe('a failed build names why it stopped', () => {
+    const FAILED_RUN = '0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6bf0';
+    const bound = JSON.stringify({ studyInfo, evidenceSource: { programId: PROGRAM, runId: FAILED_RUN, studyId: 'LMN-201-201' } });
+    const failures: Array<[number, string, unknown]> = [
+      [21, 'failed', { reason: 'unresolved_placeholders', sections: ['2', '5.1', '9.8'], at: '2026-11-02T03:10:00Z',
+        message: 'CSR section(s) 2, 5.1, 9.8 still contain unresolved template placeholders (AI drafting fell back to template text); these sections are not submission-ready.' }],
+      // A receipt written before the 2026-11-03 redaction: its message is a raw driver error with a path.
+      [22, 'failed', { message: 'relation "csr_section_outputs" does not exist at Pool.query (/app/node_modules/pg/lib/client.js:526:17)', section: '11.4.1' }],
+      [23, 'failed', { code: 'CSR_EVIDENCE_CHANGED', message: 'CSR_EVIDENCE_CHANGED', section: '12.2.1' }],
+      [24, 'failed', { reason: 'missing_section_outputs', sections: ['10.1'] }],
+      [25, 'complete', null],
+    ];
+    beforeAll(async () => {
+      for (const [id, status, error] of failures) {
+        await pg.query(`INSERT INTO csr_build_jobs (id, organization_id, project_id, study_id, status, study_info_snapshot, requested_by, error, updated_at)
+          VALUES ($1, 7, 11, 'NCT05330182', $2, $3, 5, $4, now() - $5::interval)`,
+        [id, status, bound, error === null ? null : JSON.stringify(error), `${id} minutes`]);
+      }
+    });
+
+    it('returns each failed build’s reason in plain words, and none for a build that did not fail', async () => {
+      const res = await request(app).get(`/api/csr/jobs?programId=${PROGRAM}&runId=${FAILED_RUN}`);
+      expect(res.status).toBe(200);
+      const failure = new Map(res.body.jobs.map((j: { jobId: number; failure?: string | null }) => [j.jobId, j.failure ?? null]));
+      expect(failure.get(21)).toBe('Not complete: §2, §5.1 and §9.8 still hold a data placeholder (“[…]”) where the study’s data is missing.');
+      expect(failure.get(22)).toBe('The build stopped while drafting §11.4.1. The sections already saved are kept.');
+      expect(failure.get(23)).toMatch(/^The retained evidence changed while this CSR section was drafted\..*start a new CSR build\.$/);
+      expect(failure.get(24)).toBe('Not complete: §10.1 has no saved text. The sections already saved are kept.');
+      expect(failure.get(25)).toBeNull();
+      // Never the stored message text, a driver error or a path.
+      expect(JSON.stringify(res.body)).not.toMatch(/relation|node_modules|Pool\.query|AI drafting fell back/);
+    });
+  });
+
   it('refuses a missing or malformed run and a missing program, never an empty list', async () => {
     expect((await request(app).get(`/api/csr/jobs?programId=${PROGRAM}`)).body.code).toBe('CSR_RUN_REQUIRED');
     expect((await request(app).get(`/api/csr/jobs?programId=${PROGRAM}&runId=x`)).status).toBe(400);

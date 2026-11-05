@@ -21,7 +21,8 @@
  * A failed read is an alert, never an empty list. While a build is still
  * running (queued through cross_linking) the list is re-read every
  * BUILD_POLL_MS, so its status and progress are not left at the value first
- * read; the re-reads stop once every build has ended.
+ * read; the re-reads stop once every build has ended. A failed build says why
+ * it stopped (the list's `failure`, F10 of the 2026-11-02 demo walk).
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { apiCall, apiErrorText } from '../apiCall';
@@ -40,8 +41,9 @@ const ENDED = new Set(['complete', 'failed', 'cancelled']);
 const BUILD_STATUSES = new Set(['queued', 'loading_data', 'drafting', 'tabulating',
   'cross_linking', 'complete', 'failed', 'cancelled']);
 
-/** One row of GET /api/csr/jobs?programId&runId (csr-jobs.ts). */
-interface RunBuild { jobId: number; studyId: string; status: string; progress: number; updatedAt: string }
+/** One row of GET /api/csr/jobs?programId&runId (csr-jobs.ts). `failure` is why a failed build stopped, in plain
+ * words the server chose from its recorded receipt (csr-job-runner.ts csrBuildFailureText); null otherwise. */
+interface RunBuild { jobId: number; studyId: string; status: string; progress: number; updatedAt: string; failure?: string | null }
 
 const HEADING_STATES: ReadonlyArray<CsrBoardHeading['state']> = ['not_drafted', 'draft', 'in_review', 'approved'];
 
@@ -54,7 +56,8 @@ function isBuild(value: unknown): value is RunBuild {
     && typeof row.studyId === 'string' && !!row.studyId.trim()
     && typeof row.status === 'string' && BUILD_STATUSES.has(row.status)
     && Number.isInteger(row.progress) && Number(row.progress) >= 0 && Number(row.progress) <= 100
-    && typeof row.updatedAt === 'string' && Number.isFinite(Date.parse(row.updatedAt));
+    && typeof row.updatedAt === 'string' && Number.isFinite(Date.parse(row.updatedAt))
+    && (row.failure === undefined || row.failure === null || typeof row.failure === 'string');
 }
 
 /** One heading of GET /api/csr/jobs/:jobId/headings; a malformed row refuses the whole read. */
@@ -175,6 +178,7 @@ function BuildOnCard({ build, programId, onNav }: { build: RunBuild; programId: 
   const [importSource, setImportSource] = useState<ImportSource | null>(null);
   return <div style={{ display: 'grid', gap: 4 }}>
     <p role="status">CSR build {build.jobId} · {build.status} · {build.progress}% · last updated {new Date(build.updatedAt).toLocaleString()}</p>
+    {build.status === 'failed' && <p role="alert">{build.failure?.trim() || 'This build stopped before it finished. No reason was recorded.'}</p>}
     {error && <p role="alert">{error}{' '}
       <button type="button" className="btn ghost" onClick={reload}>Retry reading sections</button>
     </p>}
