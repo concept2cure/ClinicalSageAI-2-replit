@@ -103,7 +103,9 @@ function ClinicalTable({ table }: { table: Table }) {
   const start = page * 50;
   return <details>
     <summary>{table.title}</summary>
-    <div style={{ overflowX: 'auto' }}><table>
+    {/* The product's data table (R-3, rehearsal 2026-11-05: unstyled, the header read "Synthetic LMN201 armSynthetic
+        CONTROL armTotal", every column run together). */}
+    <div style={{ overflowX: 'auto' }}><table className="reg-tbl">
       <caption>{table.title}</caption>
       <thead><tr>{table.headers.map((header, index) => <th key={index} scope="col">{header}</th>)}</tr></thead>
       <tbody>{table.rows.slice(start, start + 50).map((row, index) => <tr key={start + index}>{row.map((cell, column) => <td key={column}>{cell}</td>)}</tr>)}</tbody>
