@@ -1,3 +1,14 @@
+-- AMENDED IN PLACE 2026-11-05 — agency-meetings retired into Communication (P-39 step 4; CLAUDE.md Rule 1).
+-- The Agency Meetings surface and store retired on 2026-10-30 (docs/evidence/D2-AGENCY-MEETINGS-RETIRED/
+-- 2026-10-30/); meetings are Communication's Meetings tab and `agency-meetings` is a deep-link alias to
+-- communication-center. This file still kept and upserted its catalog row, so the Apps catalog advertised an
+-- entitlement toggle for a screen nobody can open, and the same screen under two ids
+-- (moduleCatalogReconciliation.test.ts). Removed: the id from step 1's keep-list and step 2's upsert, so a fresh
+-- database never holds the row and step 1 deprecates the existing row on every replay. The row, its metadata
+-- (its recorded tier, 'standard', included), module_subscriptions FKs and every tenant record stay; no DELETE,
+-- no appended DROP. A live grant carries to communication-center (folded-module-successors.ts), packaged at the
+-- same tier. 20260823's packaging row is removed with it.
+-- Evidence: docs/evidence/F1/2026-11-05-unverified-repairs-run-natively/README.md.
 -- AMENDED IN PLACE 2026-10-30 — D2 fold F6: the device workstream folds into Projects (CLAUDE.md Rule 1).
 -- Decision P-61 item 5: the device workstream into Projects shows only figures
 -- computed from the project's own records, and the Client Review Room admits
@@ -353,7 +364,6 @@ UPDATE available_modules
    SET metadata = COALESCE(metadata::jsonb, '{}'::jsonb) || '{"deprecated": true}'::jsonb,
        updated_at = now()
  WHERE module_id NOT IN (
-   'agency-meetings',
    'audit-trail',
    'authoring-engine',
    'batch-draft',
@@ -465,7 +475,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('pyramid', 'Submission pyramid', 'Deterministic submission work breakdown — type selector (8 engine + 12 global types), dashboard (progress ring, phase strip, risk gauge, next-available tasks), phase→task drill-down with full-metadata detail sheet (risk, CTD bindings, guidance, deps, deliverables), analytics (resources/bottlenecks, document coverage, critical path), global pyramid browser. Task status is the only client-owned state. Contract ref (not yet a @shared file): services/regulatory/SubmissionPyramidEngine.ts · globalPyramids.ts · submission-type-bridge.ts', 'Submit & file', '/concept2cure/pyramid', 'workflow', 380, '{"tiers": [], "industries": []}'::json),
   ('submission-center', 'Submission Center', 'Framework-agnostic workspace map + error catalog already in shared. Package preview, eValidator pass, ESG send vs eSTAR export picker. See SUBMISSION_CENTER_API.md.', 'Submit & file', '/concept2cure/submission-center', 'rocket', 390, '{"tiers": [], "industries": []}'::json),
   ('submission-twin', 'Submission Twin', 'Living submission intelligence — readiness/fragility, narrative-drift alerts, simulated reviewer challenges, change-impact, keyed on a numeric package id (/api/submission-twin).', 'Submit & file', '/concept2cure/submission-twin', 'layers', 400, '{"tiers": [], "industries": []}'::json),
-  ('agency-meetings', 'Agency meetings', 'Agency interactions: Pre-IND/INTERACT/Type A-D/EOP2/pre-NDA-BLA, device Q-Sub, EMA Scientific Advice. Briefing book document + questions, minutes + commitments back to the dossier.', 'Review & govern', '/concept2cure/agency-meetings', 'users', 410, '{"tiers": [], "industries": []}'::json),
   ('dispatch-readiness', 'Submission Readiness', 'The proven, deterministic last gate before transmit (dispatch-gate.ts). Composes structural validation + unacknowledged Shadow Review criticals + external eValidator; a client cannot talk it down (every input server-computed). Flags the cleared-but-never-reviewed blind spot. Bound to GET /api/submissions/sequences/:seqId/dispatch-readiness.', 'Review & govern', '/concept2cure/dispatch-readiness', 'send', 440, '{"tiers": [], "industries": []}'::json),
   ('identity-console', 'Enterprise identity (SSO / SCIM)', 'SCIM provisioning tokens (issue-once/rotate/enable/revoke, §11.10(d) hash-only storage), SCIM IP allowlist, and the live SAML endpoint references for IdP configuration.', 'Review & govern', '/concept2cure/identity-console', 'lock', 450, '{"tiers": [], "industries": []}'::json),
   ('orchestration', 'Orchestration & readiness', 'Persisted workflow engine: workflowRuns (steps · blockers · diffs · pause/resume/retry), approvalCheckpoints (manual/role/quorum/auto), readiness rules + evaluations → overall score, blocker count, isReady gate before filing.', 'Review & govern', '/concept2cure/orchestration', 'workflow', 460, '{"tiers": [], "industries": []}'::json),

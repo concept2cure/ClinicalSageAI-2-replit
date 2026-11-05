@@ -69,7 +69,10 @@ const detailOf = (s: Sent) => String(s.settled()?.detail ?? '');
 beforeEach(() => {
   __resetSurfaceActionBus();
   apiRequest.mockReset();
-  apiRequest.mockImplementation(async (_m: string, url: string) => (String(url).startsWith(LEDGER) ? ok(ENTRIES) : ok(null)));
+  /* The Apps screen refuses its admin-controls switch while the catalog cannot be read (it fails closed), so the
+     catalog read answers with a catalog, here an empty one. */
+  apiRequest.mockImplementation(async (_m: string, url: string) => (String(url).startsWith(LEDGER) ? ok(ENTRIES)
+    : String(url).startsWith('/api/module-subscriptions/catalog') ? ok({ modules: [] }) : ok(null)));
 });
 afterEach(() => {
   cleanup();
