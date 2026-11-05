@@ -329,6 +329,50 @@ status or ownership; closing a package stays §3 step 5.
 - **F1 repair**, `059c0fa07`. The protocol view assembler copied every review comment onto every reviewer. With two
   reviewers each comment showed twice; with none, no comment showed. It now returns them once, as `reviewComments`.
 
+- **F1 repair** (2026-11-05), `adae369de`. Amendments showed a status derived from their dates: under review read as
+  submitted, and approved, rejected and implemented all read as "decided". The declared risk impact was never read,
+  so "no impact" showed as "not declared". The assembler now reads both, and returns `nextStatuses` from the
+  service's own transition table.
+- **Reach: amendment changes and status** (2026-11-05), `606ebfd03`,
+  `docs/evidence/DESIGN/R1/2026-11-05-protocol-amendments/`.
+  - "Add a change" while the amendment is a draft, and "Change status" offering only the moves the server allows,
+    through `POST …/amendments/:id/changes` and `PATCH …/amendments/:id/status`.
+  - Used in the running app: Draft → Submitted → Under review → Approved, each 201.
+- **F1 repair** (2026-11-05), `d3b5d7721`. Each CAPA action carried its deviation's id, so no action could be
+  addressed and two actions collided. Each now has its own id. Deviations also carry `closeBlockers`, the server
+  closure gate's own reasons. The register mappers moved to `pdev-view-registers.ts`, in the same folder (a split,
+  not an addition).
+- **Reach: CAPA and the signed deviation close** (2026-11-05), `0c8e8e45f`,
+  `docs/evidence/DESIGN/R1/2026-11-05-protocol-deviations/`.
+  - New on the deviation card: "Add a CAPA action", "Update status" on each action, and "Close deviation" through
+    the platform's one signing ceremony. While the gate would refuse, the close is held and the gate's reasons are
+    shown.
+  - Used in the running app: the close was signed (201). Its `electronic_signatures` row records meaning approval,
+    the reason and password authentication.
+  - The first walk caught a request-shape error: the shared ceremony takes `password` at the top level. The unit
+    test had encoded my assumption, and now asserts the ceremony's contract.
+- **F1 repair** (2026-11-05), `72e36cb06`. The view assembler:
+  - derived a milestone's status from its dates, so missed and cancelled read as pending;
+  - ran a second urgency rule beside the timeline engine;
+  - printed DATE columns as `Date.toString()`.
+
+  It now reads the recorded status, uses `milestoneBucket` (and the second rule is deleted), and prints
+  YYYY-MM-DD.
+- **Reach: milestone status** (2026-11-05), `6bbd1bafe`, `docs/evidence/DESIGN/R1/2026-11-05-protocol-milestones/`.
+  "Update status" on each milestone, with the engine's buckets and the recorded status. Used in the running app:
+  First patient in recorded as Met (201).
+- **Reach: the protocol's engine reads** (2026-11-05), `docs/evidence/DESIGN/R1/2026-11-05-protocol-engine-reads/`.
+  - **Risk register:** the `summarizeRiskRegister` line; the screen's own "extreme" threshold is deleted.
+  - **Deviation trends:** `trendDeviations` signals.
+  - **EU substantiality:** per amendment, the engine's own sentence, never "non-substantial".
+
+  All three were used in the running app. The trend read's shape was wrong in the first test, and the running app
+  caught it.
+- **Handed to D4** (2026-11-05). Informed consent exists twice: the `informed_consent` document type, and
+  `/api/protocol-consent`, whose 7 routes have no caller. Its element checklist, completeness and signed approval
+  are that document type's validation. Under Rule 4 they belong in the one editor, not a protocol panel. Whether
+  the two records converge is the D4 owner's or the founder's decision.
+
 **Finding shared with the design lead**
 
 In production `LAUNCH_SCOPE_ENFORCE` defaults to on (`server/services/entitlements/launch-scope.ts:42-45`). So
@@ -342,13 +386,60 @@ The D1 spec was written on top of it, and D1 owns those files.
 
 **Next**
 
-R1 reaches in S3's protocol records, in `ProtocolDev*` files only:
-1. consent forms (`/api/protocol-consent/forms…`);
-2. amendment status and changes;
-3. closing a deviation;
-4. the milestone timeline.
+S3's protocol records are reached:
+- review comments;
+- amendments: changes, status and substantiality;
+- deviations: CAPA and the signed close, and trends;
+- milestones;
+- the risk summary.
 
-Reaches that land in a design package's files are handed to its owner as route, caller and test.
+Informed consent is with D4.
+
+R1 now moves to the next spine package with the most served-but-uncalled routes, S5 (eCTD and filing), in files
+no session holds. Each reach is checked against `COORDINATION.md` first and logged here.
+
+#### F1 — Repairs, for spine step 2: the data room's lineage (session `session_01QoxbLcnW5jPvJSjjKQtvTA`)
+
+**Delivered** (2026-11-05)
+
+- **The founder-path walk is green again**, `e0e32d099`. LX-00 (`tests/lineage/founder-path-lineage.pglite.test.ts`)
+  had been red on trunk since 2026-11-01, failing 6 of its 15 cases. Two product changes of that day were right, and
+  the walk had not followed them:
+  - `3cacf2e15`: a Shadow Review covers only the leaves it read, so the walk's database needed
+    `20261025_shadow_review_run_coverage.sql`, and its seeded run needed to name its leaves;
+  - `a58029e99`: archiving needs a reason. The walk now states one, and checks the audit row records it.
+
+  It is 15 of 15 after the change. No baseline entry changed.
+- **A Data Room upload's bytes survive a deploy and are read from every API task**, `fbc2a1773` (LX-02, the bytes
+  half), `docs/evidence/SPINE/S2/2026-11-05-capture-bytes-durable/`.
+  - **Before.** Every upload lived only on the serving Fargate task's own disk (`STORAGE_PROVIDER=s3`, up to two
+    tasks, no volume). So the other task could not read it, and each deploy erased it.
+  - **Now.** The bytes go to the byte store first. The store and object are recorded in
+    `file_uploads.storage_provider` and `storage_object_id` (`migrations/20261105_file_uploads_durable_object.sql`),
+    and `loadUploadedFile` reads them, for its 30 callers.
+  - **Kept.** `storage_path` stays the tenancy key, and the working copy stays for the path-based tools.
+  - **Evidence.** Red without the fix and green with it. The walk's baseline went from 13 to 12, and its ceiling
+    from 15 to 12.
+
+**Found**
+
+- `ci:canvas-path` read green all four days the walk was red. Its founder-walk link is static by design; the walk's
+  result exists only in CI's Test job. That job can be red for days while every push lands.
+- `server/routes/__tests__/authoringSelectedSources.pglite.test.ts` fails 12 cases at trunk, before this change.
+- `ctd_onboarding_documents` (`server/routes/ctd-onboarding.ts`, read by `readLocalUploadBuffer`) keeps its bytes on
+  local disk, the same class of defect.
+- A path-based AnA tool (`server/services/ana/document-workspace.ts`) running on the other task still finds no working
+  copy of an upload. The id-based readers are durable now.
+- Bytes already erased in production cannot be backfilled. Rows written before this change read as before.
+
+**Next**
+
+The rest of LX-02, file list first:
+1. the route's writes in one transaction;
+2. the client keeps `sourceId` (`client/src/concept2cure/hooks/useChatUpload.ts`);
+3. a path-based tool restores its working copy from the byte store.
+
+Then LX-12: transmit keeps the bytes it sent, and names its sequence. These are the walk's two `transmit` entries.
 
 ## 4. How everyone works
 

@@ -65,6 +65,7 @@ import {
   type VaultFolder,
 } from '../fixtures/vault-data';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { describeReadFailure, readFailureFor, readRefusalOf } from '../../mdx/hooks/useFetchJson';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
 import { VaultSeals } from './VaultSeals';
@@ -226,27 +227,33 @@ const EMPTY_TREE: VaultFolder[] = [];
    It goes through `readShellProject` (v2/shellProject.ts), the ONE reader for
    window.C2C_PROJECT. This surface used to hand-roll its own copy of that
    read, which is exactly the per-surface drift that module exists to stop. */
-/* Why the vault read failed, said as what happened. A 401/403/404 is an answer
-   from the server — expired session, access refused, project not in this
-   organization — and a retry cannot change it; anything else (5xx, network,
-   no status at all) is a failure to answer, which a retry can. */
-function vaultReadFailure(status: number | undefined): { hint: string; retryable: boolean } {
-  switch (status) {
-    case 401:
-      return { hint: 'Your session has expired. Sign in again to load this project’s documents.', retryable: false };
-    case 403:
-      return {
-        hint: 'You don’t have access to this project’s documents. Ask an administrator in your organization to grant it.',
-        retryable: false,
-      };
-    case 404:
-      return { hint: 'This project wasn’t found in your organization. Open a project from Projects.', retryable: false };
-    default:
-      return {
-        hint: 'The document store didn’t respond, so nothing was read. Try again, or check the service is reachable.',
-        retryable: true,
-      };
+/* Why the vault read failed, said as what happened (S6 V1, 2026-11-05). A 401 is
+   an expired session and a 404 a project not in this organization. A 403 is one of
+   several answers, told apart by the server's code through the one read
+   classifier (`readFailureFor`): the plan does not include the Vault, the Vault is
+   not in this release, or the person's role. They used to share "You don't have
+   access … Ask an administrator", so a plan without the Vault read as a permission
+   the person lacked. None of these is changed by a retry; a failure to answer
+   (5xx, network, no status at all) is, and only it offers one. */
+type VaultReadFailure = { title: string; hint: string; retryable: boolean; refusal: boolean };
+function vaultReadFailure(status: number | undefined, code?: string | null): VaultReadFailure {
+  if (status === 401) {
+    return { title: 'Couldn\'t load the project vault', hint: 'Your session has expired. Sign in again to load this project’s documents.', retryable: false, refusal: true };
   }
+  const kind = readFailureFor(status, code);
+  if (kind === 'not-found') {
+    return { title: 'Couldn\'t load the project vault', hint: 'This project wasn’t found in your organization. Open a project from Projects.', retryable: false, refusal: true };
+  }
+  if (kind === 'failed') {
+    return {
+      title: 'Couldn\'t load the project vault',
+      hint: 'The document store didn’t respond, so nothing was read. Try again, or check the service is reachable.',
+      retryable: true,
+      refusal: false,
+    };
+  }
+  const words = describeReadFailure(kind, 'the project vault');
+  return { title: words.title, hint: words.message, retryable: words.retryable, refusal: !words.retryable };
 }
 
 function currentProjectId(): string | null {
@@ -1905,6 +1912,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath], isVaultSearchShape);
   const verifiedSearch = !searchState.loading && !searchState.error && searchState.data !== null;
   const searchUnavailable = searching && !libraryMode && !searchState.loading && !verifiedSearch;
+  /* A refused search is said as its refusal (S6 V1), not as an unverified result. */
+  const searchRefusal = searchUnavailable ? readRefusalOf(searchState) : null;
 
   const results = searching
     ? (verifiedSearch ? searchState.data?.results ?? [] : []).map(searchHitToDoc)
@@ -1962,6 +1971,11 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       return { summary: 'The document vault is still loading; nothing on screen is final yet.' };
     }
     if (vaultState.error) {
+      const failure = vaultReadFailure(vaultState.status, vaultState.code);
+      /* A refusal is told to AnA as the refusal it is, with no retry to offer. */
+      if (failure.refusal) {
+        return { summary: `The document vault was not read. ${failure.hint} The screen shows no documents for that reason, not because there are none.` };
+      }
       return {
         summary:
           'The document vault could not be read, so this screen is showing no documents because of a failure, not because there are none.',
@@ -2058,7 +2072,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         'Select a named document in the tree, so its detail is shown',
       ],
     };
-  }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, organizationArtifacts, orgFocused]);
+  }, [vaultState.loading, vaultState.error, vaultState.status, vaultState.code, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, organizationArtifacts, orgFocused]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -2751,8 +2765,10 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                "no documents match your search", which is a different and
                believable claim. */
             <div className="scaf-note" role="alert" data-tone="error">
-              The vault search could not be verified — this is not a result of zero matches.
-              {' '}{redactInternals(searchState.error ?? '', 'The search did not complete.')}
+              {searchRefusal
+                ? describeReadFailure(searchRefusal, 'the vault').message
+                : <>The vault search could not be verified — this is not a result of zero matches.
+                  {' '}{redactInternals(searchState.error ?? '', 'The search did not complete.')}</>}
             </div>
           )}
           {searching && !libraryMode && verifiedSearch && pendingSearchNote(searchState.data?.pendingCount) && (
@@ -3099,9 +3115,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           <EmptyState
             tone="error"
             icon={I.alertTriangle}
-            title="Couldn't load the project vault"
-            hint={vaultReadFailure(vaultState.status).hint}
-            retry={vaultReadFailure(vaultState.status).retryable ? () => setVaultEpoch((n) => n + 1) : undefined}
+            title={vaultReadFailure(vaultState.status, vaultState.code).title}
+            hint={vaultReadFailure(vaultState.status, vaultState.code).hint}
+            retry={vaultReadFailure(vaultState.status, vaultState.code).retryable ? () => setVaultEpoch((n) => n + 1) : undefined}
           />
           {/* "Add files" stays in the header when the read fails, as it always did:
               what it stages is listed here, since the views are not drawn. */}

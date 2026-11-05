@@ -16,6 +16,7 @@ import type { Request } from 'express';
 import { requestDb } from '../../server/db/requestDb';
 import { Hop, ORG_A, AUTHOR, PASSWORD, SHA256_X, HEX64, sha256, json, asPrincipal, type World } from './founder-path-lineage.world';
 import { requiredModule1Codes } from '../../server/services/ectd/assess-dispatch-readiness';
+import { coverCurrentLeaves } from '../../server/services/shadow-review/__tests__/review-covers-current-leaves';
 
 type Row = Record<string, unknown>;
 
@@ -232,6 +233,9 @@ async function freezeDispatchTransmit(w: World): Promise<request.Response> {
      VALUES ($1, $2, 'fda', 'fda_filing', 'complete', 'Seeded completed run: the reviewer calls a model', $3)`,
     [seqId, ORG_A, 3],
   );
+  // Since 3cacf2e15a a complete run counts only over the leaves it read, so the seeded run
+  // names the sequence's current leaves, as runShadowReview records for a run over them.
+  await coverCurrentLeaves(w.jdb.pool, seqId, ORG_A);
   const sign = async (intent: 'freeze' | 'dispatch' | 'transmit'): Promise<string> => {
     const s = await as(4)(request(w.app).post('/api/c2c/actions/sign')).send({
       target: `ectd-sequence:${seqId}`,
@@ -554,10 +558,17 @@ export async function hopRetention(w: World): Promise<void> {
     expect(audit).toHaveLength(1);
   });
   await hop.check('filed-project-archived', 'the same project can be archived, and its records still read from it', async (observe) => {
-    const archived = await as3(request(w.app).post(`/api/c2c/projects/${k.programId}/archive`)).send({});
+    // Since a58029e991 archiving requires the person's reason (21 CFR 11.10(e)), recorded verbatim.
+    const reason = 'The C2C-101 IND was transmitted; the program is closed and kept for its filed record.';
+    const archived = await as3(request(w.app).post(`/api/c2c/projects/${k.programId}/archive`)).send({ reason });
     const records = await as3(request(w.app).get(`/api/c2c/projects/${k.programId}/records`));
-    observe({ archived: archived.status, records: records.status });
-    expect(archived.status).toBe(200);
+    const audit = await q<{ reason: string | null }>(
+      `SELECT new_values->>'reason' AS reason FROM audit_logs WHERE action = 'c2c.project.archive' AND record_id = $1`,
+      [k.programId],
+    );
+    observe({ archived: archived.status, records: records.status, auditedReasons: audit.map((a) => a.reason) });
+    expect(archived.status, JSON.stringify(archived.body)).toBe(200);
+    expect(audit.map((a) => a.reason)).toEqual([reason]);
     expect(records.status).toBe(200);
     expect(records.body.records.submissions.rows).toHaveLength(1);
     expect(records.body.records.vaultDocuments.rows.length).toBeGreaterThan(0);

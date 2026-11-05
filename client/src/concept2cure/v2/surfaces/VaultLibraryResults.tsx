@@ -14,6 +14,7 @@ import React from 'react';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import { I } from '../icons';
 import { useLiveData, type ShapeGuard } from '../dataConnect';
+import { describeReadFailure, readRefusalOf } from '../../mdx/hooks/useFetchJson';
 import type { VaultDoc } from '../fixtures/vault-data';
 import { vaultIngestTypeLabel } from '@shared/constants/domain/vault-taxonomy';
 import '../styles/vault-picker.css';
@@ -183,10 +184,17 @@ export function VaultLibraryResults({
   if (!path) return null;
   if (st.loading) return <div className="vd-lib" data-testid="vault-library-results"><div className="scaf-note" role="status">Searching projects you can access…</div></div>;
   if (st.error || !st.data) {
+    /* A refusal (the plan does not include the Vault, not in this release, the
+       person's role) is said as itself through the one read classifier (S6 V1);
+       only a failure to answer is an unverified result. */
+    const refusal = st.error ? readRefusalOf(st) : null;
     return (
       <div className="vd-lib" data-testid="vault-library-results">
         <div className="vd-dr-err" role="alert">
-          {I.alertTriangle} The library search could not be verified. This is not a result of zero matches.
+          {I.alertTriangle}{' '}
+          {refusal
+            ? describeReadFailure(refusal, 'the library').message
+            : 'The library search could not be verified. This is not a result of zero matches.'}
         </div>
       </div>
     );

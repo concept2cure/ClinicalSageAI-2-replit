@@ -14,9 +14,9 @@
  *   project_id, recorded at write time. A row with no resolvable project is
  *   never promoted — we do not guess attribution after the fact.
  * - Every promotion passes the memory-acceptance gate (provenance, confidence,
- *   dedupe, contradiction). Rejections are final; contradictions are stored
- *   quarantined as status 'pending_review', which the recall paths exclude
- *   (they filter status = 'active') until a human clears them.
+ *   dedupe, contradiction). Rejections are final; every review-required verdict
+ *   is stored as 'pending_review', which active-memory recall excludes.
+ *   A lack of contradiction is not acceptance or human verification.
  * - Promoted entries are embedded, because semantic recall filters
  *   `embedding IS NOT NULL` — an unembedded entry is durable but invisible.
  *   Embedding failure stores the entry anyway and warns, never drops it.
@@ -58,8 +58,10 @@ export interface ConsolidationResult {
   skipped: number;
   /** Promotions the acceptance gate refused outright (junk, duplicates, sub-floor confidence). */
   rejectedByGate: number;
-  /** Promotions stored as status 'pending_review' because they contradict existing memory. */
+  /** Durable entries awaiting review, whether uncertain or contradicted. Not active recall. */
   quarantined: number;
+  /** Failed row attempts plus any batch-scan failure; not legitimate skips.
+   * A connection/COMMIT failure may leave persistence unconfirmed. */
   errors: number;
   startedAt: Date;
   completedAt: Date;
@@ -146,7 +148,7 @@ async function findStaleMemories(batchSize: number): Promise<StaleMemoryRow[]> {
   );
 }
 
-type ConsolidationOutcome = 'consolidated' | 'quarantined' | 'rejected' | 'skipped';
+type ConsolidationOutcome = 'consolidated' | 'quarantined' | 'rejected' | 'skipped' | 'failed';
 
 /**
  * How many existing project memories the acceptance gate compares a candidate
@@ -165,10 +167,12 @@ async function embedContentToLiteral(content: string, memoryId: number): Promise
   try {
     const { embedding } = await getEmbeddingService(pool).embed(content, 'text-embedding-3-small');
     return `[${embedding.join(',')}]`;
-  } catch (err) {
+  } catch {
+    // Provider errors can contain the supplied memory text; retain only the
+    // operational outcome, not the exception or its payload.
     logger.warn(
       `Embedding failed for memory ${memoryId} — storing without embedding (invisible to ` +
-        `semantic recall until re-embedded): ${err instanceof Error ? err.message : 'unknown error'}`
+        'semantic recall until re-embedded)'
     );
     return null;
   }
@@ -182,14 +186,22 @@ async function embedContentToLiteral(content: string, memoryId: number): Promise
  * accepted by the RLS policy from 0021 even when RLS_ENFORCE=on.
  */
 async function consolidateMemory(memory: StaleMemoryRow): Promise<ConsolidationOutcome> {
-  return withTenantConnection(
-    {
-      tenantId: memory.organization_id,
-      source: 'job',
-      caller: 'memory-consolidation-job:consolidateMemory',
-    },
-    client => consolidateMemoryInner(memory, client)
-  );
+  try {
+    return await withTenantConnection(
+      {
+        tenantId: memory.organization_id,
+        source: 'job',
+        caller: 'memory-consolidation-job:consolidateMemory',
+      },
+      client => consolidateMemoryInner(memory, client)
+    );
+  } catch {
+    // Scope acquisition/release fails outside the inner callback. Account for
+    // this row, then let later rows acquire their own tenant-scoped client.
+    // Do not infer rollback: a failed acknowledgement can follow a commit.
+    logger.error(`Memory ${memory.id} consolidation scope failed; persistence unconfirmed`);
+    return 'failed';
+  }
 }
 
 async function consolidateMemoryInner(
@@ -260,8 +272,8 @@ async function consolidateMemoryInner(
     // about world-claims in a live response), its structure is how many of the
     // six summarizer fields are populated, and evidence labels are taken from
     // the content itself. The resulting sub-0.7 confidence is stored as-is —
-    // the memory orchestrator already weights atoms by confidence, so a
-    // distilled conversation ranks honestly below a verified document extract.
+    // a distilled conversation does not become active merely because it has
+    // no detected contradiction. The gate's review requirement is preserved.
     const existing = await client.query<{ id: number; content: string; category: string }>(
       `SELECT id, content, category FROM project_memory_entries
         WHERE project_id = $1 AND organization_id = $2 AND status IN ('active', 'pending_review')
@@ -304,13 +316,19 @@ async function consolidateMemoryInner(
       return 'rejected';
     }
 
-    // Contradictions are stored QUARANTINED: status 'pending_review' keeps the
-    // entry out of every recall path (they filter status = 'active') until a
-    // human resolves which side is true. Silently promoting either side would
-    // put a known-disputed claim into AnA's prompts.
-    const contradicted = verdict.contradiction_check_result.has_contradiction;
-    const status = contradicted ? 'pending_review' : 'active';
-    if (contradicted) {
+    // The gate owns admission, not just contradiction detection. In particular,
+    // an unvalidated conversation can be pending_review without contradicting
+    // anything. Persist that disposition; do not silently turn it into active
+    // knowledge. A malformed disposition is a failed attempt, not a grant.
+    if (verdict.acceptance_status !== 'accepted' && verdict.acceptance_status !== 'pending_review') {
+      logger.error(`Memory ${memory.id} acceptance disposition unavailable; not stored`);
+      return 'failed';
+    }
+    const needsReview = verdict.acceptance_status === 'pending_review' ||
+      verdict.human_review_required !== false ||
+      verdict.contradiction_check_result.has_contradiction !== false;
+    const status = needsReview ? 'pending_review' : 'active';
+    if (needsReview) {
       logger.warn(
         `Memory ${memory.id} quarantined (pending_review): ${verdict.decision_reason}`
       );
@@ -354,10 +372,12 @@ async function consolidateMemoryInner(
       `Consolidated memory ${memory.id} into project ${memory.project_id} ` +
         `(status ${status}, confidence ${verdict.confidence_score.toFixed(2)})`
     );
-    return contradicted ? 'quarantined' : 'consolidated';
-  } catch (err) {
-    logger.error(`Failed to consolidate memory ${memory.id}:`, err);
-    return 'skipped';
+    return needsReview ? 'quarantined' : 'consolidated';
+  } catch {
+    // A parse, read or write failure is not a harmless skip. The existing
+    // transaction handles rollback; the result must retain the failed attempt.
+    logger.error(`Failed to consolidate memory ${memory.id}; persistence unconfirmed`);
+    return 'failed';
   }
 }
 
@@ -453,14 +473,16 @@ export async function runConsolidation(): Promise<ConsolidationResult> {
         case 'rejected':
           rejectedByGate++;
           break;
-        default:
-          // "skipped gracefully" and "errored" both land here; errors are
-          // logged inside consolidateMemoryInner.
+        case 'failed':
+          errors++;
+          break;
+        case 'skipped':
           skipped++;
+          break;
       }
     }
-  } catch (err) {
-    logger.error('Consolidation cycle failed:', err);
+  } catch {
+    logger.error('Consolidation cycle failed; batch outcome incomplete');
     errors++;
   }
 
@@ -504,8 +526,8 @@ export async function runScheduledConsolidation(): Promise<
       logger.info('Nightly consolidation is running on another process — skipping here');
     }
     return outcome;
-  } catch (err) {
-    logger.error('Scheduled consolidation run failed:', err);
+  } catch {
+    logger.error('Scheduled consolidation run failed');
     return { ran: false, reason: 'error' };
   }
 }

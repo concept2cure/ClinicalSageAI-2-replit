@@ -1,0 +1,105 @@
+{
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "baseline": "d83cc1f586e690bf7834ce9d8327c154105e6022",
+  "plan": "F1",
+  "launch_row": "D2 (repair evidence, not closure)",
+  "runtime": {
+    "node": "22.16.0",
+    "typescript": "5.8.3"
+  },
+  "executed_suite": "tests/services/ana/memory-consolidation-outcomes.test.cjs",
+  "results": {
+    "before": {
+      "passed": 37,
+      "failed": 15,
+      "skipped": 0
+    },
+    "after": {
+      "passed": 52,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "actual_gate_cases": 12,
+  "sources": {
+    "server/services/memory-consolidation-job.ts": {
+      "before": {
+        "bytes": 22295,
+        "git_blob": "d2088e3c220e56b81824614325e0ecd2a676191d",
+        "sha256": "f13e20f998b4fdae4810552a9cb59535fdc61d5b8366fdac05082d76aeafd852"
+      },
+      "after": {
+        "bytes": 22661,
+        "git_blob": "d98282570c5fffadc12176b525d6c9ea8cee9c11",
+        "sha256": "9d7c5bd7b1f54810eb33e960f96885b42c7c47a12067b75ec09e9d2ef4aa453a"
+      }
+    },
+    "tests/services/ana/memory-consolidation-outcomes.test.cjs": {
+      "before": {
+        "bytes": 17379,
+        "git_blob": "c4cfecc69719131c4db8344bfe36f218deef90cd",
+        "sha256": "f008e0da429f08093a37189d43783f24b29152b8b3b5d204a3d936cae3f7ab9d"
+      },
+      "after": {
+        "bytes": 24686,
+        "git_blob": "942409cf9ad2dfdfaed3ae0e31d7c8e1e934c1a2",
+        "sha256": "47c4fc15940669234c320c8eeb9d8fff92ec50889cf772d9a4d71387d34410f4"
+      }
+    },
+    "server/services/__tests__/memory-consolidation.pglite.integration.test.ts": {
+      "before": {
+        "bytes": 14046,
+        "git_blob": "539d47590eff2ed33ac841c4a5fbc717eb0d0557",
+        "sha256": "2d1ed8eca57eac0bcd389370b7d317c0c0dc8527d2279d6d588709484965587a"
+      },
+      "after": {
+        "bytes": 16369,
+        "git_blob": "d82a96c5e75333ea9f0cb31b0b25aaf6b876a9e3",
+        "sha256": "bd4e1be4110e0d6391b8ea9e56cc15f00387f4005725bb653b7cdc529011d8a8"
+      }
+    },
+    "tests/db/scheduler-jobs-under-rls.dbtest.ts": {
+      "before": {
+        "bytes": 24277,
+        "git_blob": "6e39bbbef1ab5be8a2a17678ce4ed18155fb4614",
+        "sha256": "7393bc3c8bc995d89dfd3da43cf73439d90805733b25c800f0de5b0a2538d474"
+      },
+      "after": {
+        "bytes": 24432,
+        "git_blob": "9da61756a1655ed557d3c9a9f1d10b10a0cfa982",
+        "sha256": "fe6348c3fca923e5e6162c61a701fce166a3b1f0aa7e9249178b541028329a17"
+      }
+    }
+  },
+  "unchanged_acceptance_gate": {
+    "bytes": 14625,
+    "git_blob": "bdc40014b2bf166e67543b59f847ce3bdd931d47",
+    "sha256": "c0f7ef63da6c09b6fa4689768f8b6d2d23949d66c04da72ab118d8a84619008e"
+  },
+  "raw_logs": {
+    "before.tap": {
+      "bytes": 27115,
+      "git_blob": "c295b886aff2217be9d520868a28e27ac3cc77e7",
+      "sha256": "28c6b09eb809d62f9e2ea6b4bfc94de107fcce3e6614a65ca1bb7fdfb0b03602"
+    },
+    "after-final.tap": {
+      "bytes": 11461,
+      "git_blob": "5031b0296e8fc91caf319e0311db6e8b86e723e1",
+      "sha256": "e999dca0286c91b0af01d64e31ef67a82469e15b1a448d78629e97331c4e60dd"
+    },
+    "syntax-check.txt": {
+      "bytes": 367,
+      "git_blob": "ab2afaea8aa3ebd896b8d53e4f7a192cb0c3c3cb",
+      "sha256": "74c3152266e2e97796473936a24e958d58256915a2c15b1f9a74e65adf54f0c1"
+    }
+  },
+  "scope": "Real job plus real gate for 12 cases; remaining cases control gate verdicts. Database, scopes, scheduler, embeddings and logs are controlled collaborators. No native SQL/RLS/provider/browser executed.",
+  "not_executed": [
+    "Full repository typecheck/build/pre-push",
+    "PGlite integration suite",
+    "Native PostgreSQL/RLS scheduler suite",
+    "Authenticated review and release UI",
+    "Hosted AnA acceptance"
+  ]
+}

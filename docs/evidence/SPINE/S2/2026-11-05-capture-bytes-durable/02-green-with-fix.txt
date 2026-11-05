@@ -1,0 +1,3 @@
+  green  source-recorded — cre_evidence_sources holds X under checksum = sha256(X), in org A
+  green  bytes-durable — the bytes behind stored_artifact_ref read back through the storage provider and hash to the checksum
+      Tests  15 passed (15)

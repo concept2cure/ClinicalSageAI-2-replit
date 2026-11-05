@@ -1,0 +1,33 @@
+case	baseline	repaired	name
+1	PASS	PASS	successful promotion retains tenant, stored content, embedding and commit-before-count
+2	PASS	PASS	empty scan is not a failure and opens no row scope
+3	PASS	PASS	empty content remains a legitimate skip
+4	PASS	PASS	missing profile remains a legitimate skip
+5	PASS	PASS	concurrently existing summary remains skipped, without another insert
+6	PASS	PASS	gate rejection remains distinct and prevents embedding and transaction writes
+7	PASS	PASS	contradiction remains a stored quarantine rather than a successful promotion
+8	PASS	PASS	existing noncontradiction low-confidence disposition is unchanged, not newly approved
+9	FAIL	PASS	best-effort embedding failure retains durable unembedded content without provider payload logging
+10	FAIL	PASS	comparison failure counts once as error and does not suppress the following tenant
+11	FAIL	PASS	gate failure counts once as error and does not suppress the following tenant
+12	FAIL	PASS	begin failure counts once as error and does not suppress the following tenant
+13	FAIL	PASS	lock failure counts once as error and does not suppress the following tenant
+14	FAIL	PASS	dedupe failure counts once as error and does not suppress the following tenant
+15	FAIL	PASS	insert failure counts once as error and does not suppress the following tenant
+16	FAIL	PASS	commit-before failure counts once as error and does not suppress the following tenant
+17	FAIL	PASS	scope-open failure counts once as error and does not suppress the following tenant
+18	FAIL	PASS	scope-close failure counts once as error and does not suppress the following tenant
+19	FAIL	PASS	malformed JSON is an error, not a skip, and later work continues
+20	FAIL	PASS	invalid generation date is an error, not a skip, and later work continues
+21	FAIL	PASS	rollback failure does not erase the original failed attempt or abort later rows
+22	FAIL	PASS	mixed batch has separate success, quarantine, rejection, skip and failure counts
+23	FAIL	PASS	multiple scope failures are counted per attempted row, not one abort for the batch
+24	FAIL	PASS	scanError is one batch failure with no invented row outcomes or raw details
+25	FAIL	PASS	scanScopeError is one batch failure with no invented row outcomes or raw details
+26	PASS	PASS	a scheduled lease held elsewhere remains a no-work result
+27	FAIL	PASS	scheduled execution returns its actual partial-failure counts to the caller
+28	FAIL	PASS	scheduler lease error remains explicitly unavailable and omits raw exception payloads
+29	FAIL	PASS	a non-Error thrown payload is counted without logging its contents
+30	FAIL	PASS	failed save is retryable and does not fabricate a completed marker
+31	FAIL	PASS	lost COMMIT acknowledgement is unconfirmed; retry still respects the existing duplicate guard
+32	PASS	PASS	cron initialization remains single-registration with the existing cadence
