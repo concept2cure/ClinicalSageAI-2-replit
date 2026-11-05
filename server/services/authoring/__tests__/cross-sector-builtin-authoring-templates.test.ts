@@ -15,9 +15,9 @@ let all: BuiltinAuthoringTemplate[];
 beforeAll(async () => { all = await getBuiltinAuthoringTemplates(); });
 
 describe('existing internal planning outlines reach the same builtin catalog', () => {
-  it('preserves all 446 prior builtin objects and their recorded snapshots', () => {
+  it('preserves all 445 prior builtin objects and their recorded snapshots', () => {
     const prior = all.filter(template => !IDS.some(id => template.entryId === `registry:${id}`));
-    expect(prior).toHaveLength(446);
+    expect(prior).toHaveLength(445);
     // Captured from the unchanged projection in the retained meaningful RED.
     // Re-recorded 2026-10-25 (D2 increment 3, the 3a review): ten snapshots changed and no
     // other, each a reader of the one ICH M2–M5 record whose purposes and flags were
@@ -42,9 +42,13 @@ describe('existing internal planning outlines reach the same builtin catalog', (
     // policy), 42bbb941e2 (+33 US biotech identities; 4 changed) and a2a91a87db (CSR slice 4's E3
     // summaries, 7 changed; bisected, its parent 8cf9bd399c still has the 42bbb941e2 hash). 392 -> 446. Was dcebcbec4173a7f89df51626cb22a7613c118bb4216543f9f8fb6b9965aacf3c.
     // Per-object delta: docs/evidence/D2-CSR/2026-10-30-csr-trunk-red/builtin-snapshot-delta.txt.
+    // Re-recorded 2026-11-05 (F1 trunk sweep): 8626ff43ae removed registry:ICH_CSR from the picker, the
+    // same ICH E3 document as component:clinical_study_report (its ID still resolves), and changed no
+    // other object: with that one filter undone the 446 objects hash to the previous value,
+    // 0ddcbd2fd6cd3aee7faddacede59654e4108bf58ddea535f927541c69ed7971a. 446 -> 445.
     expect(createHash('sha256').update(stableStringify(
       prior.map(template => ({ id: template.id, snapshot: builtinTemplateSnapshot(template) })),
-    )).digest('hex')).toBe('0ddcbd2fd6cd3aee7faddacede59654e4108bf58ddea535f927541c69ed7971a');
+    )).digest('hex')).toBe('9c5514a3bfb7e2077ca85b75f78f9f4d70655b122136a88b3f08d7815281b3df');
   });
 
   it.each(IDS)('reaches %s with its exact source, no filing placement and no authored facts', async id => {
