@@ -1,6 +1,17 @@
 -- =============================================================================
 -- 20261023 — Review routes: a route header, and route columns on unified_tasks
 -- =============================================================================
+-- AMENDED IN PLACE 2026-11-05 (CLAUDE.md RULE 1; session
+-- session_01QoxbLcnW5jPvJSjjKQtvTA, F1): review_route_writer is granted CREATE
+-- on schema public beside USAGE. `ALTER FUNCTION … OWNER TO review_route_writer`
+-- requires the new owner to hold CREATE on the function's schema, and on
+-- PostgreSQL 15+ PUBLIC no longer has it, so on any applier that is not a true
+-- superuser (the RDS master is not) every deploy halted at this file: 432 of 462
+-- applied, "permission denied for schema public", reproduced on a local
+-- PostgreSQL 16 whose applier owns the database. The three sibling owner roles
+-- (ana_record_purger, ana_run_events_purger, artifact_record_purger) are already
+-- granted it for the same reason. Additive, idempotent; it registers as drift
+-- in c2c_migration_journal.
 -- Launch row D2, slice RR1a of docs/design/REVIEW_ROUTING_2026-10-23.md (§2.2,
 -- §2.3). Evidence docs/evidence/D2-REVIEW-ROUTING/2026-10-29-RR1a/.
 --
@@ -441,8 +452,10 @@ BEGIN
       END;
     END IF;
   END IF;
-  -- What the doors read and write, and nothing more.
-  GRANT USAGE ON SCHEMA public TO review_route_writer;
+  -- What the doors read and write, and nothing more. CREATE on public is the
+  -- ALTER … OWNER TO rule for a non-superuser applier (amended 2026-11-05, see
+  -- the header); nothing runs as this role except the fixed bodies below.
+  GRANT USAGE, CREATE ON SCHEMA public TO review_route_writer;
   GRANT SELECT ON public.review_routes TO review_route_writer;
   IF to_regclass('public.unified_tasks') IS NOT NULL THEN
     GRANT SELECT, UPDATE ON public.unified_tasks TO review_route_writer;

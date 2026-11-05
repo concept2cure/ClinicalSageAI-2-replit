@@ -142,8 +142,9 @@ describe('the route writer is a role, never a setting (P-59)', () => {
     ['GUARD_READS_A_SETTING', 'GUARD_NOT_ON_THE_ROLE']],
     ['a role that can log in', (s: string) => s.replace('CREATE ROLE review_route_writer\n      NOLOGIN', 'CREATE ROLE review_route_writer\n      LOGIN'),
       ['ROLE_NOT_NOLOGIN_NOINHERIT']],
-    ['the role granted to the runtime role', (s: string) => s.replace('GRANT USAGE ON SCHEMA public TO review_route_writer;',
-      'GRANT USAGE ON SCHEMA public TO review_route_writer;\n  GRANT review_route_writer TO app_service;'), ['ROLE_GRANTED_TO_RUNTIME']],
+    // Anchored on the schema grant (USAGE and, since 2026-11-05, CREATE: the ALTER … OWNER TO rule).
+    ['the role granted to the runtime role', (s: string) => s.replace('GRANT USAGE, CREATE ON SCHEMA public TO review_route_writer;',
+      'GRANT USAGE, CREATE ON SCHEMA public TO review_route_writer;\n  GRANT review_route_writer TO app_service;'), ['ROLE_GRANTED_TO_RUNTIME']],
     ['a door with no pinned search_path', (s: string) => s.replace(
       /(FUNCTION public\.review_route_cancel_member\([^)]*\)[\s\S]*?SECURITY DEFINER\n)SET search_path = pg_catalog, public\n/, '$1'),
     ['SEARCH_PATH_UNPINNED:review_route_cancel_member']],
