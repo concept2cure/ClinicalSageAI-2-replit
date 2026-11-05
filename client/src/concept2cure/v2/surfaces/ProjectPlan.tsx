@@ -67,6 +67,12 @@ function targetWords(iso: string | null | undefined): string {
   return d && Number.isFinite(d.getTime()) ? `Target submission ${d.toLocaleDateString(undefined, { ...DATE, timeZone: 'UTC' })}` : 'No target submission date recorded';
 }
 
+/** Under the work breakdown's workstreams, for a device plan: its own workstreams (above) carry no work-breakdown key,
+ *  so they are not counted in these, and the plan says so rather than guessing a mapping. */
+function deviceWorkstreamNote(devicePlan: unknown): string | undefined {
+  return devicePlan ? 'The device workstreams above are listed by their own items, which have no work-breakdown key, so they are not counted in these workstreams.' : undefined;
+}
+
 /**
  * The Plan step's shared reads: the plan's tasks (once, for assignments, owners and what is due for the person) and
  * the project's pyramid (once, for the content plan's join and the Program plan). A deliverable's line says who it is
@@ -167,7 +173,7 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
       )}
       {/* The filing's work breakdown with this project's progress (S11): beside what the filing needs, the work
           that produces it, phase by phase, with its critical path. */}
-      {prog && <ProjectProgramPlan programId={pid} read={pyramid} projectId={projectId} owners={assignments.byPyramidTask}
+      {prog && <ProjectProgramPlan programId={pid} read={pyramid} projectId={projectId} workstreamNote={deviceWorkstreamNote(devicePlan)} owners={assignments.byPyramidTask}
         ownersUnread={Boolean(assignments.error)} onAssigned={() => setEpoch(value => value + 1)}
         onNav={onNav} onAsk={onAsk} />}
       {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}

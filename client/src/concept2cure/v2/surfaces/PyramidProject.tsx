@@ -24,7 +24,8 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { useLiveData, type DataState } from '../dataConnect';
 import { setEditorTarget } from '../editorTarget';
 import {
-  pyProgress, pyStanding, PY_STANDING_WORDS, type PyPyramid, type PySchedule, type PyScheduledTask, type PyStanding, type PyTask,
+  pyProgress, pyStanding, pyWorkStatus, PY_STANDING_WORDS, PY_WORK_STATUS_WORDS,
+  type PyPhase, type PyPyramid, type PyReviewClock, type PySchedule, type PyScheduledTask, type PyStanding, type PyTask,
 } from '../fixtures/pyramid-data';
 import { PyTaskSheet, PyWorkBreakdown, statusRefusal, workDocumentAsk } from './Pyramid';
 import { AssignAction, AssignmentLine, buildPyramidTaskBody, type PlanAssignment } from './PlanAssign';
@@ -44,6 +45,8 @@ export interface ProjectPyramidRead {
   asOf?: string;
   schedule?: PySchedule | null;
   scheduleRefusal?: string;
+  /** The agency's clock after the filing, or null where none is held. */
+  reviewClock?: PyReviewClock | null;
 }
 export const projectPyramidPath = (programId: string) => `/api/v1/pyramids/by-project/${encodeURIComponent(programId)}`;
 
@@ -172,8 +175,10 @@ export function ProducedBy({ deliverableId, read, owners }: {
   );
 }
 
-export function ProjectProgramPlan({ programId, read: shared, projectId = null, owners, ownersUnread = false, onAssigned, targetKey, onNav, onAsk }: {
+export function ProjectProgramPlan({ programId, read: shared, projectId = null, owners, ownersUnread = false, onAssigned, targetKey, workstreamNote, onNav, onAsk }: {
   programId: string;
+  /** Said under the workstreams: a device plan's workstreams have no work-breakdown key (ProjectPlan.tsx). */
+  workstreamNote?: string;
   /** The Plan step's read of the project's pyramid (useProjectPyramid), so it is read once; read here when absent. */
   read?: DataState<ProjectPyramidRead>;
   /** projects.id behind the program (useProjectTeam), the key the owner's task is scoped by; null until verified. */
@@ -213,7 +218,7 @@ export function ProjectProgramPlan({ programId, read: shared, projectId = null, 
   return (
     <ProgramPlanBody data={data} pyramid={data.pyramid} tasks={tasks} refusal={refusal} setStatus={setStatus}
       programId={programId} projectId={projectId} owners={owners} ownersUnread={ownersUnread} onAssigned={onAssigned}
-      onNav={onNav} onAsk={onAsk} />
+      workstreamNote={workstreamNote} onNav={onNav} onAsk={onAsk} />
   );
 }
 
@@ -269,8 +274,8 @@ function ProjectTaskSheet({ pyr, task, tasks, slot, standing, ind, setStatus, on
   );
 }
 
-function ProgramPlanBody({ data, pyramid, tasks, refusal, setStatus, onNav, onAsk, ...plan }: PlanOwners & {
-  data: ProjectPyramidRead; pyramid: PyPyramid; tasks: PyTask[]; refusal: string;
+function ProgramPlanBody({ data, pyramid, tasks, refusal, setStatus, onNav, onAsk, workstreamNote, ...plan }: PlanOwners & {
+  data: ProjectPyramidRead; pyramid: PyPyramid; tasks: PyTask[]; refusal: string; workstreamNote?: string;
   setStatus: (id: string, status: string) => Promise<void>; onNav: (id: string) => void; onAsk: (text: string) => void;
 }) {
   const [openTask, setOpenTask] = useState<string | null>(null);
@@ -294,13 +299,183 @@ function ProgramPlanBody({ data, pyramid, tasks, refusal, setStatus, onNav, onAs
       <PlanScheduleLines data={data} late={late} owned={owned} total={progress.total} ownersUnread={plan.ownersUnread} />
       {data.pendingStore && <p className="pj-desc pj-fact-none" role="note">Recorded progress is not available in this deployment, so every task reads as not started.</p>}
       {refusal && <p className="pj-desc" role="alert">{refusal}</p>}
-      <details className="pj-more">
-        <summary>The work breakdown: {pyr.phases.length} phases, {progress.total} tasks</summary>
-        <PyWorkBreakdown pyr={pyr} focusPhase={null} tasks={tasks} onTask={setOpenTask} onStatus={(id, s) => void setStatus(id, s)}
-          rowPlan={(t) => <RowPlan slot={slots[t.id]} owner={plan.owners?.get(t.id)} standing={standingOf(t)} />} />
-      </details>
+      {data.schedule && <ScheduleLine schedule={data.schedule} pyr={pyr} asOf={data.asOf ?? ''} clock={data.reviewClock ?? null} />}
+      <Workstreams pyr={pyr} slots={data.schedule ? slots : null} asOf={data.asOf ?? ''} owners={plan.owners} note={workstreamNote}
+        breakdown={(phaseId) => <PyWorkBreakdown pyr={pyr} focusPhase={phaseId} tasks={tasks} onTask={setOpenTask}
+          onStatus={(id, s) => void setStatus(id, s)}
+          rowPlan={(t) => <RowPlan slot={slots[t.id]} owner={plan.owners?.get(t.id)} standing={standingOf(t)} />} />} />
       {open && <ProjectTaskSheet pyr={pyr} task={open} tasks={tasks} slot={slots[open.id]} standing={standingOf(open)}
         ind={data.type === 'IND'} setStatus={setStatus} onOpenTask={setOpenTask} onNav={onNav} onAsk={onAsk} plan={plan} />}
     </section>
   );
+}
+
+// ── §8 item 3: workstreams ──────────────────────────────────────────────────
+
+/** One workstream per phase of the work breakdown (THE_PROGRAM §8 item 3): its name, lead, tasks done, the date it
+ *  completes and a status word, opening to its tasks. The lead is the owner of the task that completes it: leads are
+ *  not otherwise recorded (§6), and the list says so. Colour only on Blocked and At risk, always with the word. */
+export function Workstreams({ pyr, slots, asOf, owners, note, breakdown }: {
+  pyr: PyPyramid; slots: Record<string, PyScheduledTask> | null; asOf: string; owners?: Map<string, PlanAssignment>;
+  note?: string; breakdown: (phaseId: string) => React.ReactNode;
+}) {
+  return (
+    <div className="py-ws" data-testid="pj-workstreams">
+      <h3 className="py-ws-h">Workstreams</h3>
+      {[...pyr.phases].sort((a, b) => a.order - b.order).map((ph) => (
+        <WorkstreamRow key={ph.id} phase={ph} tasks={pyr.tasks.filter((t) => t.phase === ph.id)} slots={slots} asOf={asOf}
+          owners={owners} breakdown={breakdown} />
+      ))}
+      <p className="pj-desc pj-fact-none">A workstream&apos;s lead is the owner of the task that completes it. Open one to see its tasks.</p>
+      {note && <p className="pj-desc pj-fact-none" data-testid="pj-workstreams-note">{note}</p>}
+    </div>
+  );
+}
+
+function WorkstreamRow({ phase, tasks, slots, asOf, owners, breakdown }: {
+  phase: PyPhase; tasks: PyTask[]; slots: Record<string, PyScheduledTask> | null; asOf: string;
+  owners?: Map<string, PlanAssignment>; breakdown: (phaseId: string) => React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const status = pyWorkStatus(tasks, slots, asOf);
+  const done = tasks.filter((t) => t.status === 'done').length;
+  const gate = phase.gate ? tasks.find((t) => t.id === phase.gate) : undefined;
+  const lead = gate ? owners?.get(gate.id)?.assigneeName : undefined;
+  const ends = gate && slots?.[gate.id] ? slots[gate.id].due : null;
+  return (
+    <details className="py-ws-row" data-status={status} onToggle={(e) => setOpen(e.currentTarget.open)}>
+      <summary>
+        <span className="py-ws-name">{phase.name}</span>
+        <span className="py-ws-lead">{lead ? `Lead ${lead}` : 'No lead'}</span>
+        <span className="py-ws-n">{done} of {tasks.length} tasks done</span>
+        <span className="py-ws-date">{status === 'complete' ? 'Completed' : ends ? `Completes ${dayWords(ends)}` : 'No date'}</span>
+        <span className="py-ws-status">{PY_WORK_STATUS_WORDS[status]}</span>
+      </summary>
+      {open && breakdown(phase.id)}
+    </details>
+  );
+}
+
+// ── §8 item 4: the schedule line ────────────────────────────────────────────
+
+const dayMs = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
+
+/** The critical path's spans: the merged date ranges of the critical tasks before the submission. */
+function criticalSpans(pyr: PyPyramid, schedule: PySchedule): [string, string][] {
+  const spans = pyr.tasks.filter((t) => t.critical && schedule.tasks[t.id] && !schedule.tasks[t.id].afterSubmission)
+    .map((t) => [schedule.tasks[t.id].start, schedule.tasks[t.id].due] as [string, string]).sort((a, b) => a[0].localeCompare(b[0]));
+  const out: [string, string][] = [];
+  for (const [a, b] of spans) {
+    const last = out[out.length - 1];
+    if (last && a <= last[1]) last[1] = b > last[1] ? b : last[1];
+    else out.push([a, b]);
+  }
+  return out;
+}
+
+interface LineMark { key: string; at: string; label: string; kind: 'milestone' | 'submission' | 'clock' | 'decision' }
+
+function scheduleMarks(pyr: PyPyramid, schedule: PySchedule, clock: PyReviewClock | null): LineMark[] {
+  const marks: LineMark[] = pyr.phases.flatMap((ph) => {
+    const slot = ph.gate ? schedule.tasks[ph.gate] : undefined;
+    return slot && !slot.afterSubmission && ph.gate !== schedule.anchorTaskId
+      ? [{ key: ph.id, at: slot.due, label: `${ph.name} complete`, kind: 'milestone' as const }] : [];
+  });
+  marks.push({ key: 'submission', at: schedule.target, label: 'Submission (target date)', kind: 'submission' });
+  for (const m of clock?.milestones ?? []) marks.push({ key: `clock-${m.day}`, at: m.date, label: `${m.label} (day ${m.day})`, kind: 'clock' });
+  if (clock) marks.push({ key: 'decision', at: clock.ends, label: `${clock.label} (day ${clock.days})`, kind: 'decision' });
+  return marks;
+}
+
+/**
+ * The schedule (THE_PROGRAM §8 item 4): one calm line from the start of the work through the submission and the
+ * agency's clock. Each phase's completion is a dot, today a mark, the critical path the darker line; a dot's date is
+ * on hover and focus. Every date is the engine's or the agency clock's; the caption says them in words.
+ */
+export function ScheduleLine({ schedule, pyr, asOf, clock }: { schedule: PySchedule; pyr: PyPyramid; asOf: string; clock: PyReviewClock | null }) {
+  const lo = Math.min(dayMs(schedule.start), asOf ? dayMs(asOf) : Infinity);
+  const hi = Math.max(dayMs(clock?.ends ?? schedule.target), asOf ? dayMs(asOf) : -Infinity);
+  const pct = (iso: string) => `${(((dayMs(iso) - lo) / Math.max(1, hi - lo)) * 100).toFixed(2)}%`;
+  const width = (a: string, b: string) => `${(((dayMs(b) - dayMs(a)) / Math.max(1, hi - lo)) * 100).toFixed(2)}%`;
+  const marks = scheduleMarks(pyr, schedule, clock);
+  return (
+    <figure className="py-line" data-testid="pj-schedule-line">
+      <div className="py-line-track" role="img"
+        aria-label={`Schedule from ${dayWords(schedule.start)} to submission on ${dayWords(schedule.target)}${clock ? ` and ${clock.label.toLowerCase()} by ${dayWords(clock.ends)}` : ''}; today is ${dayWords(asOf)}.`}>
+        <span className="py-line-base" style={{ left: pct(schedule.start), width: width(schedule.start, schedule.target) }} />
+        {criticalSpans(pyr, schedule).map(([a, b]) => <span key={a} className="py-line-crit" style={{ left: pct(a), width: width(a, b) }} />)}
+        {clock && <span className="py-line-clock" style={{ left: pct(schedule.target), width: width(schedule.target, clock.ends) }} />}
+        {marks.map((m) => (
+          <span key={m.key} className="py-line-dot" data-kind={m.kind} style={{ left: pct(m.at) }} tabIndex={0}
+            title={`${m.label} · ${dayWords(m.at)}`} aria-label={`${m.label}, ${dayWords(m.at)}`} />
+        ))}
+        {asOf && <span className="py-line-today" style={{ left: pct(asOf) }} aria-hidden="true"><span>Today</span></span>}
+      </div>
+      <figcaption className="pj-desc pj-fact-none">
+        Starts {dayWords(schedule.start)} · submission {dayWords(schedule.target)}
+        {clock ? ` · ${clock.label} by ${dayWords(clock.ends)} (${clock.authority}, ${clock.basis}).` : '. The engines hold no review clock for this filing.'}
+        {' '}The darker line is the critical path; each dot is a phase completing.
+        {clock?.clockStops ? ' The agency’s days exclude clock stops, so the decision can come later.' : ''}
+      </figcaption>
+    </figure>
+  );
+}
+
+// ── THE_PROGRAM §5, §9 step 6: the portfolio line on Projects ───────────────
+
+/** One project's plan in a few figures (the engine's scheduleSummary), as GET /api/v1/pyramids/by-project?refs= sends
+ *  it, or why there is none. */
+export interface PortfolioLineData {
+  unavailable?: boolean;
+  unreadable?: boolean;
+  type?: string | null;
+  target?: string | null;
+  summary?: {
+    total: number; done: number; blocked: number; overdue: number; lateToStart: number;
+    next: { phaseId: string; phaseName: string; taskId: string; due: string | null } | null;
+    status: 'complete' | 'blocked' | 'at-risk' | 'on-track' | 'unscheduled';
+  };
+}
+interface PortfolioRead { asOf: string; lines: Record<string, PortfolioLineData> }
+const isPortfolioRead = (v: unknown): v is PortfolioRead => !!v && typeof v === 'object' && typeof (v as PortfolioRead).lines === 'object';
+
+/** The batch's limit (pyramid.routes.ts). Projects reads 50 cards a page. */
+export const PORTFOLIO_BATCH = 100;
+
+/** The portfolio lines for a page of projects: one read for the page, not one per card. */
+export function usePortfolioLines(programIds: string[]): { lines: Record<string, PortfolioLineData>; error: boolean } {
+  const ids = programIds.slice(0, PORTFOLIO_BATCH);
+  const key = ids.join(',');
+  const read = useLiveData<PortfolioRead>(key ? `/api/v1/pyramids/by-project?refs=${encodeURIComponent(key)}` : null, [key], isPortfolioRead);
+  return { lines: read.data?.lines ?? {}, error: Boolean(read.error) };
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** The line's words. Nothing for a filing with no work breakdown or a project not admitted: the card says its filing. */
+export function portfolioWords(line: PortfolioLineData | undefined): { text: string; tone?: 'warn' | 'err' } | null {
+  if (!line || line.unavailable || !line.summary) return line?.unreadable ? { text: 'The plan could not be read.' } : null;
+  const s = line.summary;
+  const next = s.next?.due ? ` · ${s.next.phaseName} by ${dayWords(s.next.due)}` : '';
+  switch (s.status) {
+    case 'complete': return { text: 'Plan complete' };
+    case 'blocked': return { text: `${plural(s.blocked, 'task blocked', 'tasks blocked')}${next}`, tone: 'err' };
+    case 'unscheduled': return { text: 'Not scheduled: no target date' };
+    case 'at-risk': return {
+      text: s.overdue > 0 ? `${plural(s.overdue, 'task', 'tasks')} past due${next}` : `${plural(s.lateToStart, 'task', 'tasks')} should have started${next}`,
+      tone: 'warn',
+    };
+    default: return { text: `On schedule${next}` };
+  }
+}
+
+/** The card's (or list row's) one quiet line about the plan. Colour only where it is behind, beside the words. */
+export function PortfolioLine({ line, className = 'pj-card-plan' }: { line: PortfolioLineData | undefined; className?: string }) {
+  const words = portfolioWords(line);
+  return words ? <div className={className} data-tone={words.tone} data-testid="portfolio-line">{words.text}</div> : null;
+}
+
+/** Said once above the cards when the page's plan lines could not be read: never a page of cards that only looks calm. */
+export function PortfolioLinesNote({ error }: { error: boolean }) {
+  return error ? <p className="pf-sel-m" role="status" data-testid="portfolio-lines-error">Where each project’s plan stands could not be read.</p> : null;
 }

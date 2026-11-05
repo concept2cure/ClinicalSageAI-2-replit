@@ -37,6 +37,8 @@ export interface PyPhase {
   name: string;
   order: number;
   weeks?: number;
+  /** The task that completes the phase (the engine's phaseGate): the workstream's milestone; its owner leads it. */
+  gate?: string;
 }
 
 export interface PyRisk {
@@ -258,3 +260,31 @@ export const PY_STANDING_WORDS: Record<Exclude<PyStanding, null>, string> = {
   overdue: 'past due',
   'late-to-start': 'should have started',
 };
+
+/** The agency's clock after the filing (GET /api/v1/pyramids/by-project/:ref `reviewClock`): the published goal for the
+ *  pathway (server/services/market-specs/regulatory-timelines.ts) or the IND's 30-day review, from the target date. */
+export interface PyReviewClock {
+  authority: string;
+  basis: string;
+  days: number;
+  ends: string;
+  label: string;
+  caveat: string;
+  clockStops: boolean;
+  milestones: { label: string; day: number; date: string }[];
+}
+
+/** A workstream's status word: the engine's ScheduleStatus vocabulary (services/regulatory/SubmissionPyramidSchedule.ts). */
+export type PyWorkStatus = 'complete' | 'blocked' | 'at-risk' | 'on-track' | 'unscheduled';
+export const PY_WORK_STATUS_WORDS: Record<PyWorkStatus, string> = {
+  complete: 'Done', blocked: 'Blocked', 'at-risk': 'At risk', 'on-track': 'On track', unscheduled: 'Not scheduled',
+};
+
+/** One workstream's status, by the engine's rule (scheduleSummary): done when every task is; blocked when one is;
+ *  not scheduled without dates; at risk when an unfinished task is past its dates; else on track. */
+export function pyWorkStatus(tasks: PyTask[], slots: Record<string, PyScheduledTask> | null, asOf: string): PyWorkStatus {
+  if (tasks.length > 0 && tasks.every(t => t.status === 'done')) return 'complete';
+  if (tasks.some(t => t.status === 'blocked')) return 'blocked';
+  if (!slots) return 'unscheduled';
+  return tasks.some(t => pyStanding(t.status, slots[t.id], asOf) !== null) ? 'at-risk' : 'on-track';
+}
