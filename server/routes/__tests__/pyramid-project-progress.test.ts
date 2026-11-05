@@ -16,9 +16,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
-const { query, insert, update, admission, programRow, projectRef, programSql } = vi.hoisted(() => ({
+const { query, insert, update, admission, programRow, projectRef, programSql, programParams } = vi.hoisted(() => ({
   query: vi.fn(), insert: vi.fn(), update: vi.fn(),
-  admission: vi.fn(), programRow: vi.fn(), projectRef: vi.fn(), programSql: [] as string[],
+  admission: vi.fn(), programRow: vi.fn(), projectRef: vi.fn(), programSql: [] as string[], programParams: [] as unknown[][],
 }));
 vi.mock('../../utils/feature-persistence.js', () => ({
   createFeatureStore: () => ({ query, insert, update, getById: vi.fn(), remove: vi.fn() }),
@@ -29,7 +29,7 @@ vi.mock('../../middleware/tenantLifecycleGuard.js', () => ({
 }));
 vi.mock('../../db/requestDb', () => ({
   requestDb: () => ({}),
-  requestPgClient: () => ({ query: async (sql: string) => { programSql.push(sql); return { rows: programRow() }; } }),
+  requestPgClient: () => ({ query: async (sql: string, params: unknown[]) => { programSql.push(sql); programParams.push(params); return { rows: programRow() }; } }),
 }));
 vi.mock('../../services/c2c/program-project-anchor.js', () => ({ strictProjectRowForRef: (...a: unknown[]) => projectRef(...a) }));
 vi.mock('../c2c/project-access', async (original) => {
@@ -54,6 +54,7 @@ let indTask: string;
 beforeEach(async () => {
   for (const f of [query, insert, update, admission, programRow, projectRef]) f.mockReset();
   programSql.length = 0;
+  programParams.length = 0;
   query.mockResolvedValue([]);
   admission.mockResolvedValue(undefined);
   projectRef.mockResolvedValue(51);
@@ -149,5 +150,55 @@ describe('PATCH /pyramids/by-project/:ref/progress/:taskId', () => {
     programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'ca_nds' }]);
     expect((await request(app()).patch(`${PATH}/progress/${indTask}`).send({ status: 'done' })).status).toBe(409);
     expect(insert).not.toHaveBeenCalled();
+  });
+});
+
+// S11 step 3 (THE_PROGRAM §3.3, §7.2): each task's due date, back-scheduled by the engine from the project's target
+// submission date. The target is the project's own recorded field, read inside the same admitted, tenant-scoped query.
+describe("GET /pyramids/by-project/:ref — the project's schedule", () => {
+  it('back-schedules every task from the recorded target date', async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: '2027-06-04' }]);
+    const res = await request(app()).get(PATH);
+    expect(res.status).toBe(200);
+    const { data } = res.body;
+    expect(data.target).toBe('2027-06-04');
+    expect(data.asOf).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(data.schedule.anchorTaskId).toBe('phase8.complete');
+    expect(data.schedule.tasks['phase8.complete'].due).toBe('2027-06-04');
+    expect(Object.keys(data.schedule.tasks)).toHaveLength(data.pyramid.tasks.length);
+    // A predecessor is due before its successor starts.
+    const submit = data.pyramid.tasks.find((t: { id: string }) => t.id === 'phase8.submit');
+    for (const d of submit.deps) expect(data.schedule.tasks[d].due < data.schedule.tasks['phase8.submit'].start).toBe(true);
+  });
+
+  it('reads the target as a calendar date, in the tenant-scoped project query', async () => {
+    await request(app()).get(PATH);
+    expect(programSql.join('\n')).toMatch(/to_char\(rp\.target_submission_date, 'YYYY-MM-DD'\) AS target/);
+    expect(programSql.join('\n')).toMatch(/p\.organization_id = \$2/);
+    expect(programParams[0]).toEqual([51, 7]);
+    // The project is resolved in the session's organisation, never one the request names.
+    expect(projectRef.mock.calls[0][1]).toMatchObject({ orgId: 7, ref: PROGRAM });
+  });
+
+  it('gives no dates when no target date is recorded, rather than assuming one', async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: null }]);
+    const { body } = await request(app()).get(PATH);
+    expect(body.data).toMatchObject({ target: null, schedule: null });
+  });
+
+  it('gives no schedule to a person not admitted to the project', async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: '2027-06-04' }]);
+    admission.mockRejectedValue(new ProjectAdmissionRefusal(403, 'PROJECT_ACCESS_DENIED', 'You do not have access to this project.'));
+    const res = await request(app()).get(PATH);
+    expect(res.status).toBe(403);
+    expect(res.body.data).toBeUndefined();
+    expect(programSql).toHaveLength(0);
+  });
+
+  it("gives no schedule for another organisation's project: it is not found in this one", async () => {
+    projectRef.mockResolvedValue(null);
+    const res = await request(app()).get(PATH);
+    expect(res.status).toBe(404);
+    expect(programSql).toHaveLength(0);
   });
 });
