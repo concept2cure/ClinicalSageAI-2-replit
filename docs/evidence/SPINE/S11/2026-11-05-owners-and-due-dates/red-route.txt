@@ -1,0 +1,18 @@
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > gives the project's own pyramid, from its recorded filing, with its own statuses 30ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > reads the recorded filing where intake keeps it: metadata.submissionTypeId, else program_type 9ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > says a filing has no work breakdown rather than giving it another type 8ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > says the progress store is not provisioned when its table is absent, even through the ORM's wrapper 19ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > reads nothing for a project the person is not admitted to 11ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > 404s an unknown project 6ms
+ ✓ pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > records the status under the project's key, admitted for write 6ms
+ ✓ pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > updates the project's existing row, and 'todo' clears the task 7ms
+ ✓ pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > refuses a task that is not in the project pyramid, and an unknown status, writing nothing 8ms
+ ✓ pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > writes nothing when the person may not change the project 5ms
+ ✓ pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > refuses a filing with no pyramid 5ms
+ × pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > back-schedules every task from the recorded target date 10ms
+ × pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > reads the target as a calendar date, in the tenant-scoped project query 6ms
+ × pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no dates when no target date is recorded, rather than assuming one 19ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no schedule to a person not admitted to the project 9ms
+ ✓ pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no schedule for another organisation's project: it is not found in this one 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 13 passed (16)
