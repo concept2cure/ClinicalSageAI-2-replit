@@ -440,6 +440,12 @@ informed consent was.
     too: an adopt after the server's working copy was deleted succeeds from the durable copy, and an upload written
     the old way answers 410.
 
+- **The walk follows the sent package where it is kept**, `131aa7d0c`,
+  `docs/evidence/SPINE/S2/2026-11-05-walk-follows-sent-package/`. LX-12's bytes half was fixed on 2026-10-29
+  (`3cab286e12`, the kept copy in the byte store, named by `metadata.sentPackage`). The walk still read the staging
+  file the send removes by design, so it stayed red. The check now follows the recorded key. It fails on a missing
+  package and passes as written. The baseline went from 12 to 11.
+
 **Found**
 
 - `ci:canvas-path` read green all four days the walk was red. Its founder-walk link is static by design; the walk's
@@ -447,8 +453,10 @@ informed consent was.
 - `server/routes/__tests__/authoringSelectedSources.pglite.test.ts` fails 12 cases at trunk, before this change.
 - `ctd_onboarding_documents` (`server/routes/ctd-onboarding.ts`, read by `readLocalUploadBuffer`) keeps its bytes on
   local disk, the same class of defect.
-- A path-based AnA tool (`server/services/ana/document-workspace.ts`) running on the other task still finds no working
-  copy of an upload. The id-based readers are durable now.
+- ~~A path-based AnA tool on the other task finds no working copy of an upload.~~ Corrected 2026-11-05: no prompt,
+  context builder or tool result gives the model an upload's path (searched `server/services/ana`,
+  `server/routes/ana-ri`, the context builders). The only stream read of an upload goes through `loadUploadedFile`,
+  which is durable now. The tools' refusal already steers uploads to the file-id tools. Nothing to repair.
 - Bytes already erased in production cannot be backfilled. Rows written before this change read as before.
 - **LX-06 is half-built under another name.** `draft_authoring_document` takes `sourceReferences` (Vault-document
   receipts). They are verified inside the save transaction and recorded in `provenance.projectSourceReferences`
@@ -468,12 +476,14 @@ informed consent was.
 
 Two items listed here earlier were already done, as found on 2026-11-05: a failed Data Room record refuses with
 503, and the client keeps `sourceId`. What remains, file list first:
-1. a path-based AnA tool restores its working copy from the byte store (16 call sites in `AnaToolExecutor.ts`; the
-   id-based tools are durable now);
-2. LX-06's span half, with S4: verified receipts recorded as sentence-level spans, and the walk following the
+1. LX-06's span half, with S4: verified receipts recorded as sentence-level spans, and the walk following the
    Data Room → Vault → receipt → document path;
-3. LX-12, with the submission service's holder (RIM): transmit keeps the bytes it sent and names its sequence (the
-   walk's two `transmit` entries).
+2. LX-12's other half, with RIM, which holds the submission service: a transmittal names its sequence (no
+   `sequence_id` on `submission_transmittals`);
+3. LX-10's seal half, for the lane working on Authoring's filing path. `633822c083` records each filed section's
+   revision. Nothing on the Vault side yet names the seal: neither the Vault row nor its chained audit row carries
+   `frozen_documents.content_hash`. That gap is the walk's `file-to-vault/filing-names-sealed-version` and
+   `walk-back/vault-leaf-to-seal`.
 
 #### F1 — Repairs: the unverified repair commits, run natively (session `session_01QoxbLb8fV1RgQvaa8JHYku`)
 
@@ -516,10 +526,40 @@ Two items listed here earlier were already done, as found on 2026-11-05: a faile
 - The whole v2 client and shared suite (1,253 files) does not finish in 50 minutes with `maxWorkers: 1`. Running it
   in parallel shards beside the pre-push typecheck runs the container out of memory.
 
+**Delivered, second round** (2026-11-05)
+
+- **The whole v2 client and shared suite, run natively**: 1,253 files, 14,017 tests, in three shards. 185 tests failed
+  in 31 files. All 31 are resolved on trunk:
+  - **8 files**, `721aaf8c`: they mocked a signed-in user with no id (the same cause found above);
+  - **16 files**, `968759fd`: they pinned a live read as `('GET', path)`, but it now carries its abort signal. Four
+    were also fixed by the parallel sweep (`011Dpx…`) and taken from it at the merge;
+  - **3 files**, `8c178e79`: each was out of date with a deliberate change. The template read's signal; the claims
+    line derived from the current read; approved-only CSR import (`940098aa`);
+  - **2 files**, `24dff50f`: the Apps switch fails closed without a catalog; De Novo is its own pathway;
+  - **1 file**, `authoringConversationScopeLive`, fixed by the parallel sweep (`565377a1`);
+  - **1 file**, `moduleCatalogReconciliation`, a product defect, `5c2a80f2`. The catalog still seeded
+    `agency-meetings` after its surface retired (P-39 step 4), so it advertised a toggle for a screen nobody can
+    open, and listed Communication twice. The creating migrations were amended in place (RULE 1). The row and its
+    subscriptions are kept and deprecated, and a live grant carries to `communication-center`
+    (`folded-module-successors.ts`). This is proven on the PGlite replay (`folded-module-grant-continuity`).
+- **`ci:launch-scope` was red in CI** ("expected 8 launch apps, parsed 9"). Biostatistics joined by P-77, so the pin
+  reads nine, `5c2a80f2`.
+- **Reach and copy.** The Vault's "Ask AnA" row is a named group (`94bc12da`), red before and green after. The launch
+  screens' registry notes say what each screen does, not "partially built" or "see ui_kits/" (`7a1d1a45`); every
+  launch surface is now held to that.
+- **Found to be already done**, with no change needed: AnA's `create_labeling_document` project admission (it is
+  pinned by `device-tools-admit-program.test.ts`); `advise_device_readiness` carrying `filedCopyDiverged`; the empty
+  state's grey box.
+
+**Found, second round**
+
+- The CSR workflow board (not a launch surface) offers a preview on a draft row. The server refuses it as "approvals
+  changed", because the row is approved-only since `940098aa`. Handed to the CSR lane in COORDINATION.md.
+- Two sessions swept the same suites at once. The hold in COORDINATION.md stopped it for the last six files.
+
 **Next**
 
-1. The whole v2 client and shared suite, sharded and run apart from any push, with each red file named and fixed or
-   handed to its holder.
+1. The server suites, run natively the same way. This run covered the v2 client and shared suites only.
 2. The export repair's open acceptance (`docs/evidence/D2-DOCUMENTS/2026-11-04-render-snapshot/`): real Word and
    PDF output, HTTP refusal mapping and a browser walk.
 

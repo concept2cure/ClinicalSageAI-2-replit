@@ -2,7 +2,7 @@
  * The runbook's "Live: what to show" steps, as each person sees them (walk.cjs runs them).
  */
 const {
-  BASE, PEOPLE, DATASETS, MANIFEST, APPROVE, state, shot, toTop, step, retrying, openCsr, checkCsrCatalog, openVersions, openWorkingCopy,
+  BASE, PEOPLE, DATASETS, MANIFEST, APPROVE, state, shot, toTop, step, retrying, openCsr, checkCsrCatalog, openVersions,
 } = require('./walk-common.cjs');
 
 // ---------------------------------------------------------------- live: what to show (runbook, "Live: what to show")
@@ -44,14 +44,14 @@ async function livePreparedCsr() {
   return { text, screenshots: shots };
 }
 
-/** Live 4: the working copy, its saved sections (template text without a model key). */
+/** Live 4: the CSR's imported sections (F6: in the CSR itself; template text without a model key). */
 async function liveWorkingCopy() {
   const page = PEOPLE.author.page;
-  if (!state.data.workingCopyTitle) return { outcome: 'blocked', blockedBy: 'no working copy' };
-  await retrying(page, () => openWorkingCopy(page));
+  if (!state.data.importedIntoCsr) return { outcome: 'blocked', blockedBy: 'nothing imported into the CSR' };
+  await retrying(page, () => openCsr(page));
   const sections = await page.locator('main').getByText(/^(1|8) · /).count().catch(() => 0);
   return { outcome: 'blocked', blockedBy: 'its text is the build’s template text: real drafting needs a model key', sectionsShown: sections,
-    screenshot: await shot(page, '36-live-working-copy.png') };
+    screenshot: await shot(page, '36-live-csr-sections.png') };
 }
 
 /** Live 5: the reviewer's CSR scientific review, as far as it goes. */
@@ -84,8 +84,8 @@ async function liveReview() {
 /** Live 6: E-sign as the approver, and Place into filing, as far as each goes. */
 async function liveSignAndPlace() {
   const page = PEOPLE.approver.page;
-  if (!state.data.workingCopyTitle) return { outcome: 'blocked', blockedBy: 'no working copy' };
-  await retrying(page, () => openWorkingCopy(page));
+  if (!state.data.importedIntoCsr) return { outcome: 'blocked', blockedBy: 'nothing imported into the CSR' };
+  await retrying(page, () => openCsr(page));
   const said = {};
   for (const [name, file] of [['E-sign', '40-live-esign.png'], ['Place into filing', '41-live-place-into-filing.png']]) {
     const button = page.getByRole('button', { name, exact: true }).first();

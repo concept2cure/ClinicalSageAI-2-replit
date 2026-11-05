@@ -299,11 +299,17 @@ export async function hopTransmit(w: World): Promise<void> {
     observe(callers.length);
     expect(callers.length).toBeGreaterThan(0);
   });
+  /* LX-12's bytes half (3cab286e12, 2026-10-29): the guard keeps the exact package in the byte store
+     before the wire and stamps where on the transmittal, metadata.sentPackage. bundle_path names the
+     staging file the send still removes by design, so the walk follows the recorded key instead, read
+     from a fresh provider instance, and compares it with what left on the wire. */
   await hop.check('bytes-retained', 'the bytes the agency received can be read back by the transmittal and hash to its bundle_sha256', async (observe) => {
-    const kept = typeof tx.bundle_path === 'string' && fs.existsSync(tx.bundle_path);
-    observe(kept);
-    expect(kept).toBe(true);
-    expect(sha256(fs.readFileSync(String(tx.bundle_path)))).toBe(tx.bundle_sha256);
+    const sent = (json(tx.metadata) as { sentPackage?: { provider?: string; storageVersionId?: string } } | null)?.sentPackage;
+    const storage = await import('../../server/services/storage/index');
+    storage.resetStorageProvider();
+    const got = sent?.storageVersionId ? await storage.getStorageProviderFor(sent.provider ?? null).get(sent.storageVersionId, ORG_A) : null;
+    observe(got !== null && sha256(got.bytes) === tx.bundle_sha256 && sha256(got.bytes) === sha256(w.h.wire[0]));
+    expect(got && sha256(got.bytes)).toBe(sha256(w.h.wire[0]));
   });
   await hop.check('transmittal-names-project', 'the transmittal row names its project, taken from its submission', async (observe) => {
     observe(tx.program_id === k.programId);
@@ -562,10 +568,8 @@ export async function hopRetention(w: World): Promise<void> {
     const reason = 'The C2C-101 IND was transmitted; the program is closed and kept for its filed record.';
     const archived = await as3(request(w.app).post(`/api/c2c/projects/${k.programId}/archive`)).send({ reason });
     const records = await as3(request(w.app).get(`/api/c2c/projects/${k.programId}/records`));
-    const audit = await q<{ reason: string | null }>(
-      `SELECT new_values->>'reason' AS reason FROM audit_logs WHERE action = 'c2c.project.archive' AND record_id = $1`,
-      [k.programId],
-    );
+    const audit = await q<{ reason: string | null }>(`SELECT new_values->>'reason' AS reason FROM audit_logs
+      WHERE action = 'c2c.project.archive' AND record_id = $1`, [k.programId]);
     observe({ archived: archived.status, records: records.status, auditedReasons: audit.map((a) => a.reason) });
     expect(archived.status, JSON.stringify(archived.body)).toBe(200);
     expect(audit.map((a) => a.reason)).toEqual([reason]);

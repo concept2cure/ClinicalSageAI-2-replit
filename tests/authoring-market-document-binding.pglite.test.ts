@@ -6,9 +6,14 @@
  * editing copy bound to that document, so:
  *   - POST /api/authoring/docs with `c2c_document_id` naming the market
  *     document binds the new document to it;
- *   - naming a document that is not a market document of this project is
- *     refused 409, and nothing is created (never created unbound: the person
- *     asked for that market's copy);
+ *   - naming the project's home filing binds to the home filing: since
+ *     31a5453861 (2026-11-01) a document is bound to a filing only when its
+ *     create names it, the home filing or a market's document;
+ *   - naming a document that is not this project's home filing or one of its
+ *     market documents is refused 409 FILING_NOT_BOUND, and nothing is created
+ *     (never created unbound: the person asked for that filing's copy);
+ *   - a filing's copy named together with a template is refused 400
+ *     FILING_COPY_TEMPLATE, and nothing is created;
  *   - a section of a common code in the market's copy is refused 409
  *     WRONG_FILING_SCOPE, and nothing is created; a Module 1 section is
  *     created.
@@ -86,7 +91,8 @@ beforeAll(async () => {
     [NDA, OTHER],
   );
   for (const [id, project, docType, agency, scope] of [
-    ['doc_home', NDA, 'nda', 'fda', 'home'], ['doc_ema', NDA, 'maa', 'ema', 'market'], ['doc_other_ema', OTHER, 'maa', 'ema', 'market'],
+    ['doc_home', NDA, 'nda', 'fda', 'home'], ['doc_ema', NDA, 'maa', 'ema', 'market'],
+    ['doc_other_home', OTHER, 'nda', 'fda', 'home'], ['doc_other_ema', OTHER, 'maa', 'ema', 'market'],
   ]) {
     await jdb.pool.query(
       `INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title, status, readiness, filing_scope)
@@ -118,14 +124,22 @@ describe("authoring a market's own part of the filing (F22b)", () => {
     expect((await q(`SELECT c2c_document_id FROM authoring_documents WHERE id = $1`, [emaDocId]))[0].c2c_document_id).toBe('doc_ema');
   }, T);
 
-  it.each([['the home filing', 'doc_home'], ["another project's market", 'doc_other_ema'], ['an unknown document', 'doc_nope']])(
+  it.each([["another project's home filing", 'doc_other_home'], ["another project's market", 'doc_other_ema'], ['an unknown document', 'doc_nope']])(
     'naming %s is refused, and nothing is created', async (_what, id) => {
       const before = (await q(`SELECT count(*)::int AS n FROM authoring_documents`))[0].n;
       const res = await as(request(app).post('/api/authoring/docs')).send({ title: 'X', module: 'M1', client_program_id: NDA, c2c_document_id: id });
       expect(res.status).toBe(409);
-      expect(res.body.code).toBe('MARKET_DOCUMENT_NOT_BOUND');
+      expect(res.body.code).toBe('FILING_NOT_BOUND');
       expect((await q(`SELECT count(*)::int AS n FROM authoring_documents`))[0].n).toBe(before);
     }, T);
+
+  it("binds a new document to the project's own home filing when it is named", async () => {
+    const res = await as(request(app).post('/api/authoring/docs')).send({
+      title: 'US Module 1', module: 'M1', client_program_id: NDA, c2c_document_id: 'doc_home',
+    });
+    expect(res.status).toBe(201);
+    expect((await q(`SELECT c2c_document_id FROM authoring_documents WHERE id = $1`, [res.body.document.id]))[0].c2c_document_id).toBe('doc_home');
+  }, T);
 
   it("a market's copy starts without a template, and nothing is created", async () => {
     const before = (await q(`SELECT count(*)::int AS n FROM authoring_documents`))[0].n;
@@ -133,7 +147,7 @@ describe("authoring a market's own part of the filing (F22b)", () => {
       title: 'EU Module 1', module: 'M1', client_program_id: NDA, c2c_document_id: 'doc_ema', template_id: 'org-template-1',
     });
     expect(res.status).toBe(400);
-    expect(res.body.code).toBe('MARKET_DOCUMENT_TEMPLATE');
+    expect(res.body.code).toBe('FILING_COPY_TEMPLATE');
     expect((await q(`SELECT count(*)::int AS n FROM authoring_documents`))[0].n).toBe(before);
   }, T);
 
