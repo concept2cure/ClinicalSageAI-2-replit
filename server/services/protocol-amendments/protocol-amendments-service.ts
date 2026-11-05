@@ -45,6 +45,12 @@ const TRANSITIONS: Record<AmendmentStatus, AmendmentStatus[]> = {
   implemented: [],
 };
 
+/** The statuses an amendment may move to next: the same table
+ *  setAmendmentStatusTx enforces, so a screen offers only what the server takes. */
+export function nextAmendmentStatuses(status: string): AmendmentStatus[] {
+  return [...(TRANSITIONS[status as AmendmentStatus] ?? [])];
+}
+
 // ─── Amendments ──────────────────────────────────────────────────────────────
 
 export interface AmendmentInput {
