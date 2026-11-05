@@ -156,10 +156,9 @@ checked in the running app:**
   (`r1r3-r3-preview-table-spaced.png`).
 - **The narrative QC list** (95 subjects, about 9,000 px) is collapsed under "Narrative QC list · 95 subjects", as
   beside §14.3.3 in the editor (`qc-collapsed-narratives-block-settled.png`).
-- In this container's renderers (headless shell and full Chromium, no GPU), part of the very tall editor page below the
-  narratives paints as a solid magenta block. No element or pseudo-element computes that colour, and the content
-  under it is present and readable in the DOM. It is a raster limit of this environment, **not verified on a real
-  browser**. Check it once on the demo machine.
+- The solid magenta block below the narratives in these screenshots is not the product. `walk-common.cjs` `shot()` masks
+  `ul[aria-label="Narrative QC"]` and the saved §12.3.2/§14.3.3 text, to keep CDISC participant detail out of committed
+  screenshots, and Playwright paints a masked region magenta. An earlier note here took it for a renderer limit; that was wrong.
 One run stopped on the Vault step (`b1-fail-3.png`): the Library tab was showing, not Uploads. It did not recur on the
 next run, and every later step read the recorded stage first.
 
