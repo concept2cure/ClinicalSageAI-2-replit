@@ -98,7 +98,10 @@ const DELIVERABLE_TASK_WORDS = {
 };
 
 export interface PlanAssignment { taskId: string; assigneeName: string | null; dueDate: string | null; status: string }
-interface PlanTaskRow { taskId?: unknown; sourceEntityType?: unknown; sourceEntityId?: unknown; assigneeName?: unknown; dueDate?: unknown; status?: unknown; createdAt?: unknown }
+interface PlanTaskRow {
+  taskId?: unknown; title?: unknown; sourceEntityType?: unknown; sourceEntityId?: unknown;
+  assigneeId?: unknown; assigneeName?: unknown; dueDate?: unknown; status?: unknown; createdAt?: unknown;
+}
 
 const createdAt = (row: PlanTaskRow) => { const t = new Date(String(row?.createdAt ?? '')).getTime(); return Number.isFinite(t) ? t : 0; };
 
@@ -123,13 +126,44 @@ export function planAssignments(rows: unknown, programId: string, entity: string
   return out;
 }
 
-/** The project's deliverable tasks, and whether they could be read. */
+/** One of the signed-in person's open tasks in this project's plan (S11 step 4, "Due for you"). */
+export interface PlanDueItem {
+  taskId: string;
+  /** A document of the filing, or a task of the work breakdown. */
+  kind: 'document' | 'work';
+  title: string;
+  dueDate: string | null;
+  status: string;
+}
+
+const CLOSED = new Set(['completed', 'cancelled']);
+const dueMs = (iso: string | null) => { const t = iso ? new Date(iso).getTime() : NaN; return Number.isFinite(t) ? t : Infinity; };
+
+/** The person's open tasks of this project's plan, by due date (none last). Read from the same rows the plan's
+ *  assignments come from (GET /api/tasks/tasks/by-module/Plan), by assignee: the task store's own record. */
+export function planDueFor(rows: unknown, programId: string, userId: string | number | null | undefined): PlanDueItem[] {
+  const me = userId == null ? '' : String(userId).trim();
+  if (!me) return [];
+  const prefix = `${programId}:`;
+  const kinds: Record<string, PlanDueItem['kind']> = { [PLAN_TASK_ENTITY]: 'document', [PYRAMID_TASK_ENTITY]: 'work' };
+  return (Array.isArray(rows) ? rows as PlanTaskRow[] : [])
+    .filter(row => kinds[String(row?.sourceEntityType)] && String(row?.sourceEntityId ?? '').startsWith(prefix)
+      && String(row?.assigneeId ?? '') === me && !CLOSED.has(String(row?.status ?? '')))
+    .map(row => ({
+      taskId: String(row.taskId ?? ''), kind: kinds[String(row.sourceEntityType)], title: String(row.title ?? 'Untitled task'),
+      dueDate: row.dueDate == null ? null : String(row.dueDate), status: String(row.status ?? 'pending'),
+    }))
+    .sort((a, b) => dueMs(a.dueDate) - dueMs(b.dueDate));
+}
+
+/** The project's plan tasks (deliverables and work-breakdown tasks), and whether they could be read. */
 export function usePlanAssignments(programId: string, epoch: number) {
   const read = useLiveRows<PlanTaskRow>(`/api/tasks/tasks/by-module/${PLAN_TASK_MODULE}`, [programId, epoch], isRowsWith<PlanTaskRow>('taskId', 'sourceEntityType'));
   return {
     loading: read.loading, error: read.error ?? null,
     byDeliverable: planAssignments(read.rows, programId),
     byPyramidTask: planAssignments(read.rows, programId, PYRAMID_TASK_ENTITY),
+    rows: read.rows,
   };
 }
 
@@ -216,4 +250,30 @@ export function AssignAction({ deliverable, programId, projectId, assigned = fal
     {outcome?.ok && <p className="pf-sel-m pj-plan-assign-msg" role="status">Assigned{outcome.assigneeName ? ` to ${outcome.assigneeName}` : ''}. The task is in their tasks and this project’s tasks.</p>}
     {open && <AssignDrawer deliverable={deliverable} due={due} onCancel={() => setOpen(false)} onSubmit={v => void submit(v)} />}
   </>;
+}
+
+/**
+ * "Due for you" (THE_PROGRAM §8, item 2): the signed-in person's open tasks in this project's plan, by date, first in
+ * the Plan step. A task past its due date says so in words. Nothing assigned is said; an unread list is said as
+ * unread, never as nothing assigned.
+ */
+export function DueForYou({ items, unread, today = new Date() }: { items: PlanDueItem[]; unread: boolean; today?: Date }) {
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  return (
+    <section className="pj-sec" aria-labelledby="pj-due-h" data-testid="pj-due-for-you">
+      <div className="pj-sec-h"><h2 id="pj-due-h">Due for you</h2></div>
+      {unread ? <p className="pj-desc" role="status">Your tasks in this project could not be read.</p>
+        : !items.length ? <p className="pj-desc pj-fact-none">Nothing in this project&apos;s plan is assigned to you.</p>
+        : <ul className="pj-due-list">{items.map(item => {
+          const due = dueMs(item.dueDate);
+          const late = due !== Infinity && due < startOfToday;
+          const state = item.status === 'pending' ? '' : ` · ${(TASK_STATE_LABEL[item.status]?.label ?? item.status).toLowerCase()}`;
+          return <li key={item.taskId} className="pj-due-row" data-late={late || undefined}>
+            <span className="pj-due-t">{item.title}</span>
+            <span className="pj-due-k">{item.kind === 'work' ? 'Work' : 'Document'}</span>
+            <span className="pj-due-d">{due === Infinity ? 'No due date' : `Due ${new Date(due).toLocaleDateString(undefined, DATE)}`}{late ? ' · past due' : ''}{state}</span>
+          </li>;
+        })}</ul>}
+    </section>
+  );
 }

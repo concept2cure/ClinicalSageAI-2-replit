@@ -27,7 +27,7 @@ import { isLaunchSurface } from '../../../../../shared/constants/launch-scope';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 const auth = vi.hoisted(() => ({ user: null as null | { id: string; permissions: string[] } }));
-vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => auth }));
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => auth, useAuthUser: () => auth.user }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
@@ -45,7 +45,7 @@ vi.mock('../navEntitlements', async (importOriginal) => {
 
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { __resetSurfaceActionBus } from '../surfaceActions';
-import { buildDeliverableTaskBody, planAssignments, PLAN_TASK_ENTITY } from '../surfaces/PlanAssign';
+import { buildDeliverableTaskBody, planAssignments, PLAN_TASK_ENTITY, PYRAMID_TASK_ENTITY } from '../surfaces/PlanAssign';
 
 const PID = '5b2d7c11-2222-4333-8444-555566667777';
 const OTHER = '9c9c9c9c-1111-4222-8333-444455556666';
@@ -370,5 +370,78 @@ describe('what Plan says, and when (design review, pass 3)', () => {
     expect(await within(row).findByTestId('plan-assignment')).toBeTruthy();
     expect(within(row).getByTestId('plan-assignment').textContent).toMatch(/^Task completed: Dana Ruiz, due /);
     expect(within(row).getByRole('button', { name: /Assign another person/ })).toBeTruthy();
+  });
+});
+
+// S11 step 4 (THE_PROGRAM §3.5, §8): the Plan step opens with what is due for the signed-in person, and each IND
+// document names the work-breakdown task that produces it, with that task's due date and owner.
+describe("the Plan step's due-for-you and the content plan's join", () => {
+  const PYR_PATH = `/api/v1/pyramids/by-project/${PID}`;
+  const PYRAMID_READ = { programId: PID, type: 'IND', label: 'IND', filing: 'us_ind', statuses: {}, target: '2027-03-01', asOf: '2026-11-05',
+    pyramid: { type: 'IND', label: 'IND', hours: 10, phases: [{ id: 'phase1', name: 'Planning', order: 1 }],
+      tasks: [{ id: 'product_profile', phase: 'phase1', name: 'Define product profile', role: 'regulatory', hours: 6, deps: [], status: 'todo', ctd: [] }] },
+    schedule: { target: '2027-03-01', anchorTaskId: 'product_profile', start: '2027-02-22',
+      tasks: { product_profile: { start: '2027-02-22', due: '2027-03-01', workingDays: 6, basis: 'estimated-hours' } } } };
+  const workRow = (over: Record<string, unknown> = {}) => ({ taskId: 'task-w', title: 'Define product profile', sourceEntityType: PYRAMID_TASK_ENTITY,
+    sourceEntityId: `${PID}:product_profile`, assigneeId: 3, assigneeName: 'Pat Lee', dueDate: '2027-03-01T17:00:00.000Z', status: 'pending',
+    createdAt: '2026-11-05T10:00:00Z', ...over });
+  const servePlan = (planTasks: unknown[]) => {
+    serve({ planTasks });
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((m: string, u: string, b?: unknown) => (u === PYR_PATH ? Promise.resolve(ok({ success: true, data: PYRAMID_READ })) : base(m, u, b)));
+  };
+
+  it('opens with what is due for the signed-in person, from the plan\'s tasks, by date', async () => {
+    auth.user = { id: '3' } as never;
+    servePlan([
+      workRow(),
+      taskRow('product_profile:deliverable:1', { taskId: 'task-d', title: 'Prepare: Regulatory pathway assessment', assigneeId: 3, dueDate: '2026-11-03T17:00:00.000Z' }),
+      taskRow('forms:deliverable:0', { taskId: 'task-x', title: 'Prepare: Form FDA 1571', assigneeId: 12 }),
+      workRow({ taskId: 'task-done', title: 'Finished work', status: 'completed' }),
+    ]);
+    mount();
+    const plan = await openPlan();
+    const due = await within(plan).findByTestId('pj-due-for-you');
+    // First in the step.
+    expect(plan.firstElementChild).toBe(due);
+    await waitFor(() => expect(due.querySelectorAll('.pj-due-row')).toHaveLength(2));
+    const rows = Array.from(due.querySelectorAll('.pj-due-row')).map((r) => r.textContent);
+    expect(rows[0]).toMatch(/^Prepare: Regulatory pathway assessmentDocumentDue Nov 3, 2026/);
+    expect(rows[1]).toMatch(/^Define product profileWorkDue Mar 1, 2027$/);
+  });
+
+  it("says nothing is assigned rather than leaving the section out", async () => {
+    auth.user = { id: '3' } as never;
+    servePlan([]);
+    mount();
+    const plan = await openPlan();
+    expect((await within(plan).findByTestId('pj-due-for-you')).textContent).toMatch(/Nothing in this project.s plan is assigned to you\./);
+  });
+
+  it('shows no due-for-you list without a signed-in person', async () => {
+    servePlan([workRow()]);
+    mount();
+    const plan = await openPlan();
+    await within(plan).findByTestId('pj-program-plan');
+    expect(within(plan).queryByTestId('pj-due-for-you')).toBeNull();
+  });
+
+  it('names, beside each IND document, the work-breakdown task that produces it, its due date and owner', async () => {
+    servePlan([workRow()]);
+    mount();
+    await openPlan();
+    await waitFor(() => expect(within(entry('Target Product Profile')).getByTestId('plan-produced-by')).toBeTruthy());
+    expect(within(entry('Target Product Profile')).getByTestId('plan-produced-by').textContent)
+      .toBe('Work: Define product profile · due Mar 1, 2027 · Pat Lee');
+    // A document whose task is not in this project's pyramid says nothing, never a guessed task.
+    expect(within(entry('Form FDA 1571')).queryByTestId('plan-produced-by')).toBeNull();
+  });
+
+  it('reads the project pyramid once for the whole Plan step', async () => {
+    servePlan([]);
+    mount();
+    const plan = await openPlan();
+    await within(plan).findByTestId('pj-program-plan');
+    expect(apiRequest.mock.calls.filter(([, u]) => u === PYR_PATH)).toHaveLength(1);
   });
 });

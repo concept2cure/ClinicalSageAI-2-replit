@@ -231,3 +231,17 @@
 @media(max-width:800px){
   .c2c-v2 .py-row-plan{order:1;flex-direction:row;gap:8px;width:auto;align-items:baseline;}
 }
+
+/* S11 step 4: the Plan step's "Due for you" (PlanAssign.tsx DueForYou) and the content plan's join beside a document
+   (PyramidProject.tsx ProducedBy). Quiet lines; colour only where a task is past due, always with the words. */
+.c2c-v2 .pj-due-list{list-style:none;margin:0;padding:0;}
+.c2c-v2 .pj-due-row{display:flex;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--bg-100);font-size:13px;}
+.c2c-v2 .pj-due-t{flex:1;min-width:0;color:var(--text-100);}
+.c2c-v2 .pj-due-k{font-size:11px;color:var(--text-400);white-space:nowrap;}
+.c2c-v2 .pj-due-d{font-size:12px;color:var(--text-300);white-space:nowrap;font-variant-numeric:tabular-nums;}
+.c2c-v2 .pj-due-row[data-late] .pj-due-d{color:var(--error);}
+.c2c-v2 .pj-plan-producedby{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--text-400);}
+@media(max-width:600px){
+  .c2c-v2 .pj-due-row{flex-wrap:wrap;row-gap:2px;}
+  .c2c-v2 .pj-due-t{flex:1 1 100%;}
+}
