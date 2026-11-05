@@ -329,9 +329,12 @@ describe("Module 1 proposals follow the project's region (S6)", () => {
     expect(c.folderId).toBe('module-1');
     expect(c.ctdSection).toBeNull();
     expect(c.needsReview).toBe(true);
-    // A cover letter named by the CTD filename detector is a US heading too (US 1.2, EU 1.0).
-    expect(classifyForFiling({ fileName: 'cover letter.pdf', view: 'pharma', jurisdiction: 'EU' }).ctdSection).toBeNull();
+    // An FDA form number names a US form even through the CTD filename detector.
+    for (const fileName of ['356h-application.pdf', 'Form 1571 signed.pdf']) {
+      expect(classifyForFiling({ fileName, view: 'pharma', jurisdiction: 'EU', applicationKind: 'maa' }).ctdSection, fileName).toBeNull();
+    }
   });
+
 
   it("CA, AU, or an agency that names no region: Module 1, no section, needs review, and the rationale says why", () => {
     for (const j of ['CA', 'AU'] as const) {
@@ -362,5 +365,40 @@ describe("Module 1 proposals follow the project's region (S6)", () => {
     const before = classifyForFiling({ fileName: 'Module 1 administrative notes.pdf', view: 'pharma' });
     expect(before.ctdSection).toBeNull();
     expect(classifyForFiling({ fileName: 'Module 1 administrative notes.pdf', view: 'pharma', jurisdiction: 'CA' })).toEqual(before);
+  });
+});
+
+/* S6/F1 (2026-11-05): the CTD filename detector names what a Module 1 document is, so its region's heading is read
+   from the record as for labeling. A cover letter was proposed at US 1.2 in every region, or none. */
+describe("the CTD filename detector's Module 1 documents follow the project's region (F1)", () => {
+  it("the CTD filename detector's Module 1 documents take their region's heading from the record", () => {
+    const at = (fileName: string, jurisdiction: 'EU' | 'JP', applicationKind: string) =>
+      classifyForFiling({ fileName, view: 'pharma', jurisdiction, applicationKind });
+    expect(at('cover letter.pdf', 'EU', 'maa')).toMatchObject({ folderId: 'module-1', ctdSection: '1.0', needsReview: false });
+    expect(at('cover letter.pdf', 'EU', 'maa').rationale).toMatch(/EU 1\.0, Cover Letter/);
+    expect(at('Application form MAA.pdf', 'EU', 'maa').ctdSection).toBe('1.2');
+    const rmp = at('RMP draft.pdf', 'EU', 'maa');
+    expect(rmp.ctdSection).toBe('1.8.2');
+    // The US record gives an RMP no heading; the region's does, and the reason says that, not "no section".
+    expect(rmp.rationale).toMatch(/^The file name names a Module 1 document\. Module 1 follows the project's region: EU 1\.8\.2/);
+    expect(at('Application form.pdf', 'JP', 'jnda').ctdSection).toBe('1.2');
+    expect(at('patent status.pdf', 'JP', 'jnda').ctdSection).toBe('1.4');
+    expect(at('RMP draft.pdf', 'JP', 'jnda').ctdSection).toBe('1.11');
+    // Where the region's record holds no heading for it, none is proposed and a person places it.
+    for (const [fileName, j, kind] of [['patent certification.pdf', 'EU', 'maa'], ['cover letter.pdf', 'JP', 'jnda']] as const) {
+      const c = at(fileName, j, kind);
+      expect(c.ctdSection, fileName).toBeNull();
+      expect(c.needsReview, fileName).toBe(true);
+      expect(c.rationale, fileName).toMatch(new RegExp(`The ${j} Module 1 holds no single heading for this document`));
+    }
+  });
+
+  it("the CTD filename detector's US headings are unchanged", () => {
+    for (const fileName of ['cover letter.pdf', 'Application form.pdf', 'patent information.pdf', 'RMP draft.pdf', '356h-application.pdf']) {
+      const before = classifyForFiling({ fileName, view: 'pharma' });
+      expect(classifyForFiling({ fileName, view: 'pharma', jurisdiction: 'US', applicationKind: 'nda' }), fileName).toEqual(before);
+    }
+    expect(classifyForFiling({ fileName: 'cover letter.pdf', view: 'pharma' }).ctdSection).toBe('1.2');
+    expect(classifyForFiling({ fileName: 'RMP draft.pdf', view: 'pharma' }).ctdSection).toBeNull();
   });
 });

@@ -397,6 +397,8 @@ function classifyByName(input: FilingInput): NameProposal {
             rationale: ctd.section
               ? `CTD pattern "${ctd.title}" → Module ${ctd.module} (${ctd.section}).`
               : `The name names Module ${ctd.module} but no section; confirm where in the module it belongs.`,
+            // Its US heading above; another region's is read for this role (inProjectRegion).
+            module1Role: ctd.role,
           };
         }
       }
@@ -472,9 +474,11 @@ function classifyByName(input: FilingInput): NameProposal {
 function inProjectRegion(named: NameProposal, input: FilingInput): FilingClassification {
   const { module1Role, ...proposal } = named;
   if (input.jurisdiction === undefined || input.jurisdiction === 'US') return proposal;
-  if (proposal.folderId !== 'module-1' || !proposal.ctdSection) return proposal;
+  if (proposal.folderId !== 'module-1' || (!proposal.ctdSection && !module1Role)) return proposal;
   const regional = regionalModule1(module1Role, input.jurisdiction, input.applicationKind ?? null);
-  const rationale = `${proposal.rationale} ${regional.sentence}`;
+  // A document the US record gives no heading (an RMP) is not said to have "no section" when its region gives one.
+  const base = proposal.ctdSection ? proposal.rationale : 'The file name names a Module 1 document.';
+  const rationale = `${base} ${regional.sentence}`;
   if (regional.code) return { ...proposal, ctdSection: regional.code, rationale };
   return { ...proposal, ctdSection: null, confidence: 'medium', needsReview: true, rationale };
 }
