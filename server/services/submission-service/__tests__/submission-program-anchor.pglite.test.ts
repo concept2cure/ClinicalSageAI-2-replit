@@ -22,6 +22,7 @@
  * spine, the vault table as the ingest writes it, and the real chained writer.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { createIndPgliteDb, AUDIT_LOGS_PGLITE_DDL, type IndPgliteDb } from '../../../db/pglite-harness';
 import { VAULT_DDL } from '../../../routes/__tests__/_authoring-canvas-fixture';
 
@@ -100,6 +101,9 @@ beforeAll(async () => {
   holder.pglite = h.pglite;
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
   await h.pglite.exec(VAULT_DDL);
+  // Placing a vault leaf reads which company legal originals the document is
+  // (readCompanyLegalRegistryForVault, 5ebfcfd2c5), so the registry's real migration. Empty.
+  await h.pglite.exec(readFileSync(new URL('../../../../migrations/20261018_company_legal_registry.sql', import.meta.url), 'utf8'));
   // shared/schema/programs.ts leadUserId; the harness's program spine omits it.
   await h.pglite.exec(`ALTER TABLE regulatory_programs ADD COLUMN IF NOT EXISTS lead_user_id INTEGER`);
   for (const [id, org, code, lead] of [[P_A, ORG, 'A-1', LEAD.userId], [P_B, ORG, 'B-1', null], [P_X, OTHER_ORG, 'X-1', null]] as const) {
