@@ -280,6 +280,8 @@ const MIGRATIONS = [
   'migrations/20260604_shadow_review.sql',
   'migrations/20261015_shadow_review_waiver.sql', // P-34: a failed run records its failure_code
   'migrations/20261015b_shadow_finding_disposition.sql', // P-35: the dispatch count reads who closed each critical
+  // The run's coverage (3cacf2e15a): dispatch reads leaf_manifest_digest, the leaves a complete run read.
+  'migrations/20261025_shadow_review_run_coverage.sql',
   // P-33: the one dispatch verdict reads the IND LOA and safety-report registers.
   'migrations/20260614_ind_safety_reports.sql',
   'migrations/20260614_ind_cross_references.sql',
