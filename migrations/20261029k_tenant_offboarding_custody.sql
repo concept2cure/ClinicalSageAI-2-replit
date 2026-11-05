@@ -1,6 +1,17 @@
 -- =============================================================================
 -- 20261029k_tenant_offboarding_custody.sql
 --
+-- AMENDED IN PLACE 2026-11-05 (CLAUDE.md RULE 1; session
+-- session_01QoxbLcnW5jPvJSjjKQtvTA, F1): tenant_record_purger is granted CREATE
+-- on schema public beside USAGE. `ALTER FUNCTION … OWNER TO tenant_record_purger`
+-- requires the new owner to hold CREATE on the function's schema; on PostgreSQL
+-- 15+ PUBLIC no longer has it, so on any applier that is not a true superuser
+-- (the RDS master is not) every deploy halted here, 454 of 462 applied,
+-- "permission denied for schema public" (reproduced on a local PostgreSQL 16).
+-- The same fix as 20261023_review_routes.sql's review_route_writer, and the
+-- grant the purger roles of 20260926, 20261008f and 20260929 already carry.
+-- Additive, idempotent; it registers as drift in c2c_migration_journal.
+--
 -- A departing tenant's regulated records leave with the tenant, after custody
 -- passes to the customer (P-58, D6, 2026-10-29; docs/LAUNCH_DEFINITION_OF_DONE.md
 -- P-58; evidence docs/evidence/D6-OFFBOARDING-CUSTODY/2026-10-29/).
@@ -236,8 +247,10 @@ BEGIN
     END IF;
   END IF;
 
-  -- What the doors read and erase, and nothing more.
-  GRANT USAGE ON SCHEMA public TO tenant_record_purger;
+  -- What the doors read and erase, and nothing more. CREATE on public is the
+  -- ALTER … OWNER TO rule for a non-superuser applier (amended 2026-11-05, see
+  -- the header); nothing runs as this role except the fixed bodies below.
+  GRANT USAGE, CREATE ON SCHEMA public TO tenant_record_purger;
   FOREACH v_table IN ARRAY ARRAY[
     'compliance_review_records', 'electronic_signatures', 'document_audit_trail', 'data_lineage_records', 'evidence_chain_records',
     'ivdr_validation_parameter_history', 'ivdr_evidence_result_history', 'ivdr_cdx_status_history', 'reg_questions',

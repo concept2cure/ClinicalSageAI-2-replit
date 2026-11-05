@@ -1,0 +1,8 @@
+# Before the amendment (local PostgreSQL 16, applier owns the database, CREATEROLE, not superuser)
+  ✗ failed:  migrations/20261023_review_routes.sql — permission denied for schema public
+❌ Deploy migration failed: migration halted at migrations/20261023_review_routes.sql — permission denied for schema public (432/462 applied before the failure)
+
+# After amending 20261023_review_routes.sql only
+  ✓ applied: migrations/20261023_review_routes.sql
+  ✗ failed:  migrations/20261029k_tenant_offboarding_custody.sql — permission denied for schema public
+❌ Deploy migration failed: migration halted at migrations/20261029k_tenant_offboarding_custody.sql — permission denied for schema public (454/462 applied before the failure)
