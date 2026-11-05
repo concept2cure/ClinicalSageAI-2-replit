@@ -178,3 +178,68 @@ describe('the verdict sentence', () => {
       .toBe('Intact: every sealed document is recorded with its sealed hash.');
   });
 });
+
+describe('what a seal holds (S6, binders as a view)', () => {
+  const HOLDS = [
+    { id: '33333333-3333-4333-8333-333333333333', title: 'Stability protocol', version: '1.0', indexNumber: '3.2.P.8.1',
+      shortHash: 'abcdef012345', lifecycleStage: 'approved' },
+    { id: '44444444-4444-4444-8444-444444444444', title: 'Clinical overview', version: null, indexNumber: null,
+      shortHash: null, lifecycleStage: null },
+    { id: '55555555-5555-4555-8555-555555555555', title: null, version: '2', indexNumber: '1.14',
+      shortHash: '0123456789ab', lifecycleStage: 'in_review' },
+  ];
+  const OTHER = '66666666-6666-4666-8666-666666666666';
+  const THIRD = '77777777-7777-4777-8777-777777777777';
+
+  it('lists each sealed document and version under a closed disclosure, as the seal recorded it', async () => {
+    seals = [{ ...SEAL, documents: HOLDS }];
+    render(<VaultSeals projectId={PID} />);
+    const holds = await screen.findByTestId('vault-seal-holds');
+    expect(holds.tagName).toBe('DETAILS');
+    expect(holds.classList.contains('pj-more')).toBe(true);
+    expect(holds.hasAttribute('open')).toBe(false);
+    expect(holds.querySelector('summary')?.textContent).toBe('What it holds · 3 documents');
+    const rows = within(holds).getAllByTestId('vault-seal-document');
+    expect(rows.map((r) => r.querySelector('.vd-ver-v')?.textContent)).toEqual([
+      '3.2.P.8.1Stability protocol · v1.0', 'Clinical overview · version not recorded', '1.14Title not recorded · v2']);
+    expect(rows.map((r) => r.querySelector('.vd-ver-m')?.textContent)).toEqual([
+      'Approved · SHA-256 abcdef012345', 'Not sent for review · content hash not recorded', 'In review · SHA-256 0123456789ab']);
+    expect(rows[0].querySelector('.vd-num')?.textContent).toBe('3.2.P.8.1');
+  });
+
+  it("opens a sealed version through the Vault's audited download, the viewer its Versions use", async () => {
+    seals = [{ ...SEAL, documents: HOLDS }];
+    const base = H.apiRequest.getMockImplementation()!;
+    H.apiRequest.mockImplementation(async (method: string, url: string) => (url.endsWith('/download')
+      ? { ok: true, status: 200,
+        headers: { get: (h: string) => ({ 'Content-Type': 'text/plain', 'Content-Disposition': 'attachment; filename="stability-protocol.txt"' } as Record<string, string>)[h] ?? null },
+        arrayBuffer: async () => new TextEncoder().encode('Stability protocol, as filed.').buffer }
+      : base(method, url)));
+    render(<VaultSeals projectId={PID} />);
+    const holds = await screen.findByTestId('vault-seal-holds');
+    fireEvent.click(within(holds).getByRole('button', { name: 'Open Stability protocol v1.0' }));
+    await waitFor(() => expect(H.saved.map((f) => f.name)).toEqual(['stability-protocol.txt']));
+    expect(H.apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/project-vault/${PID}/documents/${HOLDS[0].id}/download`);
+    expect((await within(holds).findByRole('status')).textContent).toMatch(/Downloaded Stability protocol v1\.0 — the viewer here shows PDFs only\./);
+  });
+
+  it('says a seal of a Vault with no current documents holds none', async () => {
+    seals = [{ ...SEAL, documentCount: 0, documents: [] }];
+    render(<VaultSeals projectId={PID} />);
+    expect((await screen.findByTestId('vault-seal-holds-none')).textContent)
+      .toBe('This seal holds no documents. The Vault had no current documents when it was sealed.');
+    expect(screen.queryByTestId('vault-seal-holds')).toBeNull();
+  });
+
+  it('says a seal whose record of its documents could not be read was not read, and never shows it as empty', async () => {
+    seals = [{ ...SEAL, documents: null }, { ...SEAL, id: OTHER }, { ...SEAL, id: THIRD, documents: [{ id: 5 }] }];
+    render(<VaultSeals projectId={PID} />);
+    await waitFor(() => expect(screen.getAllByTestId('vault-seal-row')).toHaveLength(3));
+    const unread = screen.getAllByTestId('vault-seal-holds-unread');
+    expect(unread.map((u) => u.textContent)).toEqual(Array(3).fill(
+      'What this seal holds could not be read from its record. This is not an empty seal. Verify it to check the record.'));
+    expect(screen.queryByTestId('vault-seal-holds')).toBeNull();
+    expect(screen.queryByTestId('vault-seal-holds-none')).toBeNull();
+    expect(screen.queryByTestId('vault-seals-error')).toBeNull();
+  });
+});
