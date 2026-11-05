@@ -20,6 +20,7 @@ import { evaluateProtocolRules, type ProtocolRuleInput } from './protocol-rule-p
 import { buildSoaMatrix, validateSoa } from '../protocol-soa/protocol-soa-logic';
 import { computeProtocolBudget } from '../protocol-budget/protocol-budget-logic';
 import { mapAmendments, mapDeviations, mapReviewComments, mapReviews } from './pdev-view-registers';
+import { milestoneBucket } from '../protocol-milestones/protocol-milestones-logic';
 import { rowsToStudyDesign } from '../study-design/study-design-repository';
 import { validateDesign } from '../study-design/design-validation';
 import { dispositionTarget, finalizationTarget, readSignatureFacets } from './protocol-signature-manifestation';
@@ -46,15 +47,13 @@ function groupBy<T>(rows: T[], key: (r: T) => unknown): Map<string, T[]> {
   return m;
 }
 
-function milestoneUrgency(targetDate: unknown, actualDate: unknown, now: number): string {
-  if (actualDate) return 'done';
-  if (!targetDate) return 'normal';
-  const t = new Date(str(targetDate)).getTime();
-  if (Number.isNaN(t)) return 'normal';
-  const days = (t - now) / 86_400_000;
-  if (days < 0) return 'overdue';
-  if (days <= 30) return 'soon';
-  return 'normal';
+/** A date column as YYYY-MM-DD. node-postgres returns a DATE as a local-midnight
+ *  Date, which String() printed in full ("Wed Jan 01 2020 00:00:00 GMT…"). */
+function isoDay(v: unknown): string {
+  if (v instanceof Date) {
+    return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`;
+  }
+  return str(v).slice(0, 10);
 }
 
 /** The cover page's principal investigator: the column when the protocol
@@ -333,7 +332,8 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
   const docs = await loadPdevProtocolRows(orgId, scope, queryExecutor);
   if (docs.length === 0) return [];
   const ids = docs.map((d) => Number(d.id));
-  const now = Date.now();
+  // Today as YYYY-MM-DD for the timeline engine, the way isoDay reads a DATE.
+  const today = isoDay(new Date());
 
   // Bulk-fetch every child in one query each, scoped to the org + these docs.
   const q = (sql: string, params: unknown[] = [ids, orgId]) => queryExecutor.query(sql, params);
@@ -347,7 +347,7 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
     q(`SELECT id, protocol_document_id, kind, criterion FROM protocol_eligibility_criteria WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY kind, order_index, id`),
     q(`SELECT id, protocol_document_id, visit_name, timepoint FROM protocol_schedule_visits WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`),
     q(`SELECT id, protocol_document_id, category, description, likelihood, impact, mitigation, residual_likelihood, residual_impact, status, owner FROM protocol_risks WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
-    q(`SELECT id, protocol_document_id, name, milestone_type, target_date, actual_date FROM protocol_milestones WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY target_date NULLS LAST, id`),
+    q(`SELECT id, protocol_document_id, name, milestone_type, target_date, actual_date, status FROM protocol_milestones WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY target_date NULLS LAST, id`),
     q(`SELECT id, protocol_document_id, amendment_number, title, affects_consent, affects_risk, status, submitted_date, decided_date FROM protocol_amendments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     /* severity / category / status are NOT NULL with CHECK constraints on this
        table and were simply never selected, then hard-blanked below. A monitor
@@ -509,9 +509,13 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
         rl: LIKELIHOOD[str(r.residual_likelihood)] ?? 0, ri: IMPACT[str(r.residual_impact)] ?? 0,
         status: str(r.status), owner: str(r.owner),
       })),
+      /* The recorded status (planned, in progress, met, missed, cancelled), and
+         the urgency bucket from the timeline engine the timeline route uses
+         (milestoneBucket). Both were derived here from the dates by a second
+         rule, which read a missed or cancelled milestone as pending. */
       milestones: g(byDoc.milestones, id).map((m) => ({
-        id: str(m.id), label: str(m.name), date: str(m.actual_date ?? m.target_date),
-        status: m.actual_date ? 'complete' : 'pending', urgency: milestoneUrgency(m.target_date, m.actual_date, now),
+        id: str(m.id), label: str(m.name), date: isoDay(m.actual_date ?? m.target_date),
+        status: str(m.status), urgency: milestoneBucket({ targetDate: isoDay(m.target_date) || null, status: str(m.status) }, today),
       })),
       budget: mapBudget(params, budgetRows, budgetSummary),
       amendments: mapAmendments(g(byDoc.amendments, id), changesByAmend),

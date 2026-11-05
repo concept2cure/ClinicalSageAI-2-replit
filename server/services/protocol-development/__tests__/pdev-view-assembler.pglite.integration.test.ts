@@ -33,7 +33,7 @@ CREATE TABLE protocol_objectives (id serial PRIMARY KEY, organization_id int, pr
 CREATE TABLE protocol_eligibility_criteria (id serial PRIMARY KEY, organization_id int, protocol_document_id int, kind text, criterion text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_schedule_visits (id serial PRIMARY KEY, organization_id int, protocol_document_id int, visit_name text, timepoint text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_risks (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, likelihood text, impact text, mitigation text, residual_likelihood text, residual_impact text, status text, deleted_at timestamptz, owner text);
-CREATE TABLE protocol_milestones (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, milestone_type text, target_date date, actual_date date, deleted_at timestamptz);
+CREATE TABLE protocol_milestones (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, milestone_type text, target_date date, actual_date date, status text NOT NULL DEFAULT 'planned', deleted_at timestamptz);
 CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, amendment_number text, title text, affects_consent boolean, affects_risk boolean, status text NOT NULL DEFAULT 'draft', submitted_date date, decided_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendment_changes (id serial PRIMARY KEY, amendment_id int, section_ref text, change_description text, previous_text text, proposed_text text);
 CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, protocol_document_id int, deviation_number text, description text, category text CHECK (category IN ('enrollment','consent','procedure','safety','data','other')), severity text CHECK (severity IN ('minor','major','critical')), is_reportable boolean, affects_safety boolean, status text NOT NULL DEFAULT 'open' CHECK (status IN ('open','under_review','capa_pending','closed')), deleted_at timestamptz);
@@ -78,6 +78,8 @@ async function seedFullProtocol(org: number): Promise<number> {
   await pglite.query(`INSERT INTO protocol_schedule_visits (organization_id, protocol_document_id, visit_name, timepoint, order_index) VALUES ($1,$2,'Screening','Day -28',0)`, [org, id]);
   await pglite.query(`INSERT INTO protocol_risks (organization_id, protocol_document_id, category, description, likelihood, impact, mitigation, residual_likelihood, residual_impact, status) VALUES ($1,$2,'regulatory','Endpoint may be questioned','likely','major','Pre-submission meeting','possible','moderate','mitigating')`, [org, id]);
   await pglite.query(`INSERT INTO protocol_milestones (organization_id, protocol_document_id, name, milestone_type, target_date) VALUES ($1,$2,'FPI','enrollment','2020-01-01')`, [org, id]);
+  // Cancelled, with no actual date: the dates alone read it as pending and overdue.
+  await pglite.query(`INSERT INTO protocol_milestones (organization_id, protocol_document_id, name, milestone_type, target_date, status) VALUES ($1,$2,'Interim analysis','other','2020-06-01','cancelled')`, [org, id]);
   const a = await pglite.query(`INSERT INTO protocol_amendments (organization_id, protocol_document_id, amendment_number, title, affects_consent, affects_risk, status, submitted_date) VALUES ($1,$2,'A1','Widen eligibility',true,false,'under_review','2026-06-01') RETURNING id`, [org, id]);
   await pglite.query(`INSERT INTO protocol_amendment_changes (amendment_id, section_ref, change_description, previous_text, proposed_text) VALUES ($1,'5.1','loosen age','18-65','18+')`, [(a.rows[0] as { id: number }).id]);
   // Both impacts declared "no": risk was never read, so this showed as "not declared".
@@ -164,6 +166,8 @@ describe('assembleOrgPdevDocs', () => {
     expect(doc.reviewComments[0]).toMatchObject({ sec: '9', sev: 'blocking', text: 'Clarify the SAP', resolved: false });
     expect(doc.reviews[0]).not.toHaveProperty('comments');
     expect(doc.milestones[0].urgency).toBe('overdue');              // target in the past, no actual date
+    expect(doc.milestones[0]).toMatchObject({ status: 'planned', date: '2020-01-01' });  // a date, not Date.toString()
+    expect(doc.milestones[1]).toMatchObject({ label: 'Interim analysis', status: 'cancelled', urgency: 'done' });
 
     // Completeness: one required section is not_started → a critical finding, <100%.
     expect(doc.completeness).toBe(50);
