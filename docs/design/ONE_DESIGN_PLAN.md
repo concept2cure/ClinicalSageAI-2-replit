@@ -527,10 +527,12 @@ Two items listed here earlier were already done, as found on 2026-11-05: a faile
 
 The coordinating session is out of tokens. This session works on with the founder's permission of 2026-11-05 ("proceed
 with founder permission but note this in the roadmap and your work") and records its work here under P-100. Its holds
-are in `.design/claude-convergence/COORDINATION.md`, in the row "Vault parity (`01KnUG…`)".
+are in `.design/claude-convergence/COORDINATION.md`, in the row "Vault parity (`01KnUG…`)". Since the founder's "use
+multiple sub agents", slices are built by agents this session briefs, reviews, re-tests and commits; each evidence
+README says which checks the lead ran.
 
-**Delivered** (2026-11-05). Each item was shown red first, then green on real PostgreSQL where the server changed, and
-used in the running app.
+**Delivered** (2026-11-05). Each item was shown red first, then green, on real PostgreSQL where the server changed and
+in the running app where a screen changed. Where either was not possible, its README says so.
 
 - **The Vault tells its refusals apart** (S6, `3c84ddc6ac`; `docs/evidence/SPINE/S6/2026-11-05-v1-refusals/`). Not
   licensed, not in this release, the person's role, and not found are each said as themselves, through the one read
@@ -540,35 +542,52 @@ used in the running app.
   "All my projects" is that project's sponsor's projects. The sponsor is read from the project's verified anchor,
   never from the request. Every hit names its sponsor, and the relationship finder stays inside the sponsor.
 - **No relationship across sponsors** (S6, `64f33aa859`; `…/2026-11-05-v3-relationship-sponsor/`). The server refuses
-  one (409 `OTHER_CLIENT`).
+  one (409 `OTHER_CLIENT`). One recorded before that is now named in its row as another client's, and can be removed
+  (S6 V8, `4b9012b842`; `…/2026-11-05-v8-legacy-relationship-sponsor/`).
 - **The organisation's governed artifacts stay inside the open project's sponsor** (F1, `1e83af2c96`;
   `…/2026-11-05-v4-artifact-sponsors/`), and name it.
-- All four are on trunk through `a7647e0147`.
+- **AnA reads only what the person can open** (F1, `ae14ab27b0`; `docs/evidence/F1/2026-11-05-ana-vault-tools-scope/`).
+  `read_vault_document`, `list_vault_documents`, `compare_vault_versions`, `get_document_versions`,
+  `list_governed_documents`, `read_governed_document` and `global_search` filtered by organisation alone. They now read
+  the projects the sharing policy admits the person to and, inside a project, that project's sponsor's, by the Vault's
+  own narrowing (`narrowToSponsorOf`, moved into the registry read so there is one copy). An id outside reads as a
+  missing id, and a check that cannot run is an error, never an empty list.
+- **The project's settings select the Vault's words and proposals.**
+  - The header names a 510(k), De Novo, EU MDR or IVDR filing through the portfolio's one alias map (F1, `828626a217`;
+    `…/2026-11-05-v6-filing-region/`, part A). The seeded 510(k) read "IVD / Diagnostics".
+  - Module 1 proposals follow the project's region (S6 V6, `40af70d8b6`; same folder, part B). An EU or JP project is
+    given its own heading from the regional Module 1 record, or none and marked for review, never a US heading. US
+    proposals are unchanged.
+  - A device or diagnostic filing's Required documents names the filing and points to its outline in the Library,
+    with no count, and says why (S6 V7 `8e96c86ed2`, F1 `c0c53d40a4`; `…/2026-11-05-v7-device-coverage/`). It said the
+    filing had no required-section list.
+- **A seal shows what it holds** (S6 V5, `4c00273d06`; `…/2026-11-05-v5-seal-binder/`): each sealed version, read from
+  the signed record only, opened through the Vault's audited download. This is D6 §8's "binders as a view".
+- **Trunk red fixed:** `catalog-actor-scope-wrapper.test.ts` (7 of 11) had a stale mock (S6, `81fbd0702b`;
+  `…/2026-11-05-catalog-actor-scope-mock/`).
 
 **Found**
 
-- **AnA's Vault tools read the whole organisation.** `read_vault_document`, `list_vault_documents`,
-  `compare_vault_versions`, `get_document_versions`, `list_governed_documents`, `read_governed_document` and
-  `global_search` (`server/services/ana/AnaToolExecutor.ts`) filter by organisation alone. They ignore the person's
-  project access and the open project's sponsor. This is next here, as F1.
-- **The Vault does not yet follow the project's settings everywhere.**
-  - A 510(k)'s "Required documents" says "not CTD-numbered", although its Library shows the eSTAR sections.
-  - Its header reads "IVD / Diagnostics", because `vaultSpineLabel` does not normalise `510k`.
-  - Module 1 proposals are pinned to the US: an EU or Japan label is proposed at 1.14.
-  - A device project is offered CTD vocabulary at upload and in the filters.
+- **Three more AnA handlers select a governed artifact by organisation alone:** `update_vault_document` (a write),
+  `assemble_ectd_module_from_artifacts` and `draft_510k_substantial_equivalence`. Next here, as F1.
+- **Region is not read everywhere.** The Data Room's filing proposal (`data-room-processing.ts`) still gets US
+  headings, and the CTD filename detector (`ctd-ingestion-service.ts` `m1Section`) gives a cover letter, form or
+  patent the US heading in every region.
+- **A device project is offered CTD vocabulary** at upload and in the filters, and the Vault cannot place a document
+  at an eSTAR section (`filingVocabularyRefusal`). This is the MDX journey's lane.
 - **Founder questions:**
   - Should the cross-sponsor view with no project open, which today is labelled by sponsor, exist at all for a CRO?
   - Should device coverage follow the rule pack's mandatory flags or the eSTAR mapper's per-device slots? They
     disagree on D4 and D6.
+  - Should a seal say when a sealed version has since been superseded? Today it says only what was sealed and whether
+    that is intact.
   - Renditions, editable binders and per-client-type retention stay founder decisions (MR-08 Stage 6 step 4,
     `VAULT_VEEVA_PARITY_PLAN_2026-09-24.md`, FD3).
 
 **Next**
 
-1. F1: AnA's Vault tools held to the projects the person can open and to the open project's sponsor.
-2. S6: the Vault's header and Module 1 proposals follow the project's filing and region.
-3. S6: a seal opens as its binder.
-4. S6: "Required documents" says what a device filing requires.
+1. F1: the three remaining AnA handlers held to the person's projects and the open sponsor.
+2. F1: the Data Room's filing proposal reads the project's region.
 
 ## 4. How everyone works
 

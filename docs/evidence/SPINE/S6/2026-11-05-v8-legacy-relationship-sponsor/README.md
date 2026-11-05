@@ -45,6 +45,6 @@ then relates the same document to a document of its own sponsor's other project.
 client's and the second as not.
 
 **Not this change: `catalog-actor-scope-wrapper.test.ts` (7 cases) fails in `02-green.txt`.** It mocks the pool and
-tests `document-catalog-actor-access.ts`, whose imports (`ana/project-scope-admission.ts`, `ana/source-read-scope.ts`)
-this change does not touch. Its sources were last changed by `4626be1f9a`, after the suite's own last change
-(`9c266724f7`). It is reported in the coordination file for its lane.
+tests `document-catalog-actor-access.ts`, whose imports this change does not touch. It was red on trunk: its mock of
+`db/tenantStore` predates `a06ae96c83`, which made `setTenantContextTx` read another export of that module. Fixed in
+`81fbd0702b` (`../2026-11-05-catalog-actor-scope-mock/`).
