@@ -208,6 +208,12 @@
 @media(max-width:800px){
   .c2c-v2 .py-strip{grid-template-columns:repeat(2,1fr);}
   .c2c-v2 .py-glob-grid{grid-template-columns:1fr;}
+  /* A task row at phone width: the task's name on its own line, then its badge, role, hours and risk. The fixed
+     110px role column left the name a word per line under the role (program plan walk, 2026-11-04, 390 px). */
+  .c2c-v2 .py-row-main{flex-wrap:wrap;row-gap:2px;}
+  .c2c-v2 .py-row-t{flex:1 1 100%;}
+  .c2c-v2 .py-row-main .py-crit,.c2c-v2 .py-row-role,.c2c-v2 .py-row-h,.c2c-v2 .py-row-risk{order:1;}
+  .c2c-v2 .py-row-role{width:auto;}
 }
 
 /* A refused task-status write. Announced where the board is, because the revert
