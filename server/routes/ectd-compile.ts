@@ -59,7 +59,7 @@ import { canonicalRegionOf } from '../../shared/regulatory/region-identity';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 import { loadFiledStateBySubmission } from '../services/ectd/prior-sequence-loader';
 import { usableIdentifier } from '../services/ectd/regulatory-identifiers';
-import { readSubmissionPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../services/ectd/package-identity';
+import { readSubmissionPackageIdentity, readRecordedPackageIdentity, packageIdentityGaps, packageIdentityRefusal, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../services/ectd/package-identity';
 import {
   resolveRequiredSections,
   type RequiredSectionSet,
@@ -89,10 +89,9 @@ function sha256(input: string): string {
  * the pinned tests read consistently.
  */
 const NO_SPINE_LEAF_BLOCKER =
-  'No leaf files have been rendered for this compile: it is not linked to a canonical submission ' +
-  '(submissions → eCTD sequence) with placed documents, so this backbone describes authored ' +
-  'section content only and cannot be transmitted to an agency gateway. Leaf rendering runs from ' +
-  'the submission spine — create the program\'s submission and place approved documents into its ' +
+  'No leaf files have been rendered for this compile: this project has no submission with an eCTD ' +
+  'sequence yet, so no document is placed and nothing can be sent to an agency gateway. Create the ' +
+  'project\'s submission and its sequence in Submission Center, then place approved documents into its ' +
   'eCTD sequence.';
 
 const NO_SEQUENCE_LEAF_BLOCKER =
@@ -181,13 +180,17 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * Why a program-spine project compiles against an empty section set. Stated once
  * and returned verbatim as a blocker / validation finding so the caller is told,
  * in so many words, why readiness is 0% — never left to infer it from silence.
+ *
+ * Client-reaching copy, read by a regulatory person: what is missing and where
+ * to act, never the store, the id space or a pending contract behind it (B3,
+ * demo walk 2026-11-05: it read "no linked section-tracking store … legacy
+ * numeric project id … pending the document-identity contract", ahead of every
+ * real reason). Table names must never reach a response body (BP-W0-5).
  */
-// Client-reaching copy: names the condition and the consequence, but no schema
-// object — table names must never reach a response body (BP-W0-5).
 const PROGRAM_SECTION_STORE_BLOCKER =
-  'This program has no linked section-tracking store: section tracking is keyed by the ' +
-  'legacy numeric project id and no numeric project row exists for this program, so no ' +
-  'authored sections are visible to the compiler (pending the document-identity contract).';
+  'No document has been placed in a sequence of this project yet, so the compile has nothing to check and every ' +
+  'required section reads as missing. Place approved documents into the sequence in Submission Center (Builder), ' +
+  'or with Place into filing from the document.';
 
 interface CompileAnchor {
   /** Legacy numeric projects.id when the ident was numeric — keys project_sections. */
@@ -440,10 +443,49 @@ function withAnchorFindings(results: ValidationResult[], anchor: CompileAnchor):
       rule: 'SECTION_STORE_UNLINKED',
       severity: 'error',
       message: PROGRAM_SECTION_STORE_BLOCKER,
-      fix: 'Author sections under a legacy sectioned project, or wait for the program → section-store mapping (document-identity contract).',
+      fix: 'Place approved documents into the sequence in Submission Center (Builder), or with Place into filing from the document.',
     },
     ...results,
   ];
+}
+
+/** Where a US IND records its application number and applicant (P-32). */
+const US_IND_IDENTITY_PLACE =
+  'Record it in Submission Center, Forms and letters (1571, cover letter, LOA), under Recorded applicant identity.';
+
+/** The package-identity read for a compile with nothing placed: the sequence's market when there is one (P-44). */
+async function draftPackageIdentity(orgId: number, anchor: CompileAnchor, spine: SubmissionSpine | null) {
+  if (!spine) return readRecordedPackageIdentity(pool, orgId, anchor.programId);
+  return readSubmissionPackageIdentity(pool, orgId, spine.submissionId, spine.sequence ? { region: spine.sequence.region } : {});
+}
+
+/**
+ * What the package would be refused for, read before anything is placed (B3,
+ * demo walk 2026-11-05). A compile with nothing placed never reached the
+ * package identity check, so the application number, the bound sponsor and
+ * its D-U-N-S were reported only once documents were placed. Each gap is its
+ * own error here, in package-identity's words, with where a US IND records it.
+ * It adds errors only: nothing the compile refuses is loosened. A legacy
+ * numeric project has no program record, so it has nothing to read here.
+ */
+async function packageIdentityFindings(
+  orgId: number,
+  anchor: CompileAnchor,
+  spine: SubmissionSpine | null,
+): Promise<ValidationResult[]> {
+  if (!anchor.programId) return [];
+  const finding = (message: string): ValidationResult => ({ rule: 'PACKAGE_IDENTITY_MISSING', severity: 'error', message });
+  try {
+    const identity = await draftPackageIdentity(orgId, anchor, spine);
+    const region = canonicalRegionOf(spine?.sequence?.region ?? spine?.primaryRegion ?? anchor.primaryAgency ?? '');
+    const usInd = region === 'US' && !identity.market
+      && String(spine?.applicationType ?? anchor.programType ?? '').toLowerCase() === 'ind';
+    return packageIdentityGaps(identity, { fda: region === 'US' }).gaps.map((gap) => finding(
+      `The package cannot be built yet: ${gap.trim().replace(/\.$/, '')}.${usInd ? ` ${US_IND_IDENTITY_PLACE}` : ''}`));
+  } catch (err) {
+    log.warn('package identity could not be read for a compile with nothing placed', { error: err instanceof Error ? err.message : String(err) });
+    return [finding('The application number and the applicant recorded for this project could not be read, so whether the package can name them is not known.')];
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -775,7 +817,10 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     );
 
     // 2. Run pre-compile validation
-    const validationResults = withAnchorFindings(runPreCompileValidation(sections, region, required), anchor);
+    const validationResults = [
+      ...await packageIdentityFindings(orgId, anchor, spine),
+      ...withAnchorFindings(runPreCompileValidation(sections, region, required), anchor),
+    ];
     const hasBlockingErrors = validationResults.some(v => v.severity === 'error');
 
     // 3. Build module compilation status
@@ -1615,7 +1660,10 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
         `section_code, title, status, content, word_count, module, required`,
         {},
       );
-      results = withAnchorFindings(runPreCompileValidation(sections, region, required), anchor);
+      results = [
+        ...await packageIdentityFindings(orgId, anchor, spine),
+        ...withAnchorFindings(runPreCompileValidation(sections, region, required), anchor),
+      ];
     }
     const passCount = results.filter(r => r.severity === 'info').length;
     const warnCount = results.filter(r => r.severity === 'warning').length;
