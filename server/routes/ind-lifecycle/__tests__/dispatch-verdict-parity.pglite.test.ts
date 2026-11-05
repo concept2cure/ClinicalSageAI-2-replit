@@ -26,6 +26,7 @@ import express from 'express';
 import request from 'supertest';
 import { createHash } from 'crypto';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { coverCurrentLeaves } from '../../../services/shadow-review/__tests__/review-covers-current-leaves';
 
 vi.hoisted(() => {
   process.env.SKIP_DB_STARTUP_TEST = 'true';
@@ -97,6 +98,9 @@ async function completeAmendment(sequenceId: number): Promise<void> {
   await placeLeaf(sequenceId, 'm1.1.1', 'Form FDA 1571');
   await placeLeaf(sequenceId, 'm1.2', 'Cover Letter');
   await placeLeaf(sequenceId, 'm5.3.5.1', 'Protocol amendment');
+  // The completed Shadow Review covers these leaves, as a real run over them
+  // records (3cacf2e15a): a run that names no leaves covers nothing.
+  await coverCurrentLeaves({ query: q }, sequenceId, ORG);
 }
 
 /** The same sequence, asked both ways. */
