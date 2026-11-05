@@ -69,8 +69,10 @@ type Executor = Queryable & { release?: (error?: Error) => void };
 
 /** The target document, in this organization and project, editable by this person, and not a working copy. */
 async function admitTarget(q: Queryable, ctx: CreateContext, principal: AuthoringPrincipal, input: CsrIntoDocumentInput, lock: boolean): Promise<TargetDocument> {
+  // The write transaction takes the document's row lock first, as its own fixed statement; the read follows on it.
+  if (lock) await q.query('SELECT 1 FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE', [input.targetDocumentId, ctx.tenantId]);
   const { rows } = await q.query(`SELECT id::text, title, status, created_by::text, client_program_id::text AS program_id
-      FROM authoring_documents WHERE id = $1 AND tenant_id = $2${lock ? ' FOR UPDATE' : ''}`, [input.targetDocumentId, ctx.tenantId]);
+      FROM authoring_documents WHERE id = $1 AND tenant_id = $2`, [input.targetDocumentId, ctx.tenantId]);
   const doc = rows[0] as { id: string; title: string; status: string; created_by: string; program_id: string | null } | undefined;
   if (!doc) return fail(404, 'IMPORT_TARGET_NOT_FOUND', 'This document is not in your organization. Nothing was imported.');
   if (String(doc.program_id ?? '').toLowerCase() !== input.programId) return fail(409, 'IMPORT_TARGET_OTHER_PROJECT', 'This document belongs to another project than the build. Nothing was imported.');
@@ -108,6 +110,8 @@ function effectiveSource(source: CsrSource, earlier: string[]): CsrSource {
 }
 
 async function targetSections(q: Queryable, tenantId: number, documentId: string, lock: boolean): Promise<Map<string, TargetSection>> {
+  // The write transaction locks the document's section rows first (they alone, as FOR UPDATE OF s did), then reads them.
+  if (lock) await q.query('SELECT 1 FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 FOR UPDATE', [documentId, tenantId]);
   const { rows } = await q.query(`SELECT s.id::text, s.code, s.title, COALESCE(s.content, '') AS content,
       r.id::text AS latest_id, r.origin AS latest_origin, r.content_sha256 AS latest_sha,
       EXISTS (SELECT 1 FROM authoring_audit_trail c WHERE c.section_id = s.id AND c.tenant_id = s.tenant_id
@@ -118,7 +122,7 @@ async function targetSections(q: Queryable, tenantId: number, documentId: string
       ORDER BY created_at DESC, id DESC LIMIT 1) r ON true
     LEFT JOIN LATERAL (SELECT metadata FROM authoring_audit_trail t WHERE t.section_id = s.id AND t.tenant_id = s.tenant_id
       AND t.operation_type = 'UPDATE' AND t.metadata ? 'csrBuildImport' ORDER BY t.created_at DESC, t.id DESC LIMIT 1) i ON true
-    WHERE s.doc_id = $1 AND s.tenant_id = $2${lock ? ' FOR UPDATE OF s' : ''}`, [documentId, tenantId]);
+    WHERE s.doc_id = $1 AND s.tenant_id = $2`, [documentId, tenantId]);
   return new Map((rows as Array<Record<string, unknown>>).map(row => [String(row.code), {
     id: String(row.id), code: String(row.code), title: String(row.title ?? ''), content: String(row.content ?? ''),
     latestId: (row.latest_id as string | null) ?? null, latestOrigin: (row.latest_origin as string | null) ?? null,
@@ -235,11 +239,14 @@ async function recordImport({ q, ctx, input, admitted }: WriteScope, planned: Pl
     WHERE id = $2 AND tenant_id = $3`, [JSON.stringify(importSource), doc.id, ctx.tenantId]);
 }
 
-async function inTransaction<T>(ctx: CreateContext, isolation: string, work: (q: Executor) => Promise<T>): Promise<T> {
+/** The two isolation levels this import opens, as fixed statements. */
+const BEGIN_AT = { SERIALIZABLE: 'BEGIN ISOLATION LEVEL SERIALIZABLE', 'REPEATABLE READ': 'BEGIN ISOLATION LEVEL REPEATABLE READ' } as const;
+
+async function inTransaction<T>(ctx: CreateContext, isolation: keyof typeof BEGIN_AT, work: (q: Executor) => Promise<T>): Promise<T> {
   const client = await ctx.pool.connect() as Executor;
   let discard: Error | undefined;
   try {
-    await client.query(`BEGIN ISOLATION LEVEL ${isolation}`);
+    await client.query(BEGIN_AT[isolation]);
     const result = await work(client);
     await client.query('COMMIT');
     return result;
