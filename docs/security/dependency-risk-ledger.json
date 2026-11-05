@@ -90,7 +90,6 @@
       "disposition": "unreachable",
       "evidence": {
         "packagePaths": [
-          "concept2cure-riai > jest@29.7.0 > @jest/core@29.7.0 > micromatch@4.0.8 > braces@3.0.3 (devDependency)",
           "concept2cure-riai > danger@13.0.10 > micromatch@4.0.8 > braces@3.0.3 (devDependency)"
         ],
         "entryPoints": [
@@ -99,7 +98,8 @@
         "runtimeProof": [
           "The advisory is a stack-exhaustion DoS when braces expands a deeply nested PATTERN (CVE-2026-93687, CWE-674). An attacker must control the pattern string.",
           "After removing http-proxy-middleware, `npm ls braces --omit=dev --all` prints `(empty)`: the production install (npm ci --omit=dev, the Dockerfile's runtime stage) does not contain braces or micromatch.",
-          "In dev, the patterns come from jest.config / vitest-adjacent config and danger's dangerfile, all committed in this repository; neither tool takes a pattern from an HTTP request, a document or a user."
+          "In dev, the patterns come from jest.config / vitest-adjacent config and danger's dangerfile, all committed in this repository; neither tool takes a pattern from an HTTP request, a document or a user.",
+          "Re-reviewed 2026-11-05 (extension approved by the founder in session 011Dpx): `npm ls braces --omit=dev --all` is still `(empty)`; `npm ls braces --all` shows one path, danger@13.0.10 > micromatch@4.0.8 > braces@3.0.3 (the jest path is gone); `npm view braces version` is 3.0.3, so no fix exists; `git grep` finds no import of micromatch or braces in server, shared, client or scripts."
         ],
         "commands": [
           "npm ls braces --omit=dev --all",
@@ -109,8 +109,8 @@
       },
       "action": "Keep braces out of the production tree: a new runtime dependency that pulls micromatch/braces must re-review this row. Drop the row when braces ships a release above 3.0.3.",
       "owner": "Security Engineering (human owner required if disposition changes to exception)",
-      "reviewDate": "2026-10-05",
-      "expiresAt": "2026-11-05T00:00:00.000Z"
+      "reviewDate": "2026-11-05",
+      "expiresAt": "2026-12-05T00:00:00.000Z"
     }
   ]
 }
