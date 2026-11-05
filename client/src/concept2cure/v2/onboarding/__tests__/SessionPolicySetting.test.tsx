@@ -29,7 +29,7 @@ describe('governed session security policy', () => {
     expect(field('Maximum concurrent sessions')).toHaveProperty('value', '5');
     expect(screen.getByText('12 hours')).toBeTruthy();
     expect(screen.queryByRole('checkbox')).toBeNull();
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/organizations/37/settings');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/organizations/37/settings', undefined, undefined, expect.any(AbortSignal));
   });
 
   it('sends only the two enforced keys and an audited reason to the JWT organization', async () => {
@@ -110,7 +110,7 @@ describe('session policy remains bound to the original workspace', () => {
     expect(await screen.findByText(/organization changed.*reopen this page/i)).toBeTruthy();
     expect(screen.queryByRole('spinbutton')).toBeNull();
     expect(apiRequest).toHaveBeenCalledTimes(1);
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/organizations/37/settings');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/organizations/37/settings', undefined, undefined, expect.any(AbortSignal));
   });
 
   it('does not confirm a save response received after the organization changes', async () => {

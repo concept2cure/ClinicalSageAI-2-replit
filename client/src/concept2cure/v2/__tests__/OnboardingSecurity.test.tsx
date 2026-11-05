@@ -36,7 +36,7 @@ describe('security onboarding guidance', () => {
     await screen.findByText('Not enrolled. Sign-in uses an email code.');
     fireEvent.click(await screen.findByRole('button', { name: 'Identity configuration' }));
     expect(navigate).toHaveBeenCalledWith('identity-console');
-    expect(request).toHaveBeenCalledWith('GET', '/api/v1/auth/session');
+    expect(request).toHaveBeenCalledWith('GET', '/api/v1/auth/session', undefined, undefined, expect.any(AbortSignal));
     expect(request.mock.calls.some(([method]) => method !== 'GET')).toBe(false);
     expect(screen.getByText(/Selecting a requirement does not configure/)).toBeTruthy();
   });

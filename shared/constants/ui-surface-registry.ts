@@ -180,7 +180,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Entry to everything. Partially built in ui_kits/home and ui_kits/mdx.',
+    notes: 'Entry to everything: every project the organization can open, found by search, and New project, where each project starts with its goal.',
   },
   {
     id: 'apps',
@@ -744,7 +744,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE, 'motion-discipline'],
-    notes: 'Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates. See ui_kits/tasking + ui_kits/task-tray.',
+    notes: 'The organization\'s tasks: each with its owner, due date and dependencies, the critical path, channels, messages, the activity feed, presence and mentions.',
   },
 
   {
@@ -962,7 +962,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Classification, performance testing, risk analysis, IVDR, CLIA, CDx, LDT. See ui_kits/risk + ui_kits/labeling.',
+    notes: 'Classification, performance testing, risk analysis, IVDR, CLIA, CDx, LDT, with the device\'s risk file and labeling.',
   },
   {
     id: 'labeling',

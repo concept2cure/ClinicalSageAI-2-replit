@@ -26,9 +26,19 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 const auth = vi.hoisted(() => ({ roles: ['admin', 'user'] as string[] }));
+/* The signed-in account: an id (the navigation verdicts are read only for an account with one, navEntitlements.tsx
+   useNavigationReadOwner), and the same object on every render, as the session gives it. */
+const stableUser = vi.hoisted(() => {
+  const seen = new Map<string, Record<string, unknown>>();
+  return (u: Record<string, unknown>) => {
+    const key = JSON.stringify(u);
+    if (!seen.has(key)) seen.set(key, { id: 21, ...u });
+    return seen.get(key)!;
+  };
+});
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({
-    user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: auth.roles },
+    user: stableUser({ firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: auth.roles }),
     logout: vi.fn(),
   }),
 }));
@@ -78,7 +88,7 @@ async function openAccountMenu() {
       />
     </NavEntitlementsProvider>,
   );
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL, undefined, undefined, expect.any(AbortSignal)));
   // Flush the verdict microtasks so an assertion of ABSENCE cannot pass merely
   // by running before the payload landed.
   await act(async () => {
