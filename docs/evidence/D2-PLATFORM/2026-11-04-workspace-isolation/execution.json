@@ -1,0 +1,62 @@
+{
+  "baselineCommit": "307a77ffbe04e7f203fc19b18bb44869959c6ea4",
+  "node": "22.16.0",
+  "typescript": "5.8.3",
+  "testMode": "full production modules; synthetic collaborators; no browser, database or real license read",
+  "sourceFiles": {
+    "shared/regulatory/workspace-config.ts": {
+      "baseline": {
+        "bytes": 17805,
+        "gitBlob": "480b6a572d9636163d3644f8e2037b6f9a284206",
+        "sha256": "e606a612a77a252a5eb6a81c90812ea07a6bf4d28c32bbb243faca794ba60146"
+      },
+      "work": {
+        "bytes": 18227,
+        "gitBlob": "5e3803cee0db86677ab73def43e5965e9d3e0a69",
+        "sha256": "f035d1f6920a64a621c5ee35907eef568db48dcac1fe9ba75c779585ba701926"
+      }
+    },
+    "server/services/regulatory/workspace-config-enrichment.ts": {
+      "baseline": {
+        "bytes": 5052,
+        "gitBlob": "02bf0fe54b1651def1ae639f7cac13f8fc24e0b4",
+        "sha256": "f65fda2f0ba147c734e7ca9565494929c0d457bfcbd31802341643c2ae220d50"
+      },
+      "work": {
+        "bytes": 6127,
+        "gitBlob": "2bdaaf2499e036a9ea3c370e5227b53425f353ea",
+        "sha256": "072ee2735e1d72180b019264f4d2d9889fa8af7c7b83abe8d458c5a590b7669f"
+      }
+    }
+  },
+  "results": {
+    "before": {
+      "tests": 55,
+      "passed": 23,
+      "failed": 32,
+      "skipped": 0,
+      "rawSha256": "109e703ce44aee006668772433ae105ea10b72337018fc8bfe9f8f35c4fd9fc6",
+      "rawBytes": 48936,
+      "rawTranscript": "before.tap (accompanying verification bundle; reproducible with command in README)"
+    },
+    "after": {
+      "tests": 55,
+      "passed": 55,
+      "failed": 0,
+      "skipped": 0,
+      "rawSha256": "308b5af62b3517a31b709188a2d0c1386d5a074242ed56cfe257d9dba9d9d201",
+      "rawBytes": 12057,
+      "rawTranscript": "after.tap (accompanying verification bundle; reproducible with command in README)"
+    }
+  },
+  "nativeCatalogTests": {
+    "count": 12,
+    "executed": false
+  },
+  "syntaxTranspileFiles": 3,
+  "fullSemanticTypecheck": false,
+  "prePushHookRun": false,
+  "behaviorSuiteSha256": "b013265a78896a66764df0f8e8af1bbd5420aae5ab8558064d9cad5bb9d8986c",
+  "testHarnessSha256": "5e555f73acfe44bfa9207eda69a3c2d3851248ce8d7683c3b822fcc54aa98f0f",
+  "caseResultSha256": "c1d861df36114fe54261e475c5d0593898801a8880aa96818940c106f6d59a39"
+}
