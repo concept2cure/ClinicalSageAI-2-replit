@@ -4894,7 +4894,10 @@ export function DocumentWorkbench({
                 known by its stored template id, the four built-in CSR templates the scientific review reads
                 (shared CSR_TEMPLATE_IDS), so one made from registry:ICH_CSR or the IND 5.3.5.1/5.3.5.2 report
                 templates gets it too, not only the E3 component (D2-CSR F1, 2026-11-05). */}
-            {programId && activeDocId && isCsrTemplateId(docTemplateId) && <StudyDataBuild key={activeDocId} programId={programId} documentId={activeDocId} onNav={onNav} />}
+            {programId && activeDocId && isCsrTemplateId(docTemplateId) && <StudyDataBuild key={activeDocId} programId={programId} documentId={activeDocId} onNav={onNav}
+              /* F6: the import wrote this document's sections on the server. Read them again and remount the
+                 canvas on the imported text, as a revert does, unless the person has unsaved typing open. */
+              onDocumentChanged={() => void loadSections(activeDocId, () => { if (!editorDirty) setContentEpoch(e => e + 1); })} />}
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a

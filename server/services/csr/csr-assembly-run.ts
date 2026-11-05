@@ -9,9 +9,11 @@
  * written on the row as the work goes, and the outcome (or the refusal, by
  * code) recorded there for the board to read.
  *
- * The worker acts as the user who asked, under that organization's tenant
- * scope: assembleCsrJob re-checks the user's access to the job and its
- * retained run, exactly as an import into Authoring does.
+ * The worker acts as the user who asked, under that organization's full tenant
+ * scope (its integer id and its uuid: withOrganizationTenantConnection):
+ * assembleCsrJob re-checks the user's access to the job and its retained run,
+ * exactly as an import into Authoring does. An organization with no uuid is
+ * refused by code (CSR_TENANT_SCOPE_UNAVAILABLE) and nothing is read.
  *
  * Every leaf it produces is retained at once through the one seam for
  * server-rendered filing bytes (rendered-leaf-files.ts storeRenderedLeafFile),
@@ -175,8 +177,13 @@ export async function enqueueCsrAssembly(q: Queryable, input: { organizationId: 
 }
 
 export interface CsrAssemblyWorkerDeps {
-  /** Run `fn` on a connection carrying the organization's tenant scope. */
-  withOrganization<T>(organizationId: number, fn: (client: Queryable & RequestSqlClient) => Promise<T>): Promise<T>;
+  /**
+   * Run `fn` on a connection carrying the organization's full tenant scope: its integer id and its uuid, the key the
+   * Vault's row security reads. When the organization has no uuid, `fn` never runs: `refuse` runs instead, on a
+   * connection carrying the integer id alone, which reads none of the organization's Vault.
+   */
+  withOrganization<T>(organizationId: number, fn: (client: Queryable & RequestSqlClient) => Promise<T>,
+    refuse?: (client: Queryable) => Promise<T>): Promise<T>;
   assemble(q: Queryable & RequestSqlClient, input: AssembleCsrJobInput): Promise<AssembledCsrJob>;
   storeLeaf(input: StoreRenderedLeafFileInput): Promise<StoredRenderedLeafFile>;
   materializeSupplied?: typeof materializeSupplied;
@@ -184,12 +191,14 @@ export interface CsrAssemblyWorkerDeps {
 }
 
 async function defaultDeps(): Promise<CsrAssemblyWorkerDeps> {
-  const [{ withTenantConnection }, { assembleCsrJob }, { storeRenderedLeafFile }] = await Promise.all([
+  const [{ withOrganizationTenantConnection }, { assembleCsrJob }, { storeRenderedLeafFile }] = await Promise.all([
     import('../../db/withTenantConnection.js'), import('./csr-assembly-source.js'), import('../ectd/rendered-leaf-files.js'),
   ]);
   return {
-    withOrganization: (organizationId, fn) => withTenantConnection({ tenantId: organizationId, source: 'job', caller: 'csr-assembly-run' },
-      client => fn(client as unknown as Queryable & RequestSqlClient)),
+    // The organization's full scope (B1, 2026-11-05): with the integer id alone, the Vault read as empty and every
+    // assembly ended CSR_SOURCE_DATA_UNAVAILABLE on a database where the runtime role is not the table owner.
+    withOrganization: (organizationId, fn, refuse) => withOrganizationTenantConnection(organizationId, 'csr-assembly-run',
+      client => fn(client as unknown as Queryable & RequestSqlClient), refuse && (client => refuse(client as unknown as Queryable))),
     assemble: assembleCsrJob,
     storeLeaf: storeRenderedLeafFile,
   };
@@ -295,6 +304,16 @@ async function assembleClaimed(q: Queryable & RequestSqlClient, run: CsrAssembly
   return summarise(result, await kept.finish(result), result.leaves[0]?.studyId ?? '');
 }
 
+const TENANT_SCOPE_FAILURE = { code: 'CSR_TENANT_SCOPE_UNAVAILABLE',
+  message: 'This organization has no tenant key, so its Vault sources cannot be read. Nothing was assembled.' };
+
+/** The organization's full scope cannot be opened: the queued assembly is recorded failed, by code, and nothing is read. */
+async function refuseUnscoped(q: Queryable, id: number, organizationId: number): Promise<void> {
+  log.error('CSR assembly refused: the organization has no tenant key', { id, organizationId, code: TENANT_SCOPE_FAILURE.code });
+  await q.query(`UPDATE csr_assembly_runs SET status = 'failed', stage = 'Failed', error = $3::jsonb, completed_at = now(), updated_at = now()
+    WHERE id = $1 AND organization_id = $2 AND status = 'queued'`, [id, organizationId, JSON.stringify(TENANT_SCOPE_FAILURE)]);
+}
+
 /** The worker: claim a queued assembly, assemble as its requester, retain the leaves, record the outcome. */
 export async function runCsrAssembly(id: number, organizationId: number, injected?: CsrAssemblyWorkerDeps): Promise<void> {
   const deps = injected ?? await defaultDeps();
@@ -317,7 +336,7 @@ export async function runCsrAssembly(id: number, organizationId: number, injecte
     } finally {
       await fs.rm(workDir, { recursive: true, force: true });
     }
-  });
+  }, q => refuseUnscoped(q, id, organizationId));
 }
 
 /** Start the worker off the request thread, as launchCSRBuildAsync starts a build. */

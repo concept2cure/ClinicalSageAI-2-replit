@@ -162,6 +162,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
     }],
   },
   { id: 'quality', label: 'Quality', description: 'The quality management surface (SOP register, controlled documents).', scope: 'global', group: 'module' },
+  // Risk-based monitoring, a launch app and a rail work area since P-76 (2026-10-30); it had no target, so AnA and the tour could not open it.
+  { id: 'rbm', label: 'Risk-based monitoring', description: 'Risk-based quality management of the project\'s study (ICH E6(R3)): the risk assessment, KRIs and QTLs, central monitoring, site risk and the monitoring plan, each score computed deterministically and each approval signed.', scope: 'global', group: 'module' },
   {
     id: 'authoring', label: 'Authoring', description: 'The unified document authoring editor.', scope: 'project', group: 'module',
     params: [{ name: 'authoringDocType', required: false, description: 'Document type to author (drives the editor template).' }],
@@ -181,7 +183,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // by AnA. It was the one project surface `navigate_to` could not reach.
   { id: 'communication-center', label: 'Communication', description: 'The agency-communication hub for the project — the FDA loop, the agency inbox, meetings and commitments, and authority profiles.', scope: 'project', group: 'module' },
   { id: 'mission-control', label: 'Mission control', description: 'The portfolio mission-control board — every program and its cross-program status.', scope: 'global', group: 'global' },
-  { id: 'biostat-workbench', label: 'Biostatistics workbench', description: 'The biostatistics workbench — reviewer-risk assessment plus the deterministic design engines (assurance, group-sequential, sample size, multiplicity, and more).', scope: 'global', group: 'module' },
+  { id: 'biostat-workbench', label: 'Biostatistics design calculators', description: 'The biostatistics design calculators — reviewer-risk assessment plus the deterministic design engines (assurance, group-sequential, sample size, multiplicity, and more).', scope: 'global', group: 'module' },
   { id: 'filing-strategy', label: 'Filing strategy', description: 'The filing-strategy workspace — filing-sequence optimization, agency divergence, and prediction calibration.', scope: 'project', group: 'module' },
   { id: 'safety-narrative', label: 'Safety narratives', description: 'The safety-narrative workbench — the SAE case worklist with the ICH E3 §16 narrative composer and expedited-reporting clocks.', scope: 'project', group: 'module' },
   { id: 'crl-library', label: 'FDA CRL library', description: 'The FDA Complete-Response-Letter evidence library — deficiency findings by discipline and severity across the corpus.', scope: 'global', group: 'module' },

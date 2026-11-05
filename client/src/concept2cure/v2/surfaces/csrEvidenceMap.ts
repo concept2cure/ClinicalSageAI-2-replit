@@ -57,7 +57,9 @@ export function claimableCells(runs: readonly RetainedScientificRun[]): CellRef[
 
 /**
  * Each place a retained cell's exact value appears in a section's saved text,
- * outside markup, on the shared number boundaries ("190" is not found inside
+ * outside markup and outside study design (a trial phase, a scheduled week or
+ * visit, an instrument's item count: shared studyDesignNumberAt, B6), on the
+ * shared number boundaries ("190" is not found inside
  * "1190", nor "12" in "10/12"). A following "%" continues a number under that
  * rule ("12" is not "12%"), except for a cell in a percentage column, whose
  * value the text reports with its unit ("83.3%"). One occurrence per place,

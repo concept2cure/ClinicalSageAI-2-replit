@@ -6,10 +6,13 @@ import { CsrScopeError, readCsrProjectActor } from './project-scope.js';
 import { programInOrganization } from '../c2c/program-access.js';
 
 /** Completed narrative summaries are reusable inputs for Module 2, not the
- * clinical observations or full study metadata needed to draft a first CSR. */
+ * clinical observations or full study metadata needed to draft a first CSR.
+ * Narratives are composed in the CSR document, from the study data frozen
+ * there (editor/StudyDataBuild.tsx, D2-CSR F11, 2026-11-05), never from this
+ * project-level read, so the message says where to do it. */
 export const CSR_NARRATIVE_INPUTS_REQUIRED = {
   code: 'CSR_NARRATIVE_INPUTS_REQUIRED',
-  message: 'First-study CSR drafting is unavailable until verified study data and complete study information are linked to this project. Completed CSR summaries can be reused in a package; they do not supply those source inputs.',
+  message: 'Patient narratives are composed in the CSR document, from the study data frozen there: open the CSR and use "Build from the study’s data". Completed CSR summaries can be reused in a package; they do not supply study data.',
 } as const;
 
 export interface ProgramCsrSourceReadiness {

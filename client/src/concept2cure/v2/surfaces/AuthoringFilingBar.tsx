@@ -39,6 +39,7 @@ import { apiRequest, extractApiError, redactInternals, serverMessage, type ApiRe
 import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import type { WorkflowImportOrigin } from '@shared/authoring/source-import';
+import { useCsrSigningGate } from '../editor/reviewTaskState';
 
 export interface AuthoringFilingBarProps {
   docId: string;
@@ -500,8 +501,10 @@ function RefusalNote({ id, testId, text }: { id: string; testId: string; text: s
   );
 }
 
-export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal, esignRefusal: serverEsignRefusal, reviewOnly, signerIsAuthor, workflowOrigin, docRevision }: AuthoringFilingBarProps) {
-  const esignRefusal = esignRefusalFor(serverEsignRefusal, reviewOnly, signerIsAuthor);
+export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal: serverFreezeRefusal, esignRefusal: serverEsignRefusal, reviewOnly, signerIsAuthor, workflowOrigin, docRevision }: AuthoringFilingBarProps) {
+  const gate = useCsrSigningGate(docId, docRevision ?? docStatus, esignOffer(reviewOnly, signerIsAuthor).meanings,
+    { freeze: serverFreezeRefusal, esign: esignRefusalFor(serverEsignRefusal, reviewOnly, signerIsAuthor) });
+  const { freeze: freezeRefusal, esign: esignRefusal } = gate;
   const freezeNoteId = useId();
   const esignNoteId = useId();
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -566,7 +569,8 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
      acknowledgement goes only with an approval, and only after the server
      refused and the approver chose to approve it as it stands. */
   const doSign = async (input: SignInput): Promise<EsigSignedManifest> => {
-    if (refusalRef.current.esign) throw new Error(refusalRef.current.esign);
+    const refused = refusalRef.current.esign || gate.forMeaning(input.meaning);
+    if (refused) throw new Error(refused);
     let signed;
     try {
       signed = await postAuthoringSignature(docId, input, input.meaning === 'review' && adoptRef.current,
@@ -600,11 +604,11 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       </button>
       {!frozen && freezeRefusal && <RefusalNote id={freezeNoteId} testId="freeze-refusal" text={freezeRefusal} />}
       <button className="btn ghost" style={{ height: 30 }} onClick={() => setDialog('esign')} disabled={!!esignRefusal}
-        aria-describedby={esignRefusal ? esignNoteId : undefined}
+        aria-describedby={esignRefusal ? (esignRefusal === freezeRefusal ? freezeNoteId : esignNoteId) : undefined}
         title={esignRefusal ?? undefined}>
         {I.penLine} E-sign
       </button>
-      {esignRefusal && <RefusalNote id={esignNoteId} testId="esign-refusal" text={esignRefusal} />}
+      {esignRefusal && esignRefusal !== freezeRefusal && <RefusalNote id={esignNoteId} testId="esign-refusal" text={esignRefusal} />}
       {notApprovedKeys.length > 0 && (
         <RefusalNote id={notApprovedNoteId} testId="esign-not-approved" text={notApprovedNote(notApprovedKeys)} />
       )}
@@ -612,7 +616,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       <FreezeDialogs dialog={dialog} docTitle={docTitle} unresolved={unresolved} figures={figures} signerIsAuthor={signerIsAuthor} signer={signer}
         freezeRefusal={freezeRefusal} onSign={doFreeze} onClose={closeAll} onChoice={onUnsettledChoice} onFiguresChoice={onFiguresChoice('freeze')} />
       <EsignDialogs dialog={dialog} docTitle={docTitle} unresolved={unresolved} figures={figures} reviewOnly={reviewOnly} signerIsAuthor={signerIsAuthor} signer={signer}
-        esignRefusal={esignRefusal} onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
+        gate={gate.forMeaning} onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
         onSign={doSign} onClose={closeAll} onChoice={onApprovalUnsettledChoice} onFiguresChoice={onFiguresChoice('esign')} />
     </>
   );
@@ -672,9 +676,10 @@ function withFiguresMeta(meta: string, figures: FigureQuestion | null): string {
 }
 
 /** The E-sign dialog, and the approval's questions when the server asked them (not settled, 2026-10-30; figures, P-89). */
-function EsignDialogs({ dialog, docTitle, unresolved, figures, reviewOnly, signerIsAuthor, signer, esignRefusal, onMeaningChange, renderMeaningDetails, onSign, onClose, onChoice, onFiguresChoice }: {
+function EsignDialogs({ dialog, docTitle, unresolved, figures, reviewOnly, signerIsAuthor, signer, gate, onMeaningChange, renderMeaningDetails, onSign, onClose, onChoice, onFiguresChoice }: {
   dialog: Dialog; docTitle: string; unresolved: Unresolved | null; figures: FigureQuestion | null; reviewOnly?: boolean; signerIsAuthor?: boolean;
-  signer: AuthoringFilingBarProps['signer']; esignRefusal?: string | null;
+  /** The refusal for the meaning chosen: the server's, or the CSR review gate's (B7), shown before a password is sent. */
+  signer: AuthoringFilingBarProps['signer']; gate: (m: EsigMeaning) => string | null;
   onMeaningChange: (m: EsigMeaning) => void; renderMeaningDetails: (m: EsigMeaning, disabled: boolean) => React.ReactNode;
   onSign: (input: SignInput) => Promise<EsigSignedManifest>; onClose: () => void; onChoice: (v: Record<string, string>) => void;
   onFiguresChoice: (v: Record<string, string>) => void;
@@ -700,7 +705,7 @@ function EsignDialogs({ dialog, docTitle, unresolved, figures, reviewOnly, signe
       signer={signer}
       onClose={onClose}
       onSign={onSign}
-      commitRefusal={esignRefusal}
+      commitRefusal={gate}
     />
   );
 }

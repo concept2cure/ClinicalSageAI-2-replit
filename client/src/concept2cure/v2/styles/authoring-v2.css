@@ -2721,8 +2721,20 @@
   .ed-source-notice > summary {
     cursor: pointer;
   }
+  /* One column sized to the panel (B5, demo walk 2026-11-05): an `auto` track took its longest
+     unbreakable item's width, so at 390 wide the CSR's study-data panel ran past its right edge. */
   .ed-source-detail {
     margin-top: var(--space-2);
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ed-source-detail select {
+    max-width: 100%;
+  }
+  /* The CSR build, assembly and section-review blocks inside the panel lay out as inline grids
+     (style="display: grid": CsrRunBuilds, CsrAssemblyControl, CsrBuildProgress). Their `auto` track
+     took the widest select option's width (458px at 390 wide); their items may be as narrow as the panel. */
+  .ed-source-detail [style*="display: grid"] > * {
+    min-width: 0;
   }
   .ed-source-detail .de-desc {
     margin-bottom: 0;

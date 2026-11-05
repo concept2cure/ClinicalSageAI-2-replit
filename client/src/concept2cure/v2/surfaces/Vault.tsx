@@ -2473,9 +2473,11 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     </div>
   ) : null;
 
-  const versionsOf = (d: VaultDoc) =>
+  /* The Versions disclosure is VaultVersions' own: the current version's next step stands above it (B8). */
+  const versionsOf = (d: VaultDoc, open = false) =>
     projectId && d.docId ? (
       <VaultVersions
+        open={open}
         key={`versions-${d.docId}-${vaultEpoch}`}
         projectId={projectId}
         documentId={d.docId}
@@ -2558,7 +2560,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           )}
         </div>
       ))}
-      {projectId && sel.docId ? part('Versions', false, versionsOf(sel)) : null}
+      {projectId && sel.docId ? versionsOf(sel) : null}
       {projectId && sel.docId ? part('Review annotations', false, annotationsOf(sel)) : null}
       {projectId && sel.docId ? part('Related documents', false, relationshipsOf(sel)) : null}
       {projectId && sel.docId ? part('History', false, historyOf(sel)) : null}
@@ -2573,7 +2575,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           An earlier version. The tree lists the current one, which carries the document&apos;s filing.
         </div>
       )}
-      {part('Versions', true, versionsOf(sel))}
+      {versionsOf(sel, true)}
       {part('Review annotations', false, annotationsOf(sel))}
       {part('Related documents', false, relationshipsOf(sel))}
       {part('History', false, historyOf(sel))}

@@ -25,8 +25,11 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+/* One signed-in account with an id, the same object on every render: the navigation verdicts are read only for an
+   account with an id, once per visit (navEntitlements.tsx useNavigationReadOwner). */
+const signedIn = vi.hoisted(() => ({ user: { id: 21, firstName: 'Dana' } }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { firstName: 'Dana' } }),
+  useAuth: () => signedIn,
 }));
 vi.mock('@/hooks/useGlobalRiCatalog', () => ({
   useGlobalRiCatalog: () => ({ catalog: null, loading: false, error: undefined }),

@@ -30,7 +30,9 @@ vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFi
 // The build itself is StudyDataBuild's own suite; here only whether the editor mounts it, and for which document.
 vi.mock('../StudyDataBuild', async original => ({
   ...(await original<typeof import('../StudyDataBuild')>()),
-  StudyDataBuild: ({ documentId }: { documentId: string }) => <section aria-label="Build from the study’s data">{documentId}</section>,
+  StudyDataBuild: ({ documentId, onDocumentChanged }: { documentId: string; onDocumentChanged?: () => void }) => (
+    <section aria-label="Build from the study’s data">{documentId}
+      <button type="button" aria-label="Approved sections imported" onClick={onDocumentChanged} /></section>),
 }));
 import { DocumentCanvas } from '../DocumentCanvas';
 import { clearEditorTarget } from '../../editorTarget';
@@ -60,15 +62,17 @@ for (const prototype of [Range.prototype, Element.prototype, Text.prototype] as 
   prototype.getBoundingClientRect ??= () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 });
 }
 
+let sectionText = '<p>The study report title page.</p>';
+let sectionAt = AT;
 function serve(templateSource: ReturnType<typeof recorded>) {
   const doc = { id: DOC, title: 'Renamed study report', module: 'M5', status: 'DRAFT', updated_at: AT, section_count: 1,
     template_id: templateSource.id, provenance: { source: 'template', governedWrite: 'unverified', templateSource } };
-  const section = { id: SEC, doc_id: DOC, code: '1', title: 'Title Page', content: '<p>The study report title page.</p>',
-    order_index: 0, updated_at: AT };
+  const section = () => ({ id: SEC, doc_id: DOC, code: '1', title: 'Title Page', content: sectionText,
+    order_index: 0, updated_at: sectionAt });
   apiRequest.mockImplementation(async (_method: string, url: string) => {
     if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
-    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section()] });
     if (url.startsWith('/api/authoring/guidance/')) return ok({ template_guidance: [] });
     if (url.includes('/sources')) return ok({ sources: [] });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
@@ -84,6 +88,8 @@ async function opened() {
 }
 
 beforeEach(() => {
+  sectionText = '<p>The study report title page.</p>';
+  sectionAt = AT;
   localStorage.clear();
   window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
   apiRequest.mockReset();
@@ -106,4 +112,15 @@ describe('a CSR document shows "Build from the study’s data", whichever CSR te
     await opened();
     expect(screen.queryByRole('region', { name: 'Build from the study’s data' })).toBeNull();
   });
+});
+
+/* F6 (2026-11-05): the approved headings are written into this document. The editor reads its sections again
+   when the build panel says the import wrote, so the person sees the imported text without reopening it. */
+it('after an import into this CSR, the editor shows the imported text', async () => {
+  serve(recorded('component:clinical_study_report', CSR_SOURCES['component:clinical_study_report']));
+  await opened();
+  sectionText = '<p>Imported from CSR build 3, heading approved.</p>';
+  sectionAt = '2026-11-05T10:05:00Z';
+  (await screen.findByRole('button', { name: 'Approved sections imported' })).click();
+  await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('Imported from CSR build 3'));
 });

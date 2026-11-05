@@ -17,6 +17,8 @@
  */
 import type { AuthoringTaskRow, DocumentReviewsRead, StandingReview } from './ReviewTasksPanel';
 import type { AuthoringReviewStanding } from '@shared/authoring/peer-review';
+import type { EsigMeaning } from '../../hooks/useEsignature';
+import { useLiveData } from '../dataConnect';
 
 /** How a review state reads. Text, never colour alone. */
 const REVIEW_STATUS_LABEL: Record<string, string> = {
@@ -127,4 +129,40 @@ export function reviewStateNote(task: AuthoringTaskRow, review: TaskReviewState)
     default:
       return null;
   }
+}
+
+/* ── The CSR release gate, read before a password is asked (B7, demo walk 2026-11-05) ──────────────────────────
+   E-sign on the CSR took the approver's reason and password, and only then did the server refuse with 409
+   CSR_SCIENTIFIC_REVIEW_REQUIRED. A CSR is frozen, or signed as author or approver, only over a current
+   scientific-review receipt (authoring.router.ts → assertWorkflowImportRelease → csr-scientific-review.ts); the
+   review signature takes another path. The document's reviews read (GET …/reviews, this panel's) carries the
+   server's own CSR rule (reviewContext.csrScientificReviewRequired) and each verdict's standing. With the rule set
+   and no current approval, the editor says so first, with the step to take. The server stays the authority: a read
+   that is not a reading, or an approval whose receipt the server refuses, is decided there as before. */
+const CSR_GATED_MEANINGS: ReadonlySet<EsigMeaning> = new Set(['authorship', 'approval']);
+export const CSR_REVIEW_FIRST =
+  'This CSR is frozen, or signed as author or approver, only after its scientific review: a reviewer approves this ' +
+  'saved version with each reported result mapped to its table cell. Send it for review, then sign once it is approved.';
+
+/** The sentence the gate will refuse with; null when it will not, or when the body is not a reading of this document's reviews. */
+export function csrReviewFirst(body: unknown, docId: string): string | null {
+  const read = body as { success?: unknown; reviews?: unknown; reviewContext?: { csrScientificReviewRequired?: unknown } } | null;
+  if (read?.success !== true || read.reviewContext?.csrScientificReviewRequired !== true || !Array.isArray(read.reviews)) return null;
+  const rows = read.reviews as Array<Record<string, unknown> | null>;
+  if (rows.some((r) => !r || String(r.doc_id ?? '') !== docId)) return null;
+  const approved = rows.some((r) => r!.review_status === 'approved' && reviewStandingOf('approved', r!.standing) === 'current');
+  return approved ? null : CSR_REVIEW_FIRST;
+}
+
+/** Freeze's and E-sign's refusals, the server's first; and the refusal for each E-sign meaning, for the dialog. */
+export function useCsrSigningGate(docId: string, revision: string, offered: ReadonlyArray<EsigMeaning>,
+  server: { freeze?: string | null; esign?: string | null }) {
+  const read = useLiveData<unknown>(`/api/authoring/documents/${encodeURIComponent(docId)}/reviews`, [docId, revision]);
+  const refusal = read.loading || read.error ? null : csrReviewFirst(read.data, docId);
+  return {
+    freeze: server.freeze || refusal,
+    /** E-sign itself is refused when every meaning it offers is gated (a creator signs authorship alone). */
+    esign: server.esign || (refusal && offered.every((m) => CSR_GATED_MEANINGS.has(m)) ? refusal : null),
+    forMeaning: (m: EsigMeaning): string | null => server.esign || (refusal && CSR_GATED_MEANINGS.has(m) ? refusal : null),
+  };
 }

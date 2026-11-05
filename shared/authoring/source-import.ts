@@ -113,6 +113,23 @@ export function isWorkflowImportOrigin(origin: AuthoringImportOrigin): origin is
   return isWorkflowSourceKind(origin.kind);
 }
 
+/**
+ * A CSR build's approved headings imported into its own CSR document, by ICH E3 number, instead of into a new
+ * working copy (POST /api/authoring/import/source with `targetDocumentId`; server csr-import-into-document.ts).
+ * `will-write` is the preview's word for what the write reports as `written`.
+ */
+export type CsrIntoDocumentOutcome = 'will-write' | 'written' | 'unchanged' | 'edited' | 'no-heading' | 'by-reference';
+export interface CsrIntoDocumentSection { code: string; title: string; outcome: CsrIntoDocumentOutcome; placeholder: boolean }
+export interface CsrIntoDocumentReceipt {
+  preview: boolean;
+  into: { documentId: string; title: string };
+  fingerprint: string;
+  origin: WorkflowImportOrigin;
+  sections: CsrIntoDocumentSection[];
+  gaps: string[];
+  warnings: string[];
+}
+
 export interface AuthoringSourceImportData {
   doc: Record<string, unknown> & { id: string; title: string };
   sections: Record<string, unknown>[];

@@ -28,8 +28,8 @@ const runs: RetainedScientificRun[] = [{
     source: { documentId: '9c3d4e5f-6a7b-4c8d-8e9f-1a2b3c4d5e6f', sha256: 'a'.repeat(64), version: '1',
       studyId: 'CDI02', protocolNumber: 'LMN-201-CDI02', clinicalVerification: 'not-established', sourceApproval: 'canonical-lifecycle' },
     tables: {
-      disposition: { title: 'Disposition', headers: ['Arm', 'Screened', 'Randomized', 'Completed (%)'],
-        rows: [['All', '190', '36', '83.3']] },
+      disposition: { title: 'Disposition', headers: ['Arm', 'Screened', 'Randomized', 'Completed (%)', 'Phase'],
+        rows: [['All', '190', '36', '83.3', '2']] },
       primaryEfficacy: { title: 'Global cure (Part B)', headers: ['Arm', 'Mean'], rows: [['LMN-201', '12']] },
     },
   }],
@@ -80,5 +80,24 @@ describe('a mapped figure is verified where it stands in the saved text', () => 
     const content = '<p>In total, 190 people were screened, 36 were randomized and 83.3% completed.</p>';
     expect(receiptFor(content, '190', 0, { table: 'disposition', row: 0, column: 1 })().checkedClaims).toBe(1);
     expect(receiptFor(content, '83.3', 0, { table: 'disposition', row: 0, column: 3 })().checkedClaims).toBe(1);
+  });
+});
+
+/* B6 (demo walk 2026-11-05): the screen offered a trial phase, a scheduled week and an instrument's item count as
+   figures. The one rule both use now says they are not results, so the server refuses a claim on one as it would
+   any figure that is not reported where it stands, and still verifies a real result in the same sentence. */
+describe('a design number is not a reported result (B6)', () => {
+  const content = '<p>In this Phase 2 study, the ADAS-Cog (11) total at Week 12 was 36, and 190 were screened.</p>';
+
+  it('refuses the "2" of "Phase 2" and the "12" of "Week 12", and verifies the "36" reported after them', () => {
+    expect(receiptFor(content, '2', content.indexOf('Phase'), { table: 'disposition', row: 0, column: 4 }))
+      .toThrow(expect.objectContaining({ code: 'CSR_EVIDENCE_CLAIM_CHANGED' }));
+    expect(receiptFor(content, '12', content.indexOf('Week'), { table: 'primaryEfficacy', row: 0, column: 1 }))
+      .toThrow(expect.objectContaining({ code: 'CSR_EVIDENCE_CLAIM_CHANGED' }));
+    expect(receiptFor(content, '36', content.indexOf('Week'), { table: 'disposition', row: 0, column: 2 })().checkedClaims).toBe(1);
+  });
+
+  it('still verifies a real result beside them (control)', () => {
+    expect(receiptFor(content, '190', 0, { table: 'disposition', row: 0, column: 1 })().checkedClaims).toBe(1);
   });
 });

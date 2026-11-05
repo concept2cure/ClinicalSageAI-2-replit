@@ -42,8 +42,9 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: { content?: string }) => {
     if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
-    if (url === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
+    // The canvas reads the record in its project's scope (authoringCurrentReadPath, cc1607c3a3).
+    if (url === `/api/authoring/docs/${DOC}?programId=${PID}`) return ok({ document: doc });
+    if (url === `/api/authoring/docs/${DOC}/sections?programId=${PID}`) return ok({ sections: [section] });
     if (method === 'PATCH' && url === `/api/authoring/sections/${SEC}`) return ok({ section: { ...section, content: body?.content, updated_at: SAVED_AT } });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
     return ok({ success: true });

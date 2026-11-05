@@ -21,7 +21,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -30,6 +30,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { SubmissionCenter } from '../surfaces/SubmissionCenter';
+import { clearShellProject, publishShellProject } from '../shellProject';
 
 const props = () => ({ onAsk: vi.fn(), onNav: vi.fn() });
 
@@ -199,5 +200,74 @@ describe('SubmissionCenter — device filings honest error state', () => {
     );
     expect(document.body.textContent).not.toContain('Assembly readiness:');
     expect(document.body.textContent).not.toContain('ZX-9 Glucose Sensor');
+  });
+});
+
+/* B4 (demo walk 2026-11-05, 20a-submission-center-device-card.png): a drug IND's
+   Submission Center showed "Device filings · eSTAR" and a 510(k) assembly
+   verdict. The platform follows the open project's own record: the eSTAR
+   section, and its two reads, belong to a device or diagnostic project. With no
+   project open the screen is the organization's view and lists them as before. */
+describe('SubmissionCenter — device filings follow the open project', () => {
+  const PID = '7a0e1c52-4d0f-4c55-9a51-000000000b04';
+  const detailUrl = `/api/c2c/projects/${PID}`;
+  const withProject = (record: Record<string, unknown>) => {
+    mockApi();
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      method === 'GET' && url === detailUrl
+        ? ({ ok: true, status: 200, json: async () => ({ id: PID, ...record }) } as Response)
+        : base(method, url));
+    publishShellProject({ id: PID, title: 'Xanomeline TTS Phase 2' });
+  };
+  /* Every mocked read answers at once; this lets them all land before asserting. */
+  const settle = () => act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)); });
+  afterEach(() => clearShellProject());
+
+  it('a drug IND shows no device filings and asks for no device assembly verdict', async () => {
+    withProject({ program_type: 'IND', product_type: 'drug' });
+    render(<SubmissionCenter {...props()} />);
+    await waitFor(() => expect(document.body.textContent).toContain('Xanomeline TTS Phase 2'));
+    await settle();
+    expect(document.body.textContent).not.toContain('Device filings');
+    expect(document.body.textContent).not.toContain('510(k) device assembly readiness');
+    expect(apiRequest.mock.calls.some((c) => c[1] === detailUrl)).toBe(true);
+    expect(apiRequest.mock.calls.filter((c) => c[1] === ESTAR_SUBS_URL || c[1] === ASSEMBLE_URL)).toEqual([]);
+  });
+
+  it('a biologic BLA shows no device filings either', async () => {
+    withProject({ program_type: 'BLA', product_type: 'biologic' });
+    render(<SubmissionCenter {...props()} />);
+    await waitFor(() => expect(document.body.textContent).toContain('Xanomeline TTS Phase 2'));
+    await settle();
+    expect(document.body.textContent).not.toContain('Device filings');
+  });
+
+  it('a 510(k) device project shows its device filings and the assembly verdict', async () => {
+    withProject({ program_type: '510k', product_type: 'device' });
+    render(<SubmissionCenter {...props()} />);
+    await waitFor(() => expect(document.body.textContent).toContain('ZX-9 Glucose Sensor 510(k)'));
+    expect(document.body.textContent).toContain('Device filings · eSTAR');
+    await waitFor(() => expect(document.body.textContent).toContain('510(k) device assembly readiness'));
+  });
+
+  it('a diagnostic recorded only by its filing class (a Japanese IVD approval) is a device filing', async () => {
+    withProject({ program_type: 'ivd_approval', product_type: null });
+    render(<SubmissionCenter {...props()} />);
+    await waitFor(() => expect(document.body.textContent).toContain('Device filings · eSTAR'));
+  });
+
+  it('an unreadable project record shows no device filings, rather than guessing', async () => {
+    mockApi();
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      method === 'GET' && url === detailUrl
+        ? ({ ok: false, status: 500, json: async () => ({ error: 'unavailable' }) } as Response)
+        : base(method, url));
+    publishShellProject({ id: PID, title: 'Xanomeline TTS Phase 2' });
+    render(<SubmissionCenter {...props()} />);
+    await waitFor(() => expect(document.body.textContent).toContain('Xanomeline TTS Phase 2'));
+    await settle();
+    expect(document.body.textContent).not.toContain('Device filings');
   });
 });

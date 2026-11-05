@@ -7,7 +7,7 @@ import { agencyResponseImportId, isWorkflowSourceKind, studyDesignImportId } fro
  */
 import { createHash } from 'node:crypto';
 import type { Pool } from 'pg';
-import type { AuthoringImportOrigin, AuthoringSourceImportData, AuthoringSourceImportPreviewData, BinaryImportOrigin, BinaryImportSource, WorkflowImportSource } from '../../../shared/authoring/source-import';
+import type { AuthoringImportOrigin, AuthoringSourceImportData, AuthoringSourceImportPreviewData, BinaryImportOrigin, BinaryImportSource, CsrIntoDocumentReceipt, WorkflowImportSource } from '../../../shared/authoring/source-import';
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { isInlineFigureImage } from '../../../shared/authoring/figure-refs';
 import { requireGovernedReason } from '../../routes/governed-reason';
@@ -20,6 +20,8 @@ import { allocateImportedSectionCodes } from './authoring-source-conversion';
 import type { CreateContext } from './authoring-documents';
 import { authorizeAuthoringProgram, AuthoringProgramAccessError } from './authoring-program-access';
 import { materializeWorkflowSource, WorkflowSourceImportError, type MaterializedWorkflowSource } from './workflow-source-import';
+import { CsrIntoDocumentError, importCsrIntoDocument } from './csr-import-into-document';
+import { DocumentWriteReservationError } from './document-lock';
 import type { Queryable } from './authoring-evidence';
 import type { DocxImportResult } from '../../import/docx-to-authoring';
 import type { ExtractedDocumentText, classifyDocumentFormat } from '../ocr/extractDocumentText';
@@ -32,7 +34,7 @@ const MAX_SECTIONS = 200;
 
 export interface SourceImportInput { programId: string; source: BinaryImportSource; reason: string }
 export type SourceImportRefusal = { ok: false; status: number; code: string; message: string };
-export type SourceImportOutcome = SourceImportRefusal | { ok: true; data: AuthoringSourceImportData | AuthoringSourceImportPreviewData };
+export type SourceImportOutcome = SourceImportRefusal | { ok: true; data: AuthoringSourceImportData | AuthoringSourceImportPreviewData | CsrIntoDocumentReceipt };
 type SourceRecord = {
   id: string; title: string | null; file_name: string | null; mime_type: string | null;
   content_hash: string | null; document_type: string | null; ctd_section: string | null;
@@ -301,7 +303,7 @@ async function saveWorkingCopy(work: ImportWork): Promise<SourceImportOutcome> {
   }
 }
 
-interface WorkflowInput { programId: string; source: WorkflowImportSource; previewOnly: boolean; expectedFingerprint?: string; reason?: string; associationReason?: string }
+interface WorkflowInput { programId: string; source: WorkflowImportSource; previewOnly: boolean; expectedFingerprint?: string; reason?: string; associationReason?: string; targetDocumentId?: string }
 const workflowInteger = (value: unknown) => Number.isSafeInteger(value) && Number(value) > 0 && Number(value) <= 2_147_483_647;
 
 function csrWorkflowSelector(selected: Record<string, unknown>): WorkflowImportSource {
@@ -341,16 +343,38 @@ function workflowReason(value: unknown, code: string): string {
   return checked.reason;
 }
 
+/** A CSR build's approved headings may name the CSR document they are written into (csr-import-into-document.ts). */
+function importTarget(raw: Record<string, unknown>, source: WorkflowImportSource): string | undefined {
+  if (raw.targetDocumentId === undefined) return undefined;
+  const target = str(raw.targetDocumentId);
+  if (!target || !UUID.test(target) || source.kind !== 'csr') return abort(400, 'IMPORT_TARGET_INVALID', 'Choose the CSR document to import the approved headings into. Nothing was imported.');
+  return target.toLowerCase();
+}
+
 function parseWorkflowInput(raw: Record<string, unknown>): WorkflowInput | SourceImportRefusal {
   const programId = str(raw.programId);
   if (!programId || !UUID.test(programId)) return refused(400, 'PROJECT_REQUIRED', 'A valid open project is required.');
   const source = workflowSelector(raw.source as Record<string, unknown>);
+  const targetDocumentId = importTarget(raw, source);
   const previewOnly = raw.previewOnly === true;
   const reason = previewOnly ? undefined : workflowReason(raw.reason, 'REASON_REQUIRED');
   const associationReason = raw.associationReason === undefined ? undefined : workflowReason(raw.associationReason, 'ASSOCIATION_REASON_REQUIRED');
   const expectedFingerprint = str(raw.expectedFingerprint);
   if (!previewOnly && (!expectedFingerprint || !HASH.test(expectedFingerprint))) return refused(400, 'SOURCE_PREVIEW_REQUIRED', 'Preview this exact saved source before creating its working copy.');
-  return { programId: programId.toLowerCase(), source, previewOnly, reason, associationReason, expectedFingerprint: expectedFingerprint?.toLowerCase() };
+  return { programId: programId.toLowerCase(), source, previewOnly, reason, associationReason, expectedFingerprint: expectedFingerprint?.toLowerCase(),
+    ...(targetDocumentId ? { targetDocumentId } : {}) };
+}
+
+/** Into the CSR document the build was started from: no document is created (csr-import-into-document.ts). */
+async function importIntoTarget(ctx: CreateContext, principal: AuthoringPrincipal, input: WorkflowInput & { targetDocumentId: string }): Promise<SourceImportOutcome> {
+  if (input.source.kind !== 'csr') return refused(400, 'IMPORT_TARGET_INVALID', 'Choose the CSR document to import the approved headings into. Nothing was imported.');
+  try {
+    return { ok: true, data: await importCsrIntoDocument(ctx, principal, { programId: input.programId, source: input.source,
+      targetDocumentId: input.targetDocumentId, previewOnly: input.previewOnly, expectedFingerprint: input.expectedFingerprint, reason: input.reason }) };
+  } catch (error) {
+    if (error instanceof CsrIntoDocumentError || error instanceof DocumentWriteReservationError) return refused(error.status, error.code, error.message);
+    throw error;
+  }
 }
 
 async function coherentWorkflowSnapshot(ctx: CreateContext, principal: AuthoringPrincipal, input: WorkflowInput) {
@@ -431,7 +455,8 @@ export async function importSourceDocument(ctx: CreateContext, principal: Author
   try {
     if (isWorkflowSourceKind(source.kind)) {
       const input = parseWorkflowInput(body);
-      return 'ok' in input ? input : await importWorkflow(ctx, principal, input);
+      if ('ok' in input) return input;
+      return input.targetDocumentId ? await importIntoTarget(ctx, principal, { ...input, targetDocumentId: input.targetDocumentId }) : await importWorkflow(ctx, principal, input);
     }
     const input = parseSourceImportInput(raw);
     if ('ok' in input) return input;

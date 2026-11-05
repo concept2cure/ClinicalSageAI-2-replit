@@ -85,6 +85,8 @@ const ALIASES: Readonly<Record<string, string>> = {
   'device engineering': 'device-engineering',
   'post-market vigilance': 'device-postmarket',
   'dispatch readiness': 'dispatch-readiness',
+  /* Renamed 2026-11-05: "workbench" is not client copy (section 9). */
+  'biostatistics workbench': 'biostat-workbench',
 };
 
 function toApp(t: NavigationTarget): CallableApp {

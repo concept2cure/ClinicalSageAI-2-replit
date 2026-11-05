@@ -16,12 +16,17 @@ const readiness = (programId = PROGRAM, completedSummaryCount: number | null = 2
 });
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
 afterEach(() => { cleanup(); apiRequest.mockReset(); });
-it('shows real summary reuse separately from unavailable first-study narrative generation and connects recovery', async () => {
+it('shows real summary reuse, says where narratives are composed, and connects recovery', async () => {
   apiRequest.mockResolvedValue(ok(readiness()));
   const onNav = vi.fn();
   render(<CsrNarrativeReadiness programId={PROGRAM} onNav={onNav} interactionBusy={false} />);
   await screen.findByText(/2 completed CSR summaries/);
-  expect(screen.getByText(/Raw clinical observations are not linked/)).toBeTruthy();
+  /* F11 (demo walk 2026-11-05): this said "First-study AI narrative generation remains unavailable" while the CSR
+     document composed 95 narratives from its frozen study data. It now says where they are composed. */
+  const text = document.body.textContent ?? '';
+  expect(text).not.toMatch(/remains unavailable|not linked to the narrative generator/);
+  expect(text).toMatch(/composed in the CSR document/);
+  expect(text).toContain('Build from the study’s data');
   expect(screen.queryByRole('checkbox')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Open Vault' }));
   fireEvent.click(screen.getByRole('button', { name: 'Open Authoring' }));

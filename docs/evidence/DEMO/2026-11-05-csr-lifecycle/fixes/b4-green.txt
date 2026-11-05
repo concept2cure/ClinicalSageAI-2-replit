@@ -1,0 +1,26 @@
+B4 green: the same tests after the fix.
+
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings follow the open project > a drug IND shows no device filings and asks for no device assembly verdict 71ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings follow the open project > a biologic BLA shows no device filings either 71ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings follow the open project > a 510(k) device project shows its device filings and the assembly verdict 38ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings follow the open project > a diagnostic recorded only by its filing class (a Japanese IVD approval) is a device filing 28ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings follow the open project > an unreadable project record shows no device filings, rather than guessing 75ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a drug IND, an NDA and a biologic BLA are not device filings 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a recorded device-family product type is a device filing 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a device filing class decides when the product type is not recorded 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > no record is not a device filing 0ms
+ Test Files  2 passed (2)
+      Tests  80 passed (80)
+
+Suites around the touched files and product-types importers (remaining files):
+ Test Files  5 passed (5)
+      Tests  122 passed (122)
+
+Wider run (submission*, projectHome*, projectMarkets*, projectCoreWork, newProjectWizard*, filingPathNoDeadEnds,
+OfficialEstarPanel, shared/constants/domain, c2c portfolio and market scope): 960 tests passed. Three failed:
+- submissionRequiredDeliverables "reading the exact selected records once" pinned the eSTAR assemble POST for a
+  CTA project that is not a device filing; updated to expect no POST, then 50/50 passed.
+- submissionCenterGovernedWorkspaces "lists the sequence runs…": fails identically against trunk's
+  SubmissionCenter.tsx (run on a copy of HEAD's file); pre-existing, not touched.
+- projectHomeStageCss "defines no class another v2 stylesheet already defines": a stylesheet check; no stylesheet
+  is touched by this change; pre-existing.
