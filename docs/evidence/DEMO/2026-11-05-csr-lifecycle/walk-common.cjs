@@ -192,16 +192,8 @@ async function openVersions(page, file) {
   return versions;
 }
 
-/** The working copy, opened as a person finds it: the project's Author step lists it with its own Open button. */
-async function openWorkingCopy(page) {
-  await openAuthor(page);
-  await page.getByRole('button', { name: `Open ${state.data.workingCopyTitle}` }).click();
-  await page.waitForURL(/document-authoring/);
-  await page.getByText('Unbound working copy').first().waitFor({ timeout: 60_000 });
-}
-
 module.exports = {
   chromium, fs, path, crypto, BASE, DATA, MODE, HERE, TAG, SHOTS, PROJECT_TITLE, CSR_TITLE, PEOPLE, DATASETS, DEFINE, EFFICACY, MANIFEST, APPROVE, CSR_ENTRY,
   log, state, expect, sleep, loadState, saveState, shot, toTop, step, signIn, api, retrying, waitFor,
-  openAuthor, openNewDocument, csrEntries, openCsr, checkCsrCatalog, openVersions, openWorkingCopy,
+  openAuthor, openNewDocument, csrEntries, openCsr, checkCsrCatalog, openVersions,
 };
