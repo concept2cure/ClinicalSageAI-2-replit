@@ -12,14 +12,22 @@
  * longer shared by every project of the same filing type. It lives in the
  * project's Plan step: no new screen.
  *
+ * Step 3: each task's start and due date, back-scheduled by the engine from the
+ * project's target submission date (the route's `schedule`), and its owner: a
+ * task in the one task store, made through the Plan step's existing Assign
+ * (PlanAssign.tsx, POST /api/tasks/tasks), so it is in the owner's tasks.
+ *
  * @module client/src/concept2cure/v2/surfaces/PyramidProject
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { useLiveData } from '../dataConnect';
 import { setEditorTarget } from '../editorTarget';
-import { pyProgress, type PyPyramid, type PyTask } from '../fixtures/pyramid-data';
+import {
+  pyProgress, pyStanding, PY_STANDING_WORDS, type PyPyramid, type PySchedule, type PyScheduledTask, type PyStanding, type PyTask,
+} from '../fixtures/pyramid-data';
 import { PyTaskSheet, PyWorkBreakdown, statusRefusal, workDocumentAsk } from './Pyramid';
+import { AssignAction, AssignmentLine, buildPyramidTaskBody, type PlanAssignment } from './PlanAssign';
 
 interface ProjectPyramidRead {
   programId: string;
@@ -30,6 +38,12 @@ interface ProjectPyramidRead {
   pyramid?: PyPyramid;
   statuses?: Record<string, string>;
   pendingStore?: boolean;
+  /** The project's target submission date (YYYY-MM-DD), or null when none is recorded. */
+  target?: string | null;
+  /** The day the server read the schedule on. */
+  asOf?: string;
+  schedule?: PySchedule | null;
+  scheduleRefusal?: string;
 }
 const isRead = (v: unknown): v is ProjectPyramidRead =>
   !!v && typeof v === 'object' && 'type' in v && (((v as ProjectPyramidRead).type === null) || Array.isArray((v as ProjectPyramidRead).pyramid?.tasks));
@@ -64,16 +78,75 @@ function useProjectTaskStatuses(path: string, read: ProjectPyramidRead | null) {
   return { statuses, refusal, setStatus };
 }
 
-export function ProjectProgramPlan({ programId, onNav, onAsk }: {
+const DAY = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' } as const;
+/** A YYYY-MM-DD date in words, read as the calendar day it names. */
+export function dayWords(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return Number.isFinite(d.getTime()) ? d.toLocaleDateString(undefined, DAY) : iso;
+}
+
+/** The plan's one sentence about its dates. */
+export function scheduleSentence(read: Pick<ProjectPyramidRead, 'target' | 'schedule' | 'scheduleRefusal'>, late: number): string {
+  if (read.scheduleRefusal) return `The tasks could not be scheduled: ${read.scheduleRefusal.replace(/[.\s]+$/, '')}.`;
+  if (!read.target || !read.schedule) {
+    return 'No target submission date is recorded, so the tasks have no due dates. Set one in Project settings, at the top of this page.';
+  }
+  const lateWords = late === 0 ? '' : late === 1 ? ' One unfinished task is past its dates.' : ` ${late} unfinished tasks are past their dates.`;
+  return `Scheduled back from the target submission date, ${dayWords(read.target)}: the work starts by ${dayWords(read.schedule.start)}.${lateWords}`;
+}
+
+/** The row's line: the owner (or none) and the due date, with a word when the task is behind. Words, not colour alone. */
+function RowPlan({ slot, owner, standing }: { slot?: PyScheduledTask; owner?: PlanAssignment; standing: PyStanding }) {
+  return (
+    <span className="py-row-plan" data-standing={standing ?? undefined}>
+      <span className="py-row-owner">{owner ? owner.assigneeName ?? 'Owner not returned' : 'No owner'}</span>
+      {slot && <span className="py-row-due">due {dayWords(slot.due)}{standing ? ` · ${PY_STANDING_WORDS[standing]}` : ''}</span>}
+    </span>
+  );
+}
+
+/** The task sheet's schedule and owner. */
+function TaskPlan({ slot, standing, owner, ownersUnread, assign }: {
+  slot?: PyScheduledTask; standing: PyStanding; owner?: PlanAssignment; ownersUnread: boolean; assign: React.ReactNode;
+}) {
+  const ownerDue = owner?.dueDate ? new Date(owner.dueDate) : null;
+  const ownerDay = ownerDue && Number.isFinite(ownerDue.getTime())
+    ? `${ownerDue.getFullYear()}-${String(ownerDue.getMonth() + 1).padStart(2, '0')}-${String(ownerDue.getDate()).padStart(2, '0')}` : null;
+  return (
+    <div className="py-sheet-sec" data-testid="py-task-plan">
+      <div className="py-sheet-sec-l">Schedule and owner</div>
+      {slot ? (
+        <p className="py-sheet-sched">
+          Starts by {dayWords(slot.start)}, due {dayWords(slot.due)} · {slot.workingDays} working {slot.workingDays === 1 ? 'day' : 'days'}
+          {slot.basis === 'typical-duration' ? ", the engine's typical duration" : ' from its estimated hours'}
+          {slot.afterSubmission ? ' · after the submission' : ''}
+          {standing ? ` · ${PY_STANDING_WORDS[standing]}` : ''}.
+        </p>
+      ) : <p className="py-sheet-sched">No due date: this project has no target submission date recorded.</p>}
+      {owner ? <p><AssignmentLine assignment={owner} />{slot && ownerDay && ownerDay !== slot.due ? `. The schedule now says ${dayWords(slot.due)}.` : ''}</p>
+        : <p>{ownersUnread ? 'Who owns this task could not be read.' : 'No owner yet.'}</p>}
+      {assign}
+    </div>
+  );
+}
+
+export function ProjectProgramPlan({ programId, projectId = null, owners, ownersUnread = false, onAssigned, targetKey, onNav, onAsk }: {
   programId: string;
+  /** projects.id behind the program (useProjectTeam), the key the owner's task is scoped by; null until verified. */
+  projectId?: number | null;
+  /** This project's work-breakdown tasks that have an owner (usePlanAssignments().byPyramidTask). */
+  owners?: Map<string, PlanAssignment>;
+  ownersUnread?: boolean;
+  onAssigned?: () => void;
+  /** The recorded target date, so a change in Project settings reads the schedule again. */
+  targetKey?: string | null;
   onNav: (id: string) => void;
   onAsk: (text: string) => void;
 }) {
   const path = `/api/v1/pyramids/by-project/${encodeURIComponent(programId)}`;
-  const read = useLiveData<ProjectPyramidRead>(path, [path], isRead);
+  const read = useLiveData<ProjectPyramidRead>(path, [path, targetKey ?? ''], isRead);
   const data = read.data;
   const { statuses, refusal, setStatus } = useProjectTaskStatuses(path, data);
-  const [openTask, setOpenTask] = useState<string | null>(null);
   const tasks = useMemo<PyTask[]>(
     () => (data?.pyramid?.tasks ?? []).map((t) => (statuses[t.id] ? { ...t, status: statuses[t.id] } : t)),
     [data, statuses],
@@ -92,10 +165,77 @@ export function ProjectProgramPlan({ programId, onNav, onAsk }: {
       </p>
     );
   }
-  const pyr: PyPyramid = { ...data.pyramid, tasks };
+  return (
+    <ProgramPlanBody data={data} pyramid={data.pyramid} tasks={tasks} refusal={refusal} setStatus={setStatus}
+      programId={programId} projectId={projectId} owners={owners} ownersUnread={ownersUnread} onAssigned={onAssigned}
+      onNav={onNav} onAsk={onAsk} />
+  );
+}
+
+interface PlanOwners {
+  programId: string;
+  projectId: number | null;
+  owners?: Map<string, PlanAssignment>;
+  ownersUnread: boolean;
+  onAssigned?: () => void;
+}
+
+/** The schedule's sentence, how many tasks have an owner, and how the dates were reached. */
+function PlanScheduleLines({ data, late, owned, total, ownersUnread }: {
+  data: ProjectPyramidRead; late: number; owned: number; total: number; ownersUnread: boolean;
+}) {
+  return <>
+    <p className="pj-desc" data-testid="pj-program-schedule">
+      {scheduleSentence(data, late)}
+      {data.schedule && ` ${ownersUnread ? 'Who owns each task could not be read.' : `${owned} of ${total} tasks have an owner.`}`}
+    </p>
+    {data.schedule && (
+      <p className="pj-desc pj-fact-none">
+        Each task is due the working day before the work that depends on it starts. Its length is the engine&apos;s typical
+        duration, or its estimated hours at an eight-hour day. Working days are Monday to Friday; holidays are not counted.
+      </p>
+    )}
+  </>;
+}
+
+/** The task sheet, with this project's schedule and owner for the task, and its Assign. */
+function ProjectTaskSheet({ pyr, task, tasks, slot, standing, ind, setStatus, onOpenTask, onNav, onAsk, plan }: {
+  pyr: PyPyramid; task: PyTask; tasks: PyTask[]; slot?: PyScheduledTask; standing: PyStanding; ind: boolean;
+  setStatus: (id: string, status: string) => Promise<void>; onOpenTask: (id: string | null) => void;
+  onNav: (id: string) => void; onAsk: (text: string) => void; plan: PlanOwners;
+}) {
+  const { programId, projectId, owners, ownersUnread, onAssigned } = plan;
+  const assign = onAssigned && (
+    <AssignAction deliverable={{ id: task.id, title: task.name, group: task.phase }} programId={programId} projectId={projectId}
+      assigned={owners?.has(task.id) ?? false} onAssigned={onAssigned}
+      due={slot ? { value: slot.due, desc: "The schedule's date for this task, back-scheduled from the target submission date." } : undefined}
+      buildBody={(form) => buildPyramidTaskBody({ programId, projectId: projectId as number, task, ...form })} />
+  );
+  return (
+    <PyTaskSheet pyr={pyr} task={task} tasks={tasks} onClose={() => onOpenTask(null)} onTask={onOpenTask}
+      onStatus={(id, s) => void setStatus(id, s)} projectOpen
+      plan={<TaskPlan slot={slot} standing={standing} owner={owners?.get(task.id)} ownersUnread={ownersUnread} assign={assign} />}
+      onOpenSection={ind ? (code, title) => {
+        setEditorTarget({ docType: null, code, label: title, programId });
+        onOpenTask(null);
+        onNav('document-authoring');
+      } : undefined}
+      onWorkDocument={ind ? (title) => { onOpenTask(null); onAsk(workDocumentAsk(title, task.name)); } : undefined} />
+  );
+}
+
+function ProgramPlanBody({ data, pyramid, tasks, refusal, setStatus, onNav, onAsk, ...plan }: PlanOwners & {
+  data: ProjectPyramidRead; pyramid: PyPyramid; tasks: PyTask[]; refusal: string;
+  setStatus: (id: string, status: string) => Promise<void>; onNav: (id: string) => void; onAsk: (text: string) => void;
+}) {
+  const [openTask, setOpenTask] = useState<string | null>(null);
+  const pyr: PyPyramid = { ...pyramid, tasks };
   const progress = pyProgress(pyr);
   const open = openTask ? tasks.find((t) => t.id === openTask) ?? null : null;
-  const ind = data.type === 'IND';
+  const slots = data.schedule?.tasks ?? {};
+  const standingOf = (t: PyTask) => pyStanding(t.status, slots[t.id], data.asOf ?? '');
+  const late = tasks.filter((t) => standingOf(t) !== null).length;
+  const owned = plan.owners ? tasks.filter((t) => plan.owners!.has(t.id)).length : 0;
   return (
     <section className="pj-sec" aria-labelledby="pj-program-h" data-testid="pj-program-plan">
       <div className="pj-sec-h">
@@ -106,22 +246,16 @@ export function ProjectProgramPlan({ programId, onNav, onAsk }: {
         {progress.completed} of {progress.total} tasks done · critical path {progress.criticalPathPct}% done · about {progress.hoursRemaining} hours of work remaining.
         The phases, tasks, hours and dependencies are the engine&apos;s; each task&apos;s status is this project&apos;s.
       </p>
+      <PlanScheduleLines data={data} late={late} owned={owned} total={progress.total} ownersUnread={plan.ownersUnread} />
       {data.pendingStore && <p className="pj-desc pj-fact-none" role="note">Recorded progress is not available in this deployment, so every task reads as not started.</p>}
       {refusal && <p className="pj-desc" role="alert">{refusal}</p>}
       <details className="pj-more">
         <summary>The work breakdown: {pyr.phases.length} phases, {progress.total} tasks</summary>
-        <PyWorkBreakdown pyr={pyr} focusPhase={null} tasks={tasks} onTask={setOpenTask} onStatus={(id, s) => void setStatus(id, s)} />
+        <PyWorkBreakdown pyr={pyr} focusPhase={null} tasks={tasks} onTask={setOpenTask} onStatus={(id, s) => void setStatus(id, s)}
+          rowPlan={(t) => <RowPlan slot={slots[t.id]} owner={plan.owners?.get(t.id)} standing={standingOf(t)} />} />
       </details>
-      {open && (
-        <PyTaskSheet pyr={pyr} task={open} tasks={tasks} onClose={() => setOpenTask(null)} onTask={setOpenTask}
-          onStatus={(id, s) => void setStatus(id, s)} projectOpen
-          onOpenSection={ind ? (code, title) => {
-            setEditorTarget({ docType: null, code, label: title, programId });
-            setOpenTask(null);
-            onNav('document-authoring');
-          } : undefined}
-          onWorkDocument={ind ? (title) => { setOpenTask(null); onAsk(workDocumentAsk(title, open.name)); } : undefined} />
-      )}
+      {open && <ProjectTaskSheet pyr={pyr} task={open} tasks={tasks} slot={slots[open.id]} standing={standingOf(open)}
+        ind={data.type === 'IND'} setStatus={setStatus} onOpenTask={setOpenTask} onNav={onNav} onAsk={onAsk} plan={plan} />}
     </section>
   );
 }

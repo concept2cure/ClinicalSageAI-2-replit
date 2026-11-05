@@ -222,3 +222,39 @@ export function pyCoverage(pyr: PyPyramid): PyCoverageRow[] {
     .map(s => ({ ...s, pct: s.tasks.length ? Math.round(s.done / s.tasks.length * 100) : 0 }))
     .sort((a, b) => a.section.localeCompare(b.section));
 }
+
+// ── The project's schedule (S11 step 3) ───────────────────────────────────
+// The dates are the engine's (backSchedule, services/regulatory/SubmissionPyramidEngine.ts), back-scheduled from the
+// project's target submission date and sent by GET /api/v1/pyramids/by-project/:ref. The client only compares them
+// with the day the server read them on (asOf) and the task's status.
+
+export interface PyScheduledTask {
+  start: string;
+  due: string;
+  workingDays: number;
+  basis: 'typical-duration' | 'estimated-hours';
+  afterSubmission?: boolean;
+}
+
+export interface PySchedule {
+  target: string;
+  anchorTaskId: string;
+  start: string;
+  tasks: Record<string, PyScheduledTask>;
+}
+
+/** Where an unfinished task stands against its dates: past its due date, past its start date and not started, or
+ *  neither (null). A done task stands nowhere. */
+export type PyStanding = 'overdue' | 'late-to-start' | null;
+
+export function pyStanding(status: string, slot: PyScheduledTask | undefined, asOf: string): PyStanding {
+  if (!slot || status === 'done') return null;
+  if (slot.due < asOf) return 'overdue';
+  if (slot.start < asOf && status === 'todo') return 'late-to-start';
+  return null;
+}
+
+export const PY_STANDING_WORDS: Record<Exclude<PyStanding, null>, string> = {
+  overdue: 'past due',
+  'late-to-start': 'should have started',
+};

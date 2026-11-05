@@ -33,6 +33,8 @@ import { TASK_STATE_LABEL } from '../editor/ReviewTasksPanel';
 
 export const PLAN_TASK_MODULE = 'Plan';
 export const PLAN_TASK_ENTITY = 'filing_deliverable';
+/** A task of the project's work breakdown (S11 step 3): its owner's task, keyed '<program uuid>:<pyramid task id>'. */
+export const PYRAMID_TASK_ENTITY = 'pyramid_task';
 
 /** The origin id of a deliverable's task: this project's deliverable, not the catalogue entry shared by every project. */
 export function planTaskKey(programId: string, deliverableId: string): string {
@@ -40,6 +42,32 @@ export function planTaskKey(programId: string, deliverableId: string): string {
 }
 
 export interface PlanDeliverable { id: string; title: string; group: string }
+
+/** A work-breakdown task becomes its owner's task through the same create path as a deliverable, under its own
+ *  origin type, so the two never read as each other. The due date is the one the person confirmed in the form,
+ *  which starts from the schedule's. */
+export function buildPyramidTaskBody(form: {
+  programId: string; projectId: number; task: { id: string; name: string; phase: string; critical?: boolean };
+  assignee: string; due: string; note: string;
+}): Record<string, unknown> {
+  return {
+    title: form.task.name,
+    description: form.note.trim() || undefined,
+    moduleType: PLAN_TASK_MODULE,
+    moduleSource: 'program-plan',
+    category: 'program-plan',
+    taskType: 'program-plan',
+    priority: form.task.critical ? 'high' : 'medium',
+    projectId: form.projectId,
+    assigneeId: Number(form.assignee),
+    ...(form.due ? { dueDate: new Date(`${form.due}T17:00:00`).toISOString() } : {}),
+    sourceEntityType: PYRAMID_TASK_ENTITY,
+    sourceEntityId: planTaskKey(form.programId, form.task.id),
+    regulatoryImpact: true,
+    moduleData: { programId: form.programId, pyramidTaskId: form.task.id, phase: form.task.phase, raisedFrom: 'program-plan' },
+    tags: ['plan', 'program-plan'],
+  };
+}
 
 export function buildDeliverableTaskBody(form: {
   programId: string; projectId: number; deliverable: PlanDeliverable;
@@ -74,14 +102,15 @@ interface PlanTaskRow { taskId?: unknown; sourceEntityType?: unknown; sourceEnti
 
 const createdAt = (row: PlanTaskRow) => { const t = new Date(String(row?.createdAt ?? '')).getTime(); return Number.isFinite(t) ? t : 0; };
 
-/** Each of this project's deliverables that has a task, keyed by deliverable id; the newest task wins. */
-export function planAssignments(rows: unknown, programId: string): Map<string, PlanAssignment> {
+/** Each of this project's deliverables (or, with PYRAMID_TASK_ENTITY, work-breakdown tasks) that has a task, keyed by
+ *  its id; the newest task wins. */
+export function planAssignments(rows: unknown, programId: string, entity: string = PLAN_TASK_ENTITY): Map<string, PlanAssignment> {
   const out = new Map<string, PlanAssignment>();
   const prefix = `${programId}:`;
   const newestFirst = (Array.isArray(rows) ? [...rows] as PlanTaskRow[] : []).sort((a, b) => createdAt(b) - createdAt(a));
   for (const row of newestFirst) {
     const origin = String(row?.sourceEntityId ?? '');
-    if (row?.sourceEntityType !== PLAN_TASK_ENTITY || !origin.startsWith(prefix) || row.status === 'cancelled') continue;
+    if (row?.sourceEntityType !== entity || !origin.startsWith(prefix) || row.status === 'cancelled') continue;
     const id = origin.slice(prefix.length);
     if (out.has(id)) continue;
     out.set(id, {
@@ -97,7 +126,11 @@ export function planAssignments(rows: unknown, programId: string): Map<string, P
 /** The project's deliverable tasks, and whether they could be read. */
 export function usePlanAssignments(programId: string, epoch: number) {
   const read = useLiveRows<PlanTaskRow>(`/api/tasks/tasks/by-module/${PLAN_TASK_MODULE}`, [programId, epoch], isRowsWith<PlanTaskRow>('taskId', 'sourceEntityType'));
-  return { loading: read.loading, error: read.error ?? null, byDeliverable: planAssignments(read.rows, programId) };
+  return {
+    loading: read.loading, error: read.error ?? null,
+    byDeliverable: planAssignments(read.rows, programId),
+    byPyramidTask: planAssignments(read.rows, programId, PYRAMID_TASK_ENTITY),
+  };
 }
 
 const DATE = { year: 'numeric', month: 'short', day: 'numeric' } as const;
@@ -115,7 +148,7 @@ export function AssignmentLine({ assignment }: { assignment: PlanAssignment }) {
   return <span className="pj-plan-assigned" data-testid="plan-assignment">{state} {who}{dueWords(assignment.dueDate)}</span>;
 }
 
-export function assignForm(title: string, roster: Assignee[], rosterState: RosterState): C2CFormConfig {
+export function assignForm(title: string, roster: Assignee[], rosterState: RosterState, due?: { value: string; desc: string }): C2CFormConfig {
   const unread = rosterState === 'error';
   return {
     eyebrow: 'Plan',
@@ -128,17 +161,17 @@ export function assignForm(title: string, roster: Assignee[], rosterState: Roste
       { key: 'assignee', label: 'Person', type: 'select', required: true,
         options: roster.map(a => ({ value: a.id, label: a.label ?? a.name })),
         ...(roster.length ? {} : { desc: 'No members in this organisation yet, so no one can be chosen.' }) },
-      { key: 'due', label: 'Due date', type: 'date', required: true },
+      { key: 'due', label: 'Due date', type: 'date', required: true, ...(due ? { default: due.value, desc: due.desc } : {}) },
       { key: 'note', label: 'Note', type: 'textarea', rows: 3, placeholder: 'What they should know (optional)' },
     ],
   };
 }
 
-function AssignDrawer({ deliverable, onCancel, onSubmit }: {
-  deliverable: PlanDeliverable; onCancel: () => void; onSubmit: (values: Record<string, string>) => void;
+function AssignDrawer({ deliverable, due, onCancel, onSubmit }: {
+  deliverable: PlanDeliverable; due?: { value: string; desc: string }; onCancel: () => void; onSubmit: (values: Record<string, string>) => void;
 }) {
   const { roster, rosterState } = useAssigneeRoster();
-  return <C2CForm config={assignForm(deliverable.title, roster, rosterState)} onCancel={onCancel} onSubmit={onSubmit} />;
+  return <C2CForm config={assignForm(deliverable.title, roster, rosterState, due)} onCancel={onCancel} onSubmit={onSubmit} />;
 }
 
 /**
@@ -146,10 +179,14 @@ function AssignDrawer({ deliverable, onCancel, onSubmit }: {
  * A viewer is not offered it (the server refuses their task writes), nor is a
  * project whose projects.id is not verified.
  */
-export function AssignAction({ deliverable, programId, projectId, assigned = false, onAssigned }: {
+export function AssignAction({ deliverable, programId, projectId, assigned = false, onAssigned, due, buildBody }: {
   deliverable: PlanDeliverable; programId: string; projectId: number | null;
   /** Someone already has it: a second Assign adds a person, it does not move the first task. */
   assigned?: boolean; onAssigned: () => void;
+  /** The due date the form starts from, and where it came from (a work-breakdown task's back-scheduled date). */
+  due?: { value: string; desc: string };
+  /** The task body, where it is not a deliverable's (buildPyramidTaskBody). */
+  buildBody?: (form: { assignee: string; due: string; note: string }) => Record<string, unknown>;
 }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -163,7 +200,8 @@ export function AssignAction({ deliverable, programId, projectId, assigned = fal
       return;
     }
     setBusy(true);
-    const body = buildDeliverableTaskBody({ programId, projectId, deliverable, assignee: values.assignee, due: values.due ?? '', note: values.note ?? '' });
+    const form = { assignee: values.assignee, due: values.due ?? '', note: values.note ?? '' };
+    const body = buildBody ? buildBody(form) : buildDeliverableTaskBody({ programId, projectId, deliverable, ...form });
     const result = await createAssignedTask(body, DELIVERABLE_TASK_WORDS);
     setBusy(false);
     setOutcome(result);
@@ -176,6 +214,6 @@ export function AssignAction({ deliverable, programId, projectId, assigned = fal
     </button>
     {outcome && !outcome.ok && <p className="pf-sel-m pj-plan-assign-msg" role="alert" data-testid="plan-assign-error">{outcome.message}</p>}
     {outcome?.ok && <p className="pf-sel-m pj-plan-assign-msg" role="status">Assigned{outcome.assigneeName ? ` to ${outcome.assigneeName}` : ''}. The task is in their tasks and this project’s tasks.</p>}
-    {open && <AssignDrawer deliverable={deliverable} onCancel={() => setOpen(false)} onSubmit={v => void submit(v)} />}
+    {open && <AssignDrawer deliverable={deliverable} due={due} onCancel={() => setOpen(false)} onSubmit={v => void submit(v)} />}
   </>;
 }
