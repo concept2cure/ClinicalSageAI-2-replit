@@ -440,6 +440,12 @@ informed consent was.
     too: an adopt after the server's working copy was deleted succeeds from the durable copy, and an upload written
     the old way answers 410.
 
+- **The walk follows the sent package where it is kept**, `131aa7d0c`,
+  `docs/evidence/SPINE/S2/2026-11-05-walk-follows-sent-package/`. LX-12's bytes half was fixed on 2026-10-29
+  (`3cab286e12`, the kept copy in the byte store, named by `metadata.sentPackage`). The walk still read the staging
+  file the send removes by design, so it stayed red. The check now follows the recorded key. It fails on a missing
+  package and passes as written. The baseline went from 12 to 11.
+
 **Found**
 
 - `ci:canvas-path` read green all four days the walk was red. Its founder-walk link is static by design; the walk's
@@ -447,8 +453,10 @@ informed consent was.
 - `server/routes/__tests__/authoringSelectedSources.pglite.test.ts` fails 12 cases at trunk, before this change.
 - `ctd_onboarding_documents` (`server/routes/ctd-onboarding.ts`, read by `readLocalUploadBuffer`) keeps its bytes on
   local disk, the same class of defect.
-- A path-based AnA tool (`server/services/ana/document-workspace.ts`) running on the other task still finds no working
-  copy of an upload. The id-based readers are durable now.
+- ~~A path-based AnA tool on the other task finds no working copy of an upload.~~ Corrected 2026-11-05: no prompt,
+  context builder or tool result gives the model an upload's path (searched `server/services/ana`,
+  `server/routes/ana-ri`, the context builders). The only stream read of an upload goes through `loadUploadedFile`,
+  which is durable now. The tools' refusal already steers uploads to the file-id tools. Nothing to repair.
 - Bytes already erased in production cannot be backfilled. Rows written before this change read as before.
 - **LX-06 is half-built under another name.** `draft_authoring_document` takes `sourceReferences` (Vault-document
   receipts). They are verified inside the save transaction and recorded in `provenance.projectSourceReferences`
@@ -468,12 +476,14 @@ informed consent was.
 
 Two items listed here earlier were already done, as found on 2026-11-05: a failed Data Room record refuses with
 503, and the client keeps `sourceId`. What remains, file list first:
-1. a path-based AnA tool restores its working copy from the byte store (16 call sites in `AnaToolExecutor.ts`; the
-   id-based tools are durable now);
-2. LX-06's span half, with S4: verified receipts recorded as sentence-level spans, and the walk following the
+1. LX-06's span half, with S4: verified receipts recorded as sentence-level spans, and the walk following the
    Data Room → Vault → receipt → document path;
-3. LX-12, with the submission service's holder (RIM): transmit keeps the bytes it sent and names its sequence (the
-   walk's two `transmit` entries).
+2. LX-12's other half, with RIM, which holds the submission service: a transmittal names its sequence (no
+   `sequence_id` on `submission_transmittals`);
+3. LX-10's seal half, for the lane working on Authoring's filing path. `633822c083` records each filed section's
+   revision. Nothing on the Vault side yet names the seal: neither the Vault row nor its chained audit row carries
+   `frozen_documents.content_hash`. That gap is the walk's `file-to-vault/filing-names-sealed-version` and
+   `walk-back/vault-leaf-to-seal`.
 
 #### F1 — Repairs: the unverified repair commits, run natively (session `session_01QoxbLb8fV1RgQvaa8JHYku`)
 
