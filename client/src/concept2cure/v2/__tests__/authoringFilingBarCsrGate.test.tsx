@@ -37,7 +37,7 @@ function renderBar() {
 
 /** The dialog's own server checks (/api/esignature/verify-*), for a signer with no code. */
 function stubSignerChecks() {
-  const verify = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ valid: true }) }));
+  const verify = vi.fn(async (_url: string, _init?: unknown) => ({ ok: true, status: 200, json: async () => ({ valid: true }) }));
   vi.stubGlobal('fetch', verify);
   return verify;
 }
