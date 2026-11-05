@@ -60,7 +60,7 @@ describe('library search (critique 15)', () => {
     });
     await searchLibrary();
     const list = await screen.findByTestId('vault-library-results');
-    expect(apiRequest).toHaveBeenCalledWith('GET', LIB);
+    expect(apiRequest).toHaveBeenCalledWith('GET', LIB, undefined, undefined, expect.any(AbortSignal));
     expect(within(list).getByRole('status').textContent).toBe('2 documents in projects you can access match “stability”.');
     expect(list.textContent).toContain('BX-302');
     expect(list.textContent).toContain('BX-301 (this project)');
