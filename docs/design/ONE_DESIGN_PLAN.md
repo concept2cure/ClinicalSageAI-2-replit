@@ -601,6 +601,8 @@ in the running app where a screen changed. Where either was not possible, its RE
   - A device or diagnostic filing's Required documents names the filing and points to its outline in the Library,
     with no count, and says why (S6 V7 `8e96c86ed2`, F1 `c0c53d40a4`; `…/2026-11-05-v7-device-coverage/`). It said the
     filing had no required-section list.
+- **A device project's Vault offers its own vocabulary** at upload and in the filters: its own evidence kinds, and no
+  CTD section for a filing that is not CTD-numbered (S6 V9, `c2d6a9774c`; `…/2026-11-05-v9-device-vocabulary/`).
 - **A seal shows what it holds** (S6 V5, `4c00273d06`; `…/2026-11-05-v5-seal-binder/`): each sealed version, read from
   the signed record only, opened through the Vault's audited download. This is D6 §8's "binders as a view".
 - **AnA writes only where the person may change the project** (F1, `99666f51b8`;
@@ -622,8 +624,8 @@ in the running app where a screen changed. Where either was not possible, its RE
 - **A pharma "Risk management plan" is left unfiled.** The device risk-file rule claims the name first and has no
   pharma folder; "RMP" reaches the CTD detector. An ISO 14971 plan and a Module 1 RMP share the name, so which rule
   claims it is a classifier decision, not a one-line fix.
-- **A device project is offered CTD vocabulary** at upload and in the filters, and the Vault cannot place a document
-  at an eSTAR section (`filingVocabularyRefusal`). This is the MDX journey's lane.
+- **The Vault cannot place a document at an eSTAR section** (`filingVocabularyRefusal` accepts CTD codes only), so a
+  device filing's outline has no count. This is the MDX journey's lane.
 - **Founder questions:**
   - Should the cross-sponsor view with no project open, which today is labelled by sponsor, exist at all for a CRO?
   - Should device coverage follow the rule pack's mandatory flags or the eSTAR mapper's per-device slots? They
@@ -635,7 +637,7 @@ in the running app where a screen changed. Where either was not possible, its RE
 
 **Next**
 
-1. S6: the Vault offers a device project its own vocabulary at upload and in the filters, with the MDX journey lane.
+1. Answers to the founder questions above, which decide this lane's next slices.
 
 ## 4. How everyone works
 
