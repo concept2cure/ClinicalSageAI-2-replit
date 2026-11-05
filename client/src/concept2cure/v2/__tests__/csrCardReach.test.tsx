@@ -53,11 +53,16 @@ const headings = [
   { num: '14.3.3', label: 'Narratives of deaths, other serious and certain other significant adverse events', depth: 3, manual: true, state: 'in_review', contentHash: 'e'.repeat(64), reviewerId: 5, decidedAt: null, reason: null },
 ];
 const nav = vi.fn();
+/** §10.1's saved text, as GET /api/csr/jobs/:jobId/sections?sectionNumber= returns it (csr-jobs.ts). */
+const SAVED_10 = '<p>Of 23 randomized participants, 21 completed the study.</p><p>Two withdrew consent.</p>';
 let headingRows: unknown[] = headings;
 
 const RUNS_LIST = `/api/submission-orchestrator/runs?programId=${PROGRAM}`;
 function routes(method: string, path: string) {
   if (path === RUNS_LIST) return ok({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-30T08:00:00Z' }] });
+  if (method === 'GET' && path === '/api/csr/jobs/41/sections?sectionNumber=10.1') {
+    return ok({ sections: [{ sectionNumber: '10.1', contentHash: HASH_10, content: SAVED_10 }] });
+  }
   return jobRoutes(method, path);
 }
 
@@ -174,8 +179,16 @@ it('reviews the selected build section by section, with the ICH E3 labels, and a
   const review = await within(region).findByLabelText('Section review');
   expect(within(review).getByText('4 of 5 ICH E3 headings drafted · 2 approved')).toBeTruthy();
   const row = within(review).getByText('Disposition of patients').closest('li')!;
+  // Since 2026-11-03 an approval is of the exact saved text: Approve waits until that text has been read (F9).
+  const approve = within(row).getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
+  expect(approve.disabled).toBe(true);
+  fireEvent.click(within(row).getByRole('button', { name: 'Read saved section text' }));
+  expect((await within(row).findByLabelText('Saved text for §10.1')).textContent)
+    .toBe('Of 23 randomized participants, 21 completed the study.\n\nTwo withdrew consent.');
+  expect(apiRequest).toHaveBeenCalledWith('GET', '/api/csr/jobs/41/sections?sectionNumber=10.1', undefined);
+  expect(approve.disabled).toBe(false);
   const before = headingReads(41);
-  fireEvent.click(within(row).getByRole('button', { name: /Approve/ }));
+  fireEvent.click(approve);
   await vi.waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/csr/jobs/41/sections/10.1/review',
     { decision: 'approve', expectedContentHash: HASH_10 }));
   // The decision is re-read from the server, never assumed.

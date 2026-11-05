@@ -283,6 +283,17 @@ it('reads a template row as template text with data missing: not drafted, not co
   expect((within(draftRow).getByRole('button', { name: /Send for review/ }) as HTMLButtonElement).disabled).toBe(false);
 });
 
+it('shows the saved text as saved, with its lines and paragraphs, before an approval', async () => {
+  // F9: the approver reads the heading's exact saved text. The read kept the words but ran every line together.
+  render(<CsrHeadingReview jobId={41} headings={headings} onChanged={vi.fn()} onImport={vi.fn()} />);
+  apiRequest.mockResolvedValueOnce(ok({ sections: [{ sectionNumber: '11.4.1', contentHash: HASH,
+    content: 'The secondary objectives were:\n1. To evaluate cure\n2. To evaluate recurrence\n\n<p>The sponsor&#8217;s table: AE rate &amp;lt;5%.</p><p>Second   paragraph.</p>' }] }));
+  fireEvent.click(within(screen.getByText('Analysis of efficacy').closest('li')!).getByRole('button', { name: 'Read saved section text' }));
+  const text = await screen.findByLabelText('Saved text for §11.4.1');
+  expect(text.textContent).toBe('The secondary objectives were:\n1. To evaluate cure\n2. To evaluate recurrence\n\n'
+    + 'The sponsor’s table: AE rate &lt;5%.\n\nSecond paragraph.');
+});
+
 it('requires a stated reason to send a section back', async () => {
   render(<CsrHeadingReview jobId={41} headings={headings} onChanged={() => {}} onImport={() => {}} />);
   const row = screen.getByText('Disposition of patients').closest('li')!;

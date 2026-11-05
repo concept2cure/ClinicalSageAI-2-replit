@@ -288,6 +288,15 @@ describe('GET /api/csr/jobs/:jobId/headings — the build\'s ICH E3 tree for rev
     }
   });
 
+  it('serves, for a heading, the saved text whose content hash the heading carries (F9: read before approving)', async () => {
+    const heading = (await request(app).get('/api/csr/jobs/4/headings')).body.headings.find((x: { num: string }) => x.num === '12.2');
+    const read = await request(app).get('/api/csr/jobs/4/sections?sectionNumber=12.2');
+    expect(read.status).toBe(200);
+    expect(read.body.sections).toHaveLength(1);
+    expect(read.body.sections[0]).toMatchObject({ sectionNumber: '12.2', content: DRAFT, contentHash: heading.contentHash });
+    expect(sha(read.body.sections[0].content)).toBe(heading.contentHash);
+  });
+
   it('refuses another organization\'s build as not found, never its headings', async () => {
     const res = await request(app).get('/api/csr/jobs/3/headings');
     expect(res.status).toBe(404);

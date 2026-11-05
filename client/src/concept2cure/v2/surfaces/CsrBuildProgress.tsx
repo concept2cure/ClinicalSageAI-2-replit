@@ -140,11 +140,17 @@ export function CsrHeadingReview({ jobId, headings, onChanged, onImport }: {
 }
 
 /** A reviewer sees the exact persisted body before approving its hash, not just a title.
- * The existing org-scoped sections API accepts a single heading selection. */
+ * The existing org-scoped sections API accepts a single heading selection. Markup is read as text: a block or a line
+ * break ends a line, so the saved lines, lists and paragraphs read as saved (F9); entities are decoded once. */
+const BLOCK_TAG = /<\/?(?:p|div|li|ul|ol|h[1-6]|tr|table|thead|tbody|blockquote|section|pre)\b[^>]*>|<br\s*\/?>/gi;
+const codePoint = (whole: string, value: number) => (value > 0 && value <= 0x10ffff ? String.fromCodePoint(value) : whole);
 function readableCsrText(source: string): string {
-  return source.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"')
-    .replace(/\s+/g, ' ').trim();
+  return source.replace(/\r\n?/g, '\n').replace(BLOCK_TAG, '\n').replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d{1,7});/g, (whole, n: string) => codePoint(whole, Number(n)))
+    .replace(/&#x([0-9a-f]{1,6});/gi, (whole, n: string) => codePoint(whole, parseInt(n, 16)))
+    .replace(/&amp;/gi, '&')
+    .replace(/[^\S\n]+/g, ' ').replace(/ ?\n ?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 /** The exact saved body of one heading, read on request and checked against its recorded content hash. */
 function useSavedSectionText(jobId: number, heading: CsrBoardHeading) {
