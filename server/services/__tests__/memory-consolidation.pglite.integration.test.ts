@@ -187,11 +187,12 @@ describe('the live AnA chat path can finally reach durable memory', () => {
 
     const result = await runConsolidation();
 
-    expect(result.memoriesConsolidated).toBe(1);
+    expect(result.memoriesConsolidated).toBe(0);
+    expect(result.quarantined).toBe(1);
     const entries = await promotedEntries();
     expect(entries).toHaveLength(1);
     expect(entries[0].title).toContain(`[cwm_${cwmId}]`);
-    expect(entries[0].status).toBe('active');
+    expect(entries[0].status).toBe('pending_review');
     expect(entries[0].extracted_by).toBe('memory_consolidation');
     expect(entries[0].content).toContain('Module 3 filing');
   });
@@ -205,7 +206,8 @@ describe('the live AnA chat path can finally reach durable memory', () => {
 
     const result = await runConsolidation();
 
-    expect(result.memoriesConsolidated).toBe(1);
+    expect(result.memoriesConsolidated).toBe(0);
+    expect(result.quarantined).toBe(1);
     expect(await promotedEntries()).toHaveLength(1);
   });
 
@@ -245,7 +247,8 @@ describe('promotion is embedded and gated, not "write everything"', () => {
 
     const result = await runConsolidation();
 
-    expect(result.memoriesConsolidated).toBe(1);
+    expect(result.memoriesConsolidated).toBe(0);
+    expect(result.quarantined).toBe(1);
     expect(result.rejectedByGate).toBe(0);
     expect((await promotedEntries())[0].title).toContain(`[cwm_${cwmId}]`);
     const retained = await pg.query<{ content: string }>(
@@ -253,13 +256,14 @@ describe('promotion is embedded and gated, not "write everything"', () => {
     expect(retained.rows).toEqual([{ content }]);
   });
 
-  it('writes the embedding, so semantic recall (embedding IS NOT NULL) can see the memory', async () => {
+  it('retains an embedding without activating an unreviewed conversation summary', async () => {
     await seedWorkingMemory({ threadId: 't_embed', projectId: PROFILE_PROJECT });
 
     await runConsolidation();
 
     const entries = await promotedEntries();
     expect(entries[0].embedding).toBe('[0.25,0.5,0.75]');
+    expect(entries[0].status).toBe('pending_review');
     // Externally scored, honest confidence: an unvalidated conversation summary
     // must NOT carry document-extract confidence. Before the gate, every
     // promotion was hardcoded 0.75.
@@ -336,10 +340,42 @@ describe('promotion is embedded and gated, not "write everything"', () => {
     await seedWorkingMemory({ threadId: 't_idem', projectId: PROFILE_PROJECT });
 
     const first = await runConsolidation();
-    expect(first.memoriesConsolidated).toBe(1);
+    expect(first.memoriesConsolidated).toBe(0);
+    expect(first.quarantined).toBe(1);
 
     const second = await runConsolidation();
     expect(second.threadsProcessed).toBe(0);
+    expect(await promotedEntries()).toHaveLength(1);
+  });
+});
+
+// No gate mock: preserve the real acceptance decision in the actual SQL row.
+describe('review-required conversations cannot enter active-memory recall', () => {
+  it.each([
+    ['raw summary', '{}'],
+    ['fully structured KNOWN-labeled summary', JSON.stringify({
+      objective: 'Retain [KNOWN] source version for independent review',
+      lockedFacts: ['Source identity is recorded'], decisions: ['Request review'],
+      openQuestions: ['Check the evidence'], nextActions: ['Read the source'],
+      createdArtifacts: ['An unreviewed draft'],
+    })],
+  ])('stores %s pending without inventing verification or changing the source row', async (_label, structured) => {
+    const id = await seedWorkingMemory({ threadId: 'review_required', projectId: PROJECT,
+      structured, summary: 'A preliminary conversation summary with no validated evidence.' });
+    const before = (await pg.query('SELECT * FROM conversation_working_memory WHERE id = $1', [id])).rows;
+    const result = await runConsolidation();
+    expect(result).toMatchObject({ memoriesConsolidated: 0, quarantined: 1, rejectedByGate: 0, errors: 0 });
+    const saved = await pg.query<{ status: string; is_verified_by_user: boolean; confidence_score: number }>(
+      `SELECT status, is_verified_by_user, confidence_score FROM project_memory_entries
+        WHERE organization_id = $1 AND project_id = $2 AND category = 'conversation_summary'`, [ORG, PROJECT]);
+    expect(saved.rows).toHaveLength(1);
+    expect(saved.rows[0]).toMatchObject({ status: 'pending_review', is_verified_by_user: false });
+    expect(saved.rows[0].confidence_score).toBeLessThan(0.7);
+    const recall = await pg.query(`SELECT id FROM project_memory_entries
+      WHERE organization_id = $1 AND project_id = $2 AND status = 'active' AND embedding IS NOT NULL`, [ORG, PROJECT]);
+    expect(recall.rows).toHaveLength(0);
+    expect((await pg.query('SELECT * FROM conversation_working_memory WHERE id = $1', [id])).rows).toEqual(before);
+    expect((await runConsolidation()).threadsProcessed).toBe(0);
     expect(await promotedEntries()).toHaveLength(1);
   });
 });
