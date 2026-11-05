@@ -31,6 +31,10 @@ const ok = (body: unknown, status = 200) => ({ ok: true, status, json: async () 
 const refusal = (status: number, payload: unknown) => Object.assign(new Error('refused'), { name: 'ApiRequestError', status, payload });
 let studies: unknown[] = [{ source: receipt, tables }];
 const nav = vi.fn();
+/* The study's pivotal declarations sit with its data in the editor (StudyPivotalDeclarations, since 2026-10-31), and
+   a read it cannot parse is an alert of its own. Every mock below answers it, so the alert a case finds is its own. */
+const PIVOTAL = '/api/csr-workflow/pivotal?';
+const pivotal = () => ok({ projectId: 7, studies: [] });
 
 beforeEach(() => {
   studies = [{ source: receipt, tables }];
@@ -40,6 +44,7 @@ beforeEach(() => {
     if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
     if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies });
     if (path === '/api/csr/jobs') return ok({ jobId: 41, status: 'queued' }, 202);
+    if (path.startsWith(PIVOTAL)) return pivotal();
     return ok({});
   });
 });
@@ -96,6 +101,7 @@ it('does not block the document CSR source picker when optional package-run hist
     if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
     if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1',
       limitReached: false, sources: [] });
+    if (path.startsWith(PIVOTAL)) return pivotal();
     return ok({});
   });
   render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
@@ -114,6 +120,7 @@ it('permits retained document study data to build even when older package-run hi
     if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM,
       historical: true, studies: [{ source: receipt, tables }] });
     if (path === '/api/csr/jobs') return ok({ jobId: 42, status: 'queued' }, 202);
+    if (path.startsWith(PIVOTAL)) return pivotal();
     return ok({});
   });
   render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
@@ -157,6 +164,7 @@ it('tells the user when package history is malformed instead of pretending there
     if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
     if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1',
       limitReached: false, sources: [] });
+    if (path.startsWith(PIVOTAL)) return pivotal();
     return ok({});
   });
   render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
@@ -169,6 +177,7 @@ it('does not expose the source picker after the document study-data read itself 
     if (path === `/api/submission-orchestrator/runs?programId=${PROGRAM}`) return ok({ runs: [] });
     if (path.includes('/csr/study-data?')) throw refusal(503, { code: 'CSR_DATA_UNAVAILABLE',
       message: 'Current document study data could not be read.' });
+    if (path.startsWith(PIVOTAL)) return pivotal();
     return ok({});
   });
   render(<StudyDataBuild programId={PROGRAM} documentId="11111111-2222-4333-8444-000000000009" />);
