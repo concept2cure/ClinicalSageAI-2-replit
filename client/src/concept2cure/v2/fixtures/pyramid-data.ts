@@ -126,7 +126,23 @@ export const PY_ROLES: Record<string, string> = {
   medical_writer: 'Medical writer', biostat: 'Biostatistician',
   nonclinical: 'Nonclinical', pv_safety: 'PV / safety',
   pub_ops: 'Publishing ops', qa: 'Quality',
+  // Every role the engine's pyramids name (services/regulatory/pyramids/*.ts, 2026-11-04): they printed as their ids.
+  regulatory_ops: 'Regulatory ops', qa_manager: 'QA manager', cmc_lead: 'CMC lead', clinical_lead: 'Clinical lead',
+  toxicologist: 'Toxicologist', ra_associate: 'RA associate', quality: 'Quality', project_manager: 'Project manager',
+  engineering: 'Engineering', pharmacovigilance: 'Pharmacovigilance', medical_monitor: 'Medical monitor',
+  biostatistician: 'Biostatistician', nonclinical_lead: 'Nonclinical lead', safety: 'Safety', drug_safety: 'Drug safety',
+  supply_chain: 'Supply chain', medical_officer: 'Medical officer', market_access: 'Market access', executive: 'Executive',
+  clinical_research_associate: 'Clinical research associate', clinical_operations: 'Clinical operations',
 };
+
+/** A role as people say it: its label, or, for a role a pyramid adds later, its id in plain words ("supply_chain" →
+ *  "Supply chain"), never the bare id. */
+export function pyRoleLabel(role: string): string {
+  const known = PY_ROLES[role];
+  if (known) return known;
+  const words = role.replace(/_/g, ' ').trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : 'Unassigned role';
+}
 
 // ── TaskStatus vocab (5-value) ────────────────────────────────────────────
 

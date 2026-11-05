@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import {
-  PY_ROLES, PY_STATUS, pyResources, pyCoverage,
+  pyRoleLabel, PY_STATUS, pyResources, pyCoverage,
   type PyPyramid, type PyGlobalConfig,
 } from '../fixtures/pyramid-data';
 import '../styles/pyramid-v2.css';
@@ -35,7 +35,7 @@ export function PyAnalytics({ pyr, onTask }: { pyr: PyPyramid; onTask: (id: stri
           <div className="py-res">
             {res.map((r) => (
               <div key={r.role} className="py-res-row" data-over={r.overloaded || undefined}>
-                <span className="k">{PY_ROLES[r.role] || r.role}</span>
+                <span className="k">{pyRoleLabel(r.role)}</span>
                 <span className="bar"><span style={{ width: `${(r.remaining / maxRem) * 100}%` }} /></span>
                 <span className="v mono">{r.remaining}h</span>
                 {r.overloaded ? <span className="py-over">{I.alertTriangle}overloaded</span> : <span className="py-over ok">ok</span>}

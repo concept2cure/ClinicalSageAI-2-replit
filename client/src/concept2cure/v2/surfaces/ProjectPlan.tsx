@@ -27,6 +27,7 @@ import { AssignAction, AssignmentLine, usePlanAssignments, type PlanDeliverable 
 import { STEP_DOORS } from '../projectDoors';
 import { biotechPlanEntry, ProjectBiotechPlan } from './ProjectBiotechPlan';
 import { FilingLifecycleReference } from './FilingLifecycleReference';
+import { ProjectProgramPlan } from './PyramidProject';
 
 /** The features a US IND phase is composed in, when they serve this project. Each opens on the open project, and
  *  is named as the same job is named wherever its door appears (projectDoors.ts). */
@@ -135,6 +136,9 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
           <div className="pj-plan-door"><button type="button" className="btn ghost" onClick={() => onStage('author')}>{STEP_DOORS.filingDocuments} {I.right}</button></div>
         </section>
       )}
+      {/* The filing's work breakdown with this project's progress (S11): beside what the filing needs, the work
+          that produces it, phase by phase, with its critical path. */}
+      {prog && <ProjectProgramPlan programId={pid} onNav={onNav} onAsk={onAsk} />}
       {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}
       {team}
       {/* Read again after each Assign, so the new task is listed without a reload. */}
