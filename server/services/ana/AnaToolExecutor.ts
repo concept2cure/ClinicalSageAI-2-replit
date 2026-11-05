@@ -23,6 +23,7 @@ import { toBiostatsInput as mapToBiostatsInput } from '../ana-biostats/request-i
 import type { RequestSqlClient } from '../../db/requestDb.js';
 import { admitAnaProjectScope, AnaProjectScopeError } from './project-scope-admission';
 import { ProgramReadAccessError } from '../c2c/current-program-access';
+import type { PoolClient } from 'pg';
 import { SchedulePreservationConflict } from '../projects/schedule-of-events/preservation';
 import type { ScheduleExecutionContext } from '../projects/schedule-of-events';
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
@@ -15712,7 +15713,8 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
 // dedupes by section keeping highest version, and emits via masterDocumentBuilder.
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerToolHandler('assemble_ectd_module_from_artifacts', async (input, ctx) => {
+/** The assembly's project and module, or what is missing. */
+function assembleModuleInput(input: Record<string, unknown>, ctx: ToolContext | undefined): { projectId: number; moduleNumber: string } | string {
   const projectId = typeof input.project_id === 'number' ? input.project_id : undefined;
   const moduleNumber = typeof input.module_number === 'string' ? input.module_number : undefined;
   if (!projectId || !moduleNumber) {
@@ -15726,6 +15728,18 @@ registerToolHandler('assemble_ectd_module_from_artifacts', async (input, ctx) =>
       error: 'assemble_ectd_module_from_artifacts requires tenant context (organizationId)',
     });
   }
+  return { projectId, moduleNumber };
+}
+
+registerToolHandler('assemble_ectd_module_from_artifacts', async (input, ctx) => {
+  const asked = assembleModuleInput(input, ctx);
+  if (typeof asked === 'string') return asked;
+  const { projectId, moduleNumber } = asked;
+  /* The project is the model's to name, so it is held to the projects the person can open and, inside a project,
+     to that project's sponsor's (F1, 2026-11-05). It read any project of the organization. One outside reads as a
+     project with no such artifacts. */
+  const scope = await projectReadScope('assemble_ectd_module_from_artifacts', ctx ?? {});
+  if (typeof scope === 'string') return scope;
   try {
     const { getPool } = await import('../../db.js');
     const pool = getPool();
@@ -15736,8 +15750,9 @@ registerToolHandler('assemble_ectd_module_from_artifacts', async (input, ctx) =>
            AND organization_id = $2
            AND ctd_section LIKE $3 || '%'
            AND status != 'archived'
+           AND project_id = ANY($4::int[])
          ORDER BY ctd_section, version DESC`,
-      [projectId, ctx.organizationId, moduleNumber]
+      [projectId, scope.organizationId, moduleNumber, scope.projectIds]
     );
     if (rows.length === 0) {
       return JSON.stringify({
@@ -15768,7 +15783,7 @@ registerToolHandler('assemble_ectd_module_from_artifacts', async (input, ctx) =>
       sections,
       outputFormat,
       documentTitle: `eCTD Module ${moduleNumber}`,
-      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
+      outputDir: anaScratchDir(scope.organizationId, 'docbuilder'),
     });
     return JSON.stringify({
       module_number: moduleNumber,
@@ -21101,6 +21116,46 @@ async function programReadScope(name: string, ctx: ToolContext): Promise<Program
   }
 }
 
+/**
+ * Null when the person may change this project's records now; otherwise the refusal (F1, 2026-11-05). The edit right
+ * is the project sharing policy's (canAccessReportProject, forWrite), read on the write's own connection with the
+ * project and its visibility held, as the Vault's own writes read it (routes/mdx-risk-access.ts).
+ */
+async function artifactEditRefusal(client: PoolClient, scope: ProjectReadScope, projectId: number): Promise<string | null> {
+  const { readCurrentProgramActor } = await import('../c2c/current-program-access.js');
+  const { canAccessReportProject } = await import('../report-os/project-access.js');
+  const actor = await readCurrentProgramActor(client, { organizationId: scope.organizationId, userId: scope.userId, forShare: true });
+  await client.query('SELECT id FROM projects WHERE id = $1 AND organization_id = $2 FOR SHARE', [projectId, scope.organizationId]);
+  await client.query('SELECT project_id FROM project_visibility_settings WHERE project_id = $1 AND organization_id = $2 FOR SHARE',
+    [projectId, scope.organizationId]);
+  if (await canAccessReportProject(scope.organizationId, actor, projectId, client, { forWrite: true })) return null;
+  return JSON.stringify({
+    error: 'Your current project permissions do not permit this change. Nothing was changed.',
+    code: 'PROJECT_WRITE_ACCESS_DENIED',
+  });
+}
+
+/**
+ * The artifact update_vault_document may write a new version of, locked for the write, or the refusal. One outside
+ * the scope reads as no row and is answered as a missing id; then the edit right; then a finalized artifact.
+ */
+async function lockWritableArtifact(client: PoolClient, scope: ProjectReadScope, artifactId: string): Promise<
+  { id: number; status: string; version: number; title: string; project_id: number } | string
+> {
+  const existing = await client.query<{ id: number; status: string; version: number; title: string; project_id: number }>(
+    `SELECT id, status, version, title, project_id FROM concept2cure_artifacts
+      WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2) AND project_id = ANY($3::int[])
+      FOR UPDATE`,
+    [scope.organizationId, artifactId, scope.projectIds],
+  );
+  const doc = existing.rows[0];
+  if (!doc) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
+  const denied = await artifactEditRefusal(client, scope, Number(doc.project_id));
+  if (denied) return denied;
+  if (doc.status === 'locked') return JSON.stringify({ error: `'${doc.title}' is locked — finalized content is immutable. Create a new document instead.` });
+  return doc;
+}
+
 /* Each scoped read names its row's project and sponsor as the organization records them, through the aliases sp
    (projects) and scw (client_workspaces), written out in each statement: SQL text carries no interpolated fragment
    (ci:sql-interpolation). withSponsor turns client_workspace_id and client_name into the row's `client`. */
@@ -21473,13 +21528,25 @@ registerToolHandler('draft_authoring_document', async (input, ctx) => {
   return draftAuthoringDocumentTool(getPool(), input, ctx);
 });
 
-registerToolHandler('update_vault_document', async (input, ctx) => {
+/** update_vault_document's artifact, new body and stated reason, or what is missing. */
+function vaultUpdateInput(input: Record<string, unknown>, ctx: ToolContext | undefined):
+  { organizationId: number; userId: number; artifactId: string; content: string; reason: string } | string {
   if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'update_vault_document requires tenant + user context.' });
   const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
   const content = typeof input.content === 'string' ? input.content : '';
-  const reason = gatedReason(input);
   if (!artifactId) return JSON.stringify({ error: 'artifact_id (string) is required.' });
   if (!content) return JSON.stringify({ error: 'content (string) is required.' });
+  return { organizationId: ctx.organizationId, userId: ctx.userId, artifactId, content, reason: gatedReason(input) };
+}
+
+registerToolHandler('update_vault_document', async (input, ctx) => {
+  const asked = vaultUpdateInput(input, ctx);
+  if (typeof asked === 'string') return asked;
+  const { organizationId, userId, artifactId, content, reason } = asked;
+  /* A new version is written only to an artifact of a project the person can open (inside a project, its sponsor's)
+     and may change (F1, 2026-11-05). It wrote any artifact of the organization. */
+  const scope = await projectReadScope('update_vault_document', { ...ctx, organizationId, userId });
+  if (typeof scope === 'string') return scope;
   try {
     const { getPool } = await import('../../db.js');
     const { createHash } = await import('crypto');
@@ -21487,35 +21554,26 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
-      await setTenantContextTx(client, ctx.organizationId);
-      const existing = await client.query<{ id: number; status: string; version: number; title: string }>(
-        `SELECT id, status, version, title FROM concept2cure_artifacts
-          WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2)
-          FOR UPDATE`,
-        [ctx.organizationId, artifactId],
-      );
-      if (!existing.rows.length) {
+      await setTenantContextTx(client, organizationId);
+      const writable = await lockWritableArtifact(client, scope, artifactId);
+      if (typeof writable === 'string') {
         await client.query('ROLLBACK');
-        return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
+        return writable;
       }
-      const doc = existing.rows[0];
-      if (doc.status === 'locked') {
-        await client.query('ROLLBACK');
-        return JSON.stringify({ error: `'${doc.title}' is locked — finalized content is immutable. Create a new document instead.` });
-      }
+      const doc = writable;
       const hash = createHash('sha256').update(content, 'utf8').digest('hex');
       const nextVersion = Number(doc.version ?? 1) + 1;
       await client.query(
         `UPDATE concept2cure_artifacts
             SET content = $3, content_hash = $4, version = $5, updated_at = NOW()
           WHERE id = $1 AND organization_id = $2`,
-        [doc.id, ctx.organizationId, content, hash, nextVersion],
+        [doc.id, organizationId, content, hash, nextVersion],
       );
       await client.query(
         `INSERT INTO concept2cure_artifact_versions
            (artifact_id, organization_id, version, content, content_hash, change_description, created_by_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [doc.id, ctx.organizationId, nextVersion, content, hash, reason, ctx.userId],
+        [doc.id, organizationId, nextVersion, content, hash, reason, userId],
       );
       /* Lineage in the same transaction as the new version (ledger L160): the
          vault tool carries no parked sources, so every clause is the acting
@@ -21525,26 +21583,26 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
          below records 'ai_generate'. */
       await enforceAuthorLineage(
         client,
-        ctx.organizationId,
+        organizationId,
         { documentTable: 'concept2cure_artifacts', documentId: String(doc.id) },
         content,
-        String(ctx.userId),
+        String(userId),
         { machineDraft: { authorId: ANA_MACHINE_AUTHOR_ID } },
       );
       // Uniform provenance: a new vault version is an 'edit' event, same txn.
       await recordArtifactProvenance(client, {
         artifactId: doc.id,
-        organizationId: ctx.organizationId,
+        organizationId: organizationId,
         eventType: 'edit',
         eventAction: 'ai_generate',
-        actorId: ctx.userId,
+        actorId: userId,
         details: { source: 'ana_tool', reason, version: nextVersion },
         backendService: 'ana/AnaToolExecutor:vault_update',
       });
       // C2C-AUDIT-001: the Part 11 audit row is written on THIS client, inside
       // the version's transaction; a failed audit rolls the version back.
       await recordGovernedAction(client, {
-        orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
+        orgId: organizationId, userId: userId, command: 'transition',
         target: `vault-document:${doc.id}`, reason,
         payload: { kind: 'version', title: doc.title, from: Number(doc.version ?? 1), to: nextVersion, contentHash: hash },
         domain: 'mdx', surface: 'ana',
@@ -21562,6 +21620,7 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
       client.release();
     }
   } catch (err) {
+    if (err instanceof ProgramReadAccessError || err instanceof AnaProjectScopeError) return projectScopeRefusal(err);
     return JSON.stringify({ error: `update_vault_document failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });

@@ -22,14 +22,28 @@ const h = vi.hoisted(() => ({
   failWhen: null as RegExp | null,
 }));
 vi.mock('../../../db.js', () => {
-  const pool = {
-    query: async (sql: string, params?: unknown[]) => {
-      if (h.failWhen && h.failWhen.test(sql)) throw new Error('relation unreadable');
-      return h.pg.query(sql, params as unknown[]);
-    },
+  const query = async (sql: string, params?: unknown[]) => {
+    if (h.failWhen && h.failWhen.test(sql)) throw new Error('relation unreadable');
+    return h.pg.query(sql, params as unknown[]);
   };
+  // update_vault_document writes in a transaction on a lent connection: the same single database.
+  const pool = { query, connect: async () => ({ query, release: () => undefined }) };
   return { pool, getPool: () => pool, db: {} };
 });
+/* The write's own audit, lineage and provenance rows have their suites (qms-vault-audit-atomicity.contract.test.ts);
+   here they are recorded calls, so this suite sees only who may write. The module builder is the assembly's. */
+vi.mock('../../../routes/c2c/actions.js', () => ({ recordGovernedAction: vi.fn(async () => undefined) }));
+// The direct-write role gate reads the role over drizzle, which this harness does not carry; the fixture's role.
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: vi.fn(async () => 'member') }));
+vi.mock('../../clinical-regulatory-evidence/lineage-gate.js', () => ({ enforceAuthorLineage: vi.fn(async () => undefined) }));
+vi.mock('../../provenance/artifact-provenance', () => ({ recordArtifactProvenance: vi.fn(async () => undefined) }));
+vi.mock('../../docx/masterDocumentBuilder.js', () => ({
+  getMasterDocumentBuilder: () => ({
+    generateFromScratch: async (args: { sections: unknown[] }) => ({
+      outputPath: '/tmp/module.docx', format: 'docx', sizeBytes: args.sections.length, buildDurationMs: 0,
+    }),
+  }),
+}));
 vi.mock('../../document-data-disposition/eligibility.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../document-data-disposition/eligibility')>()),
   artifactDataEligibleSql: () => 'TRUE',
@@ -38,6 +52,7 @@ vi.mock('../../document-data-disposition/eligibility.js', async (importOriginal)
 vi.mock('../drafting-source-lineage.js', () => ({ evidenceSourceIdsForRetrieval: async () => new Map() }));
 
 import { getToolHandler } from '../AnaToolExecutor';
+import { approvedToolHandler } from './support/approved-tool-handler';
 
 vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
 
@@ -103,6 +118,7 @@ beforeAll(async () => {
       ('a-b',      1, 13, 'Contoso device memo',              now() - interval '3 hours'),
       ('a-priv',   1, 12, 'Private memo',                     now() - interval '4 hours'),
       ('a-theirs', 2, 20, 'Their memo',                       now() - interval '5 hours');
+    UPDATE concept2cure_artifacts SET ctd_section = '3.2.S.1' WHERE artifact_id IN ('a-a1', 'a-b', 'a-priv');
     INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash)
       SELECT a.id, a.organization_id, v, 'line ' || v, 'h' || v FROM concept2cure_artifacts a, generate_series(1, 2) v;
 
@@ -278,5 +294,89 @@ describe('an access check that cannot run is an error, never an empty result', (
         expect(out.documents ?? out.hits ?? out.content ?? out.versions, name).toBeUndefined();
       }
     }
+  });
+});
+
+/* F1 (2026-11-05): AnA's one write of a governed artifact, and its module assembly, which reads artifact content for
+   a project the model names. Both used the organization as their only filter. */
+describe('update_vault_document writes only where the person may change the project', () => {
+  const versions = async (artifactId: string) => Number((await h.pg.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM concept2cure_artifact_versions v JOIN concept2cure_artifacts a ON a.id = v.artifact_id
+      WHERE a.artifact_id = $1`, [artifactId])).rows[0].n);
+  /* As an approved model's call that a person confirmed: neither gate is what this suite tests
+     (governed-write-gate.test.ts and direct-mutator-confirm-gate.test.ts are), and either would refuse every id alike,
+     a private one included. */
+  const write = async (artifactId: string, ctx: Ctx) => JSON.parse(String(await approvedToolHandler('update_vault_document')!(
+    { artifact_id: artifactId, content: 'A new body.', reason: 'Reviewer comments incorporated.' },
+    { ...ctx, humanConfirmed: true } as never)));
+
+  it("a private project's artifact is answered as a missing one, and nothing is written", async () => {
+    const before = await versions('a-priv');
+    const hidden = await write('a-priv', MEMBER_CTX);
+    const missing = await write('no-such-id', MEMBER_CTX);
+    expect(without(hidden.error, 'a-priv')).toBe(without(missing.error, 'no-such-id'));
+    expect(await versions('a-priv')).toBe(before);
+  });
+
+  it("inside a project, another sponsor's artifact is answered as a missing one, and nothing is written", async () => {
+    const before = await versions('a-b');
+    const hidden = await write('a-b', INSIDE_A);
+    expect(hidden.ok).toBeUndefined();
+    expect(String(hidden.error)).toMatch(/No Artifacts Center document 'a-b'/);
+    expect(await versions('a-b')).toBe(before);
+  });
+
+  it('a project the person can open but not change is refused, and nothing is written', async () => {
+    const before = await versions('a-a1');
+    const out = await write('a-a1', MEMBER_CTX);
+    expect(out).toMatchObject({ code: 'PROJECT_WRITE_ACCESS_DENIED' });
+    expect(String(out.error)).toMatch(/Nothing was changed/);
+    expect(await versions('a-a1')).toBe(before);
+  });
+
+  it("with the project's edit right, the new version is written", async () => {
+    await h.pg.query(`INSERT INTO project_members VALUES (1, 10, 7, 'edit', 'active')`);
+    try {
+      const before = await versions('a-a1');
+      const out = await write('a-a1', INSIDE_A);
+      expect(out, JSON.stringify(out)).toMatchObject({ ok: true });
+      expect(await versions('a-a1')).toBe(before + 1);
+    } finally {
+      await h.pg.query(`DELETE FROM project_members WHERE project_id = 10 AND user_id = 7`);
+    }
+  });
+
+  it('a check that cannot run writes nothing, and says so', async () => {
+    const before = await versions('a-a1');
+    h.failWhen = /FROM project_members/;
+    const out = await write('a-a1', MEMBER_CTX);
+    h.failWhen = null;
+    expect(out.ok).toBeUndefined();
+    expect(out.code).toMatch(/UNAVAILABLE|DENIED/);
+    expect(await versions('a-a1')).toBe(before);
+  });
+});
+
+describe('assemble_ectd_module_from_artifacts assembles only a project the person can open', () => {
+  const assemble = (projectId: number, ctx: Ctx) =>
+    run('assemble_ectd_module_from_artifacts', { project_id: projectId, module_number: '3.2.S' }, ctx);
+
+  it('an open project of the open sponsor assembles', async () => {
+    const out = await assemble(10, INSIDE_A);
+    expect(out, JSON.stringify(out)).toMatchObject({ module_number: '3.2.S', sections_assembled: 1 });
+  });
+
+  it("a private project, or another sponsor's from inside a project, reads as a project with no such artifacts", async () => {
+    const privateOne = await assemble(12, MEMBER_CTX);
+    expect(String(privateOne.error)).toMatch(/No artifacts found for module 3\.2\.S in project 12/);
+    const otherSponsor = await assemble(13, INSIDE_A);
+    expect(String(otherSponsor.error)).toMatch(/No artifacts found for module 3\.2\.S in project 13/);
+    // Asked with no project open, the same other-sponsor project is one the person can open.
+    expect(await assemble(13, MEMBER_CTX)).toMatchObject({ sections_assembled: 1 });
+  });
+
+  it("another organization's project reads as a project with no such artifacts", async () => {
+    const out = await assemble(20, MEMBER_CTX);
+    expect(String(out.error)).toMatch(/No artifacts found/);
   });
 });
