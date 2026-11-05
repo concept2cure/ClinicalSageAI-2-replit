@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > an NDA project's vault reads NDA · 21 CFR 314, not IND · 21 CFR 312 2ms
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > an IND and a BLA read as themselves 0ms
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > a filing type the view does not list, or none, names the view and guesses no regulation 0ms
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > the NeuroPanel-Dx 510(k) reads 510(k) · 21 CFR 807, not IVD / Diagnostics 1ms
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > a De Novo and a PMA read as themselves 0ms
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > EU MDR and IVDR program types read as the taxonomy's CER and IVDR PE 0ms
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > a segment is not a filing, and a filing the view does not list names the view 0ms
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > every label the taxonomy already gave is unchanged 1ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  14:07:49
+   Duration  557ms (transform 182ms, setup 119ms, import 101ms, tests 10ms, environment 0ms)
+

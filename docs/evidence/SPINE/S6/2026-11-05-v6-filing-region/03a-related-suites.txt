@@ -1,0 +1,133 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-11-05T14:08:09.356Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:08:09.357Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-11-05T14:08:09.358Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Database connection successful
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-11-05T14:08:10.022Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a suggested upload renders inside its taxonomy folder 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > an unfiled upload renders in the Unfiled queue — visible, never dropped 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > every preset folder of the view renders even when empty 2ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a confirmed upload counts as placed, and its leaf carries real provenance only 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a row with a folder but unfiled status stays in the queue (placement wins over stale folder) 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf says who made the filing decision, and when (Part 11 review F4) > carries the person's name and the time as ISO, for a person's filing 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf says who made the filing decision, and when (Part 11 review F4) > names nobody for a suggestion 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf says who made the filing decision, and when (Part 11 review F4) > keeps a recorded person whose name this organisation cannot read as recorded 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf carries the file type the filing action decides on > projects mime_type as mimeType 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > an upload has no authoring completion, and says so > projects pct as null, not 0 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > an edited type wins over the classifier kind the upload arrived with 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > a recorded type shows when the classifier recorded no kind 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > the classifier kind is the label while the type is the OTHER "not told" value 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > the classifier kind is the label when no type was recorded at all 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > a file with neither a type nor a kind reads as File 0ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > TMF zone mirror drift guard > mirrors etmf-logic.TMF_ZONES exactly (numbers and names) 2ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > TMF zone mirror drift guard > covers the same 11 zones as tmf-completeness.TMF_REFERENCE_MODEL 0ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > TMF zone mirror drift guard > resolves zones by id and number consistently 1ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > vault taxonomy views > defines the four product segments plus the service view 0ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > vault taxonomy views > every view has folders, doc kinds, and filing frameworks 1ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > vault taxonomy views > ids are unique within each catalog 0ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > vault taxonomy views > preserves the shipped device-view filter ids (client compatibility) 0ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > vault taxonomy views > pharma/biotech views are CTD-structured; service view is TMF-zone-structured 2ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > vault taxonomy views > filing frameworks land in the right segment views 1ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > vaultViewForOrganization (service-org rule) > maps product owners to their segment 0ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > vaultViewForOrganization (service-org rule) > maps service organizations to the cross-sponsor TMF view 0ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > seedArtifacts (eTMF expected-document skeleton) > 'all' scope seeds every reference-model artifact across all 11 zones 1ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > seedArtifacts (eTMF expected-document skeleton) > 'essential' scope seeds only essential documents, all completeness-required 0ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > seedArtifacts (eTMF expected-document skeleton) > completeness_required mirrors essential — optional artifacts never dilute readiness 1ms
+ ✓ server/services/__tests__/vault-taxonomy-etmf.test.ts > seedArtifacts (eTMF expected-document skeleton) > seed codes are unique (idempotency key sanity) 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > coverageOf (pure) > counts a confirmed filing and nothing else: a suggestion is not coverage 2ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > coverageOf (pure) > a document filed deeper covers the section above it, never the reverse 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > coverageOf (pure) > carries no percentage 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a program with no program type reports the fallback with its reason, never as its own list 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a rule-pack store that cannot be read is unavailable with the reason, never "0 of m" 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > filings that cannot be read are unavailable too, not zero 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a filing document class is not a CTD dossier: it says so, and counts nothing 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a view that is not CTD-numbered shows why, and no figure 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a device or diagnostic filing names itself and points to its outline in the Library, with no figure 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > hde counts no medicinal CTD requirement even in a pharma view 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > mdl counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > ivd_licence counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > shonin counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > ninsho counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > todokede counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > ivd_approval counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > jp_cdx counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > counts from the live pack when one applies, and names it 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > Vault coverage feeds no readiness figure > is imported by the Vault read model only 285ms
+stdout | server/services/vault/__tests__/vault-document-filter.test.ts
+{
+  "timestamp": "2026-11-05T14:08:15.042Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:08:15.043Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-document-filter.test.ts
+{
+  "timestamp": "2026-11-05T14:08:15.044Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > reads repeated parameters and comma lists, drops blanks and duplicates, normalises CTD codes 3ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > checks a folder against the program view, and refuses one with no view 1ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > refuses more than twenty values in one dimension rather than truncating 1ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > offers "none" (not sent for review) beside every canonical stage 0ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > vaultFilterSql > appends after the positions already bound and leaves them where they are 1ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > vaultFilterSql > keeps the public API exact: a raw CTD string, no whole-segment widening 0ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > one vocabulary, one predicate > the taxonomy classifications are the schema enum, in the same order 0ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > one vocabulary, one predicate > no other server module that reads vault.documents builds its own metadata predicate 266ms
+ ✓ shared/constants/domain/__tests__/vault-taxonomy-labels.test.ts > every ingest type has a name > covers the enum exactly — no gaps, no strays 2ms
+ ✓ shared/constants/domain/__tests__/vault-taxonomy-labels.test.ts > every ingest type has a name > never leaves a label looking like a wire token 2ms
+ ✓ shared/constants/domain/__tests__/vault-taxonomy-labels.test.ts > every ingest type has a name > spells out the module numbers a reviewer reads 0ms
+ ✓ shared/constants/domain/__tests__/vault-taxonomy-labels.test.ts > a value outside the enum > comes back as ITSELF, not reclassified as Other 0ms
+ ✓ shared/constants/domain/__tests__/vault-taxonomy-labels.test.ts > a value outside the enum > does not reach Object.prototype 0ms
+
+ Test Files  5 passed (5)
+      Tests  62 passed (62)
+   Start at  14:08:07
+   Duration  8.41s (transform 3.46s, setup 161ms, import 6.61s, tests 621ms, environment 1ms)
+
