@@ -7,6 +7,7 @@
  * math, nested amendment changes, deviation CAPA, SoA cells, computed completeness —
  * with no blob, no fallback, and strict org scoping.
  */
+import { summarizeRiskRegister } from '../../protocol-risks/protocol-risks-logic';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 
@@ -138,6 +139,10 @@ describe('assembleOrgPdevDocs', () => {
 
     // Risk: text enums map to the 1-5 ordinals the surface multiplies.
     expect(doc.risks[0]).toMatchObject({ hazard: 'Endpoint may be questioned', l: 4, i: 4, rl: 3, ri: 3, status: 'mitigating' });
+    // The register's summary is the QRM engine's own, the one GET /protocol-risks/documents/:id/register returns.
+    expect(doc.riskSummary).toEqual({ ...summarizeRiskRegister([{
+      category: 'regulatory', likelihood: 'likely', impact: 'major', residualLikelihood: 'possible', residualImpact: 'moderate', status: 'mitigating',
+    }]), unscored: 0 });
 
     // Budget: per-subject = unit_cost × quantity; params carried through.
     expect(doc.budget.items[0].perSubject).toBe(1500);

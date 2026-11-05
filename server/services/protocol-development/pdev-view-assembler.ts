@@ -21,6 +21,7 @@ import { buildSoaMatrix, validateSoa } from '../protocol-soa/protocol-soa-logic'
 import { computeProtocolBudget } from '../protocol-budget/protocol-budget-logic';
 import { mapAmendments, mapDeviations, mapReviewComments, mapReviews } from './pdev-view-registers';
 import { milestoneBucket } from '../protocol-milestones/protocol-milestones-logic';
+import { summarizeRiskRegister, type RiskImpact, type RiskLikelihood, type RiskRegisterSummary } from '../protocol-risks/protocol-risks-logic';
 import { rowsToStudyDesign } from '../study-design/study-design-repository';
 import { validateDesign } from '../study-design/design-validation';
 import { dispositionTarget, finalizationTarget, readSignatureFacets } from './protocol-signature-manifestation';
@@ -54,6 +55,23 @@ function isoDay(v: unknown): string {
     return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`;
   }
   return str(v).slice(0, 10);
+}
+
+/** The register's summary from the QRM engine (summarizeRiskRegister, the one
+ *  GET /api/protocol-risks/documents/:id/register returns), over the risks
+ *  scored on both axes; `unscored` counts the rest, which no level describes. */
+function riskSummaryOf(rows: Record<string, unknown>[]): RiskRegisterSummary & { unscored: number } {
+  const scorable = rows.filter((r) => str(r.likelihood) in LIKELIHOOD && str(r.impact) in IMPACT);
+  const residual = (l: unknown, i: unknown) => (str(l) in LIKELIHOOD && str(i) in IMPACT);
+  const summary = summarizeRiskRegister(scorable.map((r) => ({
+    category: str(r.category),
+    likelihood: str(r.likelihood) as RiskLikelihood,
+    impact: str(r.impact) as RiskImpact,
+    residualLikelihood: residual(r.residual_likelihood, r.residual_impact) ? str(r.residual_likelihood) as RiskLikelihood : null,
+    residualImpact: residual(r.residual_likelihood, r.residual_impact) ? str(r.residual_impact) as RiskImpact : null,
+    status: str(r.status),
+  })));
+  return { ...summary, unscored: rows.length - scorable.length };
 }
 
 /** The cover page's principal investigator: the column when the protocol
@@ -501,6 +519,7 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
         exclusion: g(byDoc.eligibility, id).filter((e) => e.kind === 'exclusion').map((e) => ({ id: str(e.id), text: str(e.criterion) })),
       },
       soa: mapSoa(liveVisits, liveAssessments, liveCells, soaValidation),
+      riskSummary: riskSummaryOf(g(byDoc.risks, id)),
       risks: g(byDoc.risks, id).map((r) => ({
         id: str(r.id), hazard: str(r.description), cat: str(r.category),
         // 0 — not on the 5×5 map — rather than an invented 3 (2026-10-15).

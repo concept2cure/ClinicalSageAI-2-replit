@@ -20,6 +20,7 @@
 import React, { useMemo } from 'react';
 import * as PG from './ProtocolGov';
 import { PaneHead } from './ProtocolDevShared';
+import { hasKeys, useLiveData } from '../dataConnect';
 
 type Row = Record<string, unknown>;
 const asRows = (v: unknown): Row[] => (Array.isArray(v) ? (v as Row[]) : []);
@@ -208,6 +209,7 @@ export function AmendmentsTab({ doc, onAdd, onEdit }: ListPaneProps & {
           </div>
           <div className="pd-card-sum">{str(a.summary)}</div>
           {onEdit && <AmendmentActions a={a} onEdit={onEdit} />}
+          <AmendmentSubstantiality amendmentId={str(a.id)} />
           {/* The changeset is its own child table — an amendment recorded before
               its diff was itemised carries a summary and no changes. */}
           <div className="pd-changeset">{asRows(a.changes).map((c, i) => (
@@ -215,6 +217,44 @@ export function AmendmentsTab({ doc, onAdd, onEdit }: ListPaneProps & {
               <span className="pd-change-arrow">{'→'}</span><span className="pd-change-to">{str(c.to)}</span></div>))}</div>
         </div>))}
     </div>);
+}
+
+/** The EU substantiality read (GET /api/protocol-amendments/amendments/:id/substantiality),
+ *  asked for on demand. The engine (substantiality.ts) never returns "non-substantial":
+ *  its verdict sentence and the indicators that fired are shown as it gives them, and
+ *  the classification stays the sponsor's (EU CTR Article 2(2)(13)). Nothing is read
+ *  until it is asked for, and nothing is written. */
+function AmendmentSubstantiality({ amendmentId }: { amendmentId: string }) {
+  type Indicator = { id: string; scope: string; clause: string; title: string; status: string; message: string };
+  type Read = { assessment: { verdictReason: string; indicators: Indicator[]; notComparable: string[]; declarationConflict: string | null; us?: { indicated: number; note: string } } };
+  const [asked, setAsked] = React.useState(false);
+  const read = useLiveData<Read>(
+    asked && /^\d+$/.test(amendmentId) ? `/api/protocol-amendments/amendments/${amendmentId}/substantiality` : null,
+    [asked, amendmentId],
+    hasKeys<Read>('assessment'),
+  );
+  if (!asked) {
+    return (
+      <button type="button" className="pde-rowbtn" onClick={() => setAsked(true)}>
+        Check EU substantiality indicators
+      </button>
+    );
+  }
+  if (read.loading && !read.data) return <div className="pde-note" role="status">Reading the indicators…</div>;
+  if (read.error || !read.data) return <div className="pde-note" role="note">The substantiality indicators could not be read.</div>;
+  const a = read.data.assessment;
+  // Only Article 2(2)(13) indicators count toward the EU verdict; the US IND view stays apart (substantiality.ts).
+  const fired = a.indicators.filter((i) => i.status === 'indicated' && i.scope === 'eu_sm');
+  return (
+    <div className="pde-note" data-testid="amendment-substantiality">
+      <div><strong>EU substantial-modification indicators (Article 2(2)(13)).</strong> The classification is the sponsor&rsquo;s.</div>
+      <div>{a.verdictReason}</div>
+      {fired.map((i) => <div key={i.id}>{i.title} ({i.clause}): {i.message}</div>)}
+      {a.declarationConflict && <div>{a.declarationConflict}</div>}
+      {a.notComparable.length > 0 && <div>Not comparable: {a.notComparable.join(', ')}.</div>}
+      {a.us && a.us.indicated > 0 && <div>Under a US IND, separately: {a.us.note}</div>}
+    </div>
+  );
 }
 
 /** An amendment's writes: a change while it is a draft, and the next statuses
@@ -259,6 +299,30 @@ function DeviationClose({ d, onClose }: { d: Row; onClose: (target: { id: number
   );
 }
 
+/** The deviation trend engine's signals for this protocol (GET
+ *  /api/protocol-deviations/deviations/trends, trendDeviations: category spike,
+ *  severity rise, aging), in the engine's own sentences. Nothing is computed
+ *  here. A failed read is said; no signal is said as no signal. */
+function DeviationTrendSignals({ documentId }: { documentId: string }) {
+  // The route answers { documentId, trends } (protocol-industry-service.ts deviationTrendsForProtocol).
+  type Trends = { trends: { signals: Array<{ code: string; message: string }>; basis?: string } };
+  const read = useLiveData<Trends>(
+    /^\d+$/.test(documentId) ? `/api/protocol-deviations/deviations/trends?protocolDocumentId=${documentId}` : null,
+    [documentId],
+    (v: unknown): v is Trends => hasKeys<Trends>('trends')(v) && Array.isArray((v as Trends).trends?.signals),
+  );
+  if (read.loading && !read.data) return null;
+  if (read.error && !read.data) return <div className="pde-note" role="note">The deviation trends could not be read.</div>;
+  const signals = read.data?.trends.signals ?? [];
+  return (
+    <div className="pde-note" data-testid="deviation-trend-signals">
+      {signals.length === 0
+        ? 'No trend signal over the window the trend engine reads.'
+        : signals.map((s, i) => <div key={s.code + i}><strong>{s.code}</strong> {s.message}</div>)}
+    </div>
+  );
+}
+
 /* ---- Deviations & CAPA ---- */
 export function DeviationsTab({ doc, onAdd, onEdit, onCloseDeviation }: ListPaneProps & {
   onEdit?: (kind: 'deviation-assess' | 'capa-add' | 'capa-status', target: { id: number; label: string; defaults?: Record<string, string> }) => void;
@@ -269,6 +333,7 @@ export function DeviationsTab({ doc, onAdd, onEdit, onCloseDeviation }: ListPane
   return (
     <div className="pd-pane">
       <PaneHead title="Deviations & CAPA" sub={deviations.length + ' deviations'} action="Report deviation" onAction={onAdd} />
+      {deviations.length > 0 && <DeviationTrendSignals documentId={str(doc.id)} />}
       {deviations.length === 0 && <div className="pde-note">No deviation has been reported against this protocol.</div>}
       {deviations.map((d) => (
         <div key={str(d.id)} className="pd-card">
