@@ -1,0 +1,34 @@
+case	baseline	patched
+US_510K: non-eCTD filing retains identity without medicines-package enrichment	not ok	ok
+US_510K_IVD: non-eCTD filing retains identity without medicines-package enrichment	not ok	ok
+AU_CTA: non-eCTD filing retains identity without medicines-package enrichment	not ok	ok
+SYN_CSR: standalone document/record keeps its own requirements, not a marketing checklist	not ok	ok
+SYN_PROTOCOL: standalone document/record keeps its own requirements, not a marketing checklist	not ok	ok
+SYN_IB: standalone document/record keeps its own requirements, not a marketing checklist	not ok	ok
+SYN_CMC: standalone document/record keeps its own requirements, not a marketing checklist	not ok	ok
+SYN_SAFETY: standalone document/record keeps its own requirements, not a marketing checklist	not ok	ok
+SYN_REGISTRATION: standalone document/record keeps its own requirements, not a marketing checklist	not ok	ok
+SOP: selecting a country does not turn it into a regulatory dossier	not ok	ok
+UNKNOWN: selecting a country does not turn it into a regulatory dossier	not ok	ok
+IND keeps its eCTD path hint but never acquires the initial-marketing checklist	not ok	ok
+US_BLA: initial-marketing requirements remain available without changing selected filing	ok	ok
+EU_MAA: initial-marketing requirements remain available without changing selected filing	ok	ok
+JP_MKT_APPROVAL: initial-marketing requirements remain available without changing selected filing	ok	ok
+CA_NDS: initial-marketing requirements remain available without changing selected filing	ok	ok
+amendment: does not inherit initial-marketing requirements even if the family matches	not ok	ok
+supplement: does not inherit initial-marketing requirements even if the family matches	not ok	ok
+renewal: does not inherit initial-marketing requirements even if the family matches	not ok	ok
+post_approval: does not inherit initial-marketing requirements even if the family matches	not ok	ok
+withdrawal: does not inherit initial-marketing requirements even if the family matches	not ok	ok
+annual_report: does not inherit initial-marketing requirements even if the family matches	not ok	ok
+pre-submission stages never acquire electronic dossier or initial-marketing requirements	not ok	ok
+missing active cannot qualify the initial-marketing checklist	not ok	ok
+missing stage cannot qualify the initial-marketing checklist	not ok	ok
+inactive catalog entry cannot qualify initial-marketing requirements	not ok	ok
+paper CTD marketing keeps its checklist but not electronic XML/gateway-size hints	not ok	ok
+ACTD marketing is not silently enriched as eCTD or CTD	not ok	ok
+region overrides remain contextual and cannot rewrite selected filing or editor format	ok	ok
+no region profile means no fabricated regional overlay	ok	ok
+a missing recorded electronic size remains unassessed	ok	ok
+CRO license handling is unchanged when document requirements are non-dossier	not ok	ok
+failed license read does not add a marketing checklist to a device document	not ok	ok
