@@ -274,6 +274,20 @@ export function unsupportedCsrDeathCounts(
   return [...figures].filter(n => !supported.has(n));
 }
 
+/**
+ * The death figures of a results or synopsis section that no death row supports, split in two: those the draft
+ * claimed from another row (a misattribution, `outcome_cell_mismatch`) and those it did not claim at all, which are
+ * unreconciled figures like any other unclaimed number. Either kind refuses the draft.
+ */
+function unsupportedDeathFigures(
+  sectionNumber: string, prose: string, claims: unknown, evidence: CsrAuthoringEvidence, claimed: string[],
+): { misattributed: string[]; unclaimed: string[] } {
+  if (!isCsrObservedResultsSection(sectionNumber) && sectionNumber.trim() !== '2') return { misattributed: [], unclaimed: [] };
+  const figures = unsupportedCsrDeathCounts(prose, claims, evidence);
+  const cited = new Set(claimed.map(value => /^\s*([0-9][0-9,]*)\b/.exec(value)?.[1]?.replace(/,/g, '')));
+  return { misattributed: figures.filter(n => cited.has(n)), unclaimed: figures.filter(n => !cited.has(n)) };
+}
+
 /** A model's draft of one section: its prose and the claims it made about it. */
 export interface EvidenceBoundDraft {
   sectionNumber: string;
@@ -309,15 +323,13 @@ export function acceptEvidenceBoundDraft(
     lineage.rejectedModelDraft = { reason: 'unreconciled_claims', evidenceDigest: evidence.evidenceDigest, findings: unreconciled.slice(0, 20) };
     return false;
   }
-  if (isCsrObservedResultsSection(sectionNumber) || sectionNumber.trim() === '2') {
-    const unsupportedDeaths = unsupportedCsrDeathCounts(prose, claims, evidence);
-    if (unsupportedDeaths.length) {
-      lineage.rejectedModelDraft = { reason: 'outcome_cell_mismatch',
-        category: 'death_count', evidenceDigest: evidence.evidenceDigest };
-      return false;
-    }
-  }
   const claimed = (claims as Array<{ value: string }>).map((c) => c.value);
+  const deaths = unsupportedDeathFigures(sectionNumber, prose, claims, evidence, claimed);
+  if (deaths.misattributed.length) {
+    lineage.rejectedModelDraft = { reason: 'outcome_cell_mismatch',
+      category: 'death_count', evidenceDigest: evidence.evidenceDigest };
+    return false;
+  }
   if (sectionNumber.trim() === '2' && unclaimedCsrSynopsisResults(prose, claimed).length) {
     lineage.rejectedModelDraft = { reason: 'synopsis_observed_figures_unclaimed',
       evidenceDigest: evidence.evidenceDigest };
@@ -332,7 +344,9 @@ export function acceptEvidenceBoundDraft(
   // must NOT authorize observed results in E3 §§10–13.
   const known = isCsrObservedResultsSection(sectionNumber) ? { claimed } : { supplied, claimed };
   const statistics = isStatisticalSection(sectionNumber) ? findUnsuppliedStatistics(prose, known) : [];
-  const unsupplied = statistics.length > 0 ? statistics : findUnclaimedNumbers(prose, known);
+  const scanned = statistics.length > 0 ? statistics : findUnclaimedNumbers(prose, known);
+  // An unclaimed death figure refuses the draft even where the metadata's digits would let it pass the scan (§2).
+  const unsupplied = scanned.length > 0 ? scanned : deaths.unclaimed.map(text => ({ kind: 'death_count', text }));
   if (unsupplied.length > 0) {
     lineage.rejectedModelDraft = { reason: 'unreconciled_figures', evidenceDigest: evidence.evidenceDigest, statistics: unsupplied.slice(0, 20) };
     return false;
