@@ -243,7 +243,9 @@ study does not have.
 *Updated 2026-11-05 to the app on trunk after F1, F5, F6, F9 and B7 (re-walked as
 `../../DEMO/2026-11-05-csr-lifecycle/README.md`, "Re-walk after the fixes"). Migrate the demo database from the
 current set first (`node scripts/db/deploy-migrate.mjs`): a database migrated before 2026-10-31 answers 500 on the
-study data.*
+study data. A local server's `ALLOWED_ORIGINS` must name its own URL (for example
+`ALLOWED_ORIGINS=http://127.0.0.1:5200,http://localhost:5200`), or sign-in and `demo:seed` are refused with
+`CORS_ORIGIN_BLOCKED`.*
 
 5. **Fetch the pilot files** with `scripts/cre/fetch-cdisc-pilot-adam.mjs`. Attribute CDISC; do not modify the
    files or charge for them.
