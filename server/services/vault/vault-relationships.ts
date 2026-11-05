@@ -167,8 +167,14 @@ export async function addRelationship(
     if (family?.some((v) => v.id === to.id)) {
       return refuse(409, 'SAME_DOCUMENT', 'These are versions of one document; their order is already recorded in its version history.');
     }
-    await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:from.program_id,forShare:true});
-    await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:to.program_id,forShare:true});
+    const fromAccess = await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:from.program_id,forShare:true});
+    const toAccess = await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:to.program_id,forShare:true});
+    /* A CRO's sponsors never mix (F1, S6 V3, 2026-11-05): a document is related only to documents of its own
+       sponsor's projects. The sponsor is each project's verified anchor's client workspace, never a request value.
+       The finder searches within the sponsor (VaultRelationships.tsx); this refuses a target named some other way. */
+    if (fromAccess.clientWorkspaceId !== toAccess.clientWorkspaceId) {
+      return refuse(409, 'OTHER_CLIENT', 'That document belongs to another client’s project. A document is related only to documents of its own client’s projects.');
+    }
     const ins = await client.query(
       `INSERT INTO public.vault_document_relationships
          (organization_id, program_id, from_document_id, to_document_id, relationship_type, note, created_by)

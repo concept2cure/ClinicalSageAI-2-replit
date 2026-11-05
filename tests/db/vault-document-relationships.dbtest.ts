@@ -40,7 +40,7 @@ let viewerId: number;
 let mine: Tenant;
 let theirs: Tenant;
 let gone: Tenant;
-const ids = { protocol: '', csr: '', sap: '', sapV2: '', elsewhere: '', theirDoc: '', goneA: '', goneB: '' };
+const ids = { protocol: '', csr: '', sap: '', sapV2: '', elsewhere: '', otherSponsor: '', theirDoc: '', goneA: '', goneB: '' };
 
 async function appFor(t: Tenant, role = 'admin'): Promise<express.Express> {
   const createVaultIngestRoutes = (await import('../../server/routes/vault-ingest')).default;
@@ -150,6 +150,17 @@ beforeAll(async () => {
   ids.sap = await ingest(mine, 'Statistical analysis plan, v1.', { documentCode: `${CODE}-SAP`, documentTitle: 'Statistical analysis plan' });
   ids.sapV2 = await ingest(mine, 'Statistical analysis plan, v2.', { supersedesDocumentId: ids.sap, documentTitle: 'Statistical analysis plan' });
   ids.elsewhere = await ingest(mine, 'Investigator brochure.', { documentCode: `${CODE}-IB`, documentTitle: 'Investigator brochure' }, mine.otherProgramId);
+  /* One sponsor's two projects, and a third under another sponsor (F1, S6 V3). The fixture gives each program its own
+     client workspace, so the second program is moved under the first's, as a sponsor's projects share one. */
+  await owner.query(
+    `UPDATE projects SET client_workspace_id = (SELECT client_workspace_id FROM projects WHERE organization_id = $1 AND regulatory_program_id = $2)
+      WHERE organization_id = $1 AND regulatory_program_id = $3`, [mine.orgId, mine.programId, mine.otherProgramId]);
+  const otherSponsorProgram = String((await owner.query(
+    `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
+     VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Relata 5mg') RETURNING id`,
+    [`${PROBE}mine another sponsor's program`, `${CODE}-MINE-C`, mine.orgId])).rows[0].id);
+  await seedVaultFixtureParent(owner, { ...mine, programId: otherSponsorProgram }, { userId, namespace: `${PROBE}mine-other-sponsor` });
+  ids.otherSponsor = await ingest(mine, 'Another sponsor’s protocol.', { documentCode: `${CODE}-OS`, documentTitle: 'Another sponsor protocol' }, otherSponsorProgram);
   ids.theirDoc = await ingest(theirs, 'Their protocol.', { documentCode: `${CODE}-THEIRS`, documentTitle: 'Their protocol' });
   ids.goneA = await ingest(gone, 'A record to be purged.', { documentCode: `${CODE}-GA`, documentTitle: 'Purged A' });
   ids.goneB = await ingest(gone, 'Another record to be purged.', { documentCode: `${CODE}-GB`, documentTitle: 'Purged B' });
@@ -191,6 +202,16 @@ describe('relating documents (critique 15)', () => {
       label: 'References',
       other: expect.objectContaining({ documentId: ids.elsewhere, programId: mine.otherProgramId, programName: `${PROBE}mine second program` }),
     }));
+  });
+
+  /* F1, S6 V3 (2026-11-05): a CRO's sponsors never mix. A document is related only to documents of its own sponsor's
+     projects. The finder already searches within the sponsor (VaultRelationships.tsx); the server refuses the rest. */
+  it("refuses a document of another sponsor's project, and records nothing", async () => {
+    const res = await relate(mine, ids.csr, { toDocumentId: ids.otherSponsor, type: 'references' });
+    expect([res.status, res.body.error], JSON.stringify(res.body)).toEqual([409, 'OTHER_CLIENT']);
+    expect(res.body.message).toMatch(/another client/i);
+    const out = await list(mine, ids.csr);
+    expect(out.body.data.relationships.some((r: { other: { documentId: string } }) => r.other.documentId === ids.otherSponsor)).toBe(false);
   });
 
   it('says when the related version has since been superseded', async () => {
