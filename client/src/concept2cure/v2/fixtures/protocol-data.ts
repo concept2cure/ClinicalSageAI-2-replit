@@ -51,6 +51,8 @@ export interface PdevBudget { params: BudgetParams; items: BudgetItem[]; }
 export interface AmendmentChange { sec: string; from: string; to: string; }
 export interface PdevAmendment {
   id: string; num: string; summary: string; status: string;
+  /** The statuses the server will accept next (its transition table). */
+  nextStatuses: string[];
   /** true = a declared consent or risk impact needs an IRB re-consent determination; null = not declared. */
   reconsent: boolean | null; path: string; changes: AmendmentChange[];
 }

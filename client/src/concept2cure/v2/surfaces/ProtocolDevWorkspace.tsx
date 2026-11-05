@@ -253,7 +253,7 @@ function RegisterTabBody({ tab, doc, canWrite, onReg, onEdit }: BodyProps): Reac
     case 'risks': return <RiskTab doc={doc} onAdd={() => onReg('risk')} onEdit={onEdit} />;
     case 'milestones': return <MilestonesTab doc={doc} onAdd={() => onReg('milestone')} />;
     case 'budget': return <BudgetTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
-    case 'amendments': return <AmendmentsTab doc={doc} onAdd={() => onReg('amendment')} />;
+    case 'amendments': return <AmendmentsTab doc={doc} onAdd={() => onReg('amendment')} onEdit={canWrite ? onEdit : undefined} />;
     case 'deviations': return <DeviationsTab doc={doc} onAdd={() => onReg('deviation')} onEdit={canWrite ? onEdit : undefined} />;
     case 'reviews': return <ReviewsTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
     case 'consent': return <ConsentTab doc={doc} />;
@@ -550,6 +550,8 @@ const FORM_DONE: Record<PdevFormKind, string> = {
   'review-disposition': 'Disposition signed.',
   'review-comment': 'Comment recorded — the review is re-read from the record.',
   'comment-resolve': 'Comment resolved — the review is re-read from the record.',
+  'amendment-change': 'Change added — the amendment is re-read from the record.',
+  'amendment-status': 'Status recorded — the amendment is re-read from the record.',
   'cover-page': 'Cover page saved.',
   'start-protocol': 'Protocol started — its sections are seeded and on the record.',
 };
