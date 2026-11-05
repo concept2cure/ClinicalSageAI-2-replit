@@ -94,6 +94,6 @@ describe('source catalogue disclosures and availability', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
     await screen.findByText(source.title);
     expect(search.value).toBe('');
-    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', expect.not.stringContaining('&q=')));
+    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', expect.not.stringContaining('&q='), undefined, undefined, expect.any(AbortSignal)));
   });
 });
