@@ -15291,6 +15291,10 @@ registerToolHandler('global_search', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'global_search requires tenant context.' });
   const q = typeof input.q === 'string' ? input.q.trim() : '';
   if (q.length < 2) return JSON.stringify({ error: 'q must be at least 2 chars.' });
+  // The programs and artifacts of the projects the person can open, inside an open project its sponsor's (F1,
+  // 2026-11-05): it read the organization's, a private project's program names and artifact titles included.
+  const scope = await programReadScope('global_search', ctx);
+  if (typeof scope === 'string') return scope;
   try {
     /* Forward to the route layer's search function. We reuse the routes
        module's exported router only indirectly — calling the underlying
@@ -15298,27 +15302,30 @@ registerToolHandler('global_search', async (input, ctx) => {
     const { getPool } = await import('../../db.js');
     const ilike = `%${q.replace(/[%_]/g, (m) => `\\${m}`)}%`;
     const limit = typeof input.limit === 'number' ? Math.min(100, Math.max(1, Math.round(input.limit))) : 25;
-    const fanout = await Promise.allSettled([
+    const [programs, artifacts] = await Promise.allSettled([
       getPool().query(
         `SELECT id, name, code, status FROM regulatory_programs
-          WHERE organization_id = $1 AND deleted_at IS NULL
+          WHERE organization_id = $1 AND deleted_at IS NULL AND id = ANY($4::uuid[])
             AND (name ILIKE $2 OR COALESCE(code,'') ILIKE $2 OR COALESCE(description,'') ILIKE $2)
-          LIMIT $3`, [ctx.organizationId, ilike, limit]),
+          LIMIT $3`, [ctx.organizationId, ilike, limit, scope.programIds]),
       getPool().query(
-        `SELECT id, title, ctd_section, status FROM concept2cure_artifacts
-          WHERE organization_id = $1 AND status != 'archived' AND title ILIKE $2
-          ORDER BY updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit]),
+        `SELECT a.id, a.title, a.ctd_section, a.status, a.project_id, ${SCOPED_PROJECT_COLUMNS}
+           FROM concept2cure_artifacts a
+           ${SCOPED_ARTIFACT_PROJECT_JOIN}
+          WHERE a.organization_id = $1 AND a.project_id = ANY($4::int[]) AND a.status != 'archived' AND a.title ILIKE $2
+          ORDER BY a.updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit, scope.projectIds]),
     ]);
     const hits: Array<Record<string, unknown>> = [];
-    if (fanout[0].status === 'fulfilled') {
-      for (const r of fanout[0].value.rows) hits.push({ type: 'program', ...r });
-    }
-    if (fanout[1].status === 'fulfilled') {
-      for (const r of fanout[1].value.rows) hits.push({ type: 'artifact', ...r });
-    }
+    // A store that could not be searched is said, never left out of an "ok" answer.
+    const unavailable: string[] = [];
+    if (programs.status === 'fulfilled') hits.push(...programs.value.rows.map((r) => ({ type: 'program', ...r })));
+    else unavailable.push('programs');
+    if (artifacts.status === 'fulfilled') hits.push(...(await withSponsor(artifacts.value.rows)).map((r) => ({ type: 'artifact', ...r })));
+    else unavailable.push('artifacts');
     return JSON.stringify({
-      ok: true, query: q, hits, count: hits.length,
-      message: `Found ${hits.length} hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.`,
+      ok: unavailable.length === 0, query: q, hits, count: hits.length,
+      ...(unavailable.length ? { unavailable, error: `The ${unavailable.join(' and ')} could not be searched. Missing results are not evidence that none exist.` } : {}),
+      message: `Found ${hits.length} hits across the programs and artifacts of the projects you can open. Use the kit's search overlay for full coverage across all 12 types.`,
     });
   } catch (err) {
     return JSON.stringify({
@@ -21026,12 +21033,94 @@ function artifactModelAvailability(row: Record<string, unknown>) {
   };
 }
 
+/**
+ * The projects AnA's governed-artifact and governed-document reads may read for this person (F1, 2026-11-05).
+ *
+ * list_vault_documents, read_vault_document, get_document_versions, compare_vault_versions, list_governed_documents,
+ * read_governed_document and global_search read with the organization as their only filter. So a member read a
+ * private project's governed artifacts, and inside one sponsor's project a CRO's other sponsors' too. A CRO works
+ * across authorized sponsor projects "without mixing sponsor data or permissions" (the founder, 2026-11-05).
+ *
+ * They now read the projects the sharing policy admits the person to (getAccessibleReportProjectIds, the policy the
+ * Vault's organization view lists by, routes/artifacts-center-routes.ts). With a project open (ctx.projectId, or
+ * ctx.projectRef, a program uuid under the v2 shell), that project is admitted first (admitAnaProjectScope) and the
+ * projects are narrowed to its sponsor's (narrowToSponsorOf, the Vault's own narrowing). An id outside them reads as
+ * no row, so it is answered as a missing id is. A check that cannot run is an error, never an empty scope.
+ */
+interface ProjectReadScope { organizationId: number; userId: number; projectIds: number[] }
+/** Governed documents are keyed by program: the verified anchors (verifiedProgramAnchors) of the scope's projects. */
+interface ProgramReadScope extends ProjectReadScope { programIds: string[]; anchorProjectIds: number[] }
+
+function projectScopeRefusal(error: unknown): string {
+  if (error instanceof ProgramReadAccessError || error instanceof AnaProjectScopeError) {
+    return JSON.stringify({ error: error.message, code: error.code });
+  }
+  return JSON.stringify({
+    error: 'Current project access could not be verified. No project data was supplied.',
+    code: 'PROJECT_ACCESS_UNAVAILABLE',
+  });
+}
+
+async function projectReadScope(name: string, ctx: ToolContext): Promise<ProjectReadScope | string> {
+  const organizationId = Number(ctx.organizationId);
+  const userId = Number(ctx.userId);
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    return JSON.stringify({ error: `${name} reads only the projects you can open, and no identified member is known. Nothing was read.`, code: 'PROJECT_ACTOR_REQUIRED' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { readCurrentProgramActor } = await import('../c2c/current-program-access.js');
+    const { getAccessibleReportProjectIds } = await import('../report-os/project-access.js');
+    const { narrowToSponsorOf } = await import('../artifact-registry-read.js');
+    const q = getPool();
+    const actor = await readCurrentProgramActor(q, { organizationId, userId });
+    const accessible = await getAccessibleReportProjectIds(organizationId, actor, q);
+    const open = await admitAnaProjectScope(q, { organizationId, userId, projectId: ctx.projectId, projectRef: ctx.projectRef });
+    if (open.projectId === null) return { organizationId, userId, projectIds: accessible };
+    return { organizationId, userId, projectIds: (await narrowToSponsorOf(organizationId, accessible, open.projectId)).projectIds };
+  } catch (error) {
+    return projectScopeRefusal(error);
+  }
+}
+
+async function programReadScope(name: string, ctx: ToolContext): Promise<ProgramReadScope | string> {
+  const scope = await projectReadScope(name, ctx);
+  if (typeof scope === 'string') return scope;
+  try {
+    const { getPool } = await import('../../db.js');
+    const { getCurrentAccessibleProgramScope, verifiedProgramAnchors } = await import('../c2c/current-program-access.js');
+    const q = getPool();
+    const identity = { organizationId: scope.organizationId, userId: scope.userId };
+    const allowed = new Set(scope.projectIds);
+    const anchors = verifiedProgramAnchors(q, identity, await getCurrentAccessibleProgramScope(q, identity))
+      .filter((anchor) => allowed.has(anchor.projectId));
+    return { ...scope, programIds: anchors.map((a) => a.programId), anchorProjectIds: anchors.map((a) => a.projectId) };
+  } catch (error) {
+    return projectScopeRefusal(error);
+  }
+}
+
+/** Each scoped row's project and sponsor, as the organization records them. The aliases are the scope's own. */
+const SCOPED_PROJECT_COLUMNS = 'COALESCE(sp.code, sp.name) AS project, sp.client_workspace_id, scw.name AS client_name';
+const SCOPED_SPONSOR_JOIN = 'LEFT JOIN client_workspaces scw ON scw.id = sp.client_workspace_id AND scw.organization_id = sp.organization_id';
+const SCOPED_ARTIFACT_PROJECT_JOIN = `JOIN projects sp ON sp.id = a.project_id AND sp.organization_id = a.organization_id ${SCOPED_SPONSOR_JOIN}`;
+
+/** The rows with their sponsor named (artifactSponsor): a sponsor that cannot be named fails the read, never "none". */
+async function withSponsor(rows: Array<Record<string, unknown>>): Promise<Array<Record<string, unknown>>> {
+  const { artifactSponsor } = await import('../artifact-registry-read.js');
+  return rows.map(({ client_workspace_id, client_name, ...row }) => ({
+    ...row, client: artifactSponsor(client_workspace_id as number | null, client_name as string | null),
+  }));
+}
+
 registerToolHandler('list_vault_documents', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'list_vault_documents requires tenant context.' });
+  const scope = await projectReadScope('list_vault_documents', ctx);
+  if (typeof scope === 'string') return scope;
   try {
     const { getPool } = await import('../../db.js');
     const filters: string[] = [`a.status != 'archived'`, artifactDataEligibleSql('a')];
-    const args: unknown[] = [ctx.organizationId];
+    const args: unknown[] = [ctx.organizationId, scope.projectIds];
     if (typeof input.query === 'string' && input.query.trim()) {
       args.push(`%${input.query.trim().replace(/[%_]/g, (m) => `\\${m}`)}%`);
       filters.push(`a.title ILIKE $${args.length}`);
@@ -21047,9 +21136,11 @@ registerToolHandler('list_vault_documents', async (input, ctx) => {
     args.push(viewLimit(input));
     const { rows } = await getPool().query(
       `SELECT a.id, a.artifact_id, a.title, a.type, a.category, a.ctd_section, a.status,
-              a.version, a.updated_at, ${artifactOriginalFileAvailableSql('a')} AS original_file_available
+              a.version, a.updated_at, a.project_id, ${SCOPED_PROJECT_COLUMNS},
+              ${artifactOriginalFileAvailableSql('a')} AS original_file_available
          FROM concept2cure_artifacts a
-        WHERE a.organization_id = $1 AND ${filters.join(' AND ')}
+         ${SCOPED_ARTIFACT_PROJECT_JOIN}
+        WHERE a.organization_id = $1 AND a.project_id = ANY($2::int[]) AND ${filters.join(' AND ')}
         ORDER BY a.updated_at DESC
         LIMIT $${args.length}`,
       args,
@@ -21057,13 +21148,13 @@ registerToolHandler('list_vault_documents', async (input, ctx) => {
     return JSON.stringify({
       ok: true,
       count: rows.length,
-      documents: rows.map(row => ({ ...row, ...artifactModelAvailability(row) })),
+      documents: (await withSponsor(rows)).map(row => ({ ...row, ...artifactModelAvailability(row) })),
       message: rows.length
         ? `${rows.length} Artifacts Center document(s). Use read_vault_document with an id to open one.`
         : /* An empty Artifacts Center answer said "No vault documents match", about a
              store that is not the Vault — so a file the user had uploaded to the Vault
              was reported absent. Say what was searched instead. */
-          'No Artifacts Center documents match the filters. This does not search files uploaded to the Vault — ' +
+          'No Artifacts Center documents in the projects you can open match the filters. This does not search files uploaded to the Vault — ' +
           'do not tell the user a Vault file is missing on the strength of this result.',
     });
   } catch (err) {
@@ -21105,20 +21196,26 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'read_vault_document requires tenant context.' });
   const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
   if (!artifactId) return JSON.stringify({ error: 'artifact_id (string) is required.' });
+  const scope = await projectReadScope('read_vault_document', ctx);
+  if (typeof scope === 'string') return scope;
   try {
     const { getPool } = await import('../../db.js');
+    // An artifact of a project outside the scope reads as no row: answered as a missing id, never "not yours".
     const { rows } = await getPool().query(
       `SELECT a.id, a.artifact_id, a.title, a.type, a.category, a.ctd_section, a.status, a.version,
               a.content, a.content_hash, a.created_at, a.updated_at, a.locked_at,
+              a.project_id, ${SCOPED_PROJECT_COLUMNS},
               ${artifactOriginalFileAvailableSql('a')} AS original_file_available
          FROM concept2cure_artifacts a
+         ${SCOPED_ARTIFACT_PROJECT_JOIN}
         WHERE a.organization_id = $1 AND (a.id::text = $2 OR a.artifact_id = $2)
+          AND a.project_id = ANY($3::int[])
           AND ${artifactDataEligibleSql('a')}
         LIMIT 1`,
-      [ctx.organizationId, artifactId],
+      [ctx.organizationId, artifactId, scope.projectIds],
     );
     if (!rows.length) return JSON.stringify({ error: `No currently eligible Artifacts Center document '${artifactId}' in this organization. A withdrawn or superseded representation cannot be used as new grounding. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
-    const { content, ...meta } = rows[0];
+    const [{ content, ...meta }] = await withSponsor(rows);
     const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
 
     const evidenceSourceId = await citableSourceIdFor(
@@ -21146,25 +21243,34 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
   }
 });
 
+/** An artifact's internal id within the scope's projects, or null: one outside them reads as a missing id. */
+async function scopedArtifactKey(artifactId: string, scope: ProjectReadScope): Promise<number | null> {
+  const { getPool } = await import('../../db.js');
+  const { rows } = await getPool().query<{ id: number }>(
+    `SELECT id FROM concept2cure_artifacts
+      WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2) AND project_id = ANY($3::int[]) LIMIT 1`,
+    [scope.organizationId, artifactId, scope.projectIds],
+  );
+  return rows.length ? rows[0].id : null;
+}
+
 registerToolHandler('get_document_versions', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'get_document_versions requires tenant context.' });
   const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
   if (!artifactId) return JSON.stringify({ error: 'artifact_id (string) is required.' });
+  const scope = await projectReadScope('get_document_versions', ctx);
+  if (typeof scope === 'string') return scope;
   try {
     const { getPool } = await import('../../db.js');
-    const idRes = await getPool().query<{ id: number }>(
-      `SELECT id FROM concept2cure_artifacts
-        WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2) LIMIT 1`,
-      [ctx.organizationId, artifactId],
-    );
-    if (!idRes.rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
+    const key = await scopedArtifactKey(artifactId, scope);
+    if (key === null) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const versions = await getPool().query(
       `SELECT id, version AS version_number, change_description AS change_summary,
               content_hash, created_at, created_by_id
          FROM concept2cure_artifact_versions
         WHERE artifact_id = $1 AND organization_id = $2
         ORDER BY version DESC`,
-      [idRes.rows[0].id, ctx.organizationId],
+      [key, ctx.organizationId],
     );
     return JSON.stringify({ ok: true, count: versions.rows.length, versions: versions.rows });
   } catch (err: unknown) {
@@ -21176,10 +21282,12 @@ registerToolHandler('get_document_versions', async (input, ctx) => {
 
 registerToolHandler('list_governed_documents', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'list_governed_documents requires tenant context.' });
+  const scope = await programReadScope('list_governed_documents', ctx);
+  if (typeof scope === 'string') return scope;
   try {
     const { getPool } = await import('../../db.js');
     const filters: string[] = [];
-    const args: unknown[] = [ctx.organizationId];
+    const args: unknown[] = [ctx.organizationId, scope.programIds, scope.anchorProjectIds];
     for (const [key, col] of [['doc_type', 'doc_type'], ['agency', 'agency'], ['status', 'status']] as const) {
       const v = input[key];
       if (typeof v === 'string' && v.trim()) {
@@ -21188,10 +21296,13 @@ registerToolHandler('list_governed_documents', async (input, ctx) => {
       }
     }
     args.push(viewLimit(input));
+    // d.project_id is a program; the join names the one project it is anchored to in the scope.
     const { rows } = await getPool().query(
-      `SELECT d.id, d.project_id, d.doc_type, d.agency, d.title, d.status, d.readiness, d.updated_at
+      `SELECT d.id, d.project_id, ${SCOPED_PROJECT_COLUMNS}, d.doc_type, d.agency, d.title, d.status, d.readiness, d.updated_at
          FROM c2c_documents d
-        WHERE d.org_id = $1${filters.length ? ` AND ${filters.join(' AND ')}` : ''}
+         JOIN projects sp ON sp.regulatory_program_id = d.project_id AND sp.organization_id = d.org_id AND sp.id = ANY($3::int[])
+         ${SCOPED_SPONSOR_JOIN}
+        WHERE d.org_id = $1 AND d.project_id = ANY($2::uuid[])${filters.length ? ` AND ${filters.join(' AND ')}` : ''}
         ORDER BY d.updated_at DESC
         LIMIT $${args.length}`,
       args,
@@ -21199,7 +21310,7 @@ registerToolHandler('list_governed_documents', async (input, ctx) => {
     return JSON.stringify({
       ok: true,
       count: rows.length,
-      documents: rows,
+      documents: await withSponsor(rows),
       message: rows.length
         ? `${rows.length} governed documents. Use read_governed_document with a document id for its outline or a section's content.`
         : 'No governed documents match the filters.',
@@ -21228,12 +21339,15 @@ registerToolHandler('read_governed_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'read_governed_document requires tenant context.' });
   const documentId = typeof input.document_id === 'string' ? input.document_id.trim() : '';
   if (!documentId) return JSON.stringify({ error: 'document_id (string) is required.' });
+  const scope = await programReadScope('read_governed_document', ctx);
+  if (typeof scope === 'string') return scope;
   try {
     const { getPool } = await import('../../db.js');
+    // A document of a program outside the scope reads as no row: answered as a missing id.
     const doc = await getPool().query(
       `SELECT id, doc_type, agency, title, status, readiness FROM c2c_documents
-        WHERE org_id = $1 AND id = $2 LIMIT 1`,
-      [ctx.organizationId, documentId],
+        WHERE org_id = $1 AND id = $2 AND project_id = ANY($3::uuid[]) LIMIT 1`,
+      [ctx.organizationId, documentId, scope.programIds],
     );
     if (!doc.rows.length) return JSON.stringify({ error: `No governed document '${documentId}' in this organization.` });
 
@@ -21450,6 +21564,27 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
   }
 });
 
+/** Two versions' content compared line by line, unordered (compare_vault_versions). */
+function versionLineSummary(a: Record<string, unknown>, b: Record<string, unknown>) {
+  const linesA = String(a.content ?? '').split('\n');
+  const linesB = String(b.content ?? '').split('\n');
+  const setA = new Set(linesA);
+  const setB = new Set(linesB);
+  const added = linesB.filter(l => !setA.has(l));
+  const removed = linesA.filter(l => !setB.has(l));
+  const preview = (list: string[]) => list.filter(l => l.trim()).slice(0, 12);
+  const meta = ({ content, ...rest }: Record<string, unknown>) => ({ ...rest, chars: String(content ?? '').length });
+  return {
+    version_a: meta(a),
+    version_b: meta(b),
+    identical: a.content_hash === b.content_hash,
+    lines_added: added.length,
+    lines_removed: removed.length,
+    added_preview: preview(added),
+    removed_preview: preview(removed),
+  };
+}
+
 registerToolHandler('compare_vault_versions', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'compare_vault_versions requires tenant context.' });
   const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
@@ -21457,42 +21592,26 @@ registerToolHandler('compare_vault_versions', async (input, ctx) => {
   const vb = Number(input.version_b);
   if (!artifactId) return JSON.stringify({ error: 'artifact_id (string) is required.' });
   if (!Number.isInteger(va) || !Number.isInteger(vb)) return JSON.stringify({ error: 'version_a and version_b must be integers.' });
+  const scope = await projectReadScope('compare_vault_versions', ctx);
+  if (typeof scope === 'string') return scope;
   try {
     const { getPool } = await import('../../db.js');
-    const idRes = await getPool().query<{ id: number }>(
-      `SELECT id FROM concept2cure_artifacts
-        WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2) LIMIT 1`,
-      [ctx.organizationId, artifactId],
-    );
-    if (!idRes.rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
+    const key = await scopedArtifactKey(artifactId, scope);
+    if (key === null) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const { rows } = await getPool().query(
       `SELECT version, content, content_hash, change_description, created_at, created_by_id
          FROM concept2cure_artifact_versions
         WHERE artifact_id = $1 AND organization_id = $2 AND version = ANY($3::int[])`,
-      [idRes.rows[0].id, ctx.organizationId, [va, vb]],
+      [key, ctx.organizationId, [va, vb]],
     );
     const a = rows.find((r: any) => Number(r.version) === va);
     const b = rows.find((r: any) => Number(r.version) === vb);
     if (!a || !b) {
       return JSON.stringify({ error: `Version ${!a ? va : vb} not found — use get_document_versions to see what exists.` });
     }
-    const linesA = String(a.content ?? '').split('\n');
-    const linesB = String(b.content ?? '').split('\n');
-    const setA = new Set(linesA);
-    const setB = new Set(linesB);
-    const added = linesB.filter(l => !setA.has(l));
-    const removed = linesA.filter(l => !setB.has(l));
-    const preview = (list: string[]) => list.filter(l => l.trim()).slice(0, 12);
-    const meta = ({ content, ...rest }: any) => ({ ...rest, chars: String(content ?? '').length });
     return JSON.stringify({
       ok: true,
-      version_a: meta(a),
-      version_b: meta(b),
-      identical: a.content_hash === b.content_hash,
-      lines_added: added.length,
-      lines_removed: removed.length,
-      added_preview: preview(added),
-      removed_preview: preview(removed),
+      ...versionLineSummary(a, b),
       note: 'Line-level change summary (unordered line comparison). Read a full version via get_document_versions + read_vault_document for exact context.',
     });
   } catch (err) {

@@ -1,0 +1,562 @@
+# Green: the new suite, the four existing suites that call these handlers (updated with an access context), and every artifacts-center route suite, with the change
+# Base: HEAD 4c00273d06 plus the working-tree change to server/services/ana/AnaToolExecutor.ts, server/services/artifact-registry-read.ts, server/routes/artifacts-center-routes.ts and the test files named below
+# Command: npx vitest run server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts server/services/ana/__tests__/read-vault-document-citable.test.ts server/services/ana/__tests__/vault-named-tools-honesty.test.ts server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts server/routes/__tests__/artifacts-center-export-governance.test.ts server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts server/routes/__tests__/artifacts-center-manifest-fields.test.ts server/routes/__tests__/artifacts-center-signature-staleness.test.ts
+# Run: 2026-11-05T14:19:13Z, ANSI stripped
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-05T14:18:22.151Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:18:22.153Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-05T14:18:22.153Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-05T14:18:22.586Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > reads and lists stored kept text with original-unavailable markers, then excludes a later withdrawal 489ms
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > excludes a superseded representation and refuses foreign artifact ids 194ms
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > reports a failed policy store explicitly and never returns the previously readable artifact text 18ms
+stdout | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:18:38.233Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:18:38.235Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:18:38.236Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:18:38.354Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_vault_documents lists each open project of every sponsor, never a private project 24ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > each listed artifact names its project and its sponsor 7ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_vault_document, get_document_versions and compare_vault_versions answer a private artifact as a missing one 25ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > an artifact of an open project still reads, with its versions 25ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_governed_documents lists each open project of every sponsor, naming its project, never a private one 12ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_governed_document answers a private project's document as a missing one 52ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > global_search finds programs and artifact titles of open projects only 25ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a program uuid) 15ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a project id) 13ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > the three artifact reads answer another sponsor's artifact as a missing one 82ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > governed documents: only the open project's sponsor's are listed or read 47ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > global_search finds only the open project's sponsor's programs and artifacts 40ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > an open project the person cannot open is refused, and nothing is listed 6ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the sharing policy cannot be read: every tool says so 9ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the projects' program anchors cannot be read: the governed-document reads and global_search say so 12ms
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > a caller who is not a current member, or no identified caller, is refused 8ms
+stdout | server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:18:45.212Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:18:45.214Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:18:45.214Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:18:45.313Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts > AnA's outline read states the readiness denominator > marks each row counted by the trigger's rule, and the figure is approved over exactly those 97ms
+ ✓ server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts > AnA's outline read states the readiness denominator > the message names the counted denominator, not every row 14ms
+stderr | server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:18:52.939Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > lists every non-archived artifact of each open project, the legacy project with no program record included 45ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > never lists a project the caller cannot open, an archived row, or a row under another organization’s project 8ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > names each row’s project as its own organization records it, and its status in the Vault’s words 7ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > asks the sharing policy about this caller in this organization 7ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > with no project open to the caller, lists nothing and reads no registry row 4ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a caller who is not a current member is refused, never shown an empty listing 3ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > an access check that could not run is a 503, never an empty listing 3ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a full window says how many it did not list 25ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — a CRO's sponsors never mix in one list > names each row’s sponsor, or none when its project has none 9ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — a CRO's sponsors never mix in one list > from inside a project, lists only its sponsor's projects, and says whose 8ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — a CRO's sponsors never mix in one list > a project the caller cannot open, or another organisation’s, is not found; a malformed one is refused 11ms
+stderr | server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:18:57.828Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts > GET /api/artifacts-center — the project shown is the artifact’s own organization’s > an own project shows its code 55ms
+ ✓ server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts > GET /api/artifacts-center — the project shown is the artifact’s own organization’s > an artifact under another organization's project id never shows that project's code or name 12ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > denies export when the current persisted version has no approval 25ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > fails closed by default in production 4ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > exports only after a persisted approval and labels the bytes and headers as draft 5ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > reports a current-version signature as recorded human review 3ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > does not allow an approval of an older artifact version to authorize export 3ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > docx: records EXPORT_GENERATED with the SHA-256 of the delivered bytes 3ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > docx: delivers nothing when the record does not persist 3ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > txt: records EXPORT_GENERATED with the SHA-256 of the delivered bytes 2ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > txt: delivers nothing when the record does not persist 4ms
+stderr | server/routes/__tests__/artifacts-center-manifest-fields.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/artifacts-center-manifest-fields.test.ts
+{
+  "timestamp": "2026-11-05T14:19:03.682Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > passes through section, status, origin, author and recorded hash from the shared read 23ms
+ ✓ server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > says not recorded as null, never a filled-in value 5ms
+stderr | server/routes/__tests__/artifacts-center-signature-staleness.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/artifacts-center-signature-staleness.test.ts
+{
+  "timestamp": "2026-11-05T14:19:05.231Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > reports a signature that covers the current version as not stale 25ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > REGRESSION: an artifact signed at an earlier version reports stale 5ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > says it cannot tell, rather than guessing, when the signed version is unresolvable 11ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > reports no staleness verdict for an unsigned artifact 9ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > reports persisted review and source counts without inventing either 6ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > scopes the read to the caller organization 9ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > refuses without organization context 4ms
+stdout | server/services/ana/__tests__/vault-named-tools-honesty.test.ts
+{
+  "timestamp": "2026-11-05T14:19:06.829Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:19:06.830Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/vault-named-tools-honesty.test.ts
+{
+  "timestamp": "2026-11-05T14:19:06.830Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/vault-named-tools-honesty.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/vault-named-tools-honesty.test.ts
+{
+  "timestamp": "2026-11-05T14:19:06.940Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > an empty listing says what it searched, not that the Vault is empty 8ms
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > an unknown id is not reported as absent from the Vault 1ms
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > their descriptions tell the model which store they read 1ms
+stdout | server/services/ana/__tests__/read-vault-document-citable.test.ts
+{
+  "timestamp": "2026-11-05T14:19:10.676Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:19:10.679Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-vault-document-citable.test.ts
+{
+  "timestamp": "2026-11-05T14:19:10.679Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/read-vault-document-citable.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/read-vault-document-citable.test.ts
+{
+  "timestamp": "2026-11-05T14:19:10.813Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > returns the resolved evidence_source_id and says how to pass it 10ms
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > is null — and says so — when the artifact has no Data Room source 2ms
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > resolves through the tenant-checking resolver, not from the row it just read 2ms
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > still returns the document when attribution prep fails — a read is not lost to it 1ms
+
+ Test Files  10 passed (10)
+      Tests  59 passed (59)
+   Start at  14:18:18
+   Duration  54.67s (transform 11.24s, setup 269ms, import 35.56s, tests 16.78s, environment 1ms)
+
+
+# ---- Baseline: the 9 existing suites at HEAD, before any change (same command without the new file)
+# artifacts-center-foreign-project.pglite.test.ts fails at HEAD: commit 1e83af2c96 added client_workspaces to the registry read and did not add it to that test's schema. Its schema is completed in this change.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:07:03.406Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > lists every non-archived artifact of each open project, the legacy project with no program record included 38ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > never lists a project the caller cannot open, an archived row, or a row under another organization’s project 10ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > names each row’s project as its own organization records it, and its status in the Vault’s words 8ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > asks the sharing policy about this caller in this organization 8ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > with no project open to the caller, lists nothing and reads no registry row 5ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a caller who is not a current member is refused, never shown an empty listing 4ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > an access check that could not run is a 503, never an empty listing 3ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a full window says how many it did not list 30ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — a CRO's sponsors never mix in one list > names each row’s sponsor, or none when its project has none 9ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — a CRO's sponsors never mix in one list > from inside a project, lists only its sponsor's projects, and says whose 9ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — a CRO's sponsors never mix in one list > a project the caller cannot open, or another organisation’s, is not found; a malformed one is refused 11ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > denies export when the current persisted version has no approval 30ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > fails closed by default in production 5ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > exports only after a persisted approval and labels the bytes and headers as draft 6ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > reports a current-version signature as recorded human review 4ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > does not allow an approval of an older artifact version to authorize export 4ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > docx: records EXPORT_GENERATED with the SHA-256 of the delivered bytes 4ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > docx: delivers nothing when the record does not persist 4ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > txt: records EXPORT_GENERATED with the SHA-256 of the delivered bytes 3ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > txt: delivers nothing when the record does not persist 4ms
+stderr | server/routes/__tests__/artifacts-center-signature-staleness.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/artifacts-center-signature-staleness.test.ts
+{
+  "timestamp": "2026-11-05T14:07:09.428Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > reports a signature that covers the current version as not stale 23ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > REGRESSION: an artifact signed at an earlier version reports stale 5ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > says it cannot tell, rather than guessing, when the signed version is unresolvable 4ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > reports no staleness verdict for an unsigned artifact 4ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > reports persisted review and source counts without inventing either 4ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > scopes the read to the caller organization 3ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > refuses without organization context 3ms
+stdout | server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-05T14:07:11.757Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:07:11.759Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-05T14:07:11.759Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-05T14:07:11.963Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > reads and lists stored kept text with original-unavailable markers, then excludes a later withdrawal 410ms
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > excludes a superseded representation and refuses foreign artifact ids 160ms
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > reports a failed policy store explicitly and never returns the previously readable artifact text 16ms
+stderr | server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:07:26.706Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts > GET /api/artifacts-center — the project shown is the artifact’s own organization’s > an own project shows its code 33ms
+   → expected 503 to be 200 // Object.is equality
+ × server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts > GET /api/artifacts-center — the project shown is the artifact’s own organization’s > an artifact under another organization's project id never shows that project's code or name 7ms
+   → Cannot read properties of undefined (reading 'find')
+stdout | server/services/ana/__tests__/read-vault-document-citable.test.ts
+{
+  "timestamp": "2026-11-05T14:07:31.312Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:07:31.314Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-vault-document-citable.test.ts
+{
+  "timestamp": "2026-11-05T14:07:31.314Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/read-vault-document-citable.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/read-vault-document-citable.test.ts
+{
+  "timestamp": "2026-11-05T14:07:31.442Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > returns the resolved evidence_source_id and says how to pass it 6ms
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > is null — and says so — when the artifact has no Data Room source 1ms
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > resolves through the tenant-checking resolver, not from the row it just read 1ms
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > still returns the document when attribution prep fails — a read is not lost to it 1ms
+stdout | server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:07:35.989Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:07:35.991Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:07:35.991Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:07:36.115Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts > AnA's outline read states the readiness denominator > marks each row counted by the trigger's rule, and the figure is approved over exactly those 8ms
+ ✓ server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts > AnA's outline read states the readiness denominator > the message names the counted denominator, not every row 3ms
+stderr | server/routes/__tests__/artifacts-center-manifest-fields.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/artifacts-center-manifest-fields.test.ts
+{
+  "timestamp": "2026-11-05T14:07:44.735Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > passes through section, status, origin, author and recorded hash from the shared read 41ms
+ ✓ server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > says not recorded as null, never a filled-in value 7ms
+stdout | server/services/ana/__tests__/vault-named-tools-honesty.test.ts
+{
+  "timestamp": "2026-11-05T14:07:46.396Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:07:46.397Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/vault-named-tools-honesty.test.ts
+{
+  "timestamp": "2026-11-05T14:07:46.398Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/vault-named-tools-honesty.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/vault-named-tools-honesty.test.ts
+{
+  "timestamp": "2026-11-05T14:07:46.504Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > an empty listing says what it searched, not that the Vault is empty 4ms
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > an unknown id is not reported as absent from the Vault 1ms
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > their descriptions tell the model which store they read 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts > GET /api/artifacts-center — the project shown is the artifact’s own organization’s > an own project shows its code
+AssertionError: expected 503 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 503
+
+ ❯ server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts:75:24
+     73|   it('an own project shows its code', async () => {
+     74|     const res = await request(app()).get('/api/artifacts-center');
+     75|     expect(res.status).toBe(200);
+       |                        ^
+     76|     const own = (res.body.data as Array<{ id: string; prog: string }>)…
+     77|     expect(own?.prog).toBe('OWN-1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts > GET /api/artifacts-center — the project shown is the artifact’s own organization’s > an artifact under another organization's project id never shows that project's code or name
+TypeError: Cannot read properties of undefined (reading 'find')
+ ❯ server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts:84:76
+     82|     // Since slice C the row is not listed at all: it is in no project…
+     83|     // caller's organization, so in none the caller can open.
+     84|     const foreign = (res.body.data as Array<{ id: string; prog: string…
+       |                                                                            ^
+     85|     expect(foreign).toBeUndefined();
+     86|     expect(JSON.stringify(res.body)).not.toMatch(/THEIRS-9|Their secre…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 8 passed (9)
+      Tests  2 failed | 41 passed (43)
+   Start at  14:07:00
+   Duration  48.01s (transform 10.88s, setup 303ms, import 31.66s, tests 13.89s, environment 1ms)
+

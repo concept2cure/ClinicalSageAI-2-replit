@@ -25,6 +25,7 @@ vi.mock('../../../db.js', () => ({
 import { getToolHandler } from '../AnaToolExecutor.js';
 
 const ORG = 7;
+const READER = 41;
 const PROJECT = '11111111-1111-4111-8111-111111111111';
 let jdb: JourneyDb;
 
@@ -39,13 +40,33 @@ beforeAll(async () => {
       'migrations/20260528_phase9_document_schema.sql',
       'migrations/20260804_phase9_rule_pack_outlines.sql',
     ],
+    /* Since F1 (2026-11-05) the read holds to the projects the person can open
+       (ana-vault-tools-project-scope.pglite.test.ts), so the document's program
+       has its one project, and the reader is a member who can open it. Only the
+       columns the sharing policy and the anchor read use. */
+    testOnlySql: `
+      CREATE TABLE client_workspaces (id integer PRIMARY KEY, organization_id integer NOT NULL, name text);
+      CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, code text, name text,
+        regulatory_program_id uuid, client_workspace_id integer, status text DEFAULT 'active',
+        owner_id integer, created_by_id integer, settings jsonb DEFAULT '{}');
+      CREATE TABLE project_visibility_settings (organization_id integer, project_id integer, visibility text);
+      CREATE TABLE project_members (organization_id integer, project_id integer, user_id integer, role text, status text);
+      CREATE TABLE concept2cure_artifacts (id serial PRIMARY KEY, organization_id integer, project_id integer);
+      CREATE TABLE concept2cure_review_assignments (organization_id integer, artifact_id integer, reviewer_id integer, status text);
+    `,
   });
   h.pool = jdb.pool;
   await jdb.pool.query(`INSERT INTO organizations (id, name, slug, tier, max_projects) VALUES (${ORG}, 'Org', 'org', 'standard', 10)`);
+  await jdb.pool.query(`INSERT INTO users (id, email, name, password_hash) VALUES (${READER}, 'r@x', 'Reader', 'x')`);
+  await jdb.pool.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${READER}, 'member')`);
   await jdb.pool.query(
     `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_type, product_name, primary_agency, target_agencies, status)
      VALUES ($1, $2, 'P-ind', 'P-ind', 'ind', 'drug', 'Vorelinib', 'FDA', '[]'::json, 'active')`,
     [PROJECT, ORG],
+  );
+  await jdb.pool.query(
+    `INSERT INTO projects (id, organization_id, code, name, regulatory_program_id, owner_id, created_by_id) VALUES (70, $1, 'P-ind', 'P-ind', $2, $3, $3)`,
+    [ORG, PROJECT, READER],
   );
   await jdb.pool.query(
     `INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title, status, readiness)
@@ -69,7 +90,7 @@ beforeAll(async () => {
 });
 afterAll(async () => { await jdb?.close?.(); });
 
-const read = async () => JSON.parse(String(await getToolHandler('read_governed_document')!({ document_id: 'doc_a' }, { organizationId: ORG } as never)));
+const read = async () => JSON.parse(String(await getToolHandler('read_governed_document')!({ document_id: 'doc_a' }, { organizationId: ORG, userId: READER } as never)));
 
 describe("AnA's outline read states the readiness denominator", () => {
   it('marks each row counted by the trigger\'s rule, and the figure is approved over exactly those', async () => {
