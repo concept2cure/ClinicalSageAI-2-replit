@@ -26,10 +26,12 @@
  *     narrative store refuses a save, and the progress write refuses too); the
  *     run is recorded as cancelled and the build keeps what it had.
  *
- * The worker acts as the user who asked, under that organization's tenant
- * scope (withTenantConnection), on one dedicated connection: the source reads
- * re-check that user's access exactly as the request did, and §14.3.3 lands in
- * one transaction on that connection.
+ * The worker acts as the user who asked, under that organization's full tenant
+ * scope (its integer id and its uuid: withOrganizationTenantConnection), on one
+ * dedicated connection: the source reads re-check that user's access exactly
+ * as the request did, and §14.3.3 lands in one transaction on that connection.
+ * An organization with no uuid is refused by code (CSR_TENANT_SCOPE_UNAVAILABLE)
+ * and nothing is read.
  */
 import { setImmediate } from 'node:timers';
 import type { RequestConnectable, RequestSqlClient } from '../../db/requestDb.js';
@@ -103,18 +105,25 @@ export async function enqueueNarrativeRun(q: NarrativeQueryable, input: { organi
 }
 
 export interface CsrNarrativeWorkerDeps {
-  /** Run `fn` on one dedicated connection carrying the organization's tenant scope. */
-  withOrganization<T>(organizationId: number, fn: (client: NarrativeQueryable & RequestSqlClient) => Promise<T>): Promise<T>;
+  /**
+   * Run `fn` on one dedicated connection carrying the organization's full tenant scope: its integer id and its uuid,
+   * the key the Vault's row security reads. When the organization has no uuid, `fn` never runs: `refuse` runs instead,
+   * on a connection carrying the integer id alone, which reads none of the organization's Vault.
+   */
+  withOrganization<T>(organizationId: number, fn: (client: NarrativeQueryable & RequestSqlClient) => Promise<T>,
+    refuse?: (client: NarrativeQueryable) => Promise<T>): Promise<T>;
   build(deps: CsrNarrativeBuildDeps, input: Parameters<typeof import('./csr-narrative-store.js').buildCsrNarratives>[1]): Promise<NarrativeJobResult>;
 }
 
 async function defaultDeps(): Promise<CsrNarrativeWorkerDeps> {
-  const [{ withTenantConnection }, { buildCsrNarratives }] = await Promise.all([
+  const [{ withOrganizationTenantConnection }, { buildCsrNarratives }] = await Promise.all([
     import('../../db/withTenantConnection.js'), import('./csr-narrative-store.js'),
   ]);
   return {
-    withOrganization: (organizationId, fn) => withTenantConnection({ tenantId: organizationId, source: 'job', caller: 'csr-narrative-run' },
-      client => fn(client as unknown as NarrativeQueryable & RequestSqlClient)),
+    // The organization's full scope (B1, 2026-11-05): with the integer id alone, the Vault read as empty and every run
+    // ended CSR_SOURCE_DATA_UNAVAILABLE on a database where the runtime role is not the table owner.
+    withOrganization: (organizationId, fn, refuse) => withOrganizationTenantConnection(organizationId, 'csr-narrative-run',
+      client => fn(client as unknown as NarrativeQueryable & RequestSqlClient), refuse && (client => refuse(client as unknown as NarrativeQueryable))),
     build: buildCsrNarratives,
   };
 }
@@ -177,6 +186,16 @@ async function finish(q: NarrativeQueryable, run: Claimed, status: CsrNarrativeR
     result && status !== 'cancelled' ? result.selected : null, result ? result.selected : null, run.organizationId, run.jobId]);
 }
 
+const TENANT_SCOPE_FAILURE: CsrNarrativeRunFailure = { code: 'CSR_TENANT_SCOPE_UNAVAILABLE',
+  message: 'This organization has no tenant key, so its Vault sources cannot be read. Nothing was composed.' };
+
+/** The organization's full scope cannot be opened: the queued run is recorded failed, by code, and nothing is read. */
+async function refuseUnscoped(q: NarrativeQueryable, id: number, organizationId: number): Promise<void> {
+  log.error('CSR narrative build refused: the organization has no tenant key', { id, organizationId, code: TENANT_SCOPE_FAILURE.code });
+  await q.query(`UPDATE csr_narrative_runs SET status = 'failed', error = $3::jsonb, completed_at = now(), updated_at = now()
+    WHERE id = $1 AND organization_id = $2 AND status = 'queued'`, [id, organizationId, JSON.stringify(TENANT_SCOPE_FAILURE)]);
+}
+
 /** The worker: claim a queued run, compose as its requester, record the outcome. */
 export async function runNarrativeRun(id: number, organizationId: number, injected?: CsrNarrativeWorkerDeps): Promise<void> {
   const deps = injected ?? await defaultDeps();
@@ -195,7 +214,7 @@ export async function runNarrativeRun(id: number, organizationId: number, inject
       if (failure.code === 'CSR_NARRATIVE_FAILED') log.error('CSR narrative build failed', { id, organizationId, code: 'CSR_NARRATIVE_FAILED' });
       await finish(client, run, failure.code === 'CSR_NARRATIVE_BUILD_NOT_RUNNABLE' ? 'cancelled' : 'failed', null, failure);
     }
-  });
+  }, client => refuseUnscoped(client, id, organizationId));
 }
 
 /** Start the worker off the request thread, as launchCSRBuildAsync starts a build. */

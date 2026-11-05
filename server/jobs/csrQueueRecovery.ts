@@ -9,18 +9,28 @@
  *
  *   - discovery under the system scope (runWithSystemTenantScope), as the
  *     other estate-wide sweeps do;
- *   - each item's access check and claim on that organization's tenant
- *     connection (withTenantConnection);
- *   - each queue's own worker: runCSRBuildJob under the organization's job
- *     scope (it uses the shared db, as launchCSRBuildAsync's worker does),
- *     runCsrAssembly and runNarrativeRun on their own tenant connections.
+ *   - each item's access check and claim on a connection in that
+ *     organization's full tenant scope, its integer id and its uuid
+ *     (withOrganizationTenantConnection); an organization with no uuid has its
+ *     item refused by code and not resumed;
+ *   - each queue's own worker: runCSRBuildJob in the same full scope, held in
+ *     AsyncLocalStorage as vaultProcessingSweep and retentionCron hold theirs
+ *     (it uses the shared db, as launchCSRBuildAsync's worker uses the
+ *     request's scope), runCsrAssembly and runNarrativeRun on their own
+ *     connections, which open that scope themselves.
+ *
+ * B1 (2026-11-05, docs/evidence/D2-CSR/2026-11-05-worker-tenant-scope/): the
+ * build ran under runWithOrgJobScope and the claim on withTenantConnection, both
+ * with the integer id alone. The Vault's row security reads only the uuid, so a
+ * recovered build's source reads saw no Vault row.
  *
  * Disabled in tests and when CSR_QUEUE_RECOVERY_DISABLED is set.
  */
 import { createScopedLogger } from '../utils/logger.js';
 import { getPool } from '../db';
-import { runWithOrgJobScope, runWithSystemTenantScope } from '../db/tenantStore';
+import { runWithSystemTenantScope, runWithTenantScope } from '../db/tenantStore';
 import type { CsrQueueRecoveryDeps, CsrQueueRecoverySummary } from '../services/csr/csr-queue-recovery';
+import type { CsrScopeExecutor } from '../services/csr/project-scope';
 
 const logger = createScopedLogger('csr-queue-recovery');
 const CALLER = 'csr-queue-recovery';
@@ -29,17 +39,20 @@ const STARTUP_DELAY_MS = 15_000;
 let started = false;
 
 async function defaultDeps(): Promise<CsrQueueRecoveryDeps> {
-  const [{ withTenantConnection }, { filterTenantsForBackgroundWork }, { runCSRBuildJob }, { runCsrAssembly }, { runNarrativeRun }] = await Promise.all([
+  const [{ withOrganizationTenantConnection, readOrganizationTenantUuid }, { filterTenantsForBackgroundWork }, { runCSRBuildJob }, { runCsrAssembly }, { runNarrativeRun }] = await Promise.all([
     import('../db/withTenantConnection.js'), import('../services/tenant/tenant-lifecycle'),
     import('../services/csr/csr-job-runner'), import('../services/csr/csr-assembly-run'), import('../services/csr/csr-narrative-run'),
   ]);
   return {
     discover: (text, params) => runWithSystemTenantScope(CALLER, () => getPool().query(text, params)),
-    withOrganization: (organizationId, fn) => withTenantConnection({ tenantId: organizationId, source: 'job', caller: CALLER },
-      client => fn(client as unknown as Parameters<typeof fn>[0])),
+    withOrganization: (organizationId, fn, refuse) => withOrganizationTenantConnection(organizationId, CALLER,
+      client => fn(client as unknown as CsrScopeExecutor), refuse && (client => refuse(client as unknown as CsrScopeExecutor))),
     permitted: ids => filterTenantsForBackgroundWork(ids),
     dispatch: async (item) => {
-      if (item.queue === 'build') return runWithOrgJobScope(item.organizationId, CALLER, () => runCSRBuildJob(item.id));
+      if (item.queue === 'build') {
+        const orgUuid = await readOrganizationTenantUuid(item.organizationId, CALLER);
+        return runWithTenantScope({ tenantId: String(item.organizationId), orgUuid, role: null, source: 'job', caller: CALLER }, () => runCSRBuildJob(item.id));
+      }
       if (item.queue === 'assembly') return runCsrAssembly(item.id, item.organizationId);
       return runNarrativeRun(item.id, item.organizationId);
     },
