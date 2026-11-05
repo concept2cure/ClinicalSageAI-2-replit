@@ -15309,9 +15309,10 @@ registerToolHandler('global_search', async (input, ctx) => {
             AND (name ILIKE $2 OR COALESCE(code,'') ILIKE $2 OR COALESCE(description,'') ILIKE $2)
           LIMIT $3`, [ctx.organizationId, ilike, limit, scope.programIds]),
       getPool().query(
-        `SELECT a.id, a.title, a.ctd_section, a.status, a.project_id, ${SCOPED_PROJECT_COLUMNS}
+        `SELECT a.id, a.title, a.ctd_section, a.status, a.project_id, COALESCE(sp.code, sp.name) AS project, sp.client_workspace_id, scw.name AS client_name
            FROM concept2cure_artifacts a
-           ${SCOPED_ARTIFACT_PROJECT_JOIN}
+           JOIN projects sp ON sp.id = a.project_id AND sp.organization_id = a.organization_id
+           LEFT JOIN client_workspaces scw ON scw.id = sp.client_workspace_id AND scw.organization_id = sp.organization_id
           WHERE a.organization_id = $1 AND a.project_id = ANY($4::int[]) AND a.status != 'archived' AND a.title ILIKE $2
           ORDER BY a.updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit, scope.projectIds]),
     ]);
@@ -21100,10 +21101,9 @@ async function programReadScope(name: string, ctx: ToolContext): Promise<Program
   }
 }
 
-/** Each scoped row's project and sponsor, as the organization records them. The aliases are the scope's own. */
-const SCOPED_PROJECT_COLUMNS = 'COALESCE(sp.code, sp.name) AS project, sp.client_workspace_id, scw.name AS client_name';
-const SCOPED_SPONSOR_JOIN = 'LEFT JOIN client_workspaces scw ON scw.id = sp.client_workspace_id AND scw.organization_id = sp.organization_id';
-const SCOPED_ARTIFACT_PROJECT_JOIN = `JOIN projects sp ON sp.id = a.project_id AND sp.organization_id = a.organization_id ${SCOPED_SPONSOR_JOIN}`;
+/* Each scoped read names its row's project and sponsor as the organization records them, through the aliases sp
+   (projects) and scw (client_workspaces), written out in each statement: SQL text carries no interpolated fragment
+   (ci:sql-interpolation). withSponsor turns client_workspace_id and client_name into the row's `client`. */
 
 /** The rows with their sponsor named (artifactSponsor): a sponsor that cannot be named fails the read, never "none". */
 async function withSponsor(rows: Array<Record<string, unknown>>): Promise<Array<Record<string, unknown>>> {
@@ -21136,10 +21136,11 @@ registerToolHandler('list_vault_documents', async (input, ctx) => {
     args.push(viewLimit(input));
     const { rows } = await getPool().query(
       `SELECT a.id, a.artifact_id, a.title, a.type, a.category, a.ctd_section, a.status,
-              a.version, a.updated_at, a.project_id, ${SCOPED_PROJECT_COLUMNS},
+              a.version, a.updated_at, a.project_id, COALESCE(sp.code, sp.name) AS project, sp.client_workspace_id, scw.name AS client_name,
               ${artifactOriginalFileAvailableSql('a')} AS original_file_available
          FROM concept2cure_artifacts a
-         ${SCOPED_ARTIFACT_PROJECT_JOIN}
+         JOIN projects sp ON sp.id = a.project_id AND sp.organization_id = a.organization_id
+           LEFT JOIN client_workspaces scw ON scw.id = sp.client_workspace_id AND scw.organization_id = sp.organization_id
         WHERE a.organization_id = $1 AND a.project_id = ANY($2::int[]) AND ${filters.join(' AND ')}
         ORDER BY a.updated_at DESC
         LIMIT $${args.length}`,
@@ -21204,10 +21205,11 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
     const { rows } = await getPool().query(
       `SELECT a.id, a.artifact_id, a.title, a.type, a.category, a.ctd_section, a.status, a.version,
               a.content, a.content_hash, a.created_at, a.updated_at, a.locked_at,
-              a.project_id, ${SCOPED_PROJECT_COLUMNS},
+              a.project_id, COALESCE(sp.code, sp.name) AS project, sp.client_workspace_id, scw.name AS client_name,
               ${artifactOriginalFileAvailableSql('a')} AS original_file_available
          FROM concept2cure_artifacts a
-         ${SCOPED_ARTIFACT_PROJECT_JOIN}
+         JOIN projects sp ON sp.id = a.project_id AND sp.organization_id = a.organization_id
+           LEFT JOIN client_workspaces scw ON scw.id = sp.client_workspace_id AND scw.organization_id = sp.organization_id
         WHERE a.organization_id = $1 AND (a.id::text = $2 OR a.artifact_id = $2)
           AND a.project_id = ANY($3::int[])
           AND ${artifactDataEligibleSql('a')}
@@ -21298,10 +21300,10 @@ registerToolHandler('list_governed_documents', async (input, ctx) => {
     args.push(viewLimit(input));
     // d.project_id is a program; the join names the one project it is anchored to in the scope.
     const { rows } = await getPool().query(
-      `SELECT d.id, d.project_id, ${SCOPED_PROJECT_COLUMNS}, d.doc_type, d.agency, d.title, d.status, d.readiness, d.updated_at
+      `SELECT d.id, d.project_id, COALESCE(sp.code, sp.name) AS project, sp.client_workspace_id, scw.name AS client_name, d.doc_type, d.agency, d.title, d.status, d.readiness, d.updated_at
          FROM c2c_documents d
          JOIN projects sp ON sp.regulatory_program_id = d.project_id AND sp.organization_id = d.org_id AND sp.id = ANY($3::int[])
-         ${SCOPED_SPONSOR_JOIN}
+         LEFT JOIN client_workspaces scw ON scw.id = sp.client_workspace_id AND scw.organization_id = sp.organization_id
         WHERE d.org_id = $1 AND d.project_id = ANY($2::uuid[])${filters.length ? ` AND ${filters.join(' AND ')}` : ''}
         ORDER BY d.updated_at DESC
         LIMIT $${args.length}`,
