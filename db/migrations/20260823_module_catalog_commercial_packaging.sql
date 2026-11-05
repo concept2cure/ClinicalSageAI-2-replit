@@ -1,3 +1,10 @@
+-- AMENDED IN PLACE 2026-11-05 — agency-meetings retired into Communication (P-39 step 4; CLAUDE.md Rule 1).
+-- 20260810 no longer upserts agency-meetings; its replay deprecates the existing row. Remove its packaging row
+-- too, so the unknown-module guard below still passes on a fresh database that never holds it. Replayed databases
+-- keep the deprecated row, the tier it was given ('standard'), its subscriptions and every other module's tier
+-- unchanged (communication-center stays 'standard', the folded module's tier, so a plan that included it
+-- includes Communication).
+-- Evidence: docs/evidence/F1/2026-11-05-unverified-repairs-run-natively/README.md.
 -- AMENDED IN PLACE 2026-10-30 — D2 fold F6: the device workstream folds into Projects (CLAUDE.md Rule 1).
 -- 20260810 no longer upserts device-workstream; its replay deprecates the
 -- existing row. Remove its packaging row too, so the unknown-module guard below
@@ -254,7 +261,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   --                  vs document_generation:'standard' (ana-platform-controller).
   --                  Two declarations disagree; the document editor is the core
   --                  work surface, so it resolves to standard.
-  ('agency-meetings', 'standard'),
   ('batch-draft', 'standard'),
   ('change-assessment', 'standard'),
   ('clinical-ops', 'standard'),
