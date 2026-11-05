@@ -146,7 +146,7 @@ describe('the find view filters by metadata on the server', () => {
     fireEvent.click(screen.getByLabelText('All my projects'));
     choose(row, 'Type', 'Clinical study report');
     const list = await screen.findByTestId('vault-library-results');
-    expect((await within(list).findByRole('status')).textContent).toBe('1 document in projects you can access match the filters.');
+    expect((await within(list).findByRole('status')).textContent).toBe('1 document in projects you can access matches the filters.');
     const url = searchUrls().at(-1)!;
     expect(url.startsWith('/api/c2c/project-vault/search?')).toBe(true);
     expect(params(url).getAll('documentType')).toEqual(['CSR']);

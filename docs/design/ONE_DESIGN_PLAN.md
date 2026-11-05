@@ -395,8 +395,11 @@ S3's protocol records are reached:
 
 Informed consent is with D4.
 
-R1 now moves to the next spine package with the most served-but-uncalled routes, S5 (eCTD and filing), in files
-no session holds. Each reach is checked against `COORDINATION.md` first and logged here.
+Correction to the line written here at first: S5's behaviour is held by RIM (`COORDINATION.md`). So R1's S5
+reaches go to RIM as route, caller and test; they are not built here. S3's remaining candidates (the statistics
+thread and the SAP's versions, comments and lock in `biostatPlatform.ts`) are a statistical analysis plan, which is a
+document type. Under Rule 4 they are a convergence with the one editor, which is D4's or the founder's call, as
+informed consent was.
 
 #### F1 — Repairs, for spine step 2: the data room's lineage (session `session_01QoxbLcnW5jPvJSjjKQtvTA`)
 
@@ -421,6 +424,22 @@ no session holds. Each reach is checked against `COORDINATION.md` first and logg
   - **Evidence.** Red without the fix and green with it. The walk's baseline went from 13 to 12, and its ceiling
     from 15 to 12.
 
+- **The migration set completes on a non-superuser applier**, `a3d874ae5`,
+  `docs/evidence/D1/2026-11-05-schema-create-grants/`.
+  - **Before.** `review_route_writer` (`20261023_review_routes.sql`) and `tenant_record_purger`
+    (`20261029k_tenant_offboarding_custody.sql`) own SECURITY DEFINER functions but were granted only `USAGE` on
+    public. Changing a function's owner needs `CREATE` there. On PostgreSQL 15+ applied as the RDS master (not a
+    superuser), every deploy halted at 432, then 454, of 462.
+  - **Now.** Each is amended in place (RULE 1), as its three sibling owner roles already were. The set applies 462
+    of 462 and replays clean.
+- **The Data Room says a refusal as itself**, `b61a8b345`, `docs/evidence/SPINE/S2/2026-11-05-data-room-refusals/`.
+  - Not licensed, not in this release, a role, an unconfirmed organization, a project not found and an expired
+    session each read as themselves, with no retry, through the one read classifier, as the Vault's read does.
+    Only a failure to answer keeps the retry.
+  - Used in the running app at 1440 and 390 wide, with the gate's own 403 bodies. The upload change was used there
+    too: an adopt after the server's working copy was deleted succeeds from the durable copy, and an upload written
+    the old way answers 410.
+
 **Found**
 
 - `ci:canvas-path` read green all four days the walk was red. Its founder-walk link is static by design; the walk's
@@ -431,15 +450,30 @@ no session holds. Each reach is checked against `COORDINATION.md` first and logg
 - A path-based AnA tool (`server/services/ana/document-workspace.ts`) running on the other task still finds no working
   copy of an upload. The id-based readers are durable now.
 - Bytes already erased in production cannot be backfilled. Rows written before this change read as before.
+- **LX-06 is half-built under another name.** `draft_authoring_document` takes `sourceReferences` (Vault-document
+  receipts). They are verified inside the save transaction and recorded in `provenance.projectSourceReferences`
+  with figure and claim checks (`server/services/authoring/authoring-from-draft.ts`). They are not recorded as
+  sentence-level spans. The walk passes a differently shaped `sources[]`, so its two `ana-draft` notes are stale.
+  Recording spans, and walking the Data Room → Vault → receipt → document path, is S4's work with S2.
+- **Handed on.**
+  - D3: the Evidence step's "What to do now" box is a retired pattern.
+  - D4: `editor/useProjectSourceCatalog.ts` does not classify refusals.
+  - D0: a refusal is drawn in the error tone.
+  - R1: the CTD onboarding routes (`/api/ctd/*`) have no caller.
+- **The local database.** Running the migration set needs pgvector created by a superuser, `CREATEROLE` on the
+  applier, and the applier owning the database, as the RDS master does. `scripts/setup-local-db.sh` does not yet
+  set these up.
 
 **Next**
 
-The rest of LX-02, file list first:
-1. the route's writes in one transaction;
-2. the client keeps `sourceId` (`client/src/concept2cure/hooks/useChatUpload.ts`);
-3. a path-based tool restores its working copy from the byte store.
-
-Then LX-12: transmit keeps the bytes it sent, and names its sequence. These are the walk's two `transmit` entries.
+Two items listed here earlier were already done, as found on 2026-11-05: a failed Data Room record refuses with
+503, and the client keeps `sourceId`. What remains, file list first:
+1. a path-based AnA tool restores its working copy from the byte store (16 call sites in `AnaToolExecutor.ts`; the
+   id-based tools are durable now);
+2. LX-06's span half, with S4: verified receipts recorded as sentence-level spans, and the walk following the
+   Data Room → Vault → receipt → document path;
+3. LX-12, with the submission service's holder (RIM): transmit keeps the bytes it sent and names its sequence (the
+   walk's two `transmit` entries).
 
 ## 4. How everyone works
 

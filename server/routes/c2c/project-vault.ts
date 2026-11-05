@@ -107,7 +107,7 @@ import { programInOrganization } from '../../services/c2c/program-access';
 import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
 import {
   ProgramReadAccessError, getCurrentAccessibleProgramScope, readCurrentProgramActor, requireCurrentProgramAccess,
-  type CurrentProgramAccess,
+  verifiedProgramAnchors, type CurrentAccessibleProgramScope, type CurrentProgramAccess,
 } from '../../services/c2c/current-program-access';
 import { requestConnectable, requestPgClient } from '../../db/requestDb';
 import {
@@ -564,6 +564,66 @@ function normalizeFolderId(raw: unknown): string | null | undefined {
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The library's `sameClientAs`: a project id, none, or a value that is not a project id. */
+function sameClientAsOf(raw: unknown): string | null | 'invalid' {
+  const value = typeof raw === 'string' ? raw.trim() : '';
+  if (!value) return null;
+  return UUID_RE.test(value) ? value : 'invalid';
+}
+
+/** Two narrowings of the verified accessible set, applied together; neither ever widens it. */
+function bothNarrowings(byProject: string[] | undefined, bySponsor: string[] | undefined): string[] | undefined {
+  if (!byProject || !bySponsor) return bySponsor ?? byProject;
+  return byProject.filter((id) => bySponsor.includes(id.toLowerCase()));
+}
+
+/** A sponsor (client workspace) as a library hit names it. */
+type LibrarySponsor = { id: number; name: string };
+
+/**
+ * The library's sponsors (F1, S6 V2, 2026-11-05). A CRO works for several sponsors inside one organisation, each a
+ * client workspace, and the library listed every accessible project's documents together with no sponsor named. So a
+ * consultant in sponsor A's project, asking "all my projects", got sponsor B's documents in the same list.
+ *
+ * Asked from inside a project (`sameClientAs`), the library is that project's sponsor's projects: the sponsor is the
+ * one recorded on the project's verified anchor (`verifiedProgramAnchors`), never a value the client sends, and the
+ * narrowing only ever removes projects from the verified accessible set. A project that is not in that set is not
+ * found. Every hit names its own sponsor, or none when its project has no client workspace; a sponsor whose name
+ * cannot be read fails the search rather than show the hit as having none.
+ */
+async function librarySponsors(
+  identity: { organizationId: number; userId: number | undefined },
+  scope: CurrentAccessibleProgramScope,
+  sameClientAs: string | null,
+): Promise<{ allowed?: string[]; client?: LibrarySponsor | null; sponsorOf: (programId: string) => LibrarySponsor | null }> {
+  const anchors = verifiedProgramAnchors(pool, identity, scope);
+  const workspaceOf = new Map(anchors.map((a) => [a.programId, a.clientWorkspaceId]));
+  const ids = [...new Set(anchors.map((a) => a.clientWorkspaceId).filter((id): id is number => id !== null))];
+  const names = new Map<number, string>();
+  if (ids.length) {
+    const { rows } = await pool.query<{ id: number; name: string }>(
+      'SELECT id, name FROM client_workspaces WHERE organization_id = $1 AND id = ANY($2::int[])',
+      [identity.organizationId, ids],
+    );
+    for (const row of rows) names.set(Number(row.id), String(row.name));
+  }
+  const named = (id: number | null | undefined): LibrarySponsor | null => {
+    if (id === null || id === undefined) return null;
+    const name = names.get(id);
+    if (!name || !name.trim()) throw new Error('A sponsor of an accessible project could not be named.');
+    return { id, name };
+  };
+  const sponsorOf = (programId: string) => named(workspaceOf.get(programId.toLowerCase()));
+  if (!sameClientAs) return { sponsorOf };
+  const own = anchors.find((a) => a.programId === sameClientAs.toLowerCase());
+  if (!own) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+  return {
+    allowed: anchors.filter((a) => a.clientWorkspaceId === own.clientWorkspaceId).map((a) => a.programId),
+    client: named(own.clientWorkspaceId),
+    sponsorOf,
+  };
+}
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -1539,21 +1599,29 @@ export default function createProjectVaultRoutes(): Router {
     if ('refusal' in parsed) return res.status(400).json({ success: false, ...parsed.refusal });
     const { filters, programIds } = parsed;
     const narrowed: { allowedProgramIds?: string[]; programIds?: string[] } = programIds.length ? { allowedProgramIds: programIds, programIds } : {};
+    const sameClientAs = sameClientAsOf(req.query.sameClientAs);
+    if (sameClientAs === 'invalid') {
+      return res.status(400).json({ success: false, error: 'INVALID_PROJECT', message: 'The project the library is scoped by must be a project id.' });
+    }
     try {
-      const currentScope = await getCurrentAccessibleProgramScope(pool, { organizationId: orgId, userId: governedActorId(req) ?? undefined });
+      const identity = { organizationId: orgId, userId: governedActorId(req) ?? undefined };
+      const currentScope = await getCurrentAccessibleProgramScope(pool, identity);
+      const sponsors = await librarySponsors(identity, currentScope, sameClientAs);
+      const scoped = sameClientAs ? { client: sponsors.client } : {};
       if (!q && !hasVaultFilters(filters)) {
-        return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY', scope: 'verified-accessible-programs' } });
+        return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY', scope: 'verified-accessible-programs', ...scoped } });
       }
+      const allowed = bothNarrowings(narrowed.allowedProgramIds, sponsors.allowed);
       const found = await searchVaultDocuments(pool, {
         organizationId: orgId, userId: currentScope.actor.userId, programId: null, q, limit, offset, includeSuperseded, filters,
-        allowedProgramIds: narrowed.allowedProgramIds, facets: wantsFacets(req.query, offset),
+        allowedProgramIds: allowed, facets: wantsFacets(req.query, offset),
       }, currentScope);
       return res.json({
         success: true,
         data: {
           query: q, mode: found.mode, filters, programIds: narrowed.programIds, facets: found.facets,
-          total: found.total, limit, offset, includeSuperseded, scope: 'verified-accessible-programs',
-          results: found.results.map((r) => ({ ...r, size: prettySize(r.sizeBytes) })),
+          total: found.total, limit, offset, includeSuperseded, scope: 'verified-accessible-programs', ...scoped,
+          results: found.results.map((r) => ({ ...r, size: prettySize(r.sizeBytes), client: sponsors.sponsorOf(r.program.id) })),
         },
       });
     } catch (err) {

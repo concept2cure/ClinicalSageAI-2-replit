@@ -70,6 +70,12 @@ this change); `loadUploadedFile(` callers (30); `CREATE TABLE … file_uploads` 
 - `01-red-without-fix.txt`: the walk with the two production files reverted: `capture/bytes-durable FAILS and is
   not baselined … observed null`.
 - `02-green-with-fix.txt`: with the fix, `green bytes-durable`, 15 of 15.
+- `03-running-app.json`: the running app (dev server, PostgreSQL 16 with the full migration set applied). A
+  conversation file was uploaded; its record names its object (`storage_provider` local, `storage_object_id`). The
+  server's working copy at `storage_path` was deleted, as a redeploy or the other task would leave it. Adopting the
+  file into a project then answered 201, processing completed, and the Data Room lists it extracted with its
+  original available. An upload written the old way (no object recorded), with its working copy deleted, answered
+  410: "The file bytes are no longer available".
 - Affected suites (89 files that reach the route, the loader, the derived writers or the eight `file_uploads`
   fixtures): 1,590 passed, 12 failed. All 12 are `server/routes/__tests__/authoringSelectedSources.pglite.test.ts`,
   which fails identically at trunk without this change.
