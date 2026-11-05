@@ -329,6 +329,20 @@ status or ownership; closing a package stays §3 step 5.
 - **F1 repair**, `059c0fa07`. The protocol view assembler copied every review comment onto every reviewer. With two
   reviewers each comment showed twice; with none, no comment showed. It now returns them once, as `reviewComments`.
 
+- **F1 repair** (2026-11-05), `adae369de`. Amendments showed a status derived from their dates: under review read as
+  submitted, and approved, rejected and implemented all read as "decided". The declared risk impact was never read,
+  so "no impact" showed as "not declared". The assembler now reads both, and returns `nextStatuses` from the
+  service's own transition table.
+- **Reach: amendment changes and status** (2026-11-05), `606ebfd03`,
+  `docs/evidence/DESIGN/R1/2026-11-05-protocol-amendments/`.
+  - "Add a change" while the amendment is a draft, and "Change status" offering only the moves the server allows,
+    through `POST …/amendments/:id/changes` and `PATCH …/amendments/:id/status`.
+  - Used in the running app: Draft → Submitted → Under review → Approved, each 201.
+- **Handed to D4** (2026-11-05). Informed consent exists twice: the `informed_consent` document type, and
+  `/api/protocol-consent`, whose 7 routes have no caller. Its element checklist, completeness and signed approval
+  are that document type's validation. Under Rule 4 they belong in the one editor, not a protocol panel. Whether
+  the two records converge is the D4 owner's or the founder's decision.
+
 **Finding shared with the design lead**
 
 In production `LAUNCH_SCOPE_ENFORCE` defaults to on (`server/services/entitlements/launch-scope.ts:42-45`). So
@@ -343,10 +357,9 @@ The D1 spec was written on top of it, and D1 owns those files.
 **Next**
 
 R1 reaches in S3's protocol records, in `ProtocolDev*` files only:
-1. consent forms (`/api/protocol-consent/forms…`);
-2. amendment status and changes;
-3. closing a deviation;
-4. the milestone timeline.
+1. closing a deviation, a signed act (`POST /api/protocol-deviations/deviations/:id/close`) and CAPA status;
+2. the milestone timeline and milestone status;
+3. amendment substantiality under EU CTR, worded so that it never reads as a finding of non-substantiality.
 
 Reaches that land in a design package's files are handed to its owner as route, caller and test.
 
