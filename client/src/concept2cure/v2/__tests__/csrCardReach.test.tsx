@@ -53,6 +53,7 @@ const headings = [
   { num: '14.3.3', label: 'Narratives of deaths, other serious and certain other significant adverse events', depth: 3, manual: true, state: 'in_review', contentHash: 'e'.repeat(64), reviewerId: 5, decidedAt: null, reason: null },
 ];
 const nav = vi.fn();
+let headingRows: unknown[] = headings;
 
 const RUNS_LIST = `/api/submission-orchestrator/runs?programId=${PROGRAM}`;
 function routes(method: string, path: string) {
@@ -66,7 +67,7 @@ function jobRoutes(method: string, path: string) {
   if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies: [{ source: receipt, tables }] });
   if (method === 'GET' && path === BUILDS) return ok({ jobs: builds });
   if (method === 'POST' && path === '/api/csr/jobs') { builds = [build(42, 'queued'), ...builds]; return ok({ jobId: 42, status: 'queued' }, 202); }
-  if (method === 'GET' && /\/api\/csr\/jobs\/\d+\/headings$/.test(path)) return ok({ headings });
+  if (method === 'GET' && /\/api\/csr\/jobs\/\d+\/headings$/.test(path)) return ok({ headings: headingRows });
   if (method === 'POST' && /\/sections\/[\d.]+\/review$/.test(path)) return ok({ review: { state: 'approved' } });
   if (/\/narratives\/status$/.test(path)) return ok({ run: null });
   if (/\/narratives$/.test(path)) return ok({ subjects: [] });
@@ -74,7 +75,7 @@ function jobRoutes(method: string, path: string) {
   return ok({});
 }
 
-beforeEach(() => { builds = [build(41)]; apiRequest.mockImplementation(async (method: string, path: string) => routes(method, path)); });
+beforeEach(() => { builds = [build(41)]; headingRows = headings; apiRequest.mockImplementation(async (method: string, path: string) => routes(method, path)); });
 afterEach(() => { cleanup(); apiRequest.mockReset(); nav.mockReset(); clearEditorTarget(); });
 /* 2026-10-31 (CLAUDE.md RULE 4): the build lives in the CSR document's editor, not on Submission Center's card.
    These cases are the card's, moved: mount the editor's build and choose the study data. Here it is an earlier
@@ -208,6 +209,15 @@ it('names the target project in the import dialog when the open project is this 
     fireEvent.click(await within(other).findByRole('button', { name: /Import approved sections into Authoring/ }));
     expect(JSON.parse((await screen.findByTestId('csr-import')).firstChild!.textContent!).programName).toBeUndefined();
   } finally { clearShellProject(); }
+});
+
+it('refuses a headings read whose template flag is not a yes or no, never guessing which rows are drafted', async () => {
+  headingRows = [...headings, { num: '9.8', label: 'Changes in the conduct of the study', depth: 2, manual: false, state: 'draft',
+    placeholder: 'yes', contentHash: 'f'.repeat(64) }];
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  expect((await within(region).findByText(/The build’s sections could not be read for review/)).closest('[role="alert"]')).toBeTruthy();
+  expect(within(region).queryByLabelText('Section review')).toBeNull();
 });
 
 it('states a refused headings read as an alert, never an empty review', async () => {

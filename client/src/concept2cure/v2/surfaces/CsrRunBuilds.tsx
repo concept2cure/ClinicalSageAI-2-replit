@@ -66,7 +66,9 @@ function isHeading(value: unknown): value is CsrBoardHeading {
   return !!row && typeof row.num === 'string' && typeof row.label === 'string' && Number.isSafeInteger(row.depth)
     && typeof row.manual === 'boolean' && HEADING_STATES.includes(row.state as CsrBoardHeading['state'])
     && (row.contentHash === undefined || typeof row.contentHash === 'string')
-    && (row.integrityFailure === undefined || row.integrityFailure === true);
+    && (row.integrityFailure === undefined || row.integrityFailure === true)
+    // Whether a row is template text decides whether it is counted as drafted and offered for review (F2).
+    && (row.placeholder === undefined || typeof row.placeholder === 'boolean');
 }
 
 /** The builds bound to the run, newest first; re-read when `focus` changes and while a build is running. */

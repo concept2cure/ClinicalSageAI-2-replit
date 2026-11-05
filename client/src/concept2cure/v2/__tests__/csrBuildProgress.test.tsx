@@ -233,7 +233,7 @@ it('records a review decision on the exact text, and shows a refused decision', 
   const changed = vi.fn();
   const onImport = vi.fn();
   render(<CsrHeadingReview jobId={41} headings={headings} onChanged={changed} onImport={onImport} />);
-  expect(screen.getByText('2 of 4 ICH E3 headings with saved text free of data placeholders · 0 still contain placeholders · 1 approved')).toBeTruthy();
+  expect(screen.getByText('2 of 4 ICH E3 headings drafted · 1 approved')).toBeTruthy();
   expect(screen.getByText('Prepared from records, not drafted by the build')).toBeTruthy();
   const approve = screen.getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
   expect(approve.disabled).toBe(true);
@@ -253,6 +253,34 @@ it('records a review decision on the exact text, and shows a refused decision', 
   expect((await screen.findByRole('alert')).textContent).toMatch(/cannot approve its sections/);
   fireEvent.click(screen.getByRole('button', { name: /Import approved sections/ }));
   expect(onImport).toHaveBeenCalledWith(['10.1']);
+});
+
+it('reads a template row as template text with data missing: not drafted, not counted, not offered for review', () => {
+  // F2 of the 2026-11-02 demo walk: "18 of 119 … drafted" and "Draft · Send for review" on template rows whose saved
+  // text still held "[…]" placeholders (the server's `placeholder`, csr-headings.ts, CSR_DATA_PLACEHOLDER).
+  const template: CsrBoardHeading = { num: '9.8', label: 'Changes in the conduct of the study or planned analyses', depth: 2,
+    manual: false, state: 'draft', placeholder: true, contentHash: 'd'.repeat(64) };
+  const queued: CsrBoardHeading = { num: '5.1', label: 'Independent ethics committee', depth: 2,
+    manual: false, state: 'in_review', placeholder: true, contentHash: 'e'.repeat(64) };
+  const drafted: CsrBoardHeading = { num: '10.1', label: 'Disposition of patients', depth: 2, manual: false, state: 'draft', contentHash: 'b'.repeat(64) };
+  const approved: CsrBoardHeading = { num: '11.4.1', label: 'Analysis of efficacy', depth: 3, manual: false, state: 'approved', contentHash: HASH };
+  render(<CsrHeadingReview jobId={41} headings={[template, queued, drafted, approved]} onChanged={vi.fn()} onImport={vi.fn()} />);
+  expect(screen.getByText('2 of 4 ICH E3 headings drafted · 2 are template text with data missing · 1 approved')).toBeTruthy();
+  for (const label of ['Changes in the conduct of the study or planned analyses', 'Independent ethics committee']) {
+    const row = screen.getByText(label).closest('li')!;
+    expect(within(row).getByText('Template · data missing')).toBeTruthy();
+    expect(within(row).queryByText('Draft')).toBeNull();
+    expect(within(row).getByText(/the study’s data is still missing, so it is not offered for review/)).toBeTruthy();
+    expect(within(row).queryByRole('button', { name: /Send for review/ })).toBeNull();
+    expect(within(row).queryByRole('button', { name: /Approve/ })).toBeNull();
+    // Its text can still be read.
+    expect(within(row).getByRole('button', { name: 'Read saved section text' })).toBeTruthy();
+  }
+  // One sent for review before the rule can still be sent back.
+  expect(within(screen.getByText('Independent ethics committee').closest('li')!).getByRole('button', { name: /Send back/ })).toBeTruthy();
+  const draftRow = screen.getByText('Disposition of patients').closest('li')!;
+  expect(within(draftRow).getByText('Draft')).toBeTruthy();
+  expect((within(draftRow).getByRole('button', { name: /Send for review/ }) as HTMLButtonElement).disabled).toBe(false);
 });
 
 it('requires a stated reason to send a section back', async () => {

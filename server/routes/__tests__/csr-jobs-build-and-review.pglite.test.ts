@@ -269,6 +269,25 @@ describe('GET /api/csr/jobs/:jobId/headings — the build\'s ICH E3 tree for rev
     expect(byNum.get('16.1.1')).toMatchObject({ manual: true, depth: 3 });
   });
 
+  it('marks a template row, whose saved text still holds a data placeholder, as template text, not a draft (F2)', async () => {
+    // What the builder's template fallback saves for §9.8 when no model drafted it (ai_generated = false).
+    const TEMPLATE = '[DATA TO BE INSERTED]\n\nChanges to the conduct of the study after it began: [list each protocol amendment].';
+    await pg.query(`INSERT INTO csr_section_outputs (organization_id, project_id, job_id, section_number, content, content_hash, ai_generated)
+      VALUES (7, 11, 4, '9.8', $1, $2, false)`, [TEMPLATE, sha(TEMPLATE)]);
+    try {
+      const byNum = new Map((await request(app).get('/api/csr/jobs/4/headings')).body.headings.map((x: { num: string }) => [x.num, x]));
+      expect(byNum.get('9.8')).toMatchObject({ state: 'draft', placeholder: true, contentHash: sha(TEMPLATE) });
+      expect(byNum.get('12.2')).not.toHaveProperty('placeholder');
+      // The same rule refuses it for review on the server (csr-section-review.ts).
+      const submit = await request(app).post('/api/csr/jobs/4/sections/9.8/review').set('x-test-user', '6')
+        .send({ decision: 'submit', expectedContentHash: sha(TEMPLATE) });
+      expect(submit.status).toBe(409);
+      expect(submit.body.code).toBe('CSR_SECTION_DATA_PLACEHOLDER');
+    } finally {
+      await pg.query(`DELETE FROM csr_section_outputs WHERE job_id = 4 AND section_number = '9.8'`);
+    }
+  });
+
   it('refuses another organization\'s build as not found, never its headings', async () => {
     const res = await request(app).get('/api/csr/jobs/3/headings');
     expect(res.status).toBe(404);
