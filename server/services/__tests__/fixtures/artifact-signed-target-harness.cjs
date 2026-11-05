@@ -1,7 +1,8 @@
 'use strict';
-// Executes complete production modules. Drizzle expression construction, schema,
-// signer identity and the audit writer are explicit doubles. SQL predicates and
-// rollback execute on SQLite; PostgreSQL FOR UPDATE/SHARE are recorded only.
+// Executes complete production modules, separation of duties included. Drizzle
+// expression construction, schema, signer identity and the audit writer are
+// explicit doubles. SQL predicates and rollback execute on SQLite; PostgreSQL
+// FOR UPDATE/SHARE are recorded only.
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const assert=require('node:assert/strict'),crypto=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');const ts=require('typescript');
@@ -41,7 +42,15 @@ async function runCase(tree,c){
  const fail=kind=>{if(c.failure===kind)throw new Error('fixture '+kind+' unavailable');};
  const insert=(table,row)=>{const keys=Object.keys(row);return db.prepare(`INSERT INTO ${table} (${keys.map(snake).join(',')}) VALUES (${keys.map(()=>'?').join(',')}) RETURNING *`).get(...keys.map(k=>enc(row[k])));};
  const update=(table,delta,where)=>{const keys=Object.keys(delta||{});if(keys.length)db.prepare(`UPDATE ${table} SET ${keys.map(k=>snake(k)+' = ?').join(',')} ${where}`).run(...keys.map(k=>enc(delta[k])));};
- const review=load(tree,'server/services/artifact-approval-act.ts',{'./ectd/package-content-fingerprint':{artifactApproval:()=>({filable:true})},'./contradiction-engine-service':{contradictionEngineService:{checkPromotionBlocked:async()=>({blocked:false,blockingFindings:[],warningFindings:[]})}}});
+ // The real separation-of-duties module (P-18, 7b7b043fda): the signed act re-reads
+ // the signer's independence on the signing transaction, so the artifact's author
+ // reads run on SQLite through tx.query. Readers of other record types, and the
+ // default pool, are never the artifact's path: each double throws if reached.
+ const unreached=what=>()=>{throw new Error('separation-of-duties reached '+what+' on the artifact path');};
+ const sod=load(tree,'server/services/governance/separation-of-duties.ts',{'../../db.js':{pool:{query:unreached('the default pool')}},
+  '../qms/controlled-text-authorship.js':{QmsControlledTextAuthorshipInvalid:class extends Error{},qmsControlledTextAuthorIds:unreached('the QMS authorship reader')},
+  '../cmc/register-operators.js':{readSectionRecordOperators:unreached('the CMC register reader'),unattributedRecordsRefusal:unreached('the CMC register refusal')}});
+ const review=load(tree,'server/services/artifact-approval-act.ts',{'./ectd/package-content-fingerprint':{artifactApproval:()=>({filable:true})},'./contradiction-engine-service':{contradictionEngineService:{checkPromotionBlocked:async()=>({blocked:false,blockingFindings:[],warningFindings:[]})}},'./governance/separation-of-duties':sod});
  const head={id:101,artifactId:'artifact_owned',organizationId:7,projectId:3,version:3,status:c.status==='locked'?'approved':'review',content:'Evidence — αβγ\nDose is 2 mg; not 20 mg.',approvedVersionId:c.status==='locked'?3:null,publishedVersionId:null,title:'Clinical overview',ctdSection:'2.5',templateId:'clinical-template',createdById:300,updatedAt:new Date(timestamp)};
  head.contentHash=hash(head.content);patch(head,c.initialHead);
  const ver={id:401,artifactId:101,organizationId:7,version:3,content:head.content,contentHash:hash(head.content),createdById:300,changeDescription:'Persisted draft'};patch(ver,c.initialVersion);
@@ -108,4 +117,4 @@ async function runCase(tree,c){
 module.exports={runCase};
 if(require.main===module){(async()=>{const tree=path.resolve(process.argv[2]);const out=path.resolve(process.argv[3]);const cases=JSON.parse(fs.readFileSync(path.join(__dirname,'artifact-signed-target-cases.json'),'utf8'));const results=[];
  for(const c of cases){try{results.push({name:c.name,passed:true,result:await runCase(tree,c)});}catch(e){results.push({name:c.name,passed:false,error:e.stack});}}
- const report={node:process.version,typescript:ts.version,scope:'Full production signed act and quorum modules; SQLite transaction/predicate execution with explicit ORM/schema/identity/audit doubles. Row locks recorded, not executed. Not PostgreSQL, PGlite, RLS, HTTP, or reauthentication qualification.',sourceTree:tree,sourceSha256:hash(fs.readFileSync(path.join(tree,'server/services/artifact-signed-act.ts'))),passed:results.filter(r=>r.passed).length,failed:results.filter(r=>!r.passed).length,skipped:0,results};fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({passed:report.passed,failed:report.failed,total:results.length}));for(const r of results.filter(r=>!r.passed))console.log('FAIL '+r.name+': '+r.error.split('\n').slice(0,2).join(' '));process.exitCode=report.failed?1:0;})().catch(e=>{console.error(e);process.exitCode=2;});}
+ const report={node:process.version,typescript:ts.version,scope:'Full production signed act, quorum and separation-of-duties modules; SQLite transaction/predicate execution with explicit ORM/schema/identity/audit doubles. Row locks recorded, not executed. Not PostgreSQL, PGlite, RLS, HTTP, or reauthentication qualification.',sourceTree:tree,sourceSha256:hash(fs.readFileSync(path.join(tree,'server/services/artifact-signed-act.ts'))),passed:results.filter(r=>r.passed).length,failed:results.filter(r=>!r.passed).length,skipped:0,results};fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({passed:report.passed,failed:report.failed,total:results.length}));for(const r of results.filter(r=>!r.passed))console.log('FAIL '+r.name+': '+r.error.split('\n').slice(0,2).join(' '));process.exitCode=report.failed?1:0;})().catch(e=>{console.error(e);process.exitCode=2;});}

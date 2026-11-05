@@ -109,5 +109,8 @@
   {"name":"approved: inserted version content altered by trigger refuses","allowed":false,"missingVersion":true,"failure":"versionTrigger","returnedVersionPatch":{"content":"Trigger changed new version"}},
   {"name":"approved: inserted version contentHash altered by trigger refuses","allowed":false,"missingVersion":true,"failure":"versionTrigger","returnedVersionPatch":{"contentHash":"trigger-corrupt-hash"}},
   {"name":"approved: inserted version organizationId altered by trigger refuses","allowed":false,"missingVersion":true,"failure":"versionTrigger","returnedVersionPatch":{"organizationId":12}},
-  {"name":"approved: inserted version version altered by trigger refuses","allowed":false,"missingVersion":true,"failure":"versionTrigger","returnedVersionPatch":{"version":4}}
+  {"name":"approved: inserted version version altered by trigger refuses","allowed":false,"missingVersion":true,"failure":"versionTrigger","returnedVersionPatch":{"version":4}},
+  {"name":"approved: the artifact's creator signing is refused on the signing transaction (P-18)","allowed":false,"input":{"userId":300},"expectedCode":"SEPARATION_OF_DUTIES"},
+  {"name":"approved: the author of the stored version signing is refused on the signing transaction (P-18)","allowed":false,"initialVersion":{"createdById":777},"expectedCode":"SEPARATION_OF_DUTIES"},
+  {"name":"locked: the artifact's creator locking is refused on the signing transaction (P-18)","allowed":false,"status":"locked","input":{"userId":300},"update":{"lockedById":300},"expectedCode":"SEPARATION_OF_DUTIES"}
 ]
