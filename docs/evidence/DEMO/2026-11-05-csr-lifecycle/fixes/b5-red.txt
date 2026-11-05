@@ -1,0 +1,29 @@
+B5 red.
+
+1. The CSS test (client/src/concept2cure/v2/__tests__/editorPageCss.test.ts), run on an export of HEAD:
+ × client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the editor's source panels at phone width (B5) > sizes the one column to the panel, so no item can set it wider 7ms
+   → expected undefined to be 'minmax(0, 1fr)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the editor's source panels at phone width (B5) > keeps a select inside the panel 1ms
+   → expected undefined to be '100%' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the editor's source panels at phone width (B5) > lets the items of the panel's inline grids be as narrow as the panel 1ms
+   → expected undefined to be '0' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 11 passed (14)
+
+2. The running app (own server, port 5300, fresh database, RLS on), the CSR in the editor at 390x844, the
+   panel 'Build from the study's data' opened, measured in Chromium before the CSS change:
+   {
+    "viewport": 390,
+    "panelRight": 346,
+    "clipRight": 390,
+    "detailWidth": 458,
+    "gridTemplateColumns": "458px",
+    "pageOverflow": 0,
+    "itemsWiderThanVisible": [
+   ... CUT OFF: 977 element(s) in the panel extend past its visible right edge (390px)
+   Screenshot: b5-red-390-csr-panel.png
+
+3. What set the width (probed in the same app): the panel's grid track is 'auto'. Inside it, CsrRunBuilds and
+   CsrAssemblyControl lay out as inline grids (style="display: grid") whose 'auto' tracks took the sequence
+   select's longest option, 458px, in a 334px panel. A synthetic page with only the Study data select fits,
+   because that select is .c2c-input (width: 100%).
