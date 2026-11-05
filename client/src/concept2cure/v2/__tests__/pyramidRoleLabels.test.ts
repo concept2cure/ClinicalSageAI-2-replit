@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { PY_ROLES, pyRoleLabel } from '../fixtures/pyramid-data';
 import { getAllSupportedTypes, getPyramidForProject } from '../../../../../services/regulatory/SubmissionPyramidEngine';
 
-const engineRoles = [...new Set(getAllSupportedTypes().flatMap((type) => getPyramidForProject(type).tasks.map((t) => t.role)))];
+const engineRoles = [...new Set(getAllSupportedTypes().flatMap((type) => getPyramidForProject(type).tasks.map((t) => t.role ?? '')))];
 
 describe('the roles the pyramids name', () => {
   it('each has a label', () => {
