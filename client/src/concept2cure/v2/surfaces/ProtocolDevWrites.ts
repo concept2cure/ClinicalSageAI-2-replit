@@ -29,6 +29,9 @@
  *   comment resolve  PATCH /api/protocol-reviews/comments/:id/resolve
  *   amendment change POST  /api/protocol-amendments/amendments/:id/changes
  *   amendment status PATCH /api/protocol-amendments/amendments/:id/status
+ *   CAPA action      POST  /api/protocol-deviations/deviations/:id/capa
+ *   CAPA status      PATCH /api/protocol-deviations/capa/:id/status
+ *   deviation close  POST  /api/protocol-deviations/deviations/:id/close   (signed, below)
  *   cover page       PATCH /api/protocol-development/documents/:id
  *   start protocol   POST  /api/protocol-development/documents
  *
@@ -245,6 +248,28 @@ export async function updateProtocolRisk(
   }), 'update the risk');
 }
 
+/* ── CAPA ──────────────────────────────────────────────────────────────── */
+
+/** Record a corrective or preventive action against a deviation. */
+export async function addCapaAction(
+  deviationId: number,
+  v: { action: string; owner?: string; dueDate?: string; reason: string },
+): Promise<Record<string, unknown>> {
+  const reason = requireReason(v.reason);
+  const action = (v.action ?? '').trim();
+  if (!action) throw new Error('Describe the action. Nothing was written.');
+  return send('POST', `/api/protocol-deviations/deviations/${deviationId}/capa`, compact({
+    action, owner: (v.owner ?? '').trim(), dueDate: v.dueDate, reason,
+  }), 'record the CAPA action');
+}
+
+/** Set a CAPA action's status. */
+export async function setCapaStatus(capaId: number, status: string, rawReason: string): Promise<Record<string, unknown>> {
+  const reason = requireReason(rawReason);
+  if (!status) throw new Error('Choose the status. Nothing was written.');
+  return send('PATCH', `/api/protocol-deviations/capa/${capaId}/status`, { status, reason }, 'update the CAPA action');
+}
+
 /* ── Amendments ────────────────────────────────────────────────────────── */
 
 /** Add a line item to an amendment's changeset: the section, what changed and the text before and after. */
@@ -432,6 +457,25 @@ export async function recordReviewDisposition(
 ): Promise<Record<string, unknown>> {
   return send('PATCH', `/api/protocol-reviews/assignments/${assignmentId}/disposition`,
     { disposition: v.disposition, ...signedBody(v) }, 'sign the disposition');
+}
+
+/**
+ * Close a deviation: an electronic signature, behind the server's CAPA-closure
+ * gate. The close route runs the platform's shared ceremony
+ * (server/routes/governed-signed-act.ts), whose body carries the password and
+ * second factor at the top level (`password`, `mfaToken`), not the `reauth`
+ * object the protocol's own finalize and disposition routes read.
+ */
+export async function closeProtocolDeviation(
+  deviationId: number,
+  v: ProtocolSignatureInput,
+): Promise<Record<string, unknown>> {
+  return send('POST', `/api/protocol-deviations/deviations/${deviationId}/close`, {
+    reason: requireReason(v.reason),
+    meaning: v.meaning,
+    password: v.password,
+    ...(v.totp ? { mfaToken: v.totp } : {}),
+  }, 'close the deviation');
 }
 
 export async function finalizeProtocol(

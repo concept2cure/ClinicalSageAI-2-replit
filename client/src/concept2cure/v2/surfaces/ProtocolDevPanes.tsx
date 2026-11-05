@@ -229,9 +229,28 @@ function AmendmentActions({ a, onEdit }: {
   );
 }
 
+/** Closing a deviation is a signed act behind the server's CAPA-closure gate.
+ *  The gate's own reasons are shown while it would refuse, and the button waits. */
+function DeviationClose({ d, onClose }: { d: Row; onClose: (target: { id: number; label: string }) => void }) {
+  const blockers = Array.isArray(d.closeBlockers) ? (d.closeBlockers as unknown[]).map(String) : [];
+  const whyId = 'pd-close-why-' + str(d.id);
+  return (
+    <div className="pd-card-sum">
+      <button type="button" className="pde-rowbtn" disabled={blockers.length > 0}
+        aria-describedby={blockers.length > 0 ? whyId : undefined}
+        onClick={() => onClose({ id: Number(d.id), label: str(d.title) })}>
+        Close deviation
+      </button>
+      {blockers.length > 0 && <span id={whyId} className="pde-note">{blockers.join(' ')}</span>}
+    </div>
+  );
+}
+
 /* ---- Deviations & CAPA ---- */
-export function DeviationsTab({ doc, onAdd, onEdit }: ListPaneProps & {
-  onEdit?: (kind: 'deviation-assess', target: { id: number; label: string }) => void;
+export function DeviationsTab({ doc, onAdd, onEdit, onCloseDeviation }: ListPaneProps & {
+  onEdit?: (kind: 'deviation-assess' | 'capa-add' | 'capa-status', target: { id: number; label: string; defaults?: Record<string, string> }) => void;
+  /** Opens the signing ceremony for closing this deviation. */
+  onCloseDeviation?: (target: { id: number; label: string }) => void;
 }) {
   const deviations = asRows(doc.deviations);
   return (
@@ -262,9 +281,21 @@ export function DeviationsTab({ doc, onAdd, onEdit }: ListPaneProps & {
           {/* CAPA is a child register of the deviation: a deviation logged
               before any corrective action was agreed has none. */}
           <div className="pd-capa"><div className="pd-capa-h">CAPA actions</div>
-            {asRows(d.capa).map((c, i) => (<div key={i} className="pd-capa-row">
+            {asRows(d.capa).map((c) => (<div key={str(c.id)} className="pd-capa-row">
               <span className="pd-capa-dot" data-status={str(c.status)} /><span>{str(c.action)}</span><PG.StatusBadge status={str(c.status)} />
-            </div>))}</div>
+              {onEdit && d.status !== 'closed' && (
+                <button type="button" className="pde-rowbtn" aria-label={'Update status: ' + str(c.action).slice(0, 60)}
+                  onClick={() => onEdit('capa-status', { id: Number(c.id), label: str(c.action).slice(0, 80), defaults: { status: str(c.status) } })}>
+                  Update status
+                </button>
+              )}
+            </div>))}
+            {onEdit && d.status !== 'closed' && (
+              <button type="button" className="pde-rowbtn" onClick={() => onEdit('capa-add', { id: Number(d.id), label: str(d.title) })}>
+                Add a CAPA action
+              </button>
+            )}</div>
+          {onCloseDeviation && d.status !== 'closed' && <DeviationClose d={d} onClose={onCloseDeviation} />}
         </div>))}
     </div>);
 }
