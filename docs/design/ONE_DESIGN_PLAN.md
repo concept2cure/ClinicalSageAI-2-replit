@@ -475,6 +475,54 @@ Two items listed here earlier were already done, as found on 2026-11-05: a faile
 3. LX-12, with the submission service's holder (RIM): transmit keeps the bytes it sent and names its sequence (the
    walk's two `transmit` entries).
 
+#### F1 — Repairs: the unverified repair commits, run natively (session `session_01QoxbLb8fV1RgQvaa8JHYku`)
+
+**Delivered** (2026-11-05)
+
+- **The repairs written without dependencies were run for real.** About 45 F1 and CSR commits (2026-11-02 to 11-04,
+  author `concept2cure`) were made with no `node_modules` and no network. Their evidence called their tests "pending".
+  - **Run.** `npm ci`, then Vitest over the 29 test files they added or changed.
+  - **Result.** 555 of 560 at `ccc797bd`.
+  - **Passed natively:** the shared-platform repairs, namely the export render snapshot, workspace config and its
+    isolation, regional applicability, the submission resolver, navigation entitlements and AnA's context cache;
+    and the CSR server checks.
+  - **Typecheck.** `typecheck-no-regression`: 0 errors.
+  - **Evidence.** `docs/evidence/F1/2026-11-05-unverified-repairs-run-natively/`.
+- **The CSR screen's tests**, `7048ea80`. Five were out of date with the screen, not wrong about it: Approve now needs
+  the saved text read first (F9); the editor mounts other reads; the board read carries an AbortSignal. The CSR lane
+  fixed the same suites on trunk the same day (`9eb24c87`), and its version was kept at the merge.
+- **Every launch app is reachable by name**, `57eef8e8`.
+  - **Risk-based monitoring.** It is in the catalog and the rail (P-76) but had no navigation target, so AnA's
+    navigate, the @ menu and the product tour could not open it. It gets one, for the existing `rbm` surface. The
+    tour now stops at it and at Biostatistics.
+  - **The calculators' label.** "Biostat workbench" broke the client-copy rule; it reads "Design calculators", as
+    the page's own heading does. The old name stays an alias.
+  - **The account-menu tests.** Their mocked user had no id, so since `0fc881c1` they never read the navigation
+    verdicts.
+- **Project home's CSS gates**, `3b04e2e3`.
+  - `--danger-000` does not exist, so a failed quality count rendered grey. It is `--error` now, and the phantom-token
+    baseline shrinks from 9 to 8.
+  - The generated text ramp was stale and is regenerated.
+  - One shared action row is no longer counted as a stage-CSS clash.
+- **Two more test files red on trunk**, `c0476109`: capabilityBrowser (the same id-less mock user), and
+  clientCopyNoProgram ("the program's" study designs, now "the project's").
+- Pushed through every pre-push gate (`ca751574..80914b5b`).
+
+**Found**
+
+- `0fc881c1` made the navigation read require a signed-in account with an id. Any test that mocks `useAuth` with an
+  id-less user and expects the verdicts is red for that reason, not for a product defect. Two files were found and
+  fixed; others may exist.
+- The whole v2 client and shared suite (1,253 files) does not finish in 50 minutes with `maxWorkers: 1`. Running it
+  in parallel shards beside the pre-push typecheck runs the container out of memory.
+
+**Next**
+
+1. The whole v2 client and shared suite, sharded and run apart from any push, with each red file named and fixed or
+   handed to its holder.
+2. The export repair's open acceptance (`docs/evidence/D2-DOCUMENTS/2026-11-04-render-snapshot/`): real Word and
+   PDF output, HTTP refusal mapping and a browser walk.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for
