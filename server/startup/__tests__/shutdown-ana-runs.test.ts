@@ -105,5 +105,8 @@ describe('the runs\' writes have a deadline', () => {
     expect(order.indexOf('ana:runs aborted locally')).toBeGreaterThan(-1);
     expect(order.indexOf('ana:runs aborted locally')).toBeLessThan(order.indexOf('http:close'));
     held.settle?.();
+    // The shutdown runs on to process.exit; wait for it here, while exit is
+    // still the spy, or it lands after afterEach restored the real one.
+    expect(await exited).toBe(0);
   }, 10_000);
 });
