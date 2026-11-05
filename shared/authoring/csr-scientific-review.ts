@@ -138,10 +138,30 @@ export function placeholderIn(content: string | null | undefined): string | null
 /** A placeholder as a message quotes it: whole up to 80 characters, otherwise cut and closed with "…]". */
 export const quotedPlaceholder = (held: string): string => (held.length <= 80 ? held : `${held.slice(0, 78)}…]`);
 
+/* A number the study design writes, named by the word before it: a trial phase ("Phase 2", "Phase 2/3") and a
+ * scheduled time point ("Week 8", "Weeks 8 and 16", "Week 4 to Week 24", "Days 1-14", "Visit 3", "Cycle 2"). */
+const DESIGN_LABEL_BEFORE = /\b(?:phases?|weeks?|days?|months?|years?|visits?|cycles?)\s+(?:\d+[a-z]?(?:-|\s*(?:,|\/|–|and|or|to|through)\s*))*$/i;
+/* An instrument's item count in brackets after its hyphenated acronym: "ADAS-Cog (11)", "HAM-D (17)", "NPI-X (9)".
+ * An arm or a population is not one: "Placebo (86)" and "Non-completers (12)" are counts. */
+const INSTRUMENT_ITEMS_BEFORE = /\b[A-Z]{2,}-[A-Za-z]+\s?\($/;
+
+/**
+ * Whether the number at `at`–`end` of a saved section is study design, not a result (B6, CSR demo walk 2026-11-05:
+ * the review offered "Phase 2", "Weeks 8 and 16", "Week 4 to Week 24" and the "(11)" of "ADAS-Cog (11)" as figures to
+ * map, each with unrelated table cells). Only the word before the number decides, so a result written beside one
+ * ("at Week 24 the difference was -2.5", "86 (33.9%)") is still a result.
+ */
+export function studyDesignNumberAt(content: string, at: number, end: number): boolean {
+  const before = content.slice(Math.max(0, at - 80), at).replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;|\u00a0/g, ' ');
+  if (DESIGN_LABEL_BEFORE.test(before)) return true;
+  return INSTRUMENT_ITEMS_BEFORE.test(before) && content[end] === ')';
+}
+
 /**
  * Whether a retained cell's value `display` is reported at `at` in a saved
- * section's `content`: outside markup and on the number boundaries above, so
- * "190" is not inside "1190" and "12" is not inside "12.5". A following "%"
+ * section's `content`: outside markup, not study design (studyDesignNumberAt),
+ * and on the number boundaries above, so "190" is not inside "1190" and "12" is
+ * not inside "12.5". A following "%"
  * continues a number ("12" is not "12%"), except for a cell in a percentage
  * column (`header` names "%"), whose value the text reports with its unit
  * ("83.3%"). The one rule by which the screen offers an occurrence
@@ -153,6 +173,7 @@ export function reportedDisplayAt(content: string, at: number, display: string, 
   markup: ReadonlyArray<[number, number]> = markupRanges(content)): boolean {
   const end = at + display.length;
   if (content.slice(at, end) !== display || markup.some(([a, b]) => at < b && end > a)) return false;
+  if (studyDesignNumberAt(content, at, end)) return false;
   if (isExactNumericalDisplayAt(content, at, display)) return true;
   return content[end] === '%' && header.includes('%') && isExactNumericalDisplayAt(content.slice(0, end), at, display);
 }
