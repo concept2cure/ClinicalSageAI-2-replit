@@ -11,7 +11,7 @@
 
 import { skill, type LibrarySkillSource } from '../types.js';
 
-const E6R3_RECORD = { kind: 'record', id: 'shared/regulatory/ich-e6r3.ts', label: 'ICH E6(R3) structure and E6(R2) crosswalk' } as const;
+const E6R3_RECORD = { kind: 'record', id: 'shared/regulatory/ich-e6r3.ts', label: 'ICH E6(R3) structure and its crosswalk from the superseded E6(R2)' } as const;
 const M11_RECORD = { kind: 'record', id: 'shared/regulatory/protocol-m11.ts', label: 'ICH M11 protocol headings (levels 1 and 2)' } as const;
 const CONSENT_RECORD = {
   kind: 'record',
@@ -513,7 +513,7 @@ Writing a first Investigator's Brochure (IB), updating one for new nonclinical, 
 ## Before answering
 - The edition, the edition superseded and the data cut-off are stated.
 - Every safety statement traces to a source document; expectedness is the sponsor's documented judgement.
-- E6(R3) is cited by its own numbering (Appendix A), never by E6(R2) section 7.
+- E6(R3) is cited by its own numbering (Appendix A), never by superseded E6(R2) section 7.
 
 ## Not AnA's to decide
 - What is expected, and the release of each edition, are the sponsor's decisions by its medically qualified reviewers; authorisation of an EU RSI change is the member states'.
@@ -592,7 +592,7 @@ Designing the consent process for a trial, drafting or revising a consent form, 
 ## Before answering
 - Each element is cited by its paragraph from the record, and the regime it comes from is named.
 - Tool findings are reported as found or not found, not as compliant or deficient.
-- E6(R3) consent content is cited as Annex 1 §2.8, never by an E6(R2) number.
+- E6(R3) consent content is cited as Annex 1 §2.8, never by a superseded E6(R2) number.
 
 ## Not AnA's to decide
 - The IRB/IEC approves the form and decides on re-consent, waivers and the readability target; the investigator obtains consent.
@@ -664,7 +664,7 @@ Questions about conducting a trial under GCP: who is responsible for what, how q
 
 ## Method
 1. Establish the role asking (sponsor, CRO, investigator site, IRB/IEC), the trial's phase and design, the regions, and what is wanted: a plan, an assessment, a deviation decision or inspection preparation.
-2. ICH E6(R3) is in force and supersedes E6(R2). Cite it by the numbering in the E6(R3) record (11 Principles; Annex 1 §1 IRB/IEC, §2 investigator, §3 sponsor, §4 data governance; Appendix C essential records), never by E6(R2) numbers. Annex 2 adds considerations for decentralised, pragmatic and real-world-data elements, and its effective dates differ by region. Check any cited guideline's currency with \`check_guidance_freshness\` rather than from memory.
+2. ICH E6(R3) is in force and supersedes E6(R2). Cite it by the numbering in the E6(R3) record (11 Principles; Annex 1 §1 IRB/IEC, §2 investigator, §3 sponsor, §4 data governance; Appendix C essential records), never by superseded E6(R2) numbers. Annex 2 adds considerations for decentralised, pragmatic and real-world-data elements, and its effective dates differ by region. Check any cited guideline's currency with \`check_guidance_freshness\` rather than from memory.
 3. Obligations by role: \`advise_gcp\` returns the principles or one domain (sponsor, investigator, IRB/IEC) with citations. Delegation of tasks to service providers leaves responsibility with the sponsor (Annex 1 §3.9 sponsor oversight, §3.6 agreements).
 4. Quality management: identify what is critical to quality and the risks to it (Annex 1 §3.10, §3.10.1), and keep controls proportionate to those risks (Principle 7). \`design_monitoring_plan\` returns a monitoring mix, key risk indicators and visit guidance from the trial's design factors; a factor left out is not scored. Monitoring is Annex 1 §3.11.4.
 5. Essential records: \`plan_essential_documents\` returns the trial master file and investigator site file plan by trial stage, with retention guidance (Appendix C; in the US, 21 CFR 312.57 and 312.62).
@@ -679,7 +679,7 @@ Questions about conducting a trial under GCP: who is responsible for what, how q
 - A monitoring plan that is not traceable to the identified risks.
 - Deviations logged but not assessed for impact, not trended, or closed without effective CAPA.
 - Oversight of service providers asserted but not documented.
-- E6(R2) section numbers cited as the guideline in force.
+- Superseded E6(R2) section numbers cited as the guideline in force.
 
 ## Before answering
 - Every E6(R3) citation names a section that exists in the record.
