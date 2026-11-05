@@ -19,7 +19,7 @@ import {
   addBudgetItem, addScheduleVisit, addSoaAssessment, assessProtocolDeviation, listReviewerCandidates, optionalNumber,
   removeScheduleVisit, removeSoaAssessment, renameScheduleVisit, requestProtocolReview,
   addProtocolReviewComment, resolveProtocolReviewComment, addAmendmentChange, setAmendmentStatus,
-  addCapaAction, setCapaStatus,
+  addCapaAction, setCapaStatus, setMilestoneStatus,
   setBudgetParams, startProtocolDocument, updateProtocolHeader, updateProtocolRisk,
   type ReviewerCandidate,
 } from './ProtocolDevWrites';
@@ -31,7 +31,7 @@ export type PdevFormKind =
   | 'deviation-assess'
   | 'budget-item' | 'budget-params'
   | 'review-request' | 'review-disposition' | 'review-comment' | 'comment-resolve'
-  | 'amendment-change' | 'amendment-status' | 'capa-add' | 'capa-status'
+  | 'amendment-change' | 'amendment-status' | 'capa-add' | 'capa-status' | 'milestone-status'
   | 'cover-page'
   | 'start-protocol';
 
@@ -67,6 +67,11 @@ const COMMENT_SEVERITY = ['blocking', 'major', 'minor', 'info'];
 const CAPA_STATUS: C2CFormFieldOption[] = [
   { value: 'open', label: 'Open' }, { value: 'in_progress', label: 'In progress' },
   { value: 'completed', label: 'Completed' }, { value: 'verified', label: 'Verified' },
+];
+/** A milestone's statuses, as the server's schema has them. */
+const MILESTONE_STATUS: C2CFormFieldOption[] = [
+  { value: 'planned', label: 'Planned' }, { value: 'in_progress', label: 'In progress' }, { value: 'met', label: 'Met' },
+  { value: 'missed', label: 'Missed' }, { value: 'cancelled', label: 'Cancelled' },
 ];
 /** The amendment lifecycle's statuses in words (the server's values stay the values). */
 const AMENDMENT_STATUS_LABEL: Record<string, string> = {
@@ -249,6 +254,16 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
       REASON,
     ],
   },
+  'milestone-status': {
+    eyebrow: 'Protocol · milestone', title: 'Update milestone',
+    sub: 'Records the milestone\u2019s status. Met with no actual date records today.',
+    governed: true, submitLabel: 'Record status',
+    fields: [
+      { key: 'status', label: 'Status', type: 'select', options: MILESTONE_STATUS, half: true },
+      { key: 'actualDate', label: 'Actual date', type: 'date', half: true },
+      REASON,
+    ],
+  },
   'cover-page': {
     eyebrow: 'Protocol · cover page', title: 'Sponsor and principal investigator',
     sub: 'The cover-page record. An empty field clears the stored value; the roster is unchanged either way.',
@@ -400,6 +415,9 @@ async function submitReviewAndAmendment(
       return true;
     case 'capa-status':
       await setCapaStatus(Number(target?.id), v.status, v.reason);
+      return true;
+    case 'milestone-status':
+      await setMilestoneStatus(Number(target?.id), { status: v.status, actualDate: v.actualDate, reason: v.reason });
       return true;
     case 'review-comment':
       await addProtocolReviewComment(documentId, { comment: v.comment, sectionRef: v.sectionRef, severity: v.severity, reason: v.reason });

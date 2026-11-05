@@ -154,6 +154,8 @@ export interface PdevDoc {
   amendments: PdevAmendment[];
   deviations: PdevDeviation[];
   reviews: PdevReview[];
+  /** The QRM engine's register summary (summarizeRiskRegister), over the scored risks. */
+  riskSummary?: { total: number; byLevel: Record<string, number>; openHighOrExtreme: number; residualExposure: number; basis: string; unscored: number };
   /** The protocol's review comments, once each (they are keyed by document, not reviewer). */
   reviewComments: ReviewComment[];
   consent: ConsentElement[];
