@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   backSchedule, taskWorkingDays, ScheduleError, getAllSupportedTypes, getPyramidForProject,
+  taskStanding, phaseGate, scheduleSummary,
   type SubmissionPyramid, type PyramidTask,
 } from '../../../services/regulatory/SubmissionPyramidEngine';
 
@@ -25,9 +26,10 @@ describe('taskWorkingDays', () => {
   });
 });
 
+// a (16 h) → b (8 h) → done (8 h), with c (40 h) beside b.
+const chain = pyramid([task('a', [], 16), task('b', ['a'], 8), task('c', ['a'], 40), task('done', ['b', 'c'], 8)]);
+
 describe('backSchedule', () => {
-  // a (16 h) → b (8 h) → done (8 h), with c (40 h) beside b.
-  const chain = pyramid([task('a', [], 16), task('b', ['a'], 8), task('c', ['a'], 40), task('done', ['b', 'c'], 8)]);
 
   it('makes the task that completes the submission due on the target date', () => {
     // Friday 2027-06-04.
@@ -89,5 +91,74 @@ describe('backSchedule', () => {
   it('refuses a work breakdown with no single task that completes it', () => {
     const two = pyramid([task('a', [], 8), task('b', [], 8)]);
     expect(() => backSchedule(two, '2027-06-04')).toThrow(/no single task/);
+  });
+});
+
+// Where the work stands (S11: the Plan step's workstreams and the portfolio line).
+describe('taskStanding', () => {
+  const slot = { start: '2026-11-02', due: '2026-11-10' };
+  it('is overdue past its due date, late to start past its start and not started, else nothing', () => {
+    expect(taskStanding('in-progress', slot, '2026-11-11')).toBe('overdue');
+    expect(taskStanding('todo', slot, '2026-11-05')).toBe('late-to-start');
+    expect(taskStanding('in-progress', slot, '2026-11-05')).toBeNull();
+    expect(taskStanding('todo', slot, '2026-11-02')).toBeNull();
+  });
+  it('a done task, or one with no dates, stands nowhere', () => {
+    expect(taskStanding('done', slot, '2027-01-01')).toBeNull();
+    expect(taskStanding('todo', undefined, '2027-01-01')).toBeNull();
+  });
+});
+
+describe('phaseGate', () => {
+  it("is each phase's completing task, in every pyramid", () => {
+    for (const type of getAllSupportedTypes()) {
+      const p = getPyramidForProject(type);
+      for (const ph of p.phases) expect(phaseGate(p, ph.id), `${type} ${ph.id}`).toBe(`${ph.id}.complete`);
+    }
+  });
+  it("else the phase's one task nothing in the phase depends on, else none", () => {
+    expect(phaseGate(chain, 'p1')).toBe('done');
+    const two = pyramid([task('a', [], 8), task('b', [], 8)]);
+    expect(phaseGate(two, 'p1')).toBeNull();
+  });
+});
+
+describe('scheduleSummary', () => {
+  const ind = getPyramidForProject('IND');
+  const s = backSchedule(ind, '2027-06-04');
+  const first = ind.tasks[0].id;
+
+  it('is on track when nothing is behind, and names the next phase to complete', () => {
+    const sum = scheduleSummary(ind, s, {}, s.start);
+    expect(sum).toMatchObject({ total: 58, done: 0, overdue: 0, lateToStart: 0, status: 'on-track' });
+    expect(sum.next).toMatchObject({ phaseId: 'phase1', taskId: 'phase1.complete' });
+    expect(sum.next!.due).toBe(s.tasks['phase1.complete'].due);
+  });
+
+  it('is at risk when an unfinished task is past its dates, and counts them', () => {
+    const sum = scheduleSummary(ind, s, { [first]: 'done' }, '2027-03-01');
+    expect(sum.status).toBe('at-risk');
+    expect(sum.overdue).toBeGreaterThan(0);
+    expect(sum.done).toBe(1);
+  });
+
+  it('is blocked when a task is recorded blocked, before anything else', () => {
+    expect(scheduleSummary(ind, s, { [first]: 'blocked' }, '2027-03-01').status).toBe('blocked');
+  });
+
+  it('is unscheduled without a schedule, with no dates', () => {
+    const sum = scheduleSummary(ind, null, {}, '2026-11-05');
+    expect(sum.status).toBe('unscheduled');
+    expect(sum.next).toMatchObject({ phaseId: 'phase1', due: null });
+  });
+
+  it('is complete when every task is done, with no next milestone', () => {
+    const all = Object.fromEntries(ind.tasks.map((t) => [t.id, 'done']));
+    expect(scheduleSummary(ind, s, all, '2028-01-01')).toMatchObject({ status: 'complete', next: null, overdue: 0 });
+  });
+
+  it('skips a phase already complete for the next milestone', () => {
+    const sum = scheduleSummary(ind, s, { 'phase1.complete': 'done' }, s.start);
+    expect(sum.next?.phaseId).not.toBe('phase1');
   });
 });
