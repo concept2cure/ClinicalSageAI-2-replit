@@ -603,16 +603,22 @@ in the running app where a screen changed. Where either was not possible, its RE
     filing had no required-section list.
 - **A seal shows what it holds** (S6 V5, `4c00273d06`; `…/2026-11-05-v5-seal-binder/`): each sealed version, read from
   the signed record only, opened through the Vault's audited download. This is D6 §8's "binders as a view".
+- **AnA writes only where the person may change the project** (F1, `99666f51b8`;
+  `docs/evidence/F1/2026-11-05-ana-vault-write-assemble-scope/`). `update_vault_document` wrote a new version of any
+  artifact of the organization. It now writes only within the person's scope (inside a project, its sponsor's), and
+  only with the project's edit right, asked on the write's own connection as the Vault's writes ask it.
+  `assemble_ectd_module_from_artifacts` read the artifacts of any project the model named; it is held to the same
+  scope. The shared SQL fragments of the reads were written out, so SQL text carries no interpolation (F1,
+  `67e6d2da94`).
+- **The Data Room's filing proposal reads the project's region,** as the Vault's ingest does (F1, `0f583e995b`;
+  `docs/evidence/F1/2026-11-05-data-room-region/`).
 - **Trunk red fixed:** `catalog-actor-scope-wrapper.test.ts` (7 of 11) had a stale mock (S6, `81fbd0702b`;
   `…/2026-11-05-catalog-actor-scope-mock/`).
 
 **Found**
 
-- **Three more AnA handlers select a governed artifact by organisation alone:** `update_vault_document` (a write),
-  `assemble_ectd_module_from_artifacts` and `draft_510k_substantial_equivalence`. Next here, as F1.
-- **Region is not read everywhere.** The Data Room's filing proposal (`data-room-processing.ts`) still gets US
-  headings, and the CTD filename detector (`ctd-ingestion-service.ts` `m1Section`) gives a cover letter, form or
-  patent the US heading in every region.
+- **Region is not read everywhere.** The CTD filename detector (`ctd-ingestion-service.ts` `m1Section`) gives a cover
+  letter, form or patent the US heading in every region.
 - **A device project is offered CTD vocabulary** at upload and in the filters, and the Vault cannot place a document
   at an eSTAR section (`filingVocabularyRefusal`). This is the MDX journey's lane.
 - **Founder questions:**
@@ -626,8 +632,7 @@ in the running app where a screen changed. Where either was not possible, its RE
 
 **Next**
 
-1. F1: the three remaining AnA handlers held to the person's projects and the open sponsor.
-2. F1: the Data Room's filing proposal reads the project's region.
+1. F1: the CTD filename detector's Module 1 headings follow the project's region.
 
 ## 4. How everyone works
 
