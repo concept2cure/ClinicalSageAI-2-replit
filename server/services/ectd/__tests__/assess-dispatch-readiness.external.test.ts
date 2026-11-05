@@ -22,6 +22,11 @@ vi.mock('../../../db', () => ({
   execute: async (statement: SQL) => ({ rows: /SELECT settings FROM organizations/i.test(new PgDialect().sqlToQuery(statement).sql) ? [{ settings: {} }] : [] }) },
 }));
 vi.mock('../leaf-document-resolver', () => ({ resolveLeafDocuments: async () => [] }));
+// One completed Shadow Review over the leaves as they stand: since 3cacf2e15a the
+// presence gate counts only runs that cover the current leaves (shadow-review-coverage.ts).
+vi.mock('../../shadow-review/shadow-review-coverage', () => ({
+  shadowReviewCurrency: async () => ({ current: 1, stale: 0, newestStaleRunId: null, undetermined: false }),
+}));
 vi.mock('../dispatch-readiness', () => ({
   computeDispatchReadiness: () => ({ errors: 0, warnings: 0, infos: 0, findings: [], releaseBlockers: 0 }),
 }));
@@ -51,9 +56,10 @@ beforeEach(() => {
   vi.stubEnv('NODE_ENV', 'production');
   fixture.rows = [
     [{ id: 12, organizationId: 7, submissionId: 4, region: 'fda', type: 'amendment', sequenceNumber: '0001', status: 'assembling', validationStatus: null }],
-    // sequence, application type, leaves, completed Shadow Review runs. The
-    // critical count is a text-SQL read now (criticalsStandingOpen): execute above.
-    [{ applicationType: 'other' }], [], [{ value: 1 }],
+    // sequence, application type, leaves. The critical count is a text-SQL read
+    // now (criticalsStandingOpen): execute above; the completed runs, the
+    // coverage double above.
+    [{ applicationType: 'other' }], [],
   ];
   fixture.adapter.name = 'FDA-internal-subset';
   fixture.adapter.kind = 'internal_subset';
