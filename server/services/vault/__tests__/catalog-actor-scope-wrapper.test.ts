@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => ({ query: vi.fn(), release: vi.fn(), connect: vi.fn(), role: vi.fn(), admit: vi.fn(), revalidate: vi.fn(), ambient: { tenantId: '42', role: 'owner' } as any }));
 vi.mock('../../../db.js', () => ({ pool: { connect: h.connect } }));
-vi.mock('../../../db/tenantStore.js', () => ({ getTenantScope: () => h.ambient }));
+// The module's own exports, with the ambient scope replaced: setTenantContextTx also reads isPlatformScopeRole from it
+// (P-72 slice 1b, a06ae96c83), and a mock without it turned every read into the wrapper's generic 503.
+vi.mock('../../../db/tenantStore.js', async importActual => ({ ...(await importActual<any>()), getTenantScope: () => h.ambient }));
 vi.mock('../../ana/project-scope-admission.js', async importActual => ({ ...(await importActual<any>()), readActiveAnaActorRole: h.role }));
 vi.mock('../../ana/source-read-scope.js', async importActual => ({ ...(await importActual<any>()), admitAnaSourceReadScope: h.admit, revalidateAnaSourceReadScope: h.revalidate }));
 import { AnaProjectScopeError } from '../../ana/project-scope-admission.js';
