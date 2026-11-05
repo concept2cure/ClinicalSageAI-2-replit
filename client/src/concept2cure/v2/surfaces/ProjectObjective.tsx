@@ -161,3 +161,29 @@ export function ProjectObjective({ programId, canEdit, onAsk }: {
     </section>
   );
 }
+
+/** New project's objective field (optional): recorded as the charter's objective once the project exists (S1). Moved
+ *  here from Projects.tsx (2026-11-05), beside the card that shows it, to keep Projects.tsx under the 100 kB ceiling. */
+export function NewProjectObjectiveField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <div className="npw-field npw-field-wide">
+      <label className="npw-field-l" htmlFor="npw-objective">Objective (optional)</label>
+      <textarea id="npw-objective" className="c2c-input" rows={3} value={value} aria-describedby="npw-objective-help"
+        onChange={e => onChange(e.target.value)}
+        placeholder="What the study set out to show, e.g. that the primary endpoint is met, and what is to be filed." />
+      <span className="npw-field-help" id="npw-objective-help">
+        Recorded as the project's objective, with its history. You can add its sources on the project page, or ask AnA to propose it from the protocol and the public record.
+      </span>
+    </div>
+  );
+}
+
+/** The objective's row in New project's review step. */
+export function NewProjectObjectiveReview({ value }: { value: string }) {
+  return (
+    <div className="npw-review-row">
+      <dt>Objective</dt>
+      <dd>{value.trim() || 'Not stated'}</dd>
+    </div>
+  );
+}

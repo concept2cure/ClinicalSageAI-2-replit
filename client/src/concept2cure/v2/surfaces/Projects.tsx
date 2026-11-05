@@ -8,7 +8,8 @@ import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake
 import { createProjectIntake, readProjectIntakeWorkspaces, recordIntakeObjective, type IntakeOptionsAnswer } from './projectIntakeRequest';
 import { ClientChoicesNote, ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
 import { PortfolioLine, PortfolioLinesNote, usePortfolioLines } from './PyramidProject';
-import { ProjectPortfolioFilters, WS_LABEL, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices } from './ProjectPortfolioFilters';
+import { PortfolioPagedNote, ProjectPortfolioFilters, WS_LABEL, countFloor, daysUntil, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices, readIsPaged, searchPlaceholder } from './ProjectPortfolioFilters';
+import { NewProjectObjectiveField, NewProjectObjectiveReview } from './ProjectObjective';
 import { enumWords } from './projectWords';
 import { useDialog } from '../useDialog';
 import {
@@ -842,15 +843,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
                   <span className="npw-field-l">Target submission date</span>
                   <input className="c2c-input" type="date" value={target} onChange={e => setTarget(e.target.value)} />
                 </label>
-                <div className="npw-field npw-field-wide">
-                  <label className="npw-field-l" htmlFor="npw-objective">Objective (optional)</label>
-                  <textarea id="npw-objective" className="c2c-input" rows={3} value={objective} aria-describedby="npw-objective-help"
-                    onChange={e => setObjective(e.target.value)}
-                    placeholder="What the study set out to show, e.g. that the primary endpoint is met, and what is to be filed." />
-                  <span className="npw-field-help" id="npw-objective-help">
-                    Recorded as the project's objective, with its history. You can add its sources on the project page, or ask AnA to propose it from the protocol and the public record.
-                  </span>
-                </div>
+                <NewProjectObjectiveField value={objective} onChange={setObjective} />
               </div>
 
               {isFdaDeviceFiling && (
@@ -1029,10 +1022,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
                   <dt>Target date</dt>
                   <dd>{reviewDate(target)}</dd>
                 </div>
-                <div className="npw-review-row">
-                  <dt>Objective</dt>
-                  <dd>{objective.trim() || 'Not stated'}</dd>
-                </div>
+                <NewProjectObjectiveReview value={objective} />
                 <div className="npw-review-row">
                   <dt>Pathway</dt>
                   {/* Named as the filing is named (filingLabel), never its key:
@@ -1206,25 +1196,6 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
 
 /* ════ Projects — portfolio of programs ════ */
 
-/** True when the list route said there is more than the page it returned. */
-function readIsPaged(meta: Record<string, unknown> | undefined): boolean {
-  return meta !== undefined && meta.hasMore === true;
-}
-
-/** A count read from one page of a longer list is a floor, and reads as one. */
-function countFloor(n: number, paged: boolean): string {
-  return paged ? `${n}+` : String(n);
-}
-
-function PortfolioPagedNote({ paged, settled, count, scopedCounts }: { paged: boolean; settled: boolean; count: number; scopedCounts: boolean }) {
-  if (!paged || !settled) return null;
-  return (
-    <div role="status" className="scaf-note">
-      Showing the first {count} projects. {scopedCounts ? 'The average readiness, status filter and search cover these only. Counts cover all projects matching the selected filters.' : 'The totals, the average readiness, status filter and search cover these only.'}
-    </div>
-  );
-}
-
 /**
  * Portfolio row — the display contract projected by GET /api/c2c/projects
  * (server/routes/c2c/projects.ts), one field per real `regulatory_programs`
@@ -1284,16 +1255,6 @@ function portfolioMean(projects: ProjPortfolioEntry[], settled: boolean): { mean
   return { mean, cover: partial ? `${measured.length} of ${projects.length} measured` : '' };
 }
 
-/** Whole days from today to a YYYY-MM-DD date, in the viewer's calendar; null
- *  for no date or an unreadable one. */
-function daysUntil(isoDate: string | null | undefined, today: Date = new Date()): number | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate ?? '');
-  if (!m) return null;
-  const due = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  const now = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-  return Math.round((due - now) / 86_400_000);
-}
-
 /** The list view's columns: project, client type, stage, dossier readiness,
  *  status, lead, target date. The list is the dense view: it holds, as text,
  *  what the cards leave out (D2 §1.4 item 6). */
@@ -1321,15 +1282,6 @@ function cardLine(p: Pick<ProjPortfolioEntry, 'description' | 'program_type' | '
   if (filing.length) return filing.join(' · ');
   const lead = stated(p.lead);
   return [stated(p.stage), lead ? `Lead ${lead}` : null].filter(Boolean).join(' · ');
-}
-
-/** What the search covers, in its placeholder: the loaded page, which is the
- *  whole portfolio unless the read was paged ("the first n"). No count while the
- *  read is in flight or failed. */
-function searchPlaceholder(loaded: number, paged: boolean, settled: boolean): string {
-  if (!settled || loaded === 0) return 'Search projects';
-  if (paged) return `Search the first ${loaded} projects`;
-  return loaded === 1 ? 'Search 1 project' : `Search ${loaded} projects`;
 }
 
 /* A program whose stored status is `blocked` while the list carries no blocker
