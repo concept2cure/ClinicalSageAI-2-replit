@@ -523,6 +523,53 @@ Two items listed here earlier were already done, as found on 2026-11-05: a faile
 2. The export repair's open acceptance (`docs/evidence/D2-DOCUMENTS/2026-11-04-render-snapshot/`): real Word and
    PDF output, HTTP refusal mapping and a browser walk.
 
+#### S6 — Vault at Veeva parity, with its F1 repairs (session `session_01KnUGoX3g4R4FWKWGc2sTbN`)
+
+The coordinating session is out of tokens. This session works on with the founder's permission of 2026-11-05 ("proceed
+with founder permission but note this in the roadmap and your work") and records its work here under P-100. Its holds
+are in `.design/claude-convergence/COORDINATION.md`, in the row "Vault parity (`01KnUG…`)".
+
+**Delivered** (2026-11-05). Each item was shown red first, then green on real PostgreSQL where the server changed, and
+used in the running app.
+
+- **The Vault tells its refusals apart** (S6, `3c84ddc6ac`; `docs/evidence/SPINE/S6/2026-11-05-v1-refusals/`). Not
+  licensed, not in this release, the person's role, and not found are each said as themselves, through the one read
+  classifier (`readFailureFor`). Only a real failure offers a retry. Before, a plan without the Vault read "You don't
+  have access … ask an administrator".
+- **A CRO's sponsors never mix in the library** (F1, `7d7e2e3b50`; `…/2026-11-05-v2-sponsors/`). Inside a project,
+  "All my projects" is that project's sponsor's projects. The sponsor is read from the project's verified anchor,
+  never from the request. Every hit names its sponsor, and the relationship finder stays inside the sponsor.
+- **No relationship across sponsors** (S6, `64f33aa859`; `…/2026-11-05-v3-relationship-sponsor/`). The server refuses
+  one (409 `OTHER_CLIENT`).
+- **The organisation's governed artifacts stay inside the open project's sponsor** (F1, `1e83af2c96`;
+  `…/2026-11-05-v4-artifact-sponsors/`), and name it.
+- All four are on trunk through `a7647e0147`.
+
+**Found**
+
+- **AnA's Vault tools read the whole organisation.** `read_vault_document`, `list_vault_documents`,
+  `compare_vault_versions`, `get_document_versions`, `list_governed_documents`, `read_governed_document` and
+  `global_search` (`server/services/ana/AnaToolExecutor.ts`) filter by organisation alone. They ignore the person's
+  project access and the open project's sponsor. This is next here, as F1.
+- **The Vault does not yet follow the project's settings everywhere.**
+  - A 510(k)'s "Required documents" says "not CTD-numbered", although its Library shows the eSTAR sections.
+  - Its header reads "IVD / Diagnostics", because `vaultSpineLabel` does not normalise `510k`.
+  - Module 1 proposals are pinned to the US: an EU or Japan label is proposed at 1.14.
+  - A device project is offered CTD vocabulary at upload and in the filters.
+- **Founder questions:**
+  - Should the cross-sponsor view with no project open, which today is labelled by sponsor, exist at all for a CRO?
+  - Should device coverage follow the rule pack's mandatory flags or the eSTAR mapper's per-device slots? They
+    disagree on D4 and D6.
+  - Renditions, editable binders and per-client-type retention stay founder decisions (MR-08 Stage 6 step 4,
+    `VAULT_VEEVA_PARITY_PLAN_2026-09-24.md`, FD3).
+
+**Next**
+
+1. F1: AnA's Vault tools held to the projects the person can open and to the open project's sponsor.
+2. S6: the Vault's header and Module 1 proposals follow the project's filing and region.
+3. S6: a seal opens as its binder.
+4. S6: "Required documents" says what a device filing requires.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for
