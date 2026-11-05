@@ -53,10 +53,16 @@ const headings = [
   { num: '14.3.3', label: 'Narratives of deaths, other serious and certain other significant adverse events', depth: 3, manual: true, state: 'in_review', contentHash: 'e'.repeat(64), reviewerId: 5, decidedAt: null, reason: null },
 ];
 const nav = vi.fn();
+/** §10.1's saved text, as GET /api/csr/jobs/:jobId/sections?sectionNumber= returns it (csr-jobs.ts). */
+const SAVED_10 = '<p>Of 23 randomized participants, 21 completed the study.</p><p>Two withdrew consent.</p>';
+let headingRows: unknown[] = headings;
 
 const RUNS_LIST = `/api/submission-orchestrator/runs?programId=${PROGRAM}`;
 function routes(method: string, path: string) {
   if (path === RUNS_LIST) return ok({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-30T08:00:00Z' }] });
+  if (method === 'GET' && path === '/api/csr/jobs/41/sections?sectionNumber=10.1') {
+    return ok({ sections: [{ sectionNumber: '10.1', contentHash: HASH_10, content: SAVED_10 }] });
+  }
   return jobRoutes(method, path);
 }
 
@@ -66,7 +72,7 @@ function jobRoutes(method: string, path: string) {
   if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies: [{ source: receipt, tables }] });
   if (method === 'GET' && path === BUILDS) return ok({ jobs: builds });
   if (method === 'POST' && path === '/api/csr/jobs') { builds = [build(42, 'queued'), ...builds]; return ok({ jobId: 42, status: 'queued' }, 202); }
-  if (method === 'GET' && /\/api\/csr\/jobs\/\d+\/headings$/.test(path)) return ok({ headings });
+  if (method === 'GET' && /\/api\/csr\/jobs\/\d+\/headings$/.test(path)) return ok({ headings: headingRows });
   if (method === 'POST' && /\/sections\/[\d.]+\/review$/.test(path)) return ok({ review: { state: 'approved' } });
   if (/\/narratives\/status$/.test(path)) return ok({ run: null });
   if (/\/narratives$/.test(path)) return ok({ subjects: [] });
@@ -74,7 +80,7 @@ function jobRoutes(method: string, path: string) {
   return ok({});
 }
 
-beforeEach(() => { builds = [build(41)]; apiRequest.mockImplementation(async (method: string, path: string) => routes(method, path)); });
+beforeEach(() => { builds = [build(41)]; headingRows = headings; apiRequest.mockImplementation(async (method: string, path: string) => routes(method, path)); });
 afterEach(() => { cleanup(); apiRequest.mockReset(); nav.mockReset(); clearEditorTarget(); });
 /* 2026-10-31 (CLAUDE.md RULE 4): the build lives in the CSR document's editor, not on Submission Center's card.
    These cases are the card's, moved: mount the editor's build and choose the study data. Here it is an earlier
@@ -149,6 +155,22 @@ it('follows a drafting build until it ends, then stops re-reading the list', asy
   } finally { vi.useRealTimers(); }
 });
 
+it('says why a failed build stopped, as the list states it, and refuses a list whose reason is not text', async () => {
+  // F10 of the 2026-11-02 demo walk: the build showed only "CSR build N · failed · NN%".
+  const why = 'Not complete: §9.8 still holds a data placeholder (“[…]”) where the study’s data is missing.';
+  builds = [{ ...build(44, 'failed'), progress: 15, failure: why }];
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  expect(await within(region).findByText(/CSR build 44 · failed · 15%/)).toBeTruthy();
+  const reason = await within(region).findByText(why);
+  expect(reason.getAttribute('role')).toBe('alert');
+  cleanup();
+  builds = [{ ...build(44, 'failed'), progress: 15, failure: { stack: 'Error: at Pool.query' } }];
+  await card();
+  expect((await screen.findByText(/The CSR builds of this run could not be listed/)).getAttribute('role')).toBe('alert');
+  expect(screen.queryByText(/Pool\.query/)).toBeNull();
+});
+
 const headingReads = (jobId: number) => apiRequest.mock.calls.filter(([m, p]) => m === 'GET' && p === `/api/csr/jobs/${jobId}/headings`).length;
 
 it('reviews the selected build section by section, with the ICH E3 labels, and approves against the content hash', async () => {
@@ -157,8 +179,16 @@ it('reviews the selected build section by section, with the ICH E3 labels, and a
   const review = await within(region).findByLabelText('Section review');
   expect(within(review).getByText('4 of 5 ICH E3 headings drafted · 2 approved')).toBeTruthy();
   const row = within(review).getByText('Disposition of patients').closest('li')!;
+  // Since 2026-11-03 an approval is of the exact saved text: Approve waits until that text has been read (F9).
+  const approve = within(row).getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
+  expect(approve.disabled).toBe(true);
+  fireEvent.click(within(row).getByRole('button', { name: 'Read saved section text' }));
+  expect((await within(row).findByLabelText('Saved text for §10.1')).textContent)
+    .toBe('Of 23 randomized participants, 21 completed the study.\n\nTwo withdrew consent.');
+  expect(apiRequest).toHaveBeenCalledWith('GET', '/api/csr/jobs/41/sections?sectionNumber=10.1', undefined);
+  expect(approve.disabled).toBe(false);
   const before = headingReads(41);
-  fireEvent.click(within(row).getByRole('button', { name: /Approve/ }));
+  fireEvent.click(approve);
   await vi.waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/csr/jobs/41/sections/10.1/review',
     { decision: 'approve', expectedContentHash: HASH_10 }));
   // The decision is re-read from the server, never assumed.
@@ -192,6 +222,15 @@ it('names the target project in the import dialog when the open project is this 
     fireEvent.click(await within(other).findByRole('button', { name: /Import approved sections into Authoring/ }));
     expect(JSON.parse((await screen.findByTestId('csr-import')).firstChild!.textContent!).programName).toBeUndefined();
   } finally { clearShellProject(); }
+});
+
+it('refuses a headings read whose template flag is not a yes or no, never guessing which rows are drafted', async () => {
+  headingRows = [...headings, { num: '9.8', label: 'Changes in the conduct of the study', depth: 2, manual: false, state: 'draft',
+    placeholder: 'yes', contentHash: 'f'.repeat(64) }];
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  expect((await within(region).findByText(/The build’s sections could not be read for review/)).closest('[role="alert"]')).toBeTruthy();
+  expect(within(region).queryByLabelText('Section review')).toBeNull();
 });
 
 it('states a refused headings read as an alert, never an empty review', async () => {

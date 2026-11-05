@@ -33,7 +33,7 @@ CREATE TABLE protocol_eligibility_criteria (id serial PRIMARY KEY, organization_
 CREATE TABLE protocol_schedule_visits (id serial PRIMARY KEY, organization_id int, protocol_document_id int, visit_name text, timepoint text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_risks (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, likelihood text, impact text, mitigation text, residual_likelihood text, residual_impact text, status text, deleted_at timestamptz, owner text);
 CREATE TABLE protocol_milestones (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, milestone_type text, target_date date, actual_date date, deleted_at timestamptz);
-CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, amendment_number text, title text, affects_consent boolean, submitted_date date, decided_date date, deleted_at timestamptz);
+CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, amendment_number text, title text, affects_consent boolean, affects_risk boolean, status text NOT NULL DEFAULT 'draft', submitted_date date, decided_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendment_changes (id serial PRIMARY KEY, amendment_id int, section_ref text, change_description text, previous_text text, proposed_text text);
 CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, protocol_document_id int, deviation_number text, description text, category text CHECK (category IN ('enrollment','consent','procedure','safety','data','other')), severity text CHECK (severity IN ('minor','major','critical')), is_reportable boolean, affects_safety boolean, status text NOT NULL DEFAULT 'open' CHECK (status IN ('open','under_review','capa_pending','closed')), deleted_at timestamptz);
 CREATE TABLE protocol_capa_actions (id serial PRIMARY KEY, deviation_id int, action text, status text);
@@ -77,8 +77,10 @@ async function seedFullProtocol(org: number): Promise<number> {
   await pglite.query(`INSERT INTO protocol_schedule_visits (organization_id, protocol_document_id, visit_name, timepoint, order_index) VALUES ($1,$2,'Screening','Day -28',0)`, [org, id]);
   await pglite.query(`INSERT INTO protocol_risks (organization_id, protocol_document_id, category, description, likelihood, impact, mitigation, residual_likelihood, residual_impact, status) VALUES ($1,$2,'regulatory','Endpoint may be questioned','likely','major','Pre-submission meeting','possible','moderate','mitigating')`, [org, id]);
   await pglite.query(`INSERT INTO protocol_milestones (organization_id, protocol_document_id, name, milestone_type, target_date) VALUES ($1,$2,'FPI','enrollment','2020-01-01')`, [org, id]);
-  const a = await pglite.query(`INSERT INTO protocol_amendments (organization_id, protocol_document_id, amendment_number, title, affects_consent, submitted_date) VALUES ($1,$2,'A1','Widen eligibility',true,'2026-06-01') RETURNING id`, [org, id]);
+  const a = await pglite.query(`INSERT INTO protocol_amendments (organization_id, protocol_document_id, amendment_number, title, affects_consent, affects_risk, status, submitted_date) VALUES ($1,$2,'A1','Widen eligibility',true,false,'under_review','2026-06-01') RETURNING id`, [org, id]);
   await pglite.query(`INSERT INTO protocol_amendment_changes (amendment_id, section_ref, change_description, previous_text, proposed_text) VALUES ($1,'5.1','loosen age','18-65','18+')`, [(a.rows[0] as { id: number }).id]);
+  // Both impacts declared "no": risk was never read, so this showed as "not declared".
+  await pglite.query(`INSERT INTO protocol_amendments (organization_id, protocol_document_id, amendment_number, title, affects_consent, affects_risk, status) VALUES ($1,$2,'A2','Fix a typo',false,false,'draft')`, [org, id]);
   const dev = await pglite.query(`INSERT INTO protocol_deviations (organization_id, protocol_document_id, deviation_number, description, category, severity, is_reportable, status) VALUES ($1,$2,'D1','Missed visit','procedure','major',true,'capa_pending') RETURNING id`, [org, id]);
   await pglite.query(`INSERT INTO protocol_capa_actions (deviation_id, action, status) VALUES ($1,'Retrain site','open')`, [(dev.rows[0] as { id: number }).id]);
   await pglite.query(`INSERT INTO protocol_budget_items (organization_id, protocol_document_id, category, description, unit_cost, quantity_per_subject) VALUES ($1,$2,'labs','Central lab',500,3)`, [org, id]);
@@ -135,8 +137,10 @@ describe('assembleOrgPdevDocs', () => {
     expect(doc.budget.params).toMatchObject({ enrollment: 420, sponsorPerSubject: 15000, faRate: 28 });
 
     // Amendment with a nested change; deviation with CAPA.
-    expect(doc.amendments[0]).toMatchObject({ num: 'A1', reconsent: true, status: 'submitted' });
+    // The recorded status, not one derived from the dates (which read under_review as submitted).
+    expect(doc.amendments[0]).toMatchObject({ num: 'A1', reconsent: true, status: 'under_review', nextStatuses: ['approved', 'rejected'] });
     expect(doc.amendments[0].changes[0]).toMatchObject({ sec: '5.1', from: '18-65', to: '18+' });
+    expect(doc.amendments[1]).toMatchObject({ num: 'A2', reconsent: false, status: 'draft', nextStatuses: ['submitted'] });
     // Deviation severity/category/status carried through — a monitor must be able to
     // tell a critical reportable deviation from a minor closed one.
     expect(doc.deviations[0]).toMatchObject({ title: 'Missed visit', sev: 'major', cat: 'procedure', reportable: true, status: 'capa_pending' });

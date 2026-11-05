@@ -1,0 +1,7 @@
+# workbenchCsrStudyData.test.tsx with the gate on isCsrTemplateId(docTemplateId)
+ ✓ workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > registry:ICH_CSR 523ms
+ ✓ workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > component:clinical_study_report 209ms
+ ✓ workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > section:m5.3.5.1 196ms
+ ✓ workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > section:m5.3.5.2 190ms
+ ✓ workbenchCsrStudyData.test.tsx > a CSR document shows "Build from the study’s data", whichever CSR template it was made from > a document that is not a CSR does not show it 168ms
+      Tests  5 passed (5)

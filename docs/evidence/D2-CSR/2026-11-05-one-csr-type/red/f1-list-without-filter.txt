@@ -1,0 +1,15 @@
+# The New document list without 8626ff43ae's filter (registry entries not filtered), with this change's tests
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the full CSR remains one editable saved report > is one New document entry, the E3 component 152ms
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the full CSR remains one editable saved report > saves and reopens every canonical E3 heading from registry:ICH_CSR with its section policy 118ms
+ × server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > offers one working CSR template and still resolves existing registry IDs 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'registry:ICH_CSR', …(1) ] to deeply equal [ 'component:clinical_study_report' ]
+- Expected
++ Received
+AssertionError: registry:ICH_CSR is not offered a second time: expected true to be false // Object.is equality
+- Expected
++ Received
+AssertionError: expected [ { …(14) }, { …(14) } ] to have a length of 1 but got 2
+- Expected
++ Received
+      Tests  3 failed | 291 skipped (294)

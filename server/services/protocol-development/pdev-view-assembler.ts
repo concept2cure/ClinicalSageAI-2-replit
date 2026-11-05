@@ -19,6 +19,7 @@ import { evaluateCompleteness, type SectionView } from './protocol-development-l
 import { evaluateProtocolRules, type ProtocolRuleInput } from './protocol-rule-pack';
 import { buildSoaMatrix, validateSoa } from '../protocol-soa/protocol-soa-logic';
 import { computeProtocolBudget } from '../protocol-budget/protocol-budget-logic';
+import { nextAmendmentStatuses } from '../protocol-amendments/protocol-amendments-service';
 import { rowsToStudyDesign } from '../study-design/study-design-repository';
 import { validateDesign } from '../study-design/design-validation';
 import { dispositionTarget, finalizationTarget, readSignatureFacets, type PdevSignatureFacet } from './protocol-signature-manifestation';
@@ -179,7 +180,10 @@ function mapAmendments(
   const at = (id: number) => changesByAmend.get(str(id)) ?? [];
   return rows.map((a) => ({
     id: str(a.id), num: str(a.amendment_number), summary: str(a.title),
-    status: a.decided_date ? 'decided' : a.submitted_date ? 'submitted' : 'draft',
+    /* The recorded lifecycle status. It was derived from the dates, which
+       reported under review as submitted and approved, rejected and implemented
+       all as "decided". `nextStatuses` is the server's own transition table. */
+    status: str(a.status), nextStatuses: nextAmendmentStatuses(str(a.status)),
     // Re-consent is the IRB's determination (45 CFR 46.109(b); 21 CFR 56.109(b)),
     // never the engine's. true = a declared consent or risk impact means the
     // IRB must decide; null = either impact undeclared; false = both declared no.
@@ -415,7 +419,7 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
     q(`SELECT id, protocol_document_id, visit_name, timepoint FROM protocol_schedule_visits WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`),
     q(`SELECT id, protocol_document_id, category, description, likelihood, impact, mitigation, residual_likelihood, residual_impact, status, owner FROM protocol_risks WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     q(`SELECT id, protocol_document_id, name, milestone_type, target_date, actual_date FROM protocol_milestones WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY target_date NULLS LAST, id`),
-    q(`SELECT id, protocol_document_id, amendment_number, title, affects_consent, submitted_date, decided_date FROM protocol_amendments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
+    q(`SELECT id, protocol_document_id, amendment_number, title, affects_consent, affects_risk, status, submitted_date, decided_date FROM protocol_amendments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     /* severity / category / status are NOT NULL with CHECK constraints on this
        table and were simply never selected, then hard-blanked below. A monitor
        could not tell a CRITICAL deviation from a MINOR one — which is the 3-day

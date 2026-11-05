@@ -175,7 +175,9 @@ export function MilestonesTab({ doc, onAdd }: ListPaneProps) {
 }
 
 /* ---- Amendments ---- */
-export function AmendmentsTab({ doc, onAdd }: ListPaneProps) {
+export function AmendmentsTab({ doc, onAdd, onEdit }: ListPaneProps & {
+  onEdit?: (kind: 'amendment-change' | 'amendment-status', target: { id: number; label: string; options?: string[] }) => void;
+}) {
   const amendments = asRows(doc.amendments);
   return (
     <div className="pd-pane">
@@ -192,6 +194,7 @@ export function AmendmentsTab({ doc, onAdd }: ListPaneProps) {
             <PG.StatusBadge status={str(a.status)} />
           </div>
           <div className="pd-card-sum">{str(a.summary)}</div>
+          {onEdit && <AmendmentActions a={a} onEdit={onEdit} />}
           {/* The changeset is its own child table — an amendment recorded before
               its diff was itemised carries a summary and no changes. */}
           <div className="pd-changeset">{asRows(a.changes).map((c, i) => (
@@ -199,6 +202,31 @@ export function AmendmentsTab({ doc, onAdd }: ListPaneProps) {
               <span className="pd-change-arrow">{'→'}</span><span className="pd-change-to">{str(c.to)}</span></div>))}</div>
         </div>))}
     </div>);
+}
+
+/** An amendment's writes: a change while it is a draft, and the next statuses
+ *  the server's lifecycle allows (`nextStatuses`, from its transition table). */
+function AmendmentActions({ a, onEdit }: {
+  a: Row;
+  onEdit: (kind: 'amendment-change' | 'amendment-status', target: { id: number; label: string; options?: string[] }) => void;
+}) {
+  const next = Array.isArray(a.nextStatuses) ? (a.nextStatuses as unknown[]).map(String) : [];
+  const label = str(a.num) || str(a.summary);
+  if (str(a.status) !== 'draft' && next.length === 0) return null;
+  return (
+    <div className="pd-card-sum">
+      {str(a.status) === 'draft' && (
+        <button type="button" className="pde-rowbtn" onClick={() => onEdit('amendment-change', { id: Number(a.id), label })}>
+          Add a change
+        </button>
+      )}
+      {next.length > 0 && (
+        <button type="button" className="pde-rowbtn" onClick={() => onEdit('amendment-status', { id: Number(a.id), label, options: next })}>
+          Change status
+        </button>
+      )}
+    </div>
+  );
 }
 
 /* ---- Deviations & CAPA ---- */

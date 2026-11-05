@@ -111,10 +111,11 @@ export function CsrHeadingReview({ jobId, headings, onChanged, onImport }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const approved = headings.filter(h => h.state === 'approved' && !h.integrityFailure).map(h => h.num);
+  // A template row (saved text that still holds a data placeholder, the server's `placeholder`) is not drafted (F2).
   const drafted = headings.filter(h => h.state !== 'not_drafted' && !h.placeholder && !h.integrityFailure).length;
-  const incomplete = headings.filter(h => h.placeholder).length;
+  const templates = headings.filter(h => h.placeholder).length;
   const decide = async (heading: CsrBoardHeading, decision: Decision, reason?: string) => {
-    if (busy || heading.integrityFailure || !heading.contentHash) return;
+    if (busy || heading.integrityFailure || !heading.contentHash || (heading.placeholder && decision !== 'send_back')) return;
     setBusy(true); setError(null);
     const result = await apiCall('POST', `${JOBS}/${jobId}/sections/${encodeURIComponent(heading.num)}/review`,
       { decision, expectedContentHash: heading.contentHash, ...(reason !== undefined ? { reason } : {}) });
@@ -125,7 +126,8 @@ export function CsrHeadingReview({ jobId, headings, onChanged, onImport }: {
   return <section aria-label="Section review" style={{ marginTop: 16, maxWidth: 900 }}>
     <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
       <strong>Section review</strong>
-      <span>{drafted} of {headings.length} ICH E3 headings with saved text free of data placeholders · {incomplete} still contain placeholders · {approved.length} approved</span>
+      <span>{drafted} of {headings.length} ICH E3 headings drafted{templates > 0
+        ? ` · ${templates} ${templates === 1 ? 'is' : 'are'} template text with data missing` : ''} · {approved.length} approved</span>
       <button type="button" className="btn" disabled={busy || approved.length === 0} onClick={() => onImport(approved)}>
         {I.fileCheck} Import approved sections into Authoring
       </button>
@@ -138,11 +140,17 @@ export function CsrHeadingReview({ jobId, headings, onChanged, onImport }: {
 }
 
 /** A reviewer sees the exact persisted body before approving its hash, not just a title.
- * The existing org-scoped sections API accepts a single heading selection. */
+ * The existing org-scoped sections API accepts a single heading selection. Markup is read as text: a block or a line
+ * break ends a line, so the saved lines, lists and paragraphs read as saved (F9); entities are decoded once. */
+const BLOCK_TAG = /<\/?(?:p|div|li|ul|ol|h[1-6]|tr|table|thead|tbody|blockquote|section|pre)\b[^>]*>|<br\s*\/?>/gi;
+const codePoint = (whole: string, value: number) => (value > 0 && value <= 0x10ffff ? String.fromCodePoint(value) : whole);
 function readableCsrText(source: string): string {
-  return source.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"')
-    .replace(/\s+/g, ' ').trim();
+  return source.replace(/\r\n?/g, '\n').replace(BLOCK_TAG, '\n').replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d{1,7});/g, (whole, n: string) => codePoint(whole, Number(n)))
+    .replace(/&#x([0-9a-f]{1,6});/gi, (whole, n: string) => codePoint(whole, parseInt(n, 16)))
+    .replace(/&amp;/gi, '&')
+    .replace(/[^\S\n]+/g, ' ').replace(/ ?\n ?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 /** The exact saved body of one heading, read on request and checked against its recorded content hash. */
 function useSavedSectionText(jobId: number, heading: CsrBoardHeading) {
@@ -181,25 +189,29 @@ function HeadingStatus({ heading }: { heading: CsrBoardHeading }) {
     <span className={`rd-chip tone-${STATE_TONE[heading.state]}`}>{heading.integrityFailure
       ? 'Saved text integrity failed' : heading.placeholder ? 'Template · data missing' : STATE_LABEL[heading.state]}</span>
     {heading.integrityFailure && <span role="alert">The saved section no longer matches its recorded SHA-256. Review and import are blocked until the source is repaired.</span>}
+    {heading.placeholder && !heading.integrityFailure && <span>The build kept its template text here: the study’s data is still missing, so it is not offered for review.</span>}
     {heading.manual && heading.state === 'not_drafted' && <span>Prepared from records, not drafted by the build</span>}
     {heading.staleApproval && <span>Redrafted after approval; review again</span>}
     {heading.state === 'draft' && heading.reason && <span>Sent back: {heading.reason}</span>}
   </>;
 }
 
-/** Send for review, Approve (only once the exact saved text was read) and Send back. */
+/** Send for review, Approve (only once the exact saved text was read) and Send back. A template row is not a draft,
+ * so it is offered neither for review nor for approval (the server refuses both, csr-section-review.ts); one sent
+ * for review or approved before that rule can still be sent back. */
 function HeadingActions({ heading, busy, inspected, sendingBack, onDecide, onSendBack }: {
   heading: CsrBoardHeading; busy: boolean; inspected: boolean; sendingBack: boolean;
   onDecide: (decision: Decision, reason?: string) => void; onSendBack: () => void;
 }) {
-  const blocked = busy || heading.placeholder === true || heading.integrityFailure === true;
+  const blocked = busy || heading.integrityFailure === true;
+  const reviewable = !heading.placeholder;
   return <>
-    {heading.state === 'draft' && <button type="button" className="btn" disabled={blocked} title={heading.placeholder ? 'Complete source-data placeholders before review.' : undefined} onClick={() => onDecide('submit')}>{I.send} Send for review</button>}
-    {heading.state === 'in_review' && <button type="button" className="btn" disabled={blocked || !inspected}
-      title={heading.placeholder ? 'Complete source-data placeholders before approval.' : !inspected ? 'Read this exact saved draft before approving its content hash.' : undefined}
+    {reviewable && heading.state === 'draft' && <button type="button" className="btn" disabled={blocked} onClick={() => onDecide('submit')}>{I.send} Send for review</button>}
+    {reviewable && heading.state === 'in_review' && <button type="button" className="btn" disabled={blocked || !inspected}
+      title={inspected ? undefined : 'Read this exact saved draft before approving its content hash.'}
       onClick={() => onDecide('approve')}>{I.check} Approve</button>}
     {(heading.state === 'in_review' || heading.state === 'approved') && !sendingBack &&
-      <button type="button" className="btn" disabled={busy || heading.integrityFailure === true} onClick={onSendBack}>{I.undo} Send back</button>}
+      <button type="button" className="btn" disabled={blocked} onClick={onSendBack}>{I.undo} Send back</button>}
   </>;
 }
 

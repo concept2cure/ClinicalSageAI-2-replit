@@ -1,0 +1,24 @@
+# The 21 further files that import a CSR module, after this session
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts (20 tests) 16085ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts (28 tests) 12078ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts (32 tests) 8164ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx (87 tests) 7807ms
+ ✓ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts (8 tests) 7031ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbenchFreshness.test.tsx (10 tests) 4601ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx (12 tests) 3742ms
+ ✓ tests/services/ana-biostats.test.ts (128 tests) 1400ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts (21 tests) 1985ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx (4 tests) 1249ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts (9 tests) 1737ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts (41 tests) 1362ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts (26 tests) 1179ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts (23 tests) 707ms
+ ✓ client/src/concept2cure/v2/__tests__/studyPivotalDeclarations.test.tsx (5 tests) 760ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts (11 tests) 323ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx (31 tests) 259ms
+ ✓ tests/unit/charters-routes.test.ts (12 tests) 132ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts (21 tests) 61ms
+ ✓ tests/regulatory/m1-placement-repo-wide.test.ts (18 tests) 61ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts (17 tests) 19ms
+ Test Files  21 passed (21)
+      Tests  564 passed (564)

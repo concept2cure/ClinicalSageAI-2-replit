@@ -18,7 +18,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import {
   addBudgetItem, addScheduleVisit, addSoaAssessment, assessProtocolDeviation, listReviewerCandidates, optionalNumber,
   removeScheduleVisit, removeSoaAssessment, renameScheduleVisit, requestProtocolReview,
-  addProtocolReviewComment, resolveProtocolReviewComment,
+  addProtocolReviewComment, resolveProtocolReviewComment, addAmendmentChange, setAmendmentStatus,
   setBudgetParams, startProtocolDocument, updateProtocolHeader, updateProtocolRisk,
   type ReviewerCandidate,
 } from './ProtocolDevWrites';
@@ -30,6 +30,7 @@ export type PdevFormKind =
   | 'deviation-assess'
   | 'budget-item' | 'budget-params'
   | 'review-request' | 'review-disposition' | 'review-comment' | 'comment-resolve'
+  | 'amendment-change' | 'amendment-status'
   | 'cover-page'
   | 'start-protocol';
 
@@ -45,6 +46,8 @@ export interface PdevFormTarget {
   defaults?: Record<string, string>;
   /** A review's assigned user; null when it names a reviewer with no account. */
   reviewerUserId?: number | null;
+  /** The choices the server allows for this row (an amendment's next statuses). */
+  options?: string[];
 }
 
 const REASON: C2CFormField = {
@@ -59,6 +62,10 @@ const BUDGET_CATEGORY = ['personnel', 'procedure', 'lab', 'imaging', 'overhead',
 const REVIEW_ROLE = ['scientific', 'statistical', 'ethics', 'safety', 'regulatory', 'general'];
 const DISPOSITION = ['approve', 'approve_with_changes', 'reject', 'abstain'];
 const COMMENT_SEVERITY = ['blocking', 'major', 'minor', 'info'];
+/** The amendment lifecycle's statuses in words (the server's values stay the values). */
+const AMENDMENT_STATUS_LABEL: Record<string, string> = {
+  draft: 'Draft', submitted: 'Submitted', under_review: 'Under review', approved: 'Approved', rejected: 'Rejected', implemented: 'Implemented',
+};
 const PROTOCOL_KIND = ['clinical', 'irb', 'iacuc', 'ibc'];
 
 /** Every drawer's static half. The dynamic half (defaults, the row's name) is
@@ -194,6 +201,28 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
     governed: true, submitLabel: 'Resolve comment',
     fields: [REASON],
   },
+  'amendment-change': {
+    eyebrow: 'Protocol · amendment', title: 'Add a change',
+    sub: 'A line item in this amendment’s changeset. An amendment is submitted only once it carries at least one change.',
+    governed: true, submitLabel: 'Add change',
+    fields: [
+      { key: 'changeDescription', label: 'What changed', type: 'textarea', required: true, placeholder: 'For example: widen the upper age limit' },
+      { key: 'sectionRef', label: 'Section', type: 'text', placeholder: 'For example 5.1', half: true },
+      { key: 'previousText', label: 'Previous text', type: 'textarea' },
+      { key: 'proposedText', label: 'Proposed text', type: 'textarea' },
+      REASON,
+    ],
+  },
+  'amendment-status': {
+    eyebrow: 'Protocol · amendment', title: 'Change status',
+    sub: 'Records the amendment’s next status. Only the moves the lifecycle allows are offered.',
+    governed: true, submitLabel: 'Record status',
+    fields: [
+      // Options are the amendment's own next statuses, from the server (configFor).
+      { key: 'status', label: 'New status', type: 'select', options: [] },
+      REASON,
+    ],
+  },
   'cover-page': {
     eyebrow: 'Protocol · cover page', title: 'Sponsor and principal investigator',
     sub: 'The cover-page record. An empty field clears the stored value; the roster is unchanged either way.',
@@ -289,7 +318,11 @@ export function configFor(kind: PdevFormKind, target?: PdevFormTarget, reviewers
     : base.fields;
   const fields = kind === 'review-request'
     ? withDefaults.map((f) => reviewRequestField(f, reviewers ?? { state: 'unavailable' }))
-    : withDefaults;
+    : kind === 'amendment-status'
+      ? withDefaults.map((f) => (f.key === 'status'
+        ? { ...f, options: (target?.options ?? []).map((value) => ({ value, label: AMENDMENT_STATUS_LABEL[value] ?? value })), default: target?.options?.[0] }
+        : f))
+      : withDefaults;
   const sub = target?.label ? `${target.label} — ${base.sub ?? ''}`.trim() : base.sub;
   return { ...base, sub, fields };
 }
@@ -315,6 +348,32 @@ async function submitSchedule(
       return true;
     case 'assessment-remove':
       await removeSoaAssessment(documentId, rowId, v.reason);
+      return true;
+    default:
+      return false;
+  }
+}
+
+/** Review comments and amendment changes and status: the writes reached by R1,
+ *  kept in their own switch so no dispatch passes the repo's complexity budget. */
+async function submitReviewAndAmendment(
+  kind: PdevFormKind, documentId: number, target: PdevFormTarget | undefined, v: Record<string, string>,
+): Promise<boolean> {
+  switch (kind) {
+    case 'amendment-change':
+      await addAmendmentChange(Number(target?.id), {
+        sectionRef: v.sectionRef, changeDescription: v.changeDescription,
+        previousText: v.previousText, proposedText: v.proposedText, reason: v.reason,
+      });
+      return true;
+    case 'amendment-status':
+      await setAmendmentStatus(Number(target?.id), v.status, v.reason);
+      return true;
+    case 'review-comment':
+      await addProtocolReviewComment(documentId, { comment: v.comment, sectionRef: v.sectionRef, severity: v.severity, reason: v.reason });
+      return true;
+    case 'comment-resolve':
+      await resolveProtocolReviewComment(Number(target?.id), v.reason);
       return true;
     default:
       return false;
@@ -360,12 +419,6 @@ async function submitRegister(
       });
       return true;
     }
-    case 'review-comment':
-      await addProtocolReviewComment(documentId, { comment: v.comment, sectionRef: v.sectionRef, severity: v.severity, reason: v.reason });
-      return true;
-    case 'comment-resolve':
-      await resolveProtocolReviewComment(Number(target?.id), v.reason);
-      return true;
     case 'cover-page':
       await updateProtocolHeader(documentId, { sponsor: v.sponsor, principalInvestigator: v.principalInvestigator, reason: v.reason });
       return true;
@@ -386,6 +439,7 @@ export async function submitPdevForm(
   }
   if (await submitSchedule(kind, documentId, target, v)) return;
   if (await submitRegister(kind, documentId, target, v)) return;
+  if (await submitReviewAndAmendment(kind, documentId, target, v)) return;
   throw new Error(`No write is registered for "${kind}". Nothing was written.`);
 }
 

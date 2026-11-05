@@ -60,6 +60,8 @@ export interface ConsolidationResult {
   rejectedByGate: number;
   /** Promotions stored as status 'pending_review' because they contradict existing memory. */
   quarantined: number;
+  /** Failed row attempts plus any batch-scan failure; not legitimate skips.
+   * A connection/COMMIT failure may leave persistence unconfirmed. */
   errors: number;
   startedAt: Date;
   completedAt: Date;
@@ -146,7 +148,7 @@ async function findStaleMemories(batchSize: number): Promise<StaleMemoryRow[]> {
   );
 }
 
-type ConsolidationOutcome = 'consolidated' | 'quarantined' | 'rejected' | 'skipped';
+type ConsolidationOutcome = 'consolidated' | 'quarantined' | 'rejected' | 'skipped' | 'failed';
 
 /**
  * How many existing project memories the acceptance gate compares a candidate
@@ -165,10 +167,12 @@ async function embedContentToLiteral(content: string, memoryId: number): Promise
   try {
     const { embedding } = await getEmbeddingService(pool).embed(content, 'text-embedding-3-small');
     return `[${embedding.join(',')}]`;
-  } catch (err) {
+  } catch {
+    // Provider errors can contain the supplied memory text; retain only the
+    // operational outcome, not the exception or its payload.
     logger.warn(
       `Embedding failed for memory ${memoryId} — storing without embedding (invisible to ` +
-        `semantic recall until re-embedded): ${err instanceof Error ? err.message : 'unknown error'}`
+        'semantic recall until re-embedded)'
     );
     return null;
   }
@@ -182,14 +186,22 @@ async function embedContentToLiteral(content: string, memoryId: number): Promise
  * accepted by the RLS policy from 0021 even when RLS_ENFORCE=on.
  */
 async function consolidateMemory(memory: StaleMemoryRow): Promise<ConsolidationOutcome> {
-  return withTenantConnection(
-    {
-      tenantId: memory.organization_id,
-      source: 'job',
-      caller: 'memory-consolidation-job:consolidateMemory',
-    },
-    client => consolidateMemoryInner(memory, client)
-  );
+  try {
+    return await withTenantConnection(
+      {
+        tenantId: memory.organization_id,
+        source: 'job',
+        caller: 'memory-consolidation-job:consolidateMemory',
+      },
+      client => consolidateMemoryInner(memory, client)
+    );
+  } catch {
+    // Scope acquisition/release fails outside the inner callback. Account for
+    // this row, then let later rows acquire their own tenant-scoped client.
+    // Do not infer rollback: a failed acknowledgement can follow a commit.
+    logger.error(`Memory ${memory.id} consolidation scope failed; persistence unconfirmed`);
+    return 'failed';
+  }
 }
 
 async function consolidateMemoryInner(
@@ -355,9 +367,11 @@ async function consolidateMemoryInner(
         `(status ${status}, confidence ${verdict.confidence_score.toFixed(2)})`
     );
     return contradicted ? 'quarantined' : 'consolidated';
-  } catch (err) {
-    logger.error(`Failed to consolidate memory ${memory.id}:`, err);
-    return 'skipped';
+  } catch {
+    // A parse, read or write failure is not a harmless skip. The existing
+    // transaction handles rollback; the result must retain the failed attempt.
+    logger.error(`Failed to consolidate memory ${memory.id}; persistence unconfirmed`);
+    return 'failed';
   }
 }
 
@@ -453,14 +467,16 @@ export async function runConsolidation(): Promise<ConsolidationResult> {
         case 'rejected':
           rejectedByGate++;
           break;
-        default:
-          // "skipped gracefully" and "errored" both land here; errors are
-          // logged inside consolidateMemoryInner.
+        case 'failed':
+          errors++;
+          break;
+        case 'skipped':
           skipped++;
+          break;
       }
     }
-  } catch (err) {
-    logger.error('Consolidation cycle failed:', err);
+  } catch {
+    logger.error('Consolidation cycle failed; batch outcome incomplete');
     errors++;
   }
 
@@ -504,8 +520,8 @@ export async function runScheduledConsolidation(): Promise<
       logger.info('Nightly consolidation is running on another process — skipping here');
     }
     return outcome;
-  } catch (err) {
-    logger.error('Scheduled consolidation run failed:', err);
+  } catch {
+    logger.error('Scheduled consolidation run failed');
     return { ran: false, reason: 'error' };
   }
 }

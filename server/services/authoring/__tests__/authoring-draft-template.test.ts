@@ -180,6 +180,20 @@ describe('recorded limits are not replaced by current guidance or a parent templ
   });
 });
 
+describe('a CSR drafts as a CSR whatever template it was made from', () => {
+  it('drafts the component CSR New document offers as a CSR, though its source records no registry id', async () => {
+    const component = { ...source('GLOBAL'), filingContext: { registryId: null, region: 'GLOBAL', agency: 'ICH' } } as unknown as RecordedTemplateSource;
+    const review = reviewed(component);
+    review.template.id = '4331e7e3-7777-5c21-8c9b-0e2f56194e7e'; // component:clinical_study_report
+    h.review.mockResolvedValue(review);
+    expect((await read('FDA')).documentKind).toBe('csr');
+  });
+
+  it('keeps a non-CSR document as it was', async () => {
+    expect((await read('FDA')).documentKind).toBe('ctd');
+  });
+});
+
 describe('writing region follows the effective saved source without inventing a jurisdiction', () => {
   it.each([['US', 'FDA'], ['CA', 'Health Canada'], ['EU', 'EMA'], ['JP', 'PMDA']] as const)('derives %s writing control only when the caller omitted it', async (region, expected) => {
     h.review.mockResolvedValue(reviewed(source(region)));

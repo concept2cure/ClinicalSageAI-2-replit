@@ -147,6 +147,9 @@ test pinned the old empty-state copy; it now pins the new copy.
 | F11 | **Copy that no longer matches the product.** The imported §14.3.3 says to "run the narratives again on the build board", a label that does not exist (it is "CSR builds from this study data"). eCTD Compile still says "First-study AI narrative generation remains unavailable." while the editor composed 95 narratives. | `CsrNarrativeReferenceView.tsx`, `CsrNarrativeReadiness` | Copy in other lanes' files |
 | F12 | **The picker that shows the source preview hides the builds, with no way back.** "Freeze newer study data" opens the source picker and hides the build, narratives and files until a freeze or a reopen; a freeze selects the new study data, which has no builds. | `editor/StudyDataBuild.tsx` | A behaviour change to the panel; not needed for the demo if it is not pressed |
 
+**2026-11-05:** F2 (`e92252c1b2`), F9 (`a8a2f3d06e`) and F10 (`dd5b03c24d`) are fixed, red first
+(`../2026-11-05-csr-path-green/README.md`).
+
 F8 to F12 were found by an independent check of this walk and its runbook (a workflow of 15 agents that mapped each
 stage against the code and the local database, then critiqued the runbook). Its corrections are taken into this
 file: the approval count, the appendix count, the row count, the P-89 claim and the runbook's live path.

@@ -86,7 +86,8 @@ import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { MenuButton, MenuItem, WORKING_COPY_NOTE, downloadWorkingCopy } from './DownloadMenu';
 import { StatusPill } from './CanvasDocumentList';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
-import { CSR_TEMPLATE_ENTRY, StudyDataBuild } from './StudyDataBuild';
+import { StudyDataBuild } from './StudyDataBuild';
+import { isCsrTemplateId } from '@shared/authoring/csr-scientific-review';
 import { captureAssemblySourceIntent, captureSourceDocumentStartIntent, type AssemblySourceIntent, type AssemblySourceDocumentStartIntent } from './assemblySourceIntent';
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, workbenchNavigationRefusal, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
@@ -4889,8 +4890,11 @@ export function DocumentWorkbench({
         <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
             <AuthoringAssemblyBuild controller={assembly} />
-            {/* A clinical study report is built from the study's data here, in the one editor (RULE 4). */}
-            {programId && activeDocId && docTemplateContext?.templateSource?.entryId === CSR_TEMPLATE_ENTRY && <StudyDataBuild key={activeDocId} programId={programId} documentId={activeDocId} onNav={onNav} />}
+            {/* A clinical study report is built from the study's data here, in the one editor (RULE 4). A CSR is
+                known by its stored template id, the four built-in CSR templates the scientific review reads
+                (shared CSR_TEMPLATE_IDS), so one made from registry:ICH_CSR or the IND 5.3.5.1/5.3.5.2 report
+                templates gets it too, not only the E3 component (D2-CSR F1, 2026-11-05). */}
+            {programId && activeDocId && isCsrTemplateId(docTemplateId) && <StudyDataBuild key={activeDocId} programId={programId} documentId={activeDocId} onNav={onNav} />}
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a

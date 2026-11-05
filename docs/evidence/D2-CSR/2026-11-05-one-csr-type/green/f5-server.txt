@@ -1,0 +1,27 @@
+# vault-source-input.test.ts on the new list (all cases; the F5 cases are 'the clinical source list offers clinical sources only')
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > previews actual deterministic aggregate tables with exact receipt and no participant rows 19ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > holds exact source locks until durable inputs are captured, then releases before unrelated composers 5ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > rolls back and performs no downstream work when input capture fails 5ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > previews unapproved source honestly but refuses to include it in a new run 3ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses a review lifecycle for new runs 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses a superseded lifecycle for new runs 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses a withdrawn lifecycle for new runs 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses an approval for different bytes 2ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses private before publishing tables 2ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses revoked before publishing tables 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses foreign before publishing tables 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses withdrawn before publishing tables 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses superseded before publishing tables 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses stale-digest before publishing tables 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses corrupt-bytes before publishing tables 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-json before publishing tables 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-observations before publishing tables 2ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > refuses oversized before publishing tables 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > allows a read-only member to preview an accessible source but not start a source-bound run 3ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > does not turn store errors into an empty candidate list 1ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > lists the source and requires the exact approval hash 2ms
+ ✓ vault-source-input.test.ts > exact canonical Vault supporting source > does not echo participant cell values or unknown uploaded keys in schema validation issues 2ms
+ ✓ vault-source-input.test.ts > the clinical source list offers clinical sources only > offers the bundle manifest and a supporting source, and not the efficacy results, a dataset or other JSON 2ms
+ ✓ vault-source-input.test.ts > the clinical source list offers clinical sources only > offers a manifest that declares its format but breaks its contract, so its preview names the issues 1ms
+ ✓ vault-source-input.test.ts > the clinical source list offers clinical sources only > names a file it could not read, or whose bytes fail their digest, instead of leaving it out 1ms
+ ✓ vault-source-input.test.ts > the clinical source list offers clinical sources only > reads at most a bounded number of bytes, and says the list reached its limit beyond them 1ms

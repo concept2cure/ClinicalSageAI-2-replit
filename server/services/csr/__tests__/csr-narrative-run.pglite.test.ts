@@ -37,7 +37,12 @@ function deps(opts: { dieAfterSaves?: number; onSave?: (n: number) => Promise<vo
   const client: NarrativeQueryable = {
     async query(text, params) {
       const saving = /INSERT INTO csr_narrative_outputs/.test(text);
-      if (saving && saves >= (opts.dieAfterSaves ?? Infinity)) dead = true;
+      if (saving && !dead && saves >= (opts.dieAfterSaves ?? Infinity)) {
+        dead = true;
+        // Each save is its own transaction (e3b05b8c0c). A lost connection ends that transaction on the server, which
+        // rolls it back and releases its locks; this PGlite is one session shared with the test, so do the same here.
+        await q.query('ROLLBACK');
+      }
       if (dead) throw new Error('Connection terminated unexpectedly'); // nothing more reaches the database, not even the outcome
       const result = await q.query(text, params);
       if (saving) { saves++; await opts.onSave?.(saves); }

@@ -297,6 +297,72 @@ Each design package (D0–D7) runs its own work in this order:
    honest state.
 5. **Close.** The founder or the lead marks it `closed` in the ledger, under `Plan: PLAN`.
 
+### 3a. Progress log (founder decision P-100, 2026-11-05)
+
+Each session records what it delivered here, under its package, while the coordinator is unavailable. An entry is
+facts only: commits by SHA, evidence by path, what was found, and what is next. It changes no package's scope,
+status or ownership; closing a package stays §3 step 5.
+
+#### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
+
+**Delivered**
+
+- **Inventory**, `df6d18838` and `73ff95ac3`, `docs/evidence/DESIGN/R1/2026-11-01-inventory/`.
+  - **Method.** The server's own route table, traced at boot. Every route is matched against the client's API path
+    literals (an exact pass and a base-constant pass), then given the production gate's own verdict
+    (`launchScopeApiVerdict`).
+  - **Size.** 3,923 handlers under `/api`. 1,230 are called by a screen (exact) and 510 probably are. 2,183 have no
+    caller found by either pass.
+  - **Served but not called: 341.** These are the reach candidates. S3 69, S5 29, S4 26, S10 8, others smaller;
+    209 sit in files no package claims.
+  - **Called but refused in production: 182.** 148 are out-of-scope and 34 unattributed. Most callers are locked
+    screens; any that are launch screens are F1.
+  - **No caller at all: 171 route files.** These are retirement candidates, for the founder to decide.
+- **Reach: protocol review comments**, `cd7777ec6` and `d914c2618`,
+  `docs/evidence/DESIGN/R1/2026-11-01-protocol-review-comments/`. The Reviews tab now leaves a comment and resolves
+  one, through the existing governed routes:
+  - `POST /api/protocol-reviews/documents/:id/comments`;
+  - `PATCH /api/protocol-reviews/comments/:id/resolve`.
+
+  It was used in the running app: a project created through New project, protocol CDI02 started, a comment left and
+  resolved (201, 201), with no failed request. Three new tests fail without the change and pass with it.
+- **F1 repair**, `059c0fa07`. The protocol view assembler copied every review comment onto every reviewer. With two
+  reviewers each comment showed twice; with none, no comment showed. It now returns them once, as `reviewComments`.
+
+- **F1 repair** (2026-11-05), `adae369de`. Amendments showed a status derived from their dates: under review read as
+  submitted, and approved, rejected and implemented all read as "decided". The declared risk impact was never read,
+  so "no impact" showed as "not declared". The assembler now reads both, and returns `nextStatuses` from the
+  service's own transition table.
+- **Reach: amendment changes and status** (2026-11-05), `606ebfd03`,
+  `docs/evidence/DESIGN/R1/2026-11-05-protocol-amendments/`.
+  - "Add a change" while the amendment is a draft, and "Change status" offering only the moves the server allows,
+    through `POST …/amendments/:id/changes` and `PATCH …/amendments/:id/status`.
+  - Used in the running app: Draft → Submitted → Under review → Approved, each 201.
+- **Handed to D4** (2026-11-05). Informed consent exists twice: the `informed_consent` document type, and
+  `/api/protocol-consent`, whose 7 routes have no caller. Its element checklist, completeness and signed approval
+  are that document type's validation. Under Rule 4 they belong in the one editor, not a protocol panel. Whether
+  the two records converge is the D4 owner's or the founder's decision.
+
+**Finding shared with the design lead**
+
+In production `LAUNCH_SCOPE_ENFORCE` defaults to on (`server/services/entitlements/launch-scope.ts:42-45`). So
+screens outside the launch scope show "not in this release", and their APIs answer 403. Local runs in development do
+not show this. The design lead now walks the demo with enforcement on.
+
+**Earlier, before this plan (now D1's)**
+
+`4a5cc0d22` (2026-10-31): Home leads with the greeting and the composer, and the sidebar gained Search and Recents.
+The D1 spec was written on top of it, and D1 owns those files.
+
+**Next**
+
+R1 reaches in S3's protocol records, in `ProtocolDev*` files only:
+1. closing a deviation, a signed act (`POST /api/protocol-deviations/deviations/:id/close`) and CAPA status;
+2. the milestone timeline and milestone status;
+3. amendment substantiality under EU CTR, worded so that it never reads as a finding of non-substantiality.
+
+Reaches that land in a design package's files are handed to its owner as route, caller and test.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for
