@@ -513,6 +513,9 @@
 .c2c-v2 .pj-plan-phase>details{border-radius:var(--radius-sm);}
 .c2c-v2 .pj-plan-assigned{margin-left:8px;font-size:12px;font-weight:400;color:var(--text-300);}
 .c2c-v2 .pj-plan-assigned::before{content:'·';margin-right:8px;color:var(--text-400);}
+/* The separator follows a deliverable's name on its row; a line that opens its own paragraph (the program plan's task sheet) starts with the name. */
+.c2c-v2 p > .pj-plan-assigned:first-child{margin-left:0;}
+.c2c-v2 p > .pj-plan-assigned:first-child::before{content:none;}
 .c2c-v2 .pj-plan-assign-msg{flex-basis:100%;order:10;margin:0;}
 .c2c-v2 .pj-plan-door{margin:4px 0 10px;}
 .c2c-v2 .pj-core-work-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;}
