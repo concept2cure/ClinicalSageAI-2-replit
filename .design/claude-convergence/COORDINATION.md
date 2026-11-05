@@ -65,13 +65,14 @@ S10 (the agency's communications back into the project) is held by RIM since 202
   - the annual report line listing, which is an engine table in the one editor and shared with D4.
 
   Each comes with route, place and test.
-- **For the founder:** three decisions, in Part 2:
-  - the SAP (two systems);
-  - informed consent (two records);
-  - retiring the six `/api/submission-ops/packages/*` routes, the parallel filing store the sequence replaced
-    (FILING_SPINE F12).
+- **Decided by the founder, 2026-11-05** (`docs/LAUNCH_DEFINITION_OF_DONE.md`):
+  - **P-101:** the SAP converges into the one editor. Owner: D4's holder, with S3, after the CSR demo.
+  - **P-102:** informed consent is one record, and its 50.25 checklist becomes the editor's checks for that type.
+    Owner: D4's holder, after the demo.
+  - **P-103:** the six `/api/submission-ops/packages/*` routes are retired, and the sequence is the one filing
+    path. Owner: RIM.
 
-  Until they are decided, nobody reaches those routes.
+  Until then, nobody reaches those routes.
 
 ## Held by the founder
 
