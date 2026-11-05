@@ -1,0 +1,31 @@
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > a type alone browses: sent with an empty query, shown as filtered, with the server total
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > each control sends its own parameter, and "Approved" covers every approved stage
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > a CTD section is normalised and sent once it is a code; text that is not one is said, and not sent
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > a failed filtered read is a failure, never "no documents match these filters"
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > a verified empty filtered read says the filters matched nothing
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > the text and the filters narrow together
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > Clear filters returns to the folder, and asks nothing more of the search
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > the library search takes the same filters, and its headline says what it matched
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > versions still being read (MR-08 Stage 3) > a search says how many documents it cannot see yet, and says nothing when there are none
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > facet counts in the options > asks for counts, and shows each value's count from the verified read; a stage choice sums its stages
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > facet counts in the options > a failed read shows no counts
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > facet counts in the options > malformed counts are not shown as counts
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > a device project's filters offer the device's own vocabulary > device: no CMC kind and no CTD section field
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > a device project's filters offer the device's own vocabulary > kindOptionsFor keeps a held value outside the view, and offers every kind with no view
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > vaultFilterParams > is empty with no filter, and encodes repeated values in a stable order
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > a device project's upload row offers the device's own vocabulary > device: no CMC, batch-record or nonclinical kind, a software kind, and no CTD section field
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > a device project's upload row offers the device's own vocabulary > pharma: the CMC kind and the CTD section field, as before
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > lists chosen files as rows and sends nothing until asked
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > sends each row's title, type, classification and the folder chosen, with its kind and section, and no version
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > leaves every blank field to the Vault, and the folder to its classifier
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says what the Vault refused, row by row, and tries only that one again
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says when a recorded file’s text is still being read (MR-08 Stage 3)
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > flags a second file with the same name before it is sent
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > opens with focus on the list and says what was added; a removed row hands focus on; Close returns it
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > names each row by its file, offers only this view’s folders, and moves focus to Close once the upload settles
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > shows the share sent with a progress bar, and the rows behind it wait their turn
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > says the server is scanning and storing a file once all of it is sent, and only "Uploading…" before it knows
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > retry queue and current upload failures remain distinct > clears old refusals for a new attempt so a retry queued behind another file waits
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > retry queue and current upload failures remain distinct > keeps a new refusal or unknown result visible while the next file is uploading (unknown=false)
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > retry queue and current upload failures remain distinct > keeps a new refusal or unknown result visible while the next file is uploading (unknown=true)
+      Tests  30 passed (30)
