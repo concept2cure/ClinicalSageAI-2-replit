@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => ({ query: vi.fn(), release: vi.fn(), connect: vi.fn(), role: vi.fn(), admit: vi.fn(), revalidate: vi.fn(), ambient: { tenantId: '42', role: 'owner' } as any }));
 vi.mock('../../../db.js', () => ({ pool: { connect: h.connect } }));
-vi.mock('../../../db/tenantStore.js', () => ({ getTenantScope: () => h.ambient }));
+// The real module but the ambient scope: setTenantContextTx refuses the platform
+// role through tenantStore's own isPlatformScopeRole (P-72 slice 1b, a06ae96c83).
+vi.mock('../../../db/tenantStore.js', async importActual => ({ ...(await importActual<any>()), getTenantScope: () => h.ambient }));
 vi.mock('../../ana/project-scope-admission.js', async importActual => ({ ...(await importActual<any>()), readActiveAnaActorRole: h.role }));
 vi.mock('../../ana/source-read-scope.js', async importActual => ({ ...(await importActual<any>()), admitAnaSourceReadScope: h.admit, revalidateAnaSourceReadScope: h.revalidate }));
 import { AnaProjectScopeError } from '../../ana/project-scope-admission.js';
@@ -35,6 +37,14 @@ describe('pooled interactive actor source reads', () => {
     h.role.mockRejectedValue(new AnaProjectScopeError(403, 'ANA_PROJECT_ACCESS_DENIED', 'Inactive'));
     const run = vi.fn(); await expect(withAnaSourceReadScope(input(), run)).rejects.toMatchObject({ code: 'ANA_PROJECT_ACCESS_DENIED' });
     expect(run).not.toHaveBeenCalled(); expect(h.query.mock.calls.at(-1)?.[0]).toBe('ROLLBACK'); expect(h.release).toHaveBeenCalledOnce();
+  });
+  it('the platform role is never stamped on a tenant source read: refused before the protected read', async () => {
+    h.role.mockResolvedValue('app_super_admin');
+    const run = vi.fn();
+    await expect(withAnaSourceReadScope(input(), run)).rejects.toMatchObject({ code: 'ANA_SOURCE_ACCESS_UNAVAILABLE' });
+    expect(run).not.toHaveBeenCalled();
+    expect(h.query.mock.calls.some(c => String(c[0]).includes('app.current_user_role'))).toBe(false);
+    expect(h.query.mock.calls.at(-1)?.[0]).toBe('ROLLBACK');
   });
   it('revocation after the protected read refuses the loaded result', async () => {
     h.revalidate.mockRejectedValue(new AnaProjectScopeError(403, 'ANA_SOURCE_SCOPE_CHANGED', 'Revoked'));
