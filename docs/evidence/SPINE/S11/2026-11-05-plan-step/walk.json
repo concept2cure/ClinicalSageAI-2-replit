@@ -1,0 +1,47 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "startedAt": "2026-11-05T20:48:14.629Z",
+  "steps": [
+    {
+      "name": "sign in (one dev-login)",
+      "email": "walk.owner@example.com",
+      "project": "7419721f-f1d4-44b9-b65c-466bdcefb5b4"
+    },
+    {
+      "name": "1440: 1. Due for you, first",
+      "rows": [
+        "Submit IND\nWork\nDue Jun 3, 2027"
+      ]
+    },
+    {
+      "name": "1440: 2. each document names its producing task",
+      "documents": 93,
+      "joined": 93,
+      "esg": "Work: Submit IND · due Jun 3, 2027 · Founder",
+      "tpp": "Work: Define product profile · due Jan 5, 2027 · no owner"
+    },
+    {
+      "name": "1440: 3. no horizontal scroll",
+      "overflow": 0
+    },
+    {
+      "name": "390: 1. Due for you, first",
+      "rows": [
+        "Submit IND\nWork\nDue Jun 3, 2027"
+      ]
+    },
+    {
+      "name": "390: 2. each document names its producing task",
+      "documents": 93,
+      "joined": 93,
+      "esg": "Work: Submit IND · due Jun 3, 2027 · Founder",
+      "tpp": "Work: Define product profile · due Jan 5, 2027 · no owner"
+    },
+    {
+      "name": "390: 3. no horizontal scroll",
+      "overflow": 0
+    }
+  ],
+  "apiErrors": [],
+  "finishedAt": "2026-11-05T20:48:26.110Z"
+}
