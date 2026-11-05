@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a CRO's sponsors never mix in the governed artifacts listing > inside a project, reads its sponsor's projects only, and the heading names the sponsor once 344ms
+   → expected [ …(3) ] to include '/api/artifacts-center?sameClientAs=11…'
+ × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a CRO's sponsors never mix in the governed artifacts listing > with no project open, each row says whose project it is 29ms
+   → expected 'v7IND cover letterRegulatory document…' to match /BX-204 · Northwind Bio/
+      Tests  2 failed | 19 skipped (21)
