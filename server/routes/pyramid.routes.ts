@@ -59,6 +59,9 @@ import { isSameSubmissionType } from '@shared/regulatory/submission-type-bridge'
 import {
   getAllSupportedTypes,
   getPyramidForProject,
+  backSchedule,
+  ScheduleError,
+  type BackSchedule,
   type SubmissionType,
   type SubmissionPyramid,
   type PyramidPhase,
@@ -442,7 +445,7 @@ router.patch('/pyramids/:type/progress/:taskId', authMiddleware, enforceTenantLi
 
 // ─── The project's pyramid: its work breakdown, with this project's progress ──
 //
-// GET   /pyramids/by-project/:ref                    → { programId, type, label, pyramid, statuses } — or, for a
+// GET   /pyramids/by-project/:ref                    → { programId, type, label, pyramid, statuses, target, asOf, schedule } — or, for a
 //                                                       filing the engine has no pyramid for, { type: null, filing }
 // PATCH /pyramids/by-project/:ref/progress/:taskId   → record one task's status on this project
 //
@@ -465,7 +468,11 @@ export function pyramidTypeForFiling(recorded: string | null | undefined): Submi
 /** The store row's key for one project's progress over one pyramid. */
 export const projectProgressKey = (programId: string, type: SubmissionType) => `project:${programId.toLowerCase()}:${type}`;
 
-interface ProjectPyramidScope { orgId: number; programId: string; filing: string | null; type: SubmissionType | null }
+interface ProjectPyramidScope {
+  orgId: number; programId: string; filing: string | null; type: SubmissionType | null;
+  /** regulatory_programs.target_submission_date as YYYY-MM-DD (the date set at intake and in Project settings), or null. */
+  target: string | null;
+}
 
 /** The admitted project behind :ref, with its recorded filing and its pyramid. Answers the refusal itself and returns null. */
 async function projectPyramidScope(req: Request, res: Response, forWrite: boolean): Promise<ProjectPyramidScope | null> {
@@ -478,12 +485,13 @@ async function projectPyramidScope(req: Request, res: Response, forWrite: boolea
   await requireProjectAdmission(req, String(projectId), forWrite,
     UUID_REF.test(ref) ? { executor: requestPgClient(req), programId: ref.toLowerCase() } : undefined);
   const { rows } = await requestPgClient(req).query(
-    `SELECT rp.id::text AS program_id, COALESCE(NULLIF(rp.metadata->>'submissionTypeId', ''), rp.program_type) AS filing
+    `SELECT rp.id::text AS program_id, COALESCE(NULLIF(rp.metadata->>'submissionTypeId', ''), rp.program_type) AS filing,
+            to_char(rp.target_submission_date, 'YYYY-MM-DD') AS target
        FROM projects p JOIN regulatory_programs rp ON rp.id = p.regulatory_program_id AND rp.organization_id = p.organization_id
       WHERE p.id = $1 AND p.organization_id = $2`, [projectId, orgId]);
-  const row = rows[0] as { program_id?: string; filing?: string | null } | undefined;
+  const row = rows[0] as { program_id?: string; filing?: string | null; target?: string | null } | undefined;
   if (!row?.program_id) { clientError(res, 404, 'This project has no program record.'); return null; }
-  return { orgId, programId: row.program_id, filing: row.filing ?? null, type: pyramidTypeForFiling(row.filing) };
+  return { orgId, programId: row.program_id, filing: row.filing ?? null, type: pyramidTypeForFiling(row.filing), target: row.target ?? null };
 }
 
 function projectPyramidRefusal(res: Response, err: unknown, doing: string) {
@@ -496,6 +504,21 @@ function projectPyramidRefusal(res: Response, err: unknown, doing: string) {
   console.error(`[pyramid] project progress ${doing} failed:`, err instanceof Error ? err.message : String(err));
   return res.status(500).json({ error: { code: 'INTERNAL', message: doing === 'read'
     ? "This project's plan could not be read." : 'The task status was not recorded. Nothing was changed.' } });
+}
+
+/** Today, UTC, YYYY-MM-DD: the day the schedule is read against. */
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
+/** The project's schedule (S11 step 3): every task's start and due date, back-scheduled by the engine from the target
+ *  date along the pyramid's dependencies. No target recorded is said (null), never a date assumed. */
+function projectSchedule(type: SubmissionType, target: string | null): { schedule: BackSchedule | null; scheduleRefusal?: string } {
+  if (!target) return { schedule: null };
+  try {
+    return { schedule: backSchedule(getPyramidForProject(type), target) };
+  } catch (err) {
+    if (err instanceof ScheduleError) return { schedule: null, scheduleRefusal: err.message };
+    throw err;
+  }
 }
 
 async function sendProjectPyramid(req: Request, res: Response) {
@@ -515,6 +538,7 @@ async function sendProjectPyramid(req: Request, res: Response) {
     }
     const pyramid = adaptPyramid(getPyramidForProject(scope.type));
     return ok(res, { programId: scope.programId, type: scope.type, label: pyramid.label, filing: scope.filing, pyramid, statuses,
+      target: scope.target, asOf: todayIso(), ...projectSchedule(scope.type, scope.target),
       ...(pendingStore ? { pendingStore: true } : {}) });
   } catch (err) {
     return projectPyramidRefusal(res, err, 'read');

@@ -169,9 +169,11 @@ function PyDashboard({ pyr, onPhase, onTask }: { pyr: PyPyramid; onPhase: (id: s
 
 // ── Work breakdown ────────────────────────────────────────────────────────
 
-export function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus }: {
+export function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus, rowPlan }: {
   pyr: PyPyramid; focusPhase: string | null; onTask: (id: string) => void;
   tasks: PyTask[]; onStatus: (id: string, status: string) => void;
+  /** A project's line for the task: its due date and owner (S11 step 3, PyramidProject.tsx). */
+  rowPlan?: (task: PyTask) => React.ReactNode;
 }) {
   const phases = focusPhase ? pyr.phases.filter(p => p.id === focusPhase) : pyr.phases;
   return (
@@ -190,6 +192,7 @@ export function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus }: {
                     <span className="py-row-role">{pyRoleLabel(t.role)}</span>
                     <span className="py-row-h">{t.hours}h</span>
                     {t.risk && <span className="py-row-risk" data-sev={t.risk.severity} title={`Risk: ${t.risk.severity}`}>{I.alertTriangle}</span>}
+                    {rowPlan?.(t)}
                   </button>
                   <select className="py-row-status" data-tone={PY_STATUS[t.status]?.tone} value={t.status}
                     onChange={e => onStatus(t.id, e.target.value)} aria-label={`Status of ${t.name}`}>
@@ -222,8 +225,10 @@ function PyramidDeliverables({ task, onWorkDocument, projectOpen }: {
   </div>;
 }
 
-export function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWorkDocument, onOpenSection, projectOpen }: {
+export function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWorkDocument, onOpenSection, projectOpen, plan }: {
   pyr: PyPyramid; task: PyTask; tasks: PyTask[];
+  /** A project's schedule and owner for the task (S11 step 3, PyramidProject.tsx). */
+  plan?: React.ReactNode;
   onClose: () => void; onTask: (id: string) => void;
   onStatus: (id: string, status: string) => void;
   onWorkDocument?: (title: string) => void;
@@ -269,6 +274,8 @@ export function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWor
             </select>
             <span className="py-sheet-meta">{pyRoleLabel(task.role)} · {task.hours}h{task.critical && ' · critical path'}</span>
           </div>
+
+          {plan}
 
           {task.risk && (
             <div className="py-sheet-sec">

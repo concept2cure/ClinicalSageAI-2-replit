@@ -1,0 +1,85 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "startedAt": "2026-11-05T20:22:35.988Z",
+  "steps": [
+    {
+      "name": "sign in (one dev-login)",
+      "status": 200,
+      "email": "walk.owner@example.com",
+      "id": "1"
+    },
+    {
+      "name": "projects",
+      "withTarget": "7419721f-f1d4-44b9-b65c-466bdcefb5b4",
+      "noTarget": "38be2d7e-f8b3-4372-9450-a4f6a480fe70"
+    },
+    {
+      "name": "1. the plan says its schedule",
+      "sentence": "Scheduled back from the target submission date, Jun 4, 2027: the work starts by Dec 23, 2026. 0 of 58 tasks have an owner.",
+      "route": {
+        "target": "2027-06-04",
+        "start": "2026-12-23",
+        "anchor": "phase8.complete",
+        "submit": {
+          "start": "2027-05-28",
+          "due": "2027-06-03",
+          "workingDays": 5,
+          "basis": "typical-duration"
+        }
+      }
+    },
+    {
+      "name": "2. the task row carries owner and due date",
+      "row": "No owner\ndue Jun 3, 2027"
+    },
+    {
+      "name": "3. the sheet gives the schedule",
+      "sheet": "Schedule and owner\n\nStarts by May 28, 2027, due Jun 3, 2027 · 5 working days, the engine's typical duration.\n\nNo owner yet.\n\nAssign"
+    },
+    {
+      "name": "4. Assign, due on the schedule's date",
+      "due": "2027-06-03",
+      "status": 200
+    },
+    {
+      "name": "5. after a reload, the row names its owner",
+      "row": "Founder\ndue Jun 3, 2027",
+      "sentence": "Scheduled back from the target submission date, Jun 4, 2027: the work starts by Dec 23, 2026. 1 of 58 tasks have an owner."
+    },
+    {
+      "name": "6. it is in the person's work (GET /api/tasks/my-work)",
+      "task": {
+        "taskId": "TASK-1793910167842-1b49734f",
+        "title": "Submit IND",
+        "projectId": 1,
+        "projectName": "WALK-IND-301",
+        "moduleType": "Plan",
+        "taskType": "program-plan",
+        "status": "pending",
+        "priority": "high",
+        "dueDate": "2027-06-03T17:00:00.000Z",
+        "overdue": false,
+        "dueSoon": false,
+        "blocked": false,
+        "waitingOn": null,
+        "reviewRole": null,
+        "approvalRequired": false,
+        "approvalStatus": "not_started",
+        "criticalPath": false
+      }
+    },
+    {
+      "name": "6b. on Tasks"
+    },
+    {
+      "name": "7. a project with no target date says so",
+      "sentence": "No target submission date is recorded, so the tasks have no due dates. Set one in Project settings, at the top of this page."
+    },
+    {
+      "name": "8. 390 wide, no horizontal scroll",
+      "overflow": 0
+    }
+  ],
+  "apiErrors": [],
+  "finishedAt": "2026-11-05T20:23:02.716Z"
+}

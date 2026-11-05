@@ -1,0 +1,14 @@
+ ✓ projectProgramPlan.test.tsx > the project's program plan > reads the project's own pyramid and states its progress from the project's statuses 225ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > records a task's status on the project's route 46ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > reverts a refused status and says it was not saved 39ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > says a filing has no work breakdown, and invents none 6ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > says the plan could not be read when the read fails 5ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > says the schedule is built back from the target date, when the work starts, what is behind, and who owns what 5011ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > puts each task's owner and due date on its row, with a word when it is behind 16ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > makes an owner's task through the existing Assign, under the pyramid task's own origin, due on the schedule's date 56ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > shows the owner's task and says when the schedule has moved since it was assigned 57ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > gives no due dates when no target date is recorded, and says where to set one 5005ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > reads the schedule again when the project's target date changes 5006ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > keeps a deliverable's tasks and a work-breakdown task's apart 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 6 passed (12)

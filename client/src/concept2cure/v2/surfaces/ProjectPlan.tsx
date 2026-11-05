@@ -138,7 +138,9 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
       )}
       {/* The filing's work breakdown with this project's progress (S11): beside what the filing needs, the work
           that produces it, phase by phase, with its critical path. */}
-      {prog && <ProjectProgramPlan programId={pid} onNav={onNav} onAsk={onAsk} />}
+      {prog && <ProjectProgramPlan programId={pid} projectId={projectId} owners={assignments.byPyramidTask}
+        ownersUnread={Boolean(assignments.error)} onAssigned={() => setEpoch(value => value + 1)}
+        targetKey={prog.target_submission_date ?? null} onNav={onNav} onAsk={onAsk} />}
       {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}
       {team}
       {/* Read again after each Assign, so the new task is listed without a reload. */}
