@@ -102,3 +102,40 @@ for that lane to remove.
 | O1 | **The canonical CSR loses the CSR drafting kind.** A section draft takes its document kind from the recorded `filingContext.registryId`. The E3 component records `registryId: null`, so a CSR made from it, the one New document now offers, drafts as `'ctd'`, not `'csr'`. The therapeutic-area advisory then reads an E3 heading number ("12.2") as a CTD code. `server/services/ana-ri/open-document.ts:81` `registryIdForTemplateEntry` already resolves the component to `ICH_CSR`, and AnA's open-document brief uses it. | `server/services/authoring/authoring-draft-template.ts:103` | Outside this change's files. It changes drafting prompts, so it needs its own red test. |
 | O2 | **The same duplicate exists for 13 more types.** New document lists a `registry:<id>` row and a `component:<id>` row under one name for EU_RMP, ICH_DSUR, ICH_PROTOCOL, ICH_IB, ICH_ICF, ICH_SAP, ICH_M3_DS, ICH_M3_DP, ICH_QOS, EU_PER, ICH_CLIN_OVERVIEW, ICH_CLIN_SUMMARY and ICH_NONCLIN_OVERVIEW (`REGISTRY_COMPONENT_TEMPLATES`, `document-template-library.ts:488`). It does the same for the US lifecycle pairs: US_EXPANDED_ACCESS_INDIVIDUAL, _INTERMEDIATE and _TREATMENT, US_EUA_THERAPEUTIC, US_BPDR and US_CBER_MASTER_FILE. Which row keeps the type's functions differs by type: for the protocol, the registry row carries the `'protocol'` drafting kind (O1's line). | `server/services/authoring/builtin-authoring-templates.ts:150` | A catalog decision per type (RULE 4). It is not needed for the CSR demo. |
 | O3 | `CSR_TEMPLATE_ENTRY` has no reader left. The demo pack's comment says the editor shows the build "only" for the component entry, which is no longer true; selecting the component stays right. | `client/src/concept2cure/v2/editor/StudyDataBuild.tsx:21`; `scripts/demo/launch-demo/packs/faux.mjs:524` | Other lanes' files |
+
+## F5: the picker offers clinical sources only
+
+**Decision, from the code.** A clinical source is what preview and freeze accept (`vault-source-input.ts` `load`):
+a JSON file whose top-level `format` is the ADaM bundle manifest (`concept2cure.csr-adam-bundle.v1`) or the
+supporting source (`concept2cure.csr-source.v1`), of at most 5 MiB. Offering only bundle manifests would refuse
+the supporting sources the same code accepts, so the list offers both formats and nothing else.
+
+The list now reads each candidate's bytes and checks its digest. The cost is bounded:
+- a file over 5 MiB is not read, because it cannot be a source;
+- one list reads at most 25 MiB, five sources of the largest size;
+- beyond that, the list says it reached its limit, as it already does past 100 files.
+
+A file is offered when its JSON declares one of the two formats. The contract itself stays with the preview, which
+names its issues, so a manifest that declares its format but breaks the contract is still offered, and the person
+can see why it fails. The efficacy results file, a Dataset-JSON dataset, unparseable JSON and any other JSON are
+not offered, and the list says how many there are. A file whose bytes cannot be read, or fail their digest, is
+named in an alert. It is never silently dropped, so a failed read is never shown as an empty list. A list response
+that is malformed is still "could not be listed".
+
+The list reads bytes the preview reads, under the same program access (`authorizeCsrSourceProgram`). No content
+leaves the server: only the title, version and digest the list already returned.
+
+| Change | Path |
+|---|---|
+| `listCsrVaultSources` reads, digests and checks each candidate (`candidateKind`), returns `unreadable` and `notClinicalSources` | `server/services/csr/vault-source-input.ts` lines 25–84 (was 25–43); no other line of the file changed |
+| The picker validates the two new fields, names unreadable files in an alert, counts the others | `client/src/concept2cure/v2/editor/StudyDataSource.tsx` (`sourceList`, `SourceListNotes`) |
+| Server cases: manifest and source offered, efficacy, dataset, bad JSON and an oversized file not; a contract-breaking manifest offered; unreadable and changed bytes named; the byte bound | `server/services/csr/__tests__/vault-source-input.test.ts` ("the clinical source list offers clinical sources only"); "lists metadata only" became "lists the source", because the list now reads bytes |
+| Client cases: unreadable named beside the sources, unreadable with no sources, malformed fields are a failed list | `client/src/concept2cure/v2/__tests__/studyDataSource.test.tsx` |
+
+### Red, then green
+
+- `red/f5-server.txt`: on the old list, the efficacy results, dataset, bad JSON and oversized file were offered.
+  Unreadable files were offered as sources, and seven files were listed with no byte bound. The contract-breaking
+  manifest case passes before and after, by design.
+- `red/f5-client.txt`: the old picker showed no alert for an unreadable file and accepted malformed new fields.
+- `green/f5-server.txt`, `green/f5-client.txt`.
