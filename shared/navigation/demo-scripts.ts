@@ -62,8 +62,7 @@ export interface DemoScript {
 export const DEMO_SCRIPTS: readonly DemoScript[] = [
   /* ── The three Live Drive scripts are cut to the LAUNCH CATALOG ────────────
      docs/LAUNCH_DEFINITION_OF_DONE.md row D2 — Projects, Vault, Authoring
-     (incl. protocol development), CMC / Module 3, Risk-based monitoring
-     (P-76), Biostatistics (P-77), Submission Center, Submission Readiness,
+     (incl. protocol development), Submission Center, Submission Readiness,
      QMS controlled documents, Reporting & analytics — plus the shell surfaces (audit trail, Part 11
      console). Under LAUNCH_SCOPE_ENFORCE=on any other stop renders "Not in
      this release", and a demonstration that lands there fails in front of the
@@ -81,9 +80,9 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
     kind: 'training',
     title: 'Full product training',
     audience: 'A new subscriber team learning to run their regulatory work here.',
-    minutes: 9,
+    minutes: 8,
     description:
-      'The complete working tour of the launch catalog: the Projects portfolio and a real project, the Vault, Authoring and the protocol workspace, Biostatistics, Risk-based monitoring, CMC / Module 3, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
+      'The complete working tour of the launch catalog: the Projects portfolio and a real project, the Vault, Authoring and the protocol workspace, Biostatistics, CMC / Module 3, Risk-based monitoring, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
     steps: [
       {
         say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the work areas in this release, and they can interrupt with a question at any moment.',
@@ -112,20 +111,17 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         say: 'The protocol workspace is Authoring’s second workspace: the protocol as structured data — sections, objectives and endpoints, eligibility, the schedule of assessments, the risk register and milestones — with a deterministic completeness gate before anyone can finalize.',
         navigate: { target: 'protocol-dev' },
       },
-      /* Biostatistics (P-77, 2026-10-31) and Risk-based monitoring (P-76, 2026-10-30) joined the launch
-         catalog after this tour was written, and the tour never reached them (demo-scripts.test.ts, "walks
-         every launch app"). They follow the protocol: the study it describes is sized, then monitored. */
       {
-        say: 'Biostatistics sizes and judges the study the protocol describes: it loads the project’s own study design, computes sample size and power on the server — never a model’s estimate — and writes the statistical documents the study needs into the one editor. The design calculators and the reviewer-risk assessment are one step from there. If the project has no study design yet, say so and show where it is started.',
+        say: 'Biostatistics is the project’s evidence, opened from the project: the study’s designs read against the protocol’s endpoints, with sample size, power and the analysis computed by deterministic engines, never estimated by AnA, and each result placed where the application files it.',
         navigate: { target: 'biostatistics' },
-      },
-      {
-        say: 'Risk-based monitoring keeps watch on the study once it runs: the critical-to-quality risk assessment, key risk indicators and quality tolerance limits, site risk and monitoring signals, and the monitoring plan. Scores are computed from the recorded data, and an assessment or plan is active only once a person approves it under Part 11. If the project has no monitoring records yet, say so plainly; if their subscription does not include it, say that and move on to the next stop.',
-        navigate: { target: 'rbm' },
       },
       {
         say: 'CMC / Module 3 is where the chemistry, manufacturing and controls record is kept and the quality module is built: the substance, product, method, specification, batch and stability registers feed one deterministic compile, a contradiction sweep names what disagrees, and a fail-closed export gate holds the module until every section is approved under Part 11. What it composes is small-molecule Module 3 for a US IND; a biologic or a marketing application is refused by name and authored in the editor instead.',
         navigate: { target: 'cmc' },
+      },
+      {
+        say: 'Risk-based monitoring runs over the project’s study data, as ICH E6(R3) asks: the risk assessment, key risk indicators and quality tolerance limits, central monitoring and each site’s risk, and the monitoring plan. Every score is computed by a deterministic engine, and approving the assessment or the plan is a signature a person gives.',
+        navigate: { target: 'rbm' },
       },
       {
         say: 'The Submission Center is the operations cockpit: from planning a submission through its sequences, build and validation, up to dispatch — everything from one place, and freezing or dispatching stays a person’s signature. The approved Module 3 reaches a sequence from the CMC module, as placed leaves — never retyped here.',

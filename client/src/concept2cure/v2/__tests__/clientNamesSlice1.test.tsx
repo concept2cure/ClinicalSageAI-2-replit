@@ -41,35 +41,16 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 /* `permissions` as the session carries them (server sessionPermissions): an
-   administrator's include billing:admin, a member's do not (P-68).
-
-   The user is the signed-in account as AuthProvider holds it: one object per sign-in (React
-   state), with the id and organisation the session names. Since 0fc881c16f (2026-11-04) the
-   shell reads its subscription only for a current account visit (navEntitlements.tsx,
-   useNavigationReadOwner): a user with no id is no account, so the menu never read
-   /api/module-subscriptions/navigation, and a new user object on every render is a new visit
-   on every render. Changing the roles or permissions below is a new sign-in. */
-const auth = vi.hoisted(() => {
-  const session = {
-    roles: ['admin', 'user'] as string[],
-    permissions: ['governed:write', 'billing:admin'] as string[],
-    logout: () => Promise.resolve({ everySessionEnded: null }),
-    signedIn: null as { roles: string[]; permissions: string[]; user: object } | null,
-    user(): object {
-      const { roles, permissions } = session;
-      if (session.signedIn?.roles !== roles || session.signedIn.permissions !== permissions) {
-        session.signedIn = {
-          roles, permissions,
-          user: { id: '5', organizationId: '7', firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles, permissions },
-        };
-      }
-      return session.signedIn.user;
-    },
-  };
-  return session;
-});
+   administrator's include billing:admin, a member's do not (P-68). */
+const auth = vi.hoisted(() => ({ roles: ['admin', 'user'] as string[], permissions: ['governed:write', 'billing:admin'] as string[] }));
+/* One signed-in account, the same object on every render, as the session provides it. The navigation verdicts are
+   read only for an account with an id, once per account visit (navEntitlements.tsx useNavigationReadOwner). */
+const authUser = vi.hoisted(() => ({
+  id: 11, organizationId: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe',
+  get roles() { return auth.roles; }, get permissions() { return auth.permissions; },
+}));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: auth.user(), logout: auth.logout }),
+  useAuth: () => ({ user: authUser, logout: vi.fn() }),
 }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ tenant: null, organizationId: 7, currentOrganization: null }),
