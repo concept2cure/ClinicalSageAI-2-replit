@@ -229,7 +229,7 @@ function ReceiptList({ receipt }: { receipt: CsrIntoDocumentReceipt }) {
 /** The stated reason and the import, while the preview stands; Close once it is done. */
 function ImportControls({ open, busy, reason, setReason, ready, done, onImport, onClose, reasonRef }: {
   open: boolean; busy: boolean; reason: string; setReason: (value: string) => void; ready: boolean; done: boolean;
-  onImport: () => void; onClose: () => void; reasonRef: React.RefObject<HTMLTextAreaElement>;
+  onImport: () => void; onClose: () => void; reasonRef: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   const reasonId = useId();
   return <>
