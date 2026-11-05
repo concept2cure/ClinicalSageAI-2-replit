@@ -10,9 +10,10 @@
  * Program shape used to drop. Dropping it meant every program on that surface
  * was filled on the nIVD form.
  *
- * The regulatory path survives too: the kit folds De Novo into the k510
- * pathway, so without the raw path a De Novo program on the 510(k) surface
- * would be produced as a 510(k).
+ * The regulatory path survives too. The portfolio classification gives De Novo
+ * its own pathway (shared/constants/mdx.ts REGULATORY_PATH_TO_PATHWAY), and the
+ * raw path still travels, so a De Novo opened on the 510(k) surface is produced
+ * as a De Novo (k510IvdVariant.test.tsx).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -78,7 +79,7 @@ describe('useMdxPrograms — productType', () => {
     expect(device.productType).toBe('device');
   });
 
-  it('carries the server regulatory_path onto the kit Program — De Novo stays De Novo under the k510 pathway', async () => {
+  it('carries the server regulatory_path onto the kit Program — De Novo is classified and kept as De Novo', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -93,7 +94,7 @@ describe('useMdxPrograms — productType', () => {
     const { result } = renderHook(() => useMdxPrograms());
     await waitFor(() => expect(result.current.programs).not.toBeNull());
     const [deNovo, pma, unset] = result.current.programs!;
-    expect(deNovo.pathway).toBe('k510');
+    expect(deNovo.pathway).toBe('de_novo');
     expect(deNovo.regulatoryPath).toBe('de_novo');
     expect(pma.pathway).toBe('pma');
     expect(pma.regulatoryPath).toBe('pma');
