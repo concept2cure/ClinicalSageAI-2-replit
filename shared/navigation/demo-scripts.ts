@@ -82,7 +82,7 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
     audience: 'A new subscriber team learning to run their regulatory work here.',
     minutes: 8,
     description:
-      'The complete working tour of the launch catalog: the Projects portfolio and a real project, the Vault, Authoring and the protocol workspace, CMC / Module 3, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
+      'The complete working tour of the launch catalog: the Projects portfolio and a real project, the Vault, Authoring and the protocol workspace, Biostatistics, CMC / Module 3, Risk-based monitoring, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
     steps: [
       {
         say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the work areas in this release, and they can interrupt with a question at any moment.',
@@ -112,8 +112,16 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'protocol-dev' },
       },
       {
+        say: 'Biostatistics is the project’s evidence, opened from the project: the study’s designs read against the protocol’s endpoints, with sample size, power and the analysis computed by deterministic engines, never estimated by AnA, and each result placed where the application files it.',
+        navigate: { target: 'biostatistics' },
+      },
+      {
         say: 'CMC / Module 3 is where the chemistry, manufacturing and controls record is kept and the quality module is built: the substance, product, method, specification, batch and stability registers feed one deterministic compile, a contradiction sweep names what disagrees, and a fail-closed export gate holds the module until every section is approved under Part 11. What it composes is small-molecule Module 3 for a US IND; a biologic or a marketing application is refused by name and authored in the editor instead.',
         navigate: { target: 'cmc' },
+      },
+      {
+        say: 'Risk-based monitoring runs over the project’s study data, as ICH E6(R3) asks: the risk assessment, key risk indicators and quality tolerance limits, central monitoring and each site’s risk, and the monitoring plan. Every score is computed by a deterministic engine, and approving the assessment or the plan is a signature a person gives.',
+        navigate: { target: 'rbm' },
       },
       {
         say: 'The Submission Center is the operations cockpit: from planning a submission through its sequences, build and validation, up to dispatch — everything from one place, and freezing or dispatching stays a person’s signature. The approved Module 3 reaches a sequence from the CMC module, as placed leaves — never retyped here.',

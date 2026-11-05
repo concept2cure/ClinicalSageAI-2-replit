@@ -869,7 +869,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'biostat-workbench',
-    label: 'Biostat workbench',
+    label: 'Design calculators',
     navTier: 'specialist',
     layoutMode: 'biostatistics',
     icon: 'sigma',
