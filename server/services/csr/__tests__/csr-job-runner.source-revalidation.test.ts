@@ -72,6 +72,10 @@ class Selection {
 }
 let state: FakeState;
 const fakeDb = {
+  // The runner saves each section and its progress in one short transaction
+  // (0441fa1bec, the drafting-attempt fence). The other runner suites' fakes
+  // run the callback on the same double; so does this one.
+  transaction: async <T,>(fn: (tx: unknown) => Promise<T>): Promise<T> => fn(fakeDb),
   select: (columns?: Record<string, unknown>) => new Selection(columns),
   update: () => ({ set: (values: Record<string, unknown>) => ({ where(condition: SQL) {
     // Honor the runner's real status predicate rather than making every
