@@ -168,6 +168,15 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // creator that stops applying here is a finding, not something to swallow.
   await pg.exec(readMig('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pg.exec(readMig('migrations/20260726_cre_source_program_scope.sql'));
+  // Ninth of the same class (2026-11-05). public.file_uploads is created by
+  // migrations/20260726_file_uploads_tenancy.sql at index 19 of the set, before
+  // BATCH_START; the batch's earlier file_uploads file (20260828) guards on
+  // to_regclass and skipped here. migrations/20261105_file_uploads_durable_object.sql,
+  // IN the batch, ALTERs it (ADD COLUMN IF NOT EXISTS does not guard the TABLE's
+  // existence), so pass 1 aborted with `relation "file_uploads" does not exist`
+  // and no assertion below ran. A real deploy applies the creator first and is
+  // unaffected. Applied with pg.exec, not safe(), as the eighth.
+  await pg.exec(readMig('migrations/20260726_file_uploads_tenancy.sql'));
   // Fresh installs create the notification base before the batch's Oct 14
   // recipient receipt FK/index. The old journal omits both base tables; use
   // their actual creator DDL rather than placeholder notification columns.

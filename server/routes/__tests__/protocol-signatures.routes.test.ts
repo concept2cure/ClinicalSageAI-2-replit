@@ -445,7 +445,8 @@ describe('the protocol signing ceremony checks signing authority before the pass
       code: 'ESIGNATURE_NO_AUTHORITY',
       message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
     });
-    expect(resolveSignerOrgRole).toHaveBeenCalledWith(11, 2, pinnedSigningPool);
+    // No custody statuses (59cb0f54c4, P-58): a protocol is signed from an active organization only.
+    expect(resolveSignerOrgRole).toHaveBeenCalledWith(11, 2, pinnedSigningPool, undefined);
     expect(verifyReauth).not.toHaveBeenCalled();
     expect(finalizeProtocolTx).not.toHaveBeenCalled();
     expect(h.log).toEqual([]);
@@ -486,8 +487,8 @@ describe('current transaction authority after protocol reservation', () => {
     const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
     expect(r.status).toBe(403);
     expect(r.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
-    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(1, 11, 2, pinnedSigningPool);
-    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(2, 11, 2, pinnedSigningClient);
+    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(1, 11, 2, pinnedSigningPool, undefined);
+    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(2, 11, 2, pinnedSigningClient, undefined);
     expect(resolveSignerOrgRole.mock.invocationCallOrder[1]).toBeGreaterThan(lockProtocolForSignatureTx.mock.invocationCallOrder[0]);
     expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'ROLLBACK']);
     expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();

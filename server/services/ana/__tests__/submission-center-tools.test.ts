@@ -205,7 +205,7 @@ describe('generate_stf (pure)', () => {
     const out = JSON.parse(
       await handler({
         leaves: [
-          { study_id: 'S-1', file_tag: 'study-report', ctd_section: '5.3.5.1', href: 'm5/5-3-5-1/s-1/body.pdf', title: 'Body', operation: 'new', index_leaf_id: 'leaf-5-3-5-1-body', index_rel_path: '../../../index.xml' },
+          { study_id: 'S-1', file_tag: 'study-report-body', ctd_section: '5.3.5.1', href: 'm5/5-3-5-1/s-1/body.pdf', title: 'Body', operation: 'new', index_leaf_id: 'leaf-5-3-5-1-body', index_rel_path: '../../../index.xml' },
         ],
       })
     );
@@ -219,7 +219,7 @@ describe('generate_stf (pure)', () => {
   it('returns a structured error when a leaf has no index.xml leaf ID', async () => {
     const handler = getToolHandler('generate_stf')!;
     const out = JSON.parse(
-      await handler({ leaves: [{ study_id: 'S-1', file_tag: 'study-report', ctd_section: '5.3.5.1', href: 'h.pdf', title: 't', operation: 'new' }] })
+      await handler({ leaves: [{ study_id: 'S-1', file_tag: 'study-report-body', ctd_section: '5.3.5.1', href: 'h.pdf', title: 't', operation: 'new' }] })
     );
     expect(out.error).toMatch(/index\.xml leaf ID/);
   });

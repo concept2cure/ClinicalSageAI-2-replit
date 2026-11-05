@@ -17,14 +17,31 @@
 --
 -- Rule 1 (CLAUDE.md): re-runs on every deploy; a no-op once applied. No table
 -- is created; no data is changed.
+--
+-- AMENDED IN PLACE 2026-11-05 (F1, trunk sweep): the file now no-ops when
+-- public.capa_records is absent. Its creator, 20260504_capa_mdr.sql, is
+-- overlay-only and not in C2C_MIGRATION_FILES, so a database that never got the
+-- overlay has no capa_records, and the cast 'public.capa_records'::regclass
+-- raised 42P01 there: the file failed, and with it every deploy, since the set
+-- re-runs every file. tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+-- found it ("pass 1: ... relation "public.capa_records" does not exist"). The
+-- guard is the one this creator's other companion uses
+-- (20260919_capa_code_uniqueness_per_program.sql: "Absent table ... nothing to
+-- convert"). Nothing is removed; where the table exists, the file does what it
+-- did. Recorded in the journal as drift on databases that ran the old text.
 -- =============================================================================
 
 DO $$
 BEGIN
+  -- Absent table (a database that never got the CAPA overlay): nothing to widen.
+  -- The creator owns creation; this file only widens.
+  IF to_regclass('public.capa_records') IS NULL THEN
+    RETURN;
+  END IF;
   IF EXISTS (
     SELECT 1 FROM pg_constraint c
      WHERE c.conname = 'capa_source_chk'
-       AND c.conrelid = 'public.capa_records'::regclass
+       AND c.conrelid = to_regclass('public.capa_records')
        AND pg_get_constraintdef(c.oid) NOT LIKE '%''deviation''%'
   ) THEN
     ALTER TABLE public.capa_records DROP CONSTRAINT capa_source_chk;
