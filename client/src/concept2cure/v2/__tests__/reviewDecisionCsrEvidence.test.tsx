@@ -51,6 +51,9 @@ beforeEach(() => {
   mocks.apiRequest.mockImplementation(async (method: string, url: string) => {
     const json = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
     if (url.endsWith('/reviews')) return json(peerRead(csrContext));
+    // The document's own frozen study data is read beside the package runs; a body that is not that list fails
+    // closed (dac7ef326c). This document has none.
+    if (url.startsWith('/api/submission-orchestrator/csr/study-data')) return json({ studyData: [] });
     if (url.startsWith('/api/submission-orchestrator/runs')) return json({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-28T09:00:00Z' }] });
     if (url.endsWith('/csr-evidence/preview')) return json({ success: true, preview: { runs, tablesSha256: 'd'.repeat(64), snapshotHash: csrContext.snapshotHash } });
     if (method === 'POST' && url.endsWith('/review')) {
@@ -104,6 +107,7 @@ describe('the review decision for a CSR', () => {
     mocks.apiRequest.mockImplementation(async (method: string, url: string) => {
       const json = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body });
       if (url.endsWith('/reviews')) return json(peerRead(unlabelled));
+      if (url.startsWith('/api/submission-orchestrator/csr/study-data')) return json({ studyData: [] });
       if (url.startsWith('/api/submission-orchestrator/runs')) return json({ runs: [] });
       if (method === 'POST' && url.endsWith('/review')) {
         return json({ success: false, error: { code: 'CSR_SCIENTIFIC_REVIEW_REQUIRED', message: 'Approve this CSR only after mapping its saved result claims.' } }, 409);
