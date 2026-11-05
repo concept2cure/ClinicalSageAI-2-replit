@@ -44,7 +44,7 @@ import {
 } from '../csr-builder';
 import { csrSectionTableKeys, parseCsrEvidenceSelection,
   type CsrAuthoringEvidence } from './cortex-authoring-context';
-import { assertCsrJobEvidenceUnchanged, assertSavedCsrJobEvidence, readCsrJobEvidence,
+import { RECOVERY_MESSAGES, assertCsrJobEvidenceUnchanged, assertSavedCsrJobEvidence, readCsrJobEvidence,
   verifyCsrJobWriteScope, type CsrJobEvidenceScope } from './csr-job-evidence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -200,8 +200,10 @@ async function verifySavedTargetEvidence(
 
 /** Existing CSR worker's error-receipt boundary. Raw SDK, SQL and upload
  * errors may contain sensitive observations or credentials, so a persisted
- * job receipt or log may report ONLY a bounded typed CSR code. Kept here in
- * the established worker, not in a new service or parallel pipeline. */
+ * job receipt or log may report ONLY a bounded typed CSR code, with, for the
+ * evidence refusals that name a next step, that code's fixed sentence from
+ * csr-job-evidence.ts (never the error's own text). Kept here in the
+ * established worker, not in a new service or parallel pipeline. */
 const CSR_JOB_SAFE_CODE = /^CSR_[A-Z0-9_]{3,80}$/;
 function safeCsrJobFailure(error: unknown): { message: string; code?: string } {
   const value = error && typeof error === 'object'
@@ -210,7 +212,10 @@ function safeCsrJobFailure(error: unknown): { message: string; code?: string } {
     ? value.code
     : typeof value?.message === 'string' && CSR_JOB_SAFE_CODE.test(value.message)
       ? value.message : null;
-  return code ? { message: code, code } : { message: 'CSR_BUILD_STEP_FAILED' };
+  if (!code) return { message: 'CSR_BUILD_STEP_FAILED' };
+  const recovery = Object.prototype.hasOwnProperty.call(RECOVERY_MESSAGES, code)
+    ? RECOVERY_MESSAGES[code as keyof typeof RECOVERY_MESSAGES] : null;
+  return { message: recovery ?? code, code };
 }
 
 /**
