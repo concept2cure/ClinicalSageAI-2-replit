@@ -3779,6 +3779,11 @@ export const C2C_MIGRATION_FILES = [
   // the CSR document, without a package run. Public with organization_id INTEGER NOT NULL, so
   // the sweep below gives it its tenant policy. After regulatory_programs and organizations.
   'migrations/20261031_csr_study_data.sql',
+  // Where an upload's bytes are durably kept (LX-02, 2026-11-05): two nullable
+  // columns on file_uploads naming the storage provider and the object version.
+  // After file_uploads' creators (20260726, 20260828). Additive, IF NOT EXISTS;
+  // no table, no constraint, no DROP.
+  'migrations/20261105_file_uploads_durable_object.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

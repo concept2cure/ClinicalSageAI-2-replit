@@ -1,0 +1,6 @@
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route 268ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 passed (15)
+158:   → capture/bytes-durable FAILS and is not baselined — the bytes behind stored_artifact_ref read back through the storage provider and hash to the checksum
+159:    observed null
+679:Error: capture/bytes-durable FAILS and is not baselined — the bytes behind stored_artifact_ref read back through the storage provider and hash to the checksum
