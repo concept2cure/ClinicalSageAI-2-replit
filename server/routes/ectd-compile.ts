@@ -53,6 +53,8 @@ import {
   leafSatisfies,
   measureStatus,
   type SpineLeafRow,
+  submissionBlockers,
+  PROGRAM_SECTION_STORE_BLOCKER,
 } from '../services/ectd/compile-placement';
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { canonicalRegionOf } from '../../shared/regulatory/region-identity';
@@ -81,77 +83,6 @@ function sha256(input: string): string {
 }
 
 /**
- * Why a compile has no leaf files, stated from the ACTUAL state of the
- * submission spine — not from a hardcoded capability flag. Leaf rendering IS
- * implemented (ectd/assemble-from-core renders real PDF leaves from placed
- * submission_leaves); what varies is whether THIS project is connected to it.
- * Every message keeps the words "leaf files" so the surface's blocker panel and
- * the pinned tests read consistently.
- */
-const NO_SPINE_LEAF_BLOCKER =
-  'No leaf files have been rendered for this compile: this project has no submission with an eCTD ' +
-  'sequence yet, so no document is placed and nothing can be sent to an agency gateway. Create the ' +
-  'project\'s submission and its sequence in Submission Center, then place approved documents into its ' +
-  'eCTD sequence.';
-
-const NO_SEQUENCE_LEAF_BLOCKER =
-  'No leaf files have been rendered: the linked submission has no eCTD sequence yet, so there are ' +
-  'no placed documents to render and the package cannot be transmitted. Create a sequence and ' +
-  'place approved documents into it.';
-
-const NO_PLACED_LEAVES_BLOCKER =
-  'No leaf files have been rendered: the submission\'s eCTD sequence has no placed documents, so ' +
-  'the package cannot be transmitted. Place approved documents into the sequence to render real ' +
-  'PDF leaf files.';
-
-/**
- * What stands between this project and a transmissible submission (draft-path
- * and status-endpoint variant — the spine-backed compile computes its blockers
- * from the actual assembly result instead).
- *
- * `submissionReady` previously meant "content validation raised no blocking
- * errors", and the surface rendered that as the words "Submission-ready" next to
- * a download button. Content completeness is a real and useful signal, but it is
- * not submission readiness: a package with no leaf files cannot be submitted no
- * matter how complete its section text. Telling a regulatory user otherwise is
- * the most consequential thing this route could get wrong.
- *
- * Blockers are returned as text so the surface can say WHY rather than showing a
- * bare negative.
- */
-function submissionBlockers(
-  contentErrors: string[],
-  anchor?: CompileAnchor,
-  spine?: SubmissionSpine | null,
-): string[] {
-  const blockers: string[] = [];
-  const leavesPlaced = (spine?.sequence?.leafCount ?? 0) > 0;
-  if (anchor && anchor.numericProjectId === null && !leavesPlaced) {
-    blockers.push(PROGRAM_SECTION_STORE_BLOCKER);
-  }
-  if (contentErrors.length > 0) {
-    blockers.push(
-      `${contentErrors.length} blocking content ${contentErrors.length === 1 ? 'issue' : 'issues'} must be resolved.`,
-    );
-  }
-  // The leaf-rendering answer, from the spine's real state.
-  if (!spine) {
-    blockers.push(NO_SPINE_LEAF_BLOCKER);
-  } else if (!spine.sequence) {
-    blockers.push(NO_SEQUENCE_LEAF_BLOCKER);
-  } else if (spine.sequence.leafCount === 0) {
-    blockers.push(NO_PLACED_LEAVES_BLOCKER);
-  } else {
-    // Documents are placed; rendering + verification happen at compile time.
-    blockers.push(
-      `${spine.sequence.leafCount} document(s) are placed in the submission's eCTD sequence. ` +
-        'Run Compile to render the leaf files and verify the package before it can be considered submission-ready.',
-    );
-  }
-  return blockers;
-}
-
-/**
  * Organization id for the caller, taken only from authenticated request
  * context — never from params, query or body.
  *
@@ -175,22 +106,6 @@ function resolveOrgId(req: Request): number | null {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * Why a program-spine project compiles against an empty section set. Stated once
- * and returned verbatim as a blocker / validation finding so the caller is told,
- * in so many words, why readiness is 0% — never left to infer it from silence.
- *
- * Client-reaching copy, read by a regulatory person: what is missing and where
- * to act, never the store, the id space or a pending contract behind it (B3,
- * demo walk 2026-11-05: it read "no linked section-tracking store … legacy
- * numeric project id … pending the document-identity contract", ahead of every
- * real reason). Table names must never reach a response body (BP-W0-5).
- */
-const PROGRAM_SECTION_STORE_BLOCKER =
-  'No document has been placed in a sequence of this project yet, so the compile has nothing to check and every ' +
-  'required section reads as missing. Place approved documents into the sequence in Submission Center (Builder), ' +
-  'or with Place into filing from the document.';
 
 interface CompileAnchor {
   /** Legacy numeric projects.id when the ident was numeric — keys project_sections. */
