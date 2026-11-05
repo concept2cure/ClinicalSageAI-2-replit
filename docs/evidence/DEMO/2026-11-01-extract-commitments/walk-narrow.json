@@ -2,7 +2,7 @@
   "mode": "narrow-only",
   "base": "http://127.0.0.1:5000",
   "email": "jm.smith@concept2cure.pro",
-  "startedAt": "2026-11-01T16:38:47.788Z",
+  "startedAt": "2026-11-05T00:00:39.312Z",
   "steps": [
     {
       "name": "sign in (one dev-login)",
@@ -27,10 +27,10 @@
       "name": "390 wide: the letter's commitments",
       "horizontalOverflowPx": 0,
       "textColumnsPx": [
-        158,
-        158,
-        158,
-        145
+        214,
+        214,
+        214,
+        201
       ],
       "finding": null,
       "screenshot": "screenshots/09-mobile-390-commitments.png"
@@ -43,5 +43,5 @@
   "apiErrors": [],
   "consoleErrors": [],
   "outcome": "passed",
-  "finishedAt": "2026-11-01T16:39:03.509Z"
+  "finishedAt": "2026-11-05T00:00:52.628Z"
 }

@@ -59,7 +59,7 @@ async function signIn({ page }) {
 async function openLetter({ page, shot }) {
   // 1. Projects -> LMN-201.
   await page.goto(BASE + '/concept2cure/projects', { waitUntil: 'networkidle' });
-  await page.getByPlaceholder('Search projects').fill('LMN-201');
+  await page.getByRole('searchbox', { name: /^Search projects/ }).fill('LMN-201');
   const card = page.getByText('[Demo · Lumen] LMN-201', { exact: false }).first();
   await card.waitFor();
   step('Projects: the LMN-201 project is listed', { screenshot: await shot('01-projects-lmn201.png') });
@@ -227,7 +227,7 @@ async function narrow({ page, shot, proposals }) {
 async function irQuestions({ page, shot }) {
   // 8. G3 beside it: the C2C-101 information request's numbered questions.
   await page.goto(BASE + '/concept2cure/projects', { waitUntil: 'networkidle' });
-  await page.getByPlaceholder('Search projects').fill('C2C-101');
+  await page.getByRole('searchbox', { name: /^Search projects/ }).fill('C2C-101');
   await page.getByText('[Demo · Biotech] C2C-101', { exact: false }).first().click();
   await page.waitForURL(/project-home\?program=/);
   await page.locator('nav').getByText('Communication', { exact: true }).click();

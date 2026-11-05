@@ -152,7 +152,7 @@ Re-landed on `concept2cure-v2` on 2026-11-04, after this session reconciled onto
 | # | Defect | Fixed in |
 |---|---|---|
 | 1 | Meetings & commitments did not list a commitment recorded from a letter until re-read | `d9edfb1da3`: `onCommitmentRecorded` from `AgencyResponses` through the inbox to Communication's register version |
-| 2 | At 390 wide each commitment's text was 0px wide | Handed to the stylesheet holder (`.design/claude-convergence/COORDINATION.md`): `.cc-q-proposal` wraps and the text keeps a 16ch minimum. Not yet on trunk |
+| 2 | At 390 wide each commitment's text was 0px wide | The F1 phone-width commit beside this one: `.cc-q-proposal` wraps and the text keeps a 16ch minimum. Re-shot: `screenshots/09-mobile-390-commitments.png` |
 | 3 | Received date as a raw ISO instant; visibility tier "shared client c2c" | `ee7c051bca`: "received Oct 12, 2026"; "Your team and Concept2Cure" |
 | 4 | Commitment rows "due 2030-06-30", and no word of the letter they came from | `ee7c051bca`: "due Jun 30, 2030 · recorded from Approval letter" |
 | 5 | A letter that asks nothing told to record its questions by hand | `ee7c051bca`: it says it needs no response; the hint is on letters that owe one |
