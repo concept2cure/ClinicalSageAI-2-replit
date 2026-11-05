@@ -80,6 +80,10 @@ it('refreshes the QC list and the board when the build finished before the first
   expect((await screen.findByRole('status')).textContent).toMatch(/2 of 2 narratives composed from the ADaM rows; §14\.3\.3 and §12\.3\.2 written\./);
   const list = await screen.findByLabelText('Narrative QC');
   expect(within(list).getByText('Septic shock')).toBeTruthy();
+  // Collapsed under its count, as beside §14.3.3 in the editor: a 95-subject list no longer buries the assembly.
+  const disclosure = list.closest('details')!;
+  expect(disclosure.open).toBe(false);
+  expect(within(disclosure).getByText('Narrative QC list · 2 subjects')).toBeTruthy();
   expect(changed).toHaveBeenCalled();
 });
 
