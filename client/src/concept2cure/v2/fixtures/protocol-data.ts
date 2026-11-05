@@ -60,6 +60,8 @@ export interface CapaAction { id: string; action: string; status: string; }
 export interface PdevDeviation {
   id: string; title: string; sev: string; cat: string;
   reportable: boolean; status: string; capa: CapaAction[];
+  /** Why it cannot be closed yet: the server's CAPA-closure gate. Empty when it can be. */
+  closeBlockers: string[];
 }
 export interface ReviewComment {
   id: string; sec: string; sev: string; text: string; resolved: boolean;

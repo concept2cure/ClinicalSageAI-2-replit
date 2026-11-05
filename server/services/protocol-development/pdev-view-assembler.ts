@@ -19,10 +19,10 @@ import { evaluateCompleteness, type SectionView } from './protocol-development-l
 import { evaluateProtocolRules, type ProtocolRuleInput } from './protocol-rule-pack';
 import { buildSoaMatrix, validateSoa } from '../protocol-soa/protocol-soa-logic';
 import { computeProtocolBudget } from '../protocol-budget/protocol-budget-logic';
-import { nextAmendmentStatuses } from '../protocol-amendments/protocol-amendments-service';
+import { mapAmendments, mapDeviations, mapReviewComments, mapReviews } from './pdev-view-registers';
 import { rowsToStudyDesign } from '../study-design/study-design-repository';
 import { validateDesign } from '../study-design/design-validation';
-import { dispositionTarget, finalizationTarget, readSignatureFacets, type PdevSignatureFacet } from './protocol-signature-manifestation';
+import { dispositionTarget, finalizationTarget, readSignatureFacets } from './protocol-signature-manifestation';
 
 import { loadPdevProtocolRows, type ProtocolReadScope } from './pdev-protocol-index';
 export { listPdevProtocolIndex, type ProtocolReadScope } from './pdev-protocol-index';
@@ -55,32 +55,6 @@ function milestoneUrgency(targetDate: unknown, actualDate: unknown, now: number)
   if (days < 0) return 'overdue';
   if (days <= 30) return 'soon';
   return 'normal';
-}
-
-/** The protocol's review comments. They belong to the protocol, not to a
- *  reviewer: `protocol_review_comments` is keyed by document. They were copied
- *  onto every assignment, so the pane, which flattens the assignments, showed
- *  each comment once per reviewer and none at all before a review was asked. */
-function mapReviewComments(comments: Record<string, unknown>[]): unknown[] {
-  return comments.map((c) => ({
-    id: str(c.id), sec: str(c.section_ref), sev: str(c.severity), text: str(c.comment), resolved: bool(c.resolved),
-  }));
-}
-
-/** Review assignments. Extracted for the lint budget. */
-function mapReviews(
-  rows: Record<string, unknown>[],
-  signatureOf: (target: string) => PdevSignatureFacet,
-): unknown[] {
-  return rows.map((rv) => ({
-    id: str(rv.id), reviewer: str(rv.reviewer_name), role: str(rv.role), status: str(rv.status),
-    // Who may sign the disposition: that user, or (null) anyone taking
-    // responsibility for recording a reviewer who has no account.
-    reviewerUserId: rv.reviewer_user_id == null ? null : Number(rv.reviewer_user_id),
-    disposition: str(rv.disposition), dueDate: rv.due_date ? String(rv.due_date).slice(0, 10) : '',
-    // Who signed it, from the signature row, not the assignment's label.
-    signature: signatureOf(dispositionTarget(str(rv.id))),
-  }));
 }
 
 /** The cover page's principal investigator: the column when the protocol
@@ -169,51 +143,6 @@ function mapBudget(
     })),
     summary: budgetSummary,
   };
-}
-
-/** Amendments with their change rows. Extracted so the per-document mapper
- *  stays under the size the repo's lint budget allows. */
-function mapAmendments(
-  rows: Record<string, unknown>[],
-  changesByAmend: Map<string, Record<string, unknown>[]>,
-): unknown[] {
-  const at = (id: number) => changesByAmend.get(str(id)) ?? [];
-  return rows.map((a) => ({
-    id: str(a.id), num: str(a.amendment_number), summary: str(a.title),
-    /* The recorded lifecycle status. It was derived from the dates, which
-       reported under review as submitted and approved, rejected and implemented
-       all as "decided". `nextStatuses` is the server's own transition table. */
-    status: str(a.status), nextStatuses: nextAmendmentStatuses(str(a.status)),
-    // Re-consent is the IRB's determination (45 CFR 46.109(b); 21 CFR 56.109(b)),
-    // never the engine's. true = a declared consent or risk impact means the
-    // IRB must decide; null = either impact undeclared; false = both declared no.
-    reconsent: reconsentIndicator(a.affects_consent, a.affects_risk), path: '',
-    changes: at(Number(a.id)).map((c) => ({ sec: str(c.section_ref), from: str(c.previous_text), to: str(c.proposed_text) })),
-  }));
-}
-
-function reconsentIndicator(consent: unknown, risk: unknown): boolean | null {
-  if (bool(consent) || bool(risk)) return true;
-  if (consent === null || consent === undefined || risk === null || risk === undefined) return null;
-  return false;
-}
-
-/** Deviations with their CAPA rows. Extracted for the same reason. */
-function mapDeviations(
-  rows: Record<string, unknown>[],
-  capaByDev: Map<string, Record<string, unknown>[]>,
-): unknown[] {
-  const at = (id: number) => capaByDev.get(str(id)) ?? [];
-  return rows.map((dv) => ({
-    id: str(dv.id), title: str(dv.description), sev: str(dv.severity), cat: str(dv.category),
-    // Assessed = severity AND safety impact recorded. Legacy rows (defaulted
-    // severity, no safety assessment) read as not assessed — which they were.
-    assessed: dv.severity != null && dv.affects_safety != null,
-    // true = prompt IRB report indicated; false = not indicated; null = not determined.
-    reportable: dv.is_reportable === null || dv.is_reportable === undefined ? null : bool(dv.is_reportable),
-    status: str(dv.status),
-    capa: at(Number(dv.id)).map((c) => ({ id: str(c.deviation_id), action: str(c.action), status: str(c.status) })),
-  }));
 }
 
 /* ── The bound study design, and the design gates' findings ──────────────── */
@@ -455,7 +384,7 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
       ? queryExecutor.query(`SELECT amendment_id, section_ref, change_description, previous_text, proposed_text FROM protocol_amendment_changes WHERE amendment_id = ANY($1)`, [amendmentIds])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
     deviationIds.length
-      ? queryExecutor.query(`SELECT deviation_id, action, status FROM protocol_capa_actions WHERE deviation_id = ANY($1)`, [deviationIds])
+      ? queryExecutor.query(`SELECT id, deviation_id, action, status FROM protocol_capa_actions WHERE deviation_id = ANY($1) ORDER BY id`, [deviationIds])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
     consentFormIds.length
       ? queryExecutor.query(`SELECT id, consent_form_id, element_key, title, required, present, order_index FROM consent_form_elements WHERE consent_form_id = ANY($1) AND organization_id = $2 ORDER BY order_index, id`, [consentFormIds, orgId])
