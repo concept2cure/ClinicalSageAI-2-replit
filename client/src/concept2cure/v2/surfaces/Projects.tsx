@@ -7,6 +7,7 @@ import { capturedActorHeaders } from '@/utils/authToken';
 import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake-workspace';
 import { createProjectIntake, readProjectIntakeWorkspaces, type IntakeOptionsAnswer } from './projectIntakeRequest';
 import { ClientChoicesNote, ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
+import { PortfolioLine, PortfolioLinesNote, usePortfolioLines } from './PyramidProject';
 import { ProjectPortfolioFilters, WS_LABEL, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices } from './ProjectPortfolioFilters';
 import { enumWords } from './projectWords';
 import { useDialog } from '../useDialog';
@@ -1354,6 +1355,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const portfolioUrl = portfolioFilterUrl(clientWorkspaceId, ws, pathway);
   const live = useLiveRows<ProjPortfolioEntry>(portfolioUrl, [reloadNonce, clientWorkspaceId, ws, pathway]);
   const projects = live.rows;
+  // Each card's plan line (S11, THE_PROGRAM §5): one read for the page, from the schedule engine.
+  const plans = usePortfolioLines(projects.map(p => p.id));
   // Options come from accessible program anchors, not an organization-wide
   // client directory. The server applies this filter before it pages the list.
   const clients = useMemo(() => portfolioClients(live.meta), [live.meta]);
@@ -1721,12 +1724,14 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
            Projects: D2, fold F6, 2026-10-30). Readiness, client type, stage and
            lead are the list view's columns (D2 §1.5). */
         <div className="pj-cards">
+          <PortfolioLinesNote error={plans.error} />
           {list.map(p => {
             const line = cardLine(p);
             return (
               <button type="button" key={p.id} className="pj-card" onClick={() => openProj(p)}>
                 <div className="pj-card-t">{p.title}</div>
                 {line && <div className="pj-card-m">{line}</div>}
+                <PortfolioLine line={plans.lines[p.id]} />
                 <div className="pj-card-r">
                   <span>{[stated(p.code), p.activity].filter(Boolean).join(' · ')}</span>
                   {p.due_date && <span>Due {p.due}</span>}
@@ -1771,7 +1776,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
                 {p.status === 'blocked' && <div className="pj-list-sub">{BLOCKED_NO_CAUSE}</div>}
               </div>
               <div>{p.lead}</div>
-              <div>{p.due}</div>
+              <div>{p.due}<PortfolioLine line={plans.lines[p.id]} className="pj-list-sub" /></div>
             </button>
           ))}
         </div>
