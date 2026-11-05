@@ -42,8 +42,9 @@ function deferred<T>() {
   const promise = new Promise<T>(done => { resolve = done; });
   return { promise, resolve };
 }
+// The panel is mounted in a CSR document's editor, which it imports into (F6, 2026-11-05).
 const view = (programId: string, runId: string) =>
-  <CsrRunBuilds programId={programId} runId={runId} focus={null} />;
+  <CsrRunBuilds programId={programId} runId={runId} documentId="11111111-2222-4333-8444-000000000009" focus={null} />;
 
 beforeEach(() => apiRequest.mockReset());
 afterEach(() => { cleanup(); apiRequest.mockReset(); });
