@@ -230,6 +230,8 @@ interface BodyProps {
   onNav: (id: string) => void;
   onReg: (kind: RegisterKind) => void;
   onEdit: (kind: PdevFormKind, target?: PdevFormTarget) => void;
+  /** Opens a signing ceremony (closing a deviation). */
+  onSign?: (signing: ProtocolSigning) => void;
   onSaved: () => void;
   onError: (m: string) => void;
   /** A confirmation in the register's own words, not an error. */
@@ -246,7 +248,16 @@ interface BodyProps {
  * repo's complexity budget, and suppressing that would have been the wrong
  * trade. Returns null for a tab it does not own, so `TabBody` falls through.
  */
-function RegisterTabBody({ tab, doc, canWrite, onReg, onEdit }: BodyProps): React.ReactElement | null {
+/** The deviations tab with its writes: assess, CAPA, and the signed close. */
+function DeviationsBody({ doc, canWrite, onReg, onEdit, onSign }: Pick<BodyProps, 'doc' | 'canWrite' | 'onReg' | 'onEdit' | 'onSign'>) {
+  const write = canWrite ? onEdit : undefined;
+  const close = canWrite && onSign
+    ? (t: { id: number; label: string }) => onSign({ kind: 'close-deviation', deviationId: t.id, title: t.label })
+    : undefined;
+  return <DeviationsTab doc={doc} onAdd={() => onReg('deviation')} onEdit={write} onCloseDeviation={close} />;
+}
+
+function RegisterTabBody({ tab, doc, canWrite, onReg, onEdit, onSign }: BodyProps): React.ReactElement | null {
   switch (tab) {
     case 'objectives': return <ObjectivesTab doc={doc} onAdd={() => onReg('objective')} />;
     case 'eligibility': return <EligibilityTab doc={doc} onAdd={() => onReg('eligibility')} />;
@@ -254,7 +265,7 @@ function RegisterTabBody({ tab, doc, canWrite, onReg, onEdit }: BodyProps): Reac
     case 'milestones': return <MilestonesTab doc={doc} onAdd={() => onReg('milestone')} />;
     case 'budget': return <BudgetTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
     case 'amendments': return <AmendmentsTab doc={doc} onAdd={() => onReg('amendment')} onEdit={canWrite ? onEdit : undefined} />;
-    case 'deviations': return <DeviationsTab doc={doc} onAdd={() => onReg('deviation')} onEdit={canWrite ? onEdit : undefined} />;
+    case 'deviations': return <DeviationsBody doc={doc} canWrite={canWrite} onReg={onReg} onEdit={onEdit} onSign={onSign} />;
     case 'reviews': return <ReviewsTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
     case 'consent': return <ConsentTab doc={doc} />;
     default: return null;
@@ -429,7 +440,7 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
         <div className="pd-work" role="tabpanel" id={PD_TABPANEL_ID} aria-labelledby={pdTabId(tab)}>
           <TabBody
             tab={tab} doc={doc} sec={sec} canWrite={canWrite} onAsk={onAsk} onNav={onNav}
-            onReg={openReg} onEdit={openForm}
+            onReg={openReg} onEdit={openForm} onSign={canWrite ? setSigning : undefined}
             onSaved={() => { fireToast('Section saved — the revision is in the audit trail.'); onChanged?.(); }}
             onError={(m) => fireToast(m, 'error')}
             onToast={(m) => fireToast(m)}
@@ -552,6 +563,8 @@ const FORM_DONE: Record<PdevFormKind, string> = {
   'comment-resolve': 'Comment resolved — the review is re-read from the record.',
   'amendment-change': 'Change added — the amendment is re-read from the record.',
   'amendment-status': 'Status recorded — the amendment is re-read from the record.',
+  'capa-add': 'CAPA action added — the deviation is re-read from the record.',
+  'capa-status': 'CAPA status recorded — the deviation is re-read from the record.',
   'cover-page': 'Cover page saved.',
   'start-protocol': 'Protocol started — its sections are seeded and on the record.',
 };
@@ -568,6 +581,7 @@ function signedMessage(s: ProtocolSigning, result: Record<string, unknown>): str
     return 'Protocol finalized' + (version ? ' — now v' + version : '') + '. Signed' + meaning +
       '; the signature and the audit entry were recorded with it.';
   }
+  if (s.kind === 'close-deviation') return 'Deviation closed. Signed' + meaning + '; the signature and the audit entry were recorded with it.';
   return 'Disposition signed' + meaning + '; the signature and the audit entry were recorded with it.';
 }
 

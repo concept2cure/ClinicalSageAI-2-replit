@@ -11,6 +11,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vites
 import { PGlite } from '@electric-sql/pglite';
 
 let pglite: PGlite;
+let capaIds: string[] = [];
 const pool = {
   query: async (sql: string, params?: unknown[]) => {
     const r = await pglite.query(sql, params as unknown[]);
@@ -82,7 +83,11 @@ async function seedFullProtocol(org: number): Promise<number> {
   // Both impacts declared "no": risk was never read, so this showed as "not declared".
   await pglite.query(`INSERT INTO protocol_amendments (organization_id, protocol_document_id, amendment_number, title, affects_consent, affects_risk, status) VALUES ($1,$2,'A2','Fix a typo',false,false,'draft')`, [org, id]);
   const dev = await pglite.query(`INSERT INTO protocol_deviations (organization_id, protocol_document_id, deviation_number, description, category, severity, is_reportable, status) VALUES ($1,$2,'D1','Missed visit','procedure','major',true,'capa_pending') RETURNING id`, [org, id]);
-  await pglite.query(`INSERT INTO protocol_capa_actions (deviation_id, action, status) VALUES ($1,'Retrain site','open')`, [(dev.rows[0] as { id: number }).id]);
+  const devId = (dev.rows[0] as { id: number }).id;
+  // Two actions on one deviation: each must keep its own id (it used to carry the deviation's).
+  const capa1 = await pglite.query(`INSERT INTO protocol_capa_actions (deviation_id, action, status) VALUES ($1,'Retrain site','open') RETURNING id`, [devId]);
+  const capa2 = await pglite.query(`INSERT INTO protocol_capa_actions (deviation_id, action, status) VALUES ($1,'Add a visit-window reminder','completed') RETURNING id`, [devId]);
+  capaIds = [String((capa1.rows[0] as { id: number }).id), String((capa2.rows[0] as { id: number }).id)];
   await pglite.query(`INSERT INTO protocol_budget_items (organization_id, protocol_document_id, category, description, unit_cost, quantity_per_subject) VALUES ($1,$2,'labs','Central lab',500,3)`, [org, id]);
   await pglite.query(`INSERT INTO protocol_budget_params (organization_id, protocol_document_id, target_enrollment, sponsor_payment_per_subject, indirect_rate_pct) VALUES ($1,$2,420,15000,28)`, [org, id]);
   const asm = await pglite.query(`INSERT INTO protocol_soa_assessments (organization_id, protocol_document_id, name, category, order_index) VALUES ($1,$2,'ECG','safety',0) RETURNING id`, [org, id]);
@@ -144,7 +149,12 @@ describe('assembleOrgPdevDocs', () => {
     // Deviation severity/category/status carried through — a monitor must be able to
     // tell a critical reportable deviation from a minor closed one.
     expect(doc.deviations[0]).toMatchObject({ title: 'Missed visit', sev: 'major', cat: 'procedure', reportable: true, status: 'capa_pending' });
+    expect(doc.deviations[0].capa.map((c: { id: string }) => c.id)).toEqual(capaIds);
     expect(doc.deviations[0].capa[0]).toMatchObject({ action: 'Retrain site', status: 'open' });
+    // The closure gate's own reasons: unassessed (no safety impact recorded) and one action still open.
+    expect(doc.deviations[0].closeBlockers).toEqual(expect.arrayContaining([
+      expect.stringMatching(/not been assessed/), expect.stringMatching(/1 CAPA action\(s\) are not yet completed/),
+    ]));
 
     expect(doc.reviews[0].reviewer).toBe('Dr Reviewer');
     // No account named: the disposition can only be recorded under responsibility.

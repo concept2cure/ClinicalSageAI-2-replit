@@ -338,6 +338,19 @@ status or ownership; closing a package stays §3 step 5.
   - "Add a change" while the amendment is a draft, and "Change status" offering only the moves the server allows,
     through `POST …/amendments/:id/changes` and `PATCH …/amendments/:id/status`.
   - Used in the running app: Draft → Submitted → Under review → Approved, each 201.
+- **F1 repair** (2026-11-05), `d3b5d7721`. Each CAPA action carried its deviation's id, so no action could be
+  addressed and two actions collided. Each now has its own id. Deviations also carry `closeBlockers`, the server
+  closure gate's own reasons. The register mappers moved to `pdev-view-registers.ts`, in the same folder (a split,
+  not an addition).
+- **Reach: CAPA and the signed deviation close** (2026-11-05), `0c8e8e45f`,
+  `docs/evidence/DESIGN/R1/2026-11-05-protocol-deviations/`.
+  - New on the deviation card: "Add a CAPA action", "Update status" on each action, and "Close deviation" through
+    the platform's one signing ceremony. While the gate would refuse, the close is held and the gate's reasons are
+    shown.
+  - Used in the running app: the close was signed (201). Its `electronic_signatures` row records meaning approval,
+    the reason and password authentication.
+  - The first walk caught a request-shape error: the shared ceremony takes `password` at the top level. The unit
+    test had encoded my assumption, and now asserts the ceremony's contract.
 - **Handed to D4** (2026-11-05). Informed consent exists twice: the `informed_consent` document type, and
   `/api/protocol-consent`, whose 7 routes have no caller. Its element checklist, completeness and signed approval
   are that document type's validation. Under Rule 4 they belong in the one editor, not a protocol panel. Whether
@@ -357,9 +370,10 @@ The D1 spec was written on top of it, and D1 owns those files.
 **Next**
 
 R1 reaches in S3's protocol records, in `ProtocolDev*` files only:
-1. closing a deviation, a signed act (`POST /api/protocol-deviations/deviations/:id/close`) and CAPA status;
-2. the milestone timeline and milestone status;
-3. amendment substantiality under EU CTR, worded so that it never reads as a finding of non-substantiality.
+1. the milestone timeline and milestone status;
+2. deviation trends;
+3. the protocol risk register view;
+4. amendment substantiality under EU CTR, worded so that it never reads as a finding of non-substantiality.
 
 Reaches that land in a design package's files are handed to its owner as route, caller and test.
 
