@@ -256,25 +256,37 @@ export const REVIEW_SOP_REQUIREMENTS: AnaTool = {
 export const RESOLVE_SUBMISSION_PLAN: AnaTool = {
   name: 'resolve_submission_plan',
   description:
-    "Resolve the multi-region BUILD + SUBMIT plan for a filing across FDA (US), EMA (EU), and PMDA (Japan). Given a filing type (IND/NDA/BLA/MAA/JNDA/…) and/or product class, returns the regional equivalent application per region (e.g. a biologic marketing application → US BLA, EU MAA, JP JNDA), each with its dossier standard, region Module 1 path, validation profile, blueprints, and submission gateway, plus whether region-correct build and gateway submission are supported. Also returns an overall coverage summary asserting which (filing × region) combinations are fully supported. Use when the user asks whether/how a product can be filed in the US, EU, and Japan, or which gateway/structure applies.",
+    "Read-only submission planning through the existing shared resolver for the selected filing, product class and regions. Preserves the selected registry filing in its own region and reports compatible registry candidates elsewhere; these candidates are not legal equivalents. Returns each region's dossier standard, applicable Module 1 path, validation profile, blueprints, channel, buildSupported and submitSupported, plus coverage, gaps and methodology. Report missing, inactive, product-conflicting, portal-only, unconnected and unsupported outcomes as returned; never substitute another filing to hide a gap. A catalog match or coverage result is not project readiness, license entitlement, delivery acceptance or regulatory approval, and does not authorize signing, release or transmission. Use recorded or explicitly supplied settings; ask for missing material settings rather than inventing them. Omitted regions use the existing US, EU and JP comparison default; disclose that default. Use for medicines, medical devices, IVDs and combination products without claiming that every selected product or market is supported.",
   input_schema: {
     type: 'object',
     properties: {
-      filingType: { type: 'string', description: 'Filing string or registry id (IND, NDA, BLA, MAA, JNDA, …).' },
+      filingType: { type: 'string', description: 'Selected filing string or registry ID. Preserve the recorded selection; do not substitute another filing when it is unknown, inactive or incompatible.' },
       applicationFamily: {
         type: 'string',
-        enum: ['clinical_trial', 'marketing_authorization', 'variation', 'renewal', 'supplement', 'pediatric', 'orphan'],
-        description: 'Used when no filingType is given.',
+        // Keep aligned with ApplicationFamily in shared/regulatory/document-taxonomy.ts.
+        enum: [
+          'clinical_trial', 'marketing_authorization', 'variation', 'renewal',
+          'master_file', 'pediatric', 'orphan', 'safety_report', 'supplement',
+          'pre_submission', 'device_clearance', 'device_approval',
+          'designation', 'quality_cmc', 'quality_system', 'post_market',
+          'software_documentation', 'companion_diagnostic', 'clinical_document',
+          'dossier_module',
+        ],
+        description: 'Canonical application family, used only when no filingType is given. A family in this vocabulary is not a claim that a compatible filing or supported channel exists.',
       },
       productClass: {
         type: 'string',
-        enum: ['small_molecule', 'biologic', 'biosimilar', 'vaccine', 'atmp', 'generic', 'any'],
-        description: 'Drives the regional equivalent (biologic → BLA in the US).',
+        // Keep aligned with ProductClass in shared/regulatory/document-taxonomy.ts.
+        enum: [
+          'small_molecule', 'biologic', 'biosimilar', 'generic', 'otc',
+          'medical_device', 'ivd', 'combination_product', 'atmp', 'vaccine', 'any',
+        ],
+        description: 'Recorded or explicitly supplied canonical product class. Use medical_device for a medical device, ivd for an in vitro diagnostic, and combination_product for a combination product; do not replace a specific class with any to obtain a match.',
       },
       regions: {
         type: 'array',
         items: { type: 'string', enum: ['US', 'EU', 'JP', 'UK', 'CA', 'CN', 'AU', 'CH'] },
-        description: 'Target regions (default US, EU, JP).',
+        description: 'Explicit target-region codes in the requested order. Omission retains the US, EU, JP comparison default; disclose it. A selectable region is not a claim of region-correct build or connected submission support.',
       },
     },
     required: [],

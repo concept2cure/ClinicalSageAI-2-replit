@@ -1,0 +1,276 @@
+TAP version 13
+# Subtest: product choices exactly match the existing canonical ProductClass union
+not ok 1 - product choices exactly match the existing canonical ProductClass union
+  ---
+  duration_ms: 2.191827
+  type: 'test'
+  location: '/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:55:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        'any',
+        'atmp',
+        'biologic',
+        'biosimilar',
+    -   'combination_product',
+        'generic',
+    -   'ivd',
+    -   'medical_device',
+    -   'otc',
+        'small_molecule',
+        'vaccine'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'any'
+    1: 'atmp'
+    2: 'biologic'
+    3: 'biosimilar'
+    4: 'combination_product'
+    5: 'generic'
+    6: 'ivd'
+    7: 'medical_device'
+    8: 'otc'
+    9: 'small_molecule'
+    10: 'vaccine'
+  actual:
+    0: 'any'
+    1: 'atmp'
+    2: 'biologic'
+    3: 'biosimilar'
+    4: 'generic'
+    5: 'small_molecule'
+    6: 'vaccine'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:56:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: family choices exactly match the existing canonical ApplicationFamily union
+not ok 2 - family choices exactly match the existing canonical ApplicationFamily union
+  ---
+  duration_ms: 0.365181
+  type: 'test'
+  location: '/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:60:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    -   'clinical_document',
+        'clinical_trial',
+    -   'companion_diagnostic',
+    -   'designation',
+    -   'device_approval',
+    -   'device_clearance',
+    -   'dossier_module',
+        'marketing_authorization',
+    -   'master_file',
+        'orphan',
+        'pediatric',
+    -   'post_market',
+    -   'pre_submission',
+    -   'quality_cmc',
+    -   'quality_system',
+        'renewal',
+    -   'safety_report',
+    -   'software_documentation',
+        'supplement',
+        'variation'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'clinical_document'
+    1: 'clinical_trial'
+    2: 'companion_diagnostic'
+    3: 'designation'
+    4: 'device_approval'
+    5: 'device_clearance'
+    6: 'dossier_module'
+    7: 'marketing_authorization'
+    8: 'master_file'
+    9: 'orphan'
+    10: 'pediatric'
+    11: 'post_market'
+    12: 'pre_submission'
+    13: 'quality_cmc'
+    14: 'quality_system'
+    15: 'renewal'
+    16: 'safety_report'
+    17: 'software_documentation'
+    18: 'supplement'
+    19: 'variation'
+  actual:
+    0: 'clinical_trial'
+    1: 'marketing_authorization'
+    2: 'orphan'
+    3: 'pediatric'
+    4: 'renewal'
+    5: 'supplement'
+    6: 'variation'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:61:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: all previously exposed medicine product and family choices remain available
+ok 3 - all previously exposed medicine product and family choices remain available
+  ---
+  duration_ms: 0.155935
+  type: 'test'
+  ...
+# Subtest: the existing eight-region selector and order are unchanged
+ok 4 - the existing eight-region selector and order are unchanged
+  ---
+  duration_ms: 0.283448
+  type: 'test'
+  ...
+# Subtest: tool identity, field names and omitted-argument shape remain compatible
+ok 5 - tool identity, field names and omitted-argument shape remain compatible
+  ---
+  duration_ms: 0.193141
+  type: 'test'
+  ...
+# Subtest: the tool distinguishes registry candidates from legal equivalence
+not ok 6 - the tool distinguishes registry candidates from legal equivalence
+  ---
+  duration_ms: 0.654307
+  type: 'test'
+  location: '/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:87:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /not legal equivalents/i. Input:
+    
+    'Resolve the multi-region BUILD + SUBMIT plan for a filing across FDA (US), EMA (EU), and PMDA (Japan). Given a filing type (IND/NDA/BLA/MAA/JNDA/…) and/or product class, returns the regional equivalent application per region (e.g. a biologic marketing application → US BLA, EU MAA, JP JNDA), each with its dossier standard, region Module 1 path, validation profile, blueprints, and submission gateway, plus whether region-correct build and gateway submission are supported. Also returns an overall coverage summary asserting which (filing × region) combinations are fully supported. Use when the user asks whether/how a product can be filed in the US, EU, and Japan, or which gateway/structure applies.'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: 'Resolve the multi-region BUILD + SUBMIT plan for a filing across FDA (US), EMA (EU), and PMDA (Japan). Given a filing type (IND/NDA/BLA/MAA/JNDA/…) and/or product class, returns the regional equivalent application per region (e.g. a biologic marketing application → US BLA, EU MAA, JP JNDA), each with its dossier standard, region Module 1 path, validation profile, blueprints, and submission gateway, plus whether region-correct build and gateway submission are supported. Also returns an overall coverage summary asserting which (filing × region) combinations are fully supported. Use when the user asks whether/how a product can be filed in the US, EU, and Japan, or which gateway/structure applies.'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:88:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: the tool separates planning from readiness, entitlement, acceptance and authorization
+not ok 7 - the tool separates planning from readiness, entitlement, acceptance and authorization
+  ---
+  duration_ms: 0.144428
+  type: 'test'
+  location: '/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:93:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing limitation: project readiness'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:95:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: the tool exposes returned support limitations instead of hiding a gap
+not ok 8 - the tool exposes returned support limitations instead of hiding a gap
+  ---
+  duration_ms: 0.161664
+  type: 'test'
+  location: '/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:100:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing instruction: missing'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:102:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: the skill preserves specific product settings and discloses comparison defaults
+not ok 9 - the skill preserves specific product settings and discloses comparison defaults
+  ---
+  duration_ms: 8.296468
+  type: 'test'
+  location: '/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:107:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(method.includes(product))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:108:89)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: the skill agrees with the tool about candidates, support gaps and human authorization
+not ok 10 - the skill agrees with the tool about candidates, support gaps and human authorization
+  ---
+  duration_ms: 0.360234
+  type: 'test'
+  location: '/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:114:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing skill limitation: not legal equivalents'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/mnt/data/ana-repair/work/tests/services/regulatory/submission-plan-tool-schema.test.cjs:116:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 3
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 347.941001
