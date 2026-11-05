@@ -395,8 +395,11 @@ S3's protocol records are reached:
 
 Informed consent is with D4.
 
-R1 now moves to the next spine package with the most served-but-uncalled routes, S5 (eCTD and filing), in files
-no session holds. Each reach is checked against `COORDINATION.md` first and logged here.
+Correction to the line written here at first: S5's behaviour is held by RIM (`COORDINATION.md`). So R1's S5
+reaches go to RIM as route, caller and test; they are not built here. S3's remaining candidates (the statistics
+thread and the SAP's versions, comments and lock in `biostatPlatform.ts`) are a statistical analysis plan, which is a
+document type. Under Rule 4 they are a convergence with the one editor, which is D4's or the founder's call, as
+informed consent was.
 
 #### F1 — Repairs, for spine step 2: the data room's lineage (session `session_01QoxbLcnW5jPvJSjjKQtvTA`)
 
