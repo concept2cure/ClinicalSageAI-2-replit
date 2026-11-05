@@ -2948,6 +2948,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       }
       busy={filing}
       defaultOpen
+      onShowOutline={() => setView('library')}
     />
   );
 

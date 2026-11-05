@@ -23,7 +23,8 @@ export type VaultCoverageShape =
       covered: number;
     }
   | { state: 'unavailable'; reason: string }
-  | { state: 'not_applicable'; reason: string };
+  /** `outlineInLibrary`: a filing with its own outline, whose required sections the Library marks (S6). */
+  | { state: 'not_applicable'; reason: string; outlineInLibrary?: true };
 
 /** A document a person may file at a missing section. */
 export interface CoverageDocument {
@@ -39,6 +40,8 @@ interface Props {
   busy: boolean;
   /** Start with the sections listed: the Required documents view is this list (D6 §C.4 step 5). */
   defaultOpen?: boolean;
+  /** Open the filing's own outline, in the Library, for a filing the Vault does not count (S6). */
+  onShowOutline?: () => void;
 }
 
 function provenanceLine(p: Extract<VaultCoverageShape, { state: 'available' }>['provenance']): string {
@@ -106,7 +109,7 @@ function MissingSection({
   );
 }
 
-export function VaultCoverage({ coverage, documents, onUpload, onFileHere, busy, defaultOpen = false }: Props) {
+export function VaultCoverage({ coverage, documents, onUpload, onFileHere, busy, defaultOpen = false, onShowOutline }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const headingId = useId();
   /* A section of the Required documents view (D6 §C.4 step 11): the heading,
@@ -127,9 +130,13 @@ export function VaultCoverage({ coverage, documents, onUpload, onFileHere, busy,
     );
   }
   if (coverage.state !== 'available') {
+    /* A filing with its own outline (a device or diagnostic filing, S6): its required sections are the Library's. */
+    const outline = coverage.state === 'not_applicable' && coverage.outlineInLibrary && onShowOutline
+      ? <button type="button" className="btn ghost small" onClick={onShowOutline}>Show the outline in the Library</button>
+      : undefined;
     return (
       <section className="pj-sec" data-testid="vault-coverage" aria-labelledby={headingId}>
-        {head(coverage.state === 'unavailable' ? `Not shown. ${coverage.reason}` : coverage.reason)}
+        {head(coverage.state === 'unavailable' ? `Not shown. ${coverage.reason}` : coverage.reason, outline)}
       </section>
     );
   }
