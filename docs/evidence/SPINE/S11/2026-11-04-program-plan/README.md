@@ -55,6 +55,22 @@ production's launch gate is on, so the route is shown served. `walk.json` is its
 - Roles printed as ids ("project_manager", "toxicologist"). Labels for all of the engine's roles; a guard test.
 - At 390 px the 110 px role column left a task's name a word per line under the role text.
 
+## Other regions: found 2026-11-05, not landed
+
+The engine also holds work breakdowns for Health Canada (NOC), the TGA (AUST R), PMDA, Swissmedic, ANVISA and EU CE
+marking (`services/regulatory/globalPyramids.ts`). None resolves through the registry, and today none can be reached:
+New project offers no filing in those markets. `GET /api/submissions/market-support` answers `not_offered` for an
+NDA or BLA to Health Canada, the TGA, Swissmedic, ANVISA, PMDA or MHRA, and for a Canadian CTA or device licence,
+because the platform has no filing outline there. The one non-FDA filing it offers is an EU MAA (author-only), which
+already resolves to the engine's MAA pyramid. No project in either database has a non-FDA agency on a US filing type.
+
+So the program plan's reach into those markets (a registry map to the canonical global configs, and a rule that a US
+pyramid is a project's plan only when FDA is its agency) was written, tested and walked, then not landed: it would
+reach nothing, and its regulatory pairings would go unexercised. Its patch is kept with this session. What it waits
+on is the market itself, a filing outline for each one: "Add a market" (F22), a founder decision. Content found while
+reading them, for that review: the alias configs share their canonical's tasks, so `TGA_CTN` lists PI and CMI (a
+registration's), `EU_CE_IVDR` classifies by the MDR's rule, and `PMDA_CTN` is the Shonin plan.
+
 ## Not done here (S11's later steps)
 
 Owner and due date per pyramid task, back-scheduled from the target date along the dependencies (step 3, with S9);
