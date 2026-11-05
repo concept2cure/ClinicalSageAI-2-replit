@@ -25,8 +25,13 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+/* The signed-in account as AuthProvider holds it: one object per sign-in, with the id and
+   organisation the session names. Since 0fc881c16f (2026-11-04) the shell reads its subscription
+   only for a current account visit (navEntitlements.tsx, useNavigationReadOwner); a user with no
+   id is no account, so the read never went out and "Access resolved" never came. */
+const signedIn = vi.hoisted(() => ({ id: '5', organizationId: '7', firstName: 'Dana' }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { firstName: 'Dana' } }),
+  useAuth: () => ({ user: signedIn }),
 }));
 vi.mock('@/hooks/useGlobalRiCatalog', () => ({
   useGlobalRiCatalog: () => ({ catalog: null, loading: false, error: undefined }),
