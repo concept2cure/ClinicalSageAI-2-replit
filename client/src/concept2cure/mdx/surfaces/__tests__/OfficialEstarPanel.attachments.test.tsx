@@ -102,7 +102,7 @@ describe('optional explicit official eSTAR attachments', () => {
     expect(screen.getByTestId('official-estar-attachment-receipts').textContent).toContain('/CHAPTER 1/CH1.01/');
     expect(screen.getByTestId('official-estar-attachment-receipts').textContent).toContain(SHA);
     expect(screen.getByTestId('official-estar-attachment-receipts').textContent).toContain(DOC);
-    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/project-vault/${PROGRAM.id}/search?q=summary&limit=25`);
+    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/project-vault/${PROGRAM.id}/search?q=summary&limit=25`, undefined, undefined, expect.any(AbortSignal));
     expect(vi.mocked(downloadBase64)).toHaveBeenCalledTimes(1);
   });
   it.each([
@@ -115,7 +115,7 @@ describe('optional explicit official eSTAR attachments', () => {
     const program = { ...PROGRAM, productType };
     await ready({ ...props(), program, variant: officialEstarVariantFor(program) });
     add(); await choose();
-    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/510k/estar/attachment-slots?type=510k&variant=${variant}`);
+    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/510k/estar/attachment-slots?type=510k&variant=${variant}`, undefined, undefined, expect.any(AbortSignal));
     fireEvent.click(generate());
     await screen.findByTestId('official-estar-attachment-receipts');
     expect(posted[0]).toMatchObject({ variant, attachments: [{ slot: COVER, source: { kind: 'vault_document', documentId: DOC } }] });

@@ -194,7 +194,7 @@ describe('a member', () => {
     serve({});
     mount();
     expect(await screen.findByText(/Invoices and subscription changes are for billing administrators/)).toBeTruthy();
-    await waitFor(() => expect(h.apiRequest).toHaveBeenCalledWith('GET', '/api/billing/status'));
+    await waitFor(() => expect(h.apiRequest).toHaveBeenCalledWith('GET', '/api/billing/status', undefined, undefined, expect.any(AbortSignal)));
     expect(invoiceCalls()).toHaveLength(0);
     expect(screen.queryByText("Couldn't load invoices")).toBeNull();
     expect(screen.queryByRole('table')).toBeNull();
