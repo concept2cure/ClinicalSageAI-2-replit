@@ -89,7 +89,7 @@ describe('Audit trail — the audit_events chain verdict in the chain banner', (
     serve();
     mount();
     await screen.findByText('Audit-event chain intact');
-    expect(apiRequest).toHaveBeenCalledWith('GET', CHAIN);
+    expect(apiRequest).toHaveBeenCalledWith('GET', CHAIN, undefined, undefined, expect.any(AbortSignal));
   });
 
   it('an intact chain says intact, how many entries, and sits beside the ledger verdict', async () => {

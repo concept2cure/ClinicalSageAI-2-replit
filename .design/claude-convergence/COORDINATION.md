@@ -55,6 +55,23 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 
 S10 (the agency's communications back into the project) is held by RIM since 2026-11-01. Its earlier holder (`011Dpx…`) is back (row above) and lands only its S10 UI written before the hold.
 
+### R1 handoffs, 2026-11-05 (from `01QoxbL…`)
+
+- **To RIM (S5):** four reaches. See `docs/evidence/DESIGN/R1/2026-11-05-handoffs-and-decisions/README.md` Part 1a:
+  - eCTD preflight: check it is not a second validator first;
+  - sequence pathway readiness;
+  - the IND cover letter rendered from records;
+  - the annual report line listing, which is an engine table in the one editor and shared with D4.
+
+  Each comes with route, place and test.
+- **For the founder:** three decisions, in Part 2:
+  - the SAP (two systems);
+  - informed consent (two records);
+  - retiring the six `/api/submission-ops/packages/*` routes, the parallel filing store the sequence replaced
+    (FILING_SPINE F12).
+
+  Until they are decided, nobody reaches those routes.
+
 ## Held by the founder
 
 - **D4-3 waits until after the Phase 2 CSR demo** (the founder, 2026-11-02). D4-3 moves Freeze, E-sign and Place

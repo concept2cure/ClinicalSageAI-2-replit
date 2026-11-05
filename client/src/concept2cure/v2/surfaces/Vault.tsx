@@ -3045,7 +3045,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           ) : null}
         </div>
       </header>
-      <div className="sp-starters" data-layout="row" aria-label="Ask AnA">
+      <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
         {VAULT_STARTERS.map((s) => (
           <button key={s.label} type="button" className="sp-starter" onClick={() => onAsk(s.prompt)}>
             <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{s.label}</span>
