@@ -1,0 +1,61 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "0e8acdb9-40ba-41ed-bb5d-d0b3cf836a54",
+  "startedAt": "2026-11-05T06:07:03.432Z",
+  "steps": [
+    {
+      "name": "sign in (one dev-login)",
+      "email": "jm.smith@concept2cure.pro"
+    },
+    {
+      "name": "1440: the Data Room lists the adopted source",
+      "text": "Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it.\n\nRefresh sources\nSearch the data room catalogue\n\n1 matching sources · showing 1.\n\ndw1-synopsis.txt\nReadable"
+    },
+    {
+      "name": "1440: not-licensed",
+      "status": 403,
+      "text": "Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it. Refresh sources Search the data room catalogue Not enabled for your organization This feature is not enabled for your organization, so the data room was not read.",
+      "retryOffered": false
+    },
+    {
+      "name": "1440: out-of-release",
+      "status": 403,
+      "text": "Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it. Refresh sources Search the data room catalogue Not in this release This part of the product is not in this release, so the data room was not read.",
+      "retryOffered": false
+    },
+    {
+      "name": "1440: server-failure",
+      "status": 500,
+      "text": "Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it. Refresh sources Search the data room catalogue The data room could not be read Request failed. Try again",
+      "retryOffered": true
+    },
+    {
+      "name": "sign in (one dev-login)",
+      "email": "jm.smith@concept2cure.pro"
+    },
+    {
+      "name": "390: the Data Room lists the adopted source",
+      "text": "Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it.\n\nRefresh sources\nSearch the data room catalogue\n\n1 matching sources · showing 1.\n\ndw1-synopsis.txt\nReadable"
+    },
+    {
+      "name": "390: not-licensed",
+      "status": 403,
+      "text": "Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it. Refresh sources Search the data room catalogue Not enabled for your organization This feature is not enabled for your organization, so the data room was not read.",
+      "retryOffered": false
+    },
+    {
+      "name": "390: out-of-release",
+      "status": 403,
+      "text": "Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it. Refresh sources Search the data room catalogue Not in this release This part of the product is not in this release, so the data room was not read.",
+      "retryOffered": false
+    },
+    {
+      "name": "390: server-failure",
+      "status": 500,
+      "text": "Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it. Refresh sources Search the data room catalogue The data room could not be read Request failed. Try again",
+      "retryOffered": true
+    }
+  ],
+  "finishedAt": "2026-11-05T06:07:27.694Z",
+  "ok": true
+}
