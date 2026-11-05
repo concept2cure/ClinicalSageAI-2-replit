@@ -144,10 +144,8 @@ function readableCsrText(source: string): string {
     .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"')
     .replace(/\s+/g, ' ').trim();
 }
-function HeadingRow({ jobId, heading, busy, onDecide }: {
-  jobId: number; heading: CsrBoardHeading; busy: boolean; onDecide: (decision: Decision, reason?: string) => void;
-}) {
-  const [reason, setReason] = useState<string | null>(null);
+/** The exact saved body of one heading, read on request and checked against its recorded content hash. */
+function useSavedSectionText(jobId: number, heading: CsrBoardHeading) {
   const [savedText, setSavedText] = useState<{ hash: string; text: string } | null>(null);
   const [reading, setReading] = useState(false);
   const [readError, setReadError] = useState<string | null>(null);
@@ -171,32 +169,68 @@ function HeadingRow({ jobId, heading, busy, onDecide }: {
       setReadError(error instanceof Error ? error.message : 'The saved draft is unavailable.');
     } finally { setReading(false); }
   };
-  const inspected = savedText?.hash === heading.contentHash && !!savedText.text;
+  const inspected = !!savedText && savedText.hash === heading.contentHash && !!savedText.text;
+  return { savedText, reading, readError, readSavedText, inspected };
+}
+
+/** The heading's number, title, state and the notes that qualify it. */
+function HeadingStatus({ heading }: { heading: CsrBoardHeading }) {
+  return <>
+    <span className="mono" style={{ color: 'var(--accent-200)' }}>{heading.num}</span>
+    <span>{heading.label}</span>
+    <span className={`rd-chip tone-${STATE_TONE[heading.state]}`}>{heading.integrityFailure
+      ? 'Saved text integrity failed' : heading.placeholder ? 'Template · data missing' : STATE_LABEL[heading.state]}</span>
+    {heading.integrityFailure && <span role="alert">The saved section no longer matches its recorded SHA-256. Review and import are blocked until the source is repaired.</span>}
+    {heading.manual && heading.state === 'not_drafted' && <span>Prepared from records, not drafted by the build</span>}
+    {heading.staleApproval && <span>Redrafted after approval; review again</span>}
+    {heading.state === 'draft' && heading.reason && <span>Sent back: {heading.reason}</span>}
+  </>;
+}
+
+/** Send for review, Approve (only once the exact saved text was read) and Send back. */
+function HeadingActions({ heading, busy, inspected, sendingBack, onDecide, onSendBack }: {
+  heading: CsrBoardHeading; busy: boolean; inspected: boolean; sendingBack: boolean;
+  onDecide: (decision: Decision, reason?: string) => void; onSendBack: () => void;
+}) {
+  const blocked = busy || heading.placeholder === true || heading.integrityFailure === true;
+  return <>
+    {heading.state === 'draft' && <button type="button" className="btn" disabled={blocked} title={heading.placeholder ? 'Complete source-data placeholders before review.' : undefined} onClick={() => onDecide('submit')}>{I.send} Send for review</button>}
+    {heading.state === 'in_review' && <button type="button" className="btn" disabled={blocked || !inspected}
+      title={heading.placeholder ? 'Complete source-data placeholders before approval.' : !inspected ? 'Read this exact saved draft before approving its content hash.' : undefined}
+      onClick={() => onDecide('approve')}>{I.check} Approve</button>}
+    {(heading.state === 'in_review' || heading.state === 'approved') && !sendingBack &&
+      <button type="button" className="btn" disabled={busy || heading.integrityFailure === true} onClick={onSendBack}>{I.undo} Send back</button>}
+  </>;
+}
+
+/** The read button, a failed read, and the saved text once read. */
+function SavedSectionText({ heading, busy, read }: {
+  heading: CsrBoardHeading; busy: boolean; read: ReturnType<typeof useSavedSectionText>;
+}) {
+  return <>
+    {heading.contentHash && !heading.integrityFailure && <button type="button" className="btn ghost" disabled={busy || read.reading} onClick={() => void read.readSavedText()}>
+      {read.reading ? 'Reading saved section…' : 'Read saved section text'}
+    </button>}
+    {read.readError && <p role="alert">{read.readError}</p>}
+    {read.inspected && read.savedText && <pre aria-label={`Saved text for §${heading.num}`}
+      style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 360, overflowY: 'auto', padding: 12 }}>
+      {read.savedText.text}
+    </pre>}
+  </>;
+}
+
+function HeadingRow({ jobId, heading, busy, onDecide }: {
+  jobId: number; heading: CsrBoardHeading; busy: boolean; onDecide: (decision: Decision, reason?: string) => void;
+}) {
+  const [reason, setReason] = useState<string | null>(null);
+  const read = useSavedSectionText(jobId, heading);
   return <li style={{ display: 'grid', gap: 4, padding: `4px 0 4px ${(heading.depth - 1) * 16}px` }}>
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-      <span className="mono" style={{ color: 'var(--accent-200)' }}>{heading.num}</span>
-      <span>{heading.label}</span>
-      <span className={`rd-chip tone-${STATE_TONE[heading.state]}`}>{heading.integrityFailure
-        ? 'Saved text integrity failed' : heading.placeholder ? 'Template · data missing' : STATE_LABEL[heading.state]}</span>
-      {heading.integrityFailure && <span role="alert">The saved section no longer matches its recorded SHA-256. Review and import are blocked until the source is repaired.</span>}
-      {heading.manual && heading.state === 'not_drafted' && <span>Prepared from records, not drafted by the build</span>}
-      {heading.staleApproval && <span>Redrafted after approval; review again</span>}
-      {heading.state === 'draft' && heading.reason && <span>Sent back: {heading.reason}</span>}
-      {heading.state === 'draft' && <button type="button" className="btn" disabled={busy || heading.placeholder === true || heading.integrityFailure === true} title={heading.placeholder ? 'Complete source-data placeholders before review.' : undefined} onClick={() => onDecide('submit')}>{I.send} Send for review</button>}
-      {heading.state === 'in_review' && <button type="button" className="btn" disabled={busy || heading.placeholder === true || heading.integrityFailure === true || !inspected}
-        title={heading.placeholder ? 'Complete source-data placeholders before approval.' : !inspected ? 'Read this exact saved draft before approving its content hash.' : undefined}
-        onClick={() => onDecide('approve')}>{I.check} Approve</button>}
-      {(heading.state === 'in_review' || heading.state === 'approved') && reason === null &&
-        <button type="button" className="btn" disabled={busy || heading.integrityFailure === true} onClick={() => setReason('')}>{I.undo} Send back</button>
+      <HeadingStatus heading={heading} />
+      <HeadingActions heading={heading} busy={busy} inspected={read.inspected} sendingBack={reason !== null}
+        onDecide={onDecide} onSendBack={() => setReason('')} />
     </div>
-    {heading.contentHash && !heading.integrityFailure && <button type="button" className="btn ghost" disabled={busy || reading} onClick={() => void readSavedText()}>
-      {reading ? 'Reading saved section…' : 'Read saved section text'}
-    </button>}
-    {readError && <p role="alert">{readError}</p>}
-    {inspected && <pre aria-label={`Saved text for §${heading.num}`}
-      style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 360, overflowY: 'auto', padding: 12 }}>
-      {savedText.text}
-    </pre>}
+    <SavedSectionText heading={heading} busy={busy} read={read} />
     {reason !== null && <SendBackForm reason={reason} setReason={setReason} busy={busy} num={heading.num}
       onConfirm={() => { onDecide('send_back', reason); setReason(null); }} />}
   </li>;

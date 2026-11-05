@@ -59,7 +59,7 @@ class DatabaseDouble implements NarrativeQueryable {
   failSave = false;
   failCommit = false;
   beforeOwnershipRead?: () => void;
-  private snapshot?: { saved: typeof this.saved; sections: typeof this.sections };
+  private snapshot?: { saved: DatabaseDouble['saved']; sections: DatabaseDouble['sections'] };
   async query(text: string, p: unknown[] = []): Promise<{ rows: Record<string, unknown>[] }> {
     const sql = text.replace(/\s+/g, ' ').trim();
     this.statements.push({ sql, params: [...p] });
