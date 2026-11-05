@@ -1,0 +1,58 @@
+case	name	baseline	repaired
+1	dedupe preserves different decisions after character 200	FAIL	PASS
+2	dedupe preserves different numeric results after character 200	FAIL	PASS
+3	dedupe preserves different sources after character 200	FAIL	PASS
+4	dedupe preserves different final character at the 5000-character limit	FAIL	PASS
+5	dedupe preserves a known djb2 hash collision	FAIL	PASS
+6	dedupe preserves different Unicode text after character 200	FAIL	PASS
+7	an opposite conclusion after a shared opening reaches human review, not duplicate rejection	FAIL	PASS
+8	an exact long duplicate is still rejected	PASS	PASS
+9	existing case-and-whitespace normalization still identifies duplicates	PASS	PASS
+10	equal content in different categories is not a duplicate	PASS	PASS
+11	category/content field boundaries do not collide	FAIL	PASS
+12	opposite phrases still flag is sufficient / is insufficient in both directions	PASS	PASS
+13	two matching is insufficient assessments do not contradict each other	PASS	PASS
+14	two matching is sufficient assessments do not contradict each other	PASS	PASS
+15	opposite phrases still flag is adequate / is inadequate in both directions	PASS	PASS
+16	two matching is inadequate assessments do not contradict each other	PASS	PASS
+17	two matching is adequate assessments do not contradict each other	PASS	PASS
+18	opposite phrases still flag meets requirements / does not meet requirements in both directions	PASS	PASS
+19	two matching does not meet requirements assessments do not contradict each other	PASS	PASS
+20	two matching meets requirements assessments do not contradict each other	PASS	PASS
+21	opposite phrases still flag no risk / significant risk in both directions	PASS	PASS
+22	two matching significant risk assessments do not contradict each other	PASS	PASS
+23	two matching no risk assessments do not contradict each other	PASS	PASS
+24	opposite phrases still flag compliant / non-compliant in both directions	FAIL	PASS
+25	two matching non-compliant assessments do not contradict each other	FAIL	PASS
+26	two matching compliant assessments do not contradict each other	PASS	PASS
+27	opposite phrases still flag complete / incomplete in both directions	FAIL	PASS
+28	two matching incomplete assessments do not contradict each other	FAIL	PASS
+29	two matching complete assessments do not contradict each other	PASS	PASS
+30	opposite phrases still flag no gaps / data gaps in both directions	PASS	PASS
+31	two matching data gaps assessments do not contradict each other	PASS	PASS
+32	two matching no gaps assessments do not contradict each other	PASS	PASS
+33	opposite phrases still flag approved / rejected in both directions	PASS	PASS
+34	two matching rejected assessments do not contradict each other	PASS	PASS
+35	two matching approved assessments do not contradict each other	PASS	PASS
+36	a word fragment is not the phrase: unapproved	FAIL	PASS
+37	a word fragment is not the phrase: unrejected	FAIL	PASS
+38	a word fragment is not the phrase: completeness	FAIL	PASS
+39	a word fragment is not the phrase: non-compliantness	FAIL	PASS
+40	a word fragment is not the phrase: no risks	FAIL	PASS
+41	a word fragment is not the phrase: incomplete_record	FAIL	PASS
+42	a word fragment is not the phrase: αapproved	FAIL	PASS
+43	a word fragment is not the phrase: approvedβ	FAIL	PASS
+44	a word fragment is not the phrase: approved2	FAIL	PASS
+45	a word fragment is not the phrase: approved́ness	FAIL	PASS
+46	whitespace and case do not hide a configured multi-word conflict	FAIL	PASS
+47	punctuation boundaries retain the configured phrases	PASS	PASS
+48	masking a negative phrase does not erase a separate positive assertion	FAIL	PASS
+49	a conflict notice states the opposing assertion even when existing text contains both	FAIL	PASS
+50	multiple conflicts in one entry do not duplicate its identifier	PASS	PASS
+51	different conflicting entries retain their separate identifiers	PASS	PASS
+52	the full acceptance path does not quarantine two non-compliant assessments	FAIL	PASS
+53	low-quality content is not auto-accepted merely because a false conflict was removed	FAIL	PASS
+54	sub-floor confidence is still rejected	PASS	PASS
+55	length rejection boundaries are unchanged	PASS	PASS
+56	content, provenance and thread attribution survive unchanged	PASS	PASS
+57	no comparison records means no inferred contradiction	PASS	PASS
