@@ -1,0 +1,72 @@
+{
+  "baselineCommit": "1aa22ba92418682b86e757fc409411d1bca4b55d",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "node": "22.16.0",
+  "method": "Actual complete TypeScript route and canonical profile/tenant helpers; controlled Express registration, auth middleware, enrichment, map and catalog dependencies",
+  "results": {
+    "before": {
+      "tests": 70,
+      "pass": 32,
+      "fail": 38,
+      "skipped": 0,
+      "rawTapSha256": "b2f241a1e30acf5e0b1615d6ba3fa806bed57a2bf8fbf3590665d7e834ce1705"
+    },
+    "after": {
+      "tests": 70,
+      "pass": 70,
+      "fail": 0,
+      "skipped": 0,
+      "rawTapSha256": "4ad9879ac769495982d6efdf6c9966fb4d60d4777a3b1679aad713f5c2c885a6"
+    }
+  },
+  "files": {
+    "baseline": {
+      "server/routes/workspace-config.routes.ts": {
+        "bytes": 4988,
+        "gitBlobSha1": "b02e68730fade411b43cde6e83c15c185d0218cb",
+        "sha256": "ee0d155c2781466b62a33a673333df131e21cc5bd1ae27585cf205befac709cf"
+      },
+      "server/utils/authedOrgId.ts": {
+        "bytes": 5382,
+        "gitBlobSha1": "a144616db8a46c171ed9bbfb8fa948c81483d035",
+        "sha256": "990fef3d33b036da62eae94c076070d3ac3ea699136216588327a8b02f21585b"
+      },
+      "shared/regulatory/region-profiles.ts": {
+        "bytes": 3823,
+        "gitBlobSha1": "c84dc42e90b1cf34f22eedf323ab0d401de2e556",
+        "sha256": "15e488855ac8903189c8b6c2a19496a4c978376b7dc3d04d4409f6004b349786"
+      },
+      "shared/regulatory/client-type-profiles.ts": {
+        "bytes": 5873,
+        "gitBlobSha1": "95f5b581cc1bd4abf95559b6b8a89bcc0d51c6cd",
+        "sha256": "dfe17427715f53f73daf34aa33e86b578bc09ffc1d4262e36fa4ca1a53ec2d10"
+      }
+    },
+    "patched": {
+      "server/routes/workspace-config.routes.ts": {
+        "bytes": 6675,
+        "gitBlobSha1": "893c556f04259ac28bac9d02491dbc015c32d8a5",
+        "sha256": "83555dcf12f03a8898d1f169078009068f842e18ab3df610311327033807201e"
+      },
+      "server/utils/authedOrgId.ts": {
+        "bytes": 5382,
+        "gitBlobSha1": "a144616db8a46c171ed9bbfb8fa948c81483d035",
+        "sha256": "990fef3d33b036da62eae94c076070d3ac3ea699136216588327a8b02f21585b"
+      },
+      "shared/regulatory/region-profiles.ts": {
+        "bytes": 3823,
+        "gitBlobSha1": "c84dc42e90b1cf34f22eedf323ab0d401de2e556",
+        "sha256": "15e488855ac8903189c8b6c2a19496a4c978376b7dc3d04d4409f6004b349786"
+      },
+      "shared/regulatory/client-type-profiles.ts": {
+        "bytes": 5873,
+        "gitBlobSha1": "95f5b581cc1bd4abf95559b6b8a89bcc0d51c6cd",
+        "sha256": "dfe17427715f53f73daf34aa33e86b578bc09ffc1d4262e36fa4ca1a53ec2d10"
+      }
+    }
+  },
+  "nativeHttp": "24 cases authored; not executed (Express/Supertest/Vitest unavailable)",
+  "semanticTypecheck": "not run",
+  "liveAuthorizationOrRegulatoryQualification": false
+}

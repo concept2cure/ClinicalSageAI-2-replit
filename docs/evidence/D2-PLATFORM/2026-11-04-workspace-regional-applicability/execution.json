@@ -1,0 +1,118 @@
+{
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "baseline_commit": "354e91931ba4ce96edfeb0bf14aaa45de605453e",
+  "plan": "F1",
+  "execution": "Node complete-module behavioral tests; synthetic collaborator registry/profile/license/policy data, no external services",
+  "node": "v22.16.0",
+  "typescript": "5.8.3",
+  "results": {
+    "before": {
+      "tests": 33,
+      "pass": 7,
+      "fail": 26,
+      "skipped": 0
+    },
+    "after": {
+      "tests": 33,
+      "pass": 33,
+      "fail": 0,
+      "skipped": 0
+    },
+    "previous-baseline": {
+      "tests": 55,
+      "pass": 55,
+      "fail": 0,
+      "skipped": 0
+    },
+    "previous-regression": {
+      "tests": 55,
+      "pass": 55,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "native_catalog_cases": {
+    "authored": 13,
+    "executed": 0
+  },
+  "unchanged_complete_workspace_source": {
+    "bytes": 18227,
+    "sha256": "f035d1f6920a64a621c5ee35907eef568db48dcac1fe9ba75c779585ba701926",
+    "git_blob": "5e3803cee0db86677ab73def43e5965e9d3e0a69"
+  },
+  "sources": {
+    "server/services/regulatory/workspace-config-enrichment.ts": {
+      "before": {
+        "bytes": 6127,
+        "sha256": "072ee2735e1d72180b019264f4d2d9889fa8af7c7b83abe8d458c5a590b7669f",
+        "git_blob": "2bdaaf2499e036a9ea3c370e5227b53425f353ea"
+      },
+      "after": {
+        "bytes": 7440,
+        "sha256": "9025806edca63b49b0225522b04345a524773b4b0662623a98be813cf1086eaf",
+        "git_blob": "e1fa5e8a7077c2f161a035f6a61f22c7fc3e71d3"
+      }
+    },
+    "tests/regulatory/workspace-isolation-harness.cjs": {
+      "before": {
+        "bytes": 7461,
+        "sha256": "a3cfd08d710c45dcdbd1fa25320a18e2754b2eb4f030c4e866ca149e2d0ba82f",
+        "git_blob": "391a0d9e6d57cd233a422417a45f38192dbecdd4"
+      },
+      "after": {
+        "bytes": 7461,
+        "sha256": "a3cfd08d710c45dcdbd1fa25320a18e2754b2eb4f030c4e866ca149e2d0ba82f",
+        "git_blob": "391a0d9e6d57cd233a422417a45f38192dbecdd4"
+      }
+    },
+    "tests/regulatory/workspace-regional-applicability.test.cjs": {
+      "before": {
+        "bytes": 7789,
+        "sha256": "78e479ddf0626cc2556fcffe9b1ac19162c385051ed8c14e565e99894d6c225d",
+        "git_blob": "3840e41165d8b0b0c6bf589201675d099f498ad1"
+      },
+      "after": {
+        "bytes": 7789,
+        "sha256": "78e479ddf0626cc2556fcffe9b1ac19162c385051ed8c14e565e99894d6c225d",
+        "git_blob": "3840e41165d8b0b0c6bf589201675d099f498ad1"
+      }
+    },
+    "tests/regulatory/workspace-regional-applicability.catalog.test.ts": {
+      "before": null,
+      "after": {
+        "bytes": 3493,
+        "sha256": "d375cf43faa85c1470480cc43bcd8db0fedcc66160fe413340115e72b92f8b82",
+        "git_blob": "9837c8314eefa7dadb84964cca8b667445463695"
+      }
+    }
+  },
+  "raw_logs": {
+    "before": {
+      "bytes": 27185,
+      "sha256": "fb06bed59bde2583f9d6ebff9423b162f7e747fc5a17f10b8563286962cd2b28",
+      "git_blob": "84b982e3670309e6c0a99075ca90a6ad3de63376"
+    },
+    "after": {
+      "bytes": 7800,
+      "sha256": "096c69e4f782dd55340986f133146c8ec3c1a90f39865ec27ddc410b6b2e5024",
+      "git_blob": "41820bd6cc52987755fd4f6f9ec5772aab866bad"
+    },
+    "previous-baseline": {
+      "bytes": 12080,
+      "sha256": "30fdc91c1bf9baf2fae3e6a3191de1d5e0d13d708f0318e58b824cae42a22132",
+      "git_blob": "95a2282163b79acf748268e64a3871f8a97a3308"
+    },
+    "previous-regression": {
+      "bytes": 12072,
+      "sha256": "664794e46ea8396851801c3c74d12ed096af370693422e9bb849fac0bdc1ff6e",
+      "git_blob": "7ca6a45abd13ed3b52898b6748fbfc4b6b4b94f4"
+    }
+  },
+  "limitations": [
+    "No full repository semantic typecheck/build or pre-push hooks",
+    "No native Vitest/HTTP/DB/browser or live licensing",
+    "No legal or regulatory revalidation; region support and release gates unchanged",
+    "Publication is verified separately by reading the remote branch; this file alone does not establish push success"
+  ]
+}
