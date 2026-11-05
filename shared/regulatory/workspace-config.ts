@@ -422,7 +422,12 @@ function buildClientTypeCore(industry: string): WorkspaceClientTypeConfig | unde
  *   server enrichment layer fills the remaining (server-only) overlay fields.
  */
 export function resolveWorkspaceConfig(input: WorkspaceConfigInput): WorkspaceConfig {
-  if (typeof input === 'string') return resolveBaseConfig(input);
+  // A workspace is a caller-owned projection, not a mutable view of the
+  // platform's shared registries. Deep-copy at the public boundary so nested
+  // requirements, app/service metadata, standards, claim mappings and client
+  // terminology cannot rewrite another project's configuration. Keep the copy
+  // editable for the existing server enrichment; do not freeze global records.
+  if (typeof input === 'string') return structuredClone(resolveBaseConfig(input));
 
   const base = resolveBaseConfig(input.need);
   if (input.clientType) {
@@ -433,7 +438,7 @@ export function resolveWorkspaceConfig(input: WorkspaceConfigInput): WorkspaceCo
     const rg = buildRegionCore(input.region);
     if (rg) base.region = rg;
   }
-  return base;
+  return structuredClone(base);
 }
 
 export default { resolveWorkspaceConfig, buildSelectionCatalog };

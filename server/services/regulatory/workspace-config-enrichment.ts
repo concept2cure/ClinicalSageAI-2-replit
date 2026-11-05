@@ -96,13 +96,26 @@ export async function enrichWorkspaceConfig(
     try {
       const lic = await getLicenseInfo(input.organizationId);
       if (lic) {
-        config.clientType.entitlement = { tier: lic.tier, enabledModules: lic.enabledModules };
+        // Treat an unavailable or malformed license projection as unknown,
+        // never as an empty grant or an upgrade decision. These are shape
+        // checks, not a second tier/module policy; the existing registry still
+        // owns which grant permits an app.
+        const enabledModules = Array.isArray(lic.enabledModules) ? [...lic.enabledModules] : null;
+        if (typeof lic.tier !== 'string' || !lic.tier.trim() ||
+            !enabledModules ||
+            !enabledModules.every(moduleId => typeof moduleId === 'string' && !!moduleId.trim())) {
+          return config;
+        }
+        // Detach the cached/source array before deriving app availability.
+        // The returned tier/modules and the access lists must describe the
+        // same read even if the provider's cached object is changed later.
+        const entitlement = { tier: lic.tier, enabledModules };
 
         // App-level gating falls straight out of the unified app-registry: an app
         // accepts its canonical owner and the explicit legacy grant keys retained
         // by that registry. This projection does not replace effective route/
         // tool access checks. Apps with no moduleId remain always accessible.
-        const enabled = new Set(lic.enabledModules);
+        const enabled = new Set(entitlement.enabledModules);
         const accessible: typeof config.clientType.accessibleApps = [];
         const locked: typeof config.clientType.lockedApps = [];
         for (const a of config.apps) {
@@ -110,6 +123,10 @@ export async function enrichWorkspaceConfig(
           if (mod && !appModuleEnabled(a.id, enabled)) locked.push({ id: a.id, requiredModule: mod });
           else accessible.push(a.id);
         }
+        // Publish the entitlement and both lists together, only after every
+        // app was evaluated. A failed registry lookup must not leave a partial
+        // entitlement that looks successfully assessed.
+        config.clientType.entitlement = entitlement;
         config.clientType.accessibleApps = accessible;
         config.clientType.lockedApps = locked;
       }
