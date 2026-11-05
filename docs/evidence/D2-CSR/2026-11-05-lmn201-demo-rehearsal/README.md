@@ -6,6 +6,11 @@ walked the CSR path in the running app, as three people, on a database provision
 (`../2026-11-02-phase2-demo-walk/README.md`) and the LMN-201 sandbox runbook
 (`data/seeds/lumen-demo/LMN201_CSR_SANDBOX_RUNBOOK.md`).
 
+**Read with the CSR lane's lifecycle walk.** `docs/evidence/DEMO/2026-11-05-csr-lifecycle/README.md` is the
+canonical walk of this path. It covers the CDISC pilot, runs as the runtime role with RLS forced, and holds the
+re-walk scripts. This rehearsal is its companion on the Lumen pack. The two agree on F2, F6 and F10. R-1 to R-4
+below were found only here and were sent to that lane on 2026-11-05.
+
 **Nothing here is Lumen's data.** The pack shows "Lumen Bioscience (demo — not affiliated)", and the CSR source is
 the kit's SYNTHETIC LMN-201-like Part B fixture: 23 invented participants, labelled "NOT ACTUAL DATA" on every
 table.
