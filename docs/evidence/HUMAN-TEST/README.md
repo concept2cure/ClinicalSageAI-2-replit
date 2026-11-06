@@ -42,6 +42,18 @@ Each serves the one goal: working software in testers' hands. None changes the p
 5. **Progress records.** Progress is recorded in `.design/claude-convergence/COORDINATION.md` and in these evidence
    folders. The plan's progress log is not edited by this session.
 
+## Where testers run it
+
+`docker-compose.beta.yml` on one VM: 16 GB of RAM, 4 vCPUs, Docker, a DNS name, an HTTPS front, SMTP and the
+organisation's Anthropic key. Until 2026-11-06 this stack could not start. It now:
+- provisions itself;
+- reports `/readyz` 200;
+- lets the first administrator be created with `SETUP_TOKEN`;
+- signs that person in through the UI with the emailed code.
+
+The run and the operator's steps are in `2026-11-06-beta-stack/README.md`. The founder supplies the VM, the DNS name,
+SMTP and the key. Nothing else is missing.
+
 ## The testers' guide
 
 When J1–J5 report, the verified steps, the accounts and the known limits become one guide for human testers.
