@@ -33,7 +33,7 @@ async function shot(page, name) {
   const h = await page.evaluate(() => {
     let m = document.documentElement.scrollHeight;
     for (const e of document.querySelectorAll('*')) {
-      const s = getComputedStyle(e);
+      const s = window.getComputedStyle(e);
       if (/(auto|scroll)/.test(s.overflowY) && e.scrollHeight > e.clientHeight + 5) m = Math.max(m, e.scrollHeight + e.getBoundingClientRect().top);
     }
     return Math.min(m, 9000);
