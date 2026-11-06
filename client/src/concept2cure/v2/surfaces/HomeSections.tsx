@@ -10,6 +10,7 @@ import { openProjectHome } from '../shellProject';
 import { applySurfaceAction } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
+import { WS_LABEL } from './ProjectPortfolioFilters';
 import { OpenWorkGroups, useOpenWorkReads } from '../OpenWork';
 import { taskActorScope, taskTargetLocation } from '../taskTarget';
 import { useAuth } from '@/services/portal/authService';
@@ -97,7 +98,7 @@ export function HomeProjects({
       ) : empty ? (
         <div className="home-first" data-testid="home-first-project">
           <p className="home-first-lead">
-            A project holds one regulatory filing, for example an IND, and everything that goes into it. You work
+            A project holds one regulatory filing, for example an IND or a 510(k), and everything that goes into it. You work
             through it in six steps:
           </p>
           <ol className="home-steps">
@@ -122,7 +123,7 @@ export function HomeProjects({
                   onClick={() => openProjectHome({ id: p.id, title: p.title, code: p.code, ws: p.ws, status: p.status }, onNav)}
                 >
                   <span className="home-row-t">{p.code ? `${p.code} — ${p.title}` : p.title}</span>
-                  <span className="home-row-m">{[p.ws, p.stage, p.status].filter(Boolean).join(' · ')}</span>
+                  <span className="home-row-m">{[p.ws ? WS_LABEL[p.ws] ?? p.ws : null, p.stage, p.status].filter(Boolean).join(' · ')}</span>
                   <span className="home-row-go" aria-hidden="true">{I.right}</span>
                 </button>
               </li>
