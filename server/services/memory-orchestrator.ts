@@ -73,9 +73,9 @@ export interface MemoryPolicy {
   ranking: MemoryRankingPolicy;
   forgetting: MemoryForgettingPolicy;
   /**
-   * Number of leading content characters folded into the dedup key (after
-   * layer + title). Two atoms with the same layer, title, and content prefix
-   * collapse to the higher-scoring one.
+   * @deprecated Retained for compatibility with existing policy objects.
+   * Recall identity always compares complete content; this value no longer
+   * truncates comparisons or permits different conclusions to collapse.
    */
   dedupeContentKeyLength: number;
 }
@@ -208,8 +208,9 @@ export function shouldRemember(
 }
 
 /**
- * Collapse atoms that share a layer, title, and leading content to the
- * higher-scoring copy. Returns the survivors plus how many were dropped.
+ * Collapse complete duplicates within the same layer and category to the
+ * higher-scoring copy. Preserve the existing title/content case and edge-space
+ * equivalence, but never discard a changed conclusion after a shared prefix.
  */
 export function dedupeAtoms(
   atoms: RetrievedMemoryAtom[],
@@ -218,10 +219,14 @@ export function dedupeAtoms(
   const deduped = new Map<string, RetrievedMemoryAtom>();
 
   for (const atom of atoms) {
-    const key = `${atom.layer}:${atom.title.trim().toLowerCase()}:${atom.content
-      .slice(0, policy.dedupeContentKeyLength)
-      .trim()
-      .toLowerCase()}`;
+    // A tuple preserves boundaries even when a title or the text contains ':';
+    // compare complete strings rather than a prefix or a collision-prone hash.
+    const key = JSON.stringify([
+      atom.layer,
+      atom.category ?? null,
+      atom.title.trim().toLowerCase(),
+      atom.content.trim().toLowerCase(),
+    ]);
     const existing = deduped.get(key);
     if (!existing || scoreAtom(atom, policy) > scoreAtom(existing, policy)) {
       deduped.set(key, atom);

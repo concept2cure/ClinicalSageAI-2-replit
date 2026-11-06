@@ -1,0 +1,425 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+TAP version 13
+# (node:12) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: successful promotion retains tenant, stored content, embedding and commit-before-count
+ok 1 - successful promotion retains tenant, stored content, embedding and commit-before-count
+  ---
+  duration_ms: 4.319649
+  type: 'test'
+  ...
+# Subtest: empty scan is not a failure and opens no row scope
+ok 2 - empty scan is not a failure and opens no row scope
+  ---
+  duration_ms: 0.776146
+  type: 'test'
+  ...
+# Subtest: empty content remains a legitimate skip
+ok 3 - empty content remains a legitimate skip
+  ---
+  duration_ms: 0.439098
+  type: 'test'
+  ...
+# Subtest: missing profile remains a legitimate skip
+ok 4 - missing profile remains a legitimate skip
+  ---
+  duration_ms: 0.242448
+  type: 'test'
+  ...
+# Subtest: concurrently existing summary remains skipped, without another insert
+ok 5 - concurrently existing summary remains skipped, without another insert
+  ---
+  duration_ms: 0.483995
+  type: 'test'
+  ...
+# Subtest: gate rejection remains distinct and prevents embedding and transaction writes
+ok 6 - gate rejection remains distinct and prevents embedding and transaction writes
+  ---
+  duration_ms: 0.367442
+  type: 'test'
+  ...
+# Subtest: contradiction remains a stored quarantine rather than a successful promotion
+ok 7 - contradiction remains a stored quarantine rather than a successful promotion
+  ---
+  duration_ms: 0.566637
+  type: 'test'
+  ...
+# Subtest: noncontradiction pending-review disposition survives storage without confidence inflation
+ok 8 - noncontradiction pending-review disposition survives storage without confidence inflation
+  ---
+  duration_ms: 0.382425
+  type: 'test'
+  ...
+# Subtest: best-effort embedding failure retains durable unembedded content without provider payload logging
+ok 9 - best-effort embedding failure retains durable unembedded content without provider payload logging
+  ---
+  duration_ms: 0.817858
+  type: 'test'
+  ...
+# Subtest: comparison failure counts once as error and does not suppress the following tenant
+ok 10 - comparison failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.811248
+  type: 'test'
+  ...
+# Subtest: gate failure counts once as error and does not suppress the following tenant
+ok 11 - gate failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.570763
+  type: 'test'
+  ...
+# Subtest: begin failure counts once as error and does not suppress the following tenant
+ok 12 - begin failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.626635
+  type: 'test'
+  ...
+# Subtest: lock failure counts once as error and does not suppress the following tenant
+ok 13 - lock failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.393661
+  type: 'test'
+  ...
+# Subtest: dedupe failure counts once as error and does not suppress the following tenant
+ok 14 - dedupe failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.369276
+  type: 'test'
+  ...
+# Subtest: insert failure counts once as error and does not suppress the following tenant
+ok 15 - insert failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.445398
+  type: 'test'
+  ...
+# Subtest: commit-before failure counts once as error and does not suppress the following tenant
+ok 16 - commit-before failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.254105
+  type: 'test'
+  ...
+# Subtest: scope-open failure counts once as error and does not suppress the following tenant
+ok 17 - scope-open failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.266774
+  type: 'test'
+  ...
+# Subtest: scope-close failure counts once as error and does not suppress the following tenant
+ok 18 - scope-close failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.468792
+  type: 'test'
+  ...
+# Subtest: malformed JSON is an error, not a skip, and later work continues
+ok 19 - malformed JSON is an error, not a skip, and later work continues
+  ---
+  duration_ms: 0.381964
+  type: 'test'
+  ...
+# Subtest: invalid generation date is an error, not a skip, and later work continues
+ok 20 - invalid generation date is an error, not a skip, and later work continues
+  ---
+  duration_ms: 0.586967
+  type: 'test'
+  ...
+# Subtest: rollback failure does not erase the original failed attempt or abort later rows
+ok 21 - rollback failure does not erase the original failed attempt or abort later rows
+  ---
+  duration_ms: 0.400281
+  type: 'test'
+  ...
+# Subtest: mixed batch has separate success, quarantine, rejection, skip and failure counts
+ok 22 - mixed batch has separate success, quarantine, rejection, skip and failure counts
+  ---
+  duration_ms: 0.676519
+  type: 'test'
+  ...
+# Subtest: multiple scope failures are counted per attempted row, not one abort for the batch
+ok 23 - multiple scope failures are counted per attempted row, not one abort for the batch
+  ---
+  duration_ms: 0.286182
+  type: 'test'
+  ...
+# Subtest: scanError is one batch failure with no invented row outcomes or raw details
+ok 24 - scanError is one batch failure with no invented row outcomes or raw details
+  ---
+  duration_ms: 0.282117
+  type: 'test'
+  ...
+# Subtest: scanScopeError is one batch failure with no invented row outcomes or raw details
+ok 25 - scanScopeError is one batch failure with no invented row outcomes or raw details
+  ---
+  duration_ms: 0.198904
+  type: 'test'
+  ...
+# Subtest: a scheduled lease held elsewhere remains a no-work result
+ok 26 - a scheduled lease held elsewhere remains a no-work result
+  ---
+  duration_ms: 0.226775
+  type: 'test'
+  ...
+# Subtest: scheduled execution returns its actual partial-failure counts to the caller
+ok 27 - scheduled execution returns its actual partial-failure counts to the caller
+  ---
+  duration_ms: 0.36589
+  type: 'test'
+  ...
+# Subtest: scheduler lease error remains explicitly unavailable and omits raw exception payloads
+ok 28 - scheduler lease error remains explicitly unavailable and omits raw exception payloads
+  ---
+  duration_ms: 0.177762
+  type: 'test'
+  ...
+# Subtest: a non-Error thrown payload is counted without logging its contents
+ok 29 - a non-Error thrown payload is counted without logging its contents
+  ---
+  duration_ms: 0.504375
+  type: 'test'
+  ...
+# Subtest: failed save is retryable and does not fabricate a completed marker
+ok 30 - failed save is retryable and does not fabricate a completed marker
+  ---
+  duration_ms: 0.415443
+  type: 'test'
+  ...
+# Subtest: lost COMMIT acknowledgement is unconfirmed; retry still respects the existing duplicate guard
+ok 31 - lost COMMIT acknowledgement is unconfirmed; retry still respects the existing duplicate guard
+  ---
+  duration_ms: 0.558174
+  type: 'test'
+  ...
+# Subtest: cron initialization remains single-registration with the existing cadence
+ok 32 - cron initialization remains single-registration with the existing cadence
+  ---
+  duration_ms: 0.277039
+  type: 'test'
+  ...
+# Subtest: real gate: plain conversation remains pending without a contradiction
+ok 33 - real gate: plain conversation remains pending without a contradiction
+  ---
+  duration_ms: 0.964043
+  type: 'test'
+  ...
+# Subtest: real gate: structured conversation remains pending without a contradiction
+ok 34 - real gate: structured conversation remains pending without a contradiction
+  ---
+  duration_ms: 0.35199
+  type: 'test'
+  ...
+# Subtest: real gate: all six fields with KNOWN labels remains pending without a contradiction
+ok 35 - real gate: all six fields with KNOWN labels remains pending without a contradiction
+  ---
+  duration_ms: 0.289257
+  type: 'test'
+  ...
+# Subtest: real gate: matching negative assessments remains pending without a contradiction
+ok 36 - real gate: matching negative assessments remains pending without a contradiction
+  ---
+  duration_ms: 29.627224
+  type: 'test'
+  ...
+# Subtest: real gate: a genuine contradiction remains quarantined
+ok 37 - real gate: a genuine contradiction remains quarantined
+  ---
+  duration_ms: 0.525656
+  type: 'test'
+  ...
+# Subtest: real gate: short is rejected without embedding or storage
+ok 38 - real gate: short is rejected without embedding or storage
+  ---
+  duration_ms: 0.265132
+  type: 'test'
+  ...
+# Subtest: real gate: inferred only is rejected without embedding or storage
+ok 39 - real gate: inferred only is rejected without embedding or storage
+  ---
+  duration_ms: 0.219264
+  type: 'test'
+  ...
+# Subtest: real gate: duplicate is rejected without embedding or storage
+ok 40 - real gate: duplicate is rejected without embedding or storage
+  ---
+  duration_ms: 0.28444
+  type: 'test'
+  ...
+# Subtest: real gate: pending review is not lost during embed failure
+ok 41 - real gate: pending review is not lost during embed failure
+  ---
+  duration_ms: 0.435954
+  type: 'test'
+  ...
+# Subtest: real gate: pending review is not lost during insert failure
+ok 42 - real gate: pending review is not lost during insert failure
+  ---
+  duration_ms: 0.332031
+  type: 'test'
+  ...
+# Subtest: real gate: pending review is not lost during commit-after failure
+ok 43 - real gate: pending review is not lost during commit-after failure
+  ---
+  duration_ms: 0.395474
+  type: 'test'
+  ...
+# Subtest: real gate: scheduled mixed-tenant batch retains both scopes and pending outcomes
+ok 44 - real gate: scheduled mixed-tenant batch retains both scopes and pending outcomes
+  ---
+  duration_ms: 0.424577
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted with human review cannot become active
+ok 45 - controlled verdict: accepted with human review cannot become active
+  ---
+  duration_ms: 0.351119
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted with a contradiction cannot become active
+ok 46 - controlled verdict: accepted with a contradiction cannot become active
+  ---
+  duration_ms: 0.303709
+  type: 'test'
+  ...
+# Subtest: controlled verdict: pending with contradictory false flags cannot become active
+ok 47 - controlled verdict: pending with contradictory false flags cannot become active
+  ---
+  duration_ms: 0.554199
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted without a review flag cannot become active
+ok 48 - controlled verdict: accepted without a review flag cannot become active
+  ---
+  duration_ms: 0.244311
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted without a contradiction flag cannot become active
+ok 49 - controlled verdict: accepted without a contradiction flag cannot become active
+  ---
+  duration_ms: 0.508341
+  type: 'test'
+  ...
+# Subtest: controlled verdict: unavailable disposition unknown is a failure, not active memory
+ok 50 - controlled verdict: unavailable disposition unknown is a failure, not active memory
+  ---
+  duration_ms: 0.465418
+  type: 'test'
+  ...
+# Subtest: controlled verdict: unavailable disposition  is a failure, not active memory
+ok 51 - controlled verdict: unavailable disposition  is a failure, not active memory
+  ---
+  duration_ms: 0.191383
+  type: 'test'
+  ...
+# Subtest: controlled verdict: unavailable disposition undefined is a failure, not active memory
+ok 52 - controlled verdict: unavailable disposition undefined is a failure, not active memory
+  ---
+  duration_ms: 0.131323
+  type: 'test'
+  ...
+# Subtest: continuity: JSON object carries all seven fields through the real gate, embedding and storage
+ok 53 - continuity: JSON object carries all seven fields through the real gate, embedding and storage
+  ---
+  duration_ms: 0.668036
+  type: 'test'
+  ...
+# Subtest: continuity: serialized JSON carries all seven fields through the real gate, embedding and storage
+ok 54 - continuity: serialized JSON carries all seven fields through the real gate, embedding and storage
+  ---
+  duration_ms: 2.615603
+  type: 'test'
+  ...
+# Subtest: continuity: exclusions-only structured data preserves the raw summary fallback
+ok 55 - continuity: exclusions-only structured data preserves the raw summary fallback
+  ---
+  duration_ms: 0.251842
+  type: 'test'
+  ...
+# Subtest: continuity: a substantive exclusion is not skipped when the raw summary is empty
+ok 56 - continuity: a substantive exclusion is not skipped when the raw summary is empty
+  ---
+  duration_ms: 0.292932
+  type: 'test'
+  ...
+# Subtest: continuity: different exclusions do not become duplicate summaries at admission
+ok 57 - continuity: different exclusions do not become duplicate summaries at admission
+  ---
+  duration_ms: 0.905146
+  type: 'test'
+  ...
+# Subtest: continuity: an exact duplicate including exclusions is still rejected
+ok 58 - continuity: an exact duplicate including exclusions is still rejected
+  ---
+  duration_ms: 0.381383
+  type: 'test'
+  ...
+# Subtest: continuity: a KNOWN label inside an exclusion cannot validate an inferred-only summary
+not ok 59 - continuity: a KNOWN label inside an exclusion cannot validate an inferred-only summary
+  ---
+  duration_ms: 1.815792
+  type: 'test'
+  location: '/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:477:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+        errors: 0,
+        memoriesConsolidated: 0,
+    +   quarantined: 1,
+    +   rejectedByGate: 0,
+    -   quarantined: 0,
+    -   rejectedByGate: 1,
+        skipped: 0,
+        threadsProcessed: 1
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    threadsProcessed: 1
+    memoriesConsolidated: 0
+    skipped: 0
+    rejectedByGate: 1
+    quarantined: 0
+    errors: 0
+  actual:
+    threadsProcessed: 1
+    memoriesConsolidated: 0
+    skipped: 0
+    rejectedByGate: 0
+    quarantined: 1
+    errors: 0
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:482:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: continuity: absent or empty exclusions (undefined) preserve the legacy content
+ok 60 - continuity: absent or empty exclusions (undefined) preserve the legacy content
+  ---
+  duration_ms: 0.221888
+  type: 'test'
+  ...
+# Subtest: continuity: absent or empty exclusions ([]) preserve the legacy content
+ok 61 - continuity: absent or empty exclusions ([]) preserve the legacy content
+  ---
+  duration_ms: 0.156071
+  type: 'test'
+  ...
+# Subtest: continuity: absent or empty exclusions (null) preserve the legacy content
+ok 62 - continuity: absent or empty exclusions (null) preserve the legacy content
+  ---
+  duration_ms: 0.206765
+  type: 'test'
+  ...
+1..62
+# tests 62
+# suites 0
+# pass 61
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 497.778895

@@ -1,0 +1,31 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e
+  server/services/__tests__/ana-session-bootstrap.test.ts (504 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+(node:180) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:193) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:193) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+check-security-patterns: 0 violations across 3582 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 85c4f258] F1: keep memory regression suites within existing size limits
+ 15 files changed, 1803 insertions(+), 812 deletions(-)
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/assembler-lint-green.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/assembler-regroup-green.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/bootstrap-lint-green.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/bootstrap-regroup-green.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/consolidation-lint-green.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/consolidation-refactor-green.tap
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/pre-push-lint-failure.txt
+85c4f258b2c8b0292b6af59f7e56b8281b1da96b

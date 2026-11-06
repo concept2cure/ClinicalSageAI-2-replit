@@ -1,0 +1,477 @@
+{
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "baseline": "2cec182a17105da5863bab2fdb66ba1adef317e2",
+  "local_verification_as_of_utc": "2026-11-06T05:23:22Z",
+  "runtime": {
+    "node": "22.23.4",
+    "typescript": "5.6.3",
+    "dependencies": "existing locked npm ci installation"
+  },
+  "changed_source_and_test_files": {
+    "server/routes/chat/__tests__/send-message-read-only.test.ts": {
+      "sha256": "f7502a5428162c0cd7ac2e89590da2c592770b66ac1c84eddd23164116816316",
+      "git_blob": "b5f0799c34af68b30dd1fd5bdcca1200c0c4232f"
+    },
+    "server/routes/chat/send-message.ts": {
+      "sha256": "98555f1f30761856e71d0006da7ffc0079060c0dfd8d579ddd6c20a7c9a47f2c",
+      "git_blob": "59e54c3ce854eb298e8c3273e4efdb2870b6792f"
+    },
+    "server/services/__tests__/ana-session-bootstrap.test.ts": {
+      "sha256": "38ce5ff7371a2a3fc458f4c006f38c13a75f483e47ed78a3c32cc644e9567cac",
+      "git_blob": "8c6b9fbc31b1e9fd2fcd10937b8a89f5013b058a"
+    },
+    "server/services/__tests__/memory-context-assembler-deadline.test.ts": {
+      "sha256": "dd5db503289a5695b4aa5d709b440243c1b0dde2fdba4eff4d0f799c64a53958",
+      "git_blob": "a41e487f17ea0563ca1ec94562148a4402dd7d34"
+    },
+    "server/services/__tests__/working-memory-fact-check.test.ts": {
+      "sha256": "abebaf9dc7b11f3a0e3da70e65fb1de24d585c9951abac5038a13f535537afed",
+      "git_blob": "386e7c79ad29bcc21e543f612fc1ed381afe7bd9"
+    },
+    "server/services/__tests__/working-memory-project-recall.pglite.test.ts": {
+      "sha256": "d37a337e8b018ef2469d4a15ed250a3d9152e3f74bd496bcdb0fa7063a73a3fe",
+      "git_blob": "5e6cef8b94cbe1e1d3b30b3b9f82e01b1db96a2a"
+    },
+    "server/services/__tests__/working-memory.test.ts": {
+      "sha256": "774b81e5fc5d6e225b64015602d332853105f910b85b91b6e8ada9746433582b",
+      "git_blob": "7d49c94974bfab3c426b8f5d049042d27f31aa88"
+    },
+    "server/services/ana-session-bootstrap-format.ts": {
+      "sha256": "4f51052a5d0f1aba2d1f6df9345681ee8bbf6ae12f3d8031b238374392e5cadf",
+      "git_blob": "c5ae80ebffffcbbcdef3ec208b671ab8d2f35815"
+    },
+    "server/services/ana/__tests__/agentic-loop-rounds.test.ts": {
+      "sha256": "1d95cf100513b18cbcc8f11d9dea8826189a45da57359078e311677b0db5c951",
+      "git_blob": "ad12011543a285bf0d08c04af6c4ddefa4bcaece"
+    },
+    "server/services/ana/__tests__/turn-plan-and-context.test.ts": {
+      "sha256": "1e4eb698e913eabe2a5b3312191cf2720346840f054fefbfe528506c2c8547f3",
+      "git_blob": "dbe8cb44d42830e335e593ca8ae18cb2c9a30957"
+    },
+    "server/services/ana/agentic-loop.ts": {
+      "sha256": "ca9f2017e76cc0cc265097c9a8db085861126ec7bf999ac7d11cdc18e045d697",
+      "git_blob": "ef9c015331b8389c31afed9a99fbdfbd7fe30788"
+    },
+    "server/services/ana/turn-context-used.ts": {
+      "sha256": "2d96f928592429ffe1018427286e5db981b75adf3244d82db13f73c90162abc0",
+      "git_blob": "0419f46451017664111edc98a33340228a75ea3c"
+    },
+    "server/services/memory-consolidation-job.ts": {
+      "sha256": "411858fdba10eec272ffead7f418280fa763ca1e180a824ef679e62b8fc54fa0",
+      "git_blob": "9261e2b08830f16bb159c266f91f5b115a59d294"
+    },
+    "server/services/memory-context-assembler.ts": {
+      "sha256": "1c0c333d68021c6f6f358ce2ba09a0c5cde853bd37d6db7c408e6fd38bb93026",
+      "git_blob": "75c11479fc6ef3b8de93df0711d314f67e9e8672"
+    },
+    "server/services/working-memory.ts": {
+      "sha256": "ef9ceca85145b64f8f911c412448e444229b1987e7811bfef0b3ef436a53d170",
+      "git_blob": "5db1d1ca100beb724cc3b59fb38c401946e97d59"
+    },
+    "tests/services/ana/memory-consolidation-outcomes.test.cjs": {
+      "sha256": "b57f9a7e5ec4fa4f7e0b8f70155cffee67dff65a2a18bd010189d62265d3c000",
+      "git_blob": "71d5eaf32bf47598165e542e408c9b99408cbe88"
+    },
+    "tests/unit/memory-context-assembler.test.ts": {
+      "sha256": "12cce106b36add89d99d5c345deff26abbd8ef0bf7e78d08120ba440b6f2ab24",
+      "git_blob": "496cb302428df5347a9fb4501eb899af5cabb27f"
+    }
+  },
+  "red_green": {
+    "working_memory": {
+      "red_passed": 24,
+      "red_failed": 4,
+      "green_passed": 28
+    },
+    "assembler_context_used": {
+      "red_passed": 44,
+      "red_failed": 26,
+      "green_passed": 70,
+      "subsequent_exact_boundary_unit_passed": 27
+    },
+    "bootstrap": {
+      "red_passed": 25,
+      "red_failed": 10,
+      "green_passed": 35
+    },
+    "consolidation_quality_copy": {
+      "red_passed": 65,
+      "red_failed": 6,
+      "green_passed": 71
+    },
+    "json_chat_snapshot": {
+      "red_passed": 7,
+      "red_failed": 4,
+      "green_passed": 11
+    },
+    "recall_tool_handoff": {
+      "red_passed": 20,
+      "red_failed": 6,
+      "green_passed": 99,
+      "green_files": 6
+    }
+  },
+  "combined_final_runs": {
+    "node_tests": 128,
+    "vitest_tests": 323,
+    "vitest_files": 22,
+    "distinct_combined_tests": 451,
+    "failed": 0,
+    "build": "passed client, server and audit-chain verifier",
+    "companion_scan": "passed with filename-only warnings; actual companion suites executed",
+    "vitest_files_executed": [
+      "tests/unit/memory-context-assembler.test.ts",
+      "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+      "server/services/__tests__/memory-context-assembler-mode.test.ts",
+      "server/services/__tests__/memory-context-selected-project.test.ts",
+      "server/services/__tests__/memory-context-assembler-presents-no-confidence-percent.test.ts",
+      "server/services/__tests__/working-memory-fact-check.test.ts",
+      "server/services/__tests__/working-memory.test.ts",
+      "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+      "server/services/__tests__/working-memory-project-attribution.test.ts",
+      "server/services/__tests__/ana-session-bootstrap.test.ts",
+      "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+      "server/services/__tests__/memory-consolidation.pglite.integration.test.ts",
+      "server/services/__tests__/memory-orchestrator.test.ts",
+      "server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts",
+      "server/services/ana/__tests__/memory-fact-check.test.ts",
+      "server/services/ana/__tests__/turn-plan-and-context.test.ts",
+      "server/routes/chat/__tests__/send-message-read-only.test.ts",
+      "server/services/ana/__tests__/agentic-loop-rounds.test.ts",
+      "server/services/ana/__tests__/passage-round-budget.test.ts",
+      "server/services/ana/__tests__/passage-round-read-priority.test.ts",
+      "server/services/ana/__tests__/strict-round-body-budget.test.ts",
+      "server/services/ana/__tests__/read-receipts.test.ts"
+    ]
+  },
+  "pre_push": "complete unchanged hook passed on local candidate 85c4f258b2c8b0292b6af59f7e56b8281b1da96b before publication",
+  "logs": {
+    "working-red.txt": {
+      "source_capture": "next-memory-working-red.txt",
+      "capture_sha256": "ff086a1b0e0d7b337a1f08742a3a4272cad833476e3039a9170d42debac93194",
+      "stored_sha256": "030c7eef6949f939adb61a5c121e25390608ca658e8816f9d4acf4d9048990a4",
+      "bytes": 11235,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "working-green.txt": {
+      "source_capture": "next-memory-working-green.txt",
+      "capture_sha256": "21a65ffc727cc55a94d96aaeec30d19207872f82bf8f3a1ab2982f9b6dd7740a",
+      "stored_sha256": "053a4f9231e36a7cfa42ef4678c04259065cf6b866e3ae6a4a1806b3b34bc8ad",
+      "bytes": 7226,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "assembler-red.txt": {
+      "source_capture": "next-memory-assembler-red.txt",
+      "capture_sha256": "5c680e9982ae883f64ace14dce44d5743099e3e3d423d3ecfa6709ef1fb9101d",
+      "stored_sha256": "afd9c62bd3b81c2a3cd74f0d09d16daa04bac9470149cf22c914bdd9ac6c8b8d",
+      "bytes": 56378,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "assembler-green.txt": {
+      "source_capture": "next-memory-assembler-green.txt",
+      "capture_sha256": "da670625568c4ea669abc3e6ce1ade9580bfd32ac83d068b0befc65631d949ee",
+      "stored_sha256": "5904d16d34f9754dbfa6ab38706257a00eedba143e5f6f359131bdaf792751e8",
+      "bytes": 14473,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "assembler-boundary-green.txt": {
+      "source_capture": "next-memory-assembler-boundary-green.txt",
+      "capture_sha256": "7cfa70d544af7c273bf4d9f226fad60b4543220b9f62b1ca7c53e44637727e5a",
+      "stored_sha256": "5d230580454a0d546ad940f5162056a77c4c7b97963b9941c1284435533d0932",
+      "bytes": 6662,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "bootstrap-red.txt": {
+      "source_capture": "next-memory-bootstrap-red.txt",
+      "capture_sha256": "319dcffc5c1d9067a428102269be24f69f473f9716ea58f927290b22491a9e08",
+      "stored_sha256": "a6761c554c6dc557d308173f2aacb4b36a2bbd6d06231615546aba59b0fae2f1",
+      "bytes": 47916,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "bootstrap-green.txt": {
+      "source_capture": "next-memory-bootstrap-green.txt",
+      "capture_sha256": "21f6a46b1d592d5e4aa488e51d16528ebccf3f3739a792224c8ecd75f1a6c4ac",
+      "stored_sha256": "851888e8a72a0196e4f31914ea78a741edc8690d7164479285db879d071f324a",
+      "bytes": 7039,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "consolidation-label-red.tap": {
+      "source_capture": "next-memory-consolidation-label-red.txt",
+      "capture_sha256": "23f1ecaac69603b3e1c425fc590a151db5e509c639747da7492f315b024ce4a0",
+      "stored_sha256": "1e4ba5be1a9b222cc3ba671c5b43f0c7ac5f5f1dcc6aa9730599a9cc21c94db8",
+      "bytes": 23371,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {
+        "370": "    ",
+        "380": "    ",
+        "414": "    ",
+        "424": "    ",
+        "458": "    ",
+        "468": "    ",
+        "502": "    ",
+        "512": "    ",
+        "546": "    ",
+        "556": "    ",
+        "589": "    ",
+        "591": "    "
+      }
+    },
+    "consolidation-label-green.tap": {
+      "source_capture": "next-memory-consolidation-label-green.txt",
+      "capture_sha256": "172dd0e04b53480dcd09bd479ec82a1d74b46fdcedbf85db4240b391c59581ef",
+      "stored_sha256": "172dd0e04b53480dcd09bd479ec82a1d74b46fdcedbf85db4240b391c59581ef",
+      "bytes": 16285,
+      "normalization": "none",
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "snapshot-red.txt": {
+      "source_capture": "next-memory-snapshot-red.txt",
+      "capture_sha256": "d4ebd3946ad6bda2d01a471491c76a3d51d7eefd88bf08bf9e572f2a88f15b32",
+      "stored_sha256": "ffb47c9b750fcb47620bdbadedf5f91d405e7e9620823b140b5f5d84a2d734c0",
+      "bytes": 21707,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "snapshot-green.txt": {
+      "source_capture": "next-memory-snapshot-green.txt",
+      "capture_sha256": "4a413af39c254775f693e0faa14b22b1696dfbb569802753fae2107bdc53037e",
+      "stored_sha256": "a12b0817b1e6a9364a2d8b8ee69ddee7e01542066c14881f43e1cbeb6f82988a",
+      "bytes": 15410,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "tool-handoff-red.txt": {
+      "source_capture": "next-memory-tool-handoff-red.txt",
+      "capture_sha256": "f9d7fd0d4edc1186c96ee66187608199397dbce426af0460d211684ce29a2be6",
+      "stored_sha256": "4002b8d0c6c361a93a78b425eb892414d2aad12c468d422ce8f42d9eefbe2499",
+      "bytes": 11405,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "tool-handoff-green.txt": {
+      "source_capture": "next-memory-tool-handoff-green.txt",
+      "capture_sha256": "a1571a2624736bc4c2948f0943c267f9b19b891caa4ebc1d132180e181bd80ba",
+      "stored_sha256": "d5d40b81ce58f280d5fe2b0c4561cb9ca3ac48e48a5d4fd3078950cbe5888725",
+      "bytes": 26312,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "final-behavioral.tap": {
+      "source_capture": "next-memory-final-behavioral.tap",
+      "capture_sha256": "a588ff05cce84e685a3ab4295b7ed5cb6e9cf11b303f480fad0f7c35492c4c9f",
+      "stored_sha256": "a588ff05cce84e685a3ab4295b7ed5cb6e9cf11b303f480fad0f7c35492c4c9f",
+      "bytes": 27626,
+      "normalization": "none",
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "final-vitest.txt": {
+      "source_capture": "next-memory-final-vitest.txt",
+      "capture_sha256": "d7cba50726f405b59b32d6d4cf379c98f556e9d8eb5c204c6ba6c90a7f802701",
+      "stored_sha256": "8401668922bc998a721b7a0e30af8ce97295d0b150804d3816a8ffaf90bf6e91",
+      "bytes": 115954,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "build.txt": {
+      "source_capture": "next-memory-build.txt",
+      "capture_sha256": "404e8606741e42f0b30d21a5bea21493e3c53fef9a6941f501265a7d37cde2fd",
+      "stored_sha256": "404e8606741e42f0b30d21a5bea21493e3c53fef9a6941f501265a7d37cde2fd",
+      "bytes": 17661,
+      "normalization": "none",
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "verify-tests.txt": {
+      "source_capture": "next-memory-verify-tests.txt",
+      "capture_sha256": "a5cfd46942ea2809100354e712669d505eaba64c460188d6b19d94106da56b3d",
+      "stored_sha256": "a5cfd46942ea2809100354e712669d505eaba64c460188d6b19d94106da56b3d",
+      "bytes": 219,
+      "normalization": "none",
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "bootstrap-regroup-green.txt": {
+      "source_capture": "next-memory-bootstrap-regroup-green.txt",
+      "capture_sha256": "808c55b45590edbd15873cb679c64d2b12a582d0259c7cb26bca35dc1cfb387d",
+      "stored_sha256": "f9cc88d4dfd5872f7e4ae48aca2174bc2b87e1b55899b54d615fd33d51065938",
+      "bytes": 6958,
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "bootstrap-lint-green.txt": {
+      "source_capture": "next-memory-bootstrap-lint-green.txt",
+      "capture_sha256": "5b409d9e78f06352b89a0378e6ac4e7e81254e847af559174018746f8dfad2d9",
+      "stored_sha256": "5b409d9e78f06352b89a0378e6ac4e7e81254e847af559174018746f8dfad2d9",
+      "bytes": 456,
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "none"
+    },
+    "assembler-regroup-green.txt": {
+      "source_capture": "next-memory-assembler-regroup-green.txt",
+      "capture_sha256": "2d41743961fd8d68cb79bba4867e7029d33f28c5ae1d95206d7fdef75ed70287",
+      "stored_sha256": "ceee13d61b0000a247f7e63458e73f3e2888a7f00a1feb6d25b5afa7f8eb0ffb",
+      "bytes": 6662,
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "assembler-lint-green.txt": {
+      "source_capture": "next-memory-assembler-lint-green.txt",
+      "capture_sha256": "48c3d00ce62bdc87eb2bd6a84a116043cfe969e90778e034a6b03f5100d12179",
+      "stored_sha256": "69434d68a926da4d2b4991d3e5f2988663dda8a12e83648135538728ccbc01b7",
+      "bytes": 685,
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "consolidation-refactor-green.tap": {
+      "source_capture": "next-memory-consolidation-refactor-green.tap",
+      "capture_sha256": "c9b8cb8534fb2e1c1b4968c6c5c533e01ef39770030d88962dd89e18860666d1",
+      "stored_sha256": "c9b8cb8534fb2e1c1b4968c6c5c533e01ef39770030d88962dd89e18860666d1",
+      "bytes": 16297,
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "none"
+    },
+    "consolidation-lint-green.txt": {
+      "source_capture": "next-memory-consolidation-lint-green.txt",
+      "capture_sha256": "76bb02c1c1fe2d7d09bc4ee961aaed5bec38c3c6e4ebccaef189a562cd80dc25",
+      "stored_sha256": "4cd3ef5788260fd3d82cb84b9dffed48ba5958613f0b5c83057125ea9bc06d1e",
+      "bytes": 427,
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "pre-push-lint-failure.txt": {
+      "source_capture": "next-memory-pre-push-lint-failure.txt",
+      "capture_sha256": "75e761fcfd787387a8e2e33d18c602ff222446f74988428941a7791d4b37ca76",
+      "stored_sha256": "82341909d47d98fc45f37d21e548e334d91987145570fea765ad78868aea715a",
+      "bytes": 30468,
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "pre-push.txt": {
+      "source_capture": "next-memory-pre-push.txt",
+      "capture_sha256": "11878ec7f49f12f27b5f983ea658e7db333946bfed255107e3b1db8a070d1160",
+      "stored_sha256": "11878ec7f49f12f27b5f983ea658e7db333946bfed255107e3b1db8a070d1160",
+      "bytes": 35301,
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "none"
+    },
+    "pre-commit-implementation.txt": {
+      "source_capture": "next-memory-pre-commit.txt",
+      "capture_sha256": "a5402bc450c1810733826c36d4437a12671d52b9159f69addfcad9d2d5daf47d",
+      "stored_sha256": "fdc666bed1433a536d82ba5e0e89e03aa708019e0184304e35b98c02f8d4a43c",
+      "bytes": 3493,
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {
+        "15": " "
+      },
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "pre-commit-tests.txt": {
+      "source_capture": "next-memory-test-cleanup-pre-commit.txt",
+      "capture_sha256": "ad3e8f82beb39e776d5fb87cf46a10705e3877d307a1bbe18164fa981b9b24e0",
+      "stored_sha256": "b6876a82f2d36e4761185e7617cf777c803a5a80ed461da15385fd30d9fdb77a",
+      "bytes": 1912,
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {
+        "5": " "
+      },
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    }
+  },
+  "commands": {
+    "node": "node --test tests/services/ana/memory-consolidation-outcomes.test.cjs tests/services/ana/memory-acceptance-fidelity.test.cjs",
+    "vitest": "node --import tsx ./node_modules/vitest/vitest.mjs run tests/unit/memory-context-assembler.test.ts server/services/__tests__/memory-context-assembler-deadline.test.ts server/services/__tests__/memory-context-assembler-mode.test.ts server/services/__tests__/memory-context-selected-project.test.ts server/services/__tests__/memory-context-assembler-presents-no-confidence-percent.test.ts server/services/__tests__/working-memory-fact-check.test.ts server/services/__tests__/working-memory.test.ts server/services/__tests__/working-memory-project-recall.pglite.test.ts server/services/__tests__/working-memory-project-attribution.test.ts server/services/__tests__/ana-session-bootstrap.test.ts server/services/__tests__/ana-session-bootstrap-latency.test.ts server/services/__tests__/memory-consolidation.pglite.integration.test.ts server/services/__tests__/memory-orchestrator.test.ts server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts server/services/ana/__tests__/memory-fact-check.test.ts server/services/ana/__tests__/turn-plan-and-context.test.ts server/routes/chat/__tests__/send-message-read-only.test.ts server/services/ana/__tests__/agentic-loop-rounds.test.ts server/services/ana/__tests__/passage-round-budget.test.ts server/services/ana/__tests__/passage-round-read-priority.test.ts server/services/ana/__tests__/strict-round-body-budget.test.ts server/services/ana/__tests__/read-receipts.test.ts",
+    "build": "npm run build",
+    "companion_scan": "bash scripts/ai/verify-tests.sh",
+    "runtime_path_prefix": "/workspace/scratch/873134e51e15/node22-runtime/node_modules/node/bin"
+  },
+  "pre_push_attempts": [
+    {
+      "candidate": "340290a483a10fa19e1e90835032cd4ff3a9c222",
+      "parent": "2cec182a17105da5863bab2fdb66ba1adef317e2",
+      "tree": "22efcd6e0ad7cc932474112e9d24b019e2e52ea2",
+      "started_at_utc": "2026-11-06T05:12:49.125369+00:00",
+      "status": "completed",
+      "command": "TYPECHECK_FILES_PER_PROCESS=500 TYPECHECK_HEAP_MB=7168 sh .husky/pre-push origin https://github.com/concept2cure/ClinicalSageAI-2-replit.git",
+      "stdin": "refs/heads/concept2cure-v2 340290a483a10fa19e1e90835032cd4ff3a9c222 refs/heads/concept2cure-v2 2cec182a17105da5863bab2fdb66ba1adef317e2\n",
+      "hook_sha256": "be2a193164e851d77714721b3db3a99f8534aa4b800e7a96273077354f3b9b8c",
+      "typecheck_files_per_process": 500,
+      "typecheck_heap_mb": 7168,
+      "exit_code": 1,
+      "ended_at_utc": "2026-11-06T05:13:39.805932+00:00",
+      "log_sha256": "75e761fcfd787387a8e2e33d18c602ff222446f74988428941a7791d4b37ca76",
+      "failure": "three new test-size lint warnings; no typecheck executed",
+      "stored_log": "pre-push-lint-failure.txt"
+    },
+    {
+      "candidate": "85c4f258b2c8b0292b6af59f7e56b8281b1da96b",
+      "parent": "340290a483a10fa19e1e90835032cd4ff3a9c222",
+      "remote_base": "2cec182a17105da5863bab2fdb66ba1adef317e2",
+      "tree": "fefec1e18d9b2cb4074d2d59c1b90920a082504f",
+      "started_at_utc": "2026-11-06T05:24:58.681609+00:00",
+      "status": "completed",
+      "command": "TYPECHECK_FILES_PER_PROCESS=500 TYPECHECK_HEAP_MB=7168 sh .husky/pre-push origin https://github.com/concept2cure/ClinicalSageAI-2-replit.git",
+      "stdin": "refs/heads/concept2cure-v2 85c4f258b2c8b0292b6af59f7e56b8281b1da96b refs/heads/concept2cure-v2 2cec182a17105da5863bab2fdb66ba1adef317e2\n",
+      "hook_sha256": "be2a193164e851d77714721b3db3a99f8534aa4b800e7a96273077354f3b9b8c",
+      "typecheck_files_per_process": 500,
+      "typecheck_heap_mb": 7168,
+      "exit_code": 0,
+      "ended_at_utc": "2026-11-06T06:13:59.724160+00:00",
+      "log_sha256": "11878ec7f49f12f27b5f983ea658e7db333946bfed255107e3b1db8a070d1160",
+      "program_files_checked": 15379,
+      "workers_completed": 33,
+      "type_errors": 0,
+      "snapshot": "ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43",
+      "snapshot_unchanged": true,
+      "source_and_test_identities_verified": true,
+      "gate_and_baseline_unchanged": true,
+      "clean_worktree": true,
+      "stored_log": "pre-push.txt"
+    }
+  ],
+  "test_size_refactor": {
+    "cases_removed": 0,
+    "consolidation_names_and_order_preserved": 71,
+    "counted_consolidation_lines": 499,
+    "lint_counts": {
+      "bootstrap": 0,
+      "assembler": 1,
+      "consolidation": 1
+    },
+    "production_changed": false,
+    "baseline_changed": false,
+    "configuration_changed": false,
+    "seven_production_files_identical_to_successful_build": true
+  },
+  "publication_receipt": "publication.json"
+}
