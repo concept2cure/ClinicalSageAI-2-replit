@@ -1292,8 +1292,11 @@ function ProjectVaults({ onNav }: { onNav?: (id: string) => void }) {
     publishShellProject({ id: p.id, title: p.title, ...(p.code ? { code: p.code } : {}), ...(p.ws ? { ws: p.ws } : {}), ...(p.status ? { status: p.status } : {}) });
     onNav?.('vault');
   };
-  if (read.state === 'reading' || read.state === 'closed') return <p role="status" className="scaf-note">Reading your projects…</p>;
-  if (read.state === 'failed') return <p role="alert" className="scaf-note">Your projects could not be read, so their Vaults are not listed. Open one from Projects.</p>;
+  if (read.state !== 'ready') {
+    return read.state === 'failed'
+      ? <p role="alert" className="scaf-note">Your projects could not be read, so their Vaults are not listed. Open one from Projects.</p>
+      : <p role="status" className="scaf-note">Reading your projects…</p>;
+  }
   if (read.projects.length === 0) {
     return <p className="scaf-note">You have no projects yet. A Vault belongs to a project: create one with New project in Projects.</p>;
   }
