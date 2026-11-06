@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-06",
+  "plan": "F1",
+  "completes": [
+    "server/services/ana/draft-product-advisory.ts",
+    "server/services/authoring/authoring-draft-template.ts"
+  ],
+  "launch": "W3 D2/D4",
+  "baseline": "c50f8782ad8ef622872578ae4fae41e14d18caa1",
+  "sourceManifest": "source-sha256.json",
+  "sourceFiles": 13,
+  "scope": {
+    "applications": [
+      "UK_CTA",
+      "EU_CTA",
+      "CA_CTA",
+      "CA_CTA_A"
+    ],
+    "clinicalRows": 6,
+    "therapeuticProfiles": 25,
+    "existingPaths": [
+      "nested AnA drafting",
+      "editor project-filing fallback",
+      "validated saved-template identity handoff"
+    ]
+  },
+  "red": {
+    "unit": {
+      "failed": 181,
+      "passedControls": 66,
+      "suites": 2,
+      "log": "unit-red.txt.gz"
+    },
+    "integration": {
+      "failed": 19,
+      "passedControls": 79,
+      "suites": 3,
+      "log": "integration-red.txt.gz"
+    },
+    "productionBeforeManifest": "production-before-sha256.json"
+  },
+  "core": {
+    "result": "passed",
+    "tests": 356,
+    "suites": 5,
+    "log": "core-green.txt.gz",
+    "note": "Final after private helper separation; original controls retained."
+  },
+  "adjacent": {
+    "result": "passed",
+    "tests": 213,
+    "suites": 9,
+    "log": "regressions.txt.gz",
+    "note": "Before pure helper separation; final merged recheck pending."
+  },
+  "lint": {
+    "result": "passed",
+    "files": 13,
+    "errors": 0,
+    "warnings": 6,
+    "addedWarnings": 0,
+    "log": "lint-final.json.gz",
+    "baselineLog": "lint-before.json.gz",
+    "initialLog": "lint-initial.json.gz"
+  },
+  "build": {
+    "result": "passed",
+    "scope": "production client/server, audit/PQ verifiers",
+    "log": "build.txt.gz"
+  },
+  "review": "Independent read-only review found no material defect, import cycle or source/model/preservation regression.",
+  "publication": "pending normal hooked push",
+  "limits": [
+    "Advisory knowledge reach only; not clinical/regulatory/scientific or model qualification.",
+    "Static profile references retain existing dated-currency and unresolved-applicability checks. No new clinical source guidance was authored.",
+    "PGlite SQL and mocked HTTP/provider transports are scoped software proof; no live model/agency or native PostgreSQL qualification was run.",
+    "NMPA/Australia/Japan content unchanged; CMC composition stays small-molecule US IND.",
+    "No app/card/editor/screen/route/service/table/provider/model addition. Held CSR route unchanged."
+  ]
+}

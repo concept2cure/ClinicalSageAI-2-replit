@@ -12,6 +12,7 @@ vi.mock('../../ana/saved-template-review', () => ({ savedTemplateReview: h.revie
 import { admitDraftRevision, buildSectionDraftPrompt, draftRevisionFor, DraftRevisionError, DraftTemplateReferenceError,
   readDraftRevisionRequest, savedSectionDraftTemplate } from '../authoring-draft-template';
 import { DraftTruncatedError } from '../authoring-draft-termination';
+import { renderDraftProductAdvisory } from '../../ana/draft-product-advisory';
 
 const DOC = 'aaaaaaaa-0000-4000-8000-000000000001';
 const PROGRAM = 'bbbbbbbb-0000-4000-8000-000000000001';
@@ -24,11 +25,11 @@ const LIMIT = 16 * 1024;
 const SCOPE = { tenantId: 7, documentId: DOC, programId: PROGRAM, sectionId: SECTION, code: '3' };
 const q: RequestSqlClient = { query: async () => { throw new Error('The adapter must reuse the canonical validator'); } };
 const header = { template_id: PARENT, provenance: {}, title: 'Renamed working document' };
-const source = (region: 'US' | 'CA' | 'EU' | 'JP' | 'GLOBAL' = 'US', id = PARENT): RecordedTemplateSource => {
-  const registryId = { US: 'US_IND', CA: 'CA_CTA', EU: 'EU_CTA', JP: 'JP_CTN', GLOBAL: 'ICH_IB' }[region];
+const source = (region: 'US' | 'CA' | 'EU' | 'UK' | 'JP' | 'GLOBAL' = 'US', id = PARENT): RecordedTemplateSource => {
+  const registryId = { US: 'US_IND', CA: 'CA_CTA', EU: 'EU_CTA', UK: 'UK_CTA', JP: 'JP_CTN', GLOBAL: 'ICH_IB' }[region];
   return { id, entryId: `registry:${registryId}`, version: 1, sha256: 'a'.repeat(64), kind: 'narrative',
     aiDraftable: true, authoringMode: 'ai_draft', originalFormat: 'docx', limitations: ['Retain original source records.'],
-    filingContext: { registryId, region, agency: { US: 'FDA', CA: 'Health Canada', EU: 'EMA', JP: 'PMDA', GLOBAL: 'ICH' }[region] } };
+    filingContext: { registryId, region, agency: { US: 'FDA', CA: 'Health Canada', EU: 'EMA', UK: 'MHRA', JP: 'PMDA', GLOBAL: 'ICH' }[region] } };
 };
 
 function reviewed(parent: RecordedTemplateSource | null = source(), guidance = 'Exact saved reference guidance.'): SavedTemplateReview {
@@ -71,6 +72,34 @@ async function denied(code: string, status: number, requestedRegion?: unknown) {
 beforeEach(() => { h.review.mockReset().mockResolvedValue(reviewed()); });
 
 describe('the adapter renders only the exact admitted section reference', () => {
+  it.each([
+    ['UK', 'UK_CTA', 'uk_cta_protocol'],
+    ['EU', 'EU_CTA', 'PART_I.PROTOCOL'], ['EU', 'EU_CTA', 'PART_I.SYNOPSIS'],
+    ['CA', 'CA_CTA', '1.7.1'], ['CA', 'CA_CTA', '1.4.1'], ['CA', 'CA_CTA_A', '1.7.1'],
+  ] as const)('carries its own saved %s / %s / %s identity without consulting the project filing', async (region, registryId, code) => {
+    const saved = source(region);
+    saved.filingContext!.registryId = registryId;
+    h.review.mockResolvedValue(reviewed(saved));
+    const result = await savedSectionDraftTemplate(q, { ...SCOPE, code }, header, undefined);
+    const advisory = renderDraftProductAdvisory({ therapeuticArea: 'cardiology' }, code, 'none', undefined,
+      result.region, result.documentKind);
+    expect(advisory.prompt).toContain('### Endpoint Considerations');
+    expect(advisory.prompt).toContain('### Statistical Considerations');
+    expect(advisory.prompt).toContain('clinical applicability remains undetermined');
+    expect(blockJson(result.referenceBlock).templateSource).toEqual(saved);
+  });
+
+  it('uses the selected assembly source instead of the parent clinical identity', async () => {
+    h.review.mockResolvedValue(assembled(source('EU'), source('CA', SELECTED)));
+    const code = 'PART_I.PROTOCOL';
+    const result = await savedSectionDraftTemplate(q, { ...SCOPE, code }, header, undefined);
+    const advisory = renderDraftProductAdvisory({ therapeuticArea: 'cardiology' }, code, 'none', undefined,
+      result.region, result.documentKind);
+    expect(advisory.prompt).not.toContain('### Endpoint Considerations');
+    expect(advisory.prompt).not.toContain('### Statistical Considerations');
+    expect(blockJson(result.referenceBlock).templateSource).toEqual(source('CA', SELECTED));
+  });
+
   it('calls the existing validator for the captured document/project and one saved section without extra SQL', async () => {
     const before = JSON.stringify({ header, scope: SCOPE });
     const result = await read();

@@ -1,0 +1,53 @@
+# Complete regional therapeutic selection in shared drafting
+
+2026-11-06. Plan F1, workstream W3, launch D2/D4. Continues the existing P-73 trial-application drafting design. Baseline `c50f8782ad8ef622872578ae4fae41e14d18caa1`. Prior UK repair and receipts are already accepted on canonical.
+
+## What already exists
+
+Inventory precedes implementation and worker prompts. `rg` searched therapeutic/profile/advisory and exact caller names across server routes/API/src/services, shared/schema, migrations, AnA tools and client core surfaces. The only root AGENTS governs all files. Full non-shallow deletion history was searched with `git log --all --diff-filter=D` for `*therapeutic*`, `*draft-product*` and `*CtaBlueprint*`; it returned no deleted replacement. A stale guessed authoring-template path was corrected to the existing authoring folder before inventory completion.
+
+- `server/services/ana/draft-product-advisory.ts` is the single advisory formatter used by nested AnA drafting and the existing editor. It preserves recorded-over-declared fact precedence and per-field audit origins, and knows CTD, E3 CSR and M11 protocol identities. Its section selection currently normalizes numeric CTD codes or resolver markers; regional trial codes become null and Canadian protocol locations remain Module1.
+- `server/services/ana/therapeutic-area-profiles/index.ts` holds the existing 25-profile registry and one renderer. It already limits endpoint/statistical arrays to scientific clinical contexts and excludes quality/nonclinical/administrative CTD headings. It does not recognize regional preparation codes. Static references remain advisory with dated-registry currency and unresolved verification, not scientific evidence.
+- `server/services/ana/therapeutic-area-profiles/types.ts` owns the renderer's document-kind/context types. Existing per-profile endpoint/statistical arrays and context rules are reused; no clinical guidance or source requirement is to be invented.
+- `server/services/ana/AnaDocumentDraftingService.ts` owns `resolveDraftingRequirements`, exact-registry blueprint lookup, source markers, and nested draft prompt construction. Regional rows already resolve, but generic `blueprint`/`blueprint:regional` markers omit their exact application/code. Its current qualified-model pin and source-currentness/authority controls must remain intact.
+- `server/services/regulatory/registry/blueprints/euCtaBlueprint.ts`, `canadaCtaBlueprint.ts`, `japanCtnBlueprint.ts` and `shared/regulatory/uk-cta-authoring.ts` already own dated preparation headings/guidance. EU `PART_I.PROTOCOL`, Canadian `1.7.1`/`1.4.1`, and UK `uk_cta_protocol` name clinical protocol/synopsis rows; numeric module groupings in UK/EU are not CTD modules. Administrative, consent, quality, tox and unknown rows must not receive clinical arrays from a title guess.
+- `server/services/authoring/authoring-draft-template.ts` bridge the saved project/document into the editor. `server/routes/authoring.router.ts` already passes resolver requirementsSource and saved document kind to the same advisory formatter. Its draft/accept route is held by the CSR lane and will not be edited by this slice.
+- Existing tests: `draft-product-advisory-selection.test.ts`, `therapeutic-selection.test.ts`, `recorded-product-drafting-service.pglite.test.ts`, and `server/routes/__tests__/authoring-draft-recorded-filing.test.ts` pin the actual service/editor path, source integrity and context boundaries. Extend those owners rather than create a second drafting implementation.
+- The accepted roadmap keeps NMPA frozen, CMC composition small-molecule US IND, one project/AnA/canvas/editor, and P-104 model/PQ acceptance pending. This repair adds no app, card, screen, route, service, table, provider or model, and will make no new clinical qualification claim.
+
+## Completion target
+
+Reproduce missing existing endpoint/statistical guidance in exact supported regional protocol preparation sections, preserve exclusion for unrelated or unresolved sections, then complete the existing shared resolver/advisory contract. Clinical scope must follow exact canonical application/section identity rather than arbitrary titles, bare module numbers, declared therapeutic area or inferred jurisdiction. Retain structural advisory and missing-fact/currency limits. Production fixes follow observed behavioral red cases. Root serializes checks, commits and canonical publication.
+
+
+## Reviewed completion contract
+
+Reuse the existing `SectionDefinition` and exact synchronous catalog lookup (`getExactSectionBlueprint`), not a second list of section meanings. Add optional advisory `therapeuticContext` only to current UK protocol, EU protocol/synopsis and Canadian initial protocol/PSEAT rows. The existing CTA-A projection inherits its protocol tag and still removes the initial-only synopsis. The resolver emits anchored `blueprint:regional:<applicationId>:<canonicalRowCode>` for its supported regional answers. `recordedFilingDraftContext` in `server/services/authoring/authoring-draft-template.ts` already carries this marker to the held editor route unchanged.
+
+The shared advisory decodes exact dedicated catalog rows and supplies a separate regional section role to the renderer. It preserves actual document kind and sets no fictitious CTD location. Known regional nonclinical/quality/admin/unknown rows suppress the generic clinical-document fallback; only tagged protocol/synopsis roles enable existing clinical arrays. Existing clinical applicability and source-currency disclaimers stay present. Malformed/foreign/legacy markers grant no regional clinical role. UK/EU module groupings are never CTD module meanings. No NMPA, AU, JP notification-only, IB, consent or scientific guidance expansion is included.
+
+Additional existing owners inspected before assigning implementation: `shared/regulatory/document-taxonomy.ts` (SectionDefinition); `sectionBlueprintCatalog.ts` already exports `getExactSectionBlueprint`; `canadaCtaBlueprint.ts` creates CTA-A by filtering and spreading the initial rows, excluding 1.4.1. Two read-only reviewers confirmed marker propagation without route changes, actual generic ctd editor default, and qualified-pin/source-object identity boundaries.
+
+
+## What already exists — saved-template boundary
+
+Further caller inspection before implementation found `authoring-draft-template.ts::recordedFilingDraftContext` intentionally returns none when a saved template supplies its own region. `renderDraftReference` in that same existing file already reads the effective validated source's `filingContext.registryId` and current section code, while returning the generic ctd kind. To preserve template precedence without touching the held route, the existing sixth advisory argument accepts its existing kind string or a typed `{ documentKind, regionalSection: { registryId, code } }` value. An existing-file helper supplies that descriptor for supported regional identities only. Both descriptor and resolver marker feed one exact catalog-row selector; conflicts/unknown codes withhold clinical arrays. Nonregional and CSR string contracts stay compatible. This completes saved-template reach rather than claiming the project-only fallback covers it.
+
+
+## Preservation review before green checks
+
+Exact protocol/synopsis roles clear the CTD section rather than inventing a CTD location. Other regional rows retain their existing numeric CTD context when one exists (notably Canadian Module3 quality), while the explicit regional-other role withholds clinical endpoint/statistical arrays. This preserves existing modality/quality advice and scoped rules. Non-numeric UK/EU preparation codes still have no CTD meaning. Requested row matching mirrors the resolver's canonical code/title/former-title contract, including code plus title, and refuses a duplicate-code string. These are preservation details within the reviewed scope, not expanded clinical requirements.
+
+
+## Observed verification so far
+
+Before any production edit, focused unit reds failed 181 cases with 66 controls passing; real service/editor/adapter integration reds failed 19 with 79 controls passing. Full raw logs and the eight-file production before-hash manifest are retained. The first five-suite green passes 356/356; nine adjacent source/currentness, exact model-pin, canonical outline and saved-template/assembly suites pass 213/213. Counts refer to separate scoped runs, not whole-product or scientific qualification.
+
+The first scoped lint run has zero errors and two added complexity warnings in the advisory helpers; the drafting service's six warnings are unchanged. This run is retained as `lint-initial.json.gz`, and the helpers are being simplified before final qualification. Independent review found no runtime import cycle or change to source/pin/currentness controls. The earlier UK manifest remains a historical publication snapshot; this slice will retain its own updated source hashes.
+
+
+## Current source qualification
+
+The helper separation preserves section semantics and passes all 356 core cases again. Final scoped lint checks all 13 changed TypeScript files with zero errors and no warning growth; only the drafting service's six existing warnings remain. The production client/server and audit/PQ verifier builds pass and package the four existing controlled qualification assets. `source-sha256.json` pins the 13 current source/test files. No source or model qualification is supplied by this software build.
+
+The shared editor's validated-template adapter and project-filing HTTP path are exercised separately; the adapter test supplies a typed validated reference, while adjacent saved-template/assembly PGlite suites test its existing SQL/access/source safeguards. This is not a running-browser completion or new native-database qualification. Synchronization with newer canonical changes and the normal hooked publication remain pending.
