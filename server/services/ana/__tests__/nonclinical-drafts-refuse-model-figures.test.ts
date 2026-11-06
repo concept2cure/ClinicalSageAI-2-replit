@@ -8,9 +8,10 @@
  * a target-organ adversity profile. The model is the conduit for every one of
  * those figures; it is the shape 2.5/2.7 had before 2026-10-05.
  *
- * P-55 chose the governed register. Until its protected project binding is
- * connected, these drafts read no studies and return the record's ICH M4S
- * outline. Figures supplied in the call are refused and named as not used.
+ * P-55 chose the governed register. A current actor/project, request client
+ * and private source authority are required for recorded facts. This unit
+ * fixture lacks source authority and returns an unavailable outline. Real
+ * source reads/currentness use the separate PGlite suite.
  */
 import { describe, expect, it, vi } from 'vitest';
 
@@ -30,10 +31,14 @@ vi.mock('../governed-tool-gate.js', async orig => ({
 }));
 
 import { getToolHandler } from '../AnaToolExecutor.js';
-import { DRAFT_NONCLINICAL_OVERVIEW_M2_4, DRAFT_NONCLINICAL_SUMMARIES_M2_6 } from '../bla-biologics-tool-defs.js';
+import { DRAFT_NONCLINICAL_OVERVIEW_M2_4, DRAFT_NONCLINICAL_SUMMARIES_M2_6, LOAD_NONCLINICAL_PROGRAM, GET_NONCLINICAL_TEMPLATE } from '../bla-biologics-tool-defs.js';
 import { ctdRecordSubtree } from '../../market-specs/ctd-component-outlines';
 
-const CTX = { organizationId: 3, userId: 5, projectId: 9 } as never;
+const extracted = vi.hoisted(() => ({ load: vi.fn() }));
+vi.mock('../../preclinical/nonclinical-program-loader.js', () => ({ loadNonclinicalProgram: extracted.load }));
+
+const SQL_CLIENT = { query: vi.fn(async () => ({ rows: [] })) };
+const CTX = { organizationId: 3, userId: 5, projectId: 9, sqlClient: SQL_CLIENT } as never;
 const MODEL_STUDIES = [{ studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 13, noael: '50 mg/kg/day', keyFindings: 'hepatocellular hypertrophy' }];
 const run = async (tool: string, input: Record<string, unknown>, ctx: unknown = CTX) => JSON.parse(await getToolHandler(tool)!(input, ctx as never));
 const numbers = (sections: Array<{ number: string; subsections?: unknown[] }>): string[] =>
@@ -58,17 +63,19 @@ describe.each([
 
   it('with a project open and nothing supplied, answers with the record’s outline', async () => {
     const out = await run(tool, {});
-    expect(out.nonclinical_data?.status).toBe('needs_data');
+    expect(out.nonclinical_data?.status).toBe('unavailable');
     expect(numbers(out.structure.sections)).toEqual(ctdRecordSubtree(root).map((h) => h.code));
   });
 
-  it('names the disconnected protected source path without claiming that governed records do not exist', async () => {
+  it('names unavailable protected source context without claiming that governed records do not exist', async () => {
     const out = await run(tool, {});
     const text = JSON.stringify(out);
-    expect(out.nonclinical_data?.status).toBe('needs_data');
+    expect(out.nonclinical_data?.status).toBe('unavailable');
     expect(text).toMatch(/(?:protected|privacy|source).{0,70}(?:connect|binding)|(?:connect|binding).{0,70}(?:protected|privacy|source)/i);
     expect(text).not.toContain('does not yet record nonclinical studies against a project');
-    expect(text).toMatch(/no (?:nonclinical )?stud(?:y|ies).{0,30}(?:read|loaded)|did not read.{0,30}stud/i);
+    expect(out.nonclinical_data?.code).toBe('NONCLINICAL_SOURCE_UNAVAILABLE');
+    expect(out.summary).toBeUndefined();
+    expect(text).toContain('No study-bearing result was released');
   });
 
   it('contains unexpected source-context errors rather than returning driver details', async () => {
@@ -94,7 +101,7 @@ describe.each([
   it('when the named project cannot be resolved, says so with its code and claims no absence', async () => {
     const { resolveCsrScope, CsrScopeError } = await import('../../csr/project-scope.js');
     vi.mocked(resolveCsrScope).mockRejectedValueOnce(new CsrScopeError('CSR_PROJECT_NOT_FOUND', 404, 'The project could not be resolved.'));
-    const out = await run(tool, { project_id: 99999 }, { organizationId: 3, userId: 5 });
+    const out = await run(tool, { project_id: 99999 }, { organizationId: 3, userId: 5, sqlClient: SQL_CLIENT });
     expect(out.nonclinical_data).toMatchObject({ status: 'needs_project', code: 'CSR_PROJECT_NOT_FOUND' });
     expect(JSON.stringify(out)).not.toMatch(/recorded against this project/);
   });
@@ -108,5 +115,23 @@ describe('the tool definitions ask for no figures', () => {
     expect((def.input_schema as { required?: string[] }).required ?? []).toEqual([]);
     expect(def.description).toMatch(/do not pass/i);
     expect(def.description.length).toBeLessThanOrEqual(1024);
+  });
+});
+
+
+describe('governed binding instructions remain separate from extraction input', () => {
+  it.each([DRAFT_NONCLINICAL_OVERVIEW_M2_4, DRAFT_NONCLINICAL_SUMMARIES_M2_6, LOAD_NONCLINICAL_PROGRAM, GET_NONCLINICAL_TEMPLATE])('$name describes the current protected record binding', def => {
+    expect(def.description).not.toMatch(/not (?:yet )?connected|path is not connected|pending their protected project-source binding/i);
+    expect(def.description).toMatch(/governed|protected/i);
+    expect(def.description.length).toBeLessThanOrEqual(1024);
+  });
+
+  it('the extracted loader tells AnA that the draft tools read their own governed records', async () => {
+    extracted.load.mockResolvedValueOnce({ rowCount: 1, studies: [], presentStudies: [], speciesNoaels: [] });
+    const out = await run('load_nonclinical_program', { ctdProgramId: 4 });
+    expect(out.status).toBe('loaded');
+    expect(out.instruction).toMatch(/governed|protected/i);
+    expect(out.instruction).not.toContain('until nonclinical studies are recorded against a project');
+    expect(out.instruction).toMatch(/do not pass these studies/i);
   });
 });

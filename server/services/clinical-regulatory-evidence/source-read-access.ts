@@ -83,7 +83,10 @@ export async function admitRecordedCreSourceScope(q: RequestSqlClient,
 }
 
 function evaluatedSourceOmission(error:unknown):boolean {
-  if (error instanceof SourceReadAccessError) return error.status!==503;
+  // A current native object admitted by its canonical reader may have
+  // changed after capture. That is a stale catalogue, never proof of absence.
+  // Denied/missing objects still disappear without disclosing their identity.
+  if (error instanceof SourceReadAccessError) return error.status!==503 && error.code!=='NATIVE_SOURCE_CHANGED';
   return error instanceof ProgramReadAccessError && ['PROJECT_PERMISSION_DENIED','PROJECT_NOT_FOUND','PROJECT_ANCHOR_UNRESOLVED'].includes(error.code);
 }
 async function admitReadableIdentity(q:RequestSqlClient, row:Record<string,unknown>, context: {

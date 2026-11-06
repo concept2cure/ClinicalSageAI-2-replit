@@ -1,0 +1,246 @@
+{
+  "data": {
+    "id": 7,
+    "runUuid": "202e0aed-472f-4661-908b-cafeea22692d",
+    "organizationId": 2,
+    "clientWorkspaceId": null,
+    "scopeType": "project",
+    "scopeId": "1",
+    "reportTypeId": "compliance.audit_assurance_pack",
+    "status": "partial",
+    "requestedBy": 1,
+    "dependencySummary": {
+      "providers": [
+        {
+          "provider": "quality_project_evidence",
+          "observedAt": "2026-11-06T21:36:10.672Z",
+          "status": "partial",
+          "blocker": "Quality evidence completeness is not assessed. Audit-chain integrity and compliance controls are not assessed.",
+          "atoms": [
+            {
+              "sourceTable": "capa_records",
+              "recordId": "2387df4a-a146-4a6c-a099-f0669fc85f12",
+              "transformation": "direct_copy"
+            },
+            {
+              "sourceTable": "capa_records",
+              "recordId": "b5d01bb0-9ce9-46f8-a9cf-5558f80a2389",
+              "transformation": "direct_copy"
+            },
+            {
+              "sourceTable": "qms_nonconforming_products",
+              "recordId": "1",
+              "transformation": "direct_copy"
+            },
+            {
+              "sourceTable": "qms_nonconforming_products",
+              "recordId": "2",
+              "transformation": "direct_copy"
+            },
+            {
+              "sourceTable": "qms_nonconforming_products",
+              "recordId": "3",
+              "transformation": "direct_copy"
+            }
+          ],
+          "calculation": {
+            "method": "Canonical current native Quality projection",
+            "computedScope": "project",
+            "completeness": "not_assessed"
+          }
+        }
+      ],
+      "scopeLineage": [
+        {
+          "scopeType": "project",
+          "scopeId": "1"
+        }
+      ],
+      "summary": {
+        "scopeType": "project",
+        "scopeId": "1",
+        "accessProjectIds": [
+          1
+        ],
+        "domain": {
+          "projectEvidenceSnapshots": 4,
+          "organizationEvidenceSnapshots": 1,
+          "qualityEvidence": {
+            "schemaVersion": 1,
+            "observedAt": "2026-11-06T21:36:10.672Z",
+            "records": [
+              {
+                "key": "quality:capa_records:2387df4a-a146-4a6c-a099-f0669fc85f12",
+                "title": "CAPA: Fictional current-record task verification",
+                "text": "{\"data\":{\"record\":{\"assigned_to\":null,\"capa_code\":\"CAPA-2026-0002\",\"closed_at\":null,\"closed_by\":null,\"containment_actions\":null,\"corrective_action_plan\":null,\"created_at\":\"2026-11-06T21:28:40.803Z\",\"created_by\":\"1\",\"effectiveness_check_criteria\":null,\"effectiveness_check_result\":null,\"id\":\"2387df4a-a146-4a6c-a099-f0669fc85f12\",\"problem_statement\":\"Fictional local verification; no effectiveness or approval is asserted.\",\"program_id\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"risk_level\":\"medium\",\"root_cause_analysis\":null,\"source\":\"internal_audit\",\"source_refs\":null,\"state\":\"open\",\"summary\":null,\"target_close_date\":\"2026-12-20T00:00:00.000Z\",\"title\":\"Fictional current-record task verification\",\"type\":\"corrective\",\"updated_at\":\"2026-11-06T21:28:40.803Z\",\"updated_by\":\"1\"}},\"evidenceKind\":\"qms\",\"lifecycle\":\"open\",\"native\":{\"id\":\"2387df4a-a146-4a6c-a099-f0669fc85f12\",\"kind\":\"capa_records\"},\"programId\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"qualification\":\"Recorded Quality-system facts. Capture is not scientific verification, approval or an audit-chain assessment.\",\"sourceScope\":\"project\"}",
+                "version": null,
+                "sourceScope": "project",
+                "lifecycle": "open",
+                "native": {
+                  "kind": "capa_records",
+                  "id": "2387df4a-a146-4a6c-a099-f0669fc85f12"
+                }
+              },
+              {
+                "key": "quality:capa_records:b5d01bb0-9ce9-46f8-a9cf-5558f80a2389",
+                "title": "CAPA: Fictional Quality task linkage verification",
+                "text": "{\"data\":{\"record\":{\"assigned_to\":null,\"capa_code\":\"CAPA-2026-0001\",\"closed_at\":null,\"closed_by\":null,\"containment_actions\":null,\"corrective_action_plan\":null,\"created_at\":\"2026-11-06T19:50:04.889Z\",\"created_by\":\"1\",\"effectiveness_check_criteria\":null,\"effectiveness_check_result\":null,\"id\":\"b5d01bb0-9ce9-46f8-a9cf-5558f80a2389\",\"problem_statement\":\"Fictional audit observation for local integration verification.\",\"program_id\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"risk_level\":\"medium\",\"root_cause_analysis\":null,\"source\":\"internal_audit\",\"source_refs\":null,\"state\":\"open\",\"summary\":null,\"target_close_date\":\"2026-12-15T00:00:00.000Z\",\"title\":\"Fictional Quality task linkage verification\",\"type\":\"corrective\",\"updated_at\":\"2026-11-06T19:50:04.889Z\",\"updated_by\":\"1\"}},\"evidenceKind\":\"qms\",\"lifecycle\":\"open\",\"native\":{\"id\":\"b5d01bb0-9ce9-46f8-a9cf-5558f80a2389\",\"kind\":\"capa_records\"},\"programId\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"qualification\":\"Recorded Quality-system facts. Capture is not scientific verification, approval or an audit-chain assessment.\",\"sourceScope\":\"project\"}",
+                "version": null,
+                "sourceScope": "project",
+                "lifecycle": "open",
+                "native": {
+                  "kind": "capa_records",
+                  "id": "b5d01bb0-9ce9-46f8-a9cf-5558f80a2389"
+                }
+              },
+              {
+                "key": "quality:qms_nonconforming_products:1",
+                "title": "Nonconformance: NC-QUALITY-WORKFLOW-20261106",
+                "text": "{\"data\":{\"record\":{\"capa_linked\":false,\"created_at\":\"2026-11-06T19:48:43.303Z\",\"description\":\"Fictional verification record: source review and corrective action evidence are pending. This local test record is not an approved disposition.\",\"detected_at\":\"2026-11-06T19:48:43.303Z\",\"detected_by\":1,\"device_name\":\"Fictional workflow verification material\",\"disposition\":\"pending\",\"disposition_at\":null,\"disposition_rationale\":null,\"id\":1,\"lot_or_serial\":\"QA-QS-LOCAL-01\",\"nc_number\":\"NC-QUALITY-WORKFLOW-20261106\",\"program_id\":null,\"source\":\"audit\",\"updated_at\":\"2026-11-06T19:48:43.303Z\"}},\"evidenceKind\":\"qms\",\"lifecycle\":\"pending\",\"native\":{\"id\":\"1\",\"kind\":\"qms_nonconforming_products\"},\"qualification\":\"Recorded Quality-system facts. Capture is not scientific verification, approval or an audit-chain assessment.\",\"sourceScope\":\"organization\"}",
+                "version": null,
+                "sourceScope": "organization",
+                "lifecycle": "pending",
+                "native": {
+                  "kind": "qms_nonconforming_products",
+                  "id": "1"
+                }
+              },
+              {
+                "key": "quality:qms_nonconforming_products:2",
+                "title": "Nonconformance: NC-PROJECT-QUALITY-20261106",
+                "text": "{\"data\":{\"record\":{\"capa_linked\":false,\"created_at\":\"2026-11-06T19:50:05.034Z\",\"description\":\"Fictional project-owned nonconformance: review evidence remains pending; no disposition approval is asserted.\",\"detected_at\":\"2026-11-06T19:50:05.034Z\",\"detected_by\":1,\"device_name\":\"Fictional material\",\"disposition\":\"pending\",\"disposition_at\":null,\"disposition_rationale\":null,\"id\":2,\"lot_or_serial\":\"PROJECT-QA-01\",\"nc_number\":\"NC-PROJECT-QUALITY-20261106\",\"program_id\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"source\":\"audit\",\"updated_at\":\"2026-11-06T19:50:05.034Z\"}},\"evidenceKind\":\"qms\",\"lifecycle\":\"pending\",\"native\":{\"id\":\"2\",\"kind\":\"qms_nonconforming_products\"},\"programId\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"qualification\":\"Recorded Quality-system facts. Capture is not scientific verification, approval or an audit-chain assessment.\",\"sourceScope\":\"project\"}",
+                "version": null,
+                "sourceScope": "project",
+                "lifecycle": "pending",
+                "native": {
+                  "kind": "qms_nonconforming_products",
+                  "id": "2"
+                }
+              },
+              {
+                "key": "quality:qms_nonconforming_products:3",
+                "title": "Nonconformance: NC-QUALITY-FIDELITY-20261106",
+                "text": "{\"data\":{\"record\":{\"capa_linked\":false,\"created_at\":\"2026-11-06T21:28:40.764Z\",\"description\":\"Fictional acceptance check: pH < 6 and temperature > 30 C; impurity <LOQ; review remains pending.\",\"detected_at\":\"2026-11-06T21:28:40.764Z\",\"detected_by\":1,\"device_name\":\"Fictional acceptance material\",\"disposition\":\"pending\",\"disposition_at\":null,\"disposition_rationale\":null,\"id\":3,\"lot_or_serial\":\"QA-FIDELITY-LOCAL\",\"nc_number\":\"NC-QUALITY-FIDELITY-20261106\",\"program_id\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"source\":\"audit\",\"updated_at\":\"2026-11-06T21:28:40.764Z\"}},\"evidenceKind\":\"qms\",\"lifecycle\":\"pending\",\"native\":{\"id\":\"3\",\"kind\":\"qms_nonconforming_products\"},\"programId\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"qualification\":\"Recorded Quality-system facts. Capture is not scientific verification, approval or an audit-chain assessment.\",\"sourceScope\":\"project\"}",
+                "version": null,
+                "sourceScope": "project",
+                "lifecycle": "pending",
+                "native": {
+                  "kind": "qms_nonconforming_products",
+                  "id": "3"
+                }
+              }
+            ],
+            "limits": [
+              "Quality evidence completeness is not assessed. Audit-chain integrity and compliance controls are not assessed.",
+              "Records state their current native lifecycle. A working copy, signed release and retained version are distinct evidence; no historical status is reconstructed."
+            ]
+          }
+        },
+        "domainScope": "project",
+        "computedScope": "project",
+        "provenance": {
+          "organizationId": 2,
+          "observedAt": "2026-11-06T21:36:10.672Z",
+          "computedScope": "project",
+          "queries": [
+            {
+              "query": "readQualityProjectEvidence: canonical current actor, project and object admission",
+              "parameters": [
+                2,
+                {
+                  "scopeType": "project",
+                  "scopeId": "1"
+                }
+              ],
+              "rows": [
+                {
+                  "key": "quality:capa_records:2387df4a-a146-4a6c-a099-f0669fc85f12",
+                  "title": "CAPA: Fictional current-record task verification",
+                  "text": "{\"data\":{\"record\":{\"assigned_to\":null,\"capa_code\":\"CAPA-2026-0002\",\"closed_at\":null,\"closed_by\":null,\"containment_actions\":null,\"corrective_action_plan\":null,\"created_at\":\"2026-11-06T21:28:40.803Z\",\"created_by\":\"1\",\"effectiveness_check_criteria\":null,\"effectiveness_check_result\":null,\"id\":\"2387df4a-a146-4a6c-a099-f0669fc85f12\",\"problem_statement\":\"Fictional local verification; no effectiveness or approval is asserted.\",\"program_id\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"risk_level\":\"medium\",\"root_cause_analysis\":null,\"source\":\"internal_audit\",\"source_refs\":null,\"state\":\"open\",\"summary\":null,\"target_close_date\":\"2026-12-20T00:00:00.000Z\",\"title\":\"Fictional current-record task verification\",\"type\":\"corrective\",\"updated_at\":\"2026-11-06T21:28:40.803Z\",\"updated_by\":\"1\"}},\"evidenceKind\":\"qms\",\"lifecycle\":\"open\",\"native\":{\"id\":\"2387df4a-a146-4a6c-a099-f0669fc85f12\",\"kind\":\"capa_records\"},\"programId\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"qualification\":\"Recorded Quality-system facts. Capture is not scientific verification, approval or an audit-chain assessment.\",\"sourceScope\":\"project\"}",
+                  "version": null,
+                  "sourceScope": "project",
+                  "lifecycle": "open",
+                  "native": {
+                    "kind": "capa_records",
+                    "id": "2387df4a-a146-4a6c-a099-f0669fc85f12"
+                  }
+                },
+                {
+                  "key": "quality:capa_records:b5d01bb0-9ce9-46f8-a9cf-5558f80a2389",
+                  "title": "CAPA: Fictional Quality task linkage verification",
+                  "text": "{\"data\":{\"record\":{\"assigned_to\":null,\"capa_code\":\"CAPA-2026-0001\",\"closed_at\":null,\"closed_by\":null,\"containment_actions\":null,\"corrective_action_plan\":null,\"created_at\":\"2026-11-06T19:50:04.889Z\",\"created_by\":\"1\",\"effectiveness_check_criteria\":null,\"effectiveness_check_result\":null,\"id\":\"b5d01bb0-9ce9-46f8-a9cf-5558f80a2389\",\"problem_statement\":\"Fictional audit observation for local integration verification.\",\"program_id\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"risk_level\":\"medium\",\"root_cause_analysis\":null,\"source\":\"internal_audit\",\"source_refs\":null,\"state\":\"open\",\"summary\":null,\"target_close_date\":\"2026-12-15T00:00:00.000Z\",\"title\":\"Fictional Quality task linkage verification\",\"type\":\"corrective\",\"updated_at\":\"2026-11-06T19:50:04.889Z\",\"updated_by\":\"1\"}},\"evidenceKind\":\"qms\",\"lifecycle\":\"open\",\"native\":{\"id\":\"b5d01bb0-9ce9-46f8-a9cf-5558f80a2389\",\"kind\":\"capa_records\"},\"programId\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"qualification\":\"Recorded Quality-system facts. Capture is not scientific verification, approval or an audit-chain assessment.\",\"sourceScope\":\"project\"}",
+                  "version": null,
+                  "sourceScope": "project",
+                  "lifecycle": "open",
+                  "native": {
+                    "kind": "capa_records",
+                    "id": "b5d01bb0-9ce9-46f8-a9cf-5558f80a2389"
+                  }
+                },
+                {
+                  "key": "quality:qms_nonconforming_products:1",
+                  "title": "Nonconformance: NC-QUALITY-WORKFLOW-20261106",
+                  "text": "{\"data\":{\"record\":{\"capa_linked\":false,\"created_at\":\"2026-11-06T19:48:43.303Z\",\"description\":\"Fictional verification record: source review and corrective action evidence are pending. This local test record is not an approved disposition.\",\"detected_at\":\"2026-11-06T19:48:43.303Z\",\"detected_by\":1,\"device_name\":\"Fictional workflow verification material\",\"disposition\":\"pending\",\"disposition_at\":null,\"disposition_rationale\":null,\"id\":1,\"lot_or_serial\":\"QA-QS-LOCAL-01\",\"nc_number\":\"NC-QUALITY-WORKFLOW-20261106\",\"program_id\":null,\"source\":\"audit\",\"updated_at\":\"2026-11-06T19:48:43.303Z\"}},\"evidenceKind\":\"qms\",\"lifecycle\":\"pending\",\"native\":{\"id\":\"1\",\"kind\":\"qms_nonconforming_products\"},\"qualification\":\"Recorded Quality-system facts. Capture is not scientific verification, approval or an audit-chain assessment.\",\"sourceScope\":\"organization\"}",
+                  "version": null,
+                  "sourceScope": "organization",
+                  "lifecycle": "pending",
+                  "native": {
+                    "kind": "qms_nonconforming_products",
+                    "id": "1"
+                  }
+                },
+                {
+                  "key": "quality:qms_nonconforming_products:2",
+                  "title": "Nonconformance: NC-PROJECT-QUALITY-20261106",
+                  "text": "{\"data\":{\"record\":{\"capa_linked\":false,\"created_at\":\"2026-11-06T19:50:05.034Z\",\"description\":\"Fictional project-owned nonconformance: review evidence remains pending; no disposition approval is asserted.\",\"detected_at\":\"2026-11-06T19:50:05.034Z\",\"detected_by\":1,\"device_name\":\"Fictional material\",\"disposition\":\"pending\",\"disposition_at\":null,\"disposition_rationale\":null,\"id\":2,\"lot_or_serial\":\"PROJECT-QA-01\",\"nc_number\":\"NC-PROJECT-QUALITY-20261106\",\"program_id\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"source\":\"audit\",\"updated_at\":\"2026-11-06T19:50:05.034Z\"}},\"evidenceKind\":\"qms\",\"lifecycle\":\"pending\",\"native\":{\"id\":\"2\",\"kind\":\"qms_nonconforming_products\"},\"programId\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"qualification\":\"Recorded Quality-system facts. Capture is not scientific verification, approval or an audit-chain assessment.\",\"sourceScope\":\"project\"}",
+                  "version": null,
+                  "sourceScope": "project",
+                  "lifecycle": "pending",
+                  "native": {
+                    "kind": "qms_nonconforming_products",
+                    "id": "2"
+                  }
+                },
+                {
+                  "key": "quality:qms_nonconforming_products:3",
+                  "title": "Nonconformance: NC-QUALITY-FIDELITY-20261106",
+                  "text": "{\"data\":{\"record\":{\"capa_linked\":false,\"created_at\":\"2026-11-06T21:28:40.764Z\",\"description\":\"Fictional acceptance check: pH < 6 and temperature > 30 C; impurity <LOQ; review remains pending.\",\"detected_at\":\"2026-11-06T21:28:40.764Z\",\"detected_by\":1,\"device_name\":\"Fictional acceptance material\",\"disposition\":\"pending\",\"disposition_at\":null,\"disposition_rationale\":null,\"id\":3,\"lot_or_serial\":\"QA-FIDELITY-LOCAL\",\"nc_number\":\"NC-QUALITY-FIDELITY-20261106\",\"program_id\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"source\":\"audit\",\"updated_at\":\"2026-11-06T21:28:40.764Z\"}},\"evidenceKind\":\"qms\",\"lifecycle\":\"pending\",\"native\":{\"id\":\"3\",\"kind\":\"qms_nonconforming_products\"},\"programId\":\"6c89e2c1-2d76-4356-80cb-001821956b5a\",\"qualification\":\"Recorded Quality-system facts. Capture is not scientific verification, approval or an audit-chain assessment.\",\"sourceScope\":\"project\"}",
+                  "version": null,
+                  "sourceScope": "project",
+                  "lifecycle": "pending",
+                  "native": {
+                    "kind": "qms_nonconforming_products",
+                    "id": "3"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "scopeLabel": "F1 Recent conversation verification"
+      },
+      "criticalBlockers": [
+        "Quality evidence completeness is not assessed. Audit-chain integrity and compliance controls are not assessed."
+      ]
+    },
+    "blockers": [
+      "Quality evidence completeness is not assessed. Audit-chain integrity and compliance controls are not assessed."
+    ],
+    "confidence": null,
+    "freshness": {
+      "generatedAt": "2026-11-06T21:36:10.672Z",
+      "freshnessBudgetMs": 1800000
+    },
+    "error": null,
+    "startedAt": "2026-11-06T21:36:10.673Z",
+    "completedAt": "2026-11-06T21:36:10.672Z",
+    "createdAt": "2026-11-06T21:36:10.673Z",
+    "updatedAt": "2026-11-06T21:36:10.673Z",
+    "reportTypeLabel": "Compliance & Audit Assurance Pack",
+    "regionCode": null,
+    "registryId": null,
+    "agency": null,
+    "scopeLabel": "F1 Recent conversation verification",
+    "computedScope": "project"
+  }
+}

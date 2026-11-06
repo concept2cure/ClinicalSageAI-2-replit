@@ -51,6 +51,26 @@ function qualityAnchors(anchors: readonly VerifiedProgramAnchor[], options: Doma
   return selected;
 }
 
+const QUALITY_CHANGED = 'Quality evidence changed during collection. Refresh before generating the report.';
+
+function qualityRecord(row: NativeRecordSnapshot): NativeRecordSnapshot {
+  return { key: row.key, title: row.title, text: row.text, version: row.version,
+    sourceScope: row.sourceScope, lifecycle: row.lifecycle, native: { kind: row.native.kind, id: row.native.id,
+      ...(row.native.authoringDocumentId ? { authoringDocumentId: row.native.authoringDocumentId } : {}) } };
+}
+
+function requireSameQualityCollection(rows: readonly NativeRecordSnapshot[], keys: ReadonlySet<string>,
+  records: ReadonlyMap<string, NativeRecordSnapshot>, Unavailable: QualityUnavailable): void {
+  if (rows.length !== keys.size) throw new Unavailable(QUALITY_CHANGED);
+  const seen = new Set<string>();
+  for (const row of rows) {
+    if (seen.has(row.key) || !keys.has(row.key) || JSON.stringify(records.get(row.key)) !== JSON.stringify(qualityRecord(row))) {
+      throw new Unavailable(QUALITY_CHANGED);
+    }
+    seen.add(row.key);
+  }
+}
+
 /** Native facts retain their own scope; no Quality status is reinterpreted as an assurance verdict. */
 async function computeQualityEvidenceReport(orgId: number, options?: DomainReportOptions): Promise<DomainReportResult> {
   const { readQualityProjectEvidence, QualityEvidenceUnavailable } = await import('../qms/project-evidence');
@@ -61,24 +81,34 @@ async function computeQualityEvidenceReport(orgId: number, options?: DomainRepor
   const scope = await getCurrentAccessibleProgramScope(q, identity);
   const anchors = qualityAnchors(verifiedProgramAnchors(q, identity, scope), options, project, QualityEvidenceUnavailable);
   const records = new Map<string, NativeRecordSnapshot>();
+  const collected = new Map<string | null, ReadonlySet<string>>();
   const accessProjectIds: number[] = [];
   const collect = async (programId: string | null, projectId?: number) => {
     const rows = await readQualityProjectEvidence(q, { ...identity, programId });
+    const keys = new Set<string>();
     for (const row of rows) {
       if (row.sourceScope === 'project' && programId === null) throw new QualityEvidenceUnavailable();
-      const record: NativeRecordSnapshot = { key: row.key, title: row.title, text: row.text, version: row.version,
-        sourceScope: row.sourceScope, lifecycle: row.lifecycle, native: { kind: row.native.kind, id: row.native.id,
-          ...(row.native.authoringDocumentId ? { authoringDocumentId: row.native.authoringDocumentId } : {}) } };
+      if (keys.has(row.key)) throw new QualityEvidenceUnavailable(QUALITY_CHANGED);
+      keys.add(row.key);
+      const record = qualityRecord(row);
       const previous = records.get(record.key);
       if (previous && JSON.stringify(previous) !== JSON.stringify(record)) {
-        throw new QualityEvidenceUnavailable('Quality evidence changed during collection. Refresh before generating the report.');
+        throw new QualityEvidenceUnavailable(QUALITY_CHANGED);
       }
       records.set(record.key, record);
     }
+    collected.set(programId, keys);
     if (projectId !== undefined && rows.some(row => row.sourceScope === 'project')) accessProjectIds.push(projectId);
   };
   for (const anchor of anchors) await collect(anchor.programId, anchor.projectId);
   if (!anchors.length) await collect(null);
+  await requireProgramScopeStillCurrent(q, identity, scope);
+  // Revisit earlier projects after later reads; this detects observed drift,
+  // without representing a multi-project read as an atomic database snapshot.
+  for (const [programId, keys] of collected) {
+    const current = await readQualityProjectEvidence(q, { ...identity, programId });
+    requireSameQualityCollection(current, keys, records, QualityEvidenceUnavailable);
+  }
   await requireProgramScopeStillCurrent(q, identity, scope);
   const observedAt = now();
   const rows = [...records.values()].sort((a, b) => a.key.localeCompare(b.key));

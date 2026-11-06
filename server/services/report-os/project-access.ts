@@ -155,16 +155,18 @@ const recordObject = (value: unknown): Record<string, unknown> | null =>
 const PROGRAM_ID = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i;
 type QualityReceipt = { sourceScope: 'project' | 'organization'; programId: string | null; native: { kind: string; id: string; authoringDocumentId?: string } };
 
-/** Internal per-read batching. Serialized fields cannot manufacture its executor/actor provenance. */
+/** Internal read provenance. Serialized fields cannot manufacture its executor/actor binding. */
 export interface ReportQualityAccessContext { readonly kind: 'report-quality-access' }
 interface QualityAccessState {
   client: RequestSqlClient; organizationId: number; userId: number; role?: string;
+}
+interface QualityReportAccessState extends QualityAccessState {
   current: Map<string | null, Promise<Set<string>>>; checked: Map<string, Promise<boolean>>;
 }
 const qualityAccessContexts = new WeakMap<ReportQualityAccessContext, QualityAccessState>();
 export function createReportQualityAccessContext(client: RequestSqlClient, identity: { organizationId: number; userId: number }): ReportQualityAccessContext {
   const context = Object.freeze({ kind: 'report-quality-access' as const });
-  qualityAccessContexts.set(context, { client, ...identity, current: new Map(), checked: new Map() });
+  qualityAccessContexts.set(context, { client, ...identity });
   return context;
 }
 
@@ -219,7 +221,7 @@ function nativeBinding(native: QualityReceipt['native'], sourceScope: 'project' 
   return JSON.stringify({ sourceScope, native });
 }
 
-/** A native register is collected once per program/actor in this read. Retained authored copies keep exact-object admission. */
+/** A native register is collected once per program/actor for this report. Retained authored copies keep exact-object admission. */
 async function authorizeQualityReceipt(client: RequestSqlClient, identity: { organizationId: number; userId: number }, receipt: QualityReceipt,
   current: Map<string | null, Promise<Set<string>>>, quality: QualityModule): Promise<boolean> {
   if (['qms_documents', 'qms_document_versions'].includes(receipt.native.kind)) {
@@ -236,17 +238,14 @@ async function authorizeQualityReceipt(client: RequestSqlClient, identity: { org
 }
 
 /** Organization ownership is separate from the project workspace admitting that context. */
-async function checkedQualityReceipt(receipt: QualityReceipt, programs: readonly (string | null)[], state: QualityAccessState, quality: QualityModule, authoredChecks: Map<string, Promise<boolean>>): Promise<boolean> {
-  // Object grants can change while a multi-report history/export read continues.
-  // Deduplicate retained parents within this report, never across saved reports.
-  const checked = ['qms_documents', 'qms_document_versions'].includes(receipt.native.kind) ? authoredChecks : state.checked;
+async function checkedQualityReceipt(receipt: QualityReceipt, programs: readonly (string | null)[], state: QualityReportAccessState, quality: QualityModule): Promise<boolean> {
   for (const programId of programs) {
     const contextualReceipt = { ...receipt, programId };
     const key = JSON.stringify(contextualReceipt);
-    let admitted = checked.get(key);
+    let admitted = state.checked.get(key);
     if (!admitted) {
       admitted = authorizeQualityReceipt(state.client, { organizationId: state.organizationId, userId: state.userId }, contextualReceipt, state.current, quality);
-      checked.set(key, admitted);
+      state.checked.set(key, admitted);
     }
     if (await admitted) return true;
   }
@@ -271,12 +270,15 @@ async function canAccessQualityEvidence(organizationId: number, actor: ReportPro
   const anchors = verifiedProgramAnchors(client, identity, current);
   const permitted = new Set(anchors.filter(anchor => scope.scopeType === 'account' || String(anchor.projectId) === scope.scopeId).map(anchor => anchor.programId));
   const organizationContexts = scope.scopeType === 'account' ? [null, ...permitted] : [...permitted];
-  const authoredChecks = new Map<string, Promise<boolean>>();
+  // Native records, workspace placement and object grants can change between
+  // saved reports. Share lookups within this report, never admission decisions
+  // across a history/export batch, even when actor and project anchors match.
+  const reportState: QualityReportAccessState = { ...state, current: new Map(), checked: new Map() };
   for (const value of records) {
     const receipt = qualityReceipt(value);
     if (!receipt || (receipt.programId !== null && !permitted.has(receipt.programId))) return false;
     const programs = receipt.sourceScope === 'organization' ? organizationContexts : [receipt.programId];
-    if (!await checkedQualityReceipt(receipt, programs, state, quality, authoredChecks)) return false;
+    if (!await checkedQualityReceipt(receipt, programs, reportState, quality)) return false;
   }
   await requireProgramScopeStillCurrent(client, identity, current);
   return true;

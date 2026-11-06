@@ -1,0 +1,6 @@
+{
+  "scripts/demo/launch-demo/packs/lumen-rbm.mjs": "c80a6dccf694fe51afb194208a993cb12692199e257194b19dca11c68aaaf7be",
+  "scripts/demo/launch-demo/lumen-rbm-completion.test.mjs": "b31cd112c2d97a580631145ec656125f8dac24de8ea4485c2dc9b3b2adad436d",
+  "scripts/demo/launch-demo/seed.mjs": "2e5f36a0919830e31cdd0d21401d823e74d3b1b96a08f716c049999b341689c0",
+  "scripts/demo/launch-demo/lib.mjs": "595e9065f4e2b66e8298b5cd40be0cc04017a1c4b8f319a72c8328be8ed26c34"
+}

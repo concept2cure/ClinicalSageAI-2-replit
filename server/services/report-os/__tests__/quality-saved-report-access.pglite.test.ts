@@ -9,6 +9,7 @@ vi.mock('../../qms/project-evidence', () => ({ authorizeQualityEvidenceSnapshot:
 }));
 import { QualityEvidenceNotReadable } from '../../qms/project-evidence';
 import { canAccessReportScope, createReportQualityAccessContext } from '../project-access';
+import { qualityFamilyQuery } from '../../qms/project-evidence-queries';
 
 const A = '00000000-0000-4000-8000-000000000011', B = '00000000-0000-4000-8000-000000000012';
 const DOC = '00000000-0000-4000-8000-000000000099';
@@ -23,6 +24,28 @@ function snapshot(id: string, sourceScope: 'project' | 'organization' = 'project
 const saved = (records = [snapshot('2')], scopeType = 'project', scopeId = '11') => ({ organizationId: 7, reportTypeId: 'compliance.audit_assurance_pack',
   scopeType, scopeId, dependencySummary: { summary: { accessProjectIds: scopeType === 'project' ? [Number(scopeId)] : [], domain: { qualityEvidence: { schemaVersion: 1, records } } } } });
 
+function registerSnapshot(kind: string, row: Record<string, unknown>) {
+  const sourceScope = kind === 'qms_change_controls' && row.program_id ? 'project' : 'organization';
+  const native = { kind, id: String(row.id) };
+  return { ...snapshot(native.id, sourceScope), key: `quality:${kind}:${native.id}`, native,
+    title: String(row.name ?? row.title ?? 'Retained Quality finding'),
+    text: JSON.stringify({ evidenceKind: 'qms', sourceScope, native,
+      ...(sourceScope === 'project' ? { programId: row.program_id } : {}), data: { record: row } }) };
+}
+
+/** Reuse the collector's literal SQL with real native rows and workspace values. */
+async function readRegisterFixtures(reader: typeof q, input: { organizationId: number; programId: string | null }) {
+  const workspace = input.programId ? (await reader.query('SELECT client_workspace_id FROM projects WHERE regulatory_program_id=$1::uuid AND organization_id=$2',
+    [input.programId, input.organizationId])).rows[0]?.client_workspace_id : null;
+  const records: ReturnType<typeof registerSnapshot>[] = [];
+  for (const kind of ['quality_management_plans', 'qms_change_controls']) {
+    const query = qualityFamilyQuery(kind, { organizationId: input.organizationId, programId: input.programId,
+      workspaceId: typeof workspace === 'number' ? workspace : null, documentIds: [], trainingVersions: '[]', changeIds: [], roleIds: [], planIds: [], limit: 1001 });
+    if (query) for (const row of (await reader.query(query.sql, query.args)).rows) records.push(registerSnapshot(kind, row));
+  }
+  return records;
+}
+
 beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(`CREATE TABLE organizations(id int,status text); CREATE TABLE users(id int,status text);
@@ -36,6 +59,8 @@ beforeAll(async () => {
     CREATE TABLE report_runs(id int,run_uuid uuid,organization_id int,scope_type text,scope_id text,report_type_id text,dependency_summary json);
     CREATE TABLE authoring_documents(id uuid,tenant_id int,client_program_id uuid,status text,created_by text);
     CREATE TABLE qms_documents(id int,organization_id int,authoring_document_id uuid,metadata jsonb,deleted_at timestamptz);
+    CREATE TABLE quality_management_plans(id int,organization_id int,client_workspace_id int,name text,deleted_at timestamptz);
+    CREATE TABLE qms_change_controls(id int,organization_id int,program_id uuid,title text,deleted_at timestamptz);
     CREATE TABLE doc_permissions(tenant_id int,doc_id uuid,principal_id text,email text,role text,section_id uuid,revoked_at timestamptz,valid_from timestamptz,valid_until timestamptz);
     INSERT INTO organizations VALUES(7,'active'); INSERT INTO users VALUES(5,'active'),(6,'active');
     INSERT INTO organization_users VALUES(7,5,'member'),(7,6,'member');
@@ -47,7 +72,7 @@ beforeAll(async () => {
     INSERT INTO project_visibility_settings VALUES(11,7,'private'),(12,7,'private');`);
 });
 beforeEach(async () => {
-  vi.clearAllMocks(); await pg.exec('DELETE FROM report_runs');
+  vi.clearAllMocks(); await pg.exec('DELETE FROM report_runs; DELETE FROM quality_management_plans; DELETE FROM qms_change_controls');
   h.authorize.mockImplementation(async (_q, _input, native) => { if (native.id === '2') throw new QualityEvidenceNotReadable(); });
   h.collect.mockResolvedValue([]);
 });
@@ -169,5 +194,61 @@ describe('current authored-object grants within batched report reads', () => {
     await pg.exec('UPDATE doc_permissions SET revoked_at=NOW()');
     try { expect(await canAccessReportScope(7, actor, saved([snapshot('1')]), q, { qualityContext })).toBe(false); }
     finally { await pg.exec('UPDATE doc_permissions SET revoked_at=NULL'); }
+  });
+});
+
+describe('current native register admission within batched report reads', () => {
+  it.each(['plan removed', 'change retired'])('refuses the whole later report when its %s without any role or anchor change', async change => {
+    await pg.query('INSERT INTO quality_management_plans VALUES(17,7,71,$1,NULL)', ['Historical plan title']);
+    await pg.query('INSERT INTO qms_change_controls VALUES(21,7,$1,$2,NULL)', [A, 'Historical change title']);
+    h.collect.mockImplementation(readRegisterFixtures);
+    const receipt = registerSnapshot(change === 'plan removed' ? 'quality_management_plans' : 'qms_change_controls',
+      change === 'plan removed' ? { id: 17, name: 'Historical plan title' } : { id: 21, title: 'Historical change title', program_id: A });
+    const scope = saved([receipt, receipt]);
+    const original = JSON.stringify(scope);
+    const qualityContext = createReportQualityAccessContext(q, { organizationId: 7, userId: 5 });
+    expect(await canAccessReportScope(7, actor, scope, q, { qualityContext })).toBe(true);
+    expect(h.collect).toHaveBeenCalledTimes(1);
+    await pg.exec(change === 'plan removed' ? 'DELETE FROM quality_management_plans WHERE id=17'
+      : 'UPDATE qms_change_controls SET deleted_at=NOW() WHERE id=21');
+    expect(await canAccessReportScope(7, actor, scope, q, { qualityContext })).toBe(false);
+    expect(h.collect).toHaveBeenCalledTimes(2);
+    expect(JSON.stringify(scope)).toBe(original);
+  });
+
+  it.each(['native workspace', 'project workspace'])('rechecks the %s for the same admitted program in a later report', async change => {
+    await pg.query('INSERT INTO quality_management_plans VALUES(17,7,71,$1,NULL)', ['Workspace 71 private finding']);
+    h.collect.mockImplementation(readRegisterFixtures);
+    const scope = saved([registerSnapshot('quality_management_plans', { id: 17, name: 'Workspace 71 private finding' })]);
+    const qualityContext = createReportQualityAccessContext(q, { organizationId: 7, userId: 5 });
+    expect(await canAccessReportScope(7, actor, scope, q, { qualityContext })).toBe(true);
+    await pg.exec(change === 'native workspace' ? 'UPDATE quality_management_plans SET client_workspace_id=72 WHERE id=17'
+      : 'UPDATE projects SET client_workspace_id=72 WHERE id=11');
+    try { expect(await canAccessReportScope(7, actor, scope, q, { qualityContext })).toBe(false); }
+    finally { await pg.exec('UPDATE projects SET client_workspace_id=71 WHERE id=11'); }
+  });
+
+  it('recollects each report once while retaining historical text when the same native record remains admitted', async () => {
+    await pg.query('INSERT INTO quality_management_plans VALUES(17,7,71,$1,NULL)', ['Original finding']);
+    h.collect.mockImplementation(readRegisterFixtures);
+    const scope = saved([registerSnapshot('quality_management_plans', { id: 17, name: 'Original finding' })]);
+    const original = JSON.stringify(scope);
+    const qualityContext = createReportQualityAccessContext(q, { organizationId: 7, userId: 5 });
+    expect(await canAccessReportScope(7, actor, scope, q, { qualityContext })).toBe(true);
+    await pg.query('UPDATE quality_management_plans SET name=$1 WHERE id=17', ['Updated current finding']);
+    expect(await canAccessReportScope(7, actor, scope, q, { qualityContext })).toBe(true);
+    expect(h.collect).toHaveBeenCalledTimes(2);
+    expect(JSON.stringify(scope)).toBe(original);
+  });
+
+  it('does not reuse a native grant after the tracking anchor no longer admits its saved project binding', async () => {
+    await pg.query('INSERT INTO qms_change_controls VALUES(21,7,$1,$2,NULL)', [A, 'Historical project finding']);
+    h.collect.mockImplementation(readRegisterFixtures);
+    const scope = saved([registerSnapshot('qms_change_controls', { id: 21, title: 'Historical project finding', program_id: A })]);
+    const qualityContext = createReportQualityAccessContext(q, { organizationId: 7, userId: 5 });
+    expect(await canAccessReportScope(7, actor, scope, q, { qualityContext })).toBe(true);
+    await pg.exec("UPDATE projects SET status='deleted' WHERE id=11");
+    try { expect(await canAccessReportScope(7, actor, scope, q, { qualityContext })).toBe(false); }
+    finally { await pg.exec("UPDATE projects SET status='active' WHERE id=11"); }
   });
 });
