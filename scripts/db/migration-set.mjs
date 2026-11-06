@@ -3784,6 +3784,12 @@ export const C2C_MIGRATION_FILES = [
   // After file_uploads' creators (20260726, 20260828). Additive, IF NOT EXISTS;
   // no table, no constraint, no DROP.
   'migrations/20261105_file_uploads_durable_object.sql',
+  // Folders a person makes in a project's Vault (S6, 2026-11-06): public.document_folders
+  // gains its project (program_id) and its place under a binder or preset folder
+  // (parent_key). After regulatory_programs and organizations. Additive, IF NOT EXISTS; the
+  // table's guarded CREATE is its existing shape. Public with organization_id INTEGER NOT
+  // NULL, so the sweep below gives it a tenant policy when it has none. No DROP.
+  'migrations/20261106_document_folders_project_scope.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
