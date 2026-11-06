@@ -396,7 +396,10 @@ function assertDerivativeText(input: CreateDocumentFromDraftInput, stored: strin
       stored[0] !== sanitizeMachineDraftSectionHtml(plainTextToHtml(generated.rawContent)) ||
       derivativeTextSha(generated.rawContent) !== lookup.contentSha256) throw new DraftSourceVerificationError();
 }
-async function derivativeGenerationRow(q: Queryable, scope: { ctx: CreateContext; input: CreateDocumentFromDraftInput; generated: GeneratedDerivativeOption }) {
+async function derivativeGenerationRow(q: Queryable, scope: {
+  ctx: Pick<CreateContext, 'tenantId' | 'actor'>; input: Pick<CreateDocumentFromDraftInput, 'programId'>;
+  generated: Pick<GeneratedDerivativeOption, 'receipt' | 'derivativeId' | 'payloadSha256'>; sourceReaderUserId?: number;
+}) {
   const { ctx, input, generated } = scope, lookup = generated.receipt;
   const project = await q.query('SELECT id FROM projects WHERE organization_id=$1 AND regulatory_program_id=$2', [ctx.tenantId, input.programId]);
   if (project.rows.length !== 1) throw new DraftSourceVerificationError();
@@ -414,7 +417,7 @@ async function derivativeGenerationRow(q: Queryable, scope: { ctx: CreateContext
     [row.resolved_model, lookup.resolvedModel], [proof.provider, row.provider], [proof.model, row.model], [proof.resolvedModel, row.resolved_model],
     [proof.resultingContentTier, 2], [proof.semanticVerified, false]];
   if (!pairs.every(([actual, expected]) => actual === expected)) throw new DraftSourceVerificationError();
-  await verifyIndependentVaultSource(q, { organizationId: ctx.tenantId, userId: Number(ctx.actor.id), binding: proof.sourceBinding });
+  await verifyIndependentVaultSource(q, { organizationId: ctx.tenantId, userId: scope.sourceReaderUserId ?? Number(ctx.actor.id), binding: proof.sourceBinding });
   return row;
 }
 function derivativeServingModels(row: Record<string, any>): QualifiedServedModel[] {
@@ -425,6 +428,31 @@ function derivativeServingModels(row: Record<string, any>): QualifiedServedModel
   if (pin && (qualifiedPinRefusal({ qualifiedModelPin: pin, taskType: 'document_drafting' }) ||
       pin.provider !== row.provider || pin.pinnedVersion !== row.resolved_model)) throw new DraftSourceVerificationError();
   return servedBy;
+}
+
+/** Release reuses the actual nested gateway receipt, never the parent turn's model or displayed provenance. */
+export async function verifyRetainedDerivativeGeneration(q: Queryable, input: {
+  organizationId: number; creatorUserId: number; currentReaderUserId: number; programId: string;
+  genesisHtml: string; proof: NonNullable<DocumentProvenance['generatedDerivative']>;
+}): Promise<boolean> {
+  try {
+    const { proof } = input;
+    if (!proof || !UUID_RE.test(proof.requestId) || !UUID_RE.test(proof.derivativeId) ||
+        !Number.isSafeInteger(input.creatorUserId) || input.creatorUserId < 1 ||
+        derivativeTextSha(input.genesisHtml) !== proof.storedHtmlSha256) throw new DraftSourceVerificationError();
+    const row = await derivativeGenerationRow(q, {
+      ctx: { tenantId: input.organizationId, actor: { id: String(input.creatorUserId), email: null } },
+      input: { programId: input.programId }, sourceReaderUserId: input.currentReaderUserId,
+      generated: { derivativeId: proof.derivativeId, payloadSha256: proof.payloadSha256,
+        receipt: { requestId: proof.requestId, provider: proof.provider, model: proof.model, resolvedModel: proof.resolvedModel, contentSha256: proof.outputSha256 } },
+    });
+    if (JSON.stringify(row.metadata.verifiedDerivativeGeneration.sourceBinding) !== JSON.stringify(proof.sourceBinding)) throw new DraftSourceVerificationError();
+    derivativeServingModels(row);
+    return true;
+  } catch (error) {
+    if (error instanceof DraftSourceVerificationError) return false;
+    throw error;
+  }
 }
 async function verifiedDerivativeGeneration(q: Queryable, ctx: CreateContext, input: CreateDocumentFromDraftInput,
   stored: string[], generated: GeneratedDerivativeOption): Promise<Partial<DocumentProvenance>> {

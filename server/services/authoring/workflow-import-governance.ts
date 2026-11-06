@@ -2,7 +2,7 @@
  * name, and a review verdict are three different facts; none is qualification. */
 import { isWorkflowImportOrigin, type WorkflowImportOrigin } from '../../../shared/authoring/source-import';
 import { clauseSpans } from '../clinical-regulatory-evidence/lineage-gate';
-import { comparableText, MIN_MACHINE_CLAUSE_CHARS } from '../clinical-regulatory-evidence/machine-attribution';
+import { MIN_MACHINE_CLAUSE_CHARS } from '../clinical-regulatory-evidence/machine-attribution';
 import { assertLineageCoversContent, assertLineageHashesMatchContent, SpanLineageError, hashSpanText, listLiveMachineSpans } from '../clinical-regulatory-evidence/span-lineage.service';
 import { sectionsDigest, computeAuthoringSignatureDigest, fullVisibleAuthoringSnapshot, authoringSnapshotHash } from './authoring-content-digests';
 import { authoringReviewStanding } from './peer-review';
@@ -20,6 +20,7 @@ import { writeAuthoringAuditTrail, verifyAuthoringTrailRow, type AuthoringAuditC
 import { verifySequencedRow } from '../audit/chain-row';
 import type { IndependentCheckContext, AuthoringReviewInput } from '../../../shared/authoring/peer-review';
 import { INDEPENDENT_CHECKER_VERSION, independentSourcePins, verifyIndependentVaultSource, type IndependentCheckResult } from '../ana/saved-document-critique';
+import { machineQualificationText as qualificationComparison, ordinaryMachineGenesisMayRelease } from './governed-machine-claims';
 
 export interface WorkflowGovernanceDocument {
   id: string;
@@ -157,10 +158,6 @@ async function verifyCurrentLineageHashes(q: Queryable, input: { organizationId:
  * Prose punctuation/reflow alone must not discharge known generated content.
  * Decimal/group separators immediately before digits and scientific operators
  * remain literal; a different numeric result is never treated as the same fact. */
-function qualificationComparison(content: string): string {
-  return comparableText(content).replace(/[.,;:!?](?!\d)/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
 function retainedKnownMachineClauses(source: MaterializedWorkflowSource, sections: ReadonlyArray<WorkflowGovernanceSection>): boolean {
   const knownCodes = new Set(source.origin.sectionOrigins.filter(origin => origin.originalAuthorship === 'machine').map(origin => origin.code));
   const current = sections.map(section => qualificationComparison(section.content ?? ''));
@@ -332,6 +329,7 @@ async function requireCsrScientificRelease(q: Queryable, input: WorkflowGovernan
 export async function assertWorkflowImportRelease(q: Queryable, input: WorkflowGovernanceInput): Promise<void> {
   await assertIndependentCheckRelease(q, input);
   await requireCsrScientificRelease(q, input);
+  await assertOrdinaryMachineRelease(q, input);
   const state = await inspectedWorkflow(q, input);
   if (!state) return;
   if (state.knownMachineRemains) refusal('WORKFLOW_MODEL_QUALIFICATION_REQUIRED',
@@ -339,6 +337,25 @@ export async function assertWorkflowImportRelease(q: Queryable, input: WorkflowG
   if (!await hasCurrentAdoption(q, input, state.origin.fingerprint, state.contentHash)) {
     refusal('WORKFLOW_HUMAN_ADOPTION_REQUIRED', 'Release needs an assigned reviewer’s approved review and explicit REVIEWER electronic signature adopting this exact full document. Earlier reviews and imported signatures do not cover this copy.');
   }
+}
+
+async function assertOrdinaryMachineRelease(q: Queryable, input: WorkflowGovernanceInput): Promise<void> {
+  const rows = await independentLedger(q, input.doc.id, input.organizationId);
+  const ordinary = rows.some(row => row.operation_type === 'CREATE' && row.metadata?.provenance?.source === 'ana');
+  if (!ordinary) {
+    if ((input.doc.provenance as { source?: unknown } | null)?.source === 'ana') refusal('WORKFLOW_ORIGIN_UNVERIFIED',
+      'The machine draft has no retained creation receipt. Nothing was released.');
+    return;
+  }
+  let allowed = false;
+  try { allowed = await ordinaryMachineGenesisMayRelease(q, input,
+    await independentLedger(q, input.doc.id, input.organizationId, ['UPDATE'])); }
+  catch (error) {
+    if (!(error instanceof SpanLineageError)) throw new WorkflowImportGovernanceError(503, 'WORKFLOW_GENERATION_UNVERIFIED',
+      'Current retained machine generation could not be verified. Nothing was released.');
+  }
+  if (!allowed) refusal('WORKFLOW_MODEL_QUALIFICATION_REQUIRED',
+    'Stored machine-generated text has no retained qualified generation covering its exact words. Human review does not establish model qualification. Replace it through the governed human editing path before release.');
 }
 
 const CHECK_OPERATIONS = ['INDEPENDENT_CHECK_INIT', 'INDEPENDENT_CHECK_RECORDED', 'INDEPENDENT_FINDING_REVIEW'];
@@ -350,7 +367,7 @@ interface IndependentReceipt extends IndependentCheckResult { receiptId: string;
 
 /** Reconcile both ledger sides: changing a trail's type/metadata cannot hide
  * its original chained operation and expose an older favorable receipt. */
-async function independentLedger(q: Queryable, docId: string, organizationId: number) {
+async function independentLedger(q: Queryable, docId: string, organizationId: number, extraOperations: string[] = []) {
   try {
   const result = await q.query(`WITH trails AS (SELECT * FROM authoring_audit_trail WHERE doc_id=$1::uuid AND tenant_id=$2),
     chains AS (SELECT * FROM audit_logs WHERE tenant_id=$2 AND new_values->>'docId'=$1::uuid::text)
@@ -361,7 +378,7 @@ async function independentLedger(q: Queryable, docId: string, organizationId: nu
     WHERE t.operation_type='CREATE' OR t.operation_type=ANY($3::text[]) OR t.metadata::jsonb ? 'independentCheck'
       OR a.new_values->>'operationType'=ANY($3::text[])
       OR a.new_values->>'operationType'='CREATE'
-    ORDER BY a.chain_seq NULLS FIRST,t.created_at,t.id`, [docId, organizationId, CHECK_OPERATIONS]);
+    ORDER BY a.chain_seq NULLS FIRST,t.created_at,t.id`, [docId, organizationId, [...CHECK_OPERATIONS, ...extraOperations]]);
   for (const row of result.rows) await verifyIndependentLedgerRow(q, row, { docId, organizationId });
   return result.rows as Array<Record<string, any>>;
   } catch { return independentRefused(); }

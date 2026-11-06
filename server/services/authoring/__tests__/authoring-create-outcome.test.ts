@@ -2,12 +2,14 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { randomUUID, createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { runWithTenantScope } from '../../../db/tenantStore';
 import type express from 'express';
 import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
 import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, PROGRAM, ORG, AUTHOR, makeApp, mint, asToken } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { AUTHORING_TOOL_MIGRATIONS, DISPOSITION_IMPACT_PREREQ } from '../../ana/__tests__/support/authoring-tool-db';
 import { approvedToolHandler } from '../../ana/__tests__/support/approved-tool-handler';
-import { createDocumentFromDraft, parseProvenance, type CreateDocumentFromDraftOptions } from '../authoring-from-draft';
+import { createDocumentFromDraft, parseProvenance, verifyRetainedDerivativeGeneration, type CreateDocumentFromDraftOptions } from '../authoring-from-draft';
 import { plainTextToHtml } from '../../../../shared/authoring/plain-text-html';
 import { runAuthoringIndependentCheck } from '../peer-review';
 import { assertIndependentCheckRelease, readIndependentCheckContext } from '../workflow-import-governance';
@@ -55,9 +57,12 @@ const correspondenceOrigin: CompanyCorrespondenceOrigin = { version: 1, organiza
   companyDocumentRevision: 4, companyProfileHash: 'a'.repeat(64), companyBrandingApplied: true };
 
 beforeAll(async () => {
+  const profileCreator = readFileSync(new URL('../../../../migrations/0013_ana_intelligence_system.sql', import.meta.url), 'utf8')
+    .match(/CREATE TABLE IF NOT EXISTS user_intelligence_profiles \([\s\S]*?\n\);/)?.[0];
+  if (!profileCreator) throw new Error('Canonical owner-profile fixture DDL is required.');
   jdb = await createJourneyDb({ prereqSql: PREREQ + VAULT_DDL + DISPOSITION_IMPACT_PREREQ,
     migrations: [...AUTHORING_TOOL_MIGRATIONS, 'db/migrations/20260813_ai_gateway_audit_log.sql'],
-    testOnlySql: `${AUTHORING_ACCESS_DDL} ALTER TABLE organizations ADD COLUMN payment_status text NOT NULL DEFAULT 'active';` });
+    testOnlySql: `${AUTHORING_ACCESS_DDL} ${profileCreator} ALTER TABLE organizations ADD COLUMN payment_status text NOT NULL DEFAULT 'active';` });
   pool = {
     query: async (sql, values) => {
       if (committed && mode === 'readback' && /FROM authoring_sections WHERE doc_id/.test(sql)) throw new Error('Synthetic post-commit read failure');
@@ -188,7 +193,10 @@ describe('canonical authoring creation recovery', () => {
     mode = fault as typeof mode;
     const handler = approvedToolHandler(tool)!;
     const input = tool === 'draft_authoring_document' ? draft : { title: draft.title, content: 'A synthetic draft.', reason: 'Saving the synthetic qualification draft.' };
-    const body = JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true, sqlClient: pool }));
+    const body = await runWithTenantScope({ tenantId: String(ORG), accountId: Number(AUTHOR.id), role: 'member', source: 'test', caller: 'authoring-create-outcome' }, async () => {
+      await jdb.pool.query("SELECT set_config('app.current_tenant_id',$1,false),set_config('app.current_account_id',$2,false)", [String(ORG), AUTHOR.id]);
+      return JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true, sqlClient: pool }));
+    });
     checkRecovery(body, fault === 'after-commit' ? 'unconfirmed' : 'committed');
     if (fault === 'after-commit') expectDiscarded();
     else expect(releases).toHaveBeenCalledWith(undefined);
@@ -270,6 +278,17 @@ describe('canonical derivative generation attribution', () => {
     const genesis = await jdb.pool.query('SELECT metadata FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type=$2', [result.document.id, 'CREATE']);
     expect((genesis.rows[0] as any).metadata).toMatchObject({ independentCheck: { required: true },
       provenance: { generatedDerivative: { requestId: generated.receipt.requestId } } });
+    const released = { organizationId: ORG, creatorUserId: Number(AUTHOR.id), currentReaderUserId: Number(AUTHOR.id),
+      programId: PROGRAM, genesisHtml: String(result.sections[0].content), proof: result.provenance.generatedDerivative! };
+    expect(await verifyRetainedDerivativeGeneration(jdb.pool, released)).toBe(true);
+    expect(await verifyRetainedDerivativeGeneration(jdb.pool, { ...released, genesisHtml: `${released.genesisHtml}!` })).toBe(false);
+    const previousEnvironment = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      // The actual registry is still PQ-pending. A dev fixture's admitted tuple
+      // is not production qualification, even with an intact nested receipt.
+      expect(await verifyRetainedDerivativeGeneration(jdb.pool, released)).toBe(false);
+    } finally { process.env.NODE_ENV = previousEnvironment; }
     expect(statements.indexOf('SELECT 1')).toBeLessThan(statements.findIndex(sql => /INSERT INTO authoring_documents/.test(sql)));
   });
 
