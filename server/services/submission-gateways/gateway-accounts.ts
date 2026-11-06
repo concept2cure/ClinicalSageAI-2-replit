@@ -22,6 +22,7 @@
  */
 import { CredentialError, type GatewayName, type Region } from './types';
 import { decryptCredential, encryptCredential } from '../security/credential-cipher';
+import { createHash } from 'node:crypto';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -92,6 +93,47 @@ export interface ResolvedGatewayAccount {
   credentials: Record<string, string> | null;
 }
 
+interface AccountAuthority {
+  organizationId: number;
+  region: Region;
+  gateway: GatewayName;
+  environment: GatewayEnvironment;
+  fingerprint: string;
+}
+
+// Process-local authority cannot be supplied by a request or reconstructed
+// from public account fields. Neither ciphertext nor its digest is exposed in
+// a response, a trace or the account metadata stamped on a transmission.
+const accountAuthorities = new WeakMap<ResolvedGatewayAccount, AccountAuthority>();
+
+function authorityFingerprint(row: Record<string, unknown> | undefined): string {
+  return createHash('sha256').update(JSON.stringify([
+    Boolean(row), row?.account_mode ?? null, row?.sender_identifier ?? null,
+    row?.credentials_ciphertext ?? null, row?.updated_at ?? null,
+  ])).digest('hex');
+}
+
+async function readAccountRow(db: Queryable, authority: Omit<AccountAuthority, 'fingerprint'>) {
+  const { organizationId, region, gateway, environment } = authority;
+  const { rows } = await db.query(
+    `SELECT account_mode, sender_identifier, credentials_ciphertext, updated_at
+       FROM organization_gateway_accounts
+      WHERE organization_id = $1 AND region = $2 AND gateway = $3 AND environment = $4`,
+    [organizationId, region, gateway, environment],
+  );
+  return rows[0] as Record<string, unknown> | undefined;
+}
+
+function resolvedAccount(row: Record<string, unknown> | undefined, authority: AccountAuthority): ResolvedGatewayAccount {
+  const account: ResolvedGatewayAccount = row?.account_mode === 'client'
+    ? { mode: 'client', senderIdentifier: typeof row.sender_identifier === 'string' ? row.sender_identifier : null,
+        credentials: typeof row.credentials_ciphertext === 'string' && row.credentials_ciphertext
+          ? JSON.parse(decryptCredential(row.credentials_ciphertext)) : null }
+    : { mode: 'platform', senderIdentifier: null, credentials: null };
+  accountAuthorities.set(account, Object.freeze(authority));
+  return account;
+}
+
 /** The organisation's choice for one gateway and environment. No row is the platform account. */
 export async function resolveGatewayAccount(
   db: Queryable,
@@ -100,21 +142,36 @@ export async function resolveGatewayAccount(
   gateway: GatewayName,
   environment: GatewayEnvironment,
 ): Promise<ResolvedGatewayAccount> {
-  const { rows } = await db.query(
-    `SELECT account_mode, sender_identifier, credentials_ciphertext
-       FROM organization_gateway_accounts
-      WHERE organization_id = $1 AND region = $2 AND gateway = $3 AND environment = $4`,
-    [organizationId, region, gateway, environment],
-  );
-  const row = rows[0];
-  if (!row || row.account_mode !== 'client') {
-    return { mode: 'platform', senderIdentifier: null, credentials: null };
-  }
-  return {
-    mode: 'client',
-    senderIdentifier: row.sender_identifier ?? null,
-    credentials: row.credentials_ciphertext ? JSON.parse(decryptCredential(row.credentials_ciphertext)) : null,
-  };
+  const identity = { organizationId, region, gateway, environment };
+  const row = await readAccountRow(db, identity);
+  return resolvedAccount(row, { ...identity, fingerprint: authorityFingerprint(row) });
+}
+
+/**
+ * Re-establish the account's authority after asynchronous archive/source
+ * checks, immediately before handing credentials to the deterministic
+ * transport. A rotation, deletion or account/sender change revokes this
+ * attempt; it never falls back to the platform account. In-flight network
+ * operations cannot be recalled by this checkpoint.
+ */
+export async function resolveGatewayAccountForUse(
+  db: Queryable,
+  captured: ResolvedGatewayAccount,
+  scope: Omit<AccountAuthority, 'fingerprint'>,
+): Promise<ResolvedGatewayAccount> {
+  const { organizationId, region, gateway, environment } = scope;
+  const authority = accountAuthorities.get(captured);
+  const changed = () => new CredentialError(region, gateway, environment, [
+    'The gateway account changed or could not be confirmed while this package was being prepared. Review the current account settings and authorize a fresh transmission; nothing was sent.',
+  ]);
+  if (!authority || authority.organizationId !== organizationId || authority.region !== region
+    || authority.gateway !== gateway || authority.environment !== environment) throw changed();
+  let row: Awaited<ReturnType<typeof readAccountRow>>;
+  try { row = await readAccountRow(db, authority); } catch { throw changed(); }
+  if (authorityFingerprint(row) !== authority.fingerprint) throw changed();
+  // Decrypt only after the authority still matches, and ignore any mutation of
+  // the public captured object's fields while asynchronous checks were running.
+  return resolvedAccount(row, authority);
 }
 
 /** What a client account still lacks before it can send; empty when it can. */

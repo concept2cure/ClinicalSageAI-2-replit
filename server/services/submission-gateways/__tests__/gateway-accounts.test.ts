@@ -43,10 +43,12 @@ import {
   clientAccountRefusal,
   listGatewayAccounts,
   resolveGatewayAccount,
+  resolveGatewayAccountForUse,
   specFor,
   writeGatewayAccount,
 } from '../gateway-accounts';
 import { encryptCredential } from '../../security/credential-cipher';
+import * as sentPackages from '../sent-package-archive';
 
 const PEM_CERT = '-----BEGIN CERTIFICATE-----\nMIIBclientcert\n-----END CERTIFICATE-----';
 const PEM_KEY = '-----BEGIN PRIVATE KEY-----\nMIIEclientkey\n-----END PRIVATE KEY-----';
@@ -156,6 +158,40 @@ describe('what the organisation sees', () => {
   });
 });
 
+describe('captured account authority', () => {
+  it('does not accept a copied account or reuse authority in another organization or environment', async () => {
+    const db = memoryDb();
+    const captured = await resolveGatewayAccount(db, 7, 'fda', 'esg', 'production');
+    const scope = { organizationId: 7, region: 'fda', gateway: 'esg', environment: 'production' } as const;
+    await expect(resolveGatewayAccountForUse(db, { ...captured }, scope)).rejects.toBeInstanceOf(CredentialError);
+    await expect(resolveGatewayAccountForUse(db, captured, { ...scope, organizationId: 8 })).rejects.toBeInstanceOf(CredentialError);
+    await expect(resolveGatewayAccountForUse(db, captured, { ...scope, environment: 'staging' })).rejects.toBeInstanceOf(CredentialError);
+    await expect(resolveGatewayAccountForUse(db, captured, { ...scope, region: 'ema', gateway: 'cesp' })).rejects.toBeInstanceOf(CredentialError);
+  });
+
+  it('re-establishes credentials from the store, ignoring changes to the captured object', async () => {
+    const db = memoryDb();
+    await writeGatewayAccount(db, { organizationId: 7, userId: 11, region: 'fda', gateway: 'esg', environment: 'production',
+      reason: 'Sponsor uses its own FDA account', mode: 'client', senderIdentifier: 'ZZACME001',
+      credentials: { clientCertPem: PEM_CERT, clientKeyPem: PEM_KEY } });
+    const captured = await resolveGatewayAccount(db, 7, 'fda', 'esg', 'production');
+    captured.senderIdentifier = 'FORGED';
+    captured.credentials!.clientKeyPem = 'FORGED';
+    const current = await resolveGatewayAccountForUse(db, captured, { organizationId: 7, region: 'fda', gateway: 'esg', environment: 'production' });
+    expect(current.senderIdentifier).toBe('ZZACME001');
+    expect(current.credentials!.clientKeyPem).toBe(PEM_KEY);
+  });
+
+  it('fails closed with a content-free credential refusal if the authority store cannot be re-read', async () => {
+    const captured = await resolveGatewayAccount(memoryDb(), 7, 'fda', 'esg', 'production');
+    const unavailable = { query: async () => { throw new Error('CANARY-private-store-error'); } };
+    const error = await failureOf(resolveGatewayAccountForUse(unavailable, captured,
+      { organizationId: 7, region: 'fda', gateway: 'esg', environment: 'production' }));
+    expect(error).toBeInstanceOf(CredentialError);
+    expect((error as Error).message).not.toContain('CANARY-private-store-error');
+  });
+});
+
 describe('the guarded transmit honours the choice, before the wire', () => {
   // 2026-10-22 (MR-02 Stage 1): the record-only client refusal is exercised on
   // EMA CESP, a sourced gateway. Since e1f3fd425 the guard refuses the
@@ -209,6 +245,30 @@ describe('the guarded transmit honours the choice, before the wire', () => {
     const result = await getGateway('fda', 'esg').transmit(request());
     expect((wire.mock.calls[0][0] as GatewayTransmitRequest).account).toEqual({ mode: 'platform', senderIdentifier: null, credentials: null });
     expect(result.gatewayAccount).toEqual({ mode: 'platform', senderIdentifier: null });
+  });
+
+  it.each(['rotation', 'sender change', 'switch to platform', 'deletion'])('an account %s during archival revokes this transmit before the wire', async change => {
+    h.account = { account_mode: 'client', sender_identifier: 'ZZACME001', credentials_ciphertext: encryptCredential(JSON.stringify({ clientCertPem: PEM_CERT, clientKeyPem: PEM_KEY })) };
+    const archive = sentPackages.archiveSentPackage;
+    vi.spyOn(sentPackages, 'archiveSentPackage').mockImplementation(async (req, region, gateway) => {
+      const stored = await archive(req, region, gateway);
+      if (change === 'rotation') h.account = { ...h.account, credentials_ciphertext: encryptCredential(JSON.stringify({ clientCertPem: PEM_CERT, clientKeyPem: PEM_KEY.replace('client', 'rotated') })) };
+      if (change === 'sender change') h.account = { ...h.account, sender_identifier: 'ANOTHER-SENDER' };
+      if (change === 'switch to platform') h.account = { account_mode: 'platform', sender_identifier: null, credentials_ciphertext: null };
+      if (change === 'deletion') h.account = null;
+      return stored;
+    });
+    const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockResolvedValue({ transmittalId: 41 } as never);
+
+    const error = await failureOf(getGateway('fda', 'esg').transmit(request()));
+
+    expect(error).toBeInstanceOf(CredentialError);
+    expect((error as Error).message).toMatch(/account changed/i);
+    expect(refusedBeforeWire(error)).toBe(true);
+    expect(wire).not.toHaveBeenCalled();
+    expect(h.calls.some(c => /INSERT INTO submission_transmittals/.test(c.text))).toBe(false);
+    expect((error as Error).message).not.toContain(PEM_KEY);
+    expect((error as Error).message).not.toContain('credentials_ciphertext');
   });
 
   it('clientAccountRefusal is null for the platform account and for a complete FDA client account', () => {
