@@ -201,6 +201,39 @@ interface AuthSection {
   draftingRegionState?: import('@shared/authoring/writing-regions').DraftingRegionState;
 }
 
+interface SavedEditorSnapshot {
+  sectionId: string | null;
+  rows: AuthSection[];
+  dirty: boolean;
+  saving: boolean;
+}
+
+function sectionContentChanged(previous: AuthSection | undefined, next: AuthSection | undefined): boolean {
+  return !!previous && !!next && previous.content !== next.content;
+}
+
+function sectionVersionChanged(previous: AuthSection | undefined, next: AuthSection | undefined): boolean {
+  return sectionContentChanged(previous, next) || !!previous && !!next && previous.updated_at !== next.updated_at;
+}
+
+/** The buffer and its saved concurrency base move together, or neither moves. */
+function refreshedSectionRows(rows: AuthSection[], before: SavedEditorSnapshot, latest: SavedEditorSnapshot,
+  editor: RichSectionEditorHandle | null): { rows: AuthSection[]; held: boolean; remount: boolean } {
+  const previous = latest.rows.find(row => row.id === latest.sectionId);
+  const incoming = rows.find(row => row.id === latest.sectionId);
+  const requested = before.rows.find(row => row.id === latest.sectionId);
+  const held = !!editor && sectionVersionChanged(previous, incoming) &&
+    (latest.dirty || latest.saving || hasUnsavedSessionWork() || sectionVersionChanged(requested, previous));
+  return {
+    rows: held ? rows.map(row => row.id === previous?.id ? previous ?? row : row) : rows,
+    held,
+    remount: !!editor && !held && sectionContentChanged(previous, incoming),
+  };
+}
+
+const SECTION_REFRESH_HELD = 'The saved record changed while this section was open. Your loaded version and unsaved text were kept. Saving may be refused until the versions are reconciled.';
+const SECTION_REFRESH_FAILED = 'The saved sections could not be refreshed. The loaded text and any unsaved changes are still here.';
+
 interface AuthRevision {
   id: string;
   section_id: string;
@@ -1216,6 +1249,8 @@ export interface DocumentWorkbenchProps {
     onEditorBridge?: (bridge: EditorBridge | null) => void;
     /** A section the host asks to show; each new nonce is one request. */
     focusSection?: { id: string; nonce: number } | null;
+    /** A verified host read found saved changes; retained editors re-read without rebasing unsaved text. */
+    savedRefreshKey?: number;
   } | null;
   /** Surface-action bus id to register under, or null to register nothing —
    *  the canvas must not claim the bus while ConversationThread is on. */
@@ -1398,6 +1433,8 @@ export function DocumentWorkbench({
   useEffect(() => { setDraftPassage(null); }, [activeSectionId]);
   useEffect(() => { if (!aiDraftOpen) setDraftPassage(null); }, [aiDraftOpen]);
   const editorRef = useRef<RichSectionEditorHandle | null>(null);
+  const savedEditorRead = useRef({ sectionId: activeSectionId, rows: sections, dirty: editorDirty, saving, state: sectionsState });
+  savedEditorRead.current = { sectionId: activeSectionId, rows: sections, dirty: editorDirty, saving, state: sectionsState };
 
   /* ── A comment being anchored to a text range ──
      The editor's Comment button hands over the selection's anchor and waits;
@@ -2221,16 +2258,21 @@ export function DocumentWorkbench({
   const [storedStructure, setStructure] = useState<SectionStructure | null>(null);
   const structure = sectionsCurrent && sectionsState === 'ready' && !partialRead ? storedStructure : null;
   const sectionsGeneration = useRef(0);
+  const quietSectionRead = useRef<{ generation: number; quiet: boolean } | null>(null);
+  const [writtenRefreshKey, setWrittenRefreshKey] = useState(0);
   const loadedSectionsKey = useRef<string | null>(null);
   const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void, recovery = false,
-    recoveryOwner?: { current: () => boolean; headers: Record<string, string> }) => {
+    recoveryOwner?: { current: () => boolean; headers: Record<string, string> }, options: { quiet?: boolean } = {}) => {
     if (recoveryOwner?.current() === false) throw new Error('The section recovery owner changed.');
     const scope = creationScopeRef.current;
     const generation = ++sectionsGeneration.current;
     const revision = authService.captureSessionReadGuard().sameRevision;
     const current = () => aliveRef.current && currentReadKey.current === readKey &&
       creationScopeRef.current === scope && generation === sectionsGeneration.current && readSession.sameRevision() && revision() && recoveryOwner?.current() !== false;
-    setSectionsState('loading');
+    const before = savedEditorRead.current;
+    const quiet = !!options.quiet && loadedSectionsKey.current === readKey && before.state === 'ready';
+    quietSectionRead.current = { generation, quiet };
+    if (!quiet) setSectionsState('loading');
     if (loadedSectionsKey.current !== readKey) setSections([]);
     loadedSectionsKey.current = readKey;
     setSectionsRead({ key: readKey });
@@ -2241,8 +2283,14 @@ export function DocumentWorkbench({
       if (recovery) throw new Error('The section recovery context changed.');
       return;
     }
+    quietSectionRead.current = null;
     if (!usableSectionRead(ok, body, docId, recovery)) {
-      if (authoringReadRefused(status, body)) {
+      const refused = authoringReadRefused(status, body);
+      if (quiet && !refused) {
+        setTargetNotice(SECTION_REFRESH_FAILED);
+        return;
+      }
+      if (refused) {
         metadataGeneration.current += 1;
         setMetadataRead({ key: readKey, refused: true });
       }
@@ -2252,7 +2300,13 @@ export function DocumentWorkbench({
       if (recovery) throw new Error('The section recovery read could not be verified.');
       return;
     }
-    const list = Array.isArray(body.sections) ? body.sections : [];
+    const incomingRows = Array.isArray(body.sections) ? body.sections : [];
+    const adopted = refreshedSectionRows(incomingRows, before, savedEditorRead.current, editorRef.current);
+    const list = adopted.rows;
+    // Keep the saved base with its live buffer: adopting only a newer timestamp would permit a blind overwrite.
+    setContentEpoch(epoch => adopted.remount ? epoch + 1 : epoch);
+    setTargetNotice(notice => adopted.held ? SECTION_REFRESH_HELD
+      : notice === SECTION_REFRESH_HELD || notice === SECTION_REFRESH_FAILED ? null : notice);
     setSectionsRead({ key: readKey, readScope: body.readScope });
     setSections(list);
     /* Two document-level facts no single section can show: a code filed twice,
@@ -2278,6 +2332,17 @@ export function DocumentWorkbench({
     afterRead?.(list);
   }, [programId, readKey, readSession]);
   sectionLoaderRef.current = loadSections;
+
+  /** Retire a pre-write background read before its old row can follow the confirmed write in one React batch. */
+  const retireQuietSectionRead = useCallback((scope: { key: string }, sectionId: string) => {
+    if (creationScopeRef.current !== scope || !savedEditorRead.current.rows.some(row => row.id === sectionId)) return;
+    const read = quietSectionRead.current;
+    if (!read?.quiet || read.generation !== sectionsGeneration.current) return;
+    sectionsGeneration.current += 1;
+    quietSectionRead.current = null;
+    // Re-read after the confirmed row commits, so other sections from the retired read are not left stale.
+    setWrittenRefreshKey(key => key + 1);
+  }, []);
 
   const openCreatedSection = useCallback(async (section: { id: string; code: string }) => {
     if (!activeDocId || programSwitchHeld) return;
@@ -2372,6 +2437,16 @@ export function DocumentWorkbench({
     void loadSections(activeDocId);
     return () => { sectionsGeneration.current += 1; };
   }, [activeDocId, loadSections, creationScopeKey, readRefusal]);
+
+  const savedRefreshKey = embedded?.savedRefreshKey;
+  const lastSavedRefresh = useRef({ readKey, value: savedRefreshKey, written: writtenRefreshKey });
+  useEffect(() => {
+    const previous = lastSavedRefresh.current;
+    lastSavedRefresh.current = { readKey, value: savedRefreshKey, written: writtenRefreshKey };
+    const unchanged = previous.value === savedRefreshKey && previous.written === writtenRefreshKey;
+    if (previous.readKey !== readKey || unchanged || !activeDocId || readRefusal) return;
+    void loadSections(activeDocId, undefined, false, undefined, { quiet: true });
+  }, [savedRefreshKey, writtenRefreshKey, readKey, activeDocId, readRefusal, loadSections]);
 
   /* F4: a click on an outline node with no section here starts it — created
      through POST /api/authoring/sections, opened, the cursor put in it — but
@@ -3400,6 +3475,7 @@ export function DocumentWorkbench({
         const adopted = (json as { section?: AuthSection })?.section;
         confirmedSaveVersionRef.current = { sectionId: activeSection.id, updatedAt: adopted?.updated_at ?? null };
         const persisted = adopted?.content ?? serialized;
+        retireQuietSectionRead(assemblyHostScope, activeSection.id);
         // Adopt the server row (revision counter, updated_at) into the tree.
         setSections(ss =>
           ss.map(s =>
@@ -3480,7 +3556,7 @@ export function DocumentWorkbench({
         setSaving(false);
       }
     },
-    [activeSection, rail, loadHistory, fireToast]
+    [activeSection, rail, loadHistory, fireToast, assemblyHostScope, retireQuietSectionRead]
   );
 
   /* ── Upload a figure into the governed image store ──
@@ -3616,6 +3692,7 @@ export function DocumentWorkbench({
         }
         const adopted = (json as { section?: AuthSection })?.section;
         const content = adopted?.content ?? '';
+        retireQuietSectionRead(assemblyHostScope, activeSection.id);
         setSections(ss =>
           ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content } : s))
         );
@@ -3633,7 +3710,7 @@ export function DocumentWorkbench({
         );
       }
     },
-    [activeSection, loadHistory, fireToast]
+    [activeSection, loadHistory, fireToast, assemblyHostScope, retireQuietSectionRead]
   );
 
   /* ── Add a comment on the active section ──
@@ -4032,6 +4109,7 @@ export function DocumentWorkbench({
         return;
       }
       const content = section.content;
+      retireQuietSectionRead(assemblyHostScope, activeSectionId);
       setSections(ss =>
         ss.map(x => (x.id === section.id ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
       );
@@ -4054,7 +4132,7 @@ export function DocumentWorkbench({
       void loadSources(activeSectionId);
       if (activeDocId) void loadAudit(activeDocId);
     },
-    [activeSectionId, activeDocId, assemblyHostScope, markAssemblyAccepted, loadHistory, loadSources, loadAudit, fireToast],
+    [activeSectionId, activeDocId, assemblyHostScope, markAssemblyAccepted, loadHistory, loadSources, loadAudit, fireToast, retireQuietSectionRead],
   );
 
   /** Post one reviewer action — one decision, or a whole accept/reject-all.
@@ -4918,7 +4996,7 @@ export function DocumentWorkbench({
             {programId && activeDocId && isCsrTemplateId(docTemplateId) && <StudyDataBuild key={activeDocId} programId={programId} documentId={activeDocId} onNav={onNav}
               /* F6: the import wrote this document's sections on the server. Read them again and remount the
                  canvas on the imported text, as a revert does, unless the person has unsaved typing open. */
-              onDocumentChanged={() => void loadSections(activeDocId, () => { if (!editorDirty) setContentEpoch(e => e + 1); })} />}
+              onDocumentChanged={() => void loadSections(activeDocId, undefined, false, undefined, { quiet: true })} />}
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a

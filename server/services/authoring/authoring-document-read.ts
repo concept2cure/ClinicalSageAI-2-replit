@@ -123,13 +123,15 @@ export async function readAuthoringDocument(q:RequestSqlClient,input:AuthoringDo
   const result=await q.query(`SELECT d.id,d.title,d.module,d.product_code,d.locale,d.status,d.created_at,d.updated_at,d.created_by,
     d.template_id,d.submitted_at,d.current_workflow_id,d.approved_at,d.frozen_at,d.locked_at,d.locked_by,d.tenant_id,d.version,
     to_jsonb(d)->>'c2c_document_id' AS c2c_document_id,to_jsonb(d)->>'client_program_id' AS client_program_id,
-    COUNT(DISTINCT s.id) AS section_count,
-    COUNT(DISTINCT c.id) AS comment_count,COUNT(DISTINCT r.id) AS revision_count
+    (SELECT COUNT(*) FROM authoring_sections s
+      WHERE s.doc_id=d.id AND s.tenant_id=d.tenant_id AND s.id=ANY($3::uuid[])) AS section_count,
+    (SELECT COUNT(*) FROM authoring_comments c
+      WHERE c.doc_id=d.id AND c.tenant_id=d.tenant_id
+      AND (($4::boolean AND c.section_id IS NULL) OR c.section_id=ANY($3::uuid[]))) AS comment_count,
+    (SELECT COUNT(*) FROM doc_revisions r JOIN authoring_sections s ON r.section_id=s.id AND r.tenant_id=s.tenant_id
+      WHERE s.doc_id=d.id AND s.tenant_id=d.tenant_id AND s.id=ANY($3::uuid[])) AS revision_count
     FROM authoring_documents d
-    LEFT JOIN authoring_sections s ON s.doc_id=d.id AND s.tenant_id=d.tenant_id AND s.id=ANY($3::uuid[])
-    LEFT JOIN authoring_comments c ON c.doc_id=d.id AND c.tenant_id=d.tenant_id AND (($4::boolean AND c.section_id IS NULL) OR c.section_id=ANY($3::uuid[]))
-    LEFT JOIN doc_revisions r ON r.section_id=s.id AND r.tenant_id=s.tenant_id
-    WHERE d.id=$1 AND d.tenant_id=$2 GROUP BY d.id`,[captured.documentId,captured.organizationId,access.sectionIds,readScope==='document']);
+    WHERE d.id=$1 AND d.tenant_id=$2`,[captured.documentId,captured.organizationId,access.sectionIds,readScope==='document']);
   if(result.rows.length!==1)changed();
   const row=result.rows[0];
   const provenance=readScope==='document'?await readDocumentProvenance(q,captured.documentId,captured.organizationId):null;
@@ -144,12 +146,11 @@ export async function readAuthoringDocumentSections(q:RequestSqlClient,input:Aut
   const captured=readInput(input);const access=await getCurrentAuthoringReadScope(q,captured);
   const readScope=projection(access,captured.documentId);
   const result=await q.query(`SELECT s.id,s.doc_id,s.code,s.title,s.content,s.order_index,s.track_changes,s.created_at,s.updated_at,s.tenant_id,
-    COUNT(DISTINCT c.id) AS comment_count,COUNT(DISTINCT r.id) AS revision_count,COUNT(DISTINCT ct.id) AS citation_count
+    (SELECT COUNT(*) FROM authoring_comments c WHERE c.section_id=s.id AND c.tenant_id=s.tenant_id) AS comment_count,
+    (SELECT COUNT(*) FROM doc_revisions r WHERE r.section_id=s.id AND r.tenant_id=s.tenant_id) AS revision_count,
+    (SELECT COUNT(*) FROM authoring_citations ct WHERE ct.section_id=s.id AND ct.tenant_id=s.tenant_id) AS citation_count
     FROM authoring_sections s
-    LEFT JOIN authoring_comments c ON c.section_id=s.id AND c.tenant_id=s.tenant_id
-    LEFT JOIN doc_revisions r ON r.section_id=s.id AND r.tenant_id=s.tenant_id
-    LEFT JOIN authoring_citations ct ON ct.section_id=s.id AND ct.tenant_id=s.tenant_id
-    WHERE s.doc_id=$1 AND s.tenant_id=$2 AND s.id=ANY($3::uuid[]) GROUP BY s.id ORDER BY s.order_index,s.created_at,s.id`,
+    WHERE s.doc_id=$1 AND s.tenant_id=$2 AND s.id=ANY($3::uuid[]) ORDER BY s.order_index,s.created_at,s.id`,
   [captured.documentId,captured.organizationId,access.sectionIds]);
   // Private source metadata is read only after parent/section admission. The
   // response contains agency/state only, never the parent's provenance payload.
