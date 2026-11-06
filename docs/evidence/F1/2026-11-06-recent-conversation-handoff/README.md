@@ -79,3 +79,6 @@ Scripts, receipts and screenshots contain fictional data.
 
 Required plan, one-product, canvas-path, lint and typecheck gates run before
 publication. This is engineering evidence, not formal OQ or deployment proof.
+`publication-gates-before-ref-race.log.gz` records all of them passing, including
+zero TypeScript errors, before a concurrent branch update refused that push.
+Publication retries preserve incoming work and rerun the normal gates.

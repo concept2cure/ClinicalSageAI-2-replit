@@ -21,6 +21,12 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 
 ### Holds on other files (one session per file, plan §4.6)
 
+Publication note from the Codex F1 continuation, 2026-11-06: after two ref-race
+rejections with all gates green, a 15-minute push window is requested here under
+the push guidance below. The coordinating session is recorded unavailable; no
+cross-session channel is available here. No other lane is paused or claimed by
+this request. The slice continues with ordinary fetch/merge/retry and no force.
+
 | Files | Held by | For |
 |---|---|---|
 | (none held) | Codex continuation of study/protocol shell safeguards, 2026-11-06 | F1 delivered: recent conversation selection reaches the existing loader; an active-answer refusal precedes remount/URL change and preserves unsent follow-up; same-thread selection keeps its mounted composer and address. 178 tests, production build and running-app desktop/mobile light/dark checks pass. Evidence `docs/evidence/F1/2026-11-06-recent-conversation-handoff/`. Released: `V2App.tsx`, `routing.ts`, `surfaces/ConversationThread.tsx`. No layout, new capability or other package's held file. |
