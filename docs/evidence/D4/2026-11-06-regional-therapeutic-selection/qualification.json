@@ -50,8 +50,8 @@
     "result": "passed",
     "tests": 213,
     "suites": 9,
-    "log": "regressions.txt.gz",
-    "note": "Before pure helper separation; final merged recheck pending."
+    "log": "regressions-final.txt.gz",
+    "note": "Final after helper separation and canonical synchronization. Separate from the five-suite core cohort."
   },
   "lint": {
     "result": "passed",
@@ -76,5 +76,15 @@
     "PGlite SQL and mocked HTTP/provider transports are scoped software proof; no live model/agency or native PostgreSQL qualification was run.",
     "NMPA/Australia/Japan content unchanged; CMC composition stays small-molecule US IND.",
     "No app/card/editor/screen/route/service/table/provider/model addition. Held CSR route unchanged."
-  ]
+  ],
+  "implementationCommit": "e1e98c60b",
+  "canonicalSynchronization": {
+    "remote": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4",
+    "merge": "7b300f06212f27212660ad2066218987b49a251e",
+    "netChanges": "Launcher tests and evidence/coordination only; application runtime and all13 own source/test hashes unchanged.",
+    "launcherTests": {
+      "passed": 6,
+      "log": "launcher-tests.txt.gz"
+    }
+  }
 }

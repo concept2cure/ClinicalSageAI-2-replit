@@ -2,6 +2,10 @@
 
 2026-11-06. Plan F1, workstream W3, launch D2/D4. Continues the existing P-73 trial-application drafting design. Baseline `c50f8782ad8ef622872578ae4fae41e14d18caa1`. Prior UK repair and receipts are already accepted on canonical.
 
+## Current status
+
+Implementation, scoped checks and production builds pass. Source is frozen; normal hooked canonical publication is pending.
+
 ## What already exists
 
 Inventory precedes implementation and worker prompts. `rg` searched therapeutic/profile/advisory and exact caller names across server routes/API/src/services, shared/schema, migrations, AnA tools and client core surfaces. The only root AGENTS governs all files. Full non-shallow deletion history was searched with `git log --all --diff-filter=D` for `*therapeutic*`, `*draft-product*` and `*CtaBlueprint*`; it returned no deleted replacement. A stale guessed authoring-template path was corrected to the existing authoring folder before inventory completion.
@@ -51,3 +55,19 @@ The first scoped lint run has zero errors and two added complexity warnings in t
 The helper separation preserves section semantics and passes all 356 core cases again. Final scoped lint checks all 13 changed TypeScript files with zero errors and no warning growth; only the drafting service's six existing warnings remain. The production client/server and audit/PQ verifier builds pass and package the four existing controlled qualification assets. `source-sha256.json` pins the 13 current source/test files. No source or model qualification is supplied by this software build.
 
 The shared editor's validated-template adapter and project-filing HTTP path are exercised separately; the adapter test supplies a typed validated reference, while adjacent saved-template/assembly PGlite suites test its existing SQL/access/source safeguards. This is not a running-browser completion or new native-database qualification. Synchronization with newer canonical changes and the normal hooked publication remain pending.
+
+
+## Canonical synchronization and final scoped checks
+
+Implementation commit `e1e98c60b` was merged normally with canonical `7d771e124`
+at `7b300f062`. Only coordination conflicted; current regional scope and the
+canonical table were retained. The net incoming runtime files match `c50` exactly;
+the six added real npm/tsx launcher/refusal cases pass. No production build is
+repeated for unchanged runtime inputs.
+
+Final source/model/currentness, regional-outline and saved-template/assembly
+regressions pass 213/213 across nine suites after the private helper separation
+and merge. The five core suites pass 356/356; they are separate scoped runs, not a
+whole-repository or scientific qualification. All 13 own hashes still match the
+manifest. Production and source guards are frozen; no file remains held by this
+slice. Normal repository hooks, including the full compiler, will qualify publication.
