@@ -90,6 +90,13 @@
       "warningGrowth": 0,
       "log": "gates-pass-fourth-ref-race.txt.gz",
       "note": "All normal gates passed; the remote ref changed before lock to incoming Anna runtime P104."
+    },
+    "fifthPass": {
+      "source": "93740b36de192f2e43ee481b9b38f79a826ec92e",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-fifth-ref-race.txt.gz",
+      "note": "Anna-integrated source passed all normal gates; concurrent tasking/D3 ref advance rejected the lock."
     }
   },
   "publication": "pending normal retry after merge",
@@ -129,7 +136,7 @@
   },
   "originalSourceManifest": "source-sha256.json",
   "sourceTransition": "source-hash-transition.json",
-  "currentMergedGates": "pending normal retry",
+  "currentMergedGates": "pending normal retry after tasking/D3 integration",
   "annaIntegration": {
     "incoming": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
     "source": "ba1d327e2c00d459e0eaa7ec037489bf805a941a",
@@ -152,5 +159,16 @@
       "Selected Vault sensitivity checks and exact quoted spans do not prove semantic claim support or the full P104 spike.",
       "Correspondence blocker checks do not establish exact-package clean-file readiness."
     ]
+  },
+  "taskingD3Integration": {
+    "incoming": "57b13c599df7fa957809a4764963734b02522545",
+    "source": "bd91756d13b875a6d8ea4630b1e26d4c8b3a0b39",
+    "passed": 201,
+    "suites": 14,
+    "build": "pass",
+    "currentManifestMatches": 14,
+    "review": "Tasking admission/transaction and lifted project work/inbox reads preserve UK/editor/source scope.",
+    "nativeTaskingProof": "Retained by incoming owner; not rerun in this workstream.",
+    "conflict": "COORDINATION.md only; latest D3 row and released UK row retained."
   }
 }

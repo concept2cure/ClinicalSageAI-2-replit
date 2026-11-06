@@ -97,8 +97,28 @@ The combined core UK/regional/editor and affected runtime cohort passes 705/705
 across 30 suites. The existing upload hook passes 14/14 and Codespace synthetic
 credential/startup checks pass 31/31; these are distinct bounded checks, not full
 runtime or scientific qualification. Production client/server builds pass again.
-Providers use stand-ins, native PostgreSQL was not available, and the real PGlite
+Providers use stand-ins, native PostgreSQL suites were not run here, and the real PGlite
 creator/RLS/replay proof remains distinct from a deployed PostgreSQL qualification.
 Selected-source sensitivity, exact quotation checks and correspondence blockers
 also do not establish semantic claim support, the complete P-104 spike, or an
 exact-package clean-file verdict. The current normal publication retry is pending.
+
+
+## Workflow task and shared project-read synchronization
+
+The Anna-integrated run at `93740b36d` passed every normal gate, including zero
+TypeScript errors and no warning growth. The ref lock then lost to `57b13c599`,
+which adds workflow-task project admission and D3-2b shared work/inbox reads.
+These were merged normally at `bd91756d1`. Only the coordination table conflicted;
+its latest D3 row and the released UK row were retained. Read-only review found
+no UK/bootstrap/shared-editor blocker. The actual workflow writer now retains
+project edit scope and actual workspace on its transaction; uncertain COMMIT
+acknowledgements remain unknown. The existing project page owns one work/inbox
+read, with scope retirement and assignment refresh preserved.
+
+Seven tasking/admission/template suites and seven affected/adjacent project suites
+pass 201/201 across 14 files. Production client/server builds pass again. The
+incoming owner's native PostgreSQL proof is retained with that workstream and is
+not counted as a rerun here. All 14 current UK manifest hashes still match, and
+no UK code was changed to accommodate this merge. Publication retries continue
+through the normal hooks; the fifth complete gate/ref-race receipt is retained.
