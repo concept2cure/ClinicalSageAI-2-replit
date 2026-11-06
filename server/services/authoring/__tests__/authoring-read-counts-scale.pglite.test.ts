@@ -51,7 +51,8 @@ async function measuredPlan(kind: 'document' | 'sections') {
 
 it('keeps exact admitted header totals without multiplying comments by every section revision', async () => {
   const result = await readDocument(q, identity);
-  expect(['section_count', 'comment_count', 'revision_count'].map(key => Number(result.document[key])))
+  const document = result.document as Record<string, unknown>;
+  expect(['section_count', 'comment_count', 'revision_count'].map(key => Number(document[key])))
     .toEqual([12, 200, 384]);
   // Allow planner freedom, while prohibiting the 76,800-row cross product for 636 input rows.
   expect(await measuredPlan('document')).toBeLessThanOrEqual(2_544);
@@ -59,10 +60,11 @@ it('keeps exact admitted header totals without multiplying comments by every sec
 
 it('keeps each section counter independent when comments, citations and history all grow', async () => {
   const result = await readSections(q, identity);
-  const first = result.sections.find(section => section.id === SECTION.full)!;
+  const sections = result.sections as Array<Record<string, unknown>>;
+  const first = sections.find(section => section.id === SECTION.full)!;
   expect(['comment_count', 'revision_count', 'citation_count'].map(key => Number(first[key])))
     .toEqual([200, 32, 40]);
-  expect(result.sections.filter(section => section.id !== SECTION.full).every(section =>
+  expect(sections.filter(section => section.id !== SECTION.full).every(section =>
     Number(section.comment_count) === 0 && Number(section.revision_count) === 32 && Number(section.citation_count) === 0)).toBe(true);
   // The old join materializes 256,352 rows; counts must not multiply the three stores.
   expect(await measuredPlan('sections')).toBeLessThanOrEqual(2_544);

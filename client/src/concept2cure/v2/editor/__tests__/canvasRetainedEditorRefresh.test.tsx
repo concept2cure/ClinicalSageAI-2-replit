@@ -66,7 +66,7 @@ async function saveCollisionKeepsOldBase(original: HTMLElement) {
   expect(editorNode()).toBe(original);
   expect(editorNode().textContent).toContain(HUMAN.trim());
   expect(editorNode().textContent).not.toContain(ANA);
-  fireEvent.change(screen.getByRole('textbox', { name: 'Reason for change', exact: true }),
+  fireEvent.change(screen.getByRole('textbox', { name: 'Reason for change' }),
     { target: { value: 'Retain deliberate human amendment against the loaded revision.' } });
   fireEvent.click(screen.getByTestId('save-section'));
   await waitFor(() => expect(apiRequest.mock.calls.filter(([method]) => method === 'PATCH')).toHaveLength(1));
@@ -200,7 +200,7 @@ describe('a confirmed human save and an older pending refresh in the same render
     view.rerender(<Host refreshKey={1} />);
     await waitFor(() => expect(quietStarted).toBe(true));
     humanEdit();
-    fireEvent.change(screen.getByRole('textbox', { name: 'Reason for change', exact: true }),
+    fireEvent.change(screen.getByRole('textbox', { name: 'Reason for change' }),
       { target: { value: 'Record the human amendment before accepting another saved revision.' } });
     fireEvent.click(screen.getByTestId('save-section'));
     await waitFor(() => expect(patchCalls).toBe(1));
