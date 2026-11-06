@@ -18,7 +18,7 @@ import { SignoffList } from '../SignoffList';
 import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
 import { readShellProject, shellProgramName } from '../shellProject';
-import { conversationIdFromLocation, locationForConversation, surfaceIdFromLocation } from '../routing';
+import { conversationIdFromLocation, conversationSwitchRefusal, locationForConversation, surfaceIdFromLocation } from '../routing';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { TurnSummarySheet, useSummaryTurn } from '../TurnSummary';
 import { RunControlStrip, steerHelpFor } from '../AnaWorkSections';
@@ -1697,12 +1697,10 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
       // Another conversation, asked for while AnA is still answering in this
       // one. Loading it would abort her; the person is told instead, and opens
       // it again once she has finished.
-      if (shellChat?.isStreaming) {
+      const refusal = conversationSwitchRefusal(shellChat?.threadId, sel.id, Boolean(shellChat?.isStreaming));
+      if (refusal) {
         convo.C2C_CONVO = { id: 'current', seed: null };
-        fireToast(
-          'AnA is still answering in the current conversation, so it stays open. Open the other conversation again once she has finished.',
-          'error',
-        );
+        fireToast(refusal, 'error');
         return;
       }
       loadConversation(sel.id);
