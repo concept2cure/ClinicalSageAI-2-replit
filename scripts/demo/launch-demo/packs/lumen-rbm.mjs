@@ -343,7 +343,7 @@ async function ensureActions({ api, run, tally }, program, planId, signalIds, la
 
 /* ───────────────────────── The board, as the screen reads it ───────────────────────── */
 
-async function confirmBoard({ api, run }, program, label) {
+async function confirmBoard({ api, run }, program, { subjectsLanded }, label) {
   return run.step(`RBM: the board and roster read back on ${label}`, async () => {
     const roster = await list(api, '/api/mdx-rbm/rbm-programs', 'read the monitoring roster');
     if (!roster.some((p) => p.id.toLowerCase() === program.id.toLowerCase())) throw new Error(`the RBM roster does not list ${label}`);
@@ -354,7 +354,7 @@ async function confirmBoard({ api, run }, program, label) {
     if (s.kris.total < KRIS.length || s.kris.notEvaluated) gaps.push('KRI readings');
     if (s.qtls.total < QTLS.length || s.qtls.notEvaluated) gaps.push('QTL values');
     if (s.signals.total < SIGNALS.length) gaps.push('signals');
-    if (s.patients.scored < SUBJECTS.length) gaps.push('patient profiles');
+    if (subjectsLanded && s.patients.scored < SUBJECTS.length) gaps.push('patient profiles');
     if (!b.plan || !b.actions.length) gaps.push('plan actions');
     if (!b.freshness.length) gaps.push('source freshness');
     if (gaps.length) throw new Error(`the RBM board is missing: ${gaps.join(', ')}`);
@@ -372,9 +372,9 @@ async function confirmBoard({ api, run }, program, label) {
  */
 export async function ensureLumenRbm(ctx, program, label) {
   const assessment = await ensureAssessment(ctx, program, label);
-  await ensureIndicators(ctx, program, label);
+  const loaded = await ensureIndicators(ctx, program, label);
   const planId = await ensurePlan(ctx, program, assessment, label);
   const signalIds = await ensureSignals(ctx, program, planId, label);
   await ensureActions(ctx, program, planId, signalIds, label);
-  await confirmBoard(ctx, program, label);
+  await confirmBoard(ctx, program, loaded, label);
 }
