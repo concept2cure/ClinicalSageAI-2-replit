@@ -1,0 +1,715 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:33:41.552Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+··stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses a stale capa_record producer after the native owner changed again
+{
+  "timestamp": "2026-11-06T21:33:47.833Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The current native CAPA assignment could not be verified; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses a stale capa_action producer after the native owner changed again
+{
+  "timestamp": "2026-11-06T21:33:47.858Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The current native CAPA assignment could not be verified; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_record changed date or ended before the assignment reconciliation
+{
+  "timestamp": "2026-11-06T21:33:47.887Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The current native CAPA assignment could not be verified; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_record changed date or ended before the assignment reconciliation
+{
+  "timestamp": "2026-11-06T21:33:47.912Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The current native CAPA assignment could not be verified; the previous task was preserved"
+  }
+}
+
+····stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_action changed date or ended before the assignment reconciliation
+{
+  "timestamp": "2026-11-06T21:33:47.935Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The current native CAPA assignment could not be verified; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_action changed date or ended before the assignment reconciliation
+{
+  "timestamp": "2026-11-06T21:33:47.956Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The current native CAPA assignment could not be verified; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on inactive member
+{
+  "timestamp": "2026-11-06T21:33:47.982Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "Membership revoked"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on reader role
+{
+  "timestamp": "2026-11-06T21:33:47.997Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The CAPA assignee is not eligible for this task"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on private project
+{
+  "timestamp": "2026-11-06T21:33:48.017Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The CAPA assignee cannot access this project"
+  }
+}
+
+·····stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on create audit failure
+{
+  "timestamp": "2026-11-06T21:33:48.036Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "Audit ledger unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses to invent an action assignee from a free-text owner and the latest caller
+{
+  "timestamp": "2026-11-06T21:33:48.075Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The current native CAPA assignment could not be verified; the previous task was preserved"
+  }
+}
+
+····stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses unrelated assignee and rolls back
+{
+  "timestamp": "2026-11-06T21:33:50.506Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "The training task does not name its assigned reader"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses revoked assignment and rolls back
+{
+  "timestamp": "2026-11-06T21:33:50.512Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "The training assignment is no longer current"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses revoked actor and rolls back
+{
+  "timestamp": "2026-11-06T21:33:50.518Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "inactive"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses ambiguous anchor and rolls back
+{
+  "timestamp": "2026-11-06T21:33:50.521Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "The training document needs one verified project anchor"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses changed version and rolls back
+{
+  "timestamp": "2026-11-06T21:33:50.521Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "The task does not name the current verified training release"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses unverified release and rolls back
+{
+  "timestamp": "2026-11-06T21:33:50.522Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "The task does not name the current verified training release"
+  }
+}
+
+··············stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts
+{
+  "timestamp": "2026-11-06T21:33:51.914Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on missing owner
+{
+  "timestamp": "2026-11-06T21:33:52.150Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The native Quality task owner could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on no unique anchor
+{
+  "timestamp": "2026-11-06T21:33:52.152Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The native Quality task needs one verified project anchor"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on project access denied
+{
+  "timestamp": "2026-11-06T21:33:52.153Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "denied"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on placement audit failed
+{
+  "timestamp": "2026-11-06T21:33:52.154Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "ledger unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > does not silently unfile a bound document whose authoring program cannot be read
+{
+  "timestamp": "2026-11-06T21:33:52.156Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:12"
+    },
+    "err": "The controlled document project could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > rolls back a status race instead of creating a second open source task
+{
+  "timestamp": "2026-11-06T21:33:52.157Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The source task changed before its status could be reconciled"
+  }
+}
+
+··············stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:33:54.078Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses another tenant’s document
+{
+  "timestamp": "2026-11-06T21:33:58.885Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:13"
+    },
+    "err": "The native Quality task owner could not be verified"
+  }
+}
+
+·····stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses an authored pointer crossing tenants
+{
+  "timestamp": "2026-11-06T21:33:58.906Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:14"
+    },
+    "err": "The controlled document project could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses a deleted controlled document
+{
+  "timestamp": "2026-11-06T21:33:58.919Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:16"
+    },
+    "err": "The native Quality task owner could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses another tenant’s CAPA
+{
+  "timestamp": "2026-11-06T21:33:58.936Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:66666666-6666-4666-8666-666666666666"
+    },
+    "err": "The native Quality task owner could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses a bound document whose recorded program is deleted despite a valid tracking anchor
+{
+  "timestamp": "2026-11-06T21:33:58.954Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:17"
+    },
+    "err": "The controlled document project could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > does not hide an ambiguous anchor by choosing one tracking project
+{
+  "timestamp": "2026-11-06T21:33:58.970Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "quality-source-task",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      41,
+      42
+    ]
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > does not hide an ambiguous anchor by choosing one tracking project
+{
+  "timestamp": "2026-11-06T21:33:58.971Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The native Quality task needs one verified project anchor"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > preserves the actor admission refusal after the real owner and anchor resolve
+{
+  "timestamp": "2026-11-06T21:33:58.990Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "Project is private to another team"
+  }
+}
+
+······stdout | server/routes/__tests__/taskBoard-quality-source.test.ts
+{
+  "timestamp": "2026-11-06T21:34:01.109Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:34:01.112Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/taskBoard-quality-source.test.ts
+{
+  "timestamp": "2026-11-06T21:34:01.112Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/taskBoard-quality-source.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/taskBoard-quality-source.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/taskBoard-quality-source.test.ts
+{
+  "timestamp": "2026-11-06T21:34:01.515Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+·······stderr | server/routes/__tests__/taskBoard-quality-source.test.ts > missing or inaccessible Quality sources never produce guessed doors > keeps the task and marks its source unresolved after failed read
+{
+  "timestamp": "2026-11-06T21:34:02.201Z",
+  "level": "warn",
+  "message": "[task-board-routes] task board: a native Quality source is unavailable",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record"
+  }
+}
+
+stderr | server/routes/__tests__/taskBoard-quality-source.test.ts > missing or inaccessible Quality sources never produce guessed doors > keeps the task and marks its source unresolved after private project
+{
+  "timestamp": "2026-11-06T21:34:02.210Z",
+  "level": "warn",
+  "message": "[task-board-routes] task board: a native Quality source is unavailable",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record"
+  }
+}
+
+·········stdout | server/routes/__tests__/taskBoard-quality-source.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:34:05.783Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:34:05.785Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/taskBoard-quality-source.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:34:05.785Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/taskBoard-quality-source.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/taskBoard-quality-source.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/taskBoard-quality-source.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:34:06.042Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+············stdout | server/services/tasking/__tests__/source-task.test.ts
+{
+  "timestamp": "2026-11-06T21:34:18.640Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:34:18.641Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task.test.ts
+{
+  "timestamp": "2026-11-06T21:34:18.642Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/tasking/__tests__/source-task.test.ts
+{
+  "timestamp": "2026-11-06T21:34:19.021Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > reports a failure and never throws into the act it follows
+{
+  "timestamp": "2026-11-06T21:34:19.274Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 3,
+    "sourceEntityType": "custom_source",
+    "match": {
+      "exact": "source:x"
+    },
+    "err": "db down"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > reports a failure part way and never throws
+{
+  "timestamp": "2026-11-06T21:34:19.278Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 3,
+    "sourceEntityType": "custom_source",
+    "match": {
+      "exact": "qms-document:1:user:5"
+    },
+    "err": "db down"
+  }
+}
+
+·······stdout | server/routes/__tests__/taskBoard-review-route.test.ts
+{
+  "timestamp": "2026-11-06T21:34:22.066Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:34:22.073Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/taskBoard-review-route.test.ts
+{
+  "timestamp": "2026-11-06T21:34:22.073Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/taskBoard-review-route.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/taskBoard-review-route.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/taskBoard-review-route.test.ts
+{
+  "timestamp": "2026-11-06T21:34:22.231Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/taskBoard-review-route.test.ts > task board: a review-route task says where it is acted on > still marks a route task when its version cannot be read, without failing the board
+{
+  "timestamp": "2026-11-06T21:34:23.005Z",
+  "level": "warn",
+  "message": "[task-board-routes] task board: review-route versions unread",
+  "context": {
+    "err": "relation does not exist"
+  }
+}
+
+····
+
+ Test Files  8 passed (8)
+      Tests  93 passed (93)
+   Start at  21:33:36
+   Duration  46.86s (transform 4.65s, setup 346ms, import 23.10s, tests 20.81s, environment 3ms)
+

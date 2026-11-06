@@ -1,0 +1,112 @@
+{
+  "observedAt": "2026-11-06T22:46:48.675099+00:00",
+  "branch": "concept2cure-v2",
+  "sourceCommitBeforeRun": "e802750f45765e2900f7da8db672f2b8b67ee346",
+  "sourceCommitAfterRun": "e802750f45765e2900f7da8db672f2b8b67ee346",
+  "incomingCanonicalCommit": "7a23ed73",
+  "scope": "Read-only protected nonclinical recorded-source and native source-read compatibility after incoming7a integration",
+  "results": {
+    "testFilesPassed": 8,
+    "testsPassed": 140,
+    "failedTests": 0,
+    "durationSeconds": 55.87,
+    "execution": "One fresh eight-suite Vitest run, not composed from earlier results.",
+    "completionEvidence": "Complete Vitest pass summary retained in raw log. Terminal exit metadata was not retained by the tool session.",
+    "fullCompilerBuildAndLiveRuntimeNotRunHere": true
+  },
+  "command": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/services/ana/__tests__/module2-nonclinical-inputs.pglite.test.ts server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts server/services/preclinical/__tests__/m26-nonclinical-summaries.test.ts server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts --reporter=dot > /workspace/scratch/shared-editor-incoming7a-source-compatibility.txt 2>&1",
+  "inputsBeforeRun": {
+    "observedAt": "2026-11-06T22:43:19.113158+00:00",
+    "sourceCommit": "e802750f45765e2900f7da8db672f2b8b67ee346",
+    "files": {
+      "server/services/ana/module2-nonclinical-inputs.ts": "94dc09740f1e1ef184b379cfafd9a9a8abc8cf969faec74c7269421a01a3ac64",
+      "server/services/ana/record-source-project.ts": "4685210d174073e95a71272fb17accca88f09ab2e1f6d2b426e9ccf6f063c368",
+      "server/services/ana/AnaToolExecutor.ts": "f747202cf53a44780decbb7cf38b270949d02325119914d7087fe5f4582f2278",
+      "server/services/ana/bla-biologics-tool-defs.ts": "dc7ca7001deb0f6decb87bf0184255abf7b3d4b75df49a2a35263c077dc1c30b",
+      "server/services/clinical-regulatory-evidence/record-source.ts": "0b00d5991962f08654dbfb10af7e46e08536f8b97a121adff26d372ce50e63a5",
+      "server/services/clinical-regulatory-evidence/source-read-access.ts": "b66457fe8ffd19f5b6bc157cd8cc32f6f330a340ff621d4da94999c9d3869585",
+      "server/services/clinical-regulatory-evidence/data-room-search.ts": "1d62cc4352abf5b5fae66f03d898351771211f03a5969aced67c710dc90567be",
+      "server/services/preclinical/nonclinical-m24-adapter.ts": "6c5b016ab158e554c572f7961232da2044f7c285db25a625f31acb7db1c01ddb",
+      "server/services/preclinical/m26-nonclinical-summaries.ts": "d6401c4866752e9affd2503ae19cb300f8008ac6b70c8ffb0fe1eedc96e2b56b",
+      "server/services/m2-summary-builders.ts": "b743faeced46f624441b29f070ae0c1231fb69eb4df411463be5f4353b0af729",
+      "server/services/ana/module2-csr-inputs.ts": "697c40988585cda3f641b7c9b8d27eaf293dea71fa67e64bc7035c711a300f82",
+      "server/services/ai-gateway/model-call-scope.ts": "273d85c87022190207a71d91b58f77f2491b19fc58183ed3f84b9b7b1c8e27a2",
+      "server/services/csr/project-scope.ts": "6f70d1b969ea1abc92809f22ac9e8061506366ce250e583f325e969520b74108",
+      "server/services/c2c/program-project-anchor.ts": "feee4a39a6147b595e058682b4ac97f1cba23b10cfe5ffda6012b76e3d1585f3",
+      "server/services/ana/__tests__/module2-nonclinical-inputs.pglite.test.ts": "0bd528182078d8832942bbe7a58b1e317e2bddb029d57c5dd045515f16423fc5",
+      "server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts": "e6544f1953ca7dccc41398839d2b003aaf30b9b93917104393c524247954ad7c",
+      "server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts": "13e560e293eee796023c94c0b3957d1bb10bcb4fdfa3eb9d107c49faa2101ab3",
+      "server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts": "ada54acd1d2ada50711b88cc0caea8b5ce399e7c8bbae51556e7f83fb89897e7",
+      "server/services/preclinical/__tests__/m26-nonclinical-summaries.test.ts": "1f1c6227af1bcd865bbd0c6b522b5bd2af96b2244844ac03194451c4ccfdfd92",
+      "server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts": "00afb913b69cf9ee1b8ae5089eb2c90501b4da12980316e545c76dba53389f27",
+      "server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts": "392f47dfaa7b1a1f16479e09793f37cfa4763a008d5fb42a64250a6b90f82ae1",
+      "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "46ca133dd0332d0f13d467839a546f6c3115c8c3120c05e6a5a7ace7a5920b2a"
+    }
+  },
+  "sourceFingerprintsAfterRun": {
+    "server/services/ana/module2-nonclinical-inputs.ts": "94dc09740f1e1ef184b379cfafd9a9a8abc8cf969faec74c7269421a01a3ac64",
+    "server/services/ana/record-source-project.ts": "4685210d174073e95a71272fb17accca88f09ab2e1f6d2b426e9ccf6f063c368",
+    "server/services/ana/AnaToolExecutor.ts": "f747202cf53a44780decbb7cf38b270949d02325119914d7087fe5f4582f2278",
+    "server/services/ana/bla-biologics-tool-defs.ts": "dc7ca7001deb0f6decb87bf0184255abf7b3d4b75df49a2a35263c077dc1c30b",
+    "server/services/clinical-regulatory-evidence/record-source.ts": "0b00d5991962f08654dbfb10af7e46e08536f8b97a121adff26d372ce50e63a5",
+    "server/services/clinical-regulatory-evidence/source-read-access.ts": "b66457fe8ffd19f5b6bc157cd8cc32f6f330a340ff621d4da94999c9d3869585",
+    "server/services/clinical-regulatory-evidence/data-room-search.ts": "1d62cc4352abf5b5fae66f03d898351771211f03a5969aced67c710dc90567be",
+    "server/services/preclinical/nonclinical-m24-adapter.ts": "6c5b016ab158e554c572f7961232da2044f7c285db25a625f31acb7db1c01ddb",
+    "server/services/preclinical/m26-nonclinical-summaries.ts": "d6401c4866752e9affd2503ae19cb300f8008ac6b70c8ffb0fe1eedc96e2b56b",
+    "server/services/m2-summary-builders.ts": "b743faeced46f624441b29f070ae0c1231fb69eb4df411463be5f4353b0af729",
+    "server/services/ana/module2-csr-inputs.ts": "697c40988585cda3f641b7c9b8d27eaf293dea71fa67e64bc7035c711a300f82",
+    "server/services/ai-gateway/model-call-scope.ts": "273d85c87022190207a71d91b58f77f2491b19fc58183ed3f84b9b7b1c8e27a2",
+    "server/services/csr/project-scope.ts": "6f70d1b969ea1abc92809f22ac9e8061506366ce250e583f325e969520b74108",
+    "server/services/c2c/program-project-anchor.ts": "feee4a39a6147b595e058682b4ac97f1cba23b10cfe5ffda6012b76e3d1585f3",
+    "server/services/ana/__tests__/module2-nonclinical-inputs.pglite.test.ts": "0bd528182078d8832942bbe7a58b1e317e2bddb029d57c5dd045515f16423fc5",
+    "server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts": "e6544f1953ca7dccc41398839d2b003aaf30b9b93917104393c524247954ad7c",
+    "server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts": "13e560e293eee796023c94c0b3957d1bb10bcb4fdfa3eb9d107c49faa2101ab3",
+    "server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts": "ada54acd1d2ada50711b88cc0caea8b5ce399e7c8bbae51556e7f83fb89897e7",
+    "server/services/preclinical/__tests__/m26-nonclinical-summaries.test.ts": "1f1c6227af1bcd865bbd0c6b522b5bd2af96b2244844ac03194451c4ccfdfd92",
+    "server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts": "00afb913b69cf9ee1b8ae5089eb2c90501b4da12980316e545c76dba53389f27",
+    "server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts": "392f47dfaa7b1a1f16479e09793f37cfa4763a008d5fb42a64250a6b90f82ae1",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "46ca133dd0332d0f13d467839a546f6c3115c8c3120c05e6a5a7ace7a5920b2a"
+  },
+  "changedInputs": [],
+  "all22PinnedInputsUnchanged": true,
+  "review": [
+    {
+      "finding": "No scoped compatibility blocker found. Native nonclinical tools require the request SQL client, a current admitted project/actor and private run-source authority; supplied model studies/findings are refused.",
+      "references": [
+        "server/services/ana/module2-nonclinical-inputs.ts:101",
+        "server/services/ana/module2-nonclinical-inputs.ts:108",
+        "server/services/ana/record-source-project.ts:96"
+      ]
+    },
+    {
+      "finding": "Existing composers receive persisted NOAEL text and nullable GLP/duration values. Missing information remains a gap. The protected snapshot rechecks the current actor/project and full eligible record set before output and subsequent protected continuation.",
+      "references": [
+        "server/services/ana/module2-nonclinical-inputs.ts:37",
+        "server/services/ana/module2-nonclinical-inputs.ts:73",
+        "server/services/ana/module2-nonclinical-inputs.ts:110"
+      ]
+    },
+    {
+      "finding": "Readable native record changes remain explicit NATIVE_SOURCE_CHANGED refusals rather than silently empty catalogue results; missing or currently denied native records are unavailable without revealing their identity.",
+      "references": [
+        "server/services/clinical-regulatory-evidence/record-source.ts:176",
+        "server/services/clinical-regulatory-evidence/record-source.ts:178",
+        "server/services/clinical-regulatory-evidence/source-read-access.ts:89"
+      ]
+    }
+  ],
+  "qualificationLimits": [
+    "Isolated PGlite executes the selected SQL and fixtures; tests also use scoped seams for runtime pools, catalogue/capture audit and selected source authorization. This is not native PostgreSQL/RLS or full production migration verification.",
+    "No production, test or runner edits; no native runtime DB changes; no real provider calls, external credentials or deployment verification.",
+    "Nonclinical results remain request-scoped drafts/worksheets; source reports, scientific applicability and later-turn currentness require review. This does not establish clinical, safety, filing or release approval.",
+    "Non-fatal development audit initialization warnings in the retained test log are fixture output, not evidence of production audit-chain qualification."
+  ],
+  "log": {
+    "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/incoming7a/shared-editor-incoming7a-source-compatibility.txt",
+    "rawBytes": 3724,
+    "rawLines": 101,
+    "sha256": "6dfdf63314e9d215a0e5ae71b1fb28f04382709d2030356cae1b88d9614d12c8",
+    "complete": true,
+    "compressed": false
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "observedAt": "2026-11-06T22:43:44.857680+00:00",
+  "reviewerTask": "/root/editor_context_security_review",
+  "delegatedNonclinicalReviewer": "/root/editor_context_security_review/incoming_7a_nonclinical_review",
+  "package": "F1",
+  "comparisonBase": "e5a1536fa0f94a609f93a9871bd579446854330c",
+  "incomingCanonical": "7a23ed73ca342c1dad1e44ab7cc841e3e40e2b2f",
+  "reviewedIntegrationMerge": "e802750f45765e2900f7da8db672f2b8b67ee346",
+  "status": "passed_no_scoped_source_compatibility_blocker",
+  "method": "Read-only bounded native Quality/report and protected nonclinical bridge review, including delegated exact issuer/current-client admission inspection. Only this review documentation written. No source/test edits, tests, compiler, browser/provider calls or git mutations by reviewers.",
+  "findings": [
+    "Native admission now distinguishes opaque missing/denied parents from readable but changed snapshots. Lists omit denied identities but propagate NATIVE_SOURCE_CHANGED as a refresh refusal rather than false successful absence.",
+    "Saved-report access retains executor/actor-bound context but scopes native admission caches to each report. Deletion or access/placement changes between reports cannot reuse an earlier report grant.",
+    "Quality report collection rechecks each original project key/content set after later projects load and refuses missing, added, duplicate or changed records. This is an observed-drift fence, not a database-wide atomic snapshot or completeness assertion.",
+    "Quality text rendering uses existing authoring/inline-mark plain-text projection, preserving literal clinical comparisons and unresolved suggestions while leaving complete sealed evidence unchanged.",
+    "Protected nonclinical composition requires the supplied request SQL client before native policy/source queries; canonical current actor/project access and unique same-org inverse program anchor precede linked study reads.",
+    "Only same-org linked finalized records and each own IND submission in-reporting record are eligible. Caller study/findings/product labels do not feed the deterministic composers. Missing eligible data remains distinct from unavailable source admission.",
+    "Before study-bearing output is returned, the bridge repeats actor/anchor/whole ordered source-set verification and requires a private issuer to accept an immutable exact actor/project/program/hash grant at tier3. The same callback rechecks content/link/status/membership/eligible-set changes before protected SDK dispatch, retry or fallback.",
+    "Recorded nonclinical fields produce drafts/worksheets only. No report availability, safety, GLP adequacy, drug identity, dose, pathology classification, scientific support, model qualification or filing approval is inferred. Currentness is explicitly limited to the protected run.",
+    "Captured SDK source/cancel/PQ/derivative guards, native-stream callback/helper, workflow-import release and exact artifact-intake policies remain byte-identical to the prior bd304512 frozen source."
+  ],
+  "protectedOwnersUnchangedFromBd304512": [
+    "server/services/ai-gateway/gateway.ts",
+    "server/services/ai-gateway/providers/clients.ts",
+    "server/services/clinical-regulatory-evidence/retained-source-context.ts",
+    "server/routes/ana-ri/stream.ts",
+    "server/services/authoring/workflow-import-governance.ts",
+    "server/services/authoring/artifact-workflow-source.ts"
+  ],
+  "selectedUiPinOverlap": {
+    "browser": {
+      "selectedPinCount": 45,
+      "incomingIntersections": []
+    },
+    "live": {
+      "selectedPinCount": 30,
+      "incomingIntersections": []
+    }
+  },
+  "uiEvidenceConclusion": "Existing component45/native30 selected owners have zero incoming intersections. Retain their exact recorded checkpoints and transitive exclusions; unchanged pins do not qualify new native/nonclinical behavior. Current targeted checks are owned separately.",
+  "sourceFiles": [
+    {
+      "path": "docs/design/QUALITY_CORE_WORKFLOW_2026-11-06.md",
+      "sha256": "d5ecf42b382968a10c5ab564c49f30d4fe5793157c54b03bd80dfa7b6ab1b9e6",
+      "bytes": 11620
+    },
+    {
+      "path": ".design/claude-convergence/GOVERNED_NONCLINICAL_BINDING_2026-11-06.md",
+      "sha256": "c082f50c89e328aaf2e535c51cd7b603d7bfd09454b340b5277cb1547ff555ee",
+      "bytes": 9921
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/record-source.ts",
+      "sha256": "0b00d5991962f08654dbfb10af7e46e08536f8b97a121adff26d372ce50e63a5",
+      "bytes": 11585
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+      "sha256": "b66457fe8ffd19f5b6bc157cd8cc32f6f330a340ff621d4da94999c9d3869585",
+      "bytes": 10523
+    },
+    {
+      "path": "server/services/report-os/project-access.ts",
+      "sha256": "14fda044477c19e4903efd888bdd175a1e2ba2207d6633d15c58a2c65d2eafcf",
+      "bytes": 21311
+    },
+    {
+      "path": "server/services/report-os/research-compliance-report-providers.ts",
+      "sha256": "bd30947b5569db20bcedd031c261a48ebf377ccc48c3a9d30001b26cde9fb067",
+      "bytes": 25210
+    },
+    {
+      "path": "server/services/report-os/render/quality-evidence.ts",
+      "sha256": "48064fb34e5e34f5c3984841d33fb9c1d078b2f5f2b2f62e24573b1db6fa6807",
+      "bytes": 9713
+    },
+    {
+      "path": "server/services/ana/module2-nonclinical-inputs.ts",
+      "sha256": "94dc09740f1e1ef184b379cfafd9a9a8abc8cf969faec74c7269421a01a3ac64",
+      "bytes": 11272
+    },
+    {
+      "path": "server/services/ana/record-source-project.ts",
+      "sha256": "4685210d174073e95a71272fb17accca88f09ab2e1f6d2b426e9ccf6f063c368",
+      "bytes": 7398
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "sha256": "f747202cf53a44780decbb7cf38b270949d02325119914d7087fe5f4582f2278",
+      "bytes": 1195387
+    },
+    {
+      "path": "server/services/ana/bla-biologics-tool-defs.ts",
+      "sha256": "dc7ca7001deb0f6decb87bf0184255abf7b3d4b75df49a2a35263c077dc1c30b",
+      "bytes": 47592
+    },
+    {
+      "path": "server/services/ai-gateway/model-call-scope.ts",
+      "sha256": "273d85c87022190207a71d91b58f77f2491b19fc58183ed3f84b9b7b1c8e27a2",
+      "bytes": 12991
+    },
+    {
+      "path": "server/services/csr/project-scope.ts",
+      "sha256": "6f70d1b969ea1abc92809f22ac9e8061506366ce250e583f325e969520b74108",
+      "bytes": 10981
+    },
+    {
+      "path": "server/services/ai-gateway/gateway.ts",
+      "sha256": "8f8c5a384f083ff5d955ce26fd7b0525018c9c4bba68608f1615bb7096257109",
+      "bytes": 254256
+    },
+    {
+      "path": "server/services/ai-gateway/providers/clients.ts",
+      "sha256": "78cfd28032513f305a662a8391095f1768221abe3ec265eeabea4b39dda8367e",
+      "bytes": 10335
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/retained-source-context.ts",
+      "sha256": "331beee77add448d370ca847ac1f5f806b6cdef6765743f73702b42a5d53d061",
+      "bytes": 9364
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "sha256": "70f11b2db9a7e6b44cea5d27e5a98fdf65772af9b51d95c0622218370080bcce",
+      "bytes": 235746
+    },
+    {
+      "path": "server/services/authoring/workflow-import-governance.ts",
+      "sha256": "f709cf12c6ea7656f4b2fa1d126b474556cd17d68aa01e2294aaf78170a6dfc7",
+      "bytes": 33701
+    },
+    {
+      "path": "server/services/authoring/artifact-workflow-source.ts",
+      "sha256": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "bytes": 15210
+    },
+    {
+      "path": "server/services/qms/project-evidence.ts",
+      "sha256": "65f44625fce257a3b079becb81d0c07aa82c2c584fdd5f7f1b220d314c1c5dbc",
+      "bytes": 29276
+    }
+  ],
+  "canonicalPinManifestSha256": "36d1dfc7f9bfad28fe55cf014a2af9ba56b295a0338dbeb824dc500be2e83654",
+  "limits": [
+    "No targeted-suite, full gate, compiler/build or native browser success is asserted by this review. The lead and test owners qualify the merged source.",
+    "This is a scoped new-bridge review, not a whole-platform audit. Existing unrelated legacy paths and the entire dependency graph are not qualified.",
+    "No model call, scientific sufficiency, native concurrent transaction behavior, real customer acceptance, deployed locality, release/signature, agency transmission or complete MDX/biotech workflow parity is qualified."
+  ]
+}

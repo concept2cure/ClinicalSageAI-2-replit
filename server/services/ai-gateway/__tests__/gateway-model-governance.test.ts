@@ -21,7 +21,7 @@ import { APPROVED_MODELS } from '../../ai-governance/approved-models';
 import { createHash } from 'node:crypto';
 import { qualifiedPinFor, qualifiedPinRefusal } from '../model-governance';
 import { projectQualifiedModelPins } from '../effort';
-import type { GatewayRequest, GatewayResponse } from '../types';
+import type { GatewayRequest, GatewayResponse, ModelConfig } from '../types';
 import * as providerClients from '../providers/clients';
 import { AIGateway, DEFAULT_MODELS } from '../gateway';
 import {
@@ -337,6 +337,32 @@ describe('qualified model pin transport and evidence', () => {
     const dispatch = vi.spyOn(f.gw as unknown as { dispatchProvider: () => Promise<GatewayResponse> }, 'dispatchProvider');
     await expect(f.route({ beforeDispatch: async () => { f.changeRecord('{}'); } })).rejects.toMatchObject({ reason: 'evidence-mismatch' });
     expect(dispatch).not.toHaveBeenCalled();
+    expect(ledgerRows(f.gw)).toHaveLength(1);
+  });
+
+  it('refuses evidence changed in the platform-client resolution continuation before any SDK call', async () => {
+    const f = qualifiedFixture();
+    f.dispatch.mockRestore();
+    vi.spyOn(providerClients, 'resolveTenantModelCredentialAvailability').mockResolvedValue({ mode: 'platform', providers: [] });
+    vi.spyOn(providerClients, 'createTenantProviderClient').mockResolvedValue(null);
+    const probe = f.gw as unknown as {
+      tenantProviderClient(provider: ModelConfig['provider'], request: GatewayRequest): Promise<unknown>;
+      anthropicClient: unknown;
+    };
+    const create = vi.fn(async (params: { model: string }) => ({ model: params.model,
+      content: [{ type: 'text', text: 'Must not be sent with changed evidence.' }], stop_reason: 'end_turn',
+      usage: { input_tokens: 1, output_tokens: 1 } }));
+    probe.anthropicClient = { messages: { create } };
+    const resolveClient = probe.tenantProviderClient.bind(probe);
+    vi.spyOn(probe, 'tenantProviderClient').mockImplementation(async (...args) => {
+      const client = await resolveClient(...args);
+      f.changeRecord('{}');
+      return client;
+    });
+    await expect(f.route({ organizationId: ORG, beforeDispatch: async () => {} })).rejects.toMatchObject({
+      code: 'QUALIFIED_MODEL_PIN_REFUSED', reason: 'evidence-mismatch',
+    });
+    expect(create).not.toHaveBeenCalled();
     expect(ledgerRows(f.gw)).toHaveLength(1);
   });
 

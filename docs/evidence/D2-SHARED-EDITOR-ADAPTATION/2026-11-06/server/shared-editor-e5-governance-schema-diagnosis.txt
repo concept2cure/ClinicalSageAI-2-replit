@@ -1,0 +1,1 @@
+{"beforeCanonicalMigration":"42703","afterCanonicalMigration":"column readable; empty ledger preserved","nativeDatabase":false}

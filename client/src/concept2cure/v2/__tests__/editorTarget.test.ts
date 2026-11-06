@@ -27,6 +27,54 @@ import {
   setEditorTarget,
 } from '../editorTarget';
 
+const PROJECT = '96a53b92-bb0b-4d3c-9727-4383f9289ae8';
+const FILING = '7c867abc-d031-4c29-b60f-875a5b7263d6';
+
+describe('exact governed filing intent', () => {
+  it('preserves a whole filing without fabricating a section or authoring document', () => {
+    setEditorTarget({ docType: 'ind', programId: PROJECT, filingDocumentId: FILING });
+    expect(consumeEditorTarget()).toMatchObject({ docType: 'ind', programId: PROJECT,
+      filingDocumentId: FILING, docId: null, sectionCode: null, sectionLabel: null });
+    expect(peekEditorTarget()).toBeNull();
+  });
+
+  it('keeps the exact filing identity with a named section', () => {
+    setEditorTarget({ docType: 'cer', programId: PROJECT, filingDocumentId: FILING, code: 'A3', label: 'Clinical data' });
+    expect(peekEditorTarget()).toMatchObject({ filingDocumentId: FILING, sectionCode: 'A3', sectionLabel: 'Clinical data' });
+  });
+
+  it.each([null, '', ' ', '../filing', 'filing/id', '%2Fid', { id: FILING }, 27])('refuses malformed filing identity %j and clears an older target', value => {
+    setEditorTarget({ docType: 'cer', code: 'A3' });
+    const malformed = { docType: 'cer', programId: PROJECT, filingDocumentId: value } as unknown as Parameters<typeof setEditorTarget>[0];
+    setEditorTarget(malformed);
+    expect(peekEditorTarget()).toBeNull();
+    expect(window.C2C_EDITOR_TARGET).toBeUndefined();
+  });
+
+  it.each([
+    { docType: null, programId: PROJECT },
+    { docType: 'ind', programId: null },
+    { docType: 'ind', programId: PROJECT, docId: 'authored-copy' },
+    { docType: 'ind', programId: PROJECT, within: 'M2' },
+    { docType: 'ind', programId: PROJECT, assemblySources: { version: 1, sources: [] } },
+  ])('refuses missing scope or conflicting intent %j', scope => {
+    setEditorTarget({ ...scope, filingDocumentId: FILING } as Parameters<typeof setEditorTarget>[0]);
+    expect(peekEditorTarget()).toBeNull();
+  });
+
+  it('refuses a tampered filing claim on the private window channel', () => {
+    setEditorTarget({ docType: 'ind', programId: PROJECT, code: '2.5' });
+    Object.assign(window.C2C_EDITOR_TARGET!, { filingDocumentId: '../wrong-filing' });
+    expect(consumeEditorTarget()).toBeNull();
+    expect(window.C2C_EDITOR_TARGET).toBeUndefined();
+  });
+
+  it('does not add a filing claim to a legacy exact-document target', () => {
+    setEditorTarget({ docType: null, docId: 'existing-document', programId: PROJECT });
+    expect(peekEditorTarget()).not.toHaveProperty('filingDocumentId');
+  });
+});
+
 afterEach(() => clearEditorTarget());
 
 describe('set / peek / consume / clear', () => {

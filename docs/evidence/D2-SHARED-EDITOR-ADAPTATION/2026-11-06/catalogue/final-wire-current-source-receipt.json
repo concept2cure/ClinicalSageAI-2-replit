@@ -1,0 +1,220 @@
+{
+  "recordedAt": "2026-11-06T20:44:41.397186+00:00",
+  "package": "F1",
+  "scope": "Complete existing gateway current-source dispatch checkpoint after incoming7d tenant-credential awaits; no new service, route, store or model qualification",
+  "incomingRevision": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4",
+  "sourceBaseMergedHead": "b8b73e2fc924a5f0b80510a8920d57ca22bf8459",
+  "changedProductionFiles": [
+    "server/services/ai-gateway/gateway.ts",
+    "server/services/ai-gateway/providers/clients.ts"
+  ],
+  "changedExistingTestFiles": [
+    "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+    "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts",
+    "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts"
+  ],
+  "before": {
+    "capturedAt": "2026-11-06T20:42:47.058086+00:00",
+    "head": "b8b73e2fc924a5f0b80510a8920d57ca22bf8459",
+    "sourceInputs": {
+      "client/src/concept2cure/v2/useFilingOutline.ts": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+      "server/services/authoring/authoring-draft-template.ts": "0beb24ff53d7bcf8de01882c7012f256f543465820c92517097187b929d4e97d",
+      "server/services/authoring/authoring-draft-region-projection.ts": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+      "shared/authoring/source-import.ts": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "server/services/authoring/workflow-import-governance.ts": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+      "server/routes/artifacts-center-routes.ts": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+      "scripts/ci/lib/approved-sql-predicates.mjs": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+      "server/services/ai-gateway/gateway.ts": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+      "server/services/ai-gateway/providers/clients.ts": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+      "server/services/ai-gateway/types.ts": "4f8d6192f0e0374d75053aa52c69796eb8cb57744d73b5436b4bd52ed82ec40d",
+      "server/services/ai-gateway/model-governance.ts": "f7d5ed4903899d690ee2d487684db6b597e4bfa55f3891d85744ac012fbff99f",
+      "server/services/ai-governance/approved-models.ts": "9350d2ab137d5da95185e16974d47c6ec7f1953b545863be3fb0399fa8f33aaa",
+      "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts": "d16e3d1ca9c8d7b4b503d5133948c49a403f32283cfa6d0f79e83b8cc751d688",
+      "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts": "487fffb0df4b2444bb12acc94fa8c4e524c0da7c9c77ad8602ba775c2bc38e50",
+      "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts": "066e80a0bed82775d5dfc88d3029d1691759f54de53f7a3cea743dd23f8e1f56",
+      "server/services/authoring/__tests__/authoring-draft-template.test.ts": "85dccfdb175f5ccad2d6ca196481a6c3d4c58b59970184e7ca760857e54b4a1f",
+      "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts": "a18213f0acd3130513b71b6595f7ba98ebb64aa303d4b39688922a72bfc17249",
+      "server/routes/__tests__/authoring-draft-recorded-filing.test.ts": "547333bfae34c2f3e4a04a57abcd0742099df5c13dcca73b7cfa3120c844066e",
+      "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts": "ae746bb189ea9d04e30b0f572b75cafb2ce1008aa0c761b653b5b41f6cd4dccc",
+      "server/services/ana/__tests__/draft-project-sources.test.ts": "59bddc6dbb32b0f590904e35c758646383642d2ba563db80d4b0845ac94448e9",
+      "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": "7c1c43d63d4c216304615c55ae1a8db8bf2db9515b542964387f78b6b6006e39",
+      "server/services/ana/draft-project-sources.ts": "ce16314049e479970d15796ae9fb277671fd8d87769dc1826abc475455cd745f",
+      "server/services/ana/AnaDocumentDraftingService.ts": "93f6a4a853b5a1753df8f5dd4b0f0f636e0beabc642223157dee64db27c48f7b"
+    }
+  },
+  "after": {
+    "capturedAt": "2026-11-06T20:44:41.397186+00:00",
+    "head": "f4295889ca0297e115fcd88b334c98804c7c2fbc",
+    "sourceInputs": {
+      "client/src/concept2cure/v2/useFilingOutline.ts": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+      "server/services/authoring/authoring-draft-template.ts": "0beb24ff53d7bcf8de01882c7012f256f543465820c92517097187b929d4e97d",
+      "server/services/authoring/authoring-draft-region-projection.ts": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+      "shared/authoring/source-import.ts": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "server/services/authoring/workflow-import-governance.ts": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+      "server/routes/artifacts-center-routes.ts": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+      "scripts/ci/lib/approved-sql-predicates.mjs": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+      "server/services/ai-gateway/gateway.ts": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+      "server/services/ai-gateway/providers/clients.ts": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+      "server/services/ai-gateway/types.ts": "4f8d6192f0e0374d75053aa52c69796eb8cb57744d73b5436b4bd52ed82ec40d",
+      "server/services/ai-gateway/model-governance.ts": "f7d5ed4903899d690ee2d487684db6b597e4bfa55f3891d85744ac012fbff99f",
+      "server/services/ai-governance/approved-models.ts": "9350d2ab137d5da95185e16974d47c6ec7f1953b545863be3fb0399fa8f33aaa",
+      "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts": "d16e3d1ca9c8d7b4b503d5133948c49a403f32283cfa6d0f79e83b8cc751d688",
+      "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts": "487fffb0df4b2444bb12acc94fa8c4e524c0da7c9c77ad8602ba775c2bc38e50",
+      "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts": "066e80a0bed82775d5dfc88d3029d1691759f54de53f7a3cea743dd23f8e1f56",
+      "server/services/authoring/__tests__/authoring-draft-template.test.ts": "85dccfdb175f5ccad2d6ca196481a6c3d4c58b59970184e7ca760857e54b4a1f",
+      "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts": "a18213f0acd3130513b71b6595f7ba98ebb64aa303d4b39688922a72bfc17249",
+      "server/routes/__tests__/authoring-draft-recorded-filing.test.ts": "547333bfae34c2f3e4a04a57abcd0742099df5c13dcca73b7cfa3120c844066e",
+      "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts": "ae746bb189ea9d04e30b0f572b75cafb2ce1008aa0c761b653b5b41f6cd4dccc",
+      "server/services/ana/__tests__/draft-project-sources.test.ts": "59bddc6dbb32b0f590904e35c758646383642d2ba563db80d4b0845ac94448e9",
+      "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": "7c1c43d63d4c216304615c55ae1a8db8bf2db9515b542964387f78b6b6006e39",
+      "server/services/ana/draft-project-sources.ts": "ce16314049e479970d15796ae9fb277671fd8d87769dc1826abc475455cd745f",
+      "server/services/ana/AnaDocumentDraftingService.ts": "93f6a4a853b5a1753df8f5dd4b0f0f636e0beabc642223157dee64db27c48f7b"
+    }
+  },
+  "changedInputs": [],
+  "original11RuntimePinsUnchanged": true,
+  "red": {
+    "initial": {
+      "failed": 14,
+      "passed": 14,
+      "classification": "12 actual missing SDK-boundary checks plus2 stale incoming provider-error identity fixture assertions"
+    },
+    "currentContractFixture": {
+      "failed": 12,
+      "passed": 16,
+      "classification": "Actual tenant/platform SDK source-revocation/cancellation gap and missing final source recheck"
+    },
+    "platformContinuation": {
+      "failed": 3,
+      "passed": 81,
+      "classification": "Two actual SDK continuation cancellations and one controlled qualification-evidence drift dispatched before final sync admission"
+    }
+  },
+  "green": {
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --no-file-parallelism server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts server/services/ai-gateway/__tests__/gateway-model-governance.test.ts server/services/authoring/__tests__/authoring-draft-template.test.ts server/services/authoring/__tests__/authoring-draft-region-projection.test.ts server/routes/__tests__/authoring-draft-recorded-filing.test.ts server/services/ana/__tests__/draft-source-service-checkpoint.test.ts server/services/ana/__tests__/draft-project-sources.test.ts server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts",
+    "exitCode": 0,
+    "suitesPassed": 9,
+    "testsPassed": 250,
+    "durationSeconds": 44.75,
+    "perFileObservedPasses": {
+      "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts": 50,
+      "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts": 34,
+      "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": 20,
+      "server/services/ana/__tests__/draft-project-sources.test.ts": 44,
+      "server/routes/__tests__/authoring-draft-recorded-filing.test.ts": 9,
+      "server/services/authoring/__tests__/authoring-draft-template.test.ts": 45,
+      "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts": 8,
+      "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts": 17,
+      "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts": 23
+    }
+  },
+  "lint": {
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 26,
+    "baselineErrors": 0,
+    "baselineWarnings": 26,
+    "warningGrowth": false,
+    "testWarnings": 0
+  },
+  "sourceContract": [
+    "Original beforeDispatch captured before route awaits and the post-capacity checkpoint retained.",
+    "Private WeakMap binds the exact governed request to its original source callback and signal; concrete selected-model checks are repeated at SDK invocation and request mutation cannot replace the captured callback.",
+    "Customer-owned SDK wrapper awaits credential audit then the opaque source check; synchronous abort/PQ check runs after that await and before SDK outside both sanitizers.",
+    "Awaited null/platform and no-org paths run the same source guard outside credentialcatch. All five actual SDK sites repeat synchronous abort/PQ with concrete selected model after helper promise continuations.",
+    "Source refusal remains SOURCE_CONTEXT_UNAVAILABLE/GatewayPolicyError, terminal without provider retry/fallback or health failure; cancellation before SDK remains GatewayAbortedError pre_call.",
+    "Existing five-argument factory callers retain synchronous beforeCreate compatibility; typed fifth checks object carries separate async source and synchronous qualification checks.",
+    "No genuine model credentials, provider call, new model qualification, model registry allowance, dependency, service, endpoint or store introduced."
+  ],
+  "fixtureAssertionCorrections": {
+    "count": 2,
+    "before": "expect(failures.mock.calls[0][1]).toBe(primaryError);",
+    "after": [
+      "expect(failures.mock.calls[0][1]).toMatchObject({ status: 400, message: 'Model provider request failed (HTTP 400).' });",
+      "expect(failures.mock.calls[0][1]).not.toBe(primaryError);"
+    ],
+    "reason": "Incoming7d deliberately sanitizes provider errors before failure accounting. The exact safe status/message is asserted, while source-refusal class/code, original captured guard, callback counts, no retry/fallback and health expectations remain."
+  },
+  "logs": {
+    "shared-editor-final-wire-2026-11-06-red.txt": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-final-wire-2026-11-06-red.txt",
+      "bytes": 16936,
+      "sha256": "ff1858d16d73b10117e4f87075a60d9d266c7fee46fbb41fc83770f8703ac88e",
+      "orderedParts": [
+        "logs/shared-editor-final-wire-2026-11-06-red.txt"
+      ]
+    },
+    "shared-editor-final-wire-2026-11-06-red-current-fixture.txt": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-final-wire-2026-11-06-red-current-fixture.txt",
+      "bytes": 14711,
+      "sha256": "0acf5809d17dd8118cfe06d8defa3c1a1f26a95f1b3bf008986c7d537a236f20",
+      "orderedParts": [
+        "logs/shared-editor-final-wire-2026-11-06-red-current-fixture.txt"
+      ]
+    },
+    "shared-editor-final-wire-2026-11-06-platform-continuation-red.txt": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-final-wire-2026-11-06-platform-continuation-red.txt",
+      "bytes": 118950,
+      "sha256": "6a45ebfa02b5cdd8977f6409c07b06d6e1ecbf23b99feb88408e062bf008feda",
+      "orderedParts": [
+        "logs/shared-editor-final-wire-2026-11-06-platform-continuation-red.txt.part01",
+        "logs/shared-editor-final-wire-2026-11-06-platform-continuation-red.txt.part02"
+      ]
+    },
+    "shared-editor-final-wire-2026-11-06-final-green.txt": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-final-wire-2026-11-06-final-green.txt",
+      "bytes": 169537,
+      "sha256": "5bc17f0f2d026e1fb20672c2643e113e057aa29f2fa61afa667bfc4f30141138",
+      "orderedParts": [
+        "logs/shared-editor-final-wire-2026-11-06-final-green.txt.part01",
+        "logs/shared-editor-final-wire-2026-11-06-final-green.txt.part02",
+        "logs/shared-editor-final-wire-2026-11-06-final-green.txt.part03"
+      ]
+    },
+    "shared-editor-final-wire-2026-11-06-eslint-baseline.json": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-final-wire-2026-11-06-eslint-baseline.json",
+      "bytes": 249467,
+      "sha256": "a397a2e299f55a2404bcce2819e8f86b6a28c4b01213dabd5f35a69f8f000f1d",
+      "orderedParts": [
+        "logs/shared-editor-final-wire-2026-11-06-eslint-baseline.json.part01",
+        "logs/shared-editor-final-wire-2026-11-06-eslint-baseline.json.part02",
+        "logs/shared-editor-final-wire-2026-11-06-eslint-baseline.json.part03",
+        "logs/shared-editor-final-wire-2026-11-06-eslint-baseline.json.part04"
+      ]
+    },
+    "shared-editor-final-wire-2026-11-06-final-eslint.json": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-final-wire-2026-11-06-final-eslint.json",
+      "bytes": 252065,
+      "sha256": "b788df2694b13c45ad6faa8a49c31150159736f58d1cc29a089716349b1ebb8d",
+      "orderedParts": [
+        "logs/shared-editor-final-wire-2026-11-06-final-eslint.json.part01",
+        "logs/shared-editor-final-wire-2026-11-06-final-eslint.json.part02",
+        "logs/shared-editor-final-wire-2026-11-06-final-eslint.json.part03",
+        "logs/shared-editor-final-wire-2026-11-06-final-eslint.json.part04"
+      ]
+    }
+  },
+  "patch": {
+    "path": "final-wire-source-and-tests.patch",
+    "baseRevision": "b8b73e2fc924a5f0b80510a8920d57ca22bf8459",
+    "comparedTo": "current working tree (also includes root normal source commit)",
+    "bytes": 23274,
+    "sha256": "cfb65838b8172b4d477b722198bee2877b3d5dd7bbb035dfe54d0b3a37e9d62e"
+  },
+  "limits": [
+    "Synthetic SDK/credential seams, existing real gateway routing/placement/concurrency/retry/provider factory. No real provider credentials or requests.",
+    "Final cohorts overlap earlier results and are not additive. Initial and intermediate results are historical within this repair.",
+    "Root owns final combined compiler/build/publication; those are not claimed by this receipt."
+  ],
+  "notes": [
+    "Root committed the unchanged frozen source as f4295889ca0297e115fcd88b334c98804c7c2fbc while evidence packaging ran; all27 source/test hashes remain identical. The patch is retained relative to the known pre-fix merged source, not the now-clean git working diff."
+  ]
+}

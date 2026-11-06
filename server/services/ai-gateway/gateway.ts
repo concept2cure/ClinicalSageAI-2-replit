@@ -1395,6 +1395,8 @@ export class AIGateway {
   private readonly qualifiedPinEvidenceReader: QualifiedPinEvidenceReader = readQualifiedPinEvidence;
   /** Tenant availability belongs to one captured request, never to the global registry or SDK cache. */
   private readonly requestModels = new WeakMap<GatewayRequest, ModelConfig[]>();
+  /** Captured source authority stays private while provider credentials await their own reads. */
+  private readonly finalSourceChecks = new WeakMap<GatewayRequest, () => Promise<void>>();
   private readonly derivativeSdkPayloads = new WeakMap<GatewayRequest, { params: object; sha256: string }>();
   private readonly embeddingSourceCheckpoints = new WeakMap<EmbeddingAuthorization, (() => Promise<void>) | null>();
   private readonly customerOwnedModelSets = new WeakSet<ModelConfig[]>();
@@ -2227,16 +2229,45 @@ export class AIGateway {
 
   private modelsForRequest(request: GatewayRequest): ModelConfig[] { return this.requestModels.get(request) ?? this.models; }
 
+  private assertProviderCreateAllowed(request: GatewayRequest, modelConfig?: ModelConfig): void {
+    if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+    this.assertQualifiedModel(request, modelConfig);
+  }
+
+  /** The final holder already captured the callback plus private run authority. */
+  private recheckProviderSources(request: GatewayRequest): Promise<void> {
+    return this.finalSourceChecks.get(request)?.() ?? recheckDispatchSources(request);
+  }
+
   private async tenantProviderClient(provider: ProviderName, request: GatewayRequest): Promise<any | null> {
     const organizationId = auditOrganizationId(request);
-    if (!isOrganizationId(organizationId)) return null;
+    if (!isOrganizationId(organizationId)) {
+      await this.recheckProviderSources(request);
+      this.assertProviderCreateAllowed(request);
+      return null;
+    }
     if (request.userId !== undefined && !isOrganizationId(request.userId)) throw new TenantModelCredentialError();
+    let client: Awaited<ReturnType<typeof createTenantProviderClient>>;
     try {
-      return await createTenantProviderClient(provider, Number(organizationId),
+      client = await createTenantProviderClient(provider, Number(organizationId),
         isOrganizationId(request.userId) ? Number(request.userId) : undefined, 'model_inference',
-        { beforeCreate: () => { request.signal?.throwIfAborted(); this.assertPinnedDerivativeSdkPayload(request); this.assertQualifiedModel(request); },
-          recheckBeforeCreate: async () => { await this.assertDerivativeCurrent(request); await recheckDispatchSources(request); } });
-    } catch (error) { if (error instanceof GatewayPolicyError) throw error; throw new TenantModelCredentialError(); }
+        { beforeCreate: () => {
+          if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+          this.assertPinnedDerivativeSdkPayload(request); this.assertProviderCreateAllowed(request);
+        },
+          recheckBeforeCreate: async () => { await this.assertDerivativeCurrent(request); await this.recheckProviderSources(request); } });
+    } catch (error) {
+      if (error instanceof GatewayPolicyError || error instanceof GatewayAbortedError) throw error;
+      throw new TenantModelCredentialError();
+    }
+    // A platform-mode lookup also awaited credential state. Keep source/policy
+    // failures outside the credential catch and before the platform SDK path.
+    if (client === null) {
+      await this.assertDerivativeCurrent(request);
+      await this.recheckProviderSources(request);
+      this.assertProviderCreateAllowed(request);
+    }
+    return client;
   }
 
   /**
@@ -2274,6 +2305,15 @@ export class AIGateway {
     const governed = governServerTools(modelConfig.provider, request);
     // …and in the version this model accepts.
     governed.request = webToolsForModel(governed.request, modelConfig.webToolVariant);
+    this.finalSourceChecks.set(governed.request, async () => {
+      if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+      try { await beforeDispatch?.(); }
+      catch {
+        if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+        throw sourceCheckpointRefusal();
+      }
+      if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+    });
     if (governed.withheld.length > 0) {
       log.info('[ai-gateway] server tools withheld for this lane', {
         requestId,
@@ -2636,10 +2676,9 @@ export class AIGateway {
     applyOpenAIToolParams(params, request, modelConfig);
 
     await this.assertDerivativeCurrent(request);
-    await recheckDispatchSources(request);
-    request.signal?.throwIfAborted();
+    await this.recheckProviderSources(request);
     this.pinDerivativeSdkPayload(request, params);
-    this.assertQualifiedModel(request, modelConfig);
+    this.assertProviderCreateAllowed(request, modelConfig);
     const completion = await Promise.race([
       client.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
       new Promise<never>((_, reject) =>
@@ -2909,10 +2948,9 @@ export class AIGateway {
     if (request.signal) reqOptions.signal = request.signal;
 
     await this.assertDerivativeCurrent(request);
-    await recheckDispatchSources(request);
-    request.signal?.throwIfAborted();
+    await this.recheckProviderSources(request);
     this.pinDerivativeSdkPayload(request, params, true);
-    this.assertQualifiedModel(request, modelConfig);
+    this.assertProviderCreateAllowed(request, modelConfig);
     const response = await Promise.race([
       client.messages.create(params, Object.keys(reqOptions).length > 0 ? reqOptions : undefined),
       new Promise<never>((_, reject) =>
@@ -3133,8 +3171,8 @@ export class AIGateway {
     // a stop only stopped us reading, and the model ran to completion at full
     // cost — which is what stream.ts's own comment used to say.
     if (request.signal) streamOptions.signal = request.signal;
-    await recheckDispatchSources(request);
-    request.signal?.throwIfAborted();
+    await this.recheckProviderSources(request);
+    this.assertProviderCreateAllowed(request, modelConfig);
     const stream = await client.messages.create(
       params,
       Object.keys(streamOptions).length > 0 ? streamOptions : undefined
@@ -3375,10 +3413,9 @@ export class AIGateway {
     applyOpenAIToolParams(params, request, modelConfig);
 
     await this.assertDerivativeCurrent(request);
-    await recheckDispatchSources(request);
-    request.signal?.throwIfAborted();
+    await this.recheckProviderSources(request);
     this.pinDerivativeSdkPayload(request, params);
-    this.assertQualifiedModel(request, modelConfig);
+    this.assertProviderCreateAllowed(request, modelConfig);
     const completion = await Promise.race([
       client.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
       new Promise<never>((_, reject) =>
@@ -3461,8 +3498,8 @@ export class AIGateway {
     }
     applyOpenAIToolParams(params, request, modelConfig);
 
-    await recheckDispatchSources(request);
-    request.signal?.throwIfAborted();
+    await this.recheckProviderSources(request);
+    this.assertProviderCreateAllowed(request, modelConfig);
     const stream = await client.chat.completions.create(
       params,
       request.signal ? { signal: request.signal } : undefined,

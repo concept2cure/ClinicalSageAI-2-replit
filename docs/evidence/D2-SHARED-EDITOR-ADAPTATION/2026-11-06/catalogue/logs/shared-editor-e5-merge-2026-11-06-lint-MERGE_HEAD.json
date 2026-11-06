@@ -1,0 +1,348 @@
+[
+  {
+    "filePath": "server/services/ai-gateway/gateway.ts",
+    "errorCount": 0,
+    "warningCount": 26,
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'GatewayUsage' is defined but never used.",
+        "line": 40,
+        "column": 3,
+        "messageId": "unusedVar",
+        "endLine": 40,
+        "endColumn": 15,
+        "suggestions": [
+          {
+            "messageId": "removeUnusedVar",
+            "data": {
+              "varName": "GatewayUsage"
+            },
+            "fix": {
+              "range": [
+                948,
+                964
+              ],
+              "text": ""
+            },
+            "desc": "Remove unused variable \"GatewayUsage\"."
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'StreamCallback' is defined but never used.",
+        "line": 45,
+        "column": 3,
+        "messageId": "unusedVar",
+        "endLine": 45,
+        "endColumn": 17,
+        "suggestions": [
+          {
+            "messageId": "removeUnusedVar",
+            "data": {
+              "varName": "StreamCallback"
+            },
+            "fix": {
+              "range": [
+                1043,
+                1061
+              ],
+              "text": ""
+            },
+            "desc": "Remove unused variable \"StreamCallback\"."
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'ContentBlock' is defined but never used.",
+        "line": 46,
+        "column": 3,
+        "messageId": "unusedVar",
+        "endLine": 46,
+        "endColumn": 15,
+        "suggestions": [
+          {
+            "messageId": "removeUnusedVar",
+            "data": {
+              "varName": "ContentBlock"
+            },
+            "fix": {
+              "range": [
+                1061,
+                1077
+              ],
+              "text": ""
+            },
+            "desc": "Remove unused variable \"ContentBlock\"."
+          }
+        ]
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'partitionSystemMessages' has a complexity of 17. Maximum allowed is 15.",
+        "line": 623,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 623,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (3737). Maximum allowed is 500.",
+        "line": 698,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 5588,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'normalizeCitation' has a complexity of 20. Maximum allowed is 15.",
+        "line": 875,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 875,
+        "endColumn": 27
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'applyOpenAIToolParams' has a complexity of 32. Maximum allowed is 15.",
+        "line": 1064,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 1064,
+        "endColumn": 31
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async method 'route' has too many lines (219). Maximum allowed is 100.",
+        "line": 1579,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 1579,
+        "endColumn": 14
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'route' has a complexity of 71. Maximum allowed is 15.",
+        "line": 1579,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 1579,
+        "endColumn": 14
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'authorizeEmbedding' has a complexity of 19. Maximum allowed is 15.",
+        "line": 1904,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 1904,
+        "endColumn": 27
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async method 'assertSensitiveDispatchAllowed' has too many lines (135). Maximum allowed is 100.",
+        "line": 2352,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 2352,
+        "endColumn": 47
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'assertSensitiveDispatchAllowed' has a complexity of 36. Maximum allowed is 15.",
+        "line": 2352,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 2352,
+        "endColumn": 47
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'executeOpenAI' has a complexity of 33. Maximum allowed is 15.",
+        "line": 2579,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 2579,
+        "endColumn": 30
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async method 'executeAnthropic' has too many lines (191). Maximum allowed is 100.",
+        "line": 2763,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 2763,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'executeAnthropic' has a complexity of 56. Maximum allowed is 15.",
+        "line": 2763,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 2763,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async method 'executeAnthropicStream' has too many lines (252). Maximum allowed is 100.",
+        "line": 3010,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 3010,
+        "endColumn": 39
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'executeAnthropicStream' has a complexity of 86. Maximum allowed is 15.",
+        "line": 3010,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 3010,
+        "endColumn": 39
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 3217,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 3217,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'executeMoonshot' has a complexity of 31. Maximum allowed is 15.",
+        "line": 3335,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 3335,
+        "endColumn": 32
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async method 'executeOpenAICompatibleStream' has too many lines (149). Maximum allowed is 100.",
+        "line": 3433,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 3433,
+        "endColumn": 46
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'executeOpenAICompatibleStream' has a complexity of 40. Maximum allowed is 15.",
+        "line": 3433,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 3433,
+        "endColumn": 46
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 3552,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 3552,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 3553,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 3553,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "max-params",
+        "severity": 1,
+        "message": "Async method 'logAudit' has too many parameters (7). Maximum allowed is 5.",
+        "line": 4352,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 4352,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "max-params",
+        "severity": 1,
+        "message": "Async method 'logContentPolicyBlock' has too many parameters (6). Maximum allowed is 5.",
+        "line": 4579,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 4579,
+        "endColumn": 38
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Method 'initProviderClients' has a complexity of 26. Maximum allowed is 15.",
+        "line": 4796,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 4796,
+        "endColumn": 30
+      }
+    ]
+  },
+  {
+    "filePath": "server/services/ai-gateway/providers/clients.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "scripts/ci/lib/approved-sql-predicates.mjs",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": null,
+        "fatal": false,
+        "severity": 1,
+        "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+      }
+    ]
+  }
+]

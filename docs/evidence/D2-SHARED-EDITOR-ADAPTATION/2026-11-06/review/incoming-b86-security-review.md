@@ -1,0 +1,9 @@
+# Incoming b86 integration review — 2026-11-06
+
+Read-only review of canonical `53b9f15d8fe96767c8dbe6def2d7e8c5e03db7aa` → `b86b489405a30a07d4ed1c0d46abdd4037449dcb` at integration merge `5283da69cb953d7c4c8970d80fd14f8fe81879ce`. No scoped production blocker found. No tests, compiler, browser or gates were run by this reviewer.
+
+The 11 changed runtime owners add shared UK CTA preparation data, its registry/bootstrap and server consumers, ANA preparation context and unified-task creation admission. Saved-template reference/agency admission and the strict authoring/source-intake owners remain unchanged. UK guidance leaves initial-date/product/document applicability unresolved and does not establish completed IRAS forms, transmission or approval. Unified-task creation retains current actor/project/workspace write admission with its task and audit transaction; it does not authorize authoring imports.
+
+The initial component comparison found **one changed selected pin out of 45**, `shared/regulatory/global-document-registry.ts`. The earlier 12-case result is historical for its recorded bytes; the lead requested a component refresh. This review does not claim the refresh passed. The **25 native selected owners remain unchanged and match the fifth walk's recorded hashes**, so that walk may remain evidence for its explicit 637 checkpoint and exercised scenarios. Its manifest is not a full transitive graph: the new UK CTA, ANA, readiness and unified-task paths remain outside that native claim.
+
+Exact selected runtime hashes and limits are retained in [incoming-b86-security-review.json](incoming-b86-security-review.json). Earlier review receipts keep their original checkpoints. This source review does not qualify regulatory source currency, scientific sufficiency, external IRAS handling, deployed acceptance or release.
