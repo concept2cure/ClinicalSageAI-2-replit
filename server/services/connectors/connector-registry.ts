@@ -7,7 +7,7 @@
  */
 
 import { pool } from '../../db.js';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, createPrivateKey, randomUUID } from 'node:crypto';
 import { isSafePublicUrl } from '../../utils/ssrfGuard.js';
 import { encryptCredential, decryptCredential } from '../security/credential-cipher.js';
 import {
@@ -51,7 +51,9 @@ export const decryptConnectorCredentials = decrypt;
 type CredentialDb = { query(sql: string, params?: unknown[]): Promise<{ rows: Array<Record<string, any>> }> };
 export type TenantModelProvider = 'anthropic' | 'openai' | 'moonshot';
 export type CredentialPurpose = 'model_inference' | 'embedding' | 'connector_search' | 'connector_fetch' | 'connector_upload' | 'account_reference';
-type CredentialCardId = 'veeva_vault' | 'llm_anthropic' | 'llm_openai' | 'llm_moonshot' | 'clinical_trials_prs' | 'fda_portal';
+const EXISTING_CREDENTIAL_CARD_IDS = ['medidata_rave', 'fhir-r4', 'sam_exclusions', 'ellucian_banner', 'google_drive', 'box', 'onedrive', 'sharepoint'] as const;
+type ExistingCredentialCardId = typeof EXISTING_CREDENTIAL_CARD_IDS[number];
+type CredentialCardId = 'veeva_vault' | 'llm_anthropic' | 'llm_openai' | 'llm_moonshot' | 'clinical_trials_prs' | 'fda_portal' | ExistingCredentialCardId;
 interface CredentialField { name: string; label: string; secret: boolean; required: boolean; multiline?: boolean }
 interface CredentialCardSpec {
   id: CredentialCardId; name: string; kind: 'connector' | 'llm'; purpose: string;
@@ -74,6 +76,16 @@ export const CREDENTIAL_CARD_SPECS: readonly CredentialCardSpec[] = [
     purpose: 'Store your organization’s own portal login. Portal actions are not connected.', storageOnly: true,
     fields: [{ name: 'username', label: 'Username', secret: false, required: true }, { name: 'password', label: 'Password', secret: true, required: true }],
     scopes: ['account_reference' as const],
+  })),
+  // Reuse the existing operational catalog's schemas; administration moves to
+  // this governed capture path without creating a second connector registry.
+  ...CONNECTOR_CATALOG.filter(entry => EXISTING_CREDENTIAL_CARD_IDS.includes(entry.id as ExistingCredentialCardId)).map((entry): CredentialCardSpec => ({
+    id: entry.id as ExistingCredentialCardId, name: entry.name, kind: 'connector',
+    purpose: `Access your organization’s own ${entry.name} account.`,
+    fields: (entry.setupGuide?.credentialFields ?? []).map(field => ({ name: field.field, label: field.label, secret: field.secret,
+      required: field.required ?? !/optional/i.test(field.label), ...(field.multiline ? { multiline: true } : {}) })),
+    scopes: ['google_drive', 'box', 'onedrive', 'sharepoint'].includes(entry.id)
+      ? ['connector_search', 'connector_fetch', 'connector_upload'] : ['connector_search', 'connector_fetch'],
   })),
 ];
 interface CredentialGrant {
@@ -181,32 +193,59 @@ function cardChangeGrant(spec: CredentialCardSpec, change: CredentialCardChange)
   }
   return { scopes: scopes as CredentialPurpose[], expiresAt };
 }
-function requiredCardFields(spec: CredentialCardSpec, credentials: ConnectorCredentials): void {
-  const missing = spec.kind === 'llm' ? !credentials.apiKey || credentials.apiKey.length < 8
-    : spec.storageOnly ? !credentials.username || !credentials.password
-      : !credentials.baseUrl || (!credentials.apiKey && !(credentials.username && credentials.password));
+function requiredCardFields(spec: CredentialCardSpec, credentials: Record<string, string>): void {
+  const missing = spec.fields.some(field => field.required && !credentials[field.name])
+    || (spec.kind === 'llm' && credentials.apiKey.length < 8)
+    || (spec.id === 'veeva_vault' && !credentials.apiKey && !(credentials.username && credentials.password))
+    || (spec.id === 'fhir-r4' && !credentials.apiKey && !(credentials.clientId && credentials.clientSecret));
   if (missing) throw new CredentialCardRefusal('CREDENTIAL_FIELDS_REQUIRED', 'Complete the required credential fields for this card.', 400);
-  if (spec.id !== 'veeva_vault') return;
-  let invalidUrl = !isSafePublicUrl(credentials.baseUrl!);
-  try { const url = new URL(credentials.baseUrl!); invalidUrl ||= Boolean(url.username || url.password); } catch { invalidUrl = true; }
-  if (invalidUrl) throw new CredentialCardRefusal('CREDENTIAL_URL_INVALID', 'Use a public HTTPS Vault URL without credentials in the address.', 400);
+  validateCardConfiguration(spec, credentials);
+}
+function validateCardConfiguration(spec: CredentialCardSpec, credentials: Record<string, string>): void {
+  if (['veeva_vault', 'medidata_rave', 'fhir-r4', 'ellucian_banner'].includes(spec.id)) {
+    let invalidUrl = !isSafePublicUrl(credentials.baseUrl);
+    try { const url = new URL(credentials.baseUrl); invalidUrl ||= Boolean(url.username || url.password); } catch { invalidUrl = true; }
+    if (invalidUrl) throw new CredentialCardRefusal('CREDENTIAL_URL_INVALID', 'Use a public HTTPS service URL without credentials in the address.', 400);
+  }
+  if (['sharepoint', 'onedrive'].includes(spec.id) && !/^[a-z0-9][a-z0-9.-]{0,252}$/i.test(credentials.tenantId)) {
+    throw new CredentialCardRefusal('CREDENTIAL_FIELDS_INVALID', 'Use a valid Azure tenant identifier without URL or path characters.', 400);
+  }
+  if (spec.id === 'box' && !/^\d+$/.test(credentials.baseUrl)) {
+    throw new CredentialCardRefusal('CREDENTIAL_FIELDS_INVALID', 'Use the numeric Box enterprise identifier.', 400);
+  }
+  if (spec.id === 'google_drive') {
+    try {
+      if (createPrivateKey(credentials.clientSecret.replace(/\\n/g, '\n')).asymmetricKeyType !== 'rsa') throw new Error('Invalid key type');
+    } catch { throw new CredentialCardRefusal('CREDENTIAL_FIELDS_INVALID', 'Paste the complete RSA PEM private key from the Google service account key file.', 400); }
+  }
 }
 function cardChangeCredentials(spec: CredentialCardSpec, change: CredentialCardChange): ConnectorCredentials {
-  const credentials: ConnectorCredentials = {};
+  const credentials: Record<string, string> = {};
   if (change.action === 'revoke') return credentials;
   if (!record(change.credentials) || Object.keys(change.credentials).some(key => !spec.fields.some(field => field.name === key))) {
     throw new CredentialCardRefusal('CREDENTIAL_FIELDS_INVALID', 'Use only the fields listed for this credential card.', 400);
   }
   for (const [key, value] of Object.entries(change.credentials)) {
     if (typeof value !== 'string' || value.length > 16_384) throw new CredentialCardRefusal('CREDENTIAL_FIELDS_INVALID', 'Credential fields must be bounded text values.', 400);
-    if (value.trim()) (credentials as Record<string, unknown>)[key] = value;
+    if (value.trim()) credentials[key] = value;
   }
   requiredCardFields(spec, credentials);
+  if (spec.id === 'sharepoint' || spec.id === 'onedrive') {
+    const { tenantId, ...fields } = credentials;
+    return { ...fields, customHeaders: { [spec.id === 'sharepoint' ? 'X-Tenant-Id' : 'tenantId']: tenantId } };
+  }
   return credentials;
 }
 function credentialFieldValues(credentials: ConnectorCredentials): string[] {
-  return Object.values(credentials)
+  return Object.values(credentials).flatMap(value => record(value) ? Object.values(value) : [value])
     .filter((value): value is string => typeof value === 'string' && value.length > 0);
+}
+function credentialAuditVariants(value: string): string[] {
+  // A PEM ends in a newline, while the person's reason may be trimmed or
+  // pasted with different line endings. Redaction must cover each equivalent
+  // representation without changing the credential bytes held for the SDK.
+  const normalized = value.replace(/\\n/g, '\n').replace(/\r\n?/g, '\n');
+  return [value, value.trim(), normalized, normalized.trim(), normalized.replace(/\n/g, '\\n'), normalized.trim().replace(/\n/g, '\\n')].filter(Boolean);
 }
 function priorCardState(row: Record<string, any> | undefined, spec: CredentialCardSpec, organizationId: number) {
   if (!row) return { grant: undefined, values: [] as string[] };
@@ -237,7 +276,7 @@ export async function writeCredentialCard(db: CredentialDb, organizationId: numb
     DO UPDATE SET credentials = EXCLUDED.credentials, is_valid = EXCLUDED.is_valid, last_validated_at = NULL`,
   [organizationId, spec.id, ciphertext, change.action === 'revoke' ? false : null]);
   let reason = change.reason.trim();
-  const heldValues = [...new Set([...prior.values, ...credentialFieldValues(credentials)])].sort((a, b) => b.length - a.length);
+  const heldValues = [...new Set([...prior.values, ...credentialFieldValues(credentials)].flatMap(credentialAuditVariants))].sort((a, b) => b.length - a.length);
   for (const value of heldValues) reason = reason.split(value).join('[redacted]');
   const { writeChainedAuditRow } = await import('../auditService.js');
   await writeChainedAuditRow(db, { tenantId: organizationId, userId, action: `credential.${change.action}`,

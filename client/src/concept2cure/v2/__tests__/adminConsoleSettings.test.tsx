@@ -418,3 +418,79 @@ it('does not call an unconfirmed write response a recorded credential change', a
   expect(screen.queryByText(/Credential change recorded/)).toBeNull();
   expect(screen.queryByRole('dialog')).toBeNull();
 });
+
+
+// Independent client/API contract fixture: inventories every previously authenticated adapter.
+const inventoryCredentialCards = () => {
+  const field = (name: string, secret = false, required = true, multiline?: boolean) => ({ name, label: name, secret, required, ...(multiline === undefined ? {} : { multiline }) });
+  const repositories = ['connector_search', 'connector_fetch', 'connector_upload'];
+  const read = ['connector_search', 'connector_fetch'];
+  const spec = (id: string, fields: ReturnType<typeof field>[], scopes = read, kind = 'connector') => ({
+    id, name: id, kind, purpose: `Client-owned ${id} credential`, status: 'missing', fields, scopes,
+    grantedScopes: [], expiresAt: null, lastChangedAt: null, secretFieldsHeld: [], canManage: true,
+  });
+  return { organizationId: 7, canManage: true, credentialCards: [
+    spec('veeva_vault', [field('baseUrl'), field('username', false, false), field('password', true, false), field('apiKey', true, false)], repositories),
+    spec('llm_anthropic', [field('apiKey', true)], ['model_inference'], 'llm'),
+    spec('llm_openai', [field('apiKey', true)], ['model_inference', 'embedding'], 'llm'),
+    spec('llm_moonshot', [field('apiKey', true)], ['model_inference'], 'llm'),
+    spec('clinical_trials_prs', [field('username'), field('password', true)], ['account_reference']),
+    spec('fda_portal', [field('username'), field('password', true)], ['account_reference']),
+    spec('google_drive', [field('clientId'), field('clientSecret', true, true, true), field('username', false, false)], repositories),
+    spec('box', [field('clientId'), field('clientSecret', true), field('baseUrl')], repositories),
+    spec('onedrive', [field('clientId'), field('clientSecret', true), field('tenantId'), field('username', false, false)], repositories),
+    spec('sharepoint', [field('clientId'), field('clientSecret', true), field('tenantId')], repositories),
+    spec('medidata_rave', [field('baseUrl'), field('username'), field('password', true)]),
+    spec('fhir-r4', [field('baseUrl'), field('apiKey', true, false), field('clientId', false, false), field('clientSecret', true, false)]),
+    spec('sam_exclusions', [field('apiKey', true)]),
+    spec('ellucian_banner', [field('baseUrl'), field('apiKey', true)]),
+  ] };
+};
+
+it('accepts the complete 14-card metadata contract and keeps all eight existing adapter management forms reachable', async () => {
+  credentialOwner.value = { actor: '7:admin', key: 1, sameRevision: () => true };
+  const response = inventoryCredentialCards();
+  apiRequest.mockResolvedValue(json({ ...response, credentials: { apiKey: 'METADATA_CAPTURE_UI_CANARY' } }));
+  render(<ClientCredentialVaultCard />);
+  await screen.findByTestId('credential-card-google_drive');
+  expect(screen.getAllByTestId(/^credential-card-/)).toHaveLength(14);
+  const legacy = ['google_drive', 'box', 'onedrive', 'sharepoint', 'medidata_rave', 'fhir-r4', 'sam_exclusions', 'ellucian_banner'];
+  for (const id of legacy) {
+    fireEvent.click(within(screen.getByTestId(`credential-card-${id}`)).getByRole('button', { name: 'Store credential…' }));
+    const card = response.credentialCards.find(item => item.id === id)!;
+    for (const f of card.fields) {
+      const input = within(screen.getByRole('dialog')).getByLabelText(new RegExp(`^${f.label}`)) as HTMLInputElement;
+      expect(input.value).toBe('');
+      if (f.secret) expect(input.type).toBe('password');
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  }
+  expect(document.body.textContent).not.toContain('METADATA_CAPTURE_UI_CANARY');
+});
+
+it('captures the Google private key without a raw DOM value and sends exact PEM newlines', async () => {
+  credentialOwner.value = { actor: '7:admin', key: 1, sameRevision: () => true };
+  apiRequest.mockImplementation(async (method: string, url: string, body: any) => {
+    sent.push({ method, url, body });
+    return json(method === 'GET' ? inventoryCredentialCards() : { success: true, organizationId: 7 });
+  });
+  render(<ClientCredentialVaultCard />);
+  fireEvent.click(within(await screen.findByTestId('credential-card-google_drive')).getByRole('button', { name: 'Store credential…' }));
+  const input = screen.getByLabelText(/^clientSecret/) as HTMLInputElement;
+  expect(input.type).toBe('password'); expect(input.readOnly).toBe(true);
+  const pem = '-----BEGIN PRIVATE KEY-----\nGOOGLE_MULTILINE_UI_CANARY\n-----END PRIVATE KEY-----\n';
+  fireEvent.paste(input, { clipboardData: { getData: () => pem } });
+  expect(input.value).toBe('********'); expect(document.body.innerHTML).not.toContain('GOOGLE_MULTILINE_UI_CANARY');
+  fireEvent.click(screen.getByRole('button', { name: 'Clear captured credential' }));
+  expect(input.value).toBe('');
+  fireEvent.paste(input, { clipboardData: { getData: () => pem } });
+  fireEvent.change(screen.getByLabelText(/^clientId/), { target: { value: 'service-account@example.invalid' } });
+  fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Capture client-owned Drive credentials' } });
+  fireEvent.change(screen.getByLabelText(/Your password/), { target: { value: 'fixture password' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Store credential' }));
+  await waitFor(() => expect(sent.some(item => item.method === 'POST')).toBe(true));
+  const post = sent.find(item => item.method === 'POST');
+  expect(post?.body).toMatchObject({ connectorId: 'google_drive', credentials: { clientId: 'service-account@example.invalid', clientSecret: pem }, scopes: ['connector_search'] });
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(document.body.innerHTML).not.toContain('GOOGLE_MULTILINE_UI_CANARY');
+});

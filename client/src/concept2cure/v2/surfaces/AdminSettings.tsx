@@ -29,7 +29,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { authService } from '@/services/portal/authService';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
-import { C2CForm, type C2CFormConfig } from '../C2CForm';
+import { C2CForm, type C2CFormConfig, type C2CFormFieldControl } from '../C2CForm';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { ClaudeConnectorSetting } from './ClaudeConnectorSetting';
@@ -171,7 +171,10 @@ interface CredentialCard {
 interface CredentialCards { organizationId: number; canManage: boolean; credentialCards: CredentialCard[] }
 type CredentialAction = 'capture' | 'rotate' | 'revoke';
 const CREDENTIAL_PATH = '/api/deep-research/connectors';
-const CREDENTIAL_IDS = new Set(['veeva_vault', 'llm_anthropic', 'llm_openai', 'llm_moonshot', 'clinical_trials_prs', 'fda_portal']);
+const CREDENTIAL_IDS = new Set([
+  'veeva_vault', 'llm_anthropic', 'llm_openai', 'llm_moonshot', 'clinical_trials_prs', 'fda_portal',
+  'google_drive', 'box', 'onedrive', 'sharepoint', 'medidata_rave', 'fhir-r4', 'sam_exclusions', 'ellucian_banner',
+]);
 const CREDENTIAL_STATUSES: Record<CredentialCard['status'], string> = {
   missing: 'Not stored', stored_unvalidated: 'Stored · not validated', stored_not_connected: 'Stored · portal actions not connected', expired: 'Expired',
   revoked: 'Revoked', unavailable: 'Unavailable',
@@ -183,7 +186,8 @@ const SCOPE_LABELS: Record<string, string> = {
 
 function validCredentialFields(card: CredentialCard): boolean {
   return Array.isArray(card.fields) && card.fields.every(f => typeof f.name === 'string' && typeof f.label === 'string'
-    && typeof f.secret === 'boolean' && typeof f.required === 'boolean');
+    && typeof f.secret === 'boolean' && typeof f.required === 'boolean'
+    && (f.multiline === undefined || typeof f.multiline === 'boolean') && (f.multiline !== true || f.secret));
 }
 function validCredentialCard(card: CredentialCard): boolean {
   return Boolean(card) && CREDENTIAL_IDS.has(card.id) && typeof card.name === 'string' && typeof card.purpose === 'string'
@@ -343,6 +347,21 @@ function CredentialVaultView({ data, editing, busy, unavailable, failed, outcome
         </>}
     </div>
     {editing && <C2CForm key={`${formKey}:${editing.card.id}:${editing.action}`} config={credentialCaptureForm(editing.card, editing.action)}
-      onCancel={onCancel} onSubmit={onSave} />}
+      onCancel={onCancel} onSubmit={onSave}
+      renderField={(field, control) => editing.card.fields.some(f => f.secret && f.multiline === true && `credential.${f.name}` === field.key)
+        ? multilineCredentialCapture(control) : undefined} />}
+  </div>;
+}
+
+
+/** Multiline keys never enter a browser text control: only a fixed password mask is rendered. */
+function multilineCredentialCapture(control: C2CFormFieldControl) {
+  return <div>
+    <input id={control.id} className="de-input" type="password" readOnly value={control.value ? '********' : ''}
+      onPaste={event => { event.preventDefault(); control.onChange(event.clipboardData.getData('text/plain')); }}
+      aria-required={control.required} aria-invalid={control.invalid} aria-describedby={control.describedBy}
+      autoComplete="off" autoCapitalize="off" spellCheck={false} data-secret-entry="true" placeholder="Paste complete PEM here" />
+    <span className="txw-help">{control.value ? 'Credential captured. Paste again to replace it.' : 'Paste the complete PEM. Its text is never displayed.'}</span>
+    {control.value && <button type="button" className="btn ghost small" onClick={() => control.onChange('')}>Clear captured credential</button>}
   </div>;
 }

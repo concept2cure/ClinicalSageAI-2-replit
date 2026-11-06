@@ -21,6 +21,7 @@ import { generateKeyPairSync } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { connectorCredentials } from '../../../../shared/schema';
+import { logger } from '../../../utils/logger';
 
 const holder = vi.hoisted(() => ({ pg: null as unknown as import('@electric-sql/pglite').PGlite }));
 const pool = vi.hoisted(() => ({
@@ -42,7 +43,7 @@ const row = async () =>
   ).rows[0];
 const privateKey = () =>
   generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
-const connectDrive = () => storeCredentials(ORG, 'google_drive', { clientId: 'svc@acme.iam', clientSecret: privateKey() });
+const connectDrive = () => changeCard({ connectorId: 'google_drive', action: 'capture', credentials: { clientId: 'svc@acme.iam', clientSecret: privateKey() }, scopes: ['connector_search'], reason: 'Fixture administrator captured a Drive account' });
 
 const realFetch = globalThis.fetch;
 const driveSearches: string[] = [];
@@ -252,5 +253,72 @@ describe('credential use retains current membership through its durable audit', 
     const ledger = JSON.stringify((await holder.pg.query('SELECT action,reason,new_values FROM audit_logs')).rows);
     for (const value of [...Object.values(old), ...Object.values(next)]) expect(ledger).not.toContain(value);
     expect((await holder.pg.query('SELECT action FROM audit_logs ORDER BY chain_seq')).rows).toEqual([{ action: 'credential.capture' }, { action: 'credential.rotate' }, { action: 'credential.revoke' }]);
+  });
+});
+
+
+const existingCredentialCases: Array<{ id: string; fields: Record<string, string>; normalized: Record<string, unknown> }> = [
+  { id: 'google_drive', fields: { clientId: 'drive-fixture@example.com', clientSecret: privateKey() }, normalized: {} },
+  { id: 'box', fields: { clientId: 'box-fixture-client', clientSecret: 'fixture-box-secret', baseUrl: '123456789' }, normalized: {} },
+  { id: 'sharepoint', fields: { clientId: 'sharepoint-fixture-client', clientSecret: 'fixture-sharepoint-secret', tenantId: 'sharepoint-fixture-tenant' }, normalized: { customHeaders: { 'X-Tenant-Id': 'sharepoint-fixture-tenant' } } },
+  { id: 'onedrive', fields: { clientId: 'onedrive-fixture-client', clientSecret: 'fixture-onedrive-secret', tenantId: 'onedrive-fixture-tenant' }, normalized: { customHeaders: { tenantId: 'onedrive-fixture-tenant' } } },
+  { id: 'medidata_rave', fields: { baseUrl: 'https://medidata-fixture.example.com', username: 'fixture-medidata-login', password: 'fixture-medidata-password' }, normalized: {} },
+  { id: 'fhir-r4', fields: { baseUrl: 'https://fhir-fixture.example.com', apiKey: 'fixture-fhir-token' }, normalized: {} },
+  { id: 'sam_exclusions', fields: { apiKey: 'fixture-sam-token' }, normalized: {} },
+  { id: 'ellucian_banner', fields: { baseUrl: 'https://ellucian-fixture.example.com', apiKey: 'fixture-ellucian-token' }, normalized: {} },
+];
+
+describe('secure cards preserve all eight previously connected account capabilities', () => {
+  it.each(existingCredentialCases)('$id captures, rotates and revokes through the same scoped custody boundary', async fixture => {
+    const scopes = ['google_drive', 'box', 'sharepoint', 'onedrive'].includes(fixture.id)
+      ? ['connector_search', 'connector_fetch', 'connector_upload'] : ['connector_search', 'connector_fetch'];
+    const reason = `Capture fixture account ${Object.values(fixture.fields).join(' ')}`;
+    const saved = await changeCard({ connectorId: fixture.id, action: 'capture', credentials: fixture.fields, scopes, reason });
+    const original = await captureCredentialForUse(ORG, fixture.id, 'connector_search', pool);
+    const expected: Record<string, unknown> = { ...fixture.fields, ...fixture.normalized };
+    delete expected.tenantId;
+    expect(original?.credentials).toEqual(expected);
+    expect(saved).toMatchObject({ id: fixture.id, status: 'stored_unvalidated', grantedScopes: scopes });
+    const field = fixture.id === 'medidata_rave' ? 'password' : fixture.id === 'google_drive' || fixture.id === 'box' || fixture.id === 'sharepoint' || fixture.id === 'onedrive' ? 'clientSecret' : 'apiKey';
+    const rotatedSecret = fixture.id === 'google_drive' ? privateKey() : 'rotated-fixture-secret-value';
+    const rotatedFields = { ...fixture.fields, [field]: rotatedSecret };
+    await changeCard({ connectorId: fixture.id, action: 'rotate', credentials: rotatedFields, scopes, reason: `Rotate ${Object.values(fixture.fields).join(' ')} to ${Object.values(rotatedFields).join(' ')}` });
+    await expect(assertCredentialUseCurrent(original!, 11, false, pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    const rotated = await captureCredentialForUse(ORG, fixture.id, 'connector_search', pool);
+    expect(rotated?.credentials[field as 'apiKey' | 'clientSecret' | 'password']).toBe(rotatedSecret);
+    await changeCard({ connectorId: fixture.id, action: 'revoke', reason: `Revoke ${Object.values(rotatedFields).join(' ')}` });
+    await expect(assertCredentialUseCurrent(rotated!, 11, false, pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    const visible = JSON.stringify([saved, await listCredentialCards(ORG, true, pool), (await holder.pg.query('SELECT reason,new_values FROM audit_logs')).rows]);
+    for (const value of [...Object.values(fixture.fields), rotatedSecret]) expect(visible).not.toContain(value);
+    expect(visible).not.toContain('BEGIN PRIVATE KEY');
+    expect((await holder.pg.query('SELECT action FROM audit_logs ORDER BY chain_seq')).rows).toEqual([{ action: 'credential.capture' }, { action: 'credential.rotate' }, { action: 'credential.revoke' }]);
+  });
+  it.each(['trailing_newline', 'surrounding_whitespace', 'crlf', 'literal_newlines'])('keeps Google PEM %s bytes exact, dispatches the real adapter, and exposes no PEM in metadata or logs', async variant => {
+    const rawPem = privateKey();
+    const pem = variant === 'surrounding_whitespace' ? ` \n${rawPem} \n` : variant === 'crlf' ? rawPem.replace(/\n/g, '\r\n') : variant === 'literal_newlines' ? rawPem.replace(/\n/g, '\\n') : rawPem;
+    const info = vi.spyOn(logger, 'info').mockImplementation(() => undefined);
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    const error = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    try {
+      const saved = await changeCard({ connectorId: 'google_drive', action: 'capture', credentials: { clientId: 'pem-fixture@example.com', clientSecret: pem }, scopes: ['connector_search'], reason: `Fixture PEM capture ${pem}` });
+      const captured = await captureCredentialForUse(ORG, 'google_drive', 'connector_search', pool);
+      expect(Buffer.from(captured!.credentials.clientSecret!)).toEqual(Buffer.from(pem));
+      const [result] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] });
+      expect(result.error).toBeUndefined();
+      expect(driveSearches.some(url => url.startsWith('https://www.googleapis.com/drive/v3/files'))).toBe(true);
+      const surfaces = JSON.stringify([saved, await listCredentialCards(ORG, true, pool), (await holder.pg.query('SELECT reason,new_values FROM audit_logs')).rows, info.mock.calls, warn.mock.calls, error.mock.calls]);
+      expect(surfaces).not.toContain(pem);
+      expect(surfaces).not.toContain('BEGIN PRIVATE KEY');
+    } finally { info.mockRestore(); warn.mockRestore(); error.mockRestore(); }
+  });
+  it('FHIR OAuth credentials remain capturable without a bearer token', async () => {
+    const fields = { baseUrl: 'https://oauth-fhir.example.com', clientId: 'fixture-fhir-client', clientSecret: 'fixture-fhir-client-secret' };
+    await changeCard({ connectorId: 'fhir-r4', action: 'capture', credentials: fields, reason: 'Capture fixture SMART on FHIR account' });
+    expect((await captureCredentialForUse(ORG, 'fhir-r4', 'connector_fetch', pool))?.credentials).toEqual(fields);
+  });
+  it.each(['sharepoint', 'onedrive'])('%s accepts flat tenant identifiers and rejects browser-submitted custom headers', async connectorId => {
+    const fields = { clientId: 'fixture-client', clientSecret: 'fixture-secret', tenantId: 'fixture-tenant' };
+    await expect(changeCard({ connectorId, action: 'capture', credentials: { ...fields, customHeaders: { tenantId: 'forged' } }, reason: 'Reject unreviewed header injection' })).rejects.toMatchObject({ code: 'CREDENTIAL_FIELDS_INVALID' });
+    expect((await holder.pg.query('SELECT * FROM connector_credentials')).rows).toEqual([]);
   });
 });

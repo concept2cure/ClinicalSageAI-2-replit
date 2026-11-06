@@ -20,11 +20,18 @@ const h = vi.hoisted(() => ({
 vi.mock('../../../db.js', () => ({ pool: { query: h.query }, getPool: () => ({ query: h.query }) }));
 vi.mock('../../../db', () => ({ pool: { query: h.query }, getPool: () => ({ query: h.query }) }));
 
-import { searchConnectors, storeCredentials } from '../connector-registry.js';
+import { searchConnectors } from '../connector-registry.js';
 import { BoxConnector } from '../box.js';
 import { GoogleDriveConnector } from '../google-drive.js';
 import { OneDriveConnector } from '../onedrive.js';
 import { SharePointConnector } from '../sharepoint.js';
+import { encryptCredential } from '../../security/credential-cipher.js';
+import type { ConnectorCredentials } from '../connector-interface.js';
+
+/** Historical raw rows remain readable; new capture must use the secure card route. */
+async function seedLegacyCredentials(organizationId: number, connectorId: string, credentials: ConnectorCredentials) {
+  await h.query('INSERT INTO connector_credentials (organization_id,connector_id,credentials) VALUES ($1,$2,$3)', [organizationId, connectorId, encryptCredential(JSON.stringify(credentials))]);
+}
 
 const privateKey = () =>
   generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
@@ -71,8 +78,8 @@ const search = (org: number, connector: string) => searchConnectors(org, [connec
 
 describe('a credentialed connector searches with the caller\'s credentials', () => {
   it('Google Drive: organization B, right after A, searches with its own token', async () => {
-    await storeCredentials(1, 'google_drive', { clientId: 'svc-a@a.iam', clientSecret: privateKey() });
-    await storeCredentials(2, 'google_drive', { clientId: 'svc-b@b.iam', clientSecret: privateKey() });
+    await seedLegacyCredentials(1, 'google_drive', { clientId: 'svc-a@a.iam', clientSecret: privateKey() });
+    await seedLegacyCredentials(2, 'google_drive', { clientId: 'svc-b@b.iam', clientSecret: privateKey() });
 
     const [a] = await search(1, 'google_drive');
     const [b] = await search(2, 'google_drive');
@@ -83,8 +90,8 @@ describe('a credentialed connector searches with the caller\'s credentials', () 
   });
 
   it('Box: the same, organization by organization', async () => {
-    await storeCredentials(1, 'box', { clientId: 'box-a', clientSecret: 's-a', baseUrl: '111' });
-    await storeCredentials(2, 'box', { clientId: 'box-b', clientSecret: 's-b', baseUrl: '222' });
+    await seedLegacyCredentials(1, 'box', { clientId: 'box-a', clientSecret: 's-a', baseUrl: '111' });
+    await seedLegacyCredentials(2, 'box', { clientId: 'box-b', clientSecret: 's-b', baseUrl: '222' });
 
     await search(1, 'box');
     await search(2, 'box');
@@ -93,8 +100,8 @@ describe('a credentialed connector searches with the caller\'s credentials', () 
   });
 
   it('two organizations searching at once each use their own token', async () => {
-    await storeCredentials(1, 'box', { clientId: 'box-a', clientSecret: 's-a', baseUrl: '111' });
-    await storeCredentials(2, 'box', { clientId: 'box-b', clientSecret: 's-b', baseUrl: '222' });
+    await seedLegacyCredentials(1, 'box', { clientId: 'box-a', clientSecret: 's-a', baseUrl: '111' });
+    await seedLegacyCredentials(2, 'box', { clientId: 'box-b', clientSecret: 's-b', baseUrl: '222' });
 
     await Promise.all([search(1, 'box'), search(2, 'box'), search(1, 'box'), search(2, 'box')]);
 
@@ -107,7 +114,7 @@ describe('a credentialed connector searches with the caller\'s credentials', () 
   });
 
   it('an organization with no credentials gets no search, even after another authenticated', async () => {
-    await storeCredentials(1, 'google_drive', { clientId: 'svc-a@a.iam', clientSecret: privateKey() });
+    await seedLegacyCredentials(1, 'google_drive', { clientId: 'svc-a@a.iam', clientSecret: privateKey() });
     await search(1, 'google_drive');
     const [c] = await search(3, 'google_drive');
     expect(c.error).toMatch(/not available or not configured/);
@@ -120,7 +127,7 @@ describe('credential custody on connector failures', () => {
 
   it.each(['google_drive', 'box', 'onedrive', 'sharepoint'])('%s: a provider echo never becomes an agent result', async connector => {
     const secret = connector === 'google_drive' ? privateKey() : canary;
-    await storeCredentials(1, connector, {
+    await seedLegacyCredentials(1, connector, {
       clientId: 'client-id', clientSecret: secret, baseUrl: '111',
       customHeaders: { tenantId: 'tenant-id', 'X-Tenant-Id': 'tenant-id' },
     });
@@ -135,7 +142,7 @@ describe('credential custody on connector failures', () => {
   });
 
   it('does not expose an arbitrary transport error to the caller', async () => {
-    await storeCredentials(1, 'box', { clientId: 'client-id', clientSecret: canary, baseUrl: '111' });
+    await seedLegacyCredentials(1, 'box', { clientId: 'client-id', clientSecret: canary, baseUrl: '111' });
     globalThis.fetch = vi.fn(async () => { throw new Error(`request failed with ${canary}`); }) as typeof fetch;
 
     const [result] = await search(1, 'box');
