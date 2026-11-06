@@ -129,6 +129,9 @@ describe('native Quality evidence admission', () => {
     expect(JSON.parse(after.text).data.record.next_review_date).toBe('2027-01-01');
   });
 
+});
+
+describe('native Quality evidence SQL admission',()=>{
   it('enforces project, tenant, workspace and exact training-version boundaries in SQL',async()=>{
     const db=new PGlite();
     const draft='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',old='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
