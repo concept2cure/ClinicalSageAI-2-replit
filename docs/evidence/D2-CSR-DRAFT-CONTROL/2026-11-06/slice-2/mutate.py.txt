@@ -1,0 +1,22 @@
+import hashlib, subprocess, sys
+F='server/routes/authoring.router.ts'
+T='server/routes/__tests__/authoring-ai-draft-csr-figures.pglite.test.ts'
+M=[
+ ('M1 skip the accept re-run', "if (blocking.length) {\n        await rollbackAuthoringTransaction(client, transaction);\n        return csrFigureRefusal", "if (false && blocking.length) {\n        await rollbackAuthoringTransaction(client, transaction);\n        return csrFigureRefusal"),
+ ('M2 gate the model text, not the accepted text', "await csrCandidateFigures(csrSubject, acceptedContent)", "await csrCandidateFigures(csrSubject, candidate.content)"),
+ ('M3 drop the results rule', "figures: plan.unclaimed.map(figure => ({ figure, blocking: plan.results }))", "figures: plan.unclaimed.map(figure => ({ figure, blocking: true }))"),
+ ('M4 no receipts reads as checked', "? { status: 'not_checked', reason: 'no_csr_receipts', results: true } : null", "? { status: 'checked', basis: 'csr_claim_receipts', results: true, figures: [] } as CsrCandidateFigures : null"),
+ ('M5 drop the option set from the audit', "...(optionSet ? { option_set: optionSet } : {}),", ""),
+ ('M6 revision set not checked against derivedFrom', "if (optionSet && (optionSet.kind === 'revision') !== (generator?.derivedFrom !== undefined)) {", "if (false) {"),
+]
+orig=open(F,encoding='utf-8').read(); h=hashlib.sha256(orig.encode()).hexdigest()
+for name,a,b in M:
+    assert orig.count(a)==1, name
+    open(F,'w',encoding='utf-8').write(orig.replace(a,b))
+    r=subprocess.run(['npx','vitest','run','--maxWorkers=2',T],capture_output=True,text=True,timeout=900)
+    open(F,'w',encoding='utf-8').write(orig)
+    assert hashlib.sha256(open(F,encoding='utf-8').read().encode()).hexdigest()==h
+    out=r.stdout+r.stderr
+    line=[l for l in out.splitlines() if l.strip().startswith('Tests ')]
+    print(name, '->', 'KILLED' if r.returncode!=0 else 'SURVIVED', line[-1].strip() if line else '')
+print('restored', h)

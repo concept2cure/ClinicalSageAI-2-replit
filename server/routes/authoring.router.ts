@@ -83,7 +83,7 @@ import { resolveRequirements } from '../services/ind/ctd/requirements-resolver.j
 import { resolveSectionBriefSource } from '../services/ind/ctd/section-brief.js';
 import { basisLabel, type RegulatoryBasis } from '../../shared/regulatory/regulatory-basis';
 import { claimDocRoleOf } from '../../shared/ana/clinical-claims-vocabulary';
-import { sectionReadableText } from '../services/authoring/authoring-read-render';
+import { acceptedSectionText, renderSection, sectionReadableText } from '../services/authoring/authoring-read-render';
 import {
   checkDocumentFigureConsistency,
   type ConsistencySection,
@@ -3576,6 +3576,82 @@ function draftAcceptUnconfirmed(res: Response) {
     message: 'The server could not confirm whether this draft was accepted. Check the exact saved section before another acceptance.' } });
 }
 
+/* ── CSR slice 2: the engine figure gate on AnA's candidates (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md,
+   decision 5) ──────────────────────────────────────────────────────────────────────────────────────────────────
+   A candidate in a section of a document that carries CSR import receipts is checked by the saved-CSR verdict's
+   own figure step (csr-saved-evidence planSections, exported for this and not copied), against that section's
+   claimed engine cells and study-information numbers, on the text as the verdict reads it once saved. In §2 and
+   §10–13 (the verdict's RESULTS rule) a figure no claim carries blocks the accept; elsewhere it is reported. A CSR
+   results section of a document with no receipts has nothing to be checked against, and says so: never "passed".
+   The saved-CSR verdict and P-89 still apply to whatever is accepted. */
+type CsrCandidateFigures =
+  | { status: 'checked'; basis: 'csr_claim_receipts'; results: boolean; figures: Array<{ figure: string; blocking: boolean }> }
+  | { status: 'not_checked'; reason: 'no_csr_receipts'; results: true };
+interface CsrFigureSubject {
+  code: unknown; title: unknown; provenance: unknown; module: unknown; product_code: unknown; doc_title: unknown; template_id: unknown;
+}
+const someText = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+
+async function csrCandidateFigures(subject: CsrFigureSubject, content: string): Promise<CsrCandidateFigures | null> {
+  const { importedCsrEvidence, planSections } = await import('../services/ana/csr-saved-evidence');
+  const receipts = importedCsrEvidence(subject.provenance);
+  const [plan] = planSections([{ code: someText(subject.code) ?? null, content,
+    text: acceptedSectionText(renderSection(content)), title: someText(subject.title) }], receipts);
+  if (receipts.size) return { status: 'checked', basis: 'csr_claim_receipts', results: plan.results,
+    figures: plan.unclaimed.map(figure => ({ figure, blocking: plan.results })) };
+  const { savedIsCsr } = await import('../services/ana/saved-document-critique');
+  return plan.results && savedIsCsr({ module: subject.module, product_code: subject.product_code, title: subject.doc_title,
+    template_id: subject.template_id, provenance: subject.provenance })
+    ? { status: 'not_checked', reason: 'no_csr_receipts', results: true } : null;
+}
+
+/** The figures that refuse an accept: blocking ones of a checked candidate. */
+const blockingCsrFigures = (check: CsrCandidateFigures | null) =>
+  check?.status === 'checked' ? check.figures.filter(f => f.blocking) : [];
+
+function csrFigureRefusal(res: Response, code: unknown, figures: Array<{ figure: string; blocking: boolean }>) {
+  const named = figures.map(f => f.figure);
+  const list = named.length === 1 ? named[0] : `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
+  const where = typeof code === 'string' && code.trim() ? `§${code.trim()}` : 'this section';
+  return res.status(422).json({ success: false, error: { code: 'CSR_FIGURE_NOT_FROM_ENGINE', figures,
+    message: `Not accepted: ${list} in ${where} ${named.length === 1 ? 'is not a figure' : 'are not figures'} the study’s engine ` +
+      'produced for this section. No claimed table cell of the section holds ' + (named.length === 1 ? 'it' : 'them') +
+      '. Correct or remove ' + (named.length === 1 ? 'it' : 'them') + ', then accept again. Nothing was saved.' } });
+}
+
+/* Decision 3 of slice 1 (the lead, 2026-10-29): the accept's audit row names the option set the accepted text came
+   from, as the panel offered it ("alternative 2 of 3, concise", "revision 2 of alternative 1"). The panel sends its
+   parts; the label is written here from them, so a label of any other wording cannot be recorded. */
+const DRAFT_OPTION_APPROACHES = ['professional', 'concise', 'detailed'] as const;
+type DraftAlternativeOption = { kind: 'alternative'; position: number; count: number; approach: typeof DRAFT_OPTION_APPROACHES[number] };
+type DraftOptionSet = (DraftAlternativeOption | { kind: 'revision'; revision: number; of: DraftAlternativeOption | { kind: 'draft' } })
+  & { label: string };
+const plainRecord = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+const exactKeys = (v: Record<string, unknown>, keys: readonly string[]) =>
+  Object.keys(v).length === keys.length && keys.every(k => Object.hasOwn(v, k));
+const wholeIn = (v: unknown, min: number, max: number): v is number => Number.isSafeInteger(v) && (v as number) >= min && (v as number) <= max;
+
+function readAlternativeOption(v: unknown): DraftAlternativeOption | null {
+  if (!plainRecord(v) || !exactKeys(v, ['kind', 'position', 'count', 'approach']) || v.kind !== 'alternative') return null;
+  const approach = DRAFT_OPTION_APPROACHES.find(a => a === v.approach);
+  return approach && wholeIn(v.count, 1, DRAFT_OPTION_APPROACHES.length) && wholeIn(v.position, 1, v.count)
+    ? { kind: 'alternative', position: v.position, count: v.count, approach } : null;
+}
+
+/** The option set an accept names: undefined when none was sent (a single draft), null when it is malformed. */
+function readDraftOptionSet(raw: unknown): DraftOptionSet | null | undefined {
+  if (raw === undefined) return undefined;
+  const alternative = readAlternativeOption(raw);
+  if (alternative) return { ...alternative, label: `alternative ${alternative.position} of ${alternative.count}, ${alternative.approach}` };
+  if (!plainRecord(raw) || !exactKeys(raw, ['kind', 'revision', 'of']) || raw.kind !== 'revision' || !wholeIn(raw.revision, 1, 50)) return null;
+  const of = plainRecord(raw.of) && exactKeys(raw.of, ['kind']) && raw.of.kind === 'draft' ? { kind: 'draft' as const } : readAlternativeOption(raw.of);
+  return of ? { kind: 'revision', revision: raw.revision, of,
+    label: `revision ${raw.revision} of ${of.kind === 'draft' ? 'the draft' : `alternative ${of.position}`}` } : null;
+}
+
+const optionSetRefusal = (res: Response, why: string) => res.status(400).json({ success: false,
+  error: { code: 'OPTION_SET_INVALID', message: `${why} Nothing was saved. Choose the text again in the panel and accept it.` } });
+
 // POST /api/authoring/sections/:sectionId/ai/draft - Generate AI draft
 router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response) => {
   /* The turn this draft is (RT-6, AnA reasoning round 12): one record, opened
@@ -3591,7 +3667,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     const sectionResult = await pool.query(
       `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at,
               s.updated_at::text AS base_updated_at, s.tenant_id, d.module, d.product_code,
-              d.template_id::text, to_jsonb(d)->'provenance' AS provenance,
+              d.template_id::text, d.title AS doc_title, to_jsonb(d)->'provenance' AS provenance,
               to_jsonb(d)->>'client_program_id' AS client_program_id
        FROM authoring_sections s
        JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
@@ -3841,6 +3917,8 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         },
       });
     }
+    // CSR slice 2: the saved-CSR verdict's figure step on this candidate, before anything is parked.
+    const csrFigures = await csrCandidateFigures(section, generatedContent);
     /* The engine's check of the draft against what the model was SHOWN, and
        the turn's record, filed before the candidate is parked so the parked
        generator can name it. */
@@ -3960,6 +4038,8 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         draftId,
         // The engine's check of the draft as generated, and whether its turn was filed.
         check: drafted?.check ?? null,
+        // CSR slice 2: figures no claimed engine cell of this section holds; blocking in §2 and §10–13.
+        csrFigures,
         turnRecord: drafted?.turnRecord ?? { status: 'not_recorded', reason: 'This draft had no organization to file it under.' },
         ...revision.generator,
         ...passage.response,
@@ -4038,10 +4118,16 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     if (!draftId || typeof draftId !== 'string') {
       return res.status(400).json({ success: false, error: 'draftId is required' });
     }
+    const optionSet = readDraftOptionSet(req.body?.optionSet);
+    if (optionSet === null) return optionSetRefusal(res, 'The option set this text was chosen from is not one the panel offers.');
 
-    // Section must exist and belong to this tenant.
+    // Section must exist and belong to this tenant. Its code and its document's CSR provenance are read with it,
+    // as the draft route reads them, for the figure gate below (CSR slice 2).
     const sectionResult = await pool.query(
-      `SELECT id, doc_id, content FROM authoring_sections WHERE id = $1 AND tenant_id = $2`,
+      `SELECT s.id, s.doc_id, s.content, s.code, s.title, d.module, d.product_code, d.title AS doc_title,
+              d.template_id::text AS template_id, to_jsonb(d)->'provenance' AS provenance
+         FROM authoring_sections s JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
+        WHERE s.id = $1 AND s.tenant_id = $2`,
       [sectionId, tenantId],
     );
     if ((sectionResult.rowCount ?? 0) === 0) {
@@ -4118,6 +4204,21 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         typeof req.body?.content === 'string' ? req.body.content : candidate.content;
       draftModifiedOnAccept = acceptedContent !== candidate.content;
       generatedDraft = candidate.content;
+
+      // A revision's option set names a revision, and only a revision's does: the record is not the panel's guess.
+      if (optionSet && (optionSet.kind === 'revision') !== (generator?.derivedFrom !== undefined)) {
+        await rollbackAuthoringTransaction(client, transaction);
+        return optionSetRefusal(res, `The option set names ${optionSet.label}, which this draft is not.`);
+      }
+      /* CSR slice 2: the gate re-runs here on the content the person accepts, their edits included, never on the
+         draft as generated. A blocking figure refuses the accept; the rollback leaves the candidate for a
+         corrected accept and writes nothing. */
+      const csrSubject = sectionResult.rows[0] as CsrFigureSubject;
+      const blocking = blockingCsrFigures(await csrCandidateFigures(csrSubject, acceptedContent));
+      if (blocking.length) {
+        await rollbackAuthoringTransaction(client, transaction);
+        return csrFigureRefusal(res, csrSubject.code, blocking);
+      }
 
       saved = await client.query(
         `UPDATE authoring_sections SET content = $1, updated_at = NOW()
@@ -4218,6 +4319,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
           draft_modified_on_accept: draftModifiedOnAccept,
           generated_draft_sha256: textSha256(generatedDraft),
           ...(draftModifiedOnAccept ? { generated_draft: generatedDraft } : {}),
+          ...(optionSet ? { option_set: optionSet } : {}),
         },
         client,
       );

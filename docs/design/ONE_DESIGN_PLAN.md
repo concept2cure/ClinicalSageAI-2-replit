@@ -713,6 +713,52 @@ in the running app where a screen changed. Where either was not possible, its RE
 
 1. Answers to the founder questions above, which decide this lane's next slices.
 
+#### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
+
+Design: `docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md`. The holds are in COORDINATION.md, in the row "CSR drafting
+with the person in control".
+
+**Delivered** (2026-11-06)
+
+- **CSR slice 2, the server half** (spine step 5; RULE 2), `7799a5b0a`,
+  `docs/evidence/D2-CSR-DRAFT-CONTROL/2026-11-06/slice-2/`.
+  - In a CSR results section, a figure in AnA's draft that the study's engine did not produce can no longer be
+    accepted.
+  - Each draft, alternative, revision and passage alternative carries its figures, from the saved-CSR verdict's own
+    figure step. That step (`planSections` in `csr-saved-evidence.ts`) is exported, not copied.
+  - The accept re-runs the check on the text the person accepts. In §2 and §10–13 it refuses with 422
+    `CSR_FIGURE_NOT_FROM_ENGINE`, naming each figure, and writes nothing.
+  - A results section with no receipts says "not checked", never "passed".
+  - The accept's audit row names the option set ("alternative 2 of 3, concise").
+  - Proof: red 10 of 11, then green 11 of 11; 6 of 6 mutations killed.
+- **The running-app walk, started**, `468ee75a5`, `docs/evidence/D2-CSR-DRAFT-CONTROL/2026-11-06/walk/`. P-72 slice 1a
+  re-owned the pre-auth lookups (`ae12195a5`). Sign-in and the reset request work through them in the running app, as
+  the runtime role with RLS and the launch gate enforced, at 1440 and 390 px. The wrong-password and wrong-code
+  refusals read as themselves.
+
+**Earlier, before this plan** (2026-10-29 to 10-31, launch rows D1, D2 and D6):
+- CSR drafting slices 1 (`7b4a16cf8`) and 3–4 (`0f4bc4f2c`);
+- P-72 slices 1a and 1b (`ae12195a5`, `a06ae96c8`);
+- folds F4 and F6 (`970bc3637`).
+
+All were proven by tests. Until this walk, none was opened in the running app.
+
+**Found**
+
+- `ci:launch-scope-api` is red on two client paths outside this lane: `ReviewThreads.tsx`'s
+  `/api/concept2cure/:p/:p/reopen`, and `/api/biostat-bridge/computation-runs/:p/reproduce` (`583b96271`).
+- `ci:lineage-save-gate` is red on the CSR lane's `server/services/csr/csr-section-review.ts`.
+- The sign-in pages render the light page under the dark scheme. Whether they should follow it is D1's to decide.
+- Real drafting needs a model key, and this environment has none.
+- The account's monthly spend limit stopped this session's agents on 2026-11-06.
+
+**Next**
+
+1. The panel's half of slice 2: the figure marked on the draft itself, holding a paragraph or passage that carries a
+   blocking figure, and sending the option set.
+2. The rest of the walk: the drafting panel's honest refusals with no model key, F4/F6, and the audit-chain verdict.
+3. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for

@@ -1,0 +1,235 @@
+/**
+ * Walk (a): sign-in with password and the emailed code, sign-out, the password-reset request and its link,
+ * and a cross-organization invitation accepted by a member, at 1440 and 390, light and dark.
+ * P-72 slice 1a re-owned the pre-auth lookups (user_id_for_email, user_id_for_reset_token,
+ * invitations_for_member); every step below runs through one of them, as the runtime role, with RLS enforced.
+ */
+const c = require('./common.cjs');
+
+const JM = { email: 'jm.smith@concept2cure.pro', password: process.env.JM_PASSWORD };
+const NADIA = { email: 'nadia.empty@harbor-lane.example', password: process.env.NADIA_PASSWORD || process.env.WALK_SIGNER_PASSWORD };
+const NEW_PASSWORD = process.env.RESET_TO || 'LaneW-reset-2026-Nov!';
+
+async function passwordThenCode(page, person, tag) {
+  await c.signIn(page, person.email, person.password, { shotPrefix: tag });
+}
+
+async function openAccountMenu(page) {
+  const btn = page.locator('button.rail-account');
+  if (!(await btn.isVisible().catch(() => false))) {
+    // phone: the rail is a drawer; open it first
+    const menu = page.getByRole('button', { name: /open navigation|show sidebar|menu|navigation/i }).first();
+    if (await menu.isVisible().catch(() => false)) await menu.click();
+    await c.sleep(400);
+  }
+  await btn.click();
+  await page.getByRole('menu', { name: 'Account' }).waitFor({ timeout: 5000 });
+}
+
+async function signOut(page, tag) {
+  await openAccountMenu(page);
+  await c.shot(page, `${tag}-account-menu.png`);
+  const items = await page.getByRole('menuitem').allInnerTexts();
+  await page.getByRole('menuitem', { name: /sign out|log out/i }).click();
+  await page.waitForURL((u) => u.pathname.endsWith('/login') || u.pathname === '/', { timeout: 15000 });
+  await page.waitForLoadState('networkidle');
+  await c.sleep(500);
+  await c.shot(page, `${tag}-signed-out.png`);
+  // A signed-out person who opens a screen by address lands on sign-in, not on the screen.
+  await page.goto(c.BASE + '/concept2cure/projects', { waitUntil: 'networkidle' });
+  return { items, afterSignOutProjectsUrl: new URL(page.url()).pathname };
+}
+
+(async () => {
+  const browser = await c.chromium.launch();
+
+  for (const [vpName, viewport] of Object.entries(c.VIEWPORTS)) {
+    for (const dark of [false, true]) {
+      const tag = `a-${vpName === 'desktop' ? '1440' : '390'}-${dark ? 'dark' : 'light'}`;
+      await c.step(`login page ${tag}`, async (s) => {
+        const { context, page } = await c.newPage(browser, { viewport, dark, who: 'anon' });
+        await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+        await c.shot(page, `${tag}-login.png`);
+        s.overflowX = await c.overflowX(page);
+        s.bodyBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+        await context.close();
+      });
+    }
+  }
+
+  // Wrong password: refused, and says so.
+  await c.step('sign-in refused for a wrong password (1440)', async (s) => {
+    const { context, page } = await c.newPage(browser, { who: 'anon' });
+    await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+    await page.fill('#login-email', JM.email);
+    await page.fill('#login-password', 'not-the-password');
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await c.sleep(1500);
+    s.seen = (await c.textOf(page, 'form')).slice(0, 400);
+    await c.shot(page, 'a-1440-light-wrong-password.png');
+    await context.close();
+  });
+
+  // Password + emailed code → Home → sign-out, at both widths, light and dark (the shell's own dark preference).
+  for (const [vpName, viewport] of Object.entries(c.VIEWPORTS)) {
+    for (const dark of [false, true]) {
+      const tag = `a-${vpName === 'desktop' ? '1440' : '390'}-${dark ? 'dark' : 'light'}`;
+      await c.step(`sign in with password and emailed code, then sign out ${tag}`, async (s) => {
+        const { context, page } = await c.newPage(browser, { viewport, dark, who: 'jm' });
+        await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'domcontentloaded' });
+        await c.setTheme(page, dark);
+        await passwordThenCode(page, JM, tag);
+        s.landedOn = new URL(page.url()).pathname;
+        await c.shot(page, `${tag}-home.png`);
+        s.overflowX = await c.overflowX(page);
+        Object.assign(s, await signOut(page, tag));
+        await context.close();
+      });
+    }
+  }
+
+  // A wrong code is refused.
+  await c.step('a wrong emailed code is refused (1440)', async (s) => {
+    const { context, page } = await c.newPage(browser, { who: 'jm' });
+    await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+    await page.fill('#login-email', JM.email);
+    await page.fill('#login-password', JM.password);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await page.getByLabel('Digit 1').waitFor({ timeout: 15000 });
+    for (let i = 0; i < 6; i += 1) await page.getByLabel(`Digit ${i + 1}`).fill('0');
+    const verify = page.getByRole('button', { name: /verify|continue|sign in/i }).first();
+    if (await verify.isEnabled().catch(() => false)) await verify.click().catch(() => {});
+    await c.sleep(2000);
+    s.url = new URL(page.url()).pathname;
+    s.seen = (await c.textOf(page, 'body')).slice(0, 600);
+    await c.shot(page, 'a-1440-light-wrong-code.png');
+    await context.close();
+  });
+
+  // Password reset: request, the link, a new password, and sign-in with it.
+  for (const [vpName, viewport] of [['desktop', c.VIEWPORTS.desktop], ['phone', c.VIEWPORTS.phone]]) {
+    const tag = `a-${vpName === 'desktop' ? '1440' : '390'}-light`;
+    await c.step(`password reset request ${tag}`, async (s) => {
+      const { context, page } = await c.newPage(browser, { viewport, who: 'anon' });
+      await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+      await page.getByRole('button', { name: 'Forgot password?' }).click();
+      await c.sleep(400);
+      await c.shot(page, `${tag}-forgot.png`);
+      const field = page.locator('#forgot-email');
+      await field.fill(JM.email);
+      const since = Date.now() - 2000;
+      await page.getByRole('button', { name: /send|reset/i }).last().click();
+      await c.sleep(1500);
+      s.sentView = (await c.textOf(page, 'body')).slice(0, 500);
+      await c.shot(page, `${tag}-reset-sent.png`);
+      s.link = (await c.resetLinkFor(JM.email, since)).replace(/token=[^&]+/, 'token=<redacted>');
+      // an unknown address gets the same answer (no account enumeration)
+      await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+      await page.getByRole('button', { name: 'Forgot password?' }).click();
+      await page.locator('#forgot-email').fill('nobody-here@concept2cure.pro');
+      await page.getByRole('button', { name: /send|reset/i }).last().click();
+      await c.sleep(1500);
+      s.unknownAddressView = (await c.textOf(page, 'body')).slice(0, 500);
+      await context.close();
+    });
+  }
+
+  await c.step('password reset link → new password → sign in with it (1440)', async (s) => {
+    const { context, page } = await c.newPage(browser, { who: 'jm' });
+    const since = Date.now() - 2000;
+    await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: 'Forgot password?' }).click();
+    await page.locator('#forgot-email').fill(JM.email);
+    await page.getByRole('button', { name: /send|reset/i }).last().click();
+    await c.sleep(1200);
+    const link = await c.resetLinkFor(JM.email, since);
+    const u = new URL(link);
+    await page.goto(c.BASE + u.pathname + u.search, { waitUntil: 'networkidle' });
+    await c.shot(page, 'a-1440-light-reset-form.png');
+    const pw = page.locator('input[type="password"]');
+    s.passwordFields = await pw.count();
+    await pw.nth(0).fill(NEW_PASSWORD);
+    await pw.nth(1).fill(NEW_PASSWORD);
+    await page.getByRole('button', { name: /reset|set|save|update/i }).last().click();
+    await c.sleep(2000);
+    s.afterReset = (await c.textOf(page, 'body')).slice(0, 500);
+    await c.shot(page, 'a-1440-light-reset-done.png');
+    // the old password no longer works; the new one does
+    await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+    await page.fill('#login-email', JM.email);
+    await page.fill('#login-password', JM.password);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await c.sleep(1500);
+    s.oldPasswordAfterReset = (await c.textOf(page, 'form')).slice(0, 300);
+    await passwordThenCode(page, { email: JM.email, password: NEW_PASSWORD }, 'a-1440-light-after-reset');
+    s.landedOn = new URL(page.url()).pathname;
+    // the link is single-use
+    await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
+    await page.goto(c.BASE + u.pathname + u.search, { waitUntil: 'networkidle' });
+    const pw2 = page.locator('input[type="password"]');
+    if (await pw2.count() >= 2) {
+      await pw2.nth(0).fill('Another-pass-2026!x');
+      await pw2.nth(1).fill('Another-pass-2026!x');
+      await page.getByRole('button', { name: /reset|set|save|update/i }).last().click();
+      await c.sleep(1500);
+      s.reusedLink = (await c.textOf(page, 'body')).slice(0, 400);
+      await c.shot(page, 'a-1440-light-reset-link-reused.png');
+    }
+    await context.close();
+  });
+
+  // Invitation: JM (admin, Concept2Cure Therapeutics) invites Nadia, a member of another organization;
+  // Nadia signs in and sees and accepts it (invitations_for_member).
+  await c.step('admin invites a member of another organization (1440)', async (s) => {
+    const { context, page } = await c.newPage(browser, { who: 'jm' });
+    await c.signIn(page, JM.email, NEW_PASSWORD);
+    const r = await c.api(page, 'POST', '/api/tenant-users', { name: 'Nadia Empty', email: NADIA.email, role: 'reviewer' });
+    s.inviteStatus = r.status;
+    s.inviteBody = JSON.stringify(r.body).slice(0, 400);
+    await context.close();
+  });
+
+  for (const [vpName, viewport] of [['phone', c.VIEWPORTS.phone], ['desktop', c.VIEWPORTS.desktop]]) {
+    const tag = `a-${vpName === 'desktop' ? '1440' : '390'}-light`;
+    await c.step(`the invited member sees the invitation after signing in ${tag}${vpName === 'desktop' ? ', and accepts it' : ''}`, async (s) => {
+      const { context, page } = await c.newPage(browser, { viewport, who: 'nadia' });
+      await passwordThenCode(page, NADIA, `${tag}-nadia`);
+      s.landedOn = new URL(page.url()).pathname;
+      await c.shot(page, `${tag}-nadia-home.png`);
+      const mine = await c.api(page, 'GET', '/api/tenant-users/invitations/mine');
+      s.mineStatus = mine.status;
+      s.mine = JSON.stringify(mine.body).slice(0, 400);
+      let opener = page.getByRole('button', { name: 'Organizations and invitations' }).first();
+      if (!(await opener.isVisible().catch(() => false))) {
+        const menu = page.getByRole('button', { name: /open navigation|show sidebar|navigation|menu/i }).first();
+        if (await menu.isVisible().catch(() => false)) await menu.click();
+        await c.sleep(400);
+        opener = page.getByRole('button', { name: 'Organizations and invitations' }).first();
+      }
+      s.openerVisible = await opener.isVisible().catch(() => false);
+      await opener.click();
+      const panel = page.getByRole('dialog', { name: 'Organizations and invitations' });
+      await panel.waitFor({ timeout: 8000 });
+      await c.sleep(1200);
+      s.panelText = (await panel.innerText()).slice(0, 800);
+      await c.shot(page, `${tag}-nadia-invitations.png`);
+      if (vpName === 'desktop') {
+        await panel.getByRole('button', { name: /accept/i }).first().click();
+        await c.sleep(600);
+        await c.shot(page, `${tag}-nadia-accept-confirm.png`);
+        s.confirmText = (await c.textOf(page, '[role="dialog"]')).slice(0, 600);
+        const confirm = page.locator('[role="dialog"] button[type="submit"], [role="dialog"] button.primary').last();
+        await confirm.click();
+        await c.sleep(2500);
+        s.afterAccept = (await c.textOf(page, 'body')).slice(0, 1200);
+        await c.shot(page, `${tag}-nadia-accepted.png`);
+        const after = await c.api(page, 'GET', '/api/tenant-users/invitations/mine');
+        s.mineAfter = JSON.stringify(after.body).slice(0, 300);
+      }
+      await context.close();
+    });
+  }
+
+  console.info(c.save('auth'));
+  await browser.close();
+})();

@@ -1,0 +1,14 @@
+const c = require('./common.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.newPage(browser, { who: 'jm' });
+  page.on('response', async (r) => { if (r.url().includes('/auth/')) console.log('RESP', r.status(), r.url().replace(c.BASE,''), (await r.text().catch(()=>'')).slice(0,300)); });
+  await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+  await page.fill('#login-email', 'jm.smith@concept2cure.pro');
+  await page.fill('#login-password', process.env.JM_PASSWORD);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await c.sleep(6000);
+  console.log(page.url());
+  await page.screenshot({ path: c.SCRATCH + '/probe-signin.png' });
+  await browser.close();
+})();
