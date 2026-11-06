@@ -158,6 +158,12 @@ sets none. The plan's spine starts from a project with a goal, so the run-of-sho
    - The approver e-signs (Part 11: meaning, reason, password).
    - Place into filing at 5.3.5.1.
 
+**Also checked on demo day** (`../2026-11-06-demo-day-ui-sweep/`): every screen as the three people, and the AI paths
+up to the model.
+- CMC Module 3 cannot be shown on the Lumen projects; they are biologics (P-28).
+- Search finds places and conversations, not documents.
+- The docked conversation's controls overflow at 1440 px. The fix is with the design lead.
+
 **What not to do live**
 - Do not press Build CSR draft or Freeze as this document's study data. The first takes tens of minutes. The second
   moves the panel to study data that has no builds. Freeze newer study data is safe on its own; it only opens the
