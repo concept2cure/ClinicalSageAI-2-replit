@@ -115,7 +115,7 @@ async function writeAndAudit(client: RequestSqlClient, req: Request, orgId: numb
       // Names only: secret material is never copied into the log.
       credentialFieldsChanged: Object.keys(credentials ?? {}).sort(),
       credentialFieldsHeld: written.credentialFieldsHeld,
-      reason: String(body.reason).trim(),
+      reason: written.reason,
       reauthenticated: true,
     },
   });

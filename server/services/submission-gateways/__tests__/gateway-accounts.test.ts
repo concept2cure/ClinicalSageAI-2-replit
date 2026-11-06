@@ -13,6 +13,7 @@ import { promises as fs } from 'fs';
 import { createHash } from 'crypto';
 import os from 'os';
 import path from 'path';
+import { PGlite } from '@electric-sql/pglite';
 
 const h = vi.hoisted(() => ({
   account: null as null | Record<string, unknown>,
@@ -142,6 +143,49 @@ describe('writing the choice', () => {
     expect(await code(writeGatewayAccount(db, { ...base, mode: 'client', credentials: { clientKeyPem: 'not a key' } }))).toBe('NOT_PEM');
     expect(await code(writeGatewayAccount(db, { ...base, mode: 'shared' }))).toBe('INVALID_MODE');
     expect(db.row).toBeNull();
+  });
+
+  it('still clears an unreadable prior client credential, withholding a reason whose secrets cannot be checked', async () => {
+    const db = memoryDb();
+    await writeGatewayAccount(db, { ...base, mode: 'client', credentials: { clientKeyPem: PEM_KEY } });
+    db.row!.credentials_ciphertext = 'unreadable-ciphertext';
+    const written = await writeGatewayAccount(db, { ...base, mode: 'platform', reason: 'Clear account CANARY_UNREADABLE_SECRET_8833' });
+    expect(db.row).toMatchObject({ account_mode: 'platform', credentials_ciphertext: null, credential_fields: [] });
+    expect(written.reason).toBe(db.row!.reason);
+    expect(JSON.stringify(written)).not.toContain('CANARY_UNREADABLE_SECRET_8833');
+  });
+});
+
+describe('gateway credential change reasons on PostgreSQL semantics', () => {
+  it('keeps new and previous PEM variants out of capture, rotation and platform-revert reasons', async () => {
+    const pg = new PGlite();
+    const db = { query: (sql: string, params: unknown[] = []) => pg.query<Record<string, unknown>>(sql, params) };
+    const oldKey = '  -----BEGIN PRIVATE KEY-----\r\nCANARY_FDA_OLD_442211\r\n-----END PRIVATE KEY-----\r\n';
+    const newKey = '-----BEGIN PRIVATE KEY-----\nCANARY_FDA_NEW_775533\n-----END PRIVATE KEY-----\n';
+    const variants = (value: string) => [value, value.trim(), value.replace(/\r\n?/g, '\n'),
+      value.replace(/\r\n?/g, '\n').trim().replace(/\n/g, '\\n'), JSON.stringify(value).slice(1, -1)];
+    const base = { organizationId: 7, userId: 11, region: 'fda', gateway: 'esg', environment: 'production' };
+    try {
+      await pg.exec(await fs.readFile(path.resolve('migrations/20261001g_organization_gateway_accounts.sql'), 'utf8'));
+      for (const action of ['capture', 'rotate', 'revert'] as const) {
+        const key = action === 'capture' ? oldKey : newKey;
+        const values = action === 'rotate' ? [oldKey, newKey] : [key];
+        const reason = `Approved ESG account ${action}: ${values.flatMap(variants).join(' | ')}`;
+        const written = await writeGatewayAccount(db, { ...base, reason, mode: action === 'revert' ? 'platform' : 'client',
+          ...(action === 'revert' ? {} : { credentials: { clientKeyPem: key, clientCertPem: PEM_CERT } }) });
+        const row = (await pg.query<{ reason: string; credentials_ciphertext: string | null }>('SELECT reason, credentials_ciphertext FROM organization_gateway_accounts')).rows[0];
+        const known = action === 'rotate' ? ['CANARY_FDA_OLD_442211', 'CANARY_FDA_NEW_775533']
+          : [action === 'capture' ? 'CANARY_FDA_OLD_442211' : 'CANARY_FDA_NEW_775533'];
+        for (const canary of known) {
+          expect(row.reason, `${action} leaked a held credential into plaintext`).not.toContain(canary);
+          expect(JSON.stringify(written)).not.toContain(canary);
+        }
+        expect(row.reason).toContain('[redacted]');
+        expect(written.reason).toBe(row.reason);
+        if (action === 'revert') expect(row.credentials_ciphertext).toBeNull();
+        else expect((await resolveGatewayAccount(db, 7, 'fda', 'esg', 'production')).credentials?.clientKeyPem).toBe(key);
+      }
+    } finally { await pg.close(); }
   });
 });
 

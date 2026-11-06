@@ -3,7 +3,8 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import request from 'supertest';
 
 const h = vi.hoisted(() => ({
-  list: vi.fn(), readiness: vi.fn(), client: { query: vi.fn() },
+  list: vi.fn(), readiness: vi.fn(), client: { query: vi.fn(), release: vi.fn() },
+  write: vi.fn(), audit: vi.fn(), reauth: vi.fn(),
   user: { id: 3, organizationId: 7, role: 'admin' },
 }));
 vi.mock('../../middleware/auth', () => ({
@@ -11,24 +12,55 @@ vi.mock('../../middleware/auth', () => ({
   requireRole: () => (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
 vi.mock('../../middleware/rateLimiter', () => ({ createRateLimiter: () => (_req: Request, _res: Response, next: NextFunction) => next() }));
-vi.mock('../../db/requestDb', () => ({ requestPgClient: () => h.client, requestConnectable: vi.fn() }));
-vi.mock('../../services/auditService', () => ({ writeChainedAuditRow: vi.fn() }));
-vi.mock('../c2c/actions', () => ({ verifyReauth: vi.fn() }));
+vi.mock('../../db/requestDb', () => ({ requestPgClient: () => h.client, requestConnectable: () => ({ connect: async () => h.client }) }));
+vi.mock('../../services/auditService', () => ({ writeChainedAuditRow: h.audit }));
+vi.mock('../c2c/actions', () => ({ verifyReauth: h.reauth }));
 vi.mock('../../services/submission-gateways', () => ({
   getGatewayUnguarded: () => ({ isConfigured: async () => true }), gatewayTransportReadiness: h.readiness,
 }));
 vi.mock('../../services/submission-gateways/gateway-accounts', () => ({
-  GatewayAccountInputError: class extends Error {}, listGatewayAccounts: h.list, writeGatewayAccount: vi.fn(),
+  GatewayAccountInputError: class extends Error {}, listGatewayAccounts: h.list, writeGatewayAccount: h.write,
 }));
 
 import accounts from '../gateway-accounts';
-const app = express(); app.use('/api/gateway-accounts', accounts);
+const app = express(); app.use(express.json()); app.use('/api/gateway-accounts', accounts);
 
 beforeEach(() => {
   vi.clearAllMocks();
   h.user = { id: 3, organizationId: 7, role: 'admin' };
   h.client.query.mockResolvedValue({ rows: [{ role: 'member' }] });
   h.list.mockResolvedValue([]);
+  h.audit.mockReset().mockResolvedValue(undefined);
+  h.reauth.mockReset().mockResolvedValue({ ok: true });
+  h.write.mockReset();
+});
+
+describe('gateway credential change audit handoff', () => {
+  it('records only the writer-sanitized reason when the submitted reason contains credential material', async () => {
+    const secret = 'CANARY-PRIVATE-GATEWAY-KEY';
+    const rawReason = `Approved ESG rotation: ${secret}`;
+    const safeReason = 'Approved ESG rotation: [redacted]';
+    h.write.mockResolvedValue({
+      spec: { region: 'fda', gateway: 'esg' }, environment: 'production', previousMode: 'platform', mode: 'client',
+      senderIdentifier: 'sponsor-account', credentialFieldsHeld: ['clientKeyPem'], credentialsChanged: true, reason: safeReason,
+    });
+    const response = await request(app).put('/api/gateway-accounts/fda/esg/production').send({
+      mode: 'client', senderIdentifier: 'sponsor-account', credentials: { clientKeyPem: secret },
+      reason: rawReason, reauth: { password: 'fixture-password' },
+    });
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(h.reauth).toHaveBeenCalledWith(3, { password: 'fixture-password' });
+    expect(h.write).toHaveBeenCalledWith(h.client, expect.objectContaining({ organizationId: 7, userId: 3, reason: rawReason }));
+    expect(h.audit).toHaveBeenCalledWith(h.client, expect.objectContaining({
+      tenantId: 7, userId: 3, details: expect.objectContaining({ reason: safeReason, credentialFieldsChanged: ['clientKeyPem'] }),
+    }));
+    expect(JSON.stringify(h.audit.mock.calls)).not.toContain(secret);
+    expect(JSON.stringify(response.body)).not.toContain(secret);
+    expect(response.body).not.toHaveProperty('credentials');
+    expect(response.body).not.toHaveProperty('reason');
+    expect(h.client.query.mock.calls.map(([sql]) => sql)).toEqual(['BEGIN', 'COMMIT']);
+    expect(h.client.release).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('account settings disclose credential state and agency qualification separately', () => {

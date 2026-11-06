@@ -321,6 +321,39 @@ export interface GatewayAccountWrite {
   /** True when this write stored new secret material (it needs re-authentication). */
   credentialsChanged: boolean;
   previousMode: AccountMode;
+  /** The persisted, secret-free reason the caller must also use for its chained audit. */
+  reason: string;
+}
+
+function gatewayCredentialVariants(value: string): string[] {
+  const normalized = value.replace(/\\r\\n|\\r|\\n/g, '\n').replace(/\r\n?/g, '\n');
+  return [value, value.trim(), normalized, normalized.trim(), normalized.replace(/\n/g, '\\n'),
+    normalized.trim().replace(/\n/g, '\\n'), JSON.stringify(value).slice(1, -1), JSON.stringify(value.trim()).slice(1, -1)].filter(Boolean);
+}
+
+function safeGatewayChangeReason(reason: string, credentials: Record<string, string>[]): string {
+  const values = credentials.flatMap(fields => Object.values(fields)).flatMap(gatewayCredentialVariants);
+  let safe = reason.trim();
+  for (const secret of [...new Set(values)].sort((a, b) => b.length - a.length)) safe = safe.split(secret).join('[redacted]');
+  return safe;
+}
+
+function priorGatewayCredentials(ciphertext: unknown, mode: AccountMode): { credentials: Record<string, string>; unreadable: boolean } {
+  if (!ciphertext) return { credentials: {}, unreadable: false };
+  try {
+    const credentials: unknown = JSON.parse(decryptCredential(String(ciphertext)));
+    if (!credentials || typeof credentials !== 'object' || Array.isArray(credentials) ||
+        Object.values(credentials).some(value => typeof value !== 'string')) throw new Error('Invalid stored credentials');
+    return { credentials: credentials as Record<string, string>, unreadable: false };
+  } catch {
+    if (mode === 'client') throw new GatewayAccountInputError('CREDENTIALS_UNREADABLE', 'Stored gateway credentials could not be read. Clear the client account before replacing them.');
+    return { credentials: {}, unreadable: true };
+  }
+}
+
+function gatewayChangeReason(change: GatewayAccountChange, prior: ReturnType<typeof priorGatewayCredentials>): string {
+  if (prior.unreadable) return 'Gateway account changed; reason withheld because prior credentials could not be read.';
+  return safeGatewayChangeReason(change.reason, [prior.credentials, change.credentials ?? {}]);
 }
 
 /** Validate a change before anything is written: the refusals a person can act on. */
@@ -372,15 +405,15 @@ export async function writeGatewayAccount(db: Queryable, c: GatewayAccountChange
   );
   const before = prior.rows[0];
   const previousMode: AccountMode = before?.account_mode === 'client' ? 'client' : 'platform';
+  const kept = priorGatewayCredentials(before?.credentials_ciphertext, mode);
+  const reason = gatewayChangeReason(c, kept);
 
   let ciphertext: string | null = null;
   let held: string[] = [];
   let senderIdentifier: string | null = null;
   const credentialsChanged = mode === 'client' && Object.keys(c.credentials ?? {}).length > 0;
   if (mode === 'client') {
-    const kept: Record<string, string> =
-      before?.credentials_ciphertext ? JSON.parse(decryptCredential(before.credentials_ciphertext)) : {};
-    const merged = { ...kept, ...(c.credentials ?? {}) };
+    const merged = { ...kept.credentials, ...(c.credentials ?? {}) };
     held = Object.keys(merged).sort();
     ciphertext = held.length ? encryptCredential(JSON.stringify(merged)) : null;
     senderIdentifier =
@@ -400,7 +433,7 @@ export async function writeGatewayAccount(db: Queryable, c: GatewayAccountChange
        reason = EXCLUDED.reason,
        updated_by = EXCLUDED.updated_by,
        updated_at = NOW()`,
-    [c.organizationId, spec.region, spec.gateway, environment, mode, senderIdentifier, ciphertext, held, c.reason.trim(), c.userId],
+    [c.organizationId, spec.region, spec.gateway, environment, mode, senderIdentifier, ciphertext, held, reason, c.userId],
   );
-  return { spec, environment, mode, senderIdentifier, credentialFieldsHeld: held, credentialsChanged, previousMode };
+  return { spec, environment, mode, senderIdentifier, credentialFieldsHeld: held, credentialsChanged, previousMode, reason };
 }
