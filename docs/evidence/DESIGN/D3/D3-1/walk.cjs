@@ -75,6 +75,63 @@ async function shot(page, name) {
   return `screenshots/${name}`;
 }
 
+/** At 1440 light: a suggestion, every step, and the settings drawer, used. */
+async function exerciseThePage(page) {
+      /* A suggestion fills the box and sends nothing. */
+      const posts = [];
+      page.on('request', (r) => { if (r.method() === 'POST' && /\/api\/(chat|ana)/.test(r.url())) posts.push(r.url()); });
+      const box = page.getByRole('textbox', { name: 'Ask AnA about this project' });
+      const first = page.getByRole('group', { name: 'Suggestions' }).getByRole('button').first();
+      const words = (await first.textContent()).trim();
+      await first.click();
+      await page.waitForTimeout(400);
+      const value = await box.inputValue();
+      const focused = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+      expect(value === words, 'the suggestion is in the box');
+      expect(focused === 'Ask AnA about this project', 'focus is in the box');
+      expect(posts.length === 0, 'nothing was sent');
+      step('a suggestion fills the box and sends nothing', { words, value, focused, posts });
+      await box.fill('');
+
+      /* Each step offers its own suggestion. */
+      const perStep = [];
+      for (const label of ['Plan', 'Evidence', 'Author', 'Review', 'Submit', 'Respond']) {
+        await page.getByRole('navigation', { name: 'Project lifecycle' }).getByRole('button', { name: new RegExp(`^${label}`) }).click();
+        await page.waitForTimeout(300);
+        const f = await readFrame(page);
+        const measured = await page.evaluate(() => ({
+          mainWidth: Math.round(document.querySelector('.pj-main').getBoundingClientRect().width),
+          /* Measured, not asserted: the step bodies are D3-4's (D3.md §4.7, acceptance 3). */
+          uppercase: Array.from(document.querySelectorAll('.pj *')).filter((e) => window.getComputedStyle(e).textTransform === 'uppercase' && e.textContent.trim()).map((e) => `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]}`),
+        }));
+        perStep.push({ step: label, current: f.steps.find((s) => s.current === 'step')?.label, suggestions: f.suggestions, blurb: f.blurb, ...measured });
+      }
+      expect(perStep.every((p) => p.current === p.step), 'each click opens its step');
+      const widths = perStep.map((p) => p.mainWidth);
+      expect(Math.max(...widths) - Math.min(...widths) <= 1, `the main column keeps its width on every step (${widths.join(', ')})`);
+      step('each step offers its own suggestion', { perStep });
+      await page.getByRole('navigation', { name: 'Project lifecycle' }).getByRole('button', { name: /^Author/ }).click();
+      await page.waitForTimeout(300);
+      await shot(page, '1440-light-author-step.png');
+
+      /* Project settings is a drawer: it opens, Escape closes it, focus returns. */
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const trigger = page.locator('.pj-top button[aria-label="Project settings"]');
+      await trigger.click();
+      const dialog = page.getByRole('dialog', { name: 'Project settings' });
+      await dialog.waitFor({ timeout: 10000 });
+      await page.waitForTimeout(500);
+      const drawer = await shot(page, '1440-light-settings-drawer.png');
+      const inDialog = await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'));
+      expect(await dialog.getByRole('button', { name: 'Close settings' }).count() === 1, 'the drawer closes by "Close settings"');
+      await page.keyboard.press('Escape');
+      await dialog.waitFor({ state: 'detached', timeout: 5000 });
+      const back = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+      expect(inDialog, 'focus moves into the drawer');
+      expect(back === 'Project settings', 'focus returns to the settings button');
+      step('Project settings is a drawer: Escape closes it and focus returns', { inDialog, focusAfterClose: back, shot: drawer });
+}
+
 (async () => {
   expect(PROGRAM, 'a program id');
   fs.mkdirSync(SHOTS, { recursive: true });
@@ -102,61 +159,7 @@ async function shot(page, name) {
         const stepsShot = await shot(page, `${width}-${theme}-steps.png`);
         step(`the frame, ${width} ${theme}`, { frame, shots: [top, stepsShot] });
 
-        if (!dark && width === 1440) {
-          /* A suggestion fills the box and sends nothing. */
-          const posts = [];
-          page.on('request', (r) => { if (r.method() === 'POST' && /\/api\/(chat|ana)/.test(r.url())) posts.push(r.url()); });
-          const box = page.getByRole('textbox', { name: 'Ask AnA about this project' });
-          const first = page.getByRole('group', { name: 'Suggestions' }).getByRole('button').first();
-          const words = (await first.textContent()).trim();
-          await first.click();
-          await page.waitForTimeout(400);
-          const value = await box.inputValue();
-          const focused = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
-          expect(value === words, 'the suggestion is in the box');
-          expect(focused === 'Ask AnA about this project', 'focus is in the box');
-          expect(posts.length === 0, 'nothing was sent');
-          step('a suggestion fills the box and sends nothing', { words, value, focused, posts });
-          await box.fill('');
-
-          /* Each step offers its own suggestion. */
-          const perStep = [];
-          for (const label of ['Plan', 'Evidence', 'Author', 'Review', 'Submit', 'Respond']) {
-            await page.getByRole('navigation', { name: 'Project lifecycle' }).getByRole('button', { name: new RegExp(`^${label}`) }).click();
-            await page.waitForTimeout(300);
-            const f = await readFrame(page);
-            const measured = await page.evaluate(() => ({
-              mainWidth: Math.round(document.querySelector('.pj-main').getBoundingClientRect().width),
-              /* Measured, not asserted: the step bodies are D3-4's (D3.md §4.7, acceptance 3). */
-              uppercase: Array.from(document.querySelectorAll('.pj *')).filter((e) => getComputedStyle(e).textTransform === 'uppercase' && e.textContent.trim()).map((e) => `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]}`),
-            }));
-            perStep.push({ step: label, current: f.steps.find((s) => s.current === 'step')?.label, suggestions: f.suggestions, blurb: f.blurb, ...measured });
-          }
-          expect(perStep.every((p) => p.current === p.step), 'each click opens its step');
-          const widths = perStep.map((p) => p.mainWidth);
-          expect(Math.max(...widths) - Math.min(...widths) <= 1, `the main column keeps its width on every step (${widths.join(', ')})`);
-          step('each step offers its own suggestion', { perStep });
-          await page.getByRole('navigation', { name: 'Project lifecycle' }).getByRole('button', { name: /^Author/ }).click();
-          await page.waitForTimeout(300);
-          await shot(page, '1440-light-author-step.png');
-
-          /* Project settings is a drawer: it opens, Escape closes it, focus returns. */
-          await page.evaluate(() => window.scrollTo(0, 0));
-          const trigger = page.locator('.pj-top button[aria-label="Project settings"]');
-          await trigger.click();
-          const dialog = page.getByRole('dialog', { name: 'Project settings' });
-          await dialog.waitFor({ timeout: 10000 });
-          await page.waitForTimeout(500);
-          const drawer = await shot(page, '1440-light-settings-drawer.png');
-          const inDialog = await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'));
-          expect(await dialog.getByRole('button', { name: 'Close settings' }).count() === 1, 'the drawer closes by "Close settings"');
-          await page.keyboard.press('Escape');
-          await dialog.waitFor({ state: 'detached', timeout: 5000 });
-          const back = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
-          expect(inDialog, 'focus moves into the drawer');
-          expect(back === 'Project settings', 'focus returns to the settings button');
-          step('Project settings is a drawer: Escape closes it and focus returns', { inDialog, focusAfterClose: back, shot: drawer });
-        }
+        if (!dark && width === 1440) await exerciseThePage(page);
         await ctx.close();
       }
     }
