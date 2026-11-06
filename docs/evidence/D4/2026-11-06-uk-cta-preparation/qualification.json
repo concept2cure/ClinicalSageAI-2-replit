@@ -63,12 +63,12 @@
   },
   "repositoryGates": {
     "result": "passed",
-    "source": "79a2f3605ef7998f69009ba7baa7dd0da8dd03a1",
+    "source": "15bf1226e6bbdb8841beff4512c56ad6b38549fb",
     "typeScriptErrors": 0,
     "typeScriptBaseline": 0,
     "warningGrowth": 0,
-    "log": "gates-pass-ref-race.txt.gz",
-    "note": "All normal gates passed; Git rejected a concurrent ref advance. Normal retry pending.",
+    "log": "publication-accepted.txt.gz",
+    "note": "Normal publication accepted and remote independently verified. Prior ref-race snapshots remain retained.",
     "secondPass": {
       "source": "a3c841384269046342413a32e271ee19f19c04f1",
       "typeScriptErrors": 0,
@@ -141,9 +141,26 @@
       "lintedFiles": 16,
       "log": "gates-pass-eleventh-ref-race.txt.gz",
       "note": "Every normal gate passed; concurrent unified-task admission publication rejected the ref."
-    }
+    },
+    "initialSource": "79a2f3605ef7998f69009ba7baa7dd0da8dd03a1",
+    "checkedTypeScriptFiles": 16
   },
-  "publication": "pending normal retry after merge",
+  "publication": {
+    "result": "accepted",
+    "source": "15bf1226e6bbdb8841beff4512c56ad6b38549fb",
+    "remoteVerified": "15bf1226e6bbdb8841beff4512c56ad6b38549fb",
+    "branch": "concept2cure-v2",
+    "verifiedAt": "2026-11-06T20:03:27.450540+00:00",
+    "method": "normal git push with every repository hook enabled",
+    "typeScriptErrors": 0,
+    "typeScriptBaseline": 0,
+    "warningGrowth": 0,
+    "coreManifest": "source-sha256.anna-merged.json",
+    "coreHashesMatched": 14,
+    "integrationTestHashMatched": true,
+    "sourceIntakeFixtureHashMatched": true,
+    "limits": "No deployment, live provider, IRAS technical validation/transmission or scientific qualification is claimed."
+  },
   "limits": [
     "No IRAS form generation, technical validation, transmission or agency qualification.",
     "Initial submission date/lifecycle/product facts remain unassessed; no automatic rule selector.",
@@ -180,7 +197,11 @@
   },
   "originalSourceManifest": "source-sha256.json",
   "sourceTransition": "source-hash-transition.json",
-  "currentMergedGates": "pending normal retry after unified-task admission integration",
+  "currentMergedGates": {
+    "result": "passed",
+    "source": "15bf1226e6bbdb8841beff4512c56ad6b38549fb",
+    "log": "publication-accepted.txt.gz"
+  },
   "annaIntegration": {
     "incoming": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
     "source": "ba1d327e2c00d459e0eaa7ec037489bf805a941a",

@@ -30,6 +30,10 @@ Retain behavioral reds before production fixes, then affected catalog, metadata/
 
 ## Current status
 
+**Published.** Normal push accepted `15bf1226e6bbdb8841beff4512c56ad6b38549fb`; the remote ref was independently verified equal to it. All hooks passed, including zero full-tree TypeScript errors against the unchanged zero baseline and no warning growth. The current 14-file core manifest and both separately hashed integration test corrections match. See `publication-receipt.json` and `publication-accepted*`. No deployment or scientific qualification is claimed.
+
+The integration sections below are historical snapshots; their pending/ref-race statements are superseded by this accepted receipt.
+
 Implemented in the existing shared preparation/drafting owners: 25 preparation rows and 9 tasks, direct shared/server object identity, exact IRAS channel, and a labels-only MHRA assessment that remains unassessed. Six legacy component codes are preserved. The editor reuses its existing drafting route; no screen or layout changed.
 
 Fresh sources: five official pages (four current plus the obsolete linked MHRA page), with publisher dates, 26 verified exact quotation spans and source hashes retained in `official-source-index.json` and `official-sources.tar.gz`. The HRA obsolete link, duplicated MHRA human-experience paragraph and unread linked scenario/eligibility tables remain explicit limits. Conditional SoECAT is retained.
@@ -228,3 +232,8 @@ diff since `4a02adaec` is empty, so its preceding build still applies. All 14 co
 hashes and both separate test-correction hashes match. Native PostgreSQL evidence
 stays with the incoming owner and is not a local rerun. The eleventh full gate
 receipt is retained; the next ordinary publication retry remains pending.
+
+
+## Accepted publication
+
+The normal publication succeeded after the retained concurrent-ref rejections. The optional push-window request no longer blocks this slice. All approved core workflow, source, privacy and one-editor ownership boundaries remain as described above. Remaining P-73 work includes additional dated regional guidance, regional therapeutic-area clinical matching, nonclinical source binding and independent scientific/regulatory/model qualification.
