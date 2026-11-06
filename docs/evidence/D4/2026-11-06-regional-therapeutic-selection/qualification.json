@@ -72,11 +72,19 @@
   },
   "review": "Independent read-only review found no material defect, import cycle or source/model/preservation regression.",
   "publication": {
-    "result": "pending",
-    "initialAttempt": "failed compiler with1TS2322 in added fixture; no accepted push",
-    "failedSource": "737d908c9384b8790df79ff976bc7d2f83184842",
-    "failedLog": "publication-typecheck-red.txt.gz",
-    "correctedBaseline": 0
+    "result": "accepted",
+    "source": "d75e63b617700584971794b874ff5ae6f1990ba3",
+    "remoteVerified": "d75e63b617700584971794b874ff5ae6f1990ba3",
+    "branch": "concept2cure-v2",
+    "verifiedAt": "2026-11-06T20:58:08.230700+00:00",
+    "method": "normal git push with all repository hooks enabled",
+    "typeScriptErrors": 0,
+    "typeScriptBaseline": 0,
+    "warningGrowth": 0,
+    "sourceManifest": "source-sha256.json",
+    "sourceHashesMatched": 13,
+    "mergedDependencyHashesMatched": 3,
+    "limits": "Software selection/reach proof only; no live provider/agency, deployment or scientific/model qualification."
   },
   "limits": [
     "Advisory knowledge reach only; not clinical/regulatory/scientific or model qualification.",
@@ -136,5 +144,13 @@
       "log": "publication-typecheck-red.txt.gz",
       "status": "publication-typecheck-red-status.json.gz"
     }
-  ]
+  ],
+  "repositoryGates": {
+    "result": "passed",
+    "source": "d75e63b617700584971794b874ff5ae6f1990ba3",
+    "typeScriptErrors": 0,
+    "baseline": 0,
+    "warningGrowth": 0,
+    "log": "publication-accepted.txt.gz"
+  }
 }
