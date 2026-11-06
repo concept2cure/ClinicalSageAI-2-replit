@@ -142,7 +142,7 @@ const questionBody = z.object({
 
 const responseBody = z.object({
   responseText: z.string().max(100000).optional(),
-  editorSource: z.object({ documentId: z.string().uuid(), sectionId: z.string().uuid(),
+  editorSource: z.object({ documentId: z.string().guid(), sectionId: z.string().guid(),
     expectedSha256: z.string().regex(/^[a-f0-9]{64}$/), expectedUpdatedAt: z.string().datetime({ offset: true }) }).strict().optional(),
   expectedRevision: z.number().int().min(0).max(MAX_INT),
   reason: governedReason,

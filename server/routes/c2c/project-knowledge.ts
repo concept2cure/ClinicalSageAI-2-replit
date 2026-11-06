@@ -406,7 +406,7 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
     return sendSuccess(res, updatedKnowledge, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
     }
     logger.error('Failed to update project knowledge', { error: error.message });
     return sendError(res, 500, 'Failed to update project knowledge');

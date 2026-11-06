@@ -304,7 +304,7 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[HierarchyRoutes] Error moving project:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid move data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid move data', details: error.issues });
     }
     res.status(500).json({ error: 'Failed to move project' });
   }

@@ -151,7 +151,7 @@ const createSchema = z.object({
   fields: z.array(z.any()).optional(),
   content: z.string().optional(),
   status: z.string().optional(),
-  field_data: z.record(z.any()).optional(),
+  field_data: z.record(z.string(), z.any()).optional(),
 });
 
 const updateSchema = z.object({
@@ -165,7 +165,7 @@ const updateSchema = z.object({
   fields: z.array(z.any()).optional(),
   content: z.string().optional(),
   status: z.string().optional(),
-  field_data: z.record(z.any()).optional(),
+  field_data: z.record(z.string(), z.any()).optional(),
   completion_percentage: z.number().int().optional(),
   compliance_notes: z.string().optional(),
   regulatory_references: z.array(z.string()).optional(),

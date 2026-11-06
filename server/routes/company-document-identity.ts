@@ -23,7 +23,7 @@ router.post('/legacy-adoption', async (req, res) => {
 });
 router.get('/identity', async (req, res) => {
   try {
-    const input = parseCompanyInput(z.object({ sequenceId: z.coerce.number().int().positive(), variantId: z.string().uuid().optional() }).strict(), req.query);
+    const input = parseCompanyInput(z.object({ sequenceId: z.coerce.number().int().positive(), variantId: z.string().guid().optional() }).strict(), req.query);
     res.json((await readCompanyFilingIdentity(req, input.sequenceId, input.variantId)).data);
   }
   catch (error) { const failure = error instanceof SubmissionReadError ? error : companyDocumentsFailure(error); res.status(failure.status).json({ error: failure.code, message: failure.message }); }

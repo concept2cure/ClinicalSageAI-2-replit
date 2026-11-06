@@ -30,7 +30,7 @@ const equipmentSchema = z.object({
   modelNumber: z.string().optional(),
   serialNumber: z.string().optional(),
   status: z.enum(['AVAILABLE', 'IN_USE', 'MAINTENANCE', 'RETIRED']).default('AVAILABLE'),
-  capabilities: z.record(z.unknown()).default({}),
+  capabilities: z.record(z.string(), z.unknown()).default({}),
   building: z.string().optional(),
   room: z.string().optional(),
   cleanRoomClass: z.string().optional(),

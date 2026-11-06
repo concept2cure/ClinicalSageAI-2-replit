@@ -21,13 +21,13 @@ const legalId = z.string().trim().min(1).max(200);
 const text = (max: number) => z.string().trim().min(1).max(max);
 const nullableLegalId = legalId.nullable();
 const authoritySchema = z.object({ signatoryName: text(300), role: text(300), delegationLegalDocumentId: nullableLegalId,
-  evidenceVaultDocumentIds: z.array(z.string().uuid()).min(1).max(20) }).strict().nullable();
+  evidenceVaultDocumentIds: z.array(z.string().guid()).min(1).max(20) }).strict().nullable();
 const signatureSchema = z.object({ method: z.enum(['external_tool', 'manual_evidence']), result: z.enum(['valid', 'invalid', 'inconclusive']),
-  tool: text(300), verifiedAt: z.string().datetime(), evidenceVaultDocumentId: z.string().uuid() }).strict().nullable();
+  tool: text(300), verifiedAt: z.string().datetime(), evidenceVaultDocumentId: z.string().guid() }).strict().nullable();
 export const legalWorkflowUpdateSchema = z.object({ expectedRevision: z.number().int().nonnegative(), reason,
   workflow: z.object({ custodianUserId: z.string().regex(/^[1-9]\d*$/).nullable(), reminderDays: z.array(z.number().int().min(0).max(730)).max(12),
     replacementId: nullableLegalId, revocation: z.object({ reason }).strict().nullable().optional(), authority: authoritySchema,
-    signatureEvidence: signatureSchema, translationOfId: nullableLegalId, certifiedTranslationEvidenceVaultDocumentId: z.string().uuid().nullable() }).strict(),
+    signatureEvidence: signatureSchema, translationOfId: nullableLegalId, certifiedTranslationEvidenceVaultDocumentId: z.string().guid().nullable() }).strict(),
 }).strict();
 const scope = z.array(z.string().trim().min(1).max(100)).max(100);
 export const legalRequirementUpdateSchema = z.object({ expectedRevision: z.number().int().nonnegative(), reason,

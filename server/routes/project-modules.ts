@@ -42,8 +42,8 @@ const projectModuleParamsSchema = z.object({
 const linkSchema = z.object({
   moduleType: moduleTypeSchema,
   moduleInstanceId: z.number().int().positive(),
-  settings: z.record(z.unknown()).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const bulkLinkSchema = z.object({
@@ -52,7 +52,7 @@ const bulkLinkSchema = z.object({
       z.object({
         moduleType: moduleTypeSchema,
         moduleInstanceId: z.number().int().positive(),
-        metadata: z.record(z.unknown()).optional(),
+        metadata: z.record(z.string(), z.unknown()).optional(),
       })
     )
     .min(1)
@@ -66,8 +66,8 @@ const statusSchema = z.object({
 const updateLinkSchema = z
   .object({
     status: z.enum(MODULE_LINK_STATUSES).optional(),
-    settings: z.record(z.unknown()).optional(),
-    metadata: z.record(z.unknown()).optional(),
+    settings: z.record(z.string(), z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   })
   .refine(
     body => body.status !== undefined || body.settings !== undefined || body.metadata !== undefined,
@@ -152,7 +152,7 @@ router.post('/:projectId/modules', async (req: Request, res: Response) => {
     res.status(201).json(link);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid request', details: err.errors });
+      return res.status(400).json({ error: 'Invalid request', details: err.issues });
     }
     return serverError(res, log, 'linking the module', err, { projectId: req.params.projectId });
   }
@@ -191,7 +191,7 @@ router.post('/:projectId/modules/bulk', async (req: Request, res: Response) => {
     res.status(201).json({ projectId, linked: links.length, modules: links });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid request', details: err.errors });
+      return res.status(400).json({ error: 'Invalid request', details: err.issues });
     }
     return serverError(res, log, 'bulk-linking the modules', err, { projectId: req.params.projectId });
   }
@@ -224,7 +224,7 @@ router.delete(
       res.json({ success: true });
     } catch (err: any) {
       if (err instanceof z.ZodError) {
-        return res.status(400).json({ error: 'Invalid request', details: err.errors });
+        return res.status(400).json({ error: 'Invalid request', details: err.issues });
       }
       console.error('Error unlinking module:', err);
       res.status(500).json({ error: 'Failed to unlink module' });
@@ -258,7 +258,7 @@ router.patch('/:projectId/modules/:moduleType/:moduleInstanceId', async (req: Re
     res.json(updated);
   } catch (err: any) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid request', details: err.errors });
+      return res.status(400).json({ error: 'Invalid request', details: err.issues });
     }
     console.error('Error updating module link:', err);
     res.status(500).json({ error: 'Failed to update module link' });
@@ -294,7 +294,7 @@ router.patch(
       res.json(updated);
     } catch (err: any) {
       if (err instanceof z.ZodError) {
-        return res.status(400).json({ error: 'Invalid request', details: err.errors });
+        return res.status(400).json({ error: 'Invalid request', details: err.issues });
       }
       console.error('Error updating module status:', err);
       res.status(500).json({ error: 'Failed to update module status' });

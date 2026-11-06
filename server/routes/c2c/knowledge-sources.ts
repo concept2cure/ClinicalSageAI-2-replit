@@ -397,7 +397,7 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
     }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
     }
     logger.error('Failed to connect app to project', { error: error.message });
     return sendError(res, 500, 'Failed to connect app to project');
