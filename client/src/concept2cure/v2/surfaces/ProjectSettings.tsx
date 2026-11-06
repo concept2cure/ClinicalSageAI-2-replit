@@ -8,6 +8,8 @@ import { GovernedConfirmDialog } from '../../_shared/components/GovernedConfirmD
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { captureShellProjectGuard, shellProgramId, useShellProject } from '../shellProject';
 import { projectSettingsHeaders, requestProjectArchive, requestProjectSettings } from './projectSettingsRequest';
+import { I } from '../icons';
+import { useDialog } from '../useDialog';
 import '../styles/project-settings.css';
 
 interface Props { programId: string; onSaved: () => void }
@@ -123,19 +125,15 @@ async function saveSettings(context: Context, reason: string) {
 }
 function SettingsSession({ scope, isCurrent, onSaved }: Props & { scope: ProjectSettingsScope; isCurrent: () => boolean }) {
   const s = useSettingsState(); const prefix = useId();
-  const { open, review, pending, mounted, setOpen } = s;
+  const { mounted } = s;
   const visit = useMemo(() => captureShellProjectGuard(), []);
   const live = useRef(isCurrent); live.current = isCurrent;
   const current = useCallback(() => mounted.current && visit() && live.current(), [mounted, visit]);
   const context: Context = { state: s, scope, current, onSaved };
   const close = () => { if (!s.pending.current) s.setOpen(false); };
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, [mounted]);
-  useEffect(() => {
-    if (!open || review) return;
-    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape' && !pending.current) setOpen(false); };
-    document.addEventListener('keydown', escape);
-    return () => document.removeEventListener('keydown', escape);
-  }, [open, review, pending, setOpen]);
+  /* Escape and focus are the drawer's (useDialog, in SettingsPanel), handed to the
+     governed confirm dialog while it is open; close() still refuses during a save. */
   const toggle = () => {
     if (s.pending.current || !retained(context)) return;
     if (s.open) close();
@@ -148,7 +146,10 @@ function SettingsSession({ scope, isCurrent, onSaved }: Props & { scope: Project
     ? <ArchiveControl scope={scope} current={current} disabled={!editable} onArchived={onSaved} />
     : null;
   return <div className="pj-settings">
-    <button className="btn ghost" onClick={toggle} aria-expanded={s.open} aria-controls={`${prefix}-panel`} disabled={s.saving}>Project settings</button>
+    {/* D3 (2026-11-06, D3.md §4.9): an icon button beside the project's name that opens a drawer, not a
+        full-width panel pushing the page down. */}
+    <button type="button" className="btn ghost pj-settings-btn" onClick={toggle} aria-expanded={s.open} aria-controls={`${prefix}-panel`}
+      aria-haspopup="dialog" aria-label="Project settings" title="Project settings" disabled={s.saving}>{I.settings}</button>
     {s.open && <SettingsPanel state={s} prefix={prefix} editable={editable} patch={patch} onClose={close} archive={archive}
       onReload={() => void loadSettings(context)} onReview={() => { if (retained(context)) s.setReview(patch); }} />}
     <GovernedConfirmDialog open={!!s.review && !s.retired} action="Save project settings" target={settingsReviewTarget(s.review)} minReason={GOVERNED_REASON_MIN}
@@ -160,17 +161,28 @@ function SettingsPanel({ state: s, prefix, editable, patch, archive, onClose, on
   state: State; prefix: string; editable: boolean; patch: ProjectSettingsPatch; archive: React.ReactNode;
   onClose: () => void; onReload: () => void; onReview: () => void;
 }) {
-  return <section className="pj-settings-panel" id={`${prefix}-panel`} aria-label="Project settings">
-      <div className="pj-sec-h"><h2>Project settings</h2><button className="btn ghost small" onClick={onClose} disabled={s.saving}>Close settings</button></div>
-      {s.loading && <p role="status">Reading current project settings…</p>}
-      {s.saved && s.draft && <SettingsFields state={s} editable={editable} prefix={prefix} />}
-      {s.note && <p className="pj-settings-note" role={s.note.error ? 'alert' : 'status'}>{s.note.text}</p>}
-      {!s.loading && <div className="pj-settings-actions">
-        <button className="btn ghost" disabled={s.saving} onClick={onReload}>Reload saved settings</button>
-        {s.saved?.canChange && <button className="btn primary" disabled={!editable || !isProjectSettingsPatch(patch)} onClick={onReview}>Review settings change</button>}
+  /* D0's drawer (.de-bd / .de): focus on open, Tab kept inside, Escape closes, focus back to the button on
+     close; while the governed confirm dialog is open the drawer releases both to it. */
+  const dialogRef = useDialog(onClose, !s.review);
+  return <div className="de-bd" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="de pj-settings-panel" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true"
+      aria-labelledby={`${prefix}-h`} id={`${prefix}-panel`}>
+      <div className="de-h">
+        <div><div className="de-h-eye">Project</div><div className="de-h-t" id={`${prefix}-h`}>Project settings</div></div>
+        <button type="button" className="de-x" onClick={onClose} disabled={s.saving} aria-label="Close settings">{I.close}</button>
+      </div>
+      <div className="de-body">
+        {s.loading && <p role="status">Reading current project settings…</p>}
+        {s.saved && s.draft && <SettingsFields state={s} editable={editable} prefix={prefix} />}
+        {s.note && <p className="pj-settings-note" role={s.note.error ? 'alert' : 'status'}>{s.note.text}</p>}
+        {!s.loading && s.saved && archive}
+      </div>
+      {!s.loading && <div className="de-f pj-settings-actions">
+        <button type="button" className="btn ghost" disabled={s.saving} onClick={onReload}>Reload saved settings</button>
+        {s.saved?.canChange && <button type="button" className="btn primary" disabled={!editable || !isProjectSettingsPatch(patch)} onClick={onReview}>Review settings change</button>}
       </div>}
-      {!s.loading && s.saved && archive}
-    </section>;
+    </div>
+  </div>;
 }
 
 /* ── Archive (2026-10-31) ─────────────────────────────────────────────────────

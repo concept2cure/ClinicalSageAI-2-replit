@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
@@ -51,14 +51,29 @@ describe('Project home — the start box', () => {
     expect(container.textContent).not.toMatch(/AnA · co-author/);
     expect(container.textContent).not.toMatch(/I'm your co-author/);
     expect(screen.queryByText('Open full thread')).toBeNull();
-    const box = screen.getByRole('region', { name: /Start a conversation in/ });
-    expect(box.textContent).toMatch(/Start a conversation in BX-301/);
+    /* D3-1 (2026-11-06): Claude's project composer. It asks how it can help with this project; the heading
+       that named the product ("Start a conversation in BX-301") is gone, and what the box does is its description. */
+    const box = screen.getByRole('textbox', { name: 'Ask AnA about this project' });
+    expect(box.getAttribute('placeholder')).toBe('How can I help with this project?');
+    expect(document.getElementById(box.getAttribute('aria-describedby')!)?.textContent).toMatch(/starts a new conversation in this project/);
+    expect(container.textContent).not.toMatch(/Start a conversation in/);
+  });
+
+  it('the open step\'s suggestion fills the box and never sends', async () => {
+    const p = props();
+    render(<ProjectHome {...p} />);
+    const suggestions = await screen.findByRole('group', { name: 'Suggestions' });
+    const due = within(suggestions).getByRole('button', { name: 'What is due this week, and who has it?' });
+    fireEvent.click(due);
+    expect((screen.getByRole('textbox', { name: 'Ask AnA about this project' }) as HTMLTextAreaElement).value).toBe('What is due this week, and who has it?');
+    expect(p.onNav).not.toHaveBeenCalledWith('conversation-thread');
+    expect((window as any).C2C_CONVO).toBeUndefined();
   });
 
   it('a question typed here starts a new conversation in the project, carrying the words', async () => {
     const p = props();
     render(<ProjectHome {...p} />);
-    const box = await screen.findByRole('textbox', { name: /Start a conversation in/ });
+    const box = await screen.findByRole('textbox', { name: 'Ask AnA about this project' });
     const send = screen.getByRole('button', { name: 'Start the conversation' });
     expect((send as HTMLButtonElement).disabled, 'nothing to start with an empty box').toBe(true);
 
@@ -71,7 +86,7 @@ describe('Project home — the start box', () => {
   it('Enter with an empty box goes nowhere', async () => {
     const p = props();
     render(<ProjectHome {...p} />);
-    const box = await screen.findByRole('textbox', { name: /Start a conversation in/ });
+    const box = await screen.findByRole('textbox', { name: 'Ask AnA about this project' });
     fireEvent.keyDown(box, { key: 'Enter' });
     await waitFor(() => expect(p.onNav).not.toHaveBeenCalledWith('conversation-thread'));
     expect((window as any).C2C_CONVO).toBeUndefined();

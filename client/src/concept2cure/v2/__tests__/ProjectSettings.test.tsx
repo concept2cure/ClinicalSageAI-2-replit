@@ -41,9 +41,9 @@ async function review() {
   await open();
   fireEvent.change(screen.getByRole('combobox', { name: 'Project priority' }), { target: { value: 'high' } });
   fireEvent.click(screen.getByRole('button', { name: 'Review settings change' }));
-  return screen.findByRole('dialog');
+  return screen.findByRole('dialog', { name: 'Save project settings' });
 }
-async function submit(dialog: HTMLElement = screen.getByRole('dialog'), reason = 'Sponsor milestone alignment') {
+async function submit(dialog: HTMLElement = screen.getByRole('dialog', { name: 'Save project settings' }), reason = 'Sponsor milestone alignment') {
   fireEvent.change(within(dialog).getByPlaceholderText('Captured verbatim in the audit log. Be specific.'), { target: { value: reason } });
   fireEvent.change(within(dialog).getByPlaceholderText('yes'), { target: { value: 'yes' } });
   await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm and log' })); });
@@ -72,8 +72,8 @@ describe('Project settings reads and bounded fields', () => {
     expect(screen.queryByRole('textbox', { name: /owner|name|filing|client/i })).toBeNull();
     fireEvent.change(screen.getByRole('combobox', { name: 'Project priority' }), { target: { value: 'high' } });
     fireEvent.click(screen.getByRole('button', { name: 'Review settings change' }));
-    expect(screen.getByRole('dialog').textContent).toContain('Current project · Priority');
-    expect(screen.getByRole('dialog').textContent).not.toContain(PROGRAM);
+    expect(screen.getByRole('dialog', { name: 'Save project settings' }).textContent).toContain('Current project · Priority');
+    expect(screen.getByRole('dialog', { name: 'Save project settings' }).textContent).not.toContain(PROGRAM);
     await submit();
     await screen.findByText(/saved with your reason in the chained audit/i);
     expect(onSaved).toHaveBeenCalledOnce();
@@ -178,12 +178,12 @@ describe('Project settings uncertain or conflicting saves', () => {
     mount(); await review(); await submit();
     fireEvent.keyDown(document, { key: 'Escape' });
     fireEvent.click(screen.getByRole('button', { name: 'Close settings' }));
-    expect(screen.getByRole('region', { name: 'Project settings' })).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Project settings' })).toBeTruthy();
     expect(patches()).toHaveLength(1);
     await act(async () => pending.resolve(response(null, 503)));
     await screen.findByText(/could not be confirmed/i);
     fireEvent.click(screen.getByRole('button', { name: 'Close settings' }));
-    expect(screen.queryByRole('region', { name: 'Project settings' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Project settings' })).toBeNull();
   });
 });
 
@@ -217,7 +217,7 @@ describe('Project settings request ownership', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Project priority' }), { target: { value: 'high' } });
     const old = screen.getByRole('button', { name: 'Review settings change' });
     act(() => { authService.setToken(jwt(99), { ...ACTOR, id: '99' }, 'next-refresh', 3600); fireEvent.click(old); });
-    expect(patches()).toHaveLength(0); expect(screen.queryByRole('dialog')).toBeNull();
+    expect(patches()).toHaveLength(0); expect(screen.queryByRole('dialog', { name: 'Save project settings' })).toBeNull();
   });
   it('preserves a pending save through ordinary same-account bearer refresh', async () => {
     const pending = deferred<Response>();

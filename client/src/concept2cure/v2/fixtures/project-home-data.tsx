@@ -270,6 +270,12 @@ export interface LifecycleStage {
   now: string;
   /** `now` for a device or diagnostic project, when it differs. */
   nowDevice?: string;
+  /** The step's suggestion in the project's composer: a question a person can
+   *  send AnA as it is, never a claim about the program (D3-1, D3.md §4.4). It
+   *  fills the box; it never sends. */
+  starter: string;
+  /** `starter` for a device or diagnostic project, when it differs. */
+  starterDevice?: string;
   /** Stage names that no longer have a tab and whose work is on this one.
    *  `project-home.set-stage` still accepts them (shared/navigation/
    *  surface-actions.ts), so an AnA call naming one opens this tab. */
@@ -301,29 +307,37 @@ export const PJ_LIFECYCLE: LifecycleStage[] = [
     id: 'plan', label: 'Plan', icon: 'clipboardList', blurb: 'What this filing needs, who does it, and by when',
     now: 'See every document this filing needs. Start each from its template, and assign it to a person with a due date.',
     nowDevice: 'See the work this filing needs, by discipline. Assign each piece to a person with a due date.',
+    starter: 'What does this filing still need, and who has each piece?',
   },
   {
     id: 'evidence', label: 'Evidence', icon: 'search', blurb: 'Project files and the data room the documents are written from',
     now: 'Add the documents this filing is written from: protocols, study reports, prior correspondence. Each file is read on upload and becomes a source you can trace.',
+    starter: 'Which sources does this filing still need?',
   },
   {
     id: 'author', label: 'Author', icon: 'penLine', blurb: 'Draft eCTD sections with AnA, track changes',
     now: 'Draft the filing’s documents from those sources. Ask AnA to draft a section, or open a document and write it yourself.',
     nowDevice: 'Draft the filing’s documents from the device or diagnostic evidence. Ask AnA to draft a section, or open a document and write it yourself.',
+    starter: 'Draft the next section from this project’s sources',
+    starterDevice: 'Draft the next section from the device evidence',
   },
   {
     id: 'review', label: 'Review', icon: 'checkCircle', blurb: 'Review, approve & e-sign',
     now: 'Send each document for review, resolve the comments, and approve it with your signature.',
+    starter: 'What is waiting for review or my signature?',
   },
   {
     id: 'submit', label: 'Submit', icon: 'rocket', blurb: "Build and validate each market's eCTD sequence",
     now: 'Place the approved documents in each market’s sequence, check its readiness, then compile the submission.',
     nowDevice: 'Assemble the eSTAR or technical documentation from the approved documents.',
+    starter: 'What blocks dispatch of each market’s sequence?',
+    starterDevice: 'What does the eSTAR still need?',
     aliases: ['lifecycle'],
   },
   {
     id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Draft responses to agency letters',
     now: 'When the agency writes, add its letter here, draft each answer from it with AnA, and start the response sequence.',
+    starter: 'Draft answers to the agency’s open questions',
   },
 ];
 

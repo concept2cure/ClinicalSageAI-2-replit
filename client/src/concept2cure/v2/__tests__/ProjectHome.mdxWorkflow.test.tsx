@@ -36,7 +36,7 @@ describe('MDX starts inside the verified client project', () => {
     const writing = (await screen.findByTestId('pj-mdx-workflow')).querySelector('[data-work-package="medical-writing"]')! as HTMLElement;
     fireEvent.click(within(writing).getByRole('button', { name: 'Write this work’s documents on Author' }));
     expect(document.querySelector('.pj-lc-stage[data-status="active"]')?.textContent).toContain('Author');
-    expect(document.querySelector('.pj-stageband-blurb')?.textContent).not.toContain('eCTD');
+    expect(document.querySelector('.pj-step-blurb')?.textContent).not.toContain('eCTD');
   });
 
   it('retires the previous project workflow while the next project record is loading', async () => {

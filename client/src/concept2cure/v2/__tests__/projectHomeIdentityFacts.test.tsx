@@ -126,8 +126,37 @@ describe('project home shows the program identity from the database', () => {
   it('says "not recorded" for client, product or indication the row lacks', async () => {
     mockProgram(program({ client_workspace_id: null, client_name: null, indication: null }));
     render(<ProjectHome {...props()} />);
-    const facts = within(await screen.findByRole('region', { name: /project identity/i }));
-    expect(facts.getAllByText('not recorded')).toHaveLength(2);
+    const region = await screen.findByRole('region', { name: /project identity/i });
+    const facts = within(region);
+    /* By row, not by count: since D3-1 the facts also hold the client type, code, phase, status and priority
+       the byline gave up, and any of those may be unrecorded too. */
+    const fact = (label: string) => Array.from(region.querySelectorAll('dl.pj-fact'))
+      .find((dl) => dl.querySelector('dt')?.textContent === label)?.querySelector('dd')?.textContent;
+    expect(fact('Client')).toBe('not recorded');
+    expect(fact('Indication')).toBe('not recorded');
+    expect(fact('Product')).toBe('Vorelinib');
     expect(facts.getByText('Vorelinib')).toBeTruthy();
+  });
+
+  /* D3-1 walk (2026-11-06): the client type moved from the byline to the facts, and a page opened by its address,
+     with no list row handed over, said "not recorded" for an IND. It is derived as the project list derives it
+     (workstreamForFilingType, the function behind the server's workstreamSqlCase). */
+  it('says the client type the filing type gives, as the project list does, with no list row handed over', async () => {
+    mockProgram(program({ program_type: 'BLA', product_type: 'biologic' }));
+    render(<ProjectHome {...props()} />);
+    const region = await screen.findByRole('region', { name: /project identity/i });
+    const fact = (label: string) => Array.from(region.querySelectorAll('dl.pj-fact'))
+      .find((dl) => dl.querySelector('dt')?.textContent === label)?.querySelector('dd')?.textContent;
+    expect(fact('Client type')).toBe('Biotech');
+    expect(fact('Code')).toBe('BX-512');
+  });
+
+  it('a filing type no client type is known for is still "not recorded", never a guess', async () => {
+    mockProgram(program({ program_type: 'other', product_type: null }));
+    render(<ProjectHome {...props()} />);
+    const region = await screen.findByRole('region', { name: /project identity/i });
+    const clientType = Array.from(region.querySelectorAll('dl.pj-fact'))
+      .find((dl) => dl.querySelector('dt')?.textContent === 'Client type')?.querySelector('dd')?.textContent;
+    expect(clientType).toBe('not recorded');
   });
 });

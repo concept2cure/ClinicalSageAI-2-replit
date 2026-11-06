@@ -28,9 +28,9 @@ import { reviewStanding, type ReviewStandingGroup } from './reviewStanding';
 import { openReviewDocument } from './Review';
 import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
-import { isDeviceFamily, isDeviceOrDiagnosticProgram } from '@shared/constants/domain/product-types';
+import { isDeviceFamily, isDeviceOrDiagnosticProgram, workstreamForFilingType } from '@shared/constants/domain/product-types';
 import { isUsInd, useProgramMarkets } from './programSequence';
-import { StageBand, StageTracker } from './ProjectStages';
+import { StageTracker } from './ProjectStages';
 import { STEP_DOORS } from '../projectDoors';
 import { openProgramAction } from '../programAction';
 import { FileDropZone } from '../FileDropZone';
@@ -51,7 +51,7 @@ import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
 import { ProjectSettings } from './ProjectSettings';
 import { ProjectCoreWork } from './ProjectCoreWork';
-import { actionWords, enumWords } from './projectWords';
+import { actionWords, enumWords, filingTypeWords } from './projectWords';
 import { WS_LABEL } from './ProjectPortfolioFilters';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
@@ -1181,8 +1181,13 @@ function ProjectQuality({ pid, onNav }: { pid: string; onNav: (id: string) => vo
    show it. The one remaining message is the standing intro — framing, not a
    reply, and it says nothing about what has been done. */
 
-function StartConversation({ productName, onNav }: { productName: string; onNav: (id: string) => void }) {
+function StartConversation({ onNav, starters = [] }: {
+  productName: string; onNav: (id: string) => void;
+  /** At most three suggestions for the open step (D3-1, D3.md §4.4). A suggestion fills the box; it never sends. */
+  starters?: string[];
+}) {
   const [draft, setDraft] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   /* docs/design/ONE_ANA_ONE_CANVAS.md §2.3: a project's page starts a
      conversation in the project, as Claude's project page does. It is not a
@@ -1190,7 +1195,10 @@ function StartConversation({ productName, onNav }: { productName: string; onNav:
      "Open full thread" link and a message in AnA's voice that no model wrote,
      a second place on the page that looked like talking to AnA. Now it says
      what it does, and a question typed here starts a new conversation in
-     this project, where AnA answers it. */
+     this project, where AnA answers it. D3-1 (2026-11-06): Claude's project
+     composer, "How can I help with this project?", with the step's
+     suggestions under it; the "Start a conversation in …" heading is gone
+     (`productName` stays for the conversation the question seeds). */
   const start = () => {
     const text = draft.trim();
     if (!text) return;
@@ -1199,25 +1207,32 @@ function StartConversation({ productName, onNav }: { productName: string; onNav:
   };
 
   return (
-    <section className="pj-convo" aria-labelledby="pj-start-h">
-      <div className="pj-start-h">
-        <h2 id="pj-start-h">Start a conversation in {productName}</h2>
-        <span className="sec-sub">AnA works with this project&apos;s sources, documents and submissions.</span>
-      </div>
+    <section className="pj-convo" aria-label="Ask AnA about this project">
       <div className="pj-composer">
         <textarea
-          rows={2}
-          aria-labelledby="pj-start-h"
-          placeholder={'Ask AnA to draft, reconcile or review…'}
+          ref={textareaRef}
+          rows={3}
+          aria-label="Ask AnA about this project"
+          aria-describedby="pj-compose-d"
+          placeholder="How can I help with this project?"
           value={draft}
           onChange={e => setDraft(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); start(); } }}
         />
+        <span id="pj-compose-d" className="sr-only">AnA works with this project&apos;s sources, documents and submissions. A question starts a new conversation in this project.</span>
+        {/* No `<span className="sp" />` spacer: `.sp` is the surface page's class, whose 128px of padding made the
+            send row the composer's tallest part (D3-1 walk). The row aligns its button to the end. */}
         <div className="pj-composer-row">
-          <span className="sp" />
           <button className="pj-comp-send" aria-label="Start the conversation" disabled={!draft.trim()} onClick={start}>{I.arrowUp}</button>
         </div>
       </div>
+      {starters.length > 0 && (
+        <div className="sp-starters pj-starters" role="group" aria-label="Suggestions">
+          {starters.map((text) => (
+            <button key={text} type="button" className="sp-starter" onClick={() => { setDraft(text); textareaRef.current?.focus(); }}>{text}</button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -1246,7 +1261,7 @@ function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string)
   };
   return (
     <section className="pj-sec" aria-labelledby="pj-threads-h">
-      <div className="pj-sec-h"><h2 id="pj-threads-h">Conversations</h2><span className="sec-sub">yours on this project, to resume</span></div>
+      <div className="pj-sec-h"><h2 id="pj-threads-h">Conversations</h2><span className="sec-sub">Yours on this project</span></div>
       <Anchored
         state={threads.state}
         loadingText="Loading conversations…"
@@ -1262,24 +1277,21 @@ function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string)
           <>
             <div className="pj-files" data-testid="pj-threads">
               {threads.shown.map((t) => (
-                <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
-                  <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
-                  <div className="pj-file-m">
-                    {[fmtWhen(t.updated_at || t.created_at), working.has(t.id) ? workingMarkerLine(working.get(t.id)!) : 'Resume']
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </div>
+                <button key={t.id} type="button" className="pj-file pj-thread" onClick={() => resumeThread(t.id)} title="Resume this conversation">
+                  <span className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</span>
+                  {/* AnA's working marker while it works in the conversation, else when it last moved. */}
+                  <span className="pj-file-m">{working.has(t.id) ? workingMarkerLine(working.get(t.id)!) : fmtWhen(t.updated_at || t.created_at)}</span>
                 </button>
               ))}
             </div>
             {workingRead.failed && (
-              <div className="sec-sub" role="status" style={{ fontSize: 12, marginTop: 6 }}>{WORKING_UNREADABLE_LINE}</div>
+              <div className="sec-sub" role="status">{WORKING_UNREADABLE_LINE}</div>
             )}
             {threads.olderError && (
-              <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>{threads.olderError}</div>
+              <div className="sp-tone-warn" role="status">{threads.olderError}</div>
             )}
             {threads.hasOlder && (
-              <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px', marginTop: 8 }} disabled={threads.loadingOlder} onClick={threads.showOlder}>
+              <button type="button" className="btn ghost small pj-older" disabled={threads.loadingOlder} onClick={threads.showOlder}>
                 {threads.loadingOlder ? 'Loading older conversations…' : 'Show older conversations'}
               </button>
             )}
@@ -1594,22 +1606,28 @@ function openMarketOnSubmit(chooseStage: (stage: string) => void, submissionId: 
   });
 }
 
-/** The line under the project's name. Stored values are said in words
- *  (projectWords.ts): it read "active · priority: high · planning" (2026-10-31). */
-function ProjectTags({ tags: t }: { tags: {
-  clientType: string | null; submissionType: string | null; regionLabel: string | null; indication: string | null;
-  status: string | null; priority: string | null; phase: string | null;
-} }) {
+/* The byline under the project's name (D3-1, D3.md §4.2): the filing in words, its region, the indication, and
+   the status and priority only when they say something (not "active", not medium or low). The project code, the
+   client type, the phase and an ordinary status or priority are facts in Project knowledge, not the byline.
+   Stored values are said in words (projectWords.ts): it read "active · priority: high · planning" (2026-10-31). */
+type BylineTags = { filing: string | null; regionLabel: string | null; indication: string | null; status: string | null; priority: string | null };
+/** The byline's words, each with its tone: the status only when it is not "active", the priority only when high. */
+function bylineChips(t: BylineTags): Array<{ text: string; tone: string }> {
+  const chips: Array<{ text: string; tone: string }> = [];
+  for (const text of [t.filing, t.regionLabel, t.indication]) if (text) chips.push({ text, tone: '' });
+  const status = t.status && t.status !== 'active' ? enumWords(t.status) : null;
+  if (t.status && status) chips.push({ text: status, tone: PROGRAM_STATUS_TONE[t.status] ?? 'tone-idle' });
+  if (t.priority === 'high' || t.priority === 'critical') chips.push({ text: `${enumWords(t.priority)} priority`, tone: PRIORITY_TONE[t.priority] ?? 'tone-idle' });
+  return chips;
+}
+
+function ProjectTags({ tags }: { tags: BylineTags }) {
+  const chips = bylineChips(tags);
+  if (chips.length === 0) return null;
   return (
-    <div className="pj-tags">
-      {t.clientType && <span className="rd-chip tone-ai">{WS_LABEL[t.clientType] ?? t.clientType}</span>}
-      {t.submissionType && <span className="rd-chip tone-idle">{t.submissionType}</span>}
-      {t.regionLabel && <span className="rd-chip tone-idle">{t.regionLabel}</span>}
-      {t.indication && <span className="rd-chip tone-idle">{t.indication}</span>}
-      {t.status && <span className={`rd-chip ${PROGRAM_STATUS_TONE[t.status] ?? 'tone-idle'}`}>{enumWords(t.status)}</span>}
-      {t.priority && <span className={`rd-chip ${PRIORITY_TONE[t.priority] ?? 'tone-idle'}`}>{enumWords(t.priority)} priority</span>}
-      {t.phase && <span className="rd-chip tone-idle">{enumWords(t.phase)}</span>}
-    </div>
+    <p className="pj-tags pj-byline">
+      {chips.map((c) => <span key={c.text} className={c.tone ? `rd-chip ${c.tone}` : 'rd-chip'}>{c.text}</span>)}
+    </p>
   );
 }
 
@@ -1756,7 +1774,9 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   };
   const productName = sel?.product || prog?.product_name || (title ? title.split(' ')[0] : 'this project');
   const desc = prog?.description ?? null;
-  const clientType = sel?.ws ?? null;
+  /* The list carries the client type it projected (workstreamSqlCase); a page opened by its address derives it the
+     same way from the project's own read, so it is never "not recorded" for a filing whose type says it (D3-1 walk). */
+  const clientType = sel?.ws ?? workstreamForFilingType(prog?.program_type, prog?.product_type) ?? null;
   /* A filing document class is named by its label ("Prior Approval
      Supplement"), never its key ("pas"). */
   const submissionType = sel?.code || prog?.code || filingDocumentClassOf(prog?.program_type)?.label || prog?.program_type || null;
@@ -1790,7 +1810,8 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   const deviceFiling = isDeviceOrDiagnosticProgram(prog) || clientType === 'MDX';
   const lifecycle = deviceFiling ? PJ_LIFECYCLE.map(item => item.id === 'plan' ? { ...item, now: item.nowDevice ?? item.now } : item.id === 'author'
     ? { ...item, blurb: 'Author filing documents from the project’s device or diagnostic evidence', now: item.nowDevice ?? item.now }
-    : item.id === 'submit' ? { ...item, blurb: 'Assemble eSTAR or the applicable technical documentation', now: item.nowDevice ?? item.now } : item) : PJ_LIFECYCLE;
+    : item.id === 'submit' ? { ...item, blurb: 'Assemble eSTAR or the applicable technical documentation', now: item.nowDevice ?? item.now } : item)
+    .map(item => ({ ...item, starter: item.starterDevice ?? item.starter })) : PJ_LIFECYCLE;
   /* A filing document class (a PAS, a CSR, a meeting package) is authored
      here and never built as a sequence, so it is no eCTD filing either
      (shared/regulatory/filing-document-classes.ts; review finding, 2026-10-18). */
@@ -1971,22 +1992,43 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
     if (step || target) chooseStage(step ?? 'review');
   }, [pid, chooseStage]);
 
+  /* The filing in words for the byline ("IND", "510(k)"), not the project's code (D3.md §4.2). */
+  const filingWords = filingTypeWords(prog?.program_type) ?? filingDocumentClassOf(prog?.program_type)?.label ?? submissionType;
+  /* Claude's project header (D3-1, D3.md §4.2–4.3): the name in the serif with its settings beside it, one quiet
+     byline, the description, then the objective of record (S1). It heads the main column when the project
+     reads, and stands above the empty or error state when it does not. */
+  const header = (
+    <header className="pj-top">
+      <div className="pj-top-l">
+        <div className="pj-title-row">
+          {/* The surface's own name when there is no project name to show —
+              a label for the screen, not a name posing as a project's. */}
+          <h1 className="pj-title">{title ?? 'Project home'}</h1>
+          {pid && <ProjectSettings programId={pid} onSaved={() => setMetadataEpoch(value => value + 1)} />}
+        </div>
+        {progState.loading && <p role="status" className="pj-byline">Loading project…</p>}
+        <ProjectTags tags={{ filing: filingWords, regionLabel, indication, status, priority }} />
+        {desc && <p className="pj-desc">{desc}</p>}
+        {pid && prog?.id === pid && <ProjectObjective programId={pid} canEdit={prog.canChange !== false} onAsk={onAsk} />}
+      </div>
+    </header>
+  );
+  /* The composer's suggestions for the open step (D3.md §4.4), at most three: the step's own question (none on
+     Submit for a filing that builds no sequence; on Plan, which documents it needs when no plan is listed), then
+     the due work. The band that said "What to do now" is retired; this is where its guidance went. */
+  const sequenced = !documentClass && !regionalApplication;
+  const planListed = usInd || (!!pid && !!biotechPlanEntry(prog, pid)) || (deviceFiling && prog?.id === pid && !!mdxProjectPlan(prog));
+  const openStep = lifecycle.find(s => s.id === stage);
+  const stepStarter = stage === 'submit' && !sequenced ? null
+    : stage === 'plan' && !planListed ? 'Which documents does this filing need?'
+      : openStep?.starter ?? null;
+  const starters = [stepStarter, 'What is due this week, and who has it?'].filter((v): v is string => Boolean(v));
+
   return (
     <div className="page-inner pj">
       <button className="pj-back" onClick={() => onNav('projects')}>{I.left} All projects</button>
 
-      <div className="pj-top">
-        <div className="pj-top-l">
-          {/* The surface's own name when there is no project name to show —
-              a label for the screen, not a name posing as a project's. */}
-          <h1 className="pj-title">{title ?? 'Project home'}</h1>
-          {progState.loading && <div role="status" className="pj-desc" style={{ color: 'var(--text-400)' }}>Loading project…</div>}
-          {desc && <div className="pj-desc">{desc}</div>}
-          <ProjectTags tags={{ clientType, submissionType, regionLabel, indication, status, priority, phase }} />
-        </div>
-        {pid && <ProjectSettings programId={pid} onSaved={() => setMetadataEpoch(value => value + 1)} />}
-      </div>
-
+      {(noProject || progState.error) && header}
       {noProject ? (
         <EmptyState
           icon={I.folder}
@@ -2004,16 +2046,17 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
       ) : (
         <div className="pj-grid">
           <div className="pj-main">
+          {header}
           {/* Claude's project page (founder, 2026-11-01): the conversation with
               AnA first, then the work. The composer sits outside the step
               switch, so a half-typed message survives a change of step. */}
-          {pid && <StartConversation productName={productName} onNav={onNav} />}
+          {pid && <StartConversation productName={productName} onNav={onNav} starters={starters} />}
+          {/* The project's conversations, under the composer as Claude lists them (D3.md §4.5). */}
+          {pid && <ProjectConversations pid={pid} onNav={onNav} />}
           {/* A lifecycle belongs to a project; with none selected nothing here
               renders (the empty state above stands instead). */}
           <StageTracker stage={stage} setStage={chooseStage} lifecycle={lifecycle} />
-          {/* A filing that builds no sequence: NotSequencedState says what its Submit is. */}
-          <StageBand stage={stage} lifecycle={lifecycle} onStage={chooseStage} sequenced={!documentClass && !regionalApplication}
-            planListed={usInd || !!biotechPlanEntry(prog, pid) || (deviceFiling && prog?.id === pid && !!mdxProjectPlan(prog))} />
+          {openStep && <p className="pj-step-blurb">{openStep.blurb}</p>}
           {/* Plan — what the filing needs, who does it and by when, then the
               team and the project's tasks, moved from Author (pass 3). */}
           {stage === 'plan' && pid && (
@@ -2097,7 +2140,8 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
           {/* Beside every step (CLIENT_JOURNEY pass 4, decision 5): AnA's start box and the conversations held on
               this project. The steps come first; this column is outside the step switch, so a half-typed message
               survives a change of step (FILING_SPINE.md §2). Author adds its readiness and skills cards. */}
-          <aside className="pj-side pj-step-side" aria-label="About this project, and its conversations">
+          <aside className="pj-side" aria-labelledby="pj-knowledge-h">
+            <h2 id="pj-knowledge-h" className="pj-side-h">Project knowledge</h2>
             {/* Like Claude's project knowledge: what the project is, where its
                 filing stands, and its conversations, beside the work. */}
             <section className="pj-about" aria-label="About this project">
@@ -2106,6 +2150,12 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                   <dl className="pj-fact"><dt>Client</dt><dd>{clientName ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
                   <dl className="pj-fact"><dt>Product</dt><dd>{prog.product_name ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
                   <dl className="pj-fact"><dt>Indication</dt><dd>{indication ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  {/* The byline's former facts (D3-1, zero capability loss; D3.md §4.8 item 1). */}
+                  <dl className="pj-fact"><dt>Client type</dt><dd>{clientType ? (WS_LABEL[clientType] ?? enumWords(clientType)) : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Code</dt><dd>{sel?.code || prog.code || <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Phase</dt><dd>{phase ? enumWords(phase) : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Status</dt><dd>{status ? enumWords(status) : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Priority</dt><dd>{priority ? enumWords(priority) : <span className="pj-fact-none">not recorded</span>}</dd></dl>
                   {deviceProgram ? (
                     <>
                       <dl className="pj-fact"><dt>Device class</dt><dd>{prog.device_class ? `Class ${prog.device_class}` : <span className="pj-fact-none">not recorded</span>}</dd></dl>
@@ -2127,14 +2177,12 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                   )}
                 </section>
               )}
-              {pid && prog?.id === pid && <ProjectObjective programId={pid} canEdit={prog.canChange !== false} onAsk={onAsk} />}
               <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav} />
               {pid && !progState.error && (
                 <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }}
                   onOpenMarket={(submissionId) => openMarketOnSubmit(chooseStage, submissionId)} />
               )}
             </section>
-            {pid && <ProjectConversations pid={pid} onNav={onNav} />}
             {stage === 'author' && <ProjectSide pid={pid} dossier={dossier} copyFor={filingCopyIn(docsRead)} onOpenDoc={openDocument} onAsk={onAsk} />}
           </aside>
         </div>
