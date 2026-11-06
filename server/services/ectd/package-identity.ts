@@ -265,7 +265,7 @@ export function packageIdentityRefusal(
 ): PackageIdentityMissingError | null {
   const { missing, gaps } = packageIdentityGaps(identity, options);
   return missing.length ? new PackageIdentityMissingError(missing,
-    `A package names its application and its applicant from the record, never a placeholder, and ${gaps.join('; and ')}. ${outcome}`) : null;
+    `A package names its application and its applicant from the record, never a placeholder, and ${gaps.map((g) => g.trim().replace(/\.+$/, '')).join('; and ')}. ${outcome}`) : null;
 }
 
 /**
