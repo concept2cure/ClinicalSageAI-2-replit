@@ -9,12 +9,12 @@ import { ProjectRecords } from './ProjectRecords';
 
    They were Author-only until 2026-11-06. The dossier's readiness card left this column then: its figure is the
    Filing card's first row, and its detail is on the Author step beside Module completion. */
-export function ProjectSide({ pid, onAsk }: { pid: string | null; onAsk?: (text: string) => void }) {
+export function ProjectSide({ pid, onAsk, activity }: { pid: string | null; onAsk?: (text: string) => void; activity?: React.ReactNode }) {
   return (
     <>
       <ProjectRecordedContext programId={pid} />
       {pid && <ProjectSkills projectRef={pid} onAsk={onAsk} />}
-      {pid && <ProjectRecords pid={pid} />}
+      {pid && <ProjectRecords pid={pid} activity={activity} />}
     </>
   );
 }

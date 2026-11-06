@@ -196,13 +196,21 @@ describe('one read, several readers (D3-2b)', () => {
     id, sourceType: 'agency_letter', communicationType: 'information_request', sourceChannel: 'email', linkedSectionCodes: [],
     receivedDate: '2099-01-02', dueDate, urgency: 'high', responseRequired: true, extractedIssues: [], humanReviewStatus: 'pending', closureStatus,
   });
-  function serveAll(work: Response = ok(WORK), comms: Response = ok([letter('c1', 'open', '2099-02-20'), letter('c2', 'closed', '2099-01-01')])) {
+  const COMMIT_URL = '/api/concept2cure/projects/51/commitments';
+  const commitment = (id: number, effectiveStatus: string, due_date: string | null) => ({
+    id, commitment_type: 'post_marketing', description: `Commitment ${id}`, regulatory_basis: null, due_date, status: effectiveStatus,
+    fulfilled_date: null, effectiveStatus, project_id: 51, fulfilment: { state: 'not_started', rule: { signatureRequired: false } },
+  });
+  const COMMITMENTS = { commitments: [commitment(1, 'open', '2099-12-01'), commitment(2, 'overdue', '2020-03-01'), commitment(3, 'fulfilled', '2019-01-01')] };
+  function serveAll(work: Response = ok(WORK), comms: Response = ok([letter('c1', 'open', '2099-02-20'), letter('c2', 'closed', '2099-01-01')]),
+    commits: Response = ok(COMMITMENTS)) {
     request.mockImplementation(async (_method: string, path: string) => {
       if (path === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'Programme A' });
       if (path === `/api/c2c/projects/${PID}/team`) return ok(TEAM);
       if (path === URL) return ok(sharing());
       if (path === WORK_URL) return work;
       if (path === COMMS_URL) return comms;
+      if (path === COMMIT_URL) return commits;
       return ok({});
     });
   }
@@ -243,5 +251,21 @@ describe('one read, several readers (D3-2b)', () => {
     await screen.findByRole('region', { name: 'Tasks and approvals' });
     expect(calls(WORK_URL)).toBe(1);
     expect(calls(COMMS_URL)).toBe(1);
+  });
+
+  /* D3-2b, second half: the commitments to the agency, read by the verified integer project id the route takes. */
+  it('the Filing card says the open commitments, how many are overdue and the next due date, and opens Respond', async () => {
+    serveAll(); render(<ProjectHome {...props} />);
+    const filing = await screen.findByRole('region', { name: /^Filing$/ });
+    const row = await within(filing).findByRole('button', { name: 'Commitments: 2 open · 1 overdue · next due Mar 1, 2020' });
+    expect(request.mock.calls.some(([, path]) => path === COMMIT_URL)).toBe(true);
+    fireEvent.click(row);
+    await waitFor(() => expect(document.querySelector('.pj-lc-stage[aria-current="step"]')?.textContent?.trim()).toBe('Respond'));
+  });
+
+  it('a commitments read that failed says so, never "None open"', async () => {
+    serveAll(undefined, undefined, { ...ok({}), ok: false, status: 503 } as Response); render(<ProjectHome {...props} />);
+    const filing = await screen.findByRole('region', { name: /^Filing$/ });
+    expect(await within(filing).findByRole('button', { name: 'Commitments: Could not be read' })).toBeTruthy();
   });
 });
