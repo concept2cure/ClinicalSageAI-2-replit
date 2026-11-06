@@ -39,6 +39,11 @@
  * @module server/services/ana/governed-tool-gate
  */
 
+import { createHash } from 'node:crypto';
+import { stableStringify } from '../../../shared/canonical-json.js';
+import type { SkillPolicyApproval } from '../../../shared/ana/skills.js';
+import type { MandatorySkillGate } from '../account-skill-bundles.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
 import { isProposeOnlyCommand } from '../ana-ri/command-rbac.js';
 import { governedTierOf } from '../ana-ri/part11-governance.js';
 import { REASON_REQUIRED_TOOLS } from './stated-reason-input.js';
@@ -59,7 +64,7 @@ export type ToolGateVerdict =
   /** Runs as usual. Nothing to ask. */
   | { kind: 'UNGOVERNED' }
   /** A person must authorise it. Carries what they are authorising. */
-  | { kind: 'NEEDS_APPROVAL'; command: string; params: Record<string, unknown>; tier: ApprovalTier }
+  | { kind: 'NEEDS_APPROVAL'; command: string; params: Record<string, unknown>; tier: ApprovalTier; skillPolicyApproval?: SkillPolicyApproval }
   /**
    * The call could not be read, so it cannot be cleared. Distinct from
    * UNGOVERNED on purpose — see the module docstring.
@@ -92,7 +97,18 @@ function asRecord(v: unknown): Record<string, unknown> | null {
  * person at the confirm tier; a person's own act is refused outright; a tool
  * the register does not know is proposed.
  */
-export function classifyToolCall(call: ClassifiableToolCall): ToolGateVerdict {
+export function classifyToolCall(call: ClassifiableToolCall, gates?: ToolSkillGateSnapshot | null): ToolGateVerdict {
+  const base = classifyBaseToolCall(call);
+  if (!gates || base.kind === 'REFUSED' || base.kind === 'UNDECIDABLE' || toolAuthorizationOf(call.name, call.input).class === 'refuse') return base;
+  const approval = skillPolicyApprovalFor(call, gates);
+  if (!approval) return base;
+  if (base.kind === 'NEEDS_APPROVAL') return { ...base, skillPolicyApproval: approval };
+  const params = asRecord(call.input);
+  return params ? { kind: 'NEEDS_APPROVAL', command: call.name, params, tier: registeredToolTier(call.name), skillPolicyApproval: approval }
+    : { kind: 'UNDECIDABLE', why: 'the policy-gated call carried no arguments object' };
+}
+
+function classifyBaseToolCall(call: ClassifiableToolCall): ToolGateVerdict {
   if (call.inputParseError) {
     return { kind: 'UNDECIDABLE', why: `arguments did not parse: ${call.inputParseError}` };
   }
@@ -149,4 +165,83 @@ function classifyRegisteredTool(call: ClassifiableToolCall): ToolGateVerdict {
   const toolInput = asRecord(call.input);
   if (!toolInput) return { kind: 'UNDECIDABLE', why: 'the call carried no arguments object' };
   return { kind: 'NEEDS_APPROVAL', command: call.name, params: toolInput, tier: registeredToolTier(call.name) };
+}
+
+
+export interface SkillGateToolScope {
+  organizationId?: number | null;
+  userId?: number | null;
+  projectId?: number | null;
+  projectRef?: string | null;
+  sqlClient?: RequestSqlClient;
+}
+export interface ToolSkillGateSnapshot {
+  organizationId: number;
+  userId: number | null;
+  projectId: number | null;
+  rules: MandatorySkillGate[];
+  ruleHash: string;
+}
+
+/** Policy admission is a current database read, never the model's selected skills. */
+export async function loadToolSkillGates(scope?: SkillGateToolScope, call?: ClassifiableToolCall): Promise<ToolSkillGateSnapshot | null> {
+  if (scope?.organizationId == null) return null;
+  if (!Number.isSafeInteger(scope.organizationId) || scope.organizationId <= 0) throw new Error('Invalid policy tenant');
+  const [{ loadMandatorySkillGates }, { admitAnaProjectScope }] = await Promise.all([
+    import('../account-skill-bundles.js'), import('./project-scope-admission.js'),
+  ]);
+  const client = scope.sqlClient ?? (await import('../../db/runtime.js')).getPool();
+  let project = await admitAnaProjectScope(client, { organizationId: scope.organizationId, userId: scope.userId, projectId: scope.projectId, projectRef: scope.projectRef });
+  const input = asRecord(call?.input);
+  // Project bindings are supported only for this proven, actually consumed target.
+  // Other tools can have tenant bindings; arbitrary similarly named arguments do not define their scope.
+  const targets = (call?.name === 'check_dossier_consistency' ? [input?.project_id] : [])
+    .filter(value => value !== undefined && value !== null && value !== '');
+  for (const target of targets) {
+    const admitted = await admitAnaProjectScope(client, { organizationId: scope.organizationId, userId: scope.userId, projectRef: target });
+    if (project.projectId !== null && admitted.projectId !== project.projectId) throw new Error('The action targets a different project');
+    project = admitted;
+  }
+  return { organizationId: scope.organizationId, userId: scope.userId ?? null, projectId: project.projectId,
+    ...await loadMandatorySkillGates(client, scope.organizationId, project.projectId) };
+}
+
+/** Exact held action, including tenant and project; none of these hashes confers authority on its own. */
+export function skillPolicyApprovalFor(call: ClassifiableToolCall, gates: ToolSkillGateSnapshot): SkillPolicyApproval | null {
+  if (!gates.rules.some(rule => rule.toolName === call.name)) return null;
+  return { rulesHash: gates.ruleHash, actionHash: createHash('sha256').update(stableStringify({
+    organizationId: gates.organizationId, userId: gates.userId, projectId: gates.projectId, tool: call.name, input: call.input,
+  })).digest('hex') };
+}
+
+const confirmedSkillContexts = new WeakMap<object, SkillPolicyApproval>();
+
+/** Only the held approval route calls this, after its current-policy and exact-action checks. */
+export function authorizeSkillGateContext(context: object, approval: SkillPolicyApproval): void {
+  confirmedSkillContexts.set(context, Object.freeze({ ...approval }));
+}
+
+/** A serialized body flag/hash cannot reproduce this one-use, process-local authorization. */
+export function consumeSkillGateAuthorization(context: object, expected: SkillPolicyApproval | null): boolean | null {
+  const approved = confirmedSkillContexts.get(context);
+  confirmedSkillContexts.delete(context);
+  if (!approved) return null;
+  return expected !== null && approved.actionHash === expected.actionHash && approved.rulesHash === expected.rulesHash;
+}
+
+
+/** Current held-action validation happens before any approval claim or sign-off. */
+export async function validateHeldSkillApproval(scope: SkillGateToolScope | null, call: ClassifiableToolCall, approved?: SkillPolicyApproval): Promise<
+  { gates: ToolSkillGateSnapshot | null } | { status: number; code: string; error: string }
+> {
+  if (!scope) return { gates: null };
+  if (classifyToolCall(call).kind === 'REFUSED') return { status: 400, code: 'NOT_AN_ANA_ACTION', error: 'This is not an action AnA can take on a confirmation' };
+  let gates: ToolSkillGateSnapshot | null;
+  try { gates = await loadToolSkillGates(scope, call); }
+  catch { return { status: 503, code: 'SKILL_POLICY_UNAVAILABLE', error: 'Current organization and project rules could not be verified. Nothing was run.' }; }
+  const current = gates ? skillPolicyApprovalFor(call, gates) : null;
+  if ((approved || current) && (!approved || !current || approved.actionHash !== current.actionHash || approved.rulesHash !== current.rulesHash)) {
+    return { status: 409, code: 'SKILL_POLICY_CHANGED', error: 'The action or its approval rules changed. Ask AnA to propose it again.' };
+  }
+  return { gates };
 }

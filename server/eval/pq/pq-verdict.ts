@@ -28,7 +28,7 @@
 
 import { RAG_EMPTY_CONTEXT_REFUSAL } from '../../services/rag-generation-request.js';
 
-import { verifyCanonicalPqClaim } from './verify-pq-record.js';
+import { verifyCanonicalPqClaim, type CanonicalPqEvidence } from './verify-pq-record.js';
 import {
   extractionCriteriaProblems,
   isFloor,
@@ -670,6 +670,8 @@ export function computeVerdict(
 /** The record the runner writes, and the registry's `pq.reference` points at. */
 export interface PqRecord {
   kind: 'pq-record';
+  /** This harness measures drafting; other task classes need their own qualification evidence. */
+  intendedUses?: readonly string[];
   protocolId: string;
   protocolVersion: string;
   protocolStatus: 'draft' | 'approved';
@@ -698,7 +700,8 @@ export interface RegistryPqClaim {
   id: string;
   pinnedVersion: string;
   provider?: string;
-  pq: { status: 'pending' | 'passed' | 'failed'; reference: string | null };
+  pq: { status: 'pending' | 'passed' | 'failed'; reference: string | null;
+    intendedUses?: readonly string[]; recordSha256?: string; pinKind?: 'provider_snapshot' | 'weights_sha256' };
 }
 
 /**
@@ -710,6 +713,6 @@ export interface RegistryPqClaim {
  * which is what "re-validation is owed" in the registry has always meant, and
  * until now nothing checked.
  */
-export function verifyPqClaim(entry: RegistryPqClaim, readRecord: (ref: string) => unknown): string[] {
-  return verifyCanonicalPqClaim(entry, readRecord, { computeVerdict, servedModelMatches });
+export function verifyPqClaim(entry: RegistryPqClaim, readRecord: (ref: string) => unknown, evidence?: CanonicalPqEvidence): string[] {
+  return verifyCanonicalPqClaim(entry, readRecord, { computeVerdict, servedModelMatches }, evidence);
 }

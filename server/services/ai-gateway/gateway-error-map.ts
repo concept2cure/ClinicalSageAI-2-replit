@@ -275,6 +275,8 @@ function classifyPolicyRefusal(err: unknown): ClassifiedGatewayError | null {
 function classifyModelGovernanceRefusal(err: unknown): ClassifiedGatewayError | null {
   if (!(err instanceof GatewayPolicyError)) return null;
   const { code, reason } = err as { code?: unknown; reason?: unknown };
+  if (code === 'QUALIFIED_MODEL_PIN_REFUSED') return { code: 'MODEL_NOT_QUALIFIED', message: err.message };
+  if (code === 'TENANT_CREDENTIAL_UNAVAILABLE') return { code: 'PROVIDER_UNAVAILABLE', message: err.message };
   if (code === 'MODEL_NOT_PQ_QUALIFIED') return { code: 'MODEL_NOT_QUALIFIED', message: NO_PQ_QUALIFIED_MODEL };
   if (code !== 'MODEL_NOT_GOVERNED') return null;
   return { code: 'MODEL_NOT_QUALIFIED', message: MODEL_NOT_GOVERNED_COPY[String(reason)] ?? MODEL_NOT_GOVERNED_COPY['no-entry'] };

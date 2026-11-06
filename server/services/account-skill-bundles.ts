@@ -10,7 +10,10 @@
  * @module server/services/account-skill-bundles
  */
 
+import { createHash } from 'node:crypto';
 import { pool } from '../db.js';
+import { TOOL_REGISTER } from './ana/tool-authorization.js';
+import { PROJECT_SKILL_APPROVAL_TOOLS, type SkillApprovalBinding } from '../../shared/ana/skills.js';
 import { appendEvent } from './account-canon.js';
 import { writeChainedAuditRow } from './auditService.js';
 
@@ -50,6 +53,8 @@ export interface SkillActor {
 
 /** The fields an administrator writes. Lists are already validated against the vocabulary. */
 export interface OrgSkillFields {
+  policyBindings?: SkillApprovalBinding[];
+  sourceAuditEventId?: string | null;
   name: string;
   description: string;
   instructions: string;
@@ -137,11 +142,103 @@ export function instructionsOfBundle(row: Record<string, unknown>): string {
   return parts.join('\n\n');
 }
 
+/** Strict on populated runtime restrictions: corrupt policy is never no policy. */
+export function approvalBindingsOf(value: unknown): SkillApprovalBinding[] {
+  if (value == null) return [];
+  const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+  if (!Array.isArray(parsed) || parsed.length > 12) throw new OrgSkillRefusal(409, 'INVALID_RULE_POLICY', 'The standing approval rules could not be verified.');
+  return parsed.map(binding => {
+    if (!binding || binding.policyType !== 'requires_approval' || binding.enforcement !== 'mandatory' ||
+        typeof binding.toolName !== 'string' || ['execute_platform_command', 'run_agent'].includes(binding.toolName) ||
+        !Object.prototype.hasOwnProperty.call(TOOL_REGISTER, binding.toolName) ||
+        typeof binding.description !== 'string' || binding.description.trim().length < 8 || binding.description.length > 600) {
+      throw new OrgSkillRefusal(409, 'INVALID_RULE_POLICY', 'The standing approval rules could not be verified.');
+    }
+    return { policyType: 'requires_approval', enforcement: 'mandatory', toolName: binding.toolName, description: binding.description };
+  });
+}
+
+function sourceAuditEventOf(metadata: unknown): string | null {
+  const source = objectOf(objectOf(metadata)?.standingRule)?.sourceAuditEventId;
+  return typeof source === 'string' ? source.toLowerCase() : null;
+}
+
+const RULE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const positiveId = (value: unknown): boolean => Number.isSafeInteger(Number(value)) && Number(value) > 0;
+const bundleProject = (row: Record<string, unknown>): number | null => row.project_id == null ? null : Number(row.project_id);
+
+function unsupportedSource(): never {
+  throw new OrgSkillRefusal(422, 'RULE_SOURCE_SCOPE_UNVERIFIED', 'Choose a recorded skill correction whose organization or project scope can be verified.');
+}
+
+/** Resolve only the event schemas whose writers establish their actual scope. */
+async function sourceProjectOf(client: SkillReadClient, organizationId: number, event: Record<string, unknown>): Promise<number | null> {
+  switch (event.table_name) {
+    case 'organization_skill_settings':
+      if (!['ana_skill.library_enabled', 'ana_skill.library_disabled'].includes(String(event.action))) unsupportedSource();
+      return null;
+    case 'account_skill_bundles': {
+      if (!['ana_skill.created', 'ana_skill.updated'].includes(String(event.action))) unsupportedSource();
+      const owner = await client.query('SELECT project_id FROM account_skill_bundles WHERE bundle_id = $1 AND organization_id = $2', [event.record_id, organizationId]);
+      if (owner.rows.length !== 1) unsupportedSource();
+      return bundleProject(owner.rows[0]);
+    }
+    case 'project_skill_settings': {
+      if (!['ana_skill.project_deployed', 'ana_skill.project_turned_off', 'ana_skill.project_cleared'].includes(String(event.action))) unsupportedSource();
+      const projectId = objectOf(event.new_values)?.projectId;
+      if (typeof projectId !== 'number' || typeof event.record_id !== 'string' || !event.record_id.startsWith(`${projectId}:`)) unsupportedSource();
+      return projectId;
+    }
+    default: return unsupportedSource();
+  }
+}
+
+/** Provenance is checked on the same executor as the guarded write or call. */
+async function validateRuleSource(client: SkillReadClient, organizationId: number, projectId: number | null, sourceAuditEventId: string): Promise<void> {
+  const source = await client.query(
+    'SELECT id, table_name, record_id, action, user_id, new_values FROM audit_logs WHERE id = $1 AND tenant_id = $2',
+    [sourceAuditEventId, organizationId],
+  );
+  const event = source.rows[0];
+  if (source.rows.length !== 1 || event.id !== sourceAuditEventId) {
+    throw new OrgSkillRefusal(422, 'RULE_SOURCE_NOT_FOUND', 'The source audit record is not available in this organization.');
+  }
+  if (!positiveId(event.user_id)) throw new OrgSkillRefusal(422, 'RULE_SOURCE_ACTOR_UNVERIFIED', 'The correction source needs its recorded actor.');
+  const sourceProject = await sourceProjectOf(client, organizationId, event);
+  if (sourceProject !== null && (!positiveId(sourceProject) || sourceProject !== projectId)) {
+    throw new OrgSkillRefusal(422, 'RULE_SOURCE_SCOPE_MISMATCH', 'A project correction can only govern that project; it cannot govern another project or the whole organization.');
+  }
+}
+
+function assertProjectTools(bindings: SkillApprovalBinding[], projectId: number | null): void {
+  if (projectId !== null && bindings.some(binding => !(PROJECT_SKILL_APPROVAL_TOOLS as readonly string[]).includes(binding.toolName))) {
+    throw new OrgSkillRefusal(422, 'PROJECT_RULE_TOOL_UNSUPPORTED', 'This action does not yet have a verified project target for a mandatory project rule.');
+  }
+}
+
+async function ruleMetadata(client: SkillTxClient, organizationId: number, fields: OrgSkillFields, previous?: Record<string, unknown>) {
+  const bindings = approvalBindingsOf(fields.policyBindings ?? previous?.policy_bindings);
+  const owningProject = previous ? bundleProject(previous) : fields.projectId;
+  assertProjectTools(bindings, owningProject);
+  const sourceAuditEventId = fields.sourceAuditEventId === undefined ? sourceAuditEventOf(previous?.metadata) : fields.sourceAuditEventId?.toLowerCase() ?? null;
+  if (bindings.length && !sourceAuditEventId) {
+    throw new OrgSkillRefusal(422, 'RULE_SOURCE_REQUIRED', 'A standing approval rule needs its recorded source in this organization.');
+  }
+  if (sourceAuditEventId) {
+    if (!RULE_UUID.test(sourceAuditEventId)) throw new OrgSkillRefusal(422, 'RULE_SOURCE_REQUIRED', 'A standing rule needs a valid recorded correction source.');
+    await validateRuleSource(client, organizationId, owningProject, sourceAuditEventId);
+  }
+  const metadata = { ...(objectOf(previous?.metadata) ?? {}), standingRule: sourceAuditEventId ? { sourceAuditEventId } : null };
+  return { bindings, metadata };
+}
+
 function toRecord(row: Record<string, unknown>): OrgSkillRecord {
   const mode = row.extension_mode === 'addendum' || row.extension_mode === 'replace' ? row.extension_mode : null;
   const status = String(row.status ?? 'draft');
   return {
     id: Number(row.id),
+    policyBindings: approvalBindingsOf(row.policy_bindings),
+    sourceAuditEventId: sourceAuditEventOf(row.metadata),
     bundleId: String(row.bundle_id),
     name: String(row.name ?? ''),
     description: String(row.description ?? ''),
@@ -175,12 +272,82 @@ export async function listOrgSkills(
     `SELECT id, bundle_id, name, description, bundle_type, prompt_fragments, evidence_preferences,
               authority_response_style, module_types, work_types, submission_types, regulatory_regions,
               segments, therapeutic_areas, surfaces, document_types, triggers, tool_names,
-              extends_skill_key, extension_mode, project_id, status, version, updated_at FROM account_skill_bundles
+              extends_skill_key, extension_mode, project_id, status, version, updated_at, policy_bindings, metadata FROM account_skill_bundles
       WHERE organization_id = $1 AND ($2::boolean OR status <> 'archived')
       ORDER BY name, id`,
     [organizationId, options.includeArchived === true],
   );
   return rows.map(toRecord);
+}
+
+/** A sourced runtime restriction, independent of prompt skill selection. */
+export interface MandatorySkillGate {
+  skillId: number;
+  bundleId: string;
+  version: number;
+  projectId: number | null;
+  sourceAuditEventId: string;
+  toolName: string;
+  description: string;
+}
+
+function storedGateIdentity(row: Record<string, unknown>, organizationId: number, projectId: number | null) {
+  const scopedProject = bundleProject(row);
+  if (Number(row.organization_id) !== organizationId || !['active', 'locked'].includes(String(row.status)) ||
+      (scopedProject !== null && scopedProject !== projectId)) {
+    throw new OrgSkillRefusal(409, 'INVALID_RULE_POLICY', 'The standing approval rule scope could not be verified.');
+  }
+  const sourceAuditEventId = sourceAuditEventOf(row.metadata);
+  if (!positiveId(row.id) || !positiveId(row.version) || typeof row.bundle_id !== 'string' || !row.bundle_id ||
+      !sourceAuditEventId || !RULE_UUID.test(sourceAuditEventId)) {
+    throw new OrgSkillRefusal(409, 'INVALID_RULE_POLICY', 'The standing approval rules could not be verified.');
+  }
+  return { id: Number(row.id), version: Number(row.version), scopedProject, sourceAuditEventId, bundleId: row.bundle_id };
+}
+
+/**
+ * Read the union of tenant and current-project mandatory rules on the trusted
+ * executor. Prompt relevance, project skill off/picks and replacement settings
+ * never enter this query. Any unreadable or malformed populated rule refuses;
+ * it is never converted to an empty rule set.
+ */
+export async function loadMandatorySkillGates(
+  client: SkillReadClient,
+  organizationId: number,
+  projectId: number | null,
+): Promise<{ rules: MandatorySkillGate[]; ruleHash: string }> {
+  if (!Number.isSafeInteger(organizationId) || organizationId <= 0 ||
+      (projectId !== null && (!Number.isSafeInteger(projectId) || projectId <= 0))) {
+    throw new OrgSkillRefusal(403, 'RULE_SCOPE_UNVERIFIED', 'The standing rules need a verified organization and project scope.');
+  }
+  const { rows } = await client.query(
+    `SELECT id, bundle_id, organization_id, project_id, version, status, policy_bindings, metadata
+       FROM account_skill_bundles
+      WHERE organization_id = $1 AND status NOT IN ('draft', 'archived')
+        AND (project_id IS NULL OR project_id = $2)
+      ORDER BY bundle_id, id`, [organizationId, projectId],
+  );
+  const rules: MandatorySkillGate[] = [];
+  const checkedSources = new Set<string>();
+  for (const row of rows) {
+    const bindings = approvalBindingsOf(row.policy_bindings);
+    if (!bindings.length) continue;
+    const { id, version, scopedProject, sourceAuditEventId, bundleId } = storedGateIdentity(row, organizationId, projectId);
+    assertProjectTools(bindings, scopedProject);
+    const sourceKey = `${sourceAuditEventId}:${scopedProject ?? 'tenant'}`;
+    if (!checkedSources.has(sourceKey)) {
+      await validateRuleSource(client, organizationId, scopedProject, sourceAuditEventId);
+      checkedSources.add(sourceKey);
+    }
+    for (const binding of bindings) rules.push({
+      skillId: id, bundleId, version, projectId: scopedProject,
+      sourceAuditEventId, toolName: binding.toolName, description: binding.description,
+    });
+  }
+  const compare = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
+  rules.sort((a, b) => compare(a.bundleId, b.bundleId) || compare(a.toolName, b.toolName) || compare(a.description, b.description));
+  const ruleHash = createHash('sha256').update(JSON.stringify({ organizationId, projectId, rules })).digest('hex');
+  return { rules, ruleHash };
 }
 
 export interface SkillSettingRecord {
@@ -274,18 +441,19 @@ export async function createOrgSkill(
   const bundleId = generateId('bundle');
   try {
     return await inTransaction(pool, async client => {
+      const rules = await ruleMetadata(client, organizationId, fields);
       const { rows } = await client.query(
         `INSERT INTO account_skill_bundles
            (bundle_id, organization_id, name, description, bundle_type, module_types, work_types,
             submission_types, regulatory_regions, segments, therapeutic_areas, surfaces, document_types,
             triggers, tool_names, extends_skill_key, extension_mode, prompt_fragments, policy_bindings,
-            version, status, created_by_id, project_id, created_at, updated_at)
+            version, status, created_by_id, project_id, created_at, updated_at, metadata)
          VALUES ($1, $2, $3, $4, $5, $6::json, $7::json, $8::json, $9::json, $10::jsonb, $11::jsonb, $12::jsonb,
-                 $13::jsonb, $14::jsonb, $15::jsonb, $16, $17, $18::json, '[]'::json, 1, $19, $20, $21, NOW(), NOW())
+                 $13::jsonb, $14::jsonb, $15::jsonb, $16, $17, $18::json, $22::json, 1, $19, $20, $21, NOW(), NOW(), $23::json)
          RETURNING id, bundle_id, name, description, bundle_type, prompt_fragments, evidence_preferences,
               authority_response_style, module_types, work_types, submission_types, regulatory_regions,
               segments, therapeutic_areas, surfaces, document_types, triggers, tool_names,
-              extends_skill_key, extension_mode, project_id, status, version, updated_at`,
+              extends_skill_key, extension_mode, project_id, status, version, updated_at, policy_bindings, metadata`,
         [
           bundleId,
           organizationId,
@@ -308,6 +476,8 @@ export async function createOrgSkill(
           fields.status,
           actor.userId,
           fields.projectId,
+          JSON.stringify(rules.bindings),
+          JSON.stringify(rules.metadata),
         ],
       );
       const created = toRecord(rows[0]);
@@ -368,7 +538,7 @@ export async function updateOrgSkill(
         `SELECT id, bundle_id, name, description, bundle_type, prompt_fragments, evidence_preferences,
               authority_response_style, module_types, work_types, submission_types, regulatory_regions,
               segments, therapeutic_areas, surfaces, document_types, triggers, tool_names,
-              extends_skill_key, extension_mode, project_id, status, version, updated_at FROM account_skill_bundles
+              extends_skill_key, extension_mode, project_id, status, version, updated_at, policy_bindings, metadata FROM account_skill_bundles
           WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
         [id, organizationId],
       );
@@ -380,18 +550,19 @@ export async function updateOrgSkill(
       if (previous.status === 'archived' && fields.status !== 'draft') {
         throw new OrgSkillRefusal(409, 'ARCHIVED', 'An archived skill can only be restored as a draft.');
       }
+      const rules = await ruleMetadata(client, organizationId, fields, before.rows[0]);
       const { rows } = await client.query(
         `UPDATE account_skill_bundles SET
             name = $3, description = $4, bundle_type = $5, module_types = $6::json, work_types = $7::json,
             submission_types = $8::json, regulatory_regions = $9::json, segments = $10::jsonb,
             therapeutic_areas = $11::jsonb, surfaces = $12::jsonb, document_types = $13::jsonb,
             triggers = $14::jsonb, tool_names = $15::jsonb, extends_skill_key = $16, extension_mode = $17,
-            prompt_fragments = $18::json, status = $19, version = version + 1, updated_at = NOW()
+            prompt_fragments = $18::json, status = $19, policy_bindings = $20::json, metadata = $21::json, version = version + 1, updated_at = NOW()
           WHERE id = $1 AND organization_id = $2
           RETURNING id, bundle_id, name, description, bundle_type, prompt_fragments, evidence_preferences,
               authority_response_style, module_types, work_types, submission_types, regulatory_regions,
               segments, therapeutic_areas, surfaces, document_types, triggers, tool_names,
-              extends_skill_key, extension_mode, project_id, status, version, updated_at`,
+              extends_skill_key, extension_mode, project_id, status, version, updated_at, policy_bindings, metadata`,
         [
           id,
           organizationId,
@@ -412,6 +583,8 @@ export async function updateOrgSkill(
           fields.extensionMode,
           fragmentsOf(fields.instructions),
           fields.status,
+          JSON.stringify(rules.bindings),
+          JSON.stringify(rules.metadata),
         ],
       );
       const next = toRecord(rows[0]);

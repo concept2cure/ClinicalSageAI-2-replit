@@ -11,6 +11,7 @@
 import type { SkillReadClient } from '../../account-skill-bundles.js';
 
 export interface SkillHistoryEntry {
+  auditEventId?: string;
   occurredAt: string;
   action: string;
   actorName: string | null;
@@ -40,6 +41,7 @@ function entryOf(row: Record<string, unknown>): SkillHistoryEntry {
   const next = objectOf(objectOf(row.new_values)?.next);
   const at = row.occurred_at instanceof Date ? row.occurred_at.toISOString() : String(row.occurred_at ?? '');
   return {
+    auditEventId: typeof row.id === 'string' ? row.id : undefined,
     occurredAt: at,
     action: String(row.action ?? ''),
     actorName: typeof row.actor_name === 'string' ? row.actor_name : null,
@@ -66,7 +68,7 @@ export async function readOrgSkillHistory(
   const bundleId = skill.rows[0]?.bundle_id;
   if (typeof bundleId !== 'string') return null;
   const { rows } = await client.query(
-    `SELECT a.occurred_at, a.action, a.reason, a.new_values, u.name AS actor_name
+    `SELECT a.id, a.occurred_at, a.action, a.reason, a.new_values, u.name AS actor_name
        FROM audit_logs a
        LEFT JOIN users u ON u.id = a.user_id
       WHERE a.tenant_id = $1

@@ -20,6 +20,7 @@ import {
 import { getGateway } from '../services/ai-gateway/gateway';
 import {
   projectModelsForPicker,
+  projectQualifiedModelPins,
   EFFORT_LEVELS,
   DEFAULT_EFFORT,
 } from '../services/ai-gateway/effort';
@@ -120,6 +121,7 @@ router.post('/draft', async (req: Request, res: Response) => {
       enableThinking,
       thinkingBudget,
       enableTools,
+      qualifiedModelPin,
     } = req.body;
 
     const projectId = selectedDraftProject(req.body);
@@ -142,6 +144,7 @@ router.post('/draft', async (req: Request, res: Response) => {
       enableThinking: enableThinking ?? true,
       thinkingBudget,
       enableTools: enableTools ?? true,
+      ...(qualifiedModelPin !== undefined ? { qualifiedModelPin } : {}),
       ...identityOf(req),
       ...scope,
     });
@@ -705,12 +708,16 @@ router.get('/health', (_req: Request, res: Response) => {
  * controls (`effortLevels` + `defaultEffort`) and the legacy `frameworks` array
  * are preserved alongside the `{ success, data }` envelope.
  */
-router.get('/models', (_req: Request, res: Response) => {
-  const models = projectModelsForPicker(getGateway().getModels());
+router.get('/models', async (req: Request, res: Response) => {
+  try {
+  const gateway = getGateway();
+  const available = await gateway.getModelsForOrganization(resolveOrgId(req) ?? undefined);
+  const models = projectModelsForPicker(available);
   res.json({
     success: true,
     data: {
       models,
+      ...projectQualifiedModelPins(available),
       effortLevels: EFFORT_LEVELS,
       defaultEffort: DEFAULT_EFFORT,
       frameworks: [
@@ -723,6 +730,7 @@ router.get('/models', (_req: Request, res: Response) => {
       ],
     },
   });
+  } catch (error) { return failRequest(res, 'model availability', error); }
 });
 
 export default router;

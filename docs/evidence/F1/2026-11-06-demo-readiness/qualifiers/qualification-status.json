@@ -1,0 +1,44 @@
+{
+  "status": "frozen",
+  "nodeTests": {
+    "passed": 9,
+    "failed": 0,
+    "durationMs": 90.408446
+  },
+  "scopedLint": {
+    "scripts/demo/launch-demo/qualify-ana-editor.mjs": {
+      "errors": 0,
+      "warnings": 5,
+      "baselineWarnings": 5,
+      "warningRulesUnchanged": true
+    },
+    "scripts/demo/launch-demo/qualify-ana-editor.test.mjs": {
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "warningRulesUnchanged": true
+    },
+    "scripts/demo/launch-demo/qualify-csr.mjs": {
+      "errors": 0,
+      "warnings": 5,
+      "baselineWarnings": 5,
+      "warningRulesUnchanged": true
+    },
+    "scripts/demo/launch-demo/qualify-csr.test.mjs": {
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "warningRulesUnchanged": true
+    }
+  },
+  "broaderPreRepairRun": {
+    "passed": 22,
+    "failed": 67,
+    "genuineQualifierFailures": 5,
+    "temporaryFixtureExportFailures": 35,
+    "fauxFixtureTaxonomyOrRefusalOrderFailures": 27
+  },
+  "providerCalls": 0,
+  "paidBuilds": 0,
+  "browserQualification": false
+}

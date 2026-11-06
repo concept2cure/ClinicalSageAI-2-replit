@@ -12,6 +12,7 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async importOriginal => ({ ...(await importOriginal<typeof import('@/lib/queryClient')>()), apiRequest }));
 
 import { ApiRequestError } from '@/lib/queryClient';
+import type { OrgSkillDto } from '@shared/ana/skills';
 import { AdminSkills } from '../surfaces/AdminSkills';
 
 const STABILITY = {
@@ -51,6 +52,44 @@ const USAGE = {
   turnsWithSkills: 12,
   capped: false,
   skills: [{ key: 'cmc.stability', turns: 3, picked: 1, deployed: 0, lastUsedAt: '2026-10-20T10:00:00Z' }],
+};
+
+const SOURCE_AUDIT_ID = '10203040-1020-4030-8040-102030405060';
+const SOURCED_SKILL: OrgSkillDto = {
+  ...STABILITY,
+  id: 42,
+  bundleId: 'a-bundle',
+  key: 'org.stability-review',
+  name: 'Our stability review',
+  instructions: '## Method\nEstimate shelf life from the supplied evidence.',
+  triggers: ['shelf life'],
+  tools: ['estimate_shelf_life'],
+  disciplines: ['cmc'],
+  useCases: ['study-design'],
+  segments: ['pharma'],
+  status: 'active',
+  updatedAt: '2026-11-06T10:00:00Z',
+  projectId: null,
+  extendsSkillKey: null,
+  extensionMode: null,
+  sourceAuditEventId: SOURCE_AUDIT_ID,
+  policyBindings: [{
+    policyType: 'requires_approval',
+    enforcement: 'mandatory',
+    toolName: 'estimate_shelf_life',
+    description: 'Ask for approval before calculating a shelf-life claim.',
+  }],
+};
+
+const SOURCE_HISTORY = {
+  auditEventId: SOURCE_AUDIT_ID,
+  occurredAt: '2026-11-05T09:00:00Z',
+  action: 'ana_skill.created',
+  actorName: 'Alex Reviewer',
+  reason: 'Record the stability team review requirement.',
+  version: 1,
+  instructions: SOURCED_SKILL.instructions,
+  status: 'active',
 };
 
 function ok(body: unknown) {
@@ -161,5 +200,65 @@ describe('how often AnA used each skill', () => {
     const stability = await screen.findByRole('button', { name: /Stability programs and shelf life/ });
     expect(stability.textContent).not.toContain('not used');
     expect((screen.getByLabelText('Use') as HTMLSelectElement).disabled).toBe(true);
+  });
+});
+
+describe('sourced approval rules in the existing skill studio', () => {
+  it('shows mandatory rules independently of prompt selection and links their source audit record', async () => {
+    routes({
+      'GET /api/ana-skills/organization': () => ok({ skills: [SOURCED_SKILL] }),
+      'GET /api/ana-skills/organization/42/history': () => ok({ history: [SOURCE_HISTORY] }),
+    });
+    render(<AdminSkills />);
+    fireEvent.click(await screen.findByRole('button', { name: /Our stability review/ }));
+    const rules = await screen.findByRole('region', { name: 'Mandatory approval rules' });
+    expect(within(rules).getByText('Ask for approval before calculating a shelf-life claim.')).toBeTruthy();
+    expect(within(rules).getByText(/even when this skill is not selected or is turned off for prompts in a project/)).toBeTruthy();
+    expect(within(rules).queryByRole('textbox')).toBeNull();
+    const sourceLink = await within(rules).findByRole('link', { name: 'Source audit record' });
+    const sourceId = sourceLink.getAttribute('href')!.slice(1);
+    const sourceRow = document.getElementById(sourceId);
+    expect(sourceRow?.textContent).toContain('Alex Reviewer');
+    expect(sourceRow?.textContent).toContain('Record the stability team review requirement.');
+  });
+
+  it('keeps approval bindings and provenance out of an ordinary method edit instead of clearing or rewriting them', async () => {
+    routes({
+      'GET /api/ana-skills/organization': () => ok({ skills: [SOURCED_SKILL] }),
+      'GET /api/ana-skills/organization/42/history': () => ok({ history: [SOURCE_HISTORY] }),
+      'PUT /api/ana-skills/organization/42': () => ok({ skill: SOURCED_SKILL }),
+    });
+    render(<AdminSkills />);
+    fireEvent.click(await screen.findByRole('button', { name: /Our stability review/ }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Method'), { target: { value: '## Method\nRead the supplied stability evidence before estimating shelf life.' } });
+    fireEvent.change(within(dialog).getByLabelText(/Reason for change/), { target: { value: 'Clarify the evidence reading step.' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save skill' }));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith(
+      'PUT',
+      '/api/ana-skills/organization/42',
+      expect.objectContaining({
+        instructions: '## Method\nRead the supplied stability evidence before estimating shelf life.',
+        reason: 'Clarify the evidence reading step.',
+      }),
+    ));
+    const body = apiRequest.mock.calls.find(([method, path]) => method === 'PUT' && path === '/api/ana-skills/organization/42')![2];
+    expect(body).not.toHaveProperty('policyBindings');
+    expect(body).not.toHaveProperty('sourceAuditEventId');
+  });
+
+  it('distinguishes saved draft rules and retains their source reference when history cannot load', async () => {
+    routes({
+      'GET /api/ana-skills/organization': () => ok({ skills: [{ ...SOURCED_SKILL, status: 'draft' }] }),
+      'GET /api/ana-skills/organization/42/history': () => { throw new ApiRequestError('unavailable', 500, {}); },
+    });
+    render(<AdminSkills />);
+    fireEvent.click(await screen.findByRole('button', { name: /Our stability review/ }));
+    const rules = await screen.findByRole('region', { name: 'Mandatory approval rules' });
+    expect(within(rules).getByText(/These saved rules apply when this skill is active/)).toBeTruthy();
+    expect(within(rules).getByText(`Source audit record: ${SOURCE_AUDIT_ID}`)).toBeTruthy();
+    expect(within(rules).queryByRole('link')).toBeNull();
+    await screen.findByText(/Couldn't load the versions/);
+    expect(within(rules).queryByText(/outside the versions shown here/)).toBeNull();
   });
 });

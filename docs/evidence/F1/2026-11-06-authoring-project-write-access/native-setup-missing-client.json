@@ -1,0 +1,9 @@
+{
+  "startedAt": "2026-11-06T18:21:34.132885+00:00",
+  "elapsedSeconds": 12.275,
+  "exitCode": 1,
+  "scope": "Existing scripts/dev/up.mjs; dedicated new Docker PostgreSQL16/pgvector on loopback55432; no shared or remote database.",
+  "credentialsRedacted": true,
+  "rawOutput": "native-setup-missing-client.log.gz",
+  "rawGzipSha256": "c70a0f162bd541ba0cf3d8d4a709a4648c78370c895db7166174d6ba553f6c75"
+}

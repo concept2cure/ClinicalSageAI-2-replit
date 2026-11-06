@@ -1,6 +1,6 @@
 /** Offline, fail-closed claim verification against repository-owned evidence. */
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { PqProtocol, RegistryPqClaim, computeVerdict, servedModelMatches } from './pq-verdict.js';
@@ -24,16 +24,39 @@ const sameIds = (actual: unknown, expected: string[]) => Array.isArray(actual) &
 const validDate = (v: unknown) => nonempty(v) && /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))?$/.test(v) &&
   Number.isFinite(Date.parse(v)) && new Date(v.slice(0, 10)).toISOString().slice(0, 10) === v.slice(0, 10);
 
+/** Source modules and the shipped dist/index.js bundle share the nearest package root. */
+export function qualificationEvidenceRoot(): string {
+  let dir = path.dirname(fileURLToPath(import.meta.url));
+  for (;;) {
+    if (existsSync(path.join(dir, 'package.json'))) return realpathSync(dir);
+    const parent = path.dirname(dir);
+    if (parent === dir) throw new Error('Qualification package root is unavailable');
+    dir = parent;
+  }
+}
+
 export function readCanonicalPqEvidence(): CanonicalPqEvidence {
-  const dir = path.dirname(fileURLToPath(import.meta.url));
-  const read = (relative: string) => readFileSync(path.join(dir, relative), 'utf8');
-  return { protocolText: read('pq-protocol.json'), docBankText: read('../doc-quality/gold-tasks.json'),
-    ragGoldText: read('../rag/gold-dataset.json'), corpusManifestText: read('../rag/guidance-corpus-manifest.json') };
+  return { protocolText: readQualificationAsset('server/eval/pq/pq-protocol.json'),
+    docBankText: readQualificationAsset('server/eval/doc-quality/gold-tasks.json'),
+    ragGoldText: readQualificationAsset('server/eval/rag/gold-dataset.json'),
+    corpusManifestText: readQualificationAsset('server/eval/rag/guidance-corpus-manifest.json') };
+}
+
+/** Build assets contain only reviewed registry references and the canonical inputs, never a run directory. */
+export function readQualificationAsset(reference: string): string {
+  const root = qualificationEvidenceRoot();
+  if (path.isAbsolute(reference)) throw new Error('Repository-relative qualification evidence required');
+  const source = path.resolve(root, reference);
+  if (!source.startsWith(`${root}${path.sep}`)) throw new Error('Qualification reference leaves package');
+  const candidate = existsSync(source) ? source : path.resolve(root, 'dist/runtime-assets', reference);
+  const file = realpathSync(candidate);
+  if (!file.startsWith(`${root}${path.sep}`)) throw new Error('Qualification evidence leaves package');
+  return readFileSync(file, 'utf8');
 }
 
 function taskAttributionValid(row: Row, entry: RegistryPqClaim, rules: Rules): boolean {
   return row.servedModelVerified === true && typeof row.servedModel === 'string' &&
-    rules.servedModelMatches(row.servedModel, entry.pinnedVersion) && row.servedProvider === entry.provider;
+    (entry.pq.pinKind ? row.servedModel === entry.pinnedVersion : rules.servedModelMatches(row.servedModel, entry.pinnedVersion)) && row.servedProvider === entry.provider;
 }
 
 function taskMetricProblems(row: Row, phase: 'generation' | 'extraction'): string[] {
@@ -130,7 +153,14 @@ function ragCanonicalProblems(rag: unknown, gold: Row, manifest: Row, evidence: 
       attribution.generator.pinnedVersion !== entry.pinnedVersion || attribution.generator.provider !== entry.provider) problems.push('RAG generator is not the registry model being qualified');
   for (const item of gold.items) problems.push(...ragGoldProblems(item, rag.items, gold, manifest));
   for (const row of rag.items) problems.push(...capturedRagProblems(row, rag.scope));
+  problems.push(...strictRagPinProblems(rag.items, entry));
   return problems;
+}
+
+function strictRagPinProblems(items: Row[], entry: RegistryPqClaim): string[] {
+  return entry.pq.pinKind && items.some(row => row.generatorCalled === true &&
+    (row.servedModel !== entry.pinnedVersion || row.servedProvider !== entry.provider))
+    ? ['strict RAG output differs from the immutable registry pin'] : [];
 }
 
 function recordHeaderProblems(rec: Row, entry: RegistryPqClaim): string[] {
@@ -138,6 +168,9 @@ function recordHeaderProblems(rec: Row, entry: RegistryPqClaim): string[] {
   if (rec.modelId !== entry.id) problems.push(`record is for "${String(rec.modelId)}"`);
   if (rec.pinnedVersion !== entry.pinnedVersion) problems.push(`record qualified ${String(rec.pinnedVersion)}; re-qualification is owed`);
   if (!nonempty(entry.provider) || rec.provider !== entry.provider) problems.push('record provider is missing or differs from the registry');
+  if (entry.pq.intendedUses !== undefined && (!entry.pq.intendedUses.length ||
+      new Set(entry.pq.intendedUses).size !== entry.pq.intendedUses.length ||
+      !sameIds(rec.intendedUses, [...entry.pq.intendedUses]))) problems.push('record intended uses are missing, duplicated or differ from the registry');
   if (entry.pq.status === 'failed') {
     if (rec.verdict !== 'FAIL') problems.push(`claims failed; the record says ${String(rec.verdict)}`);
     return problems;

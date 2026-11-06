@@ -1,0 +1,15 @@
+{
+  "passed": 54,
+  "failed": 0,
+  "providerCalls": 0,
+  "liveCodespaceClaim": false,
+  "changedSourceHashes": {
+    ".devcontainer/post-start.sh": "baf40d3b9386f47b86ee58af7f4326e6f3821aa8b4e6d10c0cecc6387300c0e9",
+    "package.json": "af28ba6ac01790095784a6c04a8a288d256470915898fe003f9289cc6e69fe75",
+    "scripts/demo/launch-demo/qualify-ana-editor.mjs": "d1cacc0ef324298ca4c21de76b195e791a5ce8919deb214fdad16c04c2732776",
+    "scripts/demo/launch-demo/qualify-ana-editor.test.mjs": "7c2d965922ff2833d6121fb8bd42d1aef52cf5593423f9cca9ca5aa0d418c86c",
+    "scripts/demo/launch-demo/qualify-csr.mjs": "f36c9bc5d36c716cfbb982fe104c3f5fb6ddb508301f70fc4fa4b9874c5a9d11",
+    "scripts/demo/launch-demo/qualify-csr.test.mjs": "ca8c8b873d286eb6ec19b7202a64ad04231a63fbc415dd2a4af83980c0da8256",
+    "scripts/ops/codespaces-startup.test.mjs": "b8b2718ce5ae3d98394557fda252c7debdd22c0de94fa5e1c7f503a90b866092"
+  }
+}

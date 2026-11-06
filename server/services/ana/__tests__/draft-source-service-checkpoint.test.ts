@@ -97,6 +97,15 @@ describe('selected-source service authority', () => {
 });
 
 describe('selected-source generation checkpoints', () => {
+  it('carries the exact qualified choice to the gateway without the legacy Anthropic preference', async () => {
+    const qualifiedModelPin = { id: 'local-default', provider: 'local' as const, pinnedVersion: `sha256:${'a'.repeat(64)}`,
+      intendedUse: 'document_drafting' as const, pqReference: 'controlled/qualification.json', pqSha256: 'b'.repeat(64) };
+    await service.draftDocument({ ...request(await selected()), qualifiedModelPin });
+    const sent = seam.route.mock.calls[0][0] as GatewayRequest;
+    expect(sent.qualifiedModelPin).toEqual(qualifiedModelPin);
+    expect(sent.provider).toBeUndefined();
+    expect(sent.model).toBeUndefined();
+  });
   it('passes a genuine identity-bearing context through a private dispatch guard and text-free metadata', async () => {
     const context = await selected();
     await expect(service.draftDocument(request(context))).resolves.toMatchObject({ content: 'Generated draft.' });

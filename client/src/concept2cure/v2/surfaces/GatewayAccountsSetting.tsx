@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
-import type { C2CFormConfig, C2CFormField } from '../C2CForm';
+import type { C2CFormConfig, C2CFormField, C2CFormFieldControl } from '../C2CForm';
 import type { GatewayTransportReadiness } from '@shared/schema/gateway-transport';
 import '../styles/translation-v2.css';
+import { authService } from '@/services/portal/authService';
+import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 
 /**
  * Agency gateway accounts: whose account submissions go out under, chosen per
@@ -48,7 +50,7 @@ export interface GatewayAccount {
   transportReadiness?: GatewayTransportReadiness;
 }
 
-function isAccountList(v: unknown): v is { accounts: GatewayAccount[] } {
+function isAccountList(v: unknown): v is { organizationId: number; canManage?: boolean; accounts: GatewayAccount[] } {
   const list = (v as { accounts?: unknown } | null)?.accounts;
   return Array.isArray(list) && list.every((a) => a && typeof a === 'object' && typeof (a as GatewayAccount).mode === 'string');
 }
@@ -84,13 +86,15 @@ function modeText(a: GatewayAccount): string {
   return a.senderIdentifier ? `Your account (${a.senderIdentifier})` : 'Your account';
 }
 
-/** The refusal, in the server's words where it gave some. */
+/** Credential operations never reflect arbitrary response or exception text. */
 export function refusalText(status: number, body: unknown): string {
   if (status === 0) return 'The server could not be reached, so nothing was changed.';
   if (status === 401) return 'Not changed: your password was not confirmed.';
   if (status === 403) return "Not changed: only the organisation's owner or administrator can change this.";
-  const said = (body as { error?: { message?: unknown } } | null)?.error?.message;
-  return typeof said === 'string' && said ? `Not changed: ${said}` : `Not changed (HTTP ${status}).`;
+  const code = (body as { error?: { code?: unknown } } | null)?.error?.code;
+  if (code === 'NOT_PEM') return 'Not changed: check the certificate and private key PEM formatting.';
+  return status === 400 || status === 422 ? 'Not changed: check the account identifier, credential fields and reason.'
+    : 'The change could not be confirmed. Reopen this account to read its current status.';
 }
 
 /** The change form for one gateway and environment. Secret fields are blank: what is held is never sent back. */
@@ -158,9 +162,10 @@ export function changeBody(a: GatewayAccount, v: Record<string, string>): Record
 interface CellProps {
   account: GatewayAccount;
   onChange: (a: GatewayAccount) => void;
+  canManage: boolean;
 }
 
-function AccountCell({ account: a, onChange }: CellProps) {
+function AccountCell({ account: a, onChange, canManage }: CellProps) {
   return (
     <div className="txw-row-r" data-testid={`gateway-account-${a.region}-${a.gateway}-${a.environment}`}>
       <div>
@@ -173,11 +178,9 @@ function AccountCell({ account: a, onChange }: CellProps) {
         Agency qualification not verified
         {a.transportReadiness && <> · {a.transportReadiness.transport}: {a.transportReadiness.reason}</>}
       </span>
-      <div>
-        <button type="button" className="btn ghost small" onClick={() => onChange(a)}>
-          Change…
-        </button>
-      </div>
+      {canManage && <div>
+        <button type="button" className="btn ghost small" onClick={() => onChange(a)}>Change…</button>
+      </div>}
     </div>
   );
 }
@@ -197,32 +200,45 @@ interface Props {
   note?: React.ReactNode;
 }
 
-export function GatewayAccountsSetting({ note }: Props) {
+export function GatewayAccountsSetting(props: Props) {
+  const session = useAuthoringReadSession(authService.getUser());
+  return <GatewayAccountsVisit key={`${session.actor}:${session.key}`} {...props} session={session} />;
+}
+
+function GatewayAccountsVisit({ note, session }: Props & { session: ReturnType<typeof useAuthoringReadSession> }) {
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const current = useCallback(() => mounted.current && session.sameRevision(), [session]);
+  const [canManage, setCanManage] = useState(false);
   const [accounts, setAccounts] = useState<GatewayAccount[] | null>(null);
   const [readState, setReadState] = useState<'reading' | 'read' | 'failed'>('reading');
   const [editing, setEditing] = useState<GatewayAccount | null>(null);
   const [outcome, setOutcome] = useState<{ tone: 'ok' | 'warn'; text: string } | null>(null);
 
   const read = useCallback(async () => {
-    setReadState('reading');
+    if (!current()) return;
+    setReadState('reading'); setCanManage(false);
     const r = await send('GET', '/api/gateway-accounts');
-    if (r.ok && isAccountList(r.body)) {
+    if (!current()) return;
+    if (r.ok && isAccountList(r.body) && String(r.body.organizationId) === session.actor.split(':')[0]) {
+      setCanManage(r.body.canManage === true);
       setAccounts(r.body.accounts);
       setReadState('read');
     } else {
-      setReadState('failed');
+      setAccounts(null); setReadState('failed');
     }
-  }, []);
+  }, [current, session]);
   useEffect(() => {
     void read();
   }, [read]);
 
   const save = async (v: Record<string, string>) => {
     const a = editing;
-    if (!a) return;
+    if (!a || !current() || !canManage) return;
     // The drawer closes on every outcome: a password must not sit in it for a resubmit.
     setEditing(null);
     const r = await send('PUT', `/api/gateway-accounts/${a.region}/${a.gateway}/${a.environment}`, changeBody(a, v));
+    if (!current()) return;
     setOutcome(
       r.ok
         ? { tone: 'ok', text: `${a.label}, ${ENV_LABEL[a.environment].toLowerCase()}: saved and recorded in the audit trail.` }
@@ -230,9 +246,10 @@ export function GatewayAccountsSetting({ note }: Props) {
     );
     await read();
   };
-
   let body: React.ReactNode;
-  if (accounts) {
+  if (!current()) {
+    body = <span role="status">Reopen Settings after your session change to read the current accounts.</span>;
+  } else if (accounts) {
     body = byGateway(accounts).map((group) => (
       <div className="txw-row" key={`${group[0].region}:${group[0].gateway}`}>
         <div className="txw-row-l">
@@ -241,7 +258,7 @@ export function GatewayAccountsSetting({ note }: Props) {
         </div>
         <div className="txw-row-r-grid">
           {group.map((a) => (
-            <AccountCell key={a.environment} account={a} onChange={setEditing} />
+            <AccountCell key={a.environment} account={a} canManage={canManage && current()} onChange={setEditing} />
           ))}
         </div>
       </div>
@@ -284,7 +301,23 @@ export function GatewayAccountsSetting({ note }: Props) {
         </div>
         {body}
       </div>
-      {editing && <C2CForm config={changeForm(editing)} onCancel={() => setEditing(null)} onSubmit={(v) => void save(v)} />}
+      {editing && current() && canManage && <C2CForm config={changeForm(editing)} onCancel={() => setEditing(null)} onSubmit={(v) => void save(v)}
+        renderField={(field, control) => editing.clientFields.some(f => f.name === field.key) ? maskedCredentialField(field, control) : undefined} />}
+
     </div>
   );
+}
+
+
+/** Paste-only PEM capture: the raw text remains in form state and never enters the DOM. */
+function maskedCredentialField(field: C2CFormField, control: C2CFormFieldControl) {
+  return <div>
+    <input id={control.id} className="de-input" type="password" readOnly value={control.value ? '********' : ''}
+      onPaste={event => { event.preventDefault(); control.onChange(event.clipboardData.getData('text/plain')); }}
+      aria-required={control.required} aria-invalid={control.invalid} aria-describedby={control.describedBy}
+      autoComplete="off" autoCapitalize="off" spellCheck={false} data-secret-entry="true"
+      placeholder="Paste complete PEM here" />
+    <span className="txw-help">{control.value ? 'Credential captured. Paste again to replace it.' : 'Paste the complete PEM. Its text is never displayed.'}</span>
+    {control.value && <button type="button" className="btn ghost small" onClick={() => control.onChange('')}>Clear captured credential</button>}
+  </div>;
 }

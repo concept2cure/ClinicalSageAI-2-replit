@@ -83,7 +83,7 @@ const REGISTRY: ModelConfig[] = [
 ];
 
 vi.mock('../../server/services/ai-gateway/gateway', () => ({
-  getGateway: () => ({ getModels: () => REGISTRY }),
+  getGateway: () => ({ getModels: () => REGISTRY, getModelsForOrganization: async () => REGISTRY }),
 }));
 
 import anaIntelligenceRouter from '../../server/routes/ana-intelligence';

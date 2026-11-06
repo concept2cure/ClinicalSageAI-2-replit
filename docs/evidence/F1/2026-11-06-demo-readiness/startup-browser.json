@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "startedAt": "2026-11-06T20:11:53.993Z",
+  "cases": [
+    {
+      "name": "Actual Demo access signs in the configured author",
+      "status": "passed"
+    },
+    {
+      "name": "Project-first workspace opens after sign-in",
+      "status": "passed"
+    }
+  ],
+  "finishedAt": "2026-11-06T20:12:03.384Z"
+}

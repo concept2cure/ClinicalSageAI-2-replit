@@ -77,16 +77,41 @@ function actualTaskWorkspace(row: Record<string, unknown>, projectId: number): n
   return row.client_workspace_id as number | null;
 }
 
-async function retainTaskWorkspace(q: RequestSqlClient, organizationId: number, workspaceId: number | null,
+/** Retain the selected workspace after actor admission. Project-bound callers
+ * pass the parent's actual workspace; unfiled intake may select an owned one. */
+export async function retainTaskWorkspace(q: RequestSqlClient, organizationId: number, workspaceId: number | null,
   claimed: unknown): Promise<void> {
-  if (claimed != null) {
-    const numeric = typeof claimed === 'string' && /^\d+$/.test(claimed) ? Number(claimed) : claimed;
-    if (!validProjectId(numeric) || numeric !== workspaceId) throw projectDenied();
+  try {
+    if (workspaceId !== null && !validProjectId(workspaceId)) throw projectDenied();
+    if (claimed != null) {
+      const numeric = typeof claimed === 'string' && /^\d+$/.test(claimed) ? Number(claimed) : claimed;
+      if (!validProjectId(numeric) || numeric !== workspaceId) throw projectDenied();
+    }
+    if (workspaceId === null) return;
+    const owned = await q.query(`SELECT id FROM client_workspaces
+      WHERE id=$1 AND organization_id=$2 FOR SHARE`, [workspaceId, organizationId]);
+    if (owned.rows.length !== 1 || owned.rows[0].id !== workspaceId) throw projectDenied();
+  } catch (error) {
+    if (error instanceof TaskProjectAdmissionError) throw error;
+    throw projectUnavailable();
   }
-  if (workspaceId === null) return;
-  const owned = await q.query(`SELECT id FROM client_workspaces
-    WHERE id=$1 AND organization_id=$2 FOR SHARE`, [workspaceId, organizationId]);
-  if (owned.rows.length !== 1 || owned.rows[0].id !== workspaceId) throw projectDenied();
+}
+
+/** Unfiled work still requires current active write membership, retained on the
+ * writer's own transaction just like the actor of project-bound work. */
+export async function admitTaskCreationActor(q: RequestSqlClient, input: {
+  organizationId: number; actorUserId: number;
+}) {
+  try {
+    const actor = await readCurrentProgramActor(q, { organizationId: input.organizationId,
+      userId: input.actorUserId, forShare: true });
+    if (!GOVERNED_WRITE_ROLES.has(actor.role)) throw projectDenied();
+    return actor;
+  } catch (error) {
+    if (error instanceof TaskProjectAdmissionError) throw error;
+    if (error instanceof ProgramReadAccessError && error.status === 403) throw projectDenied();
+    throw projectUnavailable();
+  }
 }
 
 /** Extend the existing task/project boundary on the writer's own transaction.
@@ -97,9 +122,7 @@ export async function admitTaskCreationProject(q: RequestSqlClient, input: {
 }): Promise<{ projectId: number; clientWorkspaceId: number | null }> {
   const projectId = requireTaskProjectId(input.projectId);
   try {
-    const actor = await readCurrentProgramActor(q, { organizationId: input.organizationId,
-      userId: input.actorUserId, forShare: true });
-    if (!GOVERNED_WRITE_ROLES.has(actor.role)) throw projectDenied();
+    const actor = await admitTaskCreationActor(q, input);
     const { rows } = await q.query(`SELECT id,client_workspace_id,status FROM projects
       WHERE id=$1 AND organization_id=$2 FOR SHARE`, [projectId, input.organizationId]);
     if (!rows.length) throw new TaskProjectAdmissionError(404, 'TASK_PROJECT_NOT_FOUND',

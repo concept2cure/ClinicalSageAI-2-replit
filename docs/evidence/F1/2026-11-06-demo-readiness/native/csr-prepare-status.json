@@ -1,0 +1,43 @@
+{
+  "outcome": "passed",
+  "finishedAt": "2026-11-06T20:09:04.358Z",
+  "preparationBoundary": "freeze; no drafting requested",
+  "programId": "d8e5065c-c55a-43de-9879-cdaa7c230cde",
+  "documentId": "7a430471-3692-4575-a1ff-1abe010210fc",
+  "steps": [
+    {
+      "name": "project: found or created through New project",
+      "outcome": "pass",
+      "ms": 11781
+    },
+    {
+      "name": "Vault: upload the study files and the manifest (POST /api/vault/ingest)",
+      "outcome": "pass",
+      "ms": 1816
+    },
+    {
+      "name": "Vault: send, review-sign and approve each of the seven files (three people)",
+      "outcome": "pass",
+      "ms": 200772
+    },
+    {
+      "name": "Editor: New document \u2192 M5 lists the CSR once (F1)",
+      "outcome": "pass",
+      "ms": 5895
+    },
+    {
+      "name": "Editor: the CSR created from New document shows \"Build from the study\u2019s data\"",
+      "outcome": "pass",
+      "ms": 8888
+    },
+    {
+      "name": "Study data: manifest chosen, tables previewed, frozen in the document",
+      "outcome": "pass",
+      "ms": 18736
+    }
+  ],
+  "syntheticPeople": true,
+  "source": "exact existing CSR walkthrough scripts copied outside Git",
+  "rawStudyDataInGit": false,
+  "screenshotsInGit": false
+}
