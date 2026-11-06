@@ -35,7 +35,7 @@ c2c_ensure_database || c2c_blocked "the owner role or database could not be ensu
 # contract, so migrations committed since the last start are applied.
 c2c_provision || c2c_blocked "database provisioning failed."
 if [[ "${NEED_ACCOUNTS:-0}" == "1" || ! -f "$C2C_CODESPACE_STATE/accounts.done" ]]; then
-  c2c_seed_accounts && touch "$C2C_CODESPACE_STATE/accounts.done" || c2c_blocked "sign-in accounts could not be created."
+  c2c_seed_accounts || c2c_blocked "sign-in accounts could not be created."
 fi
 
 # The forwarded origin the browser uses; the CSRF origin check refuses others.
@@ -59,7 +59,20 @@ for name in "${C2C_OWNER_NAMES[@]}"; do
   C2C_UNSET+=(-u "$name")
 done
 
-c2c_app_up() { curl -fsS -o /dev/null --max-time 5 "http://127.0.0.1:$C2C_PORT/readyz"; }
+# Serving: /readyz answers with the database and the schema ok. It answers 503
+# while any dependency is down (AnA without a model key), so "serving" and
+# "ready" are reported separately, from what /readyz itself says.
+c2c_readyz() { curl -s --max-time 5 "http://127.0.0.1:$C2C_PORT/readyz" 2>/dev/null; }
+c2c_app_up() {
+  c2c_readyz | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const r=JSON.parse(s);
+    process.exit(r.dependencies?.database==="ok"&&r.dependencies?.schema==="ok"?0:1)}catch{process.exit(1)}})'
+}
+c2c_readiness_line() {
+  c2c_readyz | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const r=JSON.parse(s);
+    console.log(r.ready ? "ready (every dependency ok)" :
+      "serving; not ready: " + (r.failed||[]).join(", ") + (r.anaState ? " (AnA: " + r.anaState + ")" : ""))}
+    catch{console.log("unknown")}})'
+}
 
 if c2c_app_up; then
   c2c_log "The app is already running on port $C2C_PORT."
@@ -76,10 +89,10 @@ else
     c2c_app_up && break
     sleep 5
   done
-  c2c_app_up || c2c_blocked "the app did not answer /readyz within 15 minutes. Last log lines:
+  c2c_app_up || c2c_blocked "the app did not serve (database and schema ok on /readyz) within 15 minutes. Last log lines:
 $(tail -n 30 "$C2C_APP_LOG")"
 fi
-c2c_log "The app answered /readyz."
+c2c_log "The app is serving. /readyz: $(c2c_readiness_line)"
 
 # Read (not export) the demo identities; the seeders get only what they need.
 . "$C2C_CODESPACE_STATE/app.env"
@@ -87,7 +100,7 @@ c2c_log "The app answered /readyz."
 # Demo packs through the product's own API, once.
 if [[ ! -f "$C2C_CODESPACE_STATE/demo-seed.done" ]]; then
   c2c_log "Seeding the demo projects (npm run demo:seed -- --pack all); log: $C2C_CODESPACE_STATE/demo-seed.log"
-  if npm run --silent demo:seed -- --pack all --base-url "http://127.0.0.1:$C2C_PORT" --email "$DEMO_SEED_EMAIL" \
+  if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests" npm run --silent demo:seed -- --pack all --base-url "http://127.0.0.1:$C2C_PORT" --email "$DEMO_SEED_EMAIL" \
       >"$C2C_CODESPACE_STATE/demo-seed.log" 2>&1; then
     touch "$C2C_CODESPACE_STATE/demo-seed.done"
     c2c_log "Demo projects seeded."
@@ -122,8 +135,9 @@ if [[ ! -f "$C2C_CODESPACE_STATE/csr-study.done" ]]; then
   fi
 fi
 
-if [[ -z "${ANTHROPIC_API_KEY:-}" && -z "${OPENAI_API_KEY:-}" ]]; then
-  c2c_log "No ANTHROPIC_API_KEY or OPENAI_API_KEY secret: AnA cannot draft. Add one as a Codespaces secret and rebuild."
+if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+  c2c_log "No ANTHROPIC_API_KEY secret: AnA cannot draft regulatory documents (OPENAI_API_KEY alone answers chat only)."
+  c2c_log "Add it as a Codespaces secret for this repository, then rebuild or restart the Codespace."
 fi
 
 cat <<EOF

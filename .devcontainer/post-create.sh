@@ -192,6 +192,7 @@ c2c_seed_accounts() {
       return 1
     }
   done
+  touch "$C2C_CODESPACE_STATE/accounts.done"
   c2c_log "Sign-in accounts ready: $C2C_DEV_EMAIL (author), $C2C_REVIEWER_EMAIL, $C2C_APPROVER_EMAIL."
 }
 
@@ -218,8 +219,12 @@ c2c_post_create_main() {
 
   # Chromium for the CSR study preparation (a browser walk of the app). Best
   # effort: without it everything else still works.
-  npx --yes playwright install --with-deps chromium >/dev/null 2>&1 ||
-    c2c_log "Chromium for the CSR study preparation could not be installed; post-start will skip that step."
+  if node -e "process.exit(require('fs').existsSync(require('playwright').chromium.executablePath()) ? 0 : 1)" 2>/dev/null; then
+    c2c_log "Chromium for the CSR study preparation is already installed."
+  else
+    npx --yes playwright install --with-deps chromium >/dev/null 2>&1 ||
+      c2c_log "Chromium for the CSR study preparation could not be installed; post-start will skip that step."
+  fi
 
   c2c_log "Setup complete. post-start starts the app on port 5000."
 }

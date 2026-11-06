@@ -49,8 +49,10 @@ the app on port 5000 in development mode and opens it in your browser.
 
 1. **Add your model keys as Codespaces secrets, once.** On GitHub: your
    repository → **Settings** → **Secrets and variables** → **Codespaces** →
-   **New repository secret**. Add `ANTHROPIC_API_KEY`, and `OPENAI_API_KEY` if
-   you use OpenAI. (Or: your account's **Settings** → **Codespaces** →
+   **New repository secret**. Add `ANTHROPIC_API_KEY`: AnA drafts regulatory
+   documents with an approved Claude model, so this key is the one drafting
+   needs. `OPENAI_API_KEY` is optional; on its own it answers chat but not
+   regulatory drafting (the server's own `/readyz` says so). (Or: your account's **Settings** → **Codespaces** →
    **Secrets**, and give the secret access to this repository.) A Codespace
    reads its secrets when it starts: after adding one, rebuild or restart it.
    Do **not** add a `DATABASE_URL` or any other database secret. This Codespace
@@ -104,7 +106,8 @@ What the setup did, and where to look when something is wrong:
   `cdiscpilot01-efficacy-results.json` in that directory, the study's manifest
   says efficacy was "not supplied", and the CSR's efficacy section says so too.
   It is never invented.
-- **Without a model key** the app runs, and AnA cannot draft. The CSR build then
+- **Without `ANTHROPIC_API_KEY`** the app runs and `/readyz` answers 503 with
+  only `ana` down (`anaState: no_provider`); the start-up box says so. AnA cannot draft. The CSR build then
   ends refused (demo replies are not saved as drafts). That is how it is designed.
 
 ## Prepare the local Codespace
