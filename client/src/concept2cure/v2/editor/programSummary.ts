@@ -7,6 +7,7 @@
  * an unnamed program.
  */
 import { useEffect, useState } from 'react';
+import { isDeviceOrDiagnosticProgram } from '@shared/constants/domain/product-types';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { useAuthoringReadSession } from './authoringCurrentRead';
@@ -31,6 +32,12 @@ const str = (v: unknown): string | null => {
 
 /** The regulatory_programs row as the route serves it (bare row, no envelope —
  *  projects.ts `GET /:id` returns `rows[0]`). Tolerates an envelope anyway. */
+/** Whether the files rail offers the IND document library: not for a device or diagnostic filing, which files no
+ *  IND (Project home's rule, ProjectEvidence). Unread, it is offered as before. */
+export function offersIndLibrary(program: ProgramSummary | null): boolean {
+  return !program || !isDeviceOrDiagnosticProgram({ program_type: program.programType });
+}
+
 export function programFromBody(body: unknown, id: string): ProgramSummary | null {
   if (!body || typeof body !== 'object') return null;
   const raw = ((body as { data?: unknown }).data ?? body) as Record<string, unknown>;

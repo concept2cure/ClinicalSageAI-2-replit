@@ -144,6 +144,19 @@ describe('a whole document is filed at its own code, and a repeat placement says
     expect(document.body.textContent).not.toMatch(/one section of this document/);
   });
 
+  /* J3 human test, 2026-11-06: an Investigator's Brochure from a template whose
+     sections are title_page, 1, 2 … has no common code. The dialog prefilled
+     the open section's "1" and, in the same breath, refused it in red. */
+  it('does not prefill a code it would refuse: with no common code, the field is empty and asks for one', async () => {
+    mockApi();
+    renderSeam({ sectionCodes: ['title_page', '1', '2'], activeSectionCode: '1' });
+    fireEvent.click(screen.getByRole('button', { name: /Place into filing/ }));
+    await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
+    expect((screen.getByLabelText(/Section code/) as HTMLInputElement).value).toBe('');
+    expect(document.body.textContent).not.toMatch(/one section of this document/);
+    expect(document.body.textContent).toMatch(/Enter the CTD code it is filed at/);
+  });
+
   it('a repeat placement the server answers with the existing leaf is reported as already placed, not as a new leaf', async () => {
     mockApi((method, url) => {
       if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {

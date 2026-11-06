@@ -208,3 +208,14 @@ describe('only a toggle reports a pressed state', () => {
     expect(screen.getByRole('button', { name: /^toggle header column/i }).getAttribute('aria-pressed')).toBe('false');
   });
 });
+
+/* J3 human test, 2026-11-06: Comment with nothing selected did nothing at all. */
+describe('Comment says what it needs', () => {
+  it('with no selection, it asks for one and creates nothing', async () => {
+    const onCreate = vi.fn(async () => 'c1');
+    render(<RichSectionEditor {...base} commentsApi={{ onCreate }} />);
+    fireEvent.click(screen.getByRole('button', { name: /Comment on the selection/i }));
+    expect((await screen.findByRole('alert')).textContent).toMatch(/Select the passage to comment on/);
+    expect(onCreate).not.toHaveBeenCalled();
+  });
+});
