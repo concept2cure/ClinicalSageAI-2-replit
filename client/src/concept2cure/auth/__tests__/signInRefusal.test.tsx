@@ -66,4 +66,12 @@ describe('a refused sign-in', () => {
     expect(alert.textContent).toMatch(/not with your account/);
     expect(alert.textContent).not.toMatch(/error\.invalidCredentials|incorrect|password/i);
   });
+
+  // Human test J1 (2026-11-06): the refusal followed the person onto "Reset your password".
+  it('is not carried onto the reset view, and the reset view does not bring it back to sign-in', async () => {
+    await signInWith({ code: 'AUTH_001', message: 'Invalid credentials' });
+    fireEvent.click(screen.getByText(/forgot/i, { selector: 'button' }));
+    await waitFor(() => expect(document.getElementById('login-password')).toBeNull());
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
 });
