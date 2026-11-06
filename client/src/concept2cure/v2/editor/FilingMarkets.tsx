@@ -101,9 +101,11 @@ export function FilingMarkets(props: FilingMarketsProps) {
         <span className="ed-basis-l" id="ed-filings-h">Filings in this project</span>
       </div>
       <ul role="list" aria-labelledby="ed-filings-h" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {/* The row wraps, and the name keeps at least 12ch: in the editor's narrow left column the button
+            took the width and "FDA · IND — home filing" stood one word per line (J3 human test R5, 2026-11-06). */}
         {rows.map(({ filing, isMarket, what }) => (
-          <li key={filing.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '2px 0' }}>
-            <span className="ed-basis-d" id={`ed-filing-${filing.id}`} style={{ flex: 1, margin: 0 }}>
+          <li key={filing.id} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '2px 0' }}>
+            <span className="ed-basis-d" id={`ed-filing-${filing.id}`} style={{ flex: '1 1 12ch', margin: 0 }}>
               {nameOf(filing)} — {what}
             </span>
             <FilingAction filing={filing} isMarket={isMarket} nameId={`ed-filing-${filing.id}`} props={props} />
