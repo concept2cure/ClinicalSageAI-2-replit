@@ -656,3 +656,25 @@ describe('IndFormsPanel — the form is named once', () => {
     for (const [text] of note.mock.calls) expect(String(text)).not.toMatch(/FDA_/);
   });
 });
+
+/* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): at 1440 px the forms
+   table's Actions cell was `white-space: nowrap` around four buttons, so it ran
+   past the card and clipped "Attach completed form" and the attestation; and the
+   IND Cover Letter card's "Draft with AnA" ran past its card. Both wrap now. */
+describe('IndFormsPanel — the actions wrap instead of running past the card', () => {
+  it('the Actions cell does not forbid wrapping', async () => {
+    render(<IndFormsPanel note={vi.fn()} />);
+    const build = (await screen.findAllByRole('button', { name: /Build & check/ }))[0];
+    const cell = build.closest('td') as HTMLElement;
+    expect(cell.style.whiteSpace).not.toBe('nowrap');
+    // At 390 px the table is wider than its card, which clips: it scrolls instead.
+    expect((cell.closest('table')!.parentElement as HTMLElement).style.overflowX).toBe('auto');
+  });
+
+  it('the document cards’ action row wraps', async () => {
+    const { readFileSync } = await import('node:fs');
+    const css = readFileSync('client/src/concept2cure/v2/styles/coverage-v2.css', 'utf8');
+    const rule = css.match(/\.indl-dcard-acts\{([^}]*)\}/)?.[1] ?? '';
+    expect(rule).toMatch(/flex-wrap:\s*wrap/);
+  });
+});
