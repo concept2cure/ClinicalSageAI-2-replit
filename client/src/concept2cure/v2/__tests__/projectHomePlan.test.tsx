@@ -325,12 +325,16 @@ describe('what Plan says, and when (design review, pass 3)', () => {
     expect(screen.queryByRole('button', { name: 'Start selected work' })).toBeNull();
   });
 
-  it('a filing with no list is not told to "see every document" by the step band', async () => {
+  /* D3-1 (2026-11-06): the step band became the step's suggestion under the composer. A filing with no list is
+     not offered one; its suggestion asks AnA which documents it needs. */
+  it('a filing with no list is not told to "see every document": its suggestion asks which documents it needs', async () => {
     serve({ program: { ...US_DRUG_IND, program_type: 'NDA' } });
     mount();
     await openPlan();
     await screen.findByTestId('pj-plan-none');
-    expect(screen.getByTestId('pj-stageband').textContent).not.toMatch(/What to do now/);
+    const suggestions = within(screen.getByRole('group', { name: 'Suggestions' }));
+    expect(suggestions.getByRole('button', { name: 'Which documents does this filing need?' })).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/What to do now/);
   });
 
   it('the target date is the recorded day, never shifted by the viewer’s zone', async () => {

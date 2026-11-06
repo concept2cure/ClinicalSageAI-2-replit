@@ -158,20 +158,20 @@ describe('Project home — AnA names each step, and the removed one', () => {
 describe('Project home — the start box sits beside every step', () => {
   it('a message typed in the start box survives switching tabs', async () => {
     render(<ProjectHome {...props()} />);
-    const box = await screen.findByRole('textbox', { name: /Start a conversation in/ });
+    const box = await screen.findByRole('textbox', { name: 'Ask AnA about this project' });
     fireEvent.change(box, { target: { value: 'Draft the 2.5 clinical overview from the CSR' } });
 
     for (const label of ['Plan', 'Review', 'Submit', 'Evidence', 'Respond', 'Author']) {
       fireEvent.click(tab(label)!);
       await waitFor(() => expect(activeLabel()).toBe(label));
-      const now = screen.getByRole('textbox', { name: /Start a conversation in/ }) as HTMLTextAreaElement;
+      const now = screen.getByRole('textbox', { name: 'Ask AnA about this project' }) as HTMLTextAreaElement;
       expect(now.value, `the message was lost on switching to ${label}`).toBe('Draft the 2.5 clinical overview from the CSR');
     }
   });
 
   it('the start box comes first, above the steps; the conversations sit beside them; both stay on every step', async () => {
     render(<ProjectHome {...props()} />);
-    const region = await screen.findByRole('region', { name: /Start a conversation in/ });
+    const region = await screen.findByRole('region', { name: 'Ask AnA about this project' });
     await screen.findByText(THREAD.title);
     const tablist = screen.getByRole('navigation', { name: 'Project lifecycle' });
     // The open stage is told to a screen reader, not only drawn (WCAG 4.1.2).
@@ -181,12 +181,16 @@ describe('Project home — the start box sits beside every step', () => {
        the conversation with AnA first in the main column, then the steps. */
     expect(region.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING, 'start box before the steps').toBeTruthy();
     expect(region.closest('.pj-main'), 'start box in the main column').toBeTruthy();
+    /* D3-1 (2026-11-06, D3.md §4.5): the conversations sit under the composer, as Claude lists a project's
+       conversations, and before the steps. */
     const threads = screen.getByTestId('pj-threads');
-    expect(threads.closest('aside'), 'conversations in the side column').toBeTruthy();
+    expect(threads.closest('.pj-main'), 'conversations in the main column').toBeTruthy();
+    expect(region.compareDocumentPosition(threads) & Node.DOCUMENT_POSITION_FOLLOWING, 'conversations after the composer').toBeTruthy();
+    expect(threads.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING, 'conversations before the steps').toBeTruthy();
 
     fireEvent.click(tab('Submit')!);
     await waitFor(() => expect(activeLabel()).toBe('Submit'));
     expect(screen.getByText(THREAD.title)).toBeTruthy();
-    expect(screen.getByRole('region', { name: /Start a conversation in/ })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Ask AnA about this project' })).toBeTruthy();
   });
 });

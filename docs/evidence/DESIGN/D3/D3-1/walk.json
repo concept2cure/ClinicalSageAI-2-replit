@@ -1,0 +1,473 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "0e8acdb9-40ba-41ed-bb5d-d0b3cf836a54",
+  "startedAt": "2026-11-06T17:00:23.460Z",
+  "steps": [
+    {
+      "name": "the frame, 1440 light",
+      "frame": {
+        "title": "Durability walk IND",
+        "byline": "INDFDAData Room durability walk",
+        "objective": true,
+        "settingsButton": true,
+        "composer": true,
+        "suggestions": [
+          "What does this filing still need, and who has each piece?",
+          "What is due this week, and who has it?"
+        ],
+        "steps": [
+          {
+            "label": "Plan",
+            "current": "step"
+          },
+          {
+            "label": "Evidence",
+            "current": null
+          },
+          {
+            "label": "Author",
+            "current": null
+          },
+          {
+            "label": "Review",
+            "current": null
+          },
+          {
+            "label": "Submit",
+            "current": null
+          },
+          {
+            "label": "Respond",
+            "current": null
+          }
+        ],
+        "blurb": "What this filing needs, who does it, and by when",
+        "order": [
+          "pj-top",
+          "pj-convo",
+          "pj-sec",
+          "pj-lc",
+          "pj-step-blurb",
+          "pj-stagebody"
+        ],
+        "knowledge": "Project knowledge",
+        "facts": [
+          [
+            "Client",
+            "Concept2Cure Therapeutics"
+          ],
+          [
+            "Product",
+            "DW-1"
+          ],
+          [
+            "Indication",
+            "Data Room durability walk"
+          ],
+          [
+            "Client type",
+            "Biotech"
+          ],
+          [
+            "Code",
+            "DW1"
+          ],
+          [
+            "Phase",
+            "Planning"
+          ],
+          [
+            "Status",
+            "Active"
+          ],
+          [
+            "Priority",
+            "Medium"
+          ],
+          [
+            "IND number",
+            "not assigned"
+          ]
+        ],
+        "stageBand": false,
+        "whatToDoNow": false,
+        "overflowX": false
+      },
+      "shots": [
+        "screenshots/1440-light-top.png",
+        "screenshots/1440-light-steps.png"
+      ]
+    },
+    {
+      "name": "a suggestion fills the box and sends nothing",
+      "words": "What does this filing still need, and who has each piece?",
+      "value": "What does this filing still need, and who has each piece?",
+      "focused": "Ask AnA about this project",
+      "posts": []
+    },
+    {
+      "name": "each step offers its own suggestion",
+      "perStep": [
+        {
+          "step": "Plan",
+          "current": "Plan",
+          "suggestions": [
+            "What does this filing still need, and who has each piece?",
+            "What is due this week, and who has it?"
+          ],
+          "blurb": "What this filing needs, who does it, and by when",
+          "mainWidth": 764,
+          "uppercase": []
+        },
+        {
+          "step": "Evidence",
+          "current": "Evidence",
+          "suggestions": [
+            "Which sources does this filing still need?",
+            "What is due this week, and who has it?"
+          ],
+          "blurb": "Project files and the data room the documents are written from",
+          "mainWidth": 764,
+          "uppercase": []
+        },
+        {
+          "step": "Author",
+          "current": "Author",
+          "suggestions": [
+            "Draft the next section from this project’s sources",
+            "What is due this week, and who has it?"
+          ],
+          "blurb": "Draft eCTD sections with AnA, track changes",
+          "mainWidth": 764,
+          "uppercase": []
+        },
+        {
+          "step": "Review",
+          "current": "Review",
+          "suggestions": [
+            "What is waiting for review or my signature?",
+            "What is due this week, and who has it?"
+          ],
+          "blurb": "Review, approve & e-sign",
+          "mainWidth": 764,
+          "uppercase": []
+        },
+        {
+          "step": "Submit",
+          "current": "Submit",
+          "suggestions": [
+            "What blocks dispatch of each market’s sequence?",
+            "What is due this week, and who has it?"
+          ],
+          "blurb": "Build and validate each market's eCTD sequence",
+          "mainWidth": 764,
+          "uppercase": []
+        },
+        {
+          "step": "Respond",
+          "current": "Respond",
+          "suggestions": [
+            "Draft answers to the agency’s open questions",
+            "What is due this week, and who has it?"
+          ],
+          "blurb": "Draft responses to agency letters",
+          "mainWidth": 764,
+          "uppercase": []
+        }
+      ]
+    },
+    {
+      "name": "Project settings is a drawer: Escape closes it and focus returns",
+      "inDialog": true,
+      "focusAfterClose": "Project settings",
+      "shot": "screenshots/1440-light-settings-drawer.png"
+    },
+    {
+      "name": "the frame, 390 light",
+      "frame": {
+        "title": "Durability walk IND",
+        "byline": "INDFDAData Room durability walk",
+        "objective": true,
+        "settingsButton": true,
+        "composer": true,
+        "suggestions": [
+          "What does this filing still need, and who has each piece?",
+          "What is due this week, and who has it?"
+        ],
+        "steps": [
+          {
+            "label": "Plan",
+            "current": "step"
+          },
+          {
+            "label": "Evidence",
+            "current": null
+          },
+          {
+            "label": "Author",
+            "current": null
+          },
+          {
+            "label": "Review",
+            "current": null
+          },
+          {
+            "label": "Submit",
+            "current": null
+          },
+          {
+            "label": "Respond",
+            "current": null
+          }
+        ],
+        "blurb": "What this filing needs, who does it, and by when",
+        "order": [
+          "pj-top",
+          "pj-convo",
+          "pj-sec",
+          "pj-lc",
+          "pj-step-blurb",
+          "pj-stagebody"
+        ],
+        "knowledge": "Project knowledge",
+        "facts": [
+          [
+            "Client",
+            "Concept2Cure Therapeutics"
+          ],
+          [
+            "Product",
+            "DW-1"
+          ],
+          [
+            "Indication",
+            "Data Room durability walk"
+          ],
+          [
+            "Client type",
+            "Biotech"
+          ],
+          [
+            "Code",
+            "DW1"
+          ],
+          [
+            "Phase",
+            "Planning"
+          ],
+          [
+            "Status",
+            "Active"
+          ],
+          [
+            "Priority",
+            "Medium"
+          ],
+          [
+            "IND number",
+            "not assigned"
+          ]
+        ],
+        "stageBand": false,
+        "whatToDoNow": false,
+        "overflowX": false
+      },
+      "shots": [
+        "screenshots/390-light-top.png",
+        "screenshots/390-light-steps.png"
+      ]
+    },
+    {
+      "name": "the frame, 1440 dark",
+      "frame": {
+        "title": "Durability walk IND",
+        "byline": "INDFDAData Room durability walk",
+        "objective": true,
+        "settingsButton": true,
+        "composer": true,
+        "suggestions": [
+          "What does this filing still need, and who has each piece?",
+          "What is due this week, and who has it?"
+        ],
+        "steps": [
+          {
+            "label": "Plan",
+            "current": "step"
+          },
+          {
+            "label": "Evidence",
+            "current": null
+          },
+          {
+            "label": "Author",
+            "current": null
+          },
+          {
+            "label": "Review",
+            "current": null
+          },
+          {
+            "label": "Submit",
+            "current": null
+          },
+          {
+            "label": "Respond",
+            "current": null
+          }
+        ],
+        "blurb": "What this filing needs, who does it, and by when",
+        "order": [
+          "pj-top",
+          "pj-convo",
+          "pj-sec",
+          "pj-lc",
+          "pj-step-blurb",
+          "pj-stagebody"
+        ],
+        "knowledge": "Project knowledge",
+        "facts": [
+          [
+            "Client",
+            "Concept2Cure Therapeutics"
+          ],
+          [
+            "Product",
+            "DW-1"
+          ],
+          [
+            "Indication",
+            "Data Room durability walk"
+          ],
+          [
+            "Client type",
+            "Biotech"
+          ],
+          [
+            "Code",
+            "DW1"
+          ],
+          [
+            "Phase",
+            "Planning"
+          ],
+          [
+            "Status",
+            "Active"
+          ],
+          [
+            "Priority",
+            "Medium"
+          ],
+          [
+            "IND number",
+            "not assigned"
+          ]
+        ],
+        "stageBand": false,
+        "whatToDoNow": false,
+        "overflowX": false
+      },
+      "shots": [
+        "screenshots/1440-dark-top.png",
+        "screenshots/1440-dark-steps.png"
+      ]
+    },
+    {
+      "name": "the frame, 390 dark",
+      "frame": {
+        "title": "Durability walk IND",
+        "byline": "INDFDAData Room durability walk",
+        "objective": true,
+        "settingsButton": true,
+        "composer": true,
+        "suggestions": [
+          "What does this filing still need, and who has each piece?",
+          "What is due this week, and who has it?"
+        ],
+        "steps": [
+          {
+            "label": "Plan",
+            "current": "step"
+          },
+          {
+            "label": "Evidence",
+            "current": null
+          },
+          {
+            "label": "Author",
+            "current": null
+          },
+          {
+            "label": "Review",
+            "current": null
+          },
+          {
+            "label": "Submit",
+            "current": null
+          },
+          {
+            "label": "Respond",
+            "current": null
+          }
+        ],
+        "blurb": "What this filing needs, who does it, and by when",
+        "order": [
+          "pj-top",
+          "pj-convo",
+          "pj-sec",
+          "pj-lc",
+          "pj-step-blurb",
+          "pj-stagebody"
+        ],
+        "knowledge": "Project knowledge",
+        "facts": [
+          [
+            "Client",
+            "Concept2Cure Therapeutics"
+          ],
+          [
+            "Product",
+            "DW-1"
+          ],
+          [
+            "Indication",
+            "Data Room durability walk"
+          ],
+          [
+            "Client type",
+            "Biotech"
+          ],
+          [
+            "Code",
+            "DW1"
+          ],
+          [
+            "Phase",
+            "Planning"
+          ],
+          [
+            "Status",
+            "Active"
+          ],
+          [
+            "Priority",
+            "Medium"
+          ],
+          [
+            "IND number",
+            "not assigned"
+          ]
+        ],
+        "stageBand": false,
+        "whatToDoNow": false,
+        "overflowX": false
+      },
+      "shots": [
+        "screenshots/390-dark-top.png",
+        "screenshots/390-dark-steps.png"
+      ]
+    }
+  ],
+  "result": "pass",
+  "finishedAt": "2026-11-06T17:00:48.242Z"
+}

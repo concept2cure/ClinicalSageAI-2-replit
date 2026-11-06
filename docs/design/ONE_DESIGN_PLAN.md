@@ -520,7 +520,8 @@ informed consent was.
   sentence-level spans. The walk passes a differently shaped `sources[]`, so its two `ana-draft` notes are stale.
   Recording spans, and walking the Data Room → Vault → receipt → document path, is S4's work with S2.
 - **Handed on.**
-  - D3: the Evidence step's "What to do now" box is a retired pattern.
+  - ~~D3: the Evidence step's "What to do now" box is a retired pattern.~~ Done 2026-11-06 in D3-1 (`a9819177d`):
+    the step band is deleted on every step.
   - ~~D4: `editor/useProjectSourceCatalog.ts` does not classify refusals.~~ Done here 2026-11-06 (`f0809d977`).
   - D0: a refusal is drawn in the error tone.
   - R1: the CTD onboarding routes (`/api/ctd/*`) have no caller.
@@ -765,6 +766,45 @@ All were proven by tests. Until this walk, none was opened in the running app.
 1. The rest of the walk: the drafting panel's honest refusals with no model key, F4/F6, and the audit-chain verdict.
 2. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
 3. With a model key: walk the figure gate end to end on an imported CSR's §11.4.1.
+
+#### D3 — The project page (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, from 2026-11-06)
+
+The founder asked this session to take over and finish the project page's work. The spec is
+`.design/claude-convergence/D3.md`, in four steps (D3-1 to D3-4).
+
+**Delivered** (2026-11-06)
+
+- **D3-1, the page's frame**, `a9819177d`, `docs/evidence/DESIGN/D3/D3-1/`.
+  - The main column holds the header, AnA's composer, the project's conversations, the steps and the step body.
+    The side column is "Project knowledge". The main column is 764px on every step.
+  - The header is the name with a settings button, a byline of the filing, region and indication, and the
+    objective of record (S1) under it.
+  - The composer offers the open step's suggestion. A suggestion fills the box and never sends.
+  - The steps are D0's segmented control. The step band ("What to do now", "Next step") is deleted, and its
+    guidance is the step's suggestion.
+  - Project settings opens as D0's drawer, with focus held and returned. Its governed save and archive are
+    unchanged. This is the settings half of D3-3.
+  - Nothing lost: the byline's client type, code, phase and ordinary status or priority are facts in Project
+    knowledge. The ledger is in the README.
+  - Walked at 1440 and 390, light and dark. The walk found three defects, fixed in the same commit:
+    - at 390 the name was squeezed to 0px wide beside the settings button;
+    - a page opened by its address said "Client type: not recorded" for an IND;
+    - the empty composer was 229px tall, because its spacer carried the page class `.sp` (also on trunk).
+  - 79 of 80 project suites pass. The remaining failure is `projectHomeStageCss`'s clash case, which fails on
+    trunk too; this change leaves one clash fewer. The retired-name ratchet is at 0 for `pj-stageband` and
+    "What to do now".
+
+**Not done in D3-1, for the lead**
+
+- The objective as a composer suggestion (D3.md §4.4 item 5.1). S1's objective already offers "Ask AnA to propose
+  it" on every read, so it was not offered twice.
+
+**Next**
+
+1. D3-3: the Team drawer, and the settings `request` prop that opens the drawer on a named field.
+2. D3-2: the seven Project knowledge cards (§4.8), with the reads lifted into `ProjectWorkspace` (§4.10).
+3. D3-4: the step bodies (§4.7). This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
+   Module completion without the ring.
 
 ## 4. How everyone works
 

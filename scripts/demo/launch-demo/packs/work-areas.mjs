@@ -33,9 +33,27 @@ async function boardProjectId(api, program) {
 }
 
 /**
- * tasks: [{ title, moduleType, priority, status, dueInDays, description }]
- * Status is one the create form offers (pending | in-progress | review).
+ * tasks: [{ title, moduleType, priority, status, dueInDays, description, assignee?, criticalPath? }]
+ * Status is one the create form offers (pending | in-progress | review | blocked), or
+ * 'completed': created in progress, then moved to completed through the board's own
+ * status route (PATCH /api/tasks/tasks/:id), as a person closing it would.
+ * `assignee` is a person's name on the board's roster (GET /api/task-management/assignees);
+ * a name the roster does not hold leaves the task with its creator and is noted.
+ * A negative `dueInDays` makes an overdue task.
  */
+async function rosterIds(api, tasks) {
+  if (!tasks.some(t => t.assignee)) return new Map();
+  const roster = must(await api('GET', '/api/task-management/assignees'), 200, 'read the task roster');
+  return new Map((Array.isArray(roster.data) ? roster.data : []).map(r => [r.name, Number(r.id)]));
+}
+
+async function completeTask(api, id, t, label) {
+  const done = must(await api('PATCH', `/api/tasks/tasks/${encodeURIComponent(id)}`, {
+    status: 'completed', progress: 100,
+    reason: `Demo seed: ${label} work finished, so the board shows done work beside the open work.`,
+  }), 200, `complete task "${t.title}"`);
+  if (done.success !== true) throw new Error(`Tasking did not confirm "${t.title}" as completed.`);
+}
 export async function ensureTasks({ api, run, tally }, program, tasks, label) {
   await run.step(`Tasks: ${tasks.length} tasks on ${label}`, async () => {
     // Seed definitions themselves must be unambiguous before ANY write.
@@ -66,6 +84,9 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
     }
     let created = 0;
     const newlyCreated = [];
+    const people = await rosterIds(api, tasks);
+    const unassigned = [...new Set(tasks.filter(t => t.assignee && !people.has(t.assignee)).map(t => t.assignee))];
+    if (unassigned.length) run.note(`Tasks on ${label}: ${unassigned.join(', ')} not on this organisation's roster; their tasks stay with the person seeding.`);
     for (const t of tasks) {
       const existing = have.get(t.title);
       if (existing) {
@@ -88,7 +109,9 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
         ...(t.sourceEntityId ? { sourceEntityId: t.sourceEntityId } : {}),
         ...(t.moduleData ? { moduleData: t.moduleData } : {}),
         priority: t.priority ?? 'medium',
-        status: t.status ?? 'pending',
+        status: t.status === 'completed' ? 'in-progress' : (t.status ?? 'pending'),
+        ...(people.has(t.assignee) ? { assigneeId: people.get(t.assignee) } : {}),
+        ...(t.criticalPath ? { criticalPath: true } : {}),
         projectId,
         dueDate: isoIn(t.dueInDays ?? 14),
         regulatoryImpact: true,
@@ -101,6 +124,7 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
           typeof acknowledgement.data?.taskId !== 'string' || !acknowledgement.data.taskId.trim()) {
         throw new Error(`Tasking did not confirm the saved identity for "${t.title}". Recheck the existing board before retrying.`);
       }
+      if (t.status === 'completed') await completeTask(api, acknowledgement.data.taskId, t, label);
       newlyCreated.push({ task: t, id: acknowledgement.data.taskId });
       tally.created('task');
       created += 1;
