@@ -5129,7 +5129,7 @@ export function DocumentWorkbench({
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0
-                      ? ` · ${num(activeSection.revision_count)} revisions`
+                      ? ` · ${num(activeSection.revision_count)} revision${num(activeSection.revision_count) === 1 ? '' : 's'}`
                       : ''}
                     {num(activeSection.citation_count) > 0
                       ? ` · ${num(activeSection.citation_count)} citations`

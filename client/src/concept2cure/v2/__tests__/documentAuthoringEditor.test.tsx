@@ -108,6 +108,19 @@ beforeEach(() => {
   });
 });
 
+describe('DocumentAuthoring — the section masthead', () => {
+  it('counts one revision in the singular (J3 human test, 2026-11-06: "1 revisions")', async () => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+      if (url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok({ sections: [{ ...SECTIONS.sections[0], revision_count: 1 }] });
+      return ok({ success: true });
+    });
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(document.querySelector('.ed-mast-meta')?.textContent).toContain('1 revision'));
+    expect(document.querySelector('.ed-mast-meta')?.textContent).not.toContain('1 revisions');
+  });
+});
+
 describe('DocumentAuthoring — saved draft and filing trees', () => {
   it.each([{ module: null, c2cDocumentId: null }, { module: 'M5', c2cDocumentId: 'filing-id' }])('keeps the tree basis explicit for $module / $c2cDocumentId', async ({ module, c2cDocumentId }) => {
     const programId = '11111111-1111-4111-8111-111111111111';
