@@ -27,6 +27,7 @@ export type GatewayErrorCode =
   | 'OVERLOADED'
   | 'TOKEN_LIMIT_EXCEEDED'
   | 'PROVIDER_UNAVAILABLE'
+  | 'PROVIDER_KEY_REFUSED'
   | 'INVALID_AI_RESPONSE';
 
 export interface ClassifiedGatewayError {
@@ -53,6 +54,10 @@ export const GATEWAY_ERROR_HTTP_STATUS: Readonly<Record<GatewayErrorCode, number
   OVERLOADED: 503,
   TOKEN_LIMIT_EXCEEDED: 413,
   PROVIDER_UNAVAILABLE: 503,
+  // The provider refused this deployment's API key: configuration, not load,
+  // and never the person's own sign-in (a 401 here would tell them to sign in
+  // again). 503, as an unconfigured provider answers.
+  PROVIDER_KEY_REFUSED: 503,
   INVALID_AI_RESPONSE: 502,
 };
 
@@ -96,23 +101,42 @@ export function classifyGatewayError(
   }
   const refusal = classifyPolicyRefusal(err);
   if (refusal) return refusal;
-  if (err instanceof GatewayAllProvidersFailedError) {
-    const msg = err.message || '';
-    // 529 = Anthropic "Overloaded" (and generic provider overload/503). Distinct
-    // from a 429 rate-limit: it is transient back-pressure, retried with backoff
-    // in the gateway, and surfaced as a clean "retry shortly" rather than a fault.
-    if (/\b529\b|overloaded/i.test(msg)) {
-      return { code: 'OVERLOADED', message: 'The AI provider is overloaded right now. Please retry in a moment.' };
-    }
-    if (/429|rate.?limit/i.test(msg)) {
-      return { code: 'RATE_LIMITED', message: 'The AI provider is rate limiting requests. Try again shortly.' };
-    }
-    if (/token|context length|max.?tokens/i.test(msg)) {
-      return { code: 'TOKEN_LIMIT_EXCEEDED', message: 'The input is too large for a single AI request.' };
-    }
-    return { code: 'PROVIDER_UNAVAILABLE', message: 'The AI provider is temporarily unavailable.' };
-  }
+  if (err instanceof GatewayAllProvidersFailedError) return classifyAllProvidersFailed(err.message || '');
   return { code: 'PROVIDER_UNAVAILABLE', message: 'The AI request could not be completed.' };
+}
+
+/** Every model tried failed: why, from the gateway's own summary of the last error. */
+function classifyAllProvidersFailed(msg: string): ClassifiedGatewayError {
+  // 529 = Anthropic "Overloaded" (and generic provider overload/503). Distinct
+  // from a 429 rate-limit: it is transient back-pressure, retried with backoff
+  // in the gateway, and surfaced as a clean "retry shortly" rather than a fault.
+  if (/\b529\b|overloaded/i.test(msg)) {
+    return { code: 'OVERLOADED', message: 'The AI provider is overloaded right now. Please retry in a moment.' };
+  }
+  if (/429|rate.?limit/i.test(msg)) {
+    return { code: 'RATE_LIMITED', message: 'The AI provider is rate limiting requests. Try again shortly.' };
+  }
+  // The provider refused the key itself (401 authentication, or a 403 that
+  // says the key lacks permission). Until 2026-11-06 this read "temporarily
+  // unavailable", and the founder, holding keys, saw only "try again"
+  // (gateway-error-map-key-refused.test.ts). Before the size check, whose bare
+  // "token" would read an expired OAuth token as too large an input. Neither the provider's text nor
+  // any part of the key is repeated.
+  if (/\b401\b|authentication_error|invalid x-api-key|incorrect api key|invalid api key|api key does not have permission/i.test(msg)) {
+    // "Tried:" lists registry ids (claude-opus-4, gpt-4o); the provider log line
+    // names provider/model. Either says whose key it was.
+    const provider = /\banthropic\/|\bclaude-/i.test(msg) ? 'Anthropic' : /\bopenai\/|\bgpt-/i.test(msg) ? 'OpenAI' : 'The AI provider';
+    return {
+      code: 'PROVIDER_KEY_REFUSED',
+      message:
+        `${provider === 'The AI provider' ? provider : `The AI provider (${provider})`} refused this deployment's API key, ` +
+        'so the request was not answered. Retrying will not change this; an administrator must set a valid key.',
+    };
+  }
+  if (/token|context length|max.?tokens/i.test(msg)) {
+    return { code: 'TOKEN_LIMIT_EXCEEDED', message: 'The input is too large for a single AI request.' };
+  }
+  return { code: 'PROVIDER_UNAVAILABLE', message: 'The AI provider is temporarily unavailable.' };
 }
 
 /**
