@@ -1,0 +1,140 @@
+{
+  "observedAt": "2026-11-06T20:26:48.600769+00:00",
+  "servedCommit": "c50f8782ad8ef622872578ae4fae41e14d18caa1",
+  "route": "POST /api/mdx/rbm-metric-ingest",
+  "actualHttpStatus": 500,
+  "actualSqlState": "42P10",
+  "runtimeLogObservations": [
+    {
+      "time": "2026-11-06T20:25:11.577Z",
+      "message": "[mdx-rbm-data] metric-ingest failed",
+      "path": null,
+      "status": null,
+      "sqlState": "42P10",
+      "error": "there is no unique or exclusion constraint matching the ON CONFLICT specification"
+    },
+    {
+      "time": "2026-11-06T20:25:11.578Z",
+      "message": "[http] request_failed",
+      "path": "/api/mdx/rbm-metric-ingest",
+      "status": 500,
+      "sqlState": null,
+      "error": null
+    }
+  ],
+  "catalog": {
+    "table": "public.rbm_patient_profiles",
+    "serverVersion": "16.15 (Debian 16.15-1.pgdg12+2)",
+    "columns": [
+      {
+        "name": "id",
+        "dataType": "integer",
+        "nullable": "NO"
+      },
+      {
+        "name": "organization_id",
+        "dataType": "integer",
+        "nullable": "NO"
+      },
+      {
+        "name": "program_id",
+        "dataType": "uuid",
+        "nullable": "YES"
+      },
+      {
+        "name": "site_id",
+        "dataType": "text",
+        "nullable": "YES"
+      },
+      {
+        "name": "subject_id",
+        "dataType": "text",
+        "nullable": "NO"
+      },
+      {
+        "name": "metrics",
+        "dataType": "jsonb",
+        "nullable": "NO"
+      },
+      {
+        "name": "anomaly_score",
+        "dataType": "numeric",
+        "nullable": "YES"
+      },
+      {
+        "name": "top_dimension",
+        "dataType": "text",
+        "nullable": "YES"
+      },
+      {
+        "name": "status",
+        "dataType": "text",
+        "nullable": "NO"
+      },
+      {
+        "name": "detail",
+        "dataType": "text",
+        "nullable": "YES"
+      },
+      {
+        "name": "scored_at",
+        "dataType": "timestamp with time zone",
+        "nullable": "YES"
+      },
+      {
+        "name": "metadata",
+        "dataType": "jsonb",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "dataType": "timestamp with time zone",
+        "nullable": "NO"
+      },
+      {
+        "name": "updated_at",
+        "dataType": "timestamp with time zone",
+        "nullable": "NO"
+      },
+      {
+        "name": "deleted_at",
+        "dataType": "timestamp with time zone",
+        "nullable": "YES"
+      }
+    ],
+    "constraints": [
+      {
+        "name": "rbm_patient_profiles_organization_id_organizations_id_fk",
+        "type": "f",
+        "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id)"
+      },
+      {
+        "name": "rbm_patient_profiles_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "rbm_patient_profiles_pkey",
+        "definition": "CREATE UNIQUE INDEX rbm_patient_profiles_pkey ON public.rbm_patient_profiles USING btree (id)"
+      },
+      {
+        "name": "rbm_patient_profiles_org_idx",
+        "definition": "CREATE INDEX rbm_patient_profiles_org_idx ON public.rbm_patient_profiles USING btree (organization_id)"
+      },
+      {
+        "name": "rbm_patient_profiles_org_program_idx",
+        "definition": "CREATE INDEX rbm_patient_profiles_org_program_idx ON public.rbm_patient_profiles USING btree (organization_id, program_id)"
+      },
+      {
+        "name": "rbm_patient_profiles_status_idx",
+        "definition": "CREATE INDEX rbm_patient_profiles_status_idx ON public.rbm_patient_profiles USING btree (organization_id, status)"
+      }
+    ],
+    "profileCount": 0,
+    "duplicateTripleCount": 0
+  },
+  "ddlChanged": false,
+  "subjectRowsExported": false
+}

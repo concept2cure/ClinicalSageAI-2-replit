@@ -1,8 +1,8 @@
 # Demo launch repairs and rehearsal checkpoint
 
-Plan: F1. Existing launchers, Codespace startup and qualification scripts only.
-No product screen, module, service, schema, provider policy or governance gate
-is added or bypassed.
+Plan: F1. Existing launchers, Codespace startup, qualification scripts and RBM
+identity repair. No product screen, module, service, provider policy or
+governance gate is added or bypassed.
 
 - Actual npm startup reached the existing Codespace doctor, then failed to find
   the local tsx executable. Both dev launchers now preserve npm's local PATH.
@@ -35,3 +35,26 @@ are classified in qualifiers/; only actual qualifier UUID defects were repaired.
 The existing Codespace manual now includes pull/restart instructions. Source
 publication uses normal direct Git commit/push to concept2cure-v2 with all hooks.
 This is the pre-publication checkpoint; later runtime receipts remain separate.
+
+## Follow-through before the demo
+
+The published startup repair was then exercised through the actual npm launcher
+under Node 22, with the normal non-owner runtime database role. Its served
+commit matched c50f8782a. All three existing demo packs (biotech, MDX and Lumen)
+finished seeding; their qualification state remains honestly seeded_unqualified.
+Latest-source frontend checks passed 256 cases across 20 existing test files.
+These runtime and frontend receipts are retained under native/ and frontend/.
+
+Actual RBM ingestion exposed a missing database identity index: the Drizzle
+model created the table first without the existing migration's inline unique
+constraint. The existing model and creator migration now agree, and replay
+repairs that omission. Wrong indexes or conflicting rows fail for reconciliation
+without deleting data. All 45 focused tests pass. Native PostgreSQL replay,
+actual HTTP ingestion/read and repeated same-identity upsert pass with 12 stable
+profiles, no duplicate triples and forced row security under app_service.
+The exact migration hashes and runtime outcomes are in rbm/ and native/.
+
+No provider-backed draft was requested and the user's Codespace remains
+unavailable to this integration. Local readiness still reports no_provider;
+the operator must verify configured providers and one real draft before the
+meeting. Source publication still uses the canonical branch and normal hooks.
