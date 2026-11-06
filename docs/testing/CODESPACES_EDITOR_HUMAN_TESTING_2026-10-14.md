@@ -49,12 +49,19 @@ the app on port 5000 in development mode and opens it in your browser.
 
 1. **Add your model keys as Codespaces secrets, once.** On GitHub: your
    repository → **Settings** → **Secrets and variables** → **Codespaces** →
-   **New repository secret**. Add `ANTHROPIC_API_KEY`: AnA drafts regulatory
-   documents with an approved Claude model, so this key is the one drafting
-   needs. `OPENAI_API_KEY` is optional; on its own it answers chat but not
-   regulatory drafting (the server's own `/readyz` says so). (Or: your account's **Settings** → **Codespaces** →
+   **New repository secret**. Add **both** keys:
+   - `ANTHROPIC_API_KEY`: AnA drafts regulatory documents with an approved
+     Claude model, so drafting needs this key. `OPENAI_API_KEY` alone answers
+     chat but does not draft (the server's own `/readyz` says so).
+   - `OPENAI_API_KEY`: search uses OpenAI embeddings, including Vault search,
+     knowledge-base search and AnA's project memory. Without it,
+     `/readyz` reports `embedding_lane_down`, search fails, and AnA's Progress
+     panel reads "Memory: Could not be read". (Or: your account's **Settings** → **Codespaces** →
    **Secrets**, and give the secret access to this repository.) A Codespace
-   reads its secrets when it starts: after adding one, rebuild or restart it.
+   reads its secrets when it starts. After adding one, **stop and start** the
+   Codespace (Codespaces menu → Stop Current Codespace, then open it again);
+   reloading the page is not enough. The start then restarts the app if the
+   running app had no key, and says what the app itself sees for AnA.
    Do **not** add a `DATABASE_URL` or any other database secret. This Codespace
    uses its own local database, and it does not pass such a secret to the app.
 2. **Create the Codespace on `concept2cure-v2`.** Repository page → **Code** →
@@ -96,7 +103,9 @@ What the setup did, and where to look when something is wrong:
   runs with: the `app_service` role, which is not an owner and does not bypass
   row-level security, and random signing secrets. Nothing is committed or
   printed.
-- **Restart the app:** `pkill -f 'tsx --inspect=0 server/index.ts'; bash .devcontainer/post-start.sh`.
+- **Restart the app:** `bash .devcontainer/post-start.sh` restarts it by itself when the running app lacks a key
+  the terminal has. To force a restart: `pkill -f 'tsx --inspect=0 server/index.ts'; bash .devcontainer/post-start.sh`.
+  A terminal opened before a secret was added does not hold that secret; stop and start the Codespace instead.
 - **Check it:** `set -a; . ~/.concept2cure-codespace/app.env; set +a; npm run codespaces:doctor -- --check-app --probe-anthropic`.
 - **The CSR study's data** are the public CDISC pilot ADaM files (CDISCPILOT01).
   They are fetched when the Codespace starts into `~/.concept2cure-codespace/cdisc-pilot`,

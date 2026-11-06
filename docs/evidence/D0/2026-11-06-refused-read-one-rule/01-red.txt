@@ -1,0 +1,35 @@
+ ✓ errorState.test.tsx > ErrorState — announcement and recovery > announces assertively as an alert 149ms
+ ✓ errorState.test.tsx > ErrorState — announcement and recovery > offers a retry that runs, and reports its busy state 50ms
+ ✓ errorState.test.tsx > ErrorState — announcement and recovery > is dismissible only when a dismiss handler is given 17ms
+ ✓ errorState.test.tsx > ErrorState — announcement and recovery > shows the correlation id as the support handle 13ms
+ ✓ errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a missing relation 11ms
+ ✓ errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a Drizzle failed query 18ms
+ ✓ errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render raw SQL 17ms
+ ✓ errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an API route 11ms
+ ✓ errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an env var 8ms
+ ✓ errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a file path 5ms
+ ✓ errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a source location 5ms
+ ✓ errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a stack frame 4ms
+ ✓ errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an enum token 4ms
+ ✓ errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a driver code 5ms
+ ✓ errorState.test.tsx > ErrorState — nothing internal can be rendered through it > still renders a legitimate server sentence 5ms
+ ✓ errorState.test.tsx > EmptyState tone="error" delegates rather than rendering its own panel > renders the shared ErrorState, filter included 10ms
+ ✓ errorState.test.tsx > EmptyState tone="error" delegates rather than rendering its own panel > leaves the idle tone a polite status, not an alert 5ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a plan without the feature': its own title and words, and no retry 11ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a part not in this release': its own title and words, and no retry 5ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a role': its own title and words, and no retry 5ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'an unconfirmed organization': its own title and words, and no retry 5ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a record not in this organization': its own title and words, and no retry 6ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'an expired session': its own title and words, and no retry 11ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a plan without the feature' 6ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a part not in this release' 5ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a role' 12ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'an unconfirmed organization' 8ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a record not in this organization
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'an expired session' 6ms
+ ✓ errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a server failure' keeps the caller's words and its retry 10ms
+ ✓ errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'no response at all' keeps the caller's words and its retry 11ms
+ ✓ errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'no read given' keeps the caller's words and its retry 10ms
+ × errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > an unavailable ownership check keeps a retry, with the classifier's words 8ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  13 failed | 20 passed (33)

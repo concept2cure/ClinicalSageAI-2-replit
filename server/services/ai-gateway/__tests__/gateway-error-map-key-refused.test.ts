@@ -52,3 +52,40 @@ describe('ordering', () => {
       .toBe('PROVIDER_KEY_REFUSED');
   });
 });
+
+/**
+ * A valid key on an account that cannot be served is not an outage either (2026-11-06). Anthropic answers an account
+ * with no credit "400 … Your credit balance is too low", and the person read "temporarily unavailable". OpenAI answers
+ * a spent quota with a 429, and the person read "rate limiting … Try again shortly", for as long as they kept trying.
+ * A model the account cannot use answers 404. Each names the cause and who fixes it.
+ */
+describe('a provider account that cannot be served', () => {
+  it.each([
+    ['Anthropic', '400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011"}'],
+    ['OpenAI', '429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs.'],
+    ['OpenAI', '429 {"error":{"message":"quota","type":"insufficient_quota","code":"insufficient_quota"}}'],
+  ])('%s with no credit or quota left is PROVIDER_ACCOUNT_REFUSED, never "try again shortly"', (provider, last) => {
+    const c = classifyGatewayError(allFailed(last));
+    expect(c.code).toBe('PROVIDER_ACCOUNT_REFUSED');
+    expect(c.message).toContain(`The AI provider (${provider})`);
+    expect(c.message).toMatch(/no credit or quota left/);
+    expect(c.message).toMatch(/administrator/);
+    expect(c.message).not.toMatch(/temporarily|try again shortly|Plans & Billing|req_011|insufficient_quota/i);
+    expect(GATEWAY_ERROR_HTTP_STATUS[c.code]).toBe(503);
+  });
+
+  it.each([
+    ['Anthropic', '404 {"type":"error","error":{"type":"not_found_error","message":"model: claude-opus-5-5"}}'],
+    ['OpenAI', '404 The model `gpt-5` does not exist or you do not have access to it.'],
+  ])('%s refusing the model to this account is PROVIDER_ACCOUNT_REFUSED', (provider, last) => {
+    const c = classifyGatewayError(allFailed(last));
+    expect(c.code).toBe('PROVIDER_ACCOUNT_REFUSED');
+    expect(c.message).toContain(`The AI provider (${provider}) does not offer the requested model`);
+    expect(c.message).not.toMatch(/temporarily|not_found_error|gpt-5/);
+  });
+
+  it('a real rate limit is still a rate limit', () => {
+    expect(classifyGatewayError(allFailed('429 {"type":"error","error":{"type":"rate_limit_error","message":"Number of request tokens has exceeded your per-minute rate limit"}}')).code)
+      .toBe('RATE_LIMITED');
+  });
+});

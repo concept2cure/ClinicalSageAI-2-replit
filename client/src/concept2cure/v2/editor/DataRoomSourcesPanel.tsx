@@ -6,7 +6,6 @@ import { I } from '../icons';
 import { parseProjectSourcePage, projectSourceCatalogUrl, type ProjectSourcePage, type ProjectSourceRecord } from './projectSourceCatalog';
 import { sourceHasGroundingText, sourceReadView } from '@shared/data-room-processing-status';
 import { SourceAssemblyAction, sourceAssemblyUnavailableReason } from './SourceAssemblyDialog';
-import { describeReadFailure, readFailureFor } from '../../mdx/hooks/useFetchJson';
 
 type SourceRow = ProjectSourceRecord;
 type SourcesPage = ProjectSourcePage;
@@ -71,36 +70,15 @@ function SourcePagination({ offset, truncated, onPage }: { offset: number; trunc
   </div>;
 }
 
-/* Why the data room was not read, said as what happened (2026-11-05). The founder: a
-   feature can be not licensed, not relevant to the project, blocked by missing evidence,
-   or unavailable to this user, and those are never one generic failure. Every one of
-   them used to read "The data room could not be read" with a retry. A refusal is told
-   apart by the server's code through the one read classifier, as the Vault's read is
-   (3c84ddc6ac): a plan without the feature, a release without it, the person's role, an
-   organization not confirmed, a project not in this organization, an expired session.
-   None is changed by a retry. Only a failure to answer (5xx, no response, a page whose
-   metadata could not be confirmed) keeps the retry. */
-type DataRoomReadFailure = { title: string; hint: string | undefined; retryable: boolean };
-function dataRoomReadFailure(state: Pick<DataState<unknown>, 'status' | 'code' | 'error'>): DataRoomReadFailure {
-  if (state.status === 401) {
-    return { title: 'Your session has expired', hint: 'Sign in again to read this project’s data room.', retryable: false };
-  }
-  const kind = readFailureFor(state.status, state.code);
-  if (kind === 'failed') return { title: 'The data room could not be read', hint: state.error, retryable: true };
-  const words = describeReadFailure(kind, 'the data room');
-  return { title: words.title, hint: words.message, retryable: words.retryable };
-}
-
 function SourceListPage({ state, offset, term, onRetry, onClear, onPage, onPull, onAsk, programId, onNav }: {
   programId: string; onNav?: (id: string) => void;
   state: DataState<SourcesPage>; offset: number; term: string; onRetry: () => void; onPage: (offset: number) => void;
   onClear: () => void; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void;
 }) {
   if (state.loading) return <EmptyState busy icon={I.fileText} title="Loading project sources…" />;
-  if (state.error) {
-    const failure = dataRoomReadFailure(state);
-    return <EmptyState tone="error" icon={I.alertTriangle} title={failure.title} hint={failure.hint} retry={failure.retryable ? onRetry : undefined} />;
-  }
+  /* A refused read (not licensed, not in this release, a role, not found, an expired session) is said as
+     itself with no retry, by the shared panel's one rule (`read`, 2026-11-05/06); a failure keeps these words. */
+  if (state.error) return <EmptyState tone="error" icon={I.alertTriangle} title="The data room could not be read" hint={state.error} retry={onRetry} read={state} readWhat="the data room" />;
   const sources = state.data?.sources ?? [];
   return <>
     {typeof state.data?.total === 'number' && <p className="pf-count" role="status">{state.data.total} matching sources · showing {sources.length}.</p>}
