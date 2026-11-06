@@ -247,8 +247,11 @@ function resolvedBuiltin(builtin: BuiltinAuthoringTemplate, sections: TemplateSe
   const eligible = builtin.aiDraftable && region !== null;
   return { id: builtin.id, name: builtin.name, snapshot: source.sha256, sections,
     draftRegion: region, aiDraftable: eligible,
+    // Two different causes, said apart (J3, 2026-11-06): the GLOBAL IB was
+    // called a "preparation template", which it is not.
     aiDraftableReason: eligible ? 'The recorded narrative template permits AnA drafting; source and human review are still required.' :
-      'This preparation template or unresolved regional scope does not permit automatic AnA drafting. Retain its originals and complete it manually.',
+      !builtin.aiDraftable ? 'This is a preparation template: AnA does not draft it. Retain its originals and complete it manually.' :
+      'This template is harmonised (GLOBAL) and names no receiving agency, so AnA has no agency to draft for. Complete it manually, or start from the agency’s own template for this document.',
     limitations: [...builtin.limitations],
     metadataFor: code => ({ template_id: builtin.id, seeded: true, ...builtinTemplateSectionMetadata(builtin, source, code) }),
     draftingModeFor: code => builtin.sections.find(row => row.code === code)?.guidance.drafting_mode,
