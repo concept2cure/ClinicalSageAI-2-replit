@@ -732,6 +732,14 @@ with the person in control".
   - A results section with no receipts says "not checked", never "passed".
   - The accept's audit row names the option set ("alternative 2 of 3, concise").
   - Proof: red 10 of 11, then green 11 of 11; 6 of 6 mutations killed.
+- **CSR slice 2, the panel half**, `199f1cd28` and `d8330538b`, in the same evidence folder:
+  - each draft names its figures;
+  - the accept, a chosen paragraph or a passage replacement is held while a figure the engine did not produce still
+    stands in the text;
+  - with no receipts, the panel says "not checked against the study's engine output";
+  - the accept sends the option set.
+
+  Proof: red 12, then green 70 of 70; regression 53 files and 728 tests; 8 of 8 mutations killed.
 - **The running-app walk, started**, `468ee75a5`, `docs/evidence/D2-CSR-DRAFT-CONTROL/2026-11-06/walk/`. P-72 slice 1a
   re-owned the pre-auth lookups (`ae12195a5`). Sign-in and the reset request work through them in the running app, as
   the runtime role with RLS and the launch gate enforced, at 1440 and 390 px. The wrong-password and wrong-code
@@ -755,10 +763,9 @@ All were proven by tests. Until this walk, none was opened in the running app.
 
 **Next**
 
-1. The panel's half of slice 2: the figure marked on the draft itself, holding a paragraph or passage that carries a
-   blocking figure, and sending the option set.
-2. The rest of the walk: the drafting panel's honest refusals with no model key, F4/F6, and the audit-chain verdict.
-3. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
+1. The rest of the walk: the drafting panel's honest refusals with no model key, F4/F6, and the audit-chain verdict.
+2. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
+3. With a model key: walk the figure gate end to end on an imported CSR's §11.4.1.
 
 #### D3 — The project page (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, from 2026-11-06)
 

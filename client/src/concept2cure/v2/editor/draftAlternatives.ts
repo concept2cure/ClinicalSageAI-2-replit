@@ -15,7 +15,7 @@
  */
 import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types';
 import { looksLikeHtml } from './roundTrip';
-import type { AiDraftAlternative, AiDraftApproach, AiDraftReviewState, PendingAiDraft } from './authoringDraftTransport';
+import type { AiDraftAlternative, AiDraftApproach, AiDraftReviewState, DraftAlternativeOption, DraftOptionSet, PendingAiDraft } from './authoringDraftTransport';
 import type { EditorBridge, EditorBridgeProposal, EditorBridgeProposeResult } from './DocumentWorkbench';
 import type { EditorProposalReceipt } from './editorProposalReceipt';
 import type { ProposalState } from './proposalLifecycle';
@@ -303,4 +303,48 @@ export function revisedAlternative(state: AiDraftReviewState, target: RevisionTa
   const kept = seeded.map((a, i) => (i === shown && state.draft ? { ...a, body: state.body } : a));
   const list = [...kept, { approach: target.approach, draft, body: draft.generated, revision: { from: target.from, instruction } }];
   return { alternatives: list, shownAlternative: list.length - 1, draft, body: draft.generated, refusal: null };
+}
+
+/* ── The CSR engine figure gate, in the panel (slice 2) ─────────────────── */
+
+/**
+ * The figures the server's gate named on this draft that still stand in `text`, the person's edits
+ * included. The server re-runs the gate on the text accepted and is the authority; this only says what
+ * to show and what to hold. null: the gate does not cover this document.
+ */
+export function csrFigureHold(draft: PendingAiDraft, text: string):
+  { status: 'checked' | 'not_checked'; blocking: string[]; reported: string[] } | null {
+  const gate = draft.csrFigures;
+  if (!gate) return null;
+  if (gate.status === 'not_checked') return { status: 'not_checked', blocking: [], reported: [] };
+  const standing = gate.figures.filter(f => text.includes(f.figure));
+  return { status: 'checked', blocking: standing.filter(f => f.blocking).map(f => f.figure),
+    reported: standing.filter(f => !f.blocking).map(f => f.figure) };
+}
+
+/**
+ * The option set the accepted text was chosen from, from the panel's own list (slice 1, decision 3):
+ * the alternative shown, or a revision, how many revisions deep, and what it revises. undefined for a
+ * lone draft that was never revised, which names no set.
+ */
+export function acceptOptionSet(state: AiDraftReviewState): DraftOptionSet | undefined {
+  const list = state.alternatives ?? [];
+  const shown = state.shownAlternative ?? 0;
+  if (!list[shown]) return undefined;
+  const originals = list.filter(a => !a.revision && !a.single);
+  const asAlternative = (alt: AiDraftAlternative): DraftAlternativeOption | null => {
+    const position = originals.indexOf(alt);
+    return position < 0 ? null : { kind: 'alternative', position: position + 1, count: originals.length, approach: alt.approach };
+  };
+  let depth = 0;
+  let at = shown;
+  for (let revision = list[at].revision; revision && depth < list.length; revision = list[at]?.revision) {
+    depth += 1;
+    at = revision.from;
+  }
+  const root = list[at];
+  if (!root) return undefined;
+  if (depth === 0) return root.single ? undefined : asAlternative(root) ?? undefined;
+  const of = root.single ? { kind: 'draft' as const } : asAlternative(root);
+  return of ? { kind: 'revision', revision: depth, of } : undefined;
 }

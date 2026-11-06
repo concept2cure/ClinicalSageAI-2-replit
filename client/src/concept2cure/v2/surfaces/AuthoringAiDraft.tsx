@@ -62,8 +62,8 @@ import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types'
 
 import { useAuthoringDraftReview } from '../editor/useAuthoringDraftReview';
 import { AuthoredHtml } from '../editor/AuthoredHtml';
-import { AlternativeReview, AlternativesPicker } from '../editor/DraftAlternatives';
-import { NO_ALTERNATIVES, alternativeWording, type DraftProposalTarget } from '../editor/draftAlternatives';
+import { AlternativeReview, AlternativesPicker, CsrFigureNote } from '../editor/DraftAlternatives';
+import { NO_ALTERNATIVES, alternativeWording, csrFigureHold, type DraftProposalTarget } from '../editor/draftAlternatives';
 import { PassageAlternatives } from '../editor/DraftPassage';
 import type { PassageRequest } from '../editor/draftPassage';
 import type { AcceptedAttribution, AiDraftGenerationInputs, AiDraftMetadata, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
@@ -259,7 +259,7 @@ function DraftCheck({ check, edited }: { check: AnswerCheckView | null; edited: 
 }
 
 /** Grounding, model, check and record for one draft: the facts a reviewer needs before reading a word. */
-function DraftFacts({ draft, edited }: { draft: PendingAiDraft; edited: boolean }) {
+function DraftFacts({ draft, edited, text }: { draft: PendingAiDraft; edited: boolean; text?: string }) {
   const grounding = describeGrounding(draft);
   const generator = describeGenerator(draft.metadata);
   return (
@@ -273,6 +273,7 @@ function DraftFacts({ draft, edited }: { draft: PendingAiDraft; edited: boolean 
         {' · not saved'}
       </div>
       <DraftCheck check={draft.check} edited={edited} />
+      <CsrFigureNote draft={draft} text={text ?? draft.generated} id={`ai-draft-csr-figures-${draft.draftId ?? 'none'}`} />
       <DraftRecord turnRecord={draft.turnRecord} />
     </>
   );
@@ -325,6 +326,8 @@ export function AuthoringAiDraft({
   const generate = () => { if (!generationHold) return review.generate({ tone, region, context, requirements }); };
   const accept = review.accept;
   const edited = draft != null && body !== draft.generated;
+  // CSR slice 2: a blocking figure still in the text holds the accept; the server re-checks what is accepted.
+  const figureHeld = draft != null && (csrFigureHold(draft, body)?.blocking.length ?? 0) > 0;
   const wording = alternativeWording(review.state, edited);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const passageShown = !!passage && passage.sectionId === sectionId;
@@ -497,7 +500,7 @@ export function AuthoringAiDraft({
       {draft && grounding && (
         <>
           <AlternativesPicker state={review.state} accepting={accepting} onShow={review.showAlternative} />
-          <DraftFacts draft={draft} edited={edited} />
+          <DraftFacts draft={draft} edited={edited} text={body} />
           <AlternativeReview state={review.state} draft={draft} label={wording.paragraphLabel} edited={edited} savedContent={savedContent}
             savedUpdatedAt={savedUpdatedAt} target={proposals} busy={busy} docSealed={docSealed}
             onRevise={generationHold ? undefined : instruction => void review.revise(instruction, { tone, region, context, requirements })} />
@@ -585,7 +588,8 @@ export function AuthoringAiDraft({
                 className="btn primary"
                 style={{ height: 30 }}
                 onClick={() => void accept()}
-                disabled={busy || docSealed || editorDirty || !!acceptUnknown || !!baseChanged || draft.sectionId !== sectionId}
+                disabled={busy || docSealed || editorDirty || !!acceptUnknown || !!baseChanged || draft.sectionId !== sectionId || figureHeld}
+                aria-describedby={figureHeld ? `ai-draft-csr-figures-${draft.draftId ?? 'none'}` : undefined}
                 data-testid="ai-draft-accept"
               >
                 {accepting ? 'Saving…' : wording.accept}

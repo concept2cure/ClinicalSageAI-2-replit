@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   alternativeDescription, alternativeLabel, alternativeName, alternativeWording, arrivedAlternative, defaultPairing, draftParagraphAuthor,
   draftParagraphs, draftShape, NO_ALTERNATIVES, paragraphProposals, paragraphRefusal, revisedAlternative, revisionRefusal, revisionTarget,
-  savedParagraphs, showAlternative,
+  savedParagraphs, showAlternative, csrFigureHold, acceptOptionSet,
 } from '../draftAlternatives';
 import { createEmptyAiDraftReviewState, type PendingAiDraft } from '../authoringDraftTransport';
 
@@ -129,5 +129,49 @@ describe('revise by instruction (slice 3)', () => {
     expect(revisionRefusal({ ...two(), draft: { ...draft('P.'), draftId: null } }, false)).toMatch(/not retained on the server/);
     expect(revisionRefusal({ ...two(), baseChanged: true }, false)).toMatch(/saved section changed/);
     expect(revisionRefusal(two(), false)).toBeNull();
+  });
+});
+
+describe('the CSR engine figure gate in the panel (slice 2)', () => {
+  const checked = (figures: Array<{ figure: string; blocking: boolean }>): PendingAiDraft['csrFigures'] =>
+    ({ status: 'checked', results: true, figures });
+
+  it('holds the text while a blocking figure still stands in it, and lets it go once the person corrects it', () => {
+    const d = { ...draft('Responders were 17/305 (5.6%).'), csrFigures: checked([{ figure: '17/305', blocking: true }]) };
+    expect(csrFigureHold(d, d.generated)).toEqual({ status: 'checked', blocking: ['17/305'], reported: [] });
+    expect(csrFigureHold(d, 'Responders were 16/305 (5.2%).')).toEqual({ status: 'checked', blocking: [], reported: [] });
+  });
+
+  it('reports a figure outside the results sections without holding anything', () => {
+    const d = { ...draft('Planned 300 subjects.'), csrFigures: { status: 'checked' as const, results: false, figures: [{ figure: '300', blocking: false }] } };
+    expect(csrFigureHold(d, d.generated)).toEqual({ status: 'checked', blocking: [], reported: ['300'] });
+  });
+
+  it('says a results section with no receipts was not checked, and says nothing for a document the gate does not cover', () => {
+    expect(csrFigureHold({ ...draft('P.'), csrFigures: { status: 'not_checked' } }, 'P.')).toEqual({ status: 'not_checked', blocking: [], reported: [] });
+    expect(csrFigureHold(draft('P.'), 'P.')).toBeNull();
+  });
+
+  it('names the option set from the panel’s own list: the alternative shown, or a revision and what it revises', () => {
+    let state = createEmptyAiDraftReviewState();
+    state = { ...state, ...arrivedAlternative(state, 'professional', draft('A.', 'A'), ['concise', 'detailed'], true) };
+    state = { ...state, ...arrivedAlternative(state, 'concise', draft('B.', 'B'), ['detailed'], false) };
+    state = { ...state, ...arrivedAlternative(state, 'detailed', draft('C.', 'C'), [], false) };
+    expect(acceptOptionSet({ ...state, ...showAlternative(state, 1) }))
+      .toEqual({ kind: 'alternative', position: 2, count: 3, approach: 'concise' });
+    const revised = { ...state, ...showAlternative(state, 1) };
+    const target = revisionTarget(revised, 'concise');
+    expect(target).not.toBeNull();
+    const once = { ...revised, ...revisedAlternative(revised, target!, draft('B2.', 'B2'), 'Shorter') };
+    expect(acceptOptionSet(once)).toEqual({ kind: 'revision', revision: 1, of: { kind: 'alternative', position: 2, count: 3, approach: 'concise' } });
+    const twice = { ...once, ...revisedAlternative(once, revisionTarget(once, 'concise')!, draft('B3.', 'B3'), 'Shorter still') };
+    expect(acceptOptionSet(twice)).toEqual({ kind: 'revision', revision: 2, of: { kind: 'alternative', position: 2, count: 3, approach: 'concise' } });
+  });
+
+  it('names no set for a lone draft, and names a lone draft’s revision as a revision of the draft', () => {
+    const lone = { ...createEmptyAiDraftReviewState(), draft: draft('P.', 'D'), body: 'P.' };
+    expect(acceptOptionSet(lone)).toBeUndefined();
+    const revised = { ...lone, ...revisedAlternative(lone, revisionTarget(lone, 'professional')!, draft('P2.', 'D2'), 'Shorter') };
+    expect(acceptOptionSet(revised)).toEqual({ kind: 'revision', revision: 1, of: { kind: 'draft' } });
   });
 });
