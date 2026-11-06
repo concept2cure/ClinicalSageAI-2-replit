@@ -21,7 +21,7 @@ Searches: source-name/caller/route searches and full-history deletion searches o
 
 ## Status
 
-Implementation and local checks complete; canonical synchronization and normal hooked publication are pending. Historical Oct30 results do not qualify this source.
+**Published directly to concept2cure-v2 at `c5baa0089774eb91d4bdd9fe60a6fbcf33b05bbc`.** All normal hooks and full CLI tsc passed with zero errors and unchanged zero baseline. This packet qualifies the bounded F1 repair; historical Oct30 results do not qualify it.
 
 
 ## Observed RED and focused GREEN
@@ -76,3 +76,12 @@ The native-app browser re-walk passes **8/8 cases** on the merged UI, at 1440/39
 The first normal push completed every hook and the full CLI compiler with **0 errors, tsc exit 0, unchanged zero baseline**, but Git rejected the outdated remote ref. `source-push-ref-race-1.json/log.gz` retain that failed transport; it is not an accepted publication.
 
 Merged `965084590` normally. The exact named-input delta is three project-page files, with all authoring/server/CI and review-reopen source unchanged. `publication-bridge.json` binds their old/new hashes, the four added pins and the evidence-verifier-only change after rerun. All eight affected client suites plus the two incoming project suites pass **122/122** (`retry1-client`), replacing the original 106 client cases and adding 16 project cases. The four unchanged reopen cases and all unchanged server/119 Node cases retain their earlier qualification; overlapping passes are not added to the original 571 count. Production build and all eight native-app browser cases pass again (`retry1-build`, `retry1-browser`), with no named-input drift. The final normal push remains pending at this checkpoint.
+
+
+## Accepted publication
+
+`source-push.json/log.gz` record the **accepted normal push**, exit 0, all hooks complete, full CLI `tsc` exit 0 with zero errors and no named-input drift. The accepted source is `c5baa0089774eb91d4bdd9fe60a6fbcf33b05bbc` on `concept2cure-v2`. No PR, force push, rebase, hook bypass, baseline widening, provider call or deployment was used.
+
+`accepted-source.json` binds all **3,409 final named inputs** to SHA-256 and the exact accepted Git blob IDs. `qualification.json` records checks and their limits. Through the original 571-case run and the exact 122-case client overlay, **587 distinct Vitest cases across 24 suites** are qualified cumulatively (571 − 106 + 122; 22 − 8 + 10). This is not one 587-case invocation. The 119 Node cases and eight-case browser re-walk are separate; overlapping earlier focused/fixture/browser runs are not added.
+
+The final evidence-only commit closes this packet and releases our file holds. Reproduce the bounded checks from each receipt's argv and source freeze; run `python3 docs/evidence/F1/2026-11-06-authoring-project-write-access/finalize.py verify` to check retained output hashes, the exact source bridge, accepted Git identities and every recursively recorded packet artifact. The root artifact manifest excludes only itself. [OPEN_ITEMS.md](OPEN_ITEMS.md) retains the D3/D4 findings, provider/readiness restriction and unassessed CSR/native-concurrency/agency acceptance.
