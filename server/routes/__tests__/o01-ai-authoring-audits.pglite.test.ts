@@ -111,7 +111,7 @@ describe('editing and template suggestion outcomes reach the JSON caller', () =>
       expect(res.status).toBe(200);
     }
     expect(h.retrieval).toHaveBeenCalledTimes(2); expect(h.gateway).toHaveBeenCalledTimes(2);
-    for (const call of h.retrieval.mock.calls) expect(call[2]).toMatchObject({ projectId: '3' });
+    for (const call of h.retrieval.mock.calls) expect(call[2]).toMatchObject({ projectIds: [3] });
   });
 });
 

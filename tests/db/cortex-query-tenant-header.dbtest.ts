@@ -36,6 +36,11 @@
  * cortex-unified at /api/cortex, which mounts this router at /query. The query
  * embedding is stubbed — a model call is irrelevant to tenancy and unavailable
  * offline — and nothing else is.
+ *
+ * Since F1 (2026-11-05) the route also holds a query to the projects the person
+ * can open, so each tenant's atom is an artifact atom of its fixture project,
+ * which its creator (userA, userB) can open
+ * (docs/evidence/F1/2026-11-05-evidence-retrieval-scope/).
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import express from 'express';
@@ -51,6 +56,7 @@ import {
   ORG_B,
   FIXTURE_ORGS,
   owner,
+  ids,
   tokenA,
   userA,
   accessToken,
@@ -101,11 +107,17 @@ beforeAll(async () => {
     ['A', ORG_A],
     ['B', ORG_B],
   ] as const) {
+    const artifactId = `${TAG}-cortex-${side}`;
+    await owner.query(
+      `INSERT INTO concept2cure_artifacts (artifact_id, project_id, organization_id, type, category, title, content)
+       VALUES ($1,$2,$3,'document','clinical',$1,'fixture')`,
+      [artifactId, Number(ids[side].projects), org]
+    );
     await owner.query(
       `INSERT INTO lumen_data_atoms
          (organization_id,source_type,source_id,atom_type,title,content,embedding,status)
-       VALUES ($1,'wo03','wo03-${side}','fact',$2,$3,$4::vector,'active')`,
-      [org, `${PROBE} ${SECRET[side]}`, `${PROBE} ${SECRET[side]}`, `[${VEC.join(',')}]`]
+       VALUES ($1,'artifact',$2,'fact',$3,$4,$5::vector,'active')`,
+      [org, artifactId, `${PROBE} ${SECRET[side]}`, `${PROBE} ${SECRET[side]}`, `[${VEC.join(',')}]`]
     );
   }
 
@@ -123,6 +135,7 @@ afterAll(async () => {
     await owner.query('DELETE FROM lumen_data_atoms WHERE organization_id = ANY($1::int[])', [
       FIXTURE_ORGS,
     ]);
+    await owner.query('DELETE FROM concept2cure_artifacts WHERE artifact_id LIKE $1', [`${TAG}-cortex-%`]);
   }
   await teardownTwoTenantFixture();
 });

@@ -175,7 +175,7 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
         const retrieval = await retrieveDataRoomEvidence(pool, searchQuery, {
           limit: RETRIEVAL_TOP_K,
           minSemanticScore: RETRIEVAL_THRESHOLD,
-          projectId: String(admittedProject.id),
+          projectIds: [admittedProject.id],
         });
         retrievalStatus = retrieval.status;
         if (retrieval.cause) logger.warn('Data Room retrieval failed', { cause: retrieval.cause });
@@ -1111,7 +1111,7 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
         const retrieval = await retrieveDataRoomEvidence(pool, searchQuery, {
           limit: 5,
           minSemanticScore: 0.65,
-          projectId: String(admittedProject.id),
+          projectIds: [admittedProject.id],
         });
         retrievalStatus = retrieval.status;
         if (retrieval.cause) logger.warn('Template generation: Data Room retrieval failed', { cause: retrieval.cause });
