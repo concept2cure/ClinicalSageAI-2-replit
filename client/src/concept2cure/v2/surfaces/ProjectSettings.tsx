@@ -73,8 +73,11 @@ async function loadSettings(context: Context) {
   if (!retained(context) || serial !== s.reads.current) return;
   s.setLoading(false);
   if (answer.kind !== 'confirmed') { s.setNote({ error: true, text: answer.message }); return; }
+  const afterRefusal = s.blocked;
   s.setSaved(answer.envelope.data); s.setDraft(draftOf(answer.envelope.data)); s.setBlocked(false);
-  s.setNote({ error: false, text: 'Current saved settings loaded. This read does not confirm an earlier uncertain save or audit.' });
+  /* Said only when it means something: after a save that could not be confirmed, a reload shows what is saved but does
+     not confirm that save. Opening the settings said it too, to a tester who had saved nothing (human test J1). */
+  s.setNote(afterRefusal ? { error: false, text: 'Current saved settings loaded. This read does not confirm an earlier uncertain save or audit.' } : null);
 }
 function diff(saved: ProjectSettingsData | null, draft: Draft | null): ProjectSettingsPatch {
   if (!saved || !draft) return {};
