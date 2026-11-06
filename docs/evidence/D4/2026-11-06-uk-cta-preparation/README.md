@@ -212,3 +212,19 @@ previous cohorts and are not added to them. The incoming owner's native database
 and browser evidence remains separate and was not rerun here. The 14 core hashes
 and both separately documented test-correction hashes match. Normal publication
 remains pending at this checkpoint; all hooks remain enabled.
+
+
+The eleventh normal run at `4a02adaec` passed every hook, zero TypeScript errors
+and no warning growth across 16 changed TS files. It lost the ref to unified-task
+admission update `9c047a1ff`, merged normally at `91e5871d8`. Two independent
+read-only reviews found no UK/task-plan blocker. The alternate task writer now
+reuses current actor/project admission and actual workspace retention on its
+existing task/audit transaction; unknown commit acknowledgements discard the
+lease. Existing optional unfiled work still requires current write admission.
+
+All 145 focused admission, source-project, unified-route, governed-write and
+route-column cases across five suites pass; the server build passes. The client
+diff since `4a02adaec` is empty, so its preceding build still applies. All 14 core
+hashes and both separate test-correction hashes match. Native PostgreSQL evidence
+stays with the incoming owner and is not a local rerun. The eleventh full gate
+receipt is retained; the next ordinary publication retry remains pending.

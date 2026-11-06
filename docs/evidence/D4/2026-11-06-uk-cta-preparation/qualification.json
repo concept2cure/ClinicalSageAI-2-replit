@@ -133,6 +133,14 @@
       "warningGrowth": 0,
       "log": "gates-pass-tenth-ref-race.txt.gz",
       "note": "Every normal gate passed; concurrent authoring project-authority/editor-list and gate-completion publication rejected the ref."
+    },
+    "eleventhPass": {
+      "source": "4a02adaec7377caac6046302cea720e19b26af42",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "lintedFiles": 16,
+      "log": "gates-pass-eleventh-ref-race.txt.gz",
+      "note": "Every normal gate passed; concurrent unified-task admission publication rejected the ref."
     }
   },
   "publication": "pending normal retry after merge",
@@ -172,7 +180,7 @@
   },
   "originalSourceManifest": "source-sha256.json",
   "sourceTransition": "source-hash-transition.json",
-  "currentMergedGates": "pending normal retry after shared-editor project-authority integration",
+  "currentMergedGates": "pending normal retry after unified-task admission integration",
   "annaIntegration": {
     "incoming": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
     "source": "ba1d327e2c00d459e0eaa7ec037489bf805a941a",
@@ -280,5 +288,23 @@
       "log": "editor-authority-build.txt.gz"
     },
     "fixtureReview": "Independent read-only review reconstructed the exact canonical before-hash by reversing only the explicit grant/new denial case. All preexisting assertions retained; after-hash and 27-case/lint receipts verified."
+  },
+  "unifiedTaskIntegration": {
+    "remote": "9c047a1ff919981d8b6e13f2a4c383294fb8a745",
+    "merge": "91e5871d84ec04923048f5d221e575790bf298cf",
+    "reviews": "Two independent read-only reviews found no UK/task-plan blocker or permission weakening. The alternate unified-task POST now reuses current actor/project admission, actual workspace and same-transaction task/audit writes; unconfirmed commit discards the request lease.",
+    "tests": {
+      "passed": 145,
+      "suites": 5,
+      "log": "unified-task-tests.txt.gz"
+    },
+    "build": {
+      "result": "passed",
+      "log": "unified-task-build.txt.gz",
+      "scope": "server; git diff4a02adaec..merge -- client is empty, so preceding client build still applies"
+    },
+    "coreHashesMatched": 14,
+    "bothIntegrationTestHashesMatched": true,
+    "limits": "Counts overlap earlier cohorts. Incoming owner native PostgreSQL proof is separate and not rerun here."
   }
 }
