@@ -9,6 +9,7 @@ import type { InForceRelease } from './in-force-release';
 import { readQmsTrainingReleaseContext } from './current-release-approval';
 import { readQmsReviewSchedule, type QmsReviewSchedule } from './periodic-review';
 import type { QmsDocumentRow } from './document-approval-signature';
+import { qualityFamilyQuery } from './project-evidence-queries';
 export type { NativeRecordSnapshot } from '../clinical-regulatory-evidence/record-source';
 
 export interface QualityEvidenceInput {
@@ -54,7 +55,6 @@ interface Family {
   label: string;
   state: string;
   scope: 'organization' | 'optional-project' | 'project' | 'capa-action' | 'document-child' | 'change-child' | 'role-child' | 'qmp-child';
-  workspace?: boolean;
 }
 /** These are the existing Quality registers, not another source store. Never project arbitrary metadata. */
 const FAMILIES: readonly Family[] = [
@@ -63,14 +63,14 @@ const FAMILIES: readonly Family[] = [
   { table: 'capa_records', label: 'CAPA', state: 'state', scope: 'project', fields: fields(COMMON, 'program_id capa_code title summary type source source_refs risk_level assigned_to target_close_date problem_statement containment_actions root_cause_analysis corrective_action_plan effectiveness_check_criteria effectiveness_check_result state closed_at closed_by created_by updated_by') },
   { table: 'capa_actions', label: 'CAPA action', state: 'state', scope: 'capa-action', fields: fields(COMMON, 'capa_id n type description owner due_date completed_at completed_by evidence_refs state') },
   { table: 'qms_suppliers', label: 'Supplier', state: 'approval_status', scope: 'organization', fields: fields(COMMON, 'supplier_name supplier_code scope criticality approval_status approval_date reapproval_date quality_agreement_id last_audit_date next_audit_date iso_certifications') },
-  { table: 'qc_deviations', label: 'GMP deviation', state: 'status', scope: 'organization', workspace: true, fields: fields(COMMON, 'deviation_number deviation_type classification category title description detected_date detected_by location department batch_number product_name process_step impact_assessment impact_level investigation_required investigation_status investigation_details root_cause_identified root_cause contributing_factors capa_required capa_number corrective_actions preventive_actions immediate_actions resolution_description effectiveness_check trending_data status priority assigned_to target_closure_date actual_closure_date reviewed_by reviewed_date approved_by approved_date qa_approved_by qa_approved_date notes client_workspace_id') },
+  { table: 'qc_deviations', label: 'GMP deviation', state: 'status', scope: 'organization', fields: fields(COMMON, 'deviation_number deviation_type classification category title description detected_date detected_by location department batch_number product_name process_step impact_assessment impact_level investigation_required investigation_status investigation_details root_cause_identified root_cause contributing_factors capa_required capa_number corrective_actions preventive_actions immediate_actions resolution_description effectiveness_check trending_data status priority assigned_to target_closure_date actual_closure_date reviewed_by reviewed_date approved_by approved_date qa_approved_by qa_approved_date notes client_workspace_id') },
   { table: 'qms_internal_audits', label: 'Internal audit', state: 'status', scope: 'organization', fields: fields(COMMON, 'audit_number scope audit_standard auditor_lead_id auditor_team planned_date started_at completed_at status finding_count major_findings minor_findings observations report_artifact_id') },
   { table: 'qms_management_reviews', label: 'Management review', state: 'status', scope: 'organization', fields: fields(COMMON, 'review_date period chair_id attendees inputs outputs open_action_count closed_action_count minutes_artifact_id') },
   { table: 'qms_training_records', label: 'Training receipt', state: 'acknowledgment_method', scope: 'document-child', fields: fields(COMMON, 'user_id document_id document_version acknowledged_at acknowledgment_method trainer_id quiz_score expires_at') },
   { table: 'qms_training_assignments', label: 'Training assignment', state: 'removed_at', scope: 'document-child', fields: fields(COMMON, 'document_id job_role_id user_id assigned_by assigned_at removed_by removed_at') },
   { table: 'qms_job_roles', label: 'Quality job role', state: 'status', scope: 'organization', fields: fields(COMMON, 'name description created_by updated_by') },
   { table: 'qms_job_role_members', label: 'Quality job-role membership', state: 'removed_at', scope: 'role-child', fields: fields(COMMON, 'job_role_id user_id added_by added_at removed_by removed_at') },
-  { table: 'quality_management_plans', label: 'Quality management plan', state: 'status', scope: 'organization', workspace: true, fields: fields(COMMON, 'name description version status approved_by_id approved_at effective_date expiry_date review_frequency_days last_review_date next_review_date review_reminder_days created_by_id client_workspace_id') },
+  { table: 'quality_management_plans', label: 'Quality management plan', state: 'status', scope: 'organization', fields: fields(COMMON, 'name description version status approved_by_id approved_at effective_date expiry_date review_frequency_days last_review_date next_review_date review_reminder_days created_by_id client_workspace_id') },
   { table: 'ctq_factors', label: 'Critical-to-quality factor', state: 'status', scope: 'qmp-child', fields: fields(COMMON, 'qmp_id name description category risk_level applicable_section validation_criteria validation_method status requires_evidence_type requirement_type failure_action') },
   { table: 'qmp_section_gating', label: 'Quality section gate', state: 'status', scope: 'qmp-child', fields: fields(COMMON, 'qmp_id section_key section_name required_ctq_factor_ids minimum_mandatory_completion minimum_recommended_completion allow_override override_requires_approval override_requires_reason') },
   { table: 'qmp_traceability_matrix', label: 'Quality traceability requirement', state: 'verification_status', scope: 'qmp-child', fields: fields(COMMON, 'qmp_id ctq_factor_id requirement_id requirement_text requirement_source verification_method implementation_evidence verification_status verified_by_id verified_at notes') },
@@ -146,7 +146,7 @@ function addSnapshot(c: Collector, item: SnapshotInput): void {
     version: typeof row.version === 'string' ? row.version : null, sourceScope: scope, native, lifecycle });
 }
 async function bounded(c: Collector, sql: string, args: unknown[]): Promise<Row[]> {
-  const result = await c.reader.query(`${sql} LIMIT ${ROW_LIMIT + 1}`, args);
+  const result = await c.reader.query(sql, args);
   if (result.rows.length > ROW_LIMIT) throw new QualityEvidenceUnavailable('Quality evidence exceeds the bounded record count. No partial evidence was supplied.');
   return result.rows as Row[];
 }
@@ -166,7 +166,7 @@ async function readWorkingDocument(c: Collector, row: Row): Promise<void> {
   if (authoringId && !await canReadDocument(c.reader,c.input,row)) return;
   const scope = authoringId ? 'project' : 'organization';
   const sections = authoringId ? await bounded(c, `SELECT s.id,s.code,s.title,s.content,s.order_index FROM authoring_sections s
-    WHERE s.doc_id=$1::uuid AND s.tenant_id=$2 ORDER BY s.order_index,s.id`, [authoringId,c.input.organizationId]) : [];
+    WHERE s.doc_id=$1::uuid AND s.tenant_id=$2 ORDER BY s.order_index,s.id LIMIT $3`, [authoringId,c.input.organizationId,ROW_LIMIT+1]) : [];
   addSnapshot(c,{ table:'qms_documents',row,scope, title:`${row.doc_number ?? 'Controlled document'} ${row.title ?? ''} — working record`,
     lifecycle:typeof row.status === 'string' ? row.status : 'not_recorded', data:{ record:pick(row,DOCUMENT),sections,releasePeriodicReview:periodicReview(c,row),
       contentBasis:authoringId ? 'Current saved Authoring sections; working record, not a signed release.' : 'Legacy registry metadata only; no authored content is asserted.' },
@@ -198,13 +198,13 @@ async function readRelease(c: Collector, inForce: InForceRelease): Promise<void>
   c.acceptedAuthored.set(String(release.authoring_document_id),release as unknown as Row);
 }
 async function readDocuments(c: Collector): Promise<void> {
-  const columns=DOCUMENT.split(' ').map(name=>`d.${name}`).join(',');
-  const documents = await bounded(c,`SELECT ${columns},d.organization_id,d.deleted_at,
+  const documents = await bounded(c,`SELECT d.id,d.created_at,d.updated_at,d.doc_number,d.title,d.doc_type,d.category,d.version,d.status,
+    d.effective_date,d.next_review_date,d.author_id,d.approver_id,d.approved_at,d.superseded_by_id,d.authoring_document_id,d.organization_id,d.deleted_at,
     jsonb_build_object('lastRevision',jsonb_build_object('from',d.metadata->'lastRevision'->>'from')) AS metadata,
     a.client_program_id::text AS authoring_program_id
     FROM qms_documents d LEFT JOIN authoring_documents a ON a.id=d.authoring_document_id AND a.tenant_id=d.organization_id
     WHERE d.organization_id=$1 AND d.deleted_at IS NULL
-      AND (d.authoring_document_id IS NULL OR ($2::uuid IS NOT NULL AND a.client_program_id=$2::uuid)) ORDER BY d.id`,[c.input.organizationId,c.program]);
+      AND (d.authoring_document_id IS NULL OR ($2::uuid IS NOT NULL AND a.client_program_id=$2::uuid)) ORDER BY d.id LIMIT $3`,[c.input.organizationId,c.program,ROW_LIMIT+1]);
   for (let n=0;n<documents.length;n++) {
     const row=documents[n];
     if (row.authoring_document_id && await canReadDocument(c.reader,c.input,row)) {
@@ -229,7 +229,7 @@ async function readRetainedVersions(c: Collector): Promise<void> {
     JOIN qms_documents d ON d.id=v.document_id AND d.organization_id=v.organization_id AND d.deleted_at IS NULL
     LEFT JOIN authoring_documents a ON a.id=v.authoring_document_id AND a.tenant_id=v.organization_id
     WHERE v.organization_id=$1 AND ((v.authoring_document_id IS NULL AND d.authoring_document_id IS NULL)
-      OR ($2::uuid IS NOT NULL AND a.client_program_id=$2::uuid)) ORDER BY v.id`,[c.input.organizationId,c.program]);
+      OR ($2::uuid IS NOT NULL AND a.client_program_id=$2::uuid)) ORDER BY v.id LIMIT $3`,[c.input.organizationId,c.program,ROW_LIMIT+1]);
   for (const identity of versions) {
     let row=identity;
     if (row.authoring_document_id && !await canReadDocument(c.reader,c.input,row)) continue;
@@ -252,32 +252,13 @@ function trainingVersions(c: Collector): Array<{ document_id:number;version:stri
   return [...c.versions].flatMap(([id,versions]) => [...versions.keys()].map(version => ({ document_id:id,version })));
 }
 function familyQuery(c: Collector, family: Family): { sql:string;args:unknown[] } | null {
-  let sql = `SELECT t.* FROM ${family.table} t`;
-  const args:unknown[] = [c.input.organizationId];
-  const where = ['t.organization_id=$1',`(to_jsonb(t)->>'deleted_at') IS NULL`];
-  if (family.scope === 'optional-project') {
-    args.push(c.program);where.push('(t.program_id IS NULL OR ($2::uuid IS NOT NULL AND t.program_id=$2::uuid))');
-  } else if (family.scope === 'project' || family.scope === 'capa-action') {
-    if (!c.program) return null;
-    sql = family.scope === 'project' ? 'SELECT t.* FROM capa_records t JOIN regulatory_programs p ON p.id::text=t.program_id'
-      : 'SELECT t.* FROM capa_actions t JOIN capa_records c ON c.id=t.capa_id JOIN regulatory_programs p ON p.id::text=c.program_id';
-    args.push(c.program);where.splice(0,where.length,'p.organization_id=$1','p.deleted_at IS NULL',`${family.scope === 'project' ? 't' : 'c'}.program_id=$2`);
-  } else childPredicate(c,family,args,where);
-  if (family.workspace) {
-    args.push(c.workspace);where.push(`((to_jsonb(t)->>'client_workspace_id') IS NULL OR ($${args.length}::int IS NOT NULL AND (to_jsonb(t)->>'client_workspace_id')::int=$${args.length}::int))`);
-  }
-  return { sql:`${sql} WHERE ${where.join(' AND ')} ORDER BY t.id`,args };
-}
-function childPredicate(c:Collector,family:Family,args:unknown[],where:string[]):void {
-  if (family.table === 'qms_training_records') {
-    args.push(serialize(trainingVersions(c)));
-    where.push('EXISTS (SELECT 1 FROM jsonb_to_recordset($2::jsonb) AS v(document_id int,version text) WHERE v.document_id=t.document_id AND v.version=t.document_version)');
-  } else if (family.scope === 'document-child') {
-    args.push([...c.currentParents.keys()]);where.push('t.document_id=ANY($2::int[])');
-  } else {
-    const parent: readonly string[] | undefined = ({ 'change-child':['qms_change_controls','change_id'],'role-child':['qms_job_roles','job_role_id'],'qmp-child':['quality_management_plans','qmp_id'] } as Record<string,string[]>)[family.scope];
-    if (parent) {args.push([...(c.parents.get(parent[0])?.keys() ?? [])]);where.push(`t.${parent[1]}=ANY($2::int[])`);}
-  }
+  return qualityFamilyQuery(family.table, {
+    organizationId:c.input.organizationId,programId:c.program,workspaceId:c.workspace,limit:ROW_LIMIT+1,
+    documentIds:[...c.currentParents.keys()],trainingVersions:serialize(trainingVersions(c)),
+    changeIds:[...(c.parents.get('qms_change_controls')?.keys() ?? [])],
+    roleIds:[...(c.parents.get('qms_job_roles')?.keys() ?? [])],
+    planIds:[...(c.parents.get('quality_management_plans')?.keys() ?? [])],
+  });
 }
 function familyScope(c:Collector,family:Family,row:Row): NativeRecordSnapshot['sourceScope'] {
   if (family.table === 'qms_training_records') return c.versions.get(Number(row.document_id))?.get(String(row.document_version)) ?? unreadableChild();
