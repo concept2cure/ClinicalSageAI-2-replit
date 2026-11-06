@@ -32,6 +32,15 @@ describe('placement reuses existing study coverage and naming', () => {
     { studyId: 'STUDY-101', stfFileTag: 'bad\ntag' }])('refuses supplied invalid metadata before a write: %j', (values) => {
     expect(studyTaggingPlacement('5.3.5.1', 'new', 'fda', values)).toMatchObject({ valid: false, problem: expect.any(String) });
   });
+  /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): "study-report" was
+     accepted at placement and refused only at compile, by the packager's rule
+     (stf-generator checkStfLeaf). The dialog now refuses it with the right tag. */
+  it.each([['4.2.3.2', /pre-clinical-study-report/], ['5.3.5.1', /study-report-body/]])(
+    'refuses the undefined file-tag "study-report" at %s, naming the tag to use', (section, names) => {
+      const r = studyTaggingPlacement(section, 'new', 'fda', { studyId: 'STUDY-101', stfFileTag: 'study-report' });
+      expect(r).toMatchObject({ valid: false });
+      expect(r.problem).toMatch(names);
+    });
   it('uses the existing filename error for a supplied invalid id in an optional region too', () => {
     expect(studyTaggingPlacement('5.3.5.1', 'new', 'ema', { studyId: 'bad/id', stfFileTag: '' }).problem)
       .toMatch(/cannot form its Study Tagging File name/);
