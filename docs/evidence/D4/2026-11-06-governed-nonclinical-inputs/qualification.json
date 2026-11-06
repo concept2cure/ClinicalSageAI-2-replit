@@ -83,7 +83,7 @@
   "build": {
     "result": "passed",
     "scope": "production client/server, audit-chain verifier and qualification verifier/runtime assets",
-    "log": "build.txt.gz"
+    "log": "build-final.txt.gz"
   },
   "publication": {
     "result": "pending"
@@ -95,5 +95,21 @@
     "PGlite, synthetic fixtures and mocked SDK boundaries are not native PostgreSQL or model qualification.",
     "Tabulated2.6 remains a preparation worksheet; source-report availability, GLP compliance, clinical phase/duration suitability and sponsor safety judgment require review.",
     "No app/card/editor/screen/route/service/table/model/dependency addition, deployment or agency action. NMPA and CMC scope unchanged."
-  ]
+  ],
+  "finalCanonicalSynchronization": {
+    "remote": "2216b9dec",
+    "merge": "b1f7671dc",
+    "coordinationConflict": "Retained current nonclinical hold, incoming demo scope and historical regional delivery record.",
+    "sourceHashesMatched": 10,
+    "mergedDependencyHashesMatched": 9,
+    "csrTests": {
+      "passed": 11,
+      "suites": 1,
+      "log": "csr-polling.txt.gz"
+    },
+    "portTests": {
+      "passed": 5,
+      "log": "dev-port.txt.gz"
+    }
+  }
 }
