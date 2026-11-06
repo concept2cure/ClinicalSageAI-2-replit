@@ -138,6 +138,20 @@ fi
 if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
   c2c_log "No ANTHROPIC_API_KEY secret: AnA cannot draft regulatory documents (OPENAI_API_KEY alone answers chat only)."
   c2c_log "Add it as a Codespaces secret for this repository, then rebuild or restart the Codespace."
+else
+  # The key is checked against the Claude versions approved for drafting, with
+  # the doctor's no-generation-charge model list. Nothing secret is printed.
+  C2C_DRAFTING_MODELS="$(timeout 120 npx --no-install tsx -e "import('./server/services/ai-governance/approved-models.ts').then(m => console.log(m.APPROVED_MODELS.filter(x => x.provider === 'anthropic' && x.approvedForHighRisk).map(x => x.pinnedVersion).join(',')))" 2>/dev/null | tail -n 1)"
+  C2C_ANTHROPIC_LINE="$(
+    set -a; . "$C2C_CODESPACE_STATE/app.env"; set +a
+    env "${C2C_UNSET[@]}" node scripts/ops/codespaces-doctor.mjs --json --probe-anthropic \
+      "--expect-anthropic-models=$C2C_DRAFTING_MODELS" 2>/dev/null |
+    node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s.slice(s.indexOf("{"),s.lastIndexOf("}")+1)).anthropic;
+      const seen=(a.draftingModelsVisible||[]).join(", "), miss=(a.draftingModelsMissing||[]).join(", ");
+      console.log(a.status==="passed" ? "key accepted; drafting models available: " + (seen||"not checked") + (miss ? " (not available: " + miss + ")" : "")
+        : "BLOCKED " + a.code + ": " + a.explanation)}catch{console.log("the key check did not run")}})'
+  )"
+  c2c_log "ANTHROPIC_API_KEY: $C2C_ANTHROPIC_LINE"
 fi
 
 cat <<EOF

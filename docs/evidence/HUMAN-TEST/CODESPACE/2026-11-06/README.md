@@ -86,8 +86,8 @@ This container is Ubuntu 24.04, not the devcontainer image:
   was reported as "Not passing DATABASE_URL to the app". In the server processes `DATABASE_URL` is the empty string
   `startup.sh` exports in Codespace mode, which the doctor and the boot check treat as absent.
 
-Logs (credentials masked; none were present): [`post-create.log`](post-create.log), [`post-start.log`](post-start.log),
-[`post-start-restart.log`](post-start-restart.log). The browser walk is [`walk.cjs`](walk.cjs) and its log is
+Logs (credentials masked; none were present): [`post-create.txt`](post-create.txt), [`post-start.txt`](post-start.txt),
+[`post-start-restart.txt`](post-start-restart.txt). The browser walk is [`walk.cjs`](walk.cjs) and its log is
 [`screenshots/walk-log.txt`](screenshots/walk-log.txt).
 
 ## What passed
@@ -112,6 +112,40 @@ Screenshots (1440×900 at 2×): [`01-sign-in`](screenshots/01-sign-in.png), [`02
 [`05-ana-composer`](screenshots/05-ana-composer.png), [`06-ana-answer`](screenshots/06-ana-answer.png),
 [`07-csr-build-from-study-data`](screenshots/07-csr-build-from-study-data.png).
 
+## Follow-up the same day: the real image, the forwarded origin, and the key check
+
+**The devcontainer image, as far as this network allows.** Docker's daemon could be started after all. The image
+(`mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm`, digest `sha256:7c2e711a…`) was pulled. In it:
+- Node 22.16, Debian bookworm, root. Every command the scripts use is present (`openssl`, `runuser`, `curl`, `sudo`,
+  `setsid`, `nohup`, `pkill`); PostgreSQL is not, as expected.
+- post-create ran with the repository copied in: `npm ci` passed, then all 39 doctor and startup tests passed.
+- It then stopped at `apt-get update`, because this session's proxy answers 405 for `deb.debian.org`. The script
+  now says so by name (`BLOCKED: apt-get update failed: the distribution's package mirror is unreachable`), and each
+  step of the PGDG path names its own host when it fails. Log: [`image-post-create.txt`](image-post-create.txt).
+- Bookworm's own repository has no `postgresql-16-pgvector`, so in a real Codespace the PGDG branch runs.
+- The package's cluster is made with the container's locale, which may be C. The database is therefore created as
+  UTF8 from `template0` regardless (the fix in `6c3104c0`).
+
+A network change that would let the whole image path run here was proposed: a personal environment for this
+repository adding `deb.debian.org`, `security.debian.org`, `apt.postgresql.org` and `www.postgresql.org`. The
+Claude mobile app in use could not show the request, so nothing changed. It can be asked again from claude.ai on a
+computer.
+
+**The forwarded origin.** Requests carrying the Codespaces host (`Host: <name>-5000.app.github.dev`) were served:
+`/`, `/concept2cure/login`, `/@vite/client` and `/src/main.tsx` all answered 200 (`server/vite.ts` sets
+`allowedHosts: true`). `POST /api/auth/dev-login` with `Origin: https://<name>-5000.app.github.dev` answered 200,
+and with `Origin: https://evil.example` it answered 403. The Vite client's websocket address is
+`wss://<forwarded host>:/`, which is port 443 through the forward.
+
+**The key check.** When `ANTHROPIC_API_KEY` is set, post-start runs the doctor's no-generation-charge model list
+with `--expect-anthropic-models=claude-opus-5-5,claude-opus-5,claude-opus-4-8`. Those are the first-party versions
+`approved-models.ts` approves for regulatory drafting, read from that file, not copied. post-start prints which of
+them the key can see. A working key that sees none of them is `ANTHROPIC_DRAFTING_MODELS_NOT_VISIBLE` (blocked), so
+a key that cannot draft is named at start-up, not halfway through a CSR. Run here with a fake key, it printed
+`ANTHROPIC_API_KEY: BLOCKED ANTHROPIC_KEY_INVALID: Replace the invalid or revoked Anthropic key…`. Three new doctor
+tests cover paging, the partial match and the no-match case, and the no-match test was shown failing when its
+branch was disabled.
+
 ## Blocked or not done, by name
 
 - **No model key in this container.** The founder's `ANTHROPIC_API_KEY` is what makes AnA draft. Here:
@@ -120,9 +154,9 @@ Screenshots (1440×900 at 2×): [`01-sign-in`](screenshots/01-sign-in.png), [`02
   - The CSR build was not started.
 
   `/readyz` itself says `OPENAI_API_KEY` alone answers chat but not regulatory drafting. The doc says so.
-- **The devcontainer image was not run.** There is no Docker daemon, and the image's apt sources were refused (above).
-  The PGDG branch of `c2c_install_postgres` is written from the PostgreSQL project's published instructions and was
-  not executed here.
+- **The image's PostgreSQL install was not run end to end.** In the image, post-create passed through `npm ci` and the
+  tests, then stopped at the Debian mirror, which this session's proxy refuses (follow-up above). The PGDG branch is
+  written from the PostgreSQL project's published instructions; its first real run is the founder's Codespace.
 - **The efficacy transcription is not in the repository.** `cdiscpilot01-efficacy-results.json` would be Tables
   14-3.01/14-3.02 of the published CSR. Without it, the manifest says efficacy was "not supplied". Nothing was invented.
 - **Two 429s on `route-candidates`** appeared in the CSR walk's API log. These are the rate limiter during the

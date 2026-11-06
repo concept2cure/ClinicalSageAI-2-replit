@@ -39,6 +39,11 @@ Each serves the one goal: working software in testers' hands. None changes the p
    Projects.
 4. **Durations.** Device and other non-IND work breakdowns are scheduled from effort hours (8 h a day), and the plan says
    so. Typical durations will be added only with a cited source; none is invented.
+6. **An IVD 510(k) gets no work breakdown yet** (J1's question, 2026-11-06). The catalogue files it in the 510(k) family,
+   but the 510(k) breakdown (`services/regulatory/pyramids/510k-pyramid.ts`) has biocompatibility and sterilisation tasks
+   an in vitro device does not need, and none of the analytical and clinical performance studies an IVD 510(k) is
+   reviewed on. Mapping it would give a tester a wrong plan. The project keeps saying it has none, until an IVD
+   breakdown is written from FDA's IVD guidance with its sources.
 5. **Progress records.** Progress is recorded in `.design/claude-convergence/COORDINATION.md` and in these evidence
    folders. The plan's progress log is not edited by this session.
 

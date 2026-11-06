@@ -1,0 +1,57 @@
+🔍 Running pre-commit checks...
+
+⚠️  WARNING: console.log found in staged files:
+server/routes/chat/send-message.ts
+
+Consider using the logger utility instead:
+  import { logger } from '@/server/utils/logger';
+  logger.info('message');
+
+To bypass this check (not recommended): git commit --no-verify
+
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e
+  server/routes/chat/send-message.ts (1388 lines)
+  server/services/__tests__/ana-session-bootstrap.test.ts (502 lines)
+  server/services/ana/agentic-loop.ts (871 lines)
+  server/services/memory-consolidation-job.ts (576 lines)
+  server/services/working-memory.ts (692 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+(node:194) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:207) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:207) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+check-security-patterns: 0 violations across 3582 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 340290a4] F1: deliver complete AnA memory through existing recall boundaries
+ 36 files changed, 7116 insertions(+), 150 deletions(-)
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/README.md
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/assembler-boundary-green.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/assembler-green.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/assembler-red.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/bootstrap-green.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/bootstrap-red.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/build.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/consolidation-label-green.tap
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/consolidation-label-red.tap
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/execution.json
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/final-behavioral.tap
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/final-vitest.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/snapshot-green.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/snapshot-red.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/tool-handoff-green.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/tool-handoff-red.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/verify-tests.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/working-green.txt
+ create mode 100644 docs/evidence/D2-PLATFORM/2026-11-05-ana-memory-delivery/working-red.txt
+340290a483a10fa19e1e90835032cd4ff3a9c222

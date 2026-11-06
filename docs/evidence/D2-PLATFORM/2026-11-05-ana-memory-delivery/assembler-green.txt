@@ -1,0 +1,88 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > assembles working + project memory for a project, and client memory only without one, with metadata diagnostics 4ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > applies structured forgetting to stale, unverified, low-importance memory 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > retains stale but verified memory entries and reports trimming 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete title label before admitting a record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete category label before admitting a record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete title label before admitting a record 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete category label before admitting a record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000 0ms
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts exact-project search before project-bound recency resolves 6ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice when the prompt budget omits a whole working record 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source 0ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > does not read tenant memory without an organization 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > skips only project memory when no project is selected 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned 1ms
+(node:46) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > normalises titles and keeps the declared order and statuses 2ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses no steps 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an empty list 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses a step with no title 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an unknown status 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses duplicate titles 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses more than the cap 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > clips an over-long title rather than overflowing the panel 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > the handler reports the plan as recorded, with no completion it was not given 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits for a successful update_plan call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for another tool 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a failed call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a cancelled call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a result that is not ok 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for an unparseable result 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > survives relevance trimming 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > names drafting and project search by what they act on; what they were asked is the preview 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > labels the plan step as the plan, not as a raw tool name, and counts nothing the model chose 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > counts unresolved uploads and keeps the content/name distinction 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > a failed memory read is unavailable, never "none" 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > successful retrieval with every record omitted by the budget is unavailable, never "none" 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > successful retrieval with no matches still reports none 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > lists the memory items the assembler rendered, and drops what the budget cut 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores the last validated plan on the assistant metadata 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores nothing for a turn that declared no plan 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > reads the refusal a handler returned instead of throwing 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > is null for a result that did not refuse 0ms
+
+ Test Files  3 passed (3)
+      Tests  70 passed (70)
+   Start at  20:58:46
+   Duration  2.16s (transform 940ms, setup 103ms, import 1.53s, tests 62ms, environment 0ms)

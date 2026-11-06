@@ -1,0 +1,48 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > scoreAtom (behaviour-preserving with the previous inlined atomSortScore) > pins working memory above any semantic atom 2ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > scoreAtom (behaviour-preserving with the previous inlined atomSortScore) > combines similarity, confidence, and verified boost with the original weights 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > scoreAtom (behaviour-preserving with the previous inlined atomSortScore) > scores an atom with no similarity, verification or confidence as zero 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > per-layer ranking weights (unified formula) > ignores similarity/confidence for working memory under the default weights 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > per-layer ranking weights (unified formula) > falls back to semantic weights for an unrecognised layer 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > per-layer ranking weights (unified formula) > lets a custom policy unpin working memory so it ranks by similarity 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > always keeps working memory 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > keeps recent semantic atoms and drops stale ones 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > retains stale atoms when verified or high-importance 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > keeps atoms with no/invalid createdAt (cannot prove staleness) 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > collapses matching layer/category/title/full content to the higher-scoring atom 2ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > keeps atoms that differ by layer 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > retains different conclusions after a shared long prefix in working_memory 1ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > retains different conclusions after a shared long prefix in client_memory 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > retains different conclusions after a shared long prefix in project_memory 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > still collapses complete duplicates with existing case and surrounding-whitespace equivalence 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > keeps identical text assigned to different categories 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > does not confuse delimiters inside titles with content boundaries 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > a legacy prefix-length setting cannot collapse different complete records 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > orchestrateAtoms (full pass) > forgets, dedupes, and ranks with working memory on top 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > SEMANTIC_WORKING_MEMORY_POLICY > changes only the working_memory weights (semantic layers untouched) 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > SEMANTIC_WORKING_MEMORY_POLICY > ranks working memory by similarity instead of a flat pin 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > SEMANTIC_WORKING_MEMORY_POLICY > keeps a small structural edge: ties favour working memory 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > exposes the reviewed default constants that preserve prior behaviour 0ms
+(node:36) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > does not score a missing confidence as a confidence of zero 1ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > ranks an unscored atom on the same scale as a scored one 1ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > puts a more relevant unscored atom above a less relevant one carrying a stamped 0.8 1ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > orders unscored atoms by similarity, then verification 0ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > says how many ranked atoms carry no recorded confidence 0ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > counts working memory as unscored only where its layer weighs confidence 0ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > control: a recorded confidence still counts with its weight 0ms
+
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+   Start at  19:05:58
+   Duration  686ms (transform 125ms, setup 117ms, import 61ms, tests 21ms, environment 0ms)
+

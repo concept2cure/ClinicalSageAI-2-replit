@@ -1,0 +1,272 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
+{
+  "timestamp": "2026-11-06T05:07:00.330Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T05:07:00.331Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-budget.test.ts
+{
+  "timestamp": "2026-11-06T05:07:00.331Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > CONTROL: omitted and false keep exact historical floor and marker bytes above 24000 3ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > bounds actual ordinary floor output, retains every correlation and withholds a reverse suffix only 4ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > keeps a valid under-budget round byte-identical including whole protected JSON 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > uses a fixed ordinary envelope without copying source-controlled outcome or metadata 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > measures real legacy marker bytes under custom per-result ceiling and ordinary floor 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > keeps short ordinary siblings, then withholds the last passage before any private read 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > withholds private reads in reverse call order using the exact trusted offset 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > gives private-map membership precedence over a passage server name in the strict pass 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > does not enlarge an eligible short passage when ordinary floor output must be reduced 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > preserves exact existing replacement JSON for over-ceiling passages and private reads 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=0 instead of dropping, slicing or enlarging a private outcome 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=1 instead of dropping, slicing or enlarging a private outcome 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=2 instead of dropping, slicing or enlarging a private outcome 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=50 instead of dropping, slicing or enlarging a private outcome 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses an excessive call count when even unchanged short bodies exceed the default target 13ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > does not replace shorter ordinary or protected bodies with longer envelopes to claim success 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total NaN even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total Infinity even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -Infinity even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -1 even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > admits exactly empty bodies at zero while preserving each empty call correlation 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > accepts exact UTF-16 length and refuses one less without mutating bodies 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > refuses the actual enlarged post-guard array, without a second allocation 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > applies invalid-total and zero rules consistently to empty final arrays 1ms
+(node:51) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/agentic-loop-rounds.test.ts
+{
+  "timestamp": "2026-11-06T05:07:01.192Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T05:07:01.193Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/agentic-loop-rounds.test.ts
+{
+  "timestamp": "2026-11-06T05:07:01.193Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/agentic-loop-rounds.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > scales the round ceiling by effort 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > lifts the old flat cap of 5 for the default (balanced) turn 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > falls back to the balanced ceiling for unknown/absent effort 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > never returns fewer rounds than needed to chain a real investigation 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveRoundExtension > scales the progress-earned allowance by effort 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveRoundExtension > falls back to the balanced allowance for unknown/absent effort 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > extends past maxRounds while every round tries novel work 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > does NOT extend when the model is repeating itself 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > default behavior is unchanged when progressExtension is not set 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > thrash still cuts the loop even with extension headroom 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > passes small rounds through byte-identical (classic per-result caps) 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > squeezes an oversized round into the total budget 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > never squeezes a result below the floor 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > handles an empty round 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > keeps short whole recall JSON byte-identical with strictTotal=false 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > keeps short whole recall JSON byte-identical with strictTotal=true 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > withholds a complete memory expanded past the cap by JSON escaping with strictTotal=false 2ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > withholds a complete memory expanded past the cap by JSON escaping with strictTotal=true 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > withholds a sub-8k recall squeezed by round sharing with strictTotal=false 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > withholds a sub-8k recall squeezed by round sharing with strictTotal=true 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > admits exactly 8000 serialized characters and withholds the complete 8001-character body 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > does not protect an ordinary result whose payload claims the recall tool name 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > keeps the strict total, call identity, order and immutable input in a crowded mixed round 2ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > returns empty when nothing failed 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > names the failures and coaches adaptation, not retry 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > truncates a pathological error message 0ms
+(node:59) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/passage-round-budget.test.ts
+{
+  "timestamp": "2026-11-06T05:07:01.969Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T05:07:01.970Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/passage-round-budget.test.ts
+{
+  "timestamp": "2026-11-06T05:07:01.970Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/passage-round-budget.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > admits the first three 7500-character bodies and withholds the fourth intact 4ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > reserves every later replacement instead of filling the target with four of five 6000-character bodies 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > withholds a 8001-character over-per-result body even in an otherwise small round 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > withholds a 12000-character over-per-result body even in an otherwise small round 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > uses one fixed withholding body irrespective of payload fields or search outcome 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > does not make an over-custom-ceiling body eligible again after other bodies are withheld 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps an eligible body shorter than its replacement even with negative available room 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=0 cannot promise a hard bound 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=1 cannot promise a hard bound 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=50 cannot promise a hard bound 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=180 cannot promise a hard bound 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps every small success, miss, omission, error and refusal byte-identical 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > private read placement keeps priority and its existing replacement > reserves the same read floors/admission before allocating non-read passages in call order 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > private read placement keeps priority and its existing replacement > gives a private-map entry precedence even when its server tool name is passage search 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > private read placement keeps priority and its existing replacement > keeps ordinary results under their per-result ceiling when passage withholding frees a larger share 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > keeps a small non-passage round byte-identical 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > retains exact old equal-share slicing without passage calls 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > retains the old floor even when twenty ordinary calls exceed the total target 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > retains exact old read placement and ordinary shares when no passage calls are present 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > does not protect an ordinary tool merely because its payload requests protection or forges passage fields 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > requires the exact server tool name, not "search_document_passages_extra" 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > requires the exact server tool name, not "SEARCH_DOCUMENT_PASSAGES" 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > requires the exact server tool name, not " search_document_passages" 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > keeps the existing empty-round result 0ms
+(node:67) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects settlement withdrawal growth while retaining a real earlier acknowledged outcome
+{
+  "timestamp": "2026-11-06T05:07:03.136Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000002",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > reduces ordinary floor overflow while keeping every identity and the original array unchanged 3ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > keeps a crowding-withheld read at its exact trusted offset and records no receipt 3ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > retains a fitting read byte for byte and settles only that exact host admission 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > private map identity takes precedence over a passage name without adopting payload offsets 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > passage fields and ordinary fake receipt fields cannot mint private settlement authority 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > refuses irreducible passage minima before entering receipt settlement 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > cancellation after strict allocation withdraws source context and settles no new receipt 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects actual guard-envelope growth without mutating accepted bodies 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects settlement withdrawal growth while retaining a real earlier acknowledged outcome 3ms
+(node:75) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/document-passage-result-cap.test.ts
+{
+  "timestamp": "2026-11-06T05:07:03.893Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T05:07:03.895Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-passage-result-cap.test.ts
+{
+  "timestamp": "2026-11-06T05:07:03.895Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-passage-result-cap.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > the registered final size guard includes unavailable and early refusal paths > bounds an oversized plain unavailable error without turning it into a miss 5ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > the registered final size guard includes unavailable and early refusal paths > bounds an oversized escaped unavailable error without turning it into a miss 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > the registered final size guard includes unavailable and early refusal paths > bounds an oversized defensive early scope refusal before retrieval starts 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > the registered final size guard includes unavailable and early refusal paths > guards oversized program error output produced by the real caught-error wrapper 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > the registered final size guard includes unavailable and early refusal paths > guards oversized project error output produced by the real caught-error wrapper 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > complete registered results pass the real single-result model handoff intact > keeps success JSON intact through budgeting, capping and framing 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > complete registered results pass the real single-result model handoff intact > keeps miss JSON intact through budgeting, capping and framing 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > complete registered results pass the real single-result model handoff intact > keeps all-locators-omitted JSON intact through budgeting, capping and framing 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > retains the organization gate before scope or retrieval 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > retains the actor gate before scope or retrieval 0ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > retains a short query refusal before scope or retrieval 0ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > retains a short scope refusal verbatim 0ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > retains ordinary unavailable output instead of pretending the index had no matches 0ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > the real safe-outcome wrapper still withholds even a huge unexpected error 1ms
+(node:83) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/passage-round-read-priority.test.ts
+{
+  "timestamp": "2026-11-06T05:07:04.857Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T05:07:04.859Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/passage-round-read-priority.test.ts
+{
+  "timestamp": "2026-11-06T05:07:04.859Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/passage-round-read-priority.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/passage-round-read-priority.test.ts > review regression: passage replacement cannot change private-read admission > preserves the sixth read as not delivered when a new replacement makes a previously crowded round fit 4ms
+ ✓ server/services/ana/__tests__/passage-round-read-priority.test.ts > review regression: passage replacement cannot change private-read admission > preserves an admitted read when an irreducible passage replacement makes a previously fitting round crowded 1ms
+
+ Test Files  6 passed (6)
+      Tests  99 passed (99)
+   Start at  21:06:58
+   Duration  6.30s (transform 1.30s, setup 160ms, import 4.99s, tests 108ms, environment 0ms)
