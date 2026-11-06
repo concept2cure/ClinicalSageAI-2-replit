@@ -2,7 +2,7 @@
 
 Session `01QoxbLZbDqi…`, started by `011Dpx…`. Persona: a regulatory-operations publisher. The goal was that a tester
 can take an IND from an empty sequence 0000 to a compiled, validated package, and that the dispatch gate assesses it
-honestly. Everything below was done in the running app, at 1440×900 unless 390 is stated. Each fix has a red-then-green
+honestly. Everything below was done in the running app, at 1440×900; every Submission Center tab, Compile and Forms and letters were also checked at 390 wide. Each fix has a red-then-green
 test, and each was re-checked in the app after it landed.
 
 **Outcome.** The IND **LMN-801** went from an empty sequence to a compiled package. The compile completed, assembled the
@@ -108,6 +108,7 @@ no completed Shadow Review (no model key here) and no Part 11 release signature.
 | D-6 | Editor, Place into filing (510(k) Summary) | an empty or valid code | prefilled "1", then refused it in red | **fixed** `a036a648` |
 | D-11 | Compile/Validate with leaves placed, no identity | B3's per-gap lines | one run-on refusal naming "Module 1 forms"/"sponsor registry", ending ".."; Validate silent on identity | **fixed** `456c13e2` |
 | D-14 | Vault/editor placement, STF tag | refused before the write | "study-report" accepted; compile then refused it all with "Reassemble the CSR" for toxicology reports | **fixed** `3e732a22` |
+| D-21 | Submission Center at 390 px | fits the phone | sequence-row label one character per line; whole page 599 px wide (the submission picker); Submissions table hid Stage and Status | **fixed** `c088c58b` |
 | D-16 | 510(k), Device filings empty | a door to the panel named | text only, no way there | **fixed** `77d94883` |
 | D-8 | Validation, IND Module 3 | its remedy reachable | "record the cross-reference to the DMF … with its LOA on file": the `/api/ind-lifecycle/…/cross-references` routes have no caller (R1 inventory), and `file-loa` renders the LOA itself and sets `loaOnFile`, which a DMF holder's signed letter should decide | **→ RIM** (S5); workaround: place 3.2.S/3.2.P documents |
 | D-12 | Forms and letters, IND Cover Letter | rendered from the recorded applicant | shows the organisation and "[Sponsor Address]", not the bound sponsor; no fields for its "missing signatoryName, submissionType"; the sequence entered is cleared | **→ RIM**: R1's handoff "the IND cover letter rendered from records"; workaround: place the signed letter PDF at 1.2 from the Vault |
