@@ -105,6 +105,10 @@
         "count": 1,
         "reason": "POST /:id/lock re-authenticates a lock, which is not a signature here or on the canonical route: SIGNATURE_COMMANDS in c2c/actions.ts is sign and revoke-signature, and writeMutation('lock') writes no electronic_signatures row."
       },
+      "server/routes/deep-research.ts": {
+        "count": 1,
+        "reason": "POST /connectors captures, rotates or revokes a client credential grant (P-104), the same non-signing custody operation as gateway-accounts.ts. It checks current tenant admin/owner authority before verifyReauth and again in writeCredentialCard on the mutation transaction, then writes connector_credentials plus credential.capture/rotate/revoke chained audit. It approves no regulated content, writes no signature or signed ledger act, and grants no signing authority. Mounted route and actual PGlite credential tests prove role/reauth refusal, atomic audit rollback and metadata-only receipts."
+      },
       "server/routes/gateway-accounts.ts": {
         "count": 1,
         "reason": "PUT /:region/:gateway/:environment changes whose gateway account submissions go out under. Admin/owner only (requireRole), re-authenticated, audited; it writes no signature and records no signed act."
