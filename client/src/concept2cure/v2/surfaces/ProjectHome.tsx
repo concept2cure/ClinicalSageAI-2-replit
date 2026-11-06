@@ -40,7 +40,7 @@ import { ProjectMarkets, ProjectStatusLine, regionalPreparationReason } from './
 import { ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState, type RowCopy } from './ProjectDossier';
 import { editingCopyOf } from '../editor/editingCopy';
 import { sourceReadView } from '@shared/data-room-processing-status';
-import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
+import { ProjectTeamCard, ProjectTeamDrawer, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
 import { ProjectSide } from './ProjectSide';
 import { ProjectClientReview } from './ProjectClientReview';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
@@ -49,7 +49,7 @@ import { ProjectPlan } from './ProjectPlan';
 import { biotechPlanEntry } from './ProjectBiotechPlan';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
-import { ProjectSettings } from './ProjectSettings';
+import { ProjectSettings, type ProjectSettingsRequest } from './ProjectSettings';
 import { ProjectCoreWork } from './ProjectCoreWork';
 import { actionWords, enumWords, filingTypeWords } from './projectWords';
 import { WS_LABEL } from './ProjectPortfolioFilters';
@@ -1719,6 +1719,12 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   const progState = progRead.code === 'READ_CONTEXT_CHANGED' ? { ...progRead, error: undefined, loading: true } : progRead;
   const teamActorScope = `${teamActor?.organizationId ?? ''}:${teamActor?.id ?? ''}`;
   const { state: teamState, reload: reloadTeam, verifiedProjectId: sharingProjectId } = useProjectTeam(pid, teamActorScope);
+  /* The Team drawer (D3.md §4.9), opened by the Team card's "Manage"; a project switch closes it. */
+  const [teamOpen, setTeamOpen] = React.useState(false);
+  React.useEffect(() => { setTeamOpen(false); }, [pid]);
+  /* Project settings opened from elsewhere on the page (About's "Edit"), focused on the field it names. */
+  const [settingsRequest, setSettingsRequest] = React.useState<ProjectSettingsRequest>({ n: 0 });
+  const openSettings = (focus?: ProjectSettingsRequest['focus']) => setSettingsRequest(previous => ({ n: previous.n + 1, focus }));
   const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null, [pid, metadataEpoch]);
   /* The dossier (FILING_SPINE F23): the readiness card, the module rows and
      what AnA is told, from one read. */
@@ -2001,7 +2007,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
           {/* The surface's own name when there is no project name to show —
               a label for the screen, not a name posing as a project's. */}
           <h1 className="pj-title">{title ?? 'Project home'}</h1>
-          {pid && <ProjectSettings programId={pid} onSaved={() => setMetadataEpoch(value => value + 1)} />}
+          {pid && <ProjectSettings programId={pid} request={settingsRequest} onSaved={() => setMetadataEpoch(value => value + 1)} />}
         </div>
         {progState.loading && <p role="status" className="pj-byline">Loading project…</p>}
         <ProjectTags tags={{ filing: filingWords, regionLabel, indication, status, priority }} />
@@ -2066,12 +2072,6 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                 requestAnimationFrame(() => document.querySelector('.pj-lc')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }));
               }}
               onOpenDocument={docId => openDocument({ id: docId } as BuiltDocument)}
-              team={<section className="pj-sec">
-                <div className="pj-sec-h"><h2>Team</h2></div>
-                <ProjectTeamResponsibilities programId={pid} state={teamState} onRetry={reloadTeam} />
-                {sharingProjectId !== null && <ProjectTeamSharing programId={pid} projectId={sharingProjectId}
-                  suspended={teamState.loading || Boolean(teamState.error)} onChanged={reloadTeam} />}
-              </section>}
               tasks={<ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} />} />
           )}
 
@@ -2142,6 +2142,11 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             {/* Like Claude's project knowledge: what the project is, where its
                 filing stands, and its conversations, beside the work. */}
             <section className="pj-about" aria-label="About this project">
+              {/* "Edit" opens Project settings on the description (D3.md §4.8 item 1), for a person who may change it. */}
+              {prog && pid && prog.id === pid && prog.canChange !== false && (
+                <div className="pj-card-h"><h3>About</h3>
+                  <button type="button" className="pj-card-h-go" aria-haspopup="dialog" aria-label="Edit project details" onClick={() => openSettings('description')}>Edit</button></div>
+              )}
               {prog && (
                 <section className="pj-facts" aria-label="Project identity">
                   <dl className="pj-fact"><dt>Client</dt><dd>{clientName ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
@@ -2180,8 +2185,15 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                   onOpenMarket={(submissionId) => openMarketOnSubmit(chooseStage, submissionId)} />
               )}
             </section>
+            {/* The team, on every step (D3-3; it left Plan). "Manage" opens the Team drawer. */}
+            {pid && <ProjectTeamCard programId={pid} state={teamState} onRetry={reloadTeam} onManage={() => setTeamOpen(true)} />}
             {stage === 'author' && <ProjectSide pid={pid} dossier={dossier} copyFor={filingCopyIn(docsRead)} onOpenDoc={openDocument} onAsk={onAsk} />}
           </aside>
+          {teamOpen && pid && (
+            <ProjectTeamDrawer programId={pid} state={teamState} onRetry={reloadTeam} onClose={() => setTeamOpen(false)}
+              sharing={sharingProjectId !== null && <ProjectTeamSharing programId={pid} projectId={sharingProjectId}
+                suspended={teamState.loading || Boolean(teamState.error)} onChanged={reloadTeam} />} />
+          )}
         </div>
       )}
     </div>

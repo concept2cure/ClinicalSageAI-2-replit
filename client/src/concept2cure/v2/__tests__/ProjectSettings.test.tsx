@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProjectSettingsData, ProjectSettingsWrite } from '@shared/project-settings';
 const request = vi.hoisted(() => vi.fn());
@@ -63,6 +63,22 @@ describe('Project settings reads and bounded fields', () => {
     mount();
     await open();
     expect(screen.queryByText(/Current saved settings loaded|uncertain save/)).toBeNull();
+  });
+  /* D3-3 (D3.md §4.9 item 2): the page opens settings from elsewhere (About's "Edit") on a named field. */
+  it('a request opens the drawer on the field it names, once; a request already seen at mount opens nothing', async () => {
+    const onSaved = vi.fn();
+    const view = render(<ProjectSettings programId={PROGRAM} onSaved={onSaved} request={{ n: 0 }} />);
+    expect(screen.queryByRole('dialog', { name: 'Project settings' })).toBeNull();
+    expect(request).not.toHaveBeenCalled();
+    view.rerender(<ProjectSettings programId={PROGRAM} onSaved={onSaved} request={{ n: 1, focus: 'description' }} />);
+    const description = await screen.findByRole('textbox', { name: 'Project description' });
+    await waitFor(() => expect(document.activeElement).toBe(description));
+    fireEvent.click(screen.getByRole('button', { name: 'Close settings' }));
+    view.rerender(<ProjectSettings programId={PROGRAM} onSaved={onSaved} request={{ n: 1, focus: 'description' }} />);
+    expect(screen.queryByRole('dialog', { name: 'Project settings' })).toBeNull();
+    view.rerender(<ProjectSettings programId={PROGRAM} onSaved={onSaved} request={{ n: 2, focus: 'priority' }} />);
+    const priority = await screen.findByRole('combobox', { name: 'Project priority' });
+    await waitFor(() => expect(document.activeElement).toBe(priority));
   });
   it('reads lazily, renders actual fields, prevents a no-op and records only the reasoned difference', async () => {
     const { onSaved } = mount();

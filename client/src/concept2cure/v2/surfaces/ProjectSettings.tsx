@@ -12,7 +12,9 @@ import { I } from '../icons';
 import { useDialog } from '../useDialog';
 import '../styles/project-settings.css';
 
-interface Props { programId: string; onSaved: () => void }
+/** A request to open the drawer, focused on one field once it renders: a change of `n` opens it (D3.md §4.9). */
+export interface ProjectSettingsRequest { n: number; focus?: 'description' | 'priority' | 'targetSubmissionDate' }
+interface Props { programId: string; onSaved: () => void; request?: ProjectSettingsRequest }
 interface Draft { description: string; priority: ProjectSettingsData['priority']; targetSubmissionDate: string }
 const id = (value: unknown) => typeof value === 'string' && /^[1-9]\d*$/.test(value) ? Number(value) : value;
 const draftOf = (data: ProjectSettingsData): Draft => ({ description: data.description ?? '', priority: data.priority, targetSubmissionDate: data.targetSubmissionDate ?? '' });
@@ -123,7 +125,26 @@ async function saveSettings(context: Context, reason: string) {
     if (s.mounted.current) s.setSaving(false);
   }
 }
-function SettingsSession({ scope, isCurrent, onSaved }: Props & { scope: ProjectSettingsScope; isCurrent: () => boolean }) {
+/** Opens the drawer when the page asks (About's "Edit"), then focuses the asked field once the saved settings
+ *  have been read and the fields render. A request seen at mount is not acted on: only a change of `n` opens. */
+function useSettingsRequest(request: ProjectSettingsRequest | undefined, s: State, prefix: string, toggle: () => void) {
+  const seen = useRef(request?.n ?? 0);
+  const wanted = useRef<ProjectSettingsRequest['focus'] | null>(null);
+  const n = request?.n ?? 0;
+  useEffect(() => {
+    if (n === seen.current) return;
+    seen.current = n;
+    wanted.current = request?.focus ?? null;
+    if (!s.open) toggle();
+  }); /* no dependency list: it runs each render and acts only on a change of n, guarded by `seen` */
+  useEffect(() => {
+    const field = wanted.current;
+    if (!field || !s.open || s.loading || !s.draft) return;
+    const element = document.getElementById(`${prefix}-${field}`);
+    if (element) { element.focus(); wanted.current = null; }
+  });
+}
+function SettingsSession({ scope, isCurrent, onSaved, request }: Props & { scope: ProjectSettingsScope; isCurrent: () => boolean }) {
   const s = useSettingsState(); const prefix = useId();
   const { mounted } = s;
   const visit = useMemo(() => captureShellProjectGuard(), []);
@@ -139,6 +160,7 @@ function SettingsSession({ scope, isCurrent, onSaved }: Props & { scope: Project
     if (s.open) close();
     else { s.setOpen(true); if (!s.blocked) void loadSettings(context); }
   };
+  useSettingsRequest(request, s, prefix, toggle);
   const patch = diff(s.saved, s.draft);
   const editable = s.saved?.canChange === true && !s.saving && !s.loading && !s.blocked;
   if (s.retired) return <p className="pj-settings-note" role="status">{RETIRED}</p>;
@@ -224,11 +246,11 @@ function SettingsFields({ state: s, editable, prefix }: { state: State; editable
   return <div className="npw-fields">
     {!s.saved?.canChange && <p className="pj-settings-note npw-field-wide">Your current project permissions allow reading these settings. Editing is unavailable.</p>}
     <label className="npw-field npw-field-wide"><span className="npw-field-l">Project description</span>
-      <textarea className="c2c-input" value={draft.description} rows={3} maxLength={4000} disabled={!editable} onChange={event => change('description', event.target.value)} /></label>
-    <label className="npw-field"><span className="npw-field-l">Project priority</span><select className="c2c-input" value={draft.priority} disabled={!editable} onChange={event => change('priority', event.target.value)}>
+      <textarea id={`${prefix}-description`} className="c2c-input" value={draft.description} rows={3} maxLength={4000} disabled={!editable} onChange={event => change('description', event.target.value)} /></label>
+    <label className="npw-field"><span className="npw-field-l">Project priority</span><select id={`${prefix}-priority`} className="c2c-input" value={draft.priority} disabled={!editable} onChange={event => change('priority', event.target.value)}>
       <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option>
     </select></label>
-    <label className="npw-field"><span className="npw-field-l">Target submission date</span><input className="c2c-input" type="date" aria-label="Target submission date" min="0001-01-01" max="9999-12-31" value={draft.targetSubmissionDate} disabled={!editable} aria-describedby={`${prefix}-date-help`} onChange={event => change('targetSubmissionDate', event.target.value)} />
+    <label className="npw-field"><span className="npw-field-l">Target submission date</span><input id={`${prefix}-targetSubmissionDate`} className="c2c-input" type="date" aria-label="Target submission date" min="0001-01-01" max="9999-12-31" value={draft.targetSubmissionDate} disabled={!editable} aria-describedby={`${prefix}-date-help`} onChange={event => change('targetSubmissionDate', event.target.value)} />
       <span className="npw-field-help" id={`${prefix}-date-help`}>Recorded target only. Replanning milestones is a separate action.</span></label>
   </div>;
 }
