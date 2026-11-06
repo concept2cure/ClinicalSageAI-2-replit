@@ -380,3 +380,79 @@ describe('assemble_ectd_module_from_artifacts assembles only a project the perso
     expect(String(out.error)).toMatch(/No artifacts found/);
   });
 });
+
+/* F1-C (2026-11-05): search_all_documents and validate_cross_references read c2c_documents (and, the search,
+   concept2cure_artifacts) by organization only; and execute_platform_command opened AnA's platform commands, whose
+   artifact reads had no access check, without the open v2 project. */
+describe('search_all_documents searches only the projects the person can open', () => {
+  beforeAll(async () => {
+    await h.pg.exec(`CREATE TABLE IF NOT EXISTS tmf_artifacts (id serial PRIMARY KEY, organization_id integer, tmf_file_id integer,
+      zone integer, artifact_name text, status text, deleted_at timestamptz, updated_at timestamptz DEFAULT now())`);
+  });
+  const hitsOf = (out: { hits?: Array<{ store: string; artifact_id?: string; id?: string }> }, store: string) =>
+    (out.hits ?? []).filter((x) => x.store === store).map((x) => x.artifact_id ?? x.id).sort();
+
+  it('no project open: the vault and governed stores of open projects of every sponsor, never a private project', async () => {
+    const memos = await run('search_all_documents', { query: 'memo' }, MEMBER_CTX);
+    expect(memos.ok, JSON.stringify(memos)).toBe(true);
+    expect(hitsOf(memos, 'vault')).toEqual(['a-a1', 'a-a2', 'a-b']);
+    const inds = await run('search_all_documents', { query: 'IND' }, MEMBER_CTX);
+    expect(hitsOf(inds, 'governed')).toEqual(['doc_a1']);
+    expect(JSON.stringify([memos, inds])).not.toMatch(/a-priv|Private memo|Private IND|doc_priv|doc_them|Their/);
+  });
+
+  it("inside a project: only the open project's sponsor's", async () => {
+    const memos = await run('search_all_documents', { query: 'memo' }, INSIDE_A);
+    expect(hitsOf(memos, 'vault')).toEqual(['a-a1', 'a-a2']);
+    const contoso = await run('search_all_documents', { query: '510' }, INSIDE_A);
+    expect(contoso.ok, JSON.stringify(contoso)).toBe(true);
+    expect(contoso.hits).toEqual([]);
+  });
+
+  it('a check that cannot run is an error, and nothing is searched', async () => {
+    h.failWhen = /project_members/;
+    const out = await run('search_all_documents', { query: 'memo' }, MEMBER_CTX);
+    expect(out.error, JSON.stringify(out)).toBeTruthy();
+    expect(out.hits).toBeUndefined();
+  });
+});
+
+describe('validate_cross_references reads only a document of a project the person can open', () => {
+  const input = (documentId: string) => ({ document_id: documentId, section_references: ['Section 2.5'] });
+
+  it("a private project's document, or another sponsor's from inside a project, is answered as a missing one", async () => {
+    await expectAnsweredAsMissing('validate_cross_references', input('doc_priv'), 'document_id', MEMBER_CTX);
+    await expectAnsweredAsMissing('validate_cross_references', input('doc_them'), 'document_id', MEMBER_CTX);
+    await expectAnsweredAsMissing('validate_cross_references', input('doc_b'), 'document_id', INSIDE_A);
+  });
+
+  it('a document of a project the person can open is checked', async () => {
+    const out = await run('validate_cross_references', input('doc_b'), MEMBER_CTX);
+    expect(out, JSON.stringify(out)).toMatchObject({ documentId: 'doc_b', referencesChecked: 1 });
+    expect((await run('validate_cross_references', input('doc_a1'), INSIDE_A)).documentId).toBe('doc_a1');
+  });
+
+  it('a check that cannot run is an error, and nothing is checked', async () => {
+    h.failWhen = /project_members/;
+    const out = await run('validate_cross_references', input('doc_b'), MEMBER_CTX);
+    expect(out.error, JSON.stringify(out)).toBeTruthy();
+    expect(out.results).toBeUndefined();
+  });
+});
+
+describe("execute_platform_command reads inside the open project's sponsor", () => {
+  const search = (ctx: Ctx) => run('execute_platform_command', { command: 'search_artifacts', params: { query: 'memo' } }, ctx);
+  const titlesOf = (out: { result?: { data?: { results?: Array<{ title: string }> } } }) =>
+    (out.result?.data?.results ?? []).map((r) => r.title).sort();
+
+  it('inside a v2 project (a program uuid), only that sponsor\'s artifacts are found', async () => {
+    const out = await search(INSIDE_A);
+    expect(out.status, JSON.stringify(out)).toBe('executed');
+    expect(titlesOf(out)).toEqual(['Northwind clinical overview memo', 'Northwind protocol memo']);
+  });
+
+  it('no project open: every open project of every sponsor, never a private project', async () => {
+    const out = await search(MEMBER_CTX);
+    expect(titlesOf(out)).toEqual(['Contoso device memo', 'Northwind clinical overview memo', 'Northwind protocol memo']);
+  });
+});
