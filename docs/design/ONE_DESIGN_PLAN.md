@@ -368,6 +368,19 @@ status or ownership; closing a package stays §3 step 5.
 
   All three were used in the running app. The trend read's shape was wrong in the first test, and the running app
   caught it.
+- **Reach: the stored sizing run and its reproduction** (2026-11-06), `583b96271`,
+  `docs/evidence/DESIGN/R1/2026-11-06-sizing-run-reproduction/`.
+  - `GET /api/biostat-bridge/computation-runs/:runId/reproduce` had no caller. The design assessment now names the
+    run behind the planned N (`sizingRun`).
+  - The protocol's Statistics tab says "Stored run #1, 2026-11-06, computed 314 subjects." It offers "Check it
+    reproduces" and shows the four facts one by one.
+  - **F1, found by the reach:** with RLS enforced, the route answered 404 for the organization's own run. It
+    queried a `pool.connect()` client outside a transaction, and the scope layer sets the tenant only after
+    `BEGIN`. It reads through `pool.query` now, with a test over the real scope layer.
+  - **F1, found walking it:** the protocol workspace gave the shell's `.page-full` row two roots, so at 1440 px the
+    protocol had 325 px beside its selection bar. It has one column root now.
+  - Used in the running app, with RLS and launch scope on: before the fix, 404; after it, intact, intact,
+    reproduced, same engine version.
 - **Handed to D4** (2026-11-05). Informed consent exists twice: the `informed_consent` document type, and
   `/api/protocol-consent`, whose 7 routes have no caller. Its element checklist, completeness and signed approval
   are that document type's validation. Under Rule 4 they belong in the one editor, not a protocol panel. Whether

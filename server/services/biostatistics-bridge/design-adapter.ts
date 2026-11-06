@@ -475,13 +475,23 @@ export const BRIDGE_STAMP_PREFIX = 'Biostatistics bridge —';
  * names the method, so the SAP projection's §6 red-flags can see where the
  * planned N came from.
  */
+/**
+ * The planned N a computation gives: the attrition-adjusted total when the engine adjusted, else the total. One rule,
+ * for the figure written onto a design and for the figure read back out of its stored run.
+ */
+export function plannedSizeOf(result: unknown): number | null {
+  const r = result as Partial<ComputationResult> | null | undefined;
+  if (typeof r?.adjustedTotal === 'number') return r.adjustedTotal;
+  return typeof r?.sampleSize?.total === 'number' ? r.sampleSize.total : null;
+}
+
 export function computationToPlanPatch(
   input: StatisticalInput,
   result: ComputationResult,
   /** runId: the stored run (stats_computation_runs, S5b) this N was computed by. */
   provenance?: { engine: string; version: string; inputsSha256?: string; runId?: number },
 ): Partial<StatisticalPlan> {
-  const plannedSampleSize = result.adjustedTotal ?? result.sampleSize.total;
+  const plannedSampleSize = plannedSizeOf(result) ?? undefined;
   // The stamp always opens with the same words so `applyPlanPatch` can
   // recognise and supersede an earlier bridge stamp without touching the
   // design's own evidence (a prior trial, a TPP, a guidance).

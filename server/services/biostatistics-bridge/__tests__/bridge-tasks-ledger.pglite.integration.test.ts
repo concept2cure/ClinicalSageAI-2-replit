@@ -183,3 +183,38 @@ describe('the reason a raised task records', () => {
     expect(rows.map(r => [r.decision_reason, r.audit_reason])).toEqual(rows.map(() => ['Raised at the design review.', 'Raised at the design review.']));
   });
 });
+
+/**
+ * The assessment names the stored run behind the design's planned N (R1, 2026-11-06), so the design card can ask the
+ * reproduce route about it. The tables here carry only the columns the read uses: what is under test is which run is
+ * named, and that a failed read is never said as "none".
+ */
+describe('the stored run behind the planned N', () => {
+  const PURPOSE = 'study-design:planned-sample-size';
+  const sizingRun = async () => (await assessDesign(ORG, STUDY))!.sizingRun;
+
+  it('is a failed read, not "none", while the run table cannot be read', async () => {
+    expect(await sizingRun()).toEqual({ state: 'unreadable' });
+  });
+
+  it('is the latest run of this organization for the design and the purpose, with the N its stored outputs give', async () => {
+    await holder.pg.exec(`
+      CREATE TABLE cdisc_prm_studies (id serial PRIMARY KEY, study_id text NOT NULL, tenant_id integer NOT NULL);
+      CREATE TABLE stats_computation_runs (id bigserial PRIMARY KEY, organization_id integer NOT NULL, study_ref integer,
+        purpose text NOT NULL, outputs jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now());`);
+    expect(await sizingRun(), 'no design row').toEqual({ state: 'none' });
+
+    const ref = (await run(`INSERT INTO cdisc_prm_studies (study_id, tenant_id) VALUES ($1, $2) RETURNING id`, [STUDY, ORG])).rows[0].id;
+    expect(await sizingRun(), 'a design with no stored run').toEqual({ state: 'none' });
+
+    const put = (org: number, purpose: string, outputs: unknown, at: string) =>
+      run(`INSERT INTO stats_computation_runs (organization_id, study_ref, purpose, outputs, created_at)
+           VALUES ($1, $2, $3, $4, $5) RETURNING id`, [org, ref, purpose, JSON.stringify(outputs), at]);
+    await put(ORG, PURPOSE, { sampleSize: { total: 300 } }, '2026-11-01T00:00:00Z');
+    const named = (await put(ORG, PURPOSE, { sampleSize: { total: 400 }, adjustedTotal: 444 }, '2026-11-05T00:00:00Z')).rows[0].id;
+    await put(ORG, 'something-else', { sampleSize: { total: 1 } }, '2026-11-06T00:00:00Z');
+    await put(99, PURPOSE, { sampleSize: { total: 2 } }, '2026-11-07T00:00:00Z');
+
+    expect(await sizingRun()).toEqual({ state: 'found', runId: Number(named), recordedAt: '2026-11-05T00:00:00.000Z', plannedSampleSize: 444 });
+  });
+});
