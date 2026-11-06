@@ -110,6 +110,22 @@ export const SELF_DRIVE_TOOLS: readonly string[] = [
   'start_product_demo',
 ];
 
+/**
+ * How a document AnA drafts reaches the canvas, and from it the editor
+ * (docs/design/ANA_DOCUMENT_CANVAS.md): draft_authoring_document saves it as an
+ * authoring document of the open project.
+ *
+ * Recorded in the running app, 2026-11-06: "Draft the clinical study report for
+ * this study … show it to me in the canvas" went to the model with 50 tools and
+ * not this one. Relevance ranked other draft_* tools above it, so she could only
+ * answer in prose, and generate_document's CSR refusal pointed her at a tool she
+ * did not have. Pinned by the caller that renders the canvas (ana-ri/stream.ts),
+ * not always-on, for the reason SELF_DRIVE_TOOLS gives: voice and deep
+ * investigations share the selector and show no canvas. Pins choose only among
+ * the governed pool, so a tenant's deny-list and a read-only turn still win.
+ */
+export const CANVAS_DOCUMENT_TOOLS: readonly string[] = ['draft_authoring_document'];
+
 const STOPWORDS: ReadonlySet<string> = new Set([
   'the', 'and', 'for', 'with', 'this', 'that', 'are', 'was', 'our', 'you', 'your',
   'can', 'could', 'would', 'should', 'please', 'help', 'need', 'want', 'have', 'has',
