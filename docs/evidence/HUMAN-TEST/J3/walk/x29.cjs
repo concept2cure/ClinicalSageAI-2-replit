@@ -1,4 +1,4 @@
-const { c, openDoc, prog } = require('./lib.cjs');
+const { c, prog } = require('./lib.cjs');
 (async () => {
   const b = await c.chromium.launch();
   const p = await c.signIn(b, 'author');
@@ -11,9 +11,9 @@ const { c, openDoc, prog } = require('./lib.cjs');
   await d.getByLabel('Reason').fill('J3 walk: a controlled SOP written in the one editor');
   await d.getByRole('button', { name: 'Create and open' }).click();
   await p.waitForTimeout(6000); await p.waitForLoadState('networkidle');
-  console.log(p.url());
+  console.info(p.url());
   await c.shot(p, 'x-53-sop-created.png');
-  console.log((await p.locator('body').innerText()).match(/[^\n]*(created|Created|refus|Couldn|SOP-J3)[^\n]*/g)?.slice(0, 10));
-  console.log(c.apiErrors);
+  console.info((await p.locator('body').innerText()).match(/[^\n]*(created|Created|refus|Couldn|SOP-J3)[^\n]*/g)?.slice(0, 10));
+  console.info(c.apiErrors);
   await b.close();
 })();

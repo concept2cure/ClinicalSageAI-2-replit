@@ -1,4 +1,4 @@
-const { c, openDoc } = require('./lib.cjs');
+const { c } = require('./lib.cjs');
 const prog = '1078548e-39d6-4132-84d7-3cbeb64890d0';
 (async () => {
   const b = await c.chromium.launch();
@@ -16,7 +16,7 @@ const prog = '1078548e-39d6-4132-84d7-3cbeb64890d0';
   await dlg.getByRole('button', { name: 'Create document' }).click();
   await p.waitForTimeout(6000); await p.waitForLoadState('networkidle');
   await c.shot(p, 'x-43-510k-created.png');
-  console.log((await p.locator('body').innerText()).match(/Document created[^\n]*|[^\n]*refus[^\n]*|[^\n]*Couldn[^\n]*/g));
-  console.log(c.apiErrors);
+  console.info((await p.locator('body').innerText()).match(/Document created[^\n]*|[^\n]*refus[^\n]*|[^\n]*Couldn[^\n]*/g));
+  console.info(c.apiErrors);
   await b.close();
 })();
