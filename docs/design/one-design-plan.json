@@ -219,7 +219,7 @@
     },
     {
       "id": "L1",
-      "title": "Launch rows D1–D10 (docs/LAUNCH_DEFINITION_OF_DONE.md)",
+      "title": "Launch rows D1\u2013D10 (docs/LAUNCH_DEFINITION_OF_DONE.md)",
       "status": "open",
       "dependsOn": [],
       "paths": [
@@ -386,7 +386,12 @@
         "client/src/concept2cure/v2/surfaces/usePeerReviewDecision.ts",
         "client/src/concept2cure/v2/surfaces/authoringPeerReview.ts",
         "server/routes/regulatory-intelligence.ts",
-        "server/services/intelligence/ana-failure-learning.ts"
+        "server/services/intelligence/ana-failure-learning.ts",
+        "client/src/concept2cure/v2/surfaces/AdminSkills.tsx",
+        "server/services/digest/proactive-digest.ts",
+        "server/services/digest/digest-heartbeat.ts",
+        "server/services/automation/scheduled-jobs.ts",
+        "server/services/tasking/create-task.ts"
       ]
     },
     {
@@ -642,9 +647,9 @@
     {
       "id": "anna-runtime",
       "decision": "P-104",
-      "title": "Extend the existing Anna runtime — Multi-Agent Architecture Spec v0.5",
-      "source": "MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf §§1–32",
-      "planSection": "docs/design/ONE_DESIGN_PLAN.md §1d",
+      "title": "Extend the existing Anna runtime \u2014 Multi-Agent Architecture Spec v0.5",
+      "source": "MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf \u00a7\u00a71\u201332",
+      "planSection": "docs/design/ONE_DESIGN_PLAN.md \u00a71d",
       "status": "acceptance_pending",
       "newFilesApproved": false,
       "accountTarget": "client_owned_only_for_client_filings; retain historical sender identity; no migration claimed",
@@ -658,7 +663,7 @@
             "S5",
             "S6"
           ],
-          "gate": "Expanded §14.4 spike: independent verification, custody, exact-byte approval, tenant isolation, correction/hard gate, tier routing, derivative round-trip",
+          "gate": "Expanded \u00a714.4 spike: independent verification, custody, exact-byte approval, tenant isolation, correction/hard gate, tier routing, derivative round-trip",
           "status": "acceptance_pending"
         },
         {
@@ -926,6 +931,24 @@
           "package": "S4",
           "status": "implementation_in_progress",
           "scope": "Existing draft_authoring_document accepts approved derivative reference only; actual nested generation ledger/hash/served identity verifies inside canonical authoring create transaction before linking draft to editor, not parent-model attribution."
+        },
+        {
+          "name": "private_profile_database_owner_wall",
+          "package": "F1",
+          "status": "implementation_in_progress",
+          "scope": "Repair existing private intelligence and relational profile creators with restrictive owner-and-tenant RLS and verified request account stamping/clearing; real non-bypass PostgreSQL proof before private RuleRecord writes."
+        },
+        {
+          "name": "source_authority_across_parent_child_and_embedding",
+          "package": "S4",
+          "status": "implementation_in_progress",
+          "scope": "Private runtime source authority accumulates persisted classification across parent and child reads and rechecks exact current source after credential awaits; unknown history remains T3 and public JSON cannot lower it."
+        },
+        {
+          "name": "alignment_digest_and_attributable_system_repair_tasks",
+          "package": "S4",
+          "status": "implementation_in_progress",
+          "scope": "Existing digest heartbeat and scheduler consume verified rule versions, deliver content-minimal communications and create idempotent explicitly system-attributed review tasks plus atomic chained audit; no fabricated human and no automatic repair closure."
         }
       ],
       "hardDependencies": [
@@ -937,12 +960,12 @@
         {
           "name": "approved_reversible_derivative_pipeline",
           "status": "unresolved",
-          "evidence": "No established reversible tenant-local token-map custody or approved derivative policy; existing redaction is not the §26 derivative round-trip"
+          "evidence": "No established reversible tenant-local token-map custody or approved derivative policy; existing redaction is not the \u00a726 derivative round-trip"
         },
         {
           "name": "expanded_spike",
           "status": "acceptance_pending",
-          "evidence": "No full §14.4 + §§19/23/26 fixture pass; component tests do not enable downstream phases"
+          "evidence": "No full \u00a714.4 + \u00a7\u00a719/23/26 fixture pass; component tests do not enable downstream phases"
         }
       ],
       "userDirections": [

@@ -291,6 +291,15 @@ customer KMS grants, deployed locality, provider terms, model PQ and semantic do
 own evidence gates. Component and integration results are recorded after execution; no phase is marked accepted
 merely by declaring a dependency or implementing an interface.
 
+**Existing owner and digest homes.** `user_intelligence_profiles` and `ana_relational_profiles` already hold
+personal context; their current creator migrations are replayed on canonical deployment. The owner boundary is
+repaired there and in the existing authenticated tenant/account scope, rather than storing personal rules in the
+organization directory. Private-rule CRUD follows that native proof. Existing `proactive-digest.ts`,
+`digest-heartbeat.ts`, `scheduled-jobs.ts` and `create-task.ts` receive verified rule-version snapshots, atomic
+content-minimal notices and explicitly system-attributed review tasks. A scheduled job never borrows a human's
+identity. Existing Skills administration remains the human ledger; runtime source authority extends the existing
+model-call scope and readers instead of trusting a caller's declared tier.
+
 ### Milestones in the existing roadmap — §11 build order
 
 Each row is **queued for v0.5 acceptance** until its stated fixture is run and recorded. A file's existence or an
