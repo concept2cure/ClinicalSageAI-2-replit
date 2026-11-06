@@ -1133,6 +1133,15 @@ with the person in control".
   - the accept sends the option set.
 
   Proof: red 12, then green 70 of 70; regression 53 files and 728 tests; 8 of 8 mutations killed.
+- **The running-app walk, finished except what needs a model key**, `891e1884b` and `aa211c406`, in the same walk folder.
+  - Works: the drafting panel opens and refuses honestly with no provider, at 1440 and 390. Reporting's device section
+    (F4), Projects' activity line and the device Client Review Room (F6) work, and both retired ids resolve.
+  - Fixed, then re-walked: focus now returns after a draft request; the panel shows no internal section id.
+  - Handed on:
+    - every section of the seeded C2C-101 Quality Overall Summary reads `draftingRegionState: unavailable`, which holds
+      drafting there;
+    - five workbench suites are red since `53b179b99`;
+    - two D4 layout issues, at 1440 and 390.
 - **The running-app walk, started**, `468ee75a5`, `docs/evidence/D2-CSR-DRAFT-CONTROL/2026-11-06/walk/`. P-72 slice 1a
   re-owned the pre-auth lookups (`ae12195a5`). Sign-in and the reset request work through them in the running app, as
   the runtime role with RLS and the launch gate enforced, at 1440 and 390 px. The wrong-password and wrong-code
@@ -1156,9 +1165,9 @@ All were proven by tests. Until this walk, none was opened in the running app.
 
 **Next**
 
-1. The rest of the walk: the drafting panel's honest refusals with no model key, F4/F6, and the audit-chain verdict.
-2. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
-3. With a model key: walk the figure gate end to end on an imported CSR's §11.4.1.
+1. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
+2. With a model key: walk the figure gate end to end on an imported CSR's §11.4.1, with revise and passage
+   alternatives.
 
 #### D3 — The project page (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, from 2026-11-06)
 

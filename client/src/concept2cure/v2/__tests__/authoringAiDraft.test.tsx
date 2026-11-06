@@ -319,6 +319,30 @@ describe('AuthoringAiDraft', () => {
     expect(container.querySelector('.ana-activity-phase')).toBeNull();
   });
 
+  it('returns focus to the control pressed once a draft request ends, as the revise and passage controls do (walk, 2026-11-06)', async () => {
+    apiRequest.mockImplementation(rejects(503, 'GATEWAY_UNAVAILABLE', NO_PROVIDER_MESSAGE));
+    mount();
+    const generateButton = screen.getByTestId('ai-draft-generate');
+    generateButton.focus();
+    fireEvent.click(generateButton);
+    // A browser drops focus from a control disabled while AnA drafts (jsdom keeps it, so the drop is made here).
+    const transient = document.body.appendChild(document.createElement('input'));
+    transient.focus();
+    transient.remove();
+    expect(document.activeElement).toBe(document.body);
+    await screen.findByTestId('ai-draft-refusal');
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('ai-draft-generate')));
+  });
+
+  it('names a section by its outline code, and never by an internal id (walk, 2026-11-06)', () => {
+    mount({ sectionCode: 'qms-purpose', sectionTitle: 'Purpose' });
+    expect(screen.getByText(/from Data Room sources/).textContent).toContain('Draft Purpose from Data Room sources');
+    expect(document.body.textContent).not.toContain('qms-purpose');
+    cleanup();
+    mount({ sectionCode: '11.4.1', sectionTitle: 'Efficacy results' });
+    expect(screen.getByText(/from Data Room sources/).textContent).toContain('Draft 11.4.1 from Data Room sources');
+  });
+
   it('a deployment with no AI provider is refused on the panel: no draft body, no accept, a refusal that stays', async () => {
     apiRequest.mockImplementation(rejects(503, 'GATEWAY_UNAVAILABLE', NO_PROVIDER_MESSAGE));
     mount();
