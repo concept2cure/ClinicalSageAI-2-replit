@@ -228,11 +228,16 @@ export function isBoundCoordinationAction(ctx:ToolContext|undefined,name:string,
   if(name===RUN_AGENT_TOOL)return input.action===undefined||['spawn','team','message','revision'].includes(String(input.action));
   return name===UPDATE_PLAN_TOOL_NAME&&Array.isArray(input.worker_dispositions)&&Object.keys(input).every(key=>key==='worker_dispositions');
 }
-export async function recordBoundCoordinationRefusal(ctx:ToolContext|undefined,toolName:string,input:Record<string,unknown>,code:string):Promise<void>{
+export async function recordBoundCoordinationRefusal(ctx:ToolContext|undefined,toolName:string,input:Record<string,unknown>,code:string,
+  options:{toolNameSha256?:string}={}):Promise<void>{
   const binding=ctx&&coordinationBindings.get(ctx);if(!binding)throw new Error('COORDINATION_CAPABILITY_REQUIRED');
+  if(options.toolNameSha256!==undefined&&!/^[a-f0-9]{64}$/.test(options.toolNameSha256))throw new Error('COORDINATION_INPUT_INVALID');
   const argsSha256=coordinationSha256(stableStringify(input)),model=coordinationModel(ctx);
-  await binding.host.refuse(binding.handle??null,{intentId:`refused:${model?.requestId??'unrecorded_model'}:${toolName}:${argsSha256}:${code}`,
-    toolName,argsSha256,code,model});
+  const basis:import('./run-events').CoordinationBasis[]=[];
+  if(options.toolNameSha256)basis.push({kind:'event',ref:'untrusted_tool_name',sha256:options.toolNameSha256});
+  if(toolName==='execute_platform_command'&&input.command==='freeze_document')basis.push({kind:'event',ref:'command:freeze_document'});
+  await binding.host.refuse(binding.handle??null,{intentId:`refused:${model?.requestId??'unrecorded_model'}:${toolName}:${argsSha256}:${code}:${options.toolNameSha256??''}`,
+    toolName,argsSha256,code,model,basis});
 }
 function coordinationModel(ctx: ToolContext | undefined): CoordinationModel | null {
   return ctx?.servingModel ? { provider: ctx.servingModel.provider ?? null, model: ctx.servingModel.model ?? null, requestId: ctx.servingModel.requestId ?? null } : null;

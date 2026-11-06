@@ -182,22 +182,29 @@ export type HarnessState = ReturnType<typeof freshState>;
 
 const state: HarnessState = freshState();
 
+function fixtureOwnerRows(sql: string, params: unknown[] | undefined,
+  scope: ReturnType<typeof getTenantScope>, user: HarnessState['user']): Record<string, unknown>[] | null {
+  if (sql === "SELECT current_setting('app.current_tenant_id',true) AS tenant_scope,current_setting('app.current_account_id',true) AS owner_scope") {
+    return [{ tenant_scope: scope?.tenantId ?? '', owner_scope: scope?.accountId == null ? '' : String(scope.accountId) }];
+  }
+  if (/SELECT id,user_id,organization_id,program_id,metadata FROM chat_threads WHERE id=\$1/.test(sql) &&
+      ['thread-1', 'thread-owned'].includes(String(params?.[0]))) {
+    return [{ id: params?.[0], user_id: user.id, organization_id: user.organizationId, program_id: null, metadata: {} }];
+  }
+  return null;
+}
+
 const pool = {
   // Legitimate public-project fixtures for suites testing model/run behavior.
   // Private access suites replace this pool with actual SQL and live sharing.
   query: async (sql: string, params?: unknown[]) => {
     let rows: Record<string, unknown>[] = [];
-    if (sql === "SELECT current_setting('app.current_tenant_id',true) AS tenant_scope,current_setting('app.current_account_id',true) AS owner_scope") {
-      const scope = getTenantScope();
-      rows = [{ tenant_scope: scope?.tenantId ?? '', owner_scope: scope?.accountId == null ? '' : String(scope.accountId) }];
-    }
+    const ownerRows = fixtureOwnerRows(sql, params, getTenantScope(), state.user);
+    if (ownerRows) rows = ownerRows;
     else if (/FROM regulatory_programs WHERE id = \$1/.test(sql)) rows = [{ id: params?.[0] }];
     else if (/WHERE regulatory_program_id\s*=\s*\$1/.test(sql)) rows = [{ id: 42, clientWorkspaceId: null }];
     else if (/SELECT id, regulatory_program_id FROM projects/.test(sql)) rows = [{ id: params?.[0], regulatory_program_id: null }];
     else if (/FROM organization_users/.test(sql)) rows = [{ role: 'member', user_id: params?.[0] }];
-    else if (/SELECT id,user_id,organization_id,program_id,metadata FROM chat_threads WHERE id=\$1/.test(sql) &&
-      ['thread-1', 'thread-owned'].includes(String(params?.[0]))) rows = [{ id: params?.[0], user_id: state.user.id,
-        organization_id: state.user.organizationId, program_id: null, metadata: {} }];
     else if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) rows = [{ id: params?.[2], owner_id: 3,
       created_by_id: 3, settings: {}, visibility: 'org_public', members: [], review_assigned: false }];
     return { rows, rowCount: rows.length };

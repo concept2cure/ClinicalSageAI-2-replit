@@ -222,12 +222,14 @@ import {
   notifyObserver,
   resolveToolConcurrency,
   type AgenticToolEvent,
+  type DispatchedCall,
   type LoopDispatchOptions,
 } from './agentic-tool-dispatch.js';
 import { modelCallRefusal, createRunSourceAuthority, runWithSourceAuthority, recordCurrentRunSource,
   runWithOwnerPrivateModelContexts, bindOwnerPrivateModelChildRequest, captureOwnerPrivateModelGate, type OwnerPrivateModelContextCapsule } from '../ai-gateway/model-call-scope.js';
 import { consumeSkillGateAuthorization, loadToolSkillGates, skillPolicyApprovalFor } from './governed-tool-gate.js';
 import { inheritCoordinationBinding, isWorkerCoordinationAction, isBoundCoordinationAction, recordBoundCoordinationRefusal, registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
+import { coordinationSha256 } from './run-events.js';
 import { interviewClientType } from './intelligence-questions/client-segment.js';
 import { HIDDEN_APP_TOOLS, anaCapabilityInLaunchScope } from './ana-launch-scope';
 import { launchScopeEnforced } from '../entitlements/launch-scope';
@@ -473,6 +475,9 @@ function inheritToolAuthorities(from: ToolContext | undefined, to: ToolContext):
   if (from && requiresOwnerPrivateToolLane(from)) requireOwnerPrivateToolLane(to);
   return inheritCoordinationBinding(from, to);
 }
+function coordinationDenialUnavailable(): never {
+  throw Object.assign(new Error('The refused child action could not be durably recorded. Further model work was held.'), { code: 'RUN_COORDINATION_UNAVAILABLE' });
+}
 export function ownerPrivateToolRefusal(name: string, input: Record<string, unknown>, ctx?: ToolContext,
   required = false): { code: string; result: string } | null {
   if (!required && !requiresOwnerPrivateToolLane(ctx)) return null;
@@ -640,7 +645,7 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
     if (refusal) {
       if (refusal.code === 'SUB_AGENT_READ_ONLY' && isWorkerCoordinationAction(ctx, 'run_agent', { action: 'team' })) {
         try { await recordBoundCoordinationRefusal(ctx, name, input, refusal.code); }
-        catch { return JSON.stringify({ success: false, error: 'RUN_COORDINATION_UNAVAILABLE', message: 'The refused child action could not be durably recorded. Nothing was run.' }); }
+        catch { return coordinationDenialUnavailable(); }
       }
       recordToolOutcome(name, 'failure', 0, refusal.code, orgId);
       return refusal.result;
@@ -16290,6 +16295,7 @@ async function runOneTool(
       cancellationWait.dispose();
     }
   } catch (error: any) {
+    if (error?.code === 'RUN_COORDINATION_UNAVAILABLE') throw error;
     if (error instanceof ToolRunCancelled) {
       return { call, result: JSON.stringify(CANCELLED_TOOL_RESULT(call.name)) };
     }
@@ -16338,6 +16344,18 @@ function stageToolResultsForModel(results: ToolResultEntry[], round: number,
   const content = staged.map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(tr.content)}`).join('\n\n');
   if (observer) notifyObserver('onToolResultsForModel', () => observer(staged.map(entry => ({ ...entry })), round));
   return content;
+}
+
+/** The offered-tool boundary runs before registered wrappers. A refused child
+ * call still needs its durable receipt before any reply reaches its model. */
+async function recordUnofferedChildRefusal(result: DispatchedCall, ctx?: ToolContext): Promise<DispatchedCall> {
+  if (result.errorMessage !== 'not offered' || !isWorkerCoordinationAction(ctx, 'run_agent', { action: 'team' })) return result;
+  const known = toolHandlers.has(result.call.name);
+  try {
+    await recordBoundCoordinationRefusal(ctx, known ? result.call.name : 'unoffered_tool', result.call.input, 'TOOL_NOT_OFFERED',
+      known ? undefined : { toolNameSha256: coordinationSha256(result.call.name) });
+  } catch { return coordinationDenialUnavailable(); }
+  return result;
 }
 
 export interface AgenticOptions {
@@ -16619,7 +16637,7 @@ async function executeAgenticLoopWithSources(
           const callContext = { ...(toolContext ?? {}), servingModel: servedModelOf(finalResponse), ...subAgent.toolCtx,
             ...readReceiptContext(readReceipts, call.id) };
           return runOneTool(handler, call, inheritToolAuthorities(toolContext, callContext), signal);
-        }),
+        }).then(result => recordUnofferedChildRefusal(result, toolContext)),
       subAgent.toolConcurrency,
     );
 

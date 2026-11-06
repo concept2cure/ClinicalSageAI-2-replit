@@ -207,9 +207,25 @@ function nextNativeModelCall(calls: Map<string, number>, id: string): number {
   const count = calls.get(id) ?? 0; calls.set(id, count + 1); return count;
 }
 
-async function nativeRun(cancel: boolean, {pg,pool,queryFailures}: Awaited<ReturnType<typeof nativeCoordinationFixture>>) {
+type NativeToolCall = { name: string; input: Record<string, unknown> };
+function nativeInitialTool(denialFailure: boolean): NativeToolCall {
+  return denialFailure ? { name: 'execute_platform_command', input: { command: 'freeze_document', documentId: 'native-document' } }
+    : { name: 'read_vault_document', input: { artifact_id: 'native-source' } };
+}
+function nativeForbiddenTool(isA: boolean): NativeToolCall {
+  return isA ? { name: 'run_agent', input: { action: 'spawn', role: 'research', objective: 'Forbidden nested child', instructions: 'Do not run.' } }
+    : { name: 'execute_platform_command', input: { command: 'freeze_document', documentId: 'native-document' } };
+}
+function nativeRunsAlone(cancel: boolean, denialFailure: boolean): boolean { return cancel || denialFailure; }
+function nativeToolUses(use: NativeToolCall | null, id: string, count: number, isA: boolean) {
+  const calls = use ? [{ ...use, id: `${id}:${count}` }] : [];
+  if (count === 4 && isA) calls.push({ id: `${id}:unknown`, name: 'PRIVATE_UNKNOWN_TOOL_CANARY_384', input: { secret: 'UNKNOWN_ARGS_CANARY_384' } });
+  return calls;
+}
+
+async function nativeRun(cancel: boolean, {pg,pool,queryFailures}: Awaited<ReturnType<typeof nativeCoordinationFixture>>, denialFailure = false) {
   const program = '11111111-1111-4111-8111-111111111111';
-  const runId = cancel ? 'native-cancel-run' : 'native-parallel-run';
+  const runId = denialFailure ? 'native-denial-failure-run' : cancel ? 'native-cancel-run' : 'native-parallel-run';
   await pg.query('INSERT INTO ana_runs(id,organization_id,user_id,project_id,status,owner_instance) VALUES($1,7,3,$2,$3,$4)', [runId, program, 'running', runOwnerInstance()]);
   const executor = await vi.importActual<typeof import('../../../services/ana/AnaToolExecutor.js')>('../../../services/ana/AnaToolExecutor.js');
   const io = vi.spyOn(nativeDb as unknown as { getPool(): CoordinationPool }, 'getPool').mockReturnValue(pool);
@@ -229,7 +245,10 @@ async function nativeRun(cancel: boolean, {pg,pool,queryFailures}: Awaited<Retur
     await request.beforeDispatch?.(); await gate.recheck(); checkpointCalls.push(count);
     const isA = JSON.stringify(request.messages[1]).includes('Native worker A');
     let use: { name: string; input: Record<string, unknown> } | null = null;
-    if (count === 0) { if (++firstCalls === 2 || cancel) both(); await concurrent; use = { name: 'read_vault_document', input: { artifact_id: 'native-source' } }; }
+    if (count === 0) {
+      if (++firstCalls === 2 || nativeRunsAlone(cancel, denialFailure)) both(); await concurrent;
+      use = nativeInitialTool(denialFailure);
+    }
     else if (count === 1 && cancel) controller.abort();
     else if (count === 1) {
       const peer = isA ? { intent_id: 'A-request', recipient: 'w2' } : { intent_id: 'B-request', recipient: 'w1' };
@@ -244,9 +263,9 @@ async function nativeRun(cancel: boolean, {pg,pool,queryFailures}: Awaited<Retur
       use = { name: 'search_literature', input: { query: 'Needs a current human decision' } };
     }
     else if (count === 4) {
-      use = { name: 'run_agent', input: { action: 'spawn', role: 'research', objective: 'Forbidden nested child', instructions: 'Do not run.' } };
+      use = nativeForbiddenTool(isA);
     }
-    return { content: 'Operational proposal only.', toolUses: use ? [{ ...use, id: `${id}:${count}` }] : [],
+    return { content: 'Operational proposal only.', toolUses: nativeToolUses(use, id, count, isA),
       provider: 'anthropic', model: 'fixture-advisory', requestId: `${id}:model:${count}`,
       usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2, estimatedCostUsd: 0 }, latencyMs: 1, cached: false, deterministic: false };
   });
@@ -267,7 +286,7 @@ async function nativeRun(cancel: boolean, {pg,pool,queryFailures}: Awaited<Retur
         vi.spyOn(coordination, 'report').mockImplementation(async (handle, input) => {
           try { return await originalReport(handle, input); } catch (error) { reportFailures.push(String(error)); throw error; }
         });
-        const subjects = cancel ? ['A'] : ['A', 'B'];
+        const subjects = cancel || denialFailure ? ['A'] : ['A', 'B'];
         const results = await Promise.all(subjects.map(subject => {
           const call = { id: `native-${subject}`, name: 'run_agent' };
           timeline.announced(1, call, { label: 'Delegating assigned work', source: 'engine', preview: null });
@@ -308,11 +327,33 @@ describe('registered parallel workers with actual durable coordination and sourc
     expect(result.board.workers.every(worker => worker.parentDisposition === 'pending' && worker.outcome === 'completed' && worker.total === null)).toBe(true);
     const messages = await fixture.pg.query<{ count: number }>("SELECT count(*)::int AS count FROM audit_logs WHERE new_values->>'operation'='message' AND record_id='native-parallel-run'");
     expect(messages.rows[0].count).toBe(2); expect(result.checkpointCalls.length).toBeGreaterThanOrEqual(10);
+    expect(result.results.some(item => item.trace.steps.some((step: { result: string }) => step.result.includes('TOOL_NOT_OFFERED')))).toBe(true);
+    const refusals = await fixture.pg.query<{ new_values: { worker: string; model: { model: string }; basis: Array<{ ref: string; sha256?: string }> } }>(
+      "SELECT new_values FROM audit_logs WHERE action='ana.coordination.recorded' AND record_id='native-parallel-run' AND new_values->>'operation'='refused'");
+    expect(refusals.rows.some(row => row.new_values.worker === 'w2' && row.new_values.model.model === 'fixture-advisory' &&
+      row.new_values.basis.some(ref => ref.ref === 'TOOL_NOT_OFFERED') && row.new_values.basis.some(ref => ref.ref === 'tool:execute_platform_command'))).toBe(true);
+    expect(refusals.rows.some(row => row.new_values.basis.some(ref => ref.ref === 'untrusted_tool_name' && ref.sha256 === coordinationSha256('PRIVATE_UNKNOWN_TOOL_CANARY_384')))).toBe(true);
+    expect(JSON.stringify(refusals.rows)).not.toContain('PRIVATE_UNKNOWN_TOOL_CANARY_384');
+    expect(JSON.stringify(refusals.rows)).not.toContain('UNKNOWN_ARGS_CANARY_384');
     expect(JSON.stringify(result.frames)).not.toContain('Native worker A');
     const replay = new TurnTimeline({ write: () => { throw new Error('Forged projection reached the wire'); }, recorder: () => null });
     replay.workerBinding({ id: 'replay', name: 'run_agent' });
     const worker = result.board.workers[0];
     expect(() => replay.worker(1, JSON.parse(JSON.stringify({ receipt: worker.receipt, snapshot: worker })))).toThrow('RUN_COORDINATION_UNAVAILABLE');
+  }, 60000);
+  it('holds the actual child before another model call if its unoffered-action denial cannot commit', async () => {
+    await fixture.pg.exec(`CREATE FUNCTION fail_native_denial() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.record_id='native-denial-failure-run' AND NEW.new_values->>'operation'='refused' THEN RAISE EXCEPTION 'denial audit unavailable'; END IF;
+      RETURN NEW; END $$;
+      CREATE TRIGGER fail_native_denial BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION fail_native_denial();`);
+    try {
+      const result = await nativeRun(false, fixture, true);
+      expect(result.results[0]).toMatchObject({ error: 'AGENT_FAILED', code: 'RUN_COORDINATION_UNAVAILABLE' });
+      expect(result.checkpointCalls).toHaveLength(1);
+      expect(result.board.workers[0]).toMatchObject({ phase: 'stopped', outcome: 'failed', parentDisposition: 'pending' });
+      const denied = await fixture.pg.query("SELECT id FROM audit_logs WHERE record_id='native-denial-failure-run' AND new_values->>'operation'='refused'");
+      expect(denied.rows).toHaveLength(0);
+    } finally { await fixture.pg.exec('DROP TRIGGER fail_native_denial ON audit_logs; DROP FUNCTION fail_native_denial()'); }
   }, 60000);
   it('records cancellation without completion or accepting a proposal', async () => {
     const result = await nativeRun(true, fixture);

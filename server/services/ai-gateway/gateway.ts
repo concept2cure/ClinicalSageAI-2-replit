@@ -190,6 +190,13 @@ function ownerPrivateMetadata(request: GatewayRequest): Record<string, unknown> 
 }
 /** Keep all caller metadata and detector excerpts out of the ordinary ledger
  * for private calls. Their full record is retained only in encrypted custody. */
+function ordinaryAuditMetadata(request: GatewayRequest): Record<string, unknown> {
+  return ownerPrivateOf(request) ? {} : withoutVerifiedGeneration(request.metadata) ?? {};
+}
+function safePrivateAuditError(request: GatewayRequest, error?: string): string | undefined {
+  if (!error) return error;
+  return ownerPrivateOf(request) ? 'OWNER_PRIVATE_GATEWAY_FAILURE' : error;
+}
 function safePrivateAuditDetail(request: GatewayRequest, detail: Record<string, unknown>): Record<string, unknown> {
   return ownerPrivateOf(request) ? ownerPrivateMetadata(request) : detail;
 }
@@ -4481,7 +4488,7 @@ export class AIGateway {
         estimatedCostUsd: response.usage.estimatedCostUsd,
         latencyMs: response.latencyMs,
         success,
-        error: ownerPrivateOf(request) && error ? 'OWNER_PRIVATE_GATEWAY_FAILURE' : error,
+        error: safePrivateAuditError(request, error),
         cached: response.cached,
         deterministic: response.deterministic,
         // Reproducibility: which params + prompt produced this output.
@@ -4525,7 +4532,7 @@ export class AIGateway {
         // classifier-redacted excerpts — never raw content (the prompt itself
         // is represented by promptHash alone).
         metadata: {
-          ...(ownerPrivateOf(request) ? {} : withoutVerifiedGeneration(request.metadata) ?? {}),
+          ...ordinaryAuditMetadata(request),
           ...(contentPolicy ? safePrivateAuditDetail(request, { contentPolicy }) : {}),
           ...ownerPrivateMetadata(request),
           ...(request.qualifiedModelPin ? { qualifiedModelPin: request.qualifiedModelPin } : {}),

@@ -215,7 +215,10 @@ export function classifyAgentFailure(
   const verb = modelCalls === 0 ? 'could not start' : 'could not finish';
   let code: AgentFailureCode;
   let why: string;
-  if (e.code === 'MODEL_NOT_APPROVED_FOR_HIGH_RISK' || e.code === 'MODEL_NOT_PQ_QUALIFIED') {
+  if (e.code === 'RUN_COORDINATION_UNAVAILABLE') {
+    code = 'RUN_COORDINATION_UNAVAILABLE';
+    why = 'the refused action could not be durably recorded, so further work was held';
+  } else if (e.code === 'MODEL_NOT_APPROVED_FOR_HIGH_RISK' || e.code === 'MODEL_NOT_PQ_QUALIFIED') {
     code = 'MODEL_NOT_APPROVED';
     why = 'no model approved for this work was available';
   } else if (e.name === 'GatewayModelDeclinedError') {

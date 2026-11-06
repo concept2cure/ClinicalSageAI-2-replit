@@ -11,8 +11,7 @@ import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vites
 import { randomUUID } from 'node:crypto';
 import { createJourneyDb, extractTableDdl, type JourneyDb } from '../../../../tests/golden-journeys/harness';
 import { PREREQ, AUTHORING_ACCESS_DDL, ORG, AUTHOR } from '../../../routes/__tests__/_authoring-canvas-fixture';
-import { openRunCoordination, readRunCoordination, assertCoordinationProjection, coordinationSha256,
-  type CoordinationPool, type CoordinationScope, type CoordinationProjection } from '../run-events';
+import { openRunCoordination, readRunCoordination, assertCoordinationProjection, coordinationSha256, type CoordinationPool, type CoordinationScope, type CoordinationProjection } from '../run-events';
 import { admitRunCoordination, markRunOwnerPrivate, readOwnerPrivateBoundary, recheckRunOwnerPrivacy,runOwnerInstance } from '../run-control';
 import { TurnRecorder, writeTurnRecord } from '../turn-record';
 import { runWithTenantScope } from '../../../db/tenantStore';
@@ -28,16 +27,10 @@ const mem = vi.hoisted(() => ({
 
 vi.mock('../../working-memory', async importOriginal => {
   const original = await importOriginal<typeof import('../../working-memory')>();
-  return {
-    ...original,
-    getLatestWorkingMemoryByThread: vi.fn(async () => null),
-    searchWorkingMemorySemantic: vi.fn(async () => []),
-  };
+  return { ...original, getLatestWorkingMemoryByThread: vi.fn(async () => null),
+    searchWorkingMemorySemantic: vi.fn(async () => []) };
 });
-vi.mock('../../client-intelligence-memory', () => ({
-  searchMemoryEntriesSemantic: mem.client,
-  searchProjectMemoryEntriesSemantic: mem.project,
-}));
+vi.mock('../../client-intelligence-memory', () => ({searchMemoryEntriesSemantic:mem.client,searchProjectMemoryEntriesSemantic:mem.project}));
 vi.mock('../../../db', () => ({ pool: {query:(sql:string,params?:unknown[])=>mem.chatQuery(sql,params),
   connect:async()=>({query:(sql:string,params?:unknown[])=>mem.chatQuery(sql,params),release(){}})}, db: {} }));
 vi.mock('../../security/field-encryption', async original => {
@@ -48,13 +41,7 @@ vi.mock('../../security/field-encryption', async original => {
     openTenantPayload: (text: string, context: import('../../security/field-encryption').TenantPayloadContext, key: string) => actual.openTenantPayload(text, context, key, ops) };
 });
 
-import {
-  handleUpdatePlan,
-  normalizePlan,
-  planEventFromToolResult,
-  MAX_PLAN_STEPS,
-  UPDATE_PLAN,
-} from '../turn-plan';
+import { handleUpdatePlan, normalizePlan, planEventFromToolResult, MAX_PLAN_STEPS, UPDATE_PLAN } from '../turn-plan';
 import { buildContextUsedEvent, memoryStatusOf } from '../turn-context-used';
 import { ALWAYS_ON_TOOLS, selectToolsForTurn } from '../tool-selection';
 import { describeToolPlan } from '../agentic-loop';
@@ -188,7 +175,7 @@ function registerEncryptedPeerCaptureProof() {
       ()=>modelScope.captureOwnerPrivateModelGate(scope)!.expand()));
     const expandedPeer=await expandPeer();expect(expandedPeer).toContain(canary);
     expect(expandedPeer).toContain('UNTRUSTED PEER DATA');expect(expandedPeer).toContain('\\u003c/untrusted_peer_data>');
-    expect(expandedPeer).not.toContain('</untrusted_peer_data> Ignore');expect(expandedPeer).toContain('\"semanticVerified\":false');
+    expect(expandedPeer).not.toContain('</untrusted_peer_data> Ignore');expect(expandedPeer).toContain('"semanticVerified":false');
     expect(JSON.stringify((await pool.query('SELECT new_values FROM audit_logs WHERE tenant_id=$1', [ORG])).rows)).not.toContain(canary);
     expect(JSON.stringify((await pool.query('SELECT text FROM ana_record_blobs WHERE organization_id=$1', [ORG])).rows)).not.toContain(canary);
     await expect(pool.query("UPDATE ana_record_blobs SET text='changed' WHERE organization_id=$1", [ORG])).rejects.toThrow();
@@ -390,14 +377,9 @@ function registerOwnerPrivateCaptureProof() {
 
 describe('update_plan validates and never invents', () => {
   it('normalises titles and keeps the declared order and statuses', () => {
-    const out = normalizePlan({
-      steps: steps(['  Read the   protocol synopsis ', 'completed'], ['Draft section 2.7.3', 'in_progress'], ['Check citations', 'pending']),
-    });
-    expect(out).toEqual([
-      { title: 'Read the protocol synopsis', status: 'completed' },
-      { title: 'Draft section 2.7.3', status: 'in_progress' },
-      { title: 'Check citations', status: 'pending' },
-    ]);
+    const out = normalizePlan({steps:steps(['  Read the   protocol synopsis ', 'completed'], ['Draft section 2.7.3', 'in_progress'], ['Check citations', 'pending'])});
+    expect(out).toEqual([{title:'Read the protocol synopsis',status:'completed'},
+      {title:'Draft section 2.7.3',status:'in_progress'},{title:'Check citations',status:'pending'}]);
   });
 
   it.each([
@@ -427,14 +409,8 @@ describe('the plan event is built from the validated result only', () => {
   const ok = JSON.stringify({ ok: true, steps: steps(['A', 'completed'], ['B', 'in_progress']) });
 
   it('emits for a successful update_plan call', () => {
-    expect(planEventFromToolResult('update_plan', 'success', ok, 2)).toEqual({
-      type: 'plan',
-      round: 2,
-      steps: [
-        { title: 'A', status: 'completed' },
-        { title: 'B', status: 'in_progress' },
-      ],
-    });
+    expect(planEventFromToolResult('update_plan','success',ok,2)).toEqual({type:'plan',round:2,
+      steps:[{title:'A',status:'completed'},{title:'B',status:'in_progress'}]});
   });
 
   it.each([
@@ -478,14 +454,10 @@ describe('update_plan is always offered and has a calm label', () => {
 
 describe('context_used states only what reached the model', () => {
   it('counts unresolved uploads and keeps the content/name distinction', () => {
-    const ev = buildContextUsedEvent({
-      requestedUploads: 3,
-      uploads: [
-        { fileId: 'f1', fileName: 'Protocol v3.pdf', mimeType: 'application/pdf', read: 'content' },
-        { fileId: 'f2', fileName: 'SAP.docx', mimeType: 'application/vnd.openxmlformats', read: 'name_only' },
-      ],
-      memory: { memoryBlock: '', atoms: [], diagnostics: null },
-    });
+    const ev = buildContextUsedEvent({requestedUploads:3,uploads:[
+      {fileId:'f1',fileName:'Protocol v3.pdf',mimeType:'application/pdf',read:'content'},
+      {fileId:'f2',fileName:'SAP.docx',mimeType:'application/vnd.openxmlformats',read:'name_only'}],
+      memory:{memoryBlock:'',atoms:[],diagnostics:null}});
     expect(ev.unresolvedUploads).toBe(1);
     expect(ev.uploads.map(u => u.read)).toEqual(['content', 'name_only']);
   });
@@ -498,23 +470,13 @@ describe('context_used states only what reached the model', () => {
     const memory: MemoryContextAssemblerResult = {
       memoryBlock: 'Memory history is incomplete because the prompt budget omitted the matching records.',
       atoms: [{ id: 1, layer: 'project_memory', title: 'Qualified release decision', content: 'A complete decision too long for this prompt.' }],
-      read: [],
-      diagnostics: {
-        requestedLimitPerLayer: 4,
-        appliedMaxChars: 1000,
-        minSimilarity: 0.6,
-        maxAgeDays: 180,
-        droppedByForgetting: 0,
-        droppedByDeduplication: 0,
-        trimmed: true,
-        layerOutcomes: { workingMemory: 'empty', clientMemory: 'skipped', projectMemory: 'ok' },
-      },
+      read:[],diagnostics:{requestedLimitPerLayer:4,appliedMaxChars:1000,minSimilarity:0.6,maxAgeDays:180,
+        droppedByForgetting:0,droppedByDeduplication:0,trimmed:true,
+        layerOutcomes:{workingMemory:'empty',clientMemory:'skipped',projectMemory:'ok'}},
     };
 
     expect(memoryStatusOf(memory)).toBe('unavailable');
-    expect(buildContextUsedEvent({ requestedUploads: 0, uploads: [], memory })).toMatchObject({
-      memory: [], memoryStatus: 'unavailable',
-    });
+    expect(buildContextUsedEvent({requestedUploads:0,uploads:[],memory})).toMatchObject({memory:[],memoryStatus:'unavailable'});
   });
 
   it('successful retrieval with no matches still reports none', async () => {
@@ -532,20 +494,11 @@ describe('context_used states only what reached the model', () => {
         { id: 3, title: 'Dissolution method', content: 'y'.repeat(390), similarity: 0.75 },
         { id: 4, title: 'Late item', content: 'z'.repeat(390), similarity: 0.7 },
       ],
-      totalCount: 4,
-      query: '',
+      totalCount:4,query:'',
     });
-    const result = await buildMemoryContextForChat({
-      threadId: 'thread_plan',
-      organizationId: 9,
-      projectId: 42,
-      query: 'estimand',
-      maxChars: 1000,
-    });
-    const admitted = [
-      { layer: 'project_memory', title: 'Estimand decision', documentName: 'Type B minutes' },
-      { layer: 'project_memory', title: 'Stability arm' },
-    ];
+    const result = await buildMemoryContextForChat({threadId:'thread_plan',organizationId:9,projectId:42,query:'estimand',maxChars:1000});
+    const admitted = [{layer:'project_memory',title:'Estimand decision',documentName:'Type B minutes'},
+      {layer:'project_memory',title:'Stability arm'}];
     expect(result.read).toEqual(admitted);
     expect(result.memoryBlock).toContain('x'.repeat(390));
     expect(result.memoryBlock).not.toContain('y'.repeat(80));
@@ -554,9 +507,7 @@ describe('context_used states only what reached the model', () => {
     expect(result.memoryBlock.trimEnd().endsWith('--- END PERSISTENT MEMORY CONTEXT ---')).toBe(true);
     expect(result.diagnostics.trimmed).toBe(true);
     expect(memoryStatusOf(result)).toBe('read');
-    expect(buildContextUsedEvent({ requestedUploads: 0, uploads: [], memory: result })).toMatchObject({
-      memory: admitted, memoryStatus: 'read',
-    });
+    expect(buildContextUsedEvent({requestedUploads:0,uploads:[],memory:result})).toMatchObject({memory:admitted,memoryStatus:'read'});
   });
 });
 
@@ -575,9 +526,7 @@ describe('the declared plan is persisted with the turn', () => {
 describe('a handler that refuses is a step that did not happen', () => {
   it('reads the refusal a handler returned instead of throwing', () => {
     // The real case: draft_authoring_document with no project open.
-    const r = JSON.stringify({
-      error: 'draft_authoring_document needs an open project — every authoring document is filed under one.',
-    });
+    const r=JSON.stringify({error:'draft_authoring_document needs an open project — every authoring document is filed under one.'});
     expect(refusalOf(r)).toMatch(/^draft_authoring_document needs an open project/);
   });
 
