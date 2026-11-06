@@ -78,8 +78,17 @@ describe("the project's program plan", () => {
   it('says a filing has no work breakdown, and invents none', async () => {
     reads = { success: true, data: { programId: PROGRAM, type: null, filing: 'ca_nds' } };
     mount();
-    expect((await screen.findByTestId('pj-program-none')).textContent).toMatch(/This project.s filing \(ca_nds\) has none yet/);
+    expect((await screen.findByTestId('pj-program-none')).textContent).toMatch(/This project.s filing, New Drug Submission \(NDS\), has none yet/);
     expect(screen.queryByRole('heading', { name: 'Program plan' })).toBeNull();
+  });
+
+  // Human test J1 (2026-11-06): "510(k)s" beside "(us_510k_ivd) has none" read as a contradiction and a stored key.
+  it("names the filing in words, never its key: a 510(k) for IVD", async () => {
+    reads = { success: true, data: { programId: PROGRAM, type: null, filing: 'us_510k_ivd' } };
+    mount();
+    const note = (await screen.findByTestId('pj-program-none')).textContent ?? '';
+    expect(note).toMatch(/This project.s filing, 510\(k\) for IVD, has none yet/);
+    expect(note).not.toContain('us_510k_ivd');
   });
 
   it('says the plan could not be read when the read fails', async () => {
