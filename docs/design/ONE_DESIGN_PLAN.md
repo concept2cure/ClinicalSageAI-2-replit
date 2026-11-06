@@ -263,6 +263,34 @@ These instructions continue P-104 within the existing files. No new source file,
 provider/model entry or fabricated qualification is approved. The ledger lists the exact additional existing
 implementation and build paths. Full v0.5 acceptance remains pending until its fixture gates pass.
 
+### Continued execution — finish the remaining controls (P-104)
+
+The founder reaffirmed the end-to-end assignment after publication of `9c7a618981c53b79e8fd66ba51970d91f65c326a`:
+all completed work belongs on the canonical branch, and implementation must continue. The prior release is
+verified in canonical history. Missing real model qualification does not prevent finishing deterministic code,
+tenant-bound qualification plumbing, governed evidence, source-bound correspondence review or custody controls.
+
+**What already exists.** `server/services/security/field-encryption.ts` supplies encryption primitives;
+`server/services/observability/redaction.ts` supplies irreversible telemetry redaction; existing tenant storage
+supplies organization-scoped immutable bytes; `org-placement-writer.ts` and `routes/ai-placement-policy.ts` own the
+placement setting and its governed transaction; `tenant-settings-writer.ts` owns generic settings isolation.
+Extend these with a separate typed derivative contract, never treating ordinary redaction or a public label as an
+attestation. Existing `AdminSettings.tsx`, the nonstream drafting endpoint and `AnaDocumentDraftingService.ts`
+reach the workflow. No new source file, table, route mount, model entry or dependency is approved.
+
+**Active slices.** F1 repairs bind every PQ phase to its verified tenant/programme, invalidate verification when
+material evidence changes, and join exact letter spans/current human review to blocker open/resolve/reopen. S4
+implements explicit-span/minimal-template derivatives, tenant-key/AAD encrypted map custody in existing storage,
+managed settings metadata, fresh human reauthentication over the exact residual payload hash, policy/source/actor
+rechecks, buffered derivative-only gateway dispatch and deterministic local token reinjection verification. Raw
+Tier 3 remains local. Unknown/missing/duplicate tokens, stale or revoked approvals, changed source/policy and foreign
+scope refuse. This is a deterministic path; no heuristic certifies arbitrary prose and no model certifies itself.
+
+The prototype must be callable through the existing API and Administration cards, not only test helpers. Actual
+customer KMS grants, deployed locality, provider terms, model PQ and semantic document verification retain their
+own evidence gates. Component and integration results are recorded after execution; no phase is marked accepted
+merely by declaring a dependency or implementing an interface.
+
 ### Milestones in the existing roadmap — §11 build order
 
 Each row is **queued for v0.5 acceptance** until its stated fixture is run and recorded. A file's existence or an
