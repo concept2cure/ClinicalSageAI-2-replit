@@ -108,3 +108,23 @@ current repository-controlled qualified pin. Generic displayed provenance and ol
 no release authority. The production client/server and both standalone audit/qualification verifiers build. The
 mandatory changed-source lint checks pass with zero errors and a net reduction of four warnings. Final canonical
 compiler, pre-push and confirmed remote receipt remain the publication gate.
+
+
+### Canonical synchronization and combined source checks
+
+The first complete publication attempt passed every mandatory gate, including the full zero-baseline compiler
+with **zero errors**, then Git refused the update because canonical work advanced. `43fe4a8e2` merges that editor,
+source and credential work. `cd23db47c` preserves both sets of protections at all five SDK sites, composes team and
+native source checkpoints, and registers the actual admitted native selection in run authority inherited by child
+calls. The additional joined regressions prove that a changed team anchor blocks parent follow-up and changed
+native facts block the child before its first provider call. Their source/admission/retained/coordination SQL runs;
+the QMS collector is an explicitly bounded database fact producer, not a complete QMS or model qualification.
+
+Combined validation passes **42 SDK checkpoint tests**, **34 private SQL/AES tests**, **11 stream tests**,
+**82 authoring component tests** and **21 native workflow tests**. The merged production client/server build and
+standalone verifiers build. The final SDK terminal-error helper rerun also passes 42/42 with no added source lint
+warning. Later canonical drafting-panel changes merge without touching the team/private surfaces and pass 32/32.
+The encrypted-family/monitor rehome meets the unchanged size ceilings and preserves 63 private/SDK/runtime plus
+275 monitor/graph regression checks. Current administration reauthentication passes 25 cases, including revoked
+authority before password checking; QMS error envelopes pass 15 ceremony cases and the unchanged disclosure guard.
+These runs overlap and must not be summed. Final merged publication is retried with the normal hooks.
