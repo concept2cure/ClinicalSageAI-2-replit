@@ -27,6 +27,8 @@ the push guidance below. The coordinating session is recorded unavailable; no
 cross-session channel is available here. No other lane is paused or claimed by
 this request. The slice continues with ordinary fetch/merge/retry and no force.
 
+Quality F1 current-record follow-up, 2026-11-06: this slice now also requests a 15-minute publication window after two ref races, both with every normal gate green and compiler 0/baseline 0 (`ea3b158e6a` → `2216b9decb` → `1947fa1666`). The coordinating session is recorded unavailable and no callable cross-session channel reaches it here. No other lane is paused by this note; this slice keeps ordinary fetch/merge/retry, without force or hook bypass. Source `4d1a06bf48`, evidence `docs/evidence/DESIGN/R1/2026-11-06-quality-current-records/`; all Quality implementation holds are released with publication.
+
 | Files | Held by | For |
 |---|---|---|
 | (none held) | Codex continuation, 2026-11-06 | F1 W3 D2/D4 delivered: truthful M24/M26 composition preserves study taxonomy, findings, NOAEL/NOEL and missing-data/report limits; no study-bearing tool activation. Canonical accepted `f1b07add1`; compiler 0/baseline 0, warning delta -1; 378 nonclinical/authority tests and final production build pass. Evidence `docs/evidence/D4/2026-11-06-governed-nonclinical-inputs/`. Native project/lifecycle/currentness binding remains next under merged P104 Tier 3 authority. No app/editor/route/model addition. |
