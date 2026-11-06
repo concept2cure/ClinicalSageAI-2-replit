@@ -62,6 +62,8 @@ export interface BillingStatus {
   billingCycle: string;
   seats: number;
   currentPeriodEnd?: string;
+  /** Whether a billing record exists; absent on a server before 2026-11-06 (read as unknown, not as no). */
+  billingAccount?: boolean;
 }
 
 /* ---- DTC self-service tiers (DTC_PRICING) -- dollars ---- */
