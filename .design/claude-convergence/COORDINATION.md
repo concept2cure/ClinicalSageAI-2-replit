@@ -211,3 +211,36 @@ Codex project/editor continuation **holds no files**. Source accepted directly a
 Demo-readiness publication note (Codex,2026-11-06): two normal pushes passed every gate but lost remote-ref races. Under the existing guidance, a 15-minute publication window is requested for the verified npm launcher fix ahead of the founder demo around21:00UTC. The coordinator is recorded unavailable and no cross-session channel is available here; no other lane is claimed paused. Normal fetch/merge/retry continues.
 
 Codex npm-launcher continuation: **holds no files**. `7d771e124a4dba820fbbd26d8919c7c69cd1a9d4` accepted the two dev shell flags with all normal hooks; combined60Node cases, actual npm startup/Demoaccess, six CSR preparation steps with eleven retained tables and three manual editor checks pass. Source and rehearsal are in `docs/evidence/F1/2026-11-06-demo-readiness/LAUNCHER.md`; this resolves our earlier push-window request. **→ S4/CSR owners:** source-tier propagation remains incomplete in the held inline authoring draft and CSR-builder gateway calls; the existing SDK drafting service already enforces persisted T2 placement. See LAUNCHER-HANDOFF. No reclassification, provider/PQ bypass or live-generation claim was made.
+
+### P-104 continuation publication and next scopes, 2026-11-06
+
+Canonical publication `ea3b158e6a4d87519958f60e2c43520fdd476d99` is confirmed by remote ref. All pre-push gates pass,
+including zero compiler errors, no lint errors, 14 fewer warnings and reduced SQL value allowance. The preceding
+merged consolidation passes 1,195 tests/54 suites; after fixed-SQL repairs, evidence 41, Skills/digest 91, custody
+19 and canonical-predicate adversarial 38 checks pass. Production client/server and packaging builds pass.
+
+The next founder-directed S4 work extends the same files, with root owning Git and the full compiler:
+
+- Runtime worker: shared turn timeline, emitter, sub-agent lifecycle/result, existing host bridge and executor
+  integration; worker events follow durable coordination receipts and carry no raw brief.
+- Coordination worker: existing run-events/run-control, turn-plan, run_agent schema and turn-record receipt
+  references; append-only audit/blob authority, bounded same-project peer messages and explicit AnA dispositions.
+- UI worker: existing ConversationThread, useAgentActivity, AnaWorkPanel/Sections and Summary projections;
+  default-off Show team, measured counters and honest estimates. Shared app-v2.css remains with its holder.
+- Project worker: existing schedule service/sweep, task-planning strict dependency analysis and AnA project
+  briefing; canonical charter objective and independent source/release/filing gates, never task completion alone.
+- Private-rule worker: existing private user-profile API/store, Skills loaders/gates and verified MCP owner scope;
+  source text remains owner-private and generic profile writers cannot alter the protected rules subtree.
+- Shared-learning worker: existing contribution policy and QMS exact-artifact controls; legacy wisdom remains
+  quarantined. Account Skills receipt integration waits for the private-rule store holder to release that file.
+
+Shared files require an explicit holder handoff before editing. Runtime owns stream.ts/AnaToolExecutor.ts and
+shared/ana/turn-timeline.ts; Coordination supplies adapters rather than editing those files in parallel. Private
+rules owns ana-context-router.ts/account-skill-bundles.ts until it releases them; the project/shared workers use
+read-only imports and coordinate their later adapters. Root owns plan/ledger, integration, remaining client repair
+and private UI work. No source files, tables, mounts, tools, models or dependencies are added.
+
+Full-history deletion review confirms `agent-swarm.ts` was deliberately retired in `1d19566c8`, the old agent
+service in `287f34f65`, and the old global rule loader in `359221e5e`. Their live successors are the existing bounded
+run_agent and current Skills/runtime; none is restored. The former process-memory/global-list/body-approvedBy
+swarm cannot become the new authority. All external QA/model/KMS evidence gates remain explicit.
