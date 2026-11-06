@@ -25,6 +25,8 @@ export interface CatalogDocumentRow {
   documentCode: string | null;
   documentTitle: string | null;
   documentType: string | null;
+  /** Existing Vault classification, retained for local model routing. */
+  classification?: string | null;
   fileName: string | null;
   mimeType: string | null;
   contentHash: string;
@@ -117,7 +119,8 @@ export async function loadDocumentForOrg(
   const textCol = opts.includeText ? 'd.extracted_text' : 'NULL::text AS extracted_text';
   const res = await q.query(
     `SELECT d.id, d.program_id, d.document_code, d.document_title, d.document_type,
-            d.file_name, d.mime_type, d.content_hash, to_jsonb(d)->>'version' AS version, ${textCol},
+            d.file_name, d.mime_type, d.content_hash, to_jsonb(d)->>'version' AS version,
+            to_jsonb(d)->>'classification' AS classification, ${textCol},
             ${vaultDispositionChoiceSql('d')} AS disposition,
             ${vaultBinaryAvailableSql('d')} AS original_file_available,
             d.folder_id, d.evidence_kind, d.ctd_section, d.placement_status,
@@ -230,6 +233,7 @@ function projectDocumentRow(r: Record<string, unknown>, bound: { documentId: str
     id, programId,
     documentCode: nullableText(r.document_code), documentTitle: nullableText(r.document_title),
     documentType: nullableText(r.document_type), fileName: nullableText(r.file_name),
+    classification: r.classification == null ? null : requiredText(r.classification),
     mimeType: nullableText(r.mime_type), contentHash,
     version: r.version == null ? null : requiredText(r.version),
     disposition, originalFileAvailable: r.original_file_available, extractedText: nullableText(r.extracted_text),
@@ -256,7 +260,8 @@ export async function loadDocumentForAdmittedScope(
   const currentClause = opts.currentOnly ? ` AND NOT ${supersededSql('d')}` : '';
   const res = await opts.executor.query(
     `SELECT d.id, d.organization_id, d.program_id, d.document_code, d.document_title, d.document_type,
-            d.file_name, d.mime_type, d.content_hash, to_jsonb(d)->>'version' AS version, ${textCol},
+            d.file_name, d.mime_type, d.content_hash, to_jsonb(d)->>'version' AS version,
+            to_jsonb(d)->>'classification' AS classification, ${textCol},
             ${vaultDispositionChoiceSql('d')} AS disposition,
             ${vaultBinaryAvailableSql('d')} AS original_file_available,
             NOT ${supersededSql('d')} AS is_current,
@@ -290,6 +295,7 @@ function projectAdmittedDocumentRow(r: Record<string, any>): CatalogDocumentRow 
     documentCode: r.document_code,
     documentTitle: r.document_title,
     documentType: r.document_type,
+    classification: typeof r.classification === 'string' ? r.classification : null,
     fileName: r.file_name,
     mimeType: r.mime_type,
     contentHash: r.content_hash,

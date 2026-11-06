@@ -9,6 +9,8 @@ import { chooseSourceWindow, type SourceWindow } from './draft-source-window.js'
 import { draftSourceIdentityForText } from './draft-source-identity.js';
 import { looksLikeProgramUuid, parseIntegerProjectId } from '../../lib/project-id.js';
 import { throwIfDraftCancelled, trustedSignal } from './batch-draft-result.js';
+import { sensitivityTierForClassification } from '../ai-gateway/sensitive-placement-policy.js';
+import type { DataSensitivityTier } from '../ai-gateway/types.js';
 
 export interface DraftSource extends DraftSourceReferenceV2 {
   programId: string;
@@ -20,6 +22,7 @@ export interface DraftSource extends DraftSourceReferenceV2 {
   sourceAvailability: string;
   completeText: boolean;
   text: string;
+  sensitivityTier?: DataSensitivityTier;
   /** Why this window (S5d): chosen by the section's terms, the opening, or the whole document. */
   basis?: SourceWindow['basis'];
 }
@@ -98,6 +101,7 @@ function sourceState(doc: ActorCatalogDocumentRow | null, documentId: string, pr
       doc.disposition === 'remove_data' || doc.disposition === 'supersede' ||
       doc.isCurrent !== true || doc.sourceAccess.currentUseEligible !== true) throw new Error('SOURCE_UNAVAILABLE');
   return Object.freeze({ documentId, programId: doc.programId.toLowerCase(), contentHash: doc.contentHash.toLowerCase(),
+    sensitivityTier: sensitivityTierForClassification(doc.classification),
     extractedTextSha256: doc.extractedTextSha256.toLowerCase(), disposition: doc.disposition ?? null,
     originalFileAvailable: doc.originalFileAvailable, catalogStatus: doc.catalog.status,
     extractionMethod: doc.catalog.extractionMethod, extractionConfidence: doc.catalog.extractionConfidence });
@@ -106,6 +110,7 @@ function sourceState(doc: ActorCatalogDocumentRow | null, documentId: string, pr
 type SourceState = ReturnType<typeof sourceState>;
 function sameSource(before: SourceState, after: SourceState): boolean {
   return before.documentId === after.documentId && before.programId === after.programId &&
+    before.sensitivityTier === after.sensitivityTier &&
     before.contentHash === after.contentHash && before.extractedTextSha256 === after.extractedTextSha256 &&
     before.disposition === after.disposition && before.originalFileAvailable === after.originalFileAvailable &&
     before.catalogStatus === after.catalogStatus && before.extractionMethod === after.extractionMethod &&
@@ -187,6 +192,7 @@ export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext, q
     remaining -= text.length;
     sources.push({
       ...identity, documentId, programId, contentHash: before.contentHash,
+      sensitivityTier: before.sensitivityTier,
       title: doc.documentTitle || doc.fileName || '',
       extractionMethod: doc.catalog.extractionMethod, extractionConfidence: doc.catalog.extractionConfidence,
       ...sourceAvailabilityPresentation(doc),
@@ -248,4 +254,11 @@ export function draftSourceAudit(context?: DraftSourceContext) {
     projectSources: authority?.sources.map(s => ({ version: s.version, documentId: s.documentId, contentHash: s.contentHash,
       extractedTextSha256: s.extractedTextSha256, spanSha256: s.spanSha256, span: { ...s.span } })) ?? [],
   };
+}
+
+/** Only the private server issuer can supply classifications for selected
+ * sources. A copied context or a model's tier assertion grants no authority. */
+export function draftSourceSensitivityTiers(context?: DraftSourceContext): readonly DataSensitivityTier[] | undefined {
+  const authority = contextAuthority(context);
+  return authority ? Object.freeze(authority.sources.map(s => s.sensitivityTier ?? 3)) : undefined;
 }
