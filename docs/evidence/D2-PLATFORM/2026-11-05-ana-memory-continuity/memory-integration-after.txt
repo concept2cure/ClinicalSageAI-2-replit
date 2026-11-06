@@ -1,0 +1,719 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-06T02:59:49.976Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T02:59:49.977Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-06T02:59:49.977Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
+{
+  "timestamp": "2026-11-06T02:59:53.035Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
+{
+  "timestamp": "2026-11-06T02:59:53.040Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
+{
+  "timestamp": "2026-11-06T02:59:53.042Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
+{
+  "timestamp": "2026-11-06T02:59:53.047Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
+{
+  "timestamp": "2026-11-06T02:59:53.047Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (12ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
+{
+  "timestamp": "2026-11-06T02:59:53.058Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
+{
+  "timestamp": "2026-11-06T02:59:53.060Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
+{
+  "timestamp": "2026-11-06T02:59:53.061Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
+{
+  "timestamp": "2026-11-06T02:59:53.064Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
+{
+  "timestamp": "2026-11-06T02:59:53.064Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (6ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > never guesses: a thread row with NO project attribution stays unpromoted
+{
+  "timestamp": "2026-11-06T02:59:53.071Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > never guesses: a thread row with NO project attribution stays unpromoted
+{
+  "timestamp": "2026-11-06T02:59:53.072Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 0 stale memories to consolidate",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T02:59:53.072Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/0 consolidated, 0 quarantined, 0 rejected by gate, 0 skipped, 0 errors (1ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile
+{
+  "timestamp": "2026-11-06T02:59:53.081Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile
+{
+  "timestamp": "2026-11-06T02:59:53.083Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Skipping memory 1 — no project intelligence profile for project 12",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile
+{
+  "timestamp": "2026-11-06T02:59:53.083Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile
+{
+  "timestamp": "2026-11-06T02:59:53.083Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 0 quarantined, 0 rejected by gate, 1 skipped, 0 errors (2ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison
+{
+  "timestamp": "2026-11-06T02:59:53.092Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison
+{
+  "timestamp": "2026-11-06T02:59:53.093Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison
+{
+  "timestamp": "2026-11-06T02:59:53.094Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison
+{
+  "timestamp": "2026-11-06T02:59:53.096Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison
+{
+  "timestamp": "2026-11-06T02:59:53.097Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (4ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary
+{
+  "timestamp": "2026-11-06T02:59:53.106Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary
+{
+  "timestamp": "2026-11-06T02:59:53.108Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary
+{
+  "timestamp": "2026-11-06T02:59:53.109Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary
+{
+  "timestamp": "2026-11-06T02:59:53.112Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary
+{
+  "timestamp": "2026-11-06T02:59:53.113Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (7ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers
+{
+  "timestamp": "2026-11-06T02:59:53.121Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers
+{
+  "timestamp": "2026-11-06T02:59:53.122Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers
+{
+  "timestamp": "2026-11-06T02:59:53.123Z",
+  "level": "info",
+  "message": "[memory-consolidation] Memory 1 rejected by acceptance gate: Duplicate of existing memory #1",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers
+{
+  "timestamp": "2026-11-06T02:59:53.123Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 0 quarantined, 1 rejected by gate, 0 skipped, 0 errors (2ms)",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id 28ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression 15ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > never guesses: a thread row with NO project attribution stays unpromoted 8ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile 12ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison 14ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary 15ms
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
+{
+  "timestamp": "2026-11-06T02:59:53.131Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
+{
+  "timestamp": "2026-11-06T02:59:53.132Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
+{
+  "timestamp": "2026-11-06T02:59:53.166Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Contradicts existing memories: New memory says \"is insufficient\" but existing memory #1 says \"is sufficient\"",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
+{
+  "timestamp": "2026-11-06T02:59:53.169Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.38)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
+{
+  "timestamp": "2026-11-06T02:59:53.169Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (38ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
+{
+  "timestamp": "2026-11-06T02:59:53.177Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
+{
+  "timestamp": "2026-11-06T02:59:53.179Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
+{
+  "timestamp": "2026-11-06T02:59:53.180Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
+{
+  "timestamp": "2026-11-06T02:59:53.181Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
+{
+  "timestamp": "2026-11-06T02:59:53.182Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (5ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
+{
+  "timestamp": "2026-11-06T02:59:53.182Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
+{
+  "timestamp": "2026-11-06T02:59:53.183Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 0 stale memories to consolidate",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T02:59:53.183Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/0 consolidated, 0 quarantined, 0 rejected by gate, 0 skipped, 0 errors (1ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.191Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.193Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.193Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.35 between thresholds — needs human verification",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.195Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.35)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.195Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (4ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.198Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.199Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 0 stale memories to consolidate",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T02:59:53.199Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/0 consolidated, 0 quarantined, 0 rejected by gate, 0 skipped, 0 errors (1ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.208Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.209Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.211Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.55 between thresholds — needs human verification",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.213Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.55)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.213Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (5ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.215Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
+{
+  "timestamp": "2026-11-06T02:59:53.216Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 0 stale memories to consolidate",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T02:59:53.216Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/0 consolidated, 0 quarantined, 0 rejected by gate, 0 skipped, 0 errors (1ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them
+{
+  "timestamp": "2026-11-06T02:59:53.224Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them
+{
+  "timestamp": "2026-11-06T02:59:53.226Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them
+{
+  "timestamp": "2026-11-06T02:59:53.226Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.55 between thresholds — needs human verification",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them
+{
+  "timestamp": "2026-11-06T02:59:53.229Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.55)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them
+{
+  "timestamp": "2026-11-06T02:59:53.229Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (5ms)",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers 11ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it 46ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id) 13ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row 15ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row 17ms
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.237Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.239Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.240Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.242Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.242Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (5ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.242Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.244Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.244Z",
+  "level": "warn",
+  "message": "[memory-consolidation] Memory 2 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.246Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidated memory 2 into project 11 (status pending_review, confidence 0.40)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.246Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (4ms)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.248Z",
+  "level": "info",
+  "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.249Z",
+  "level": "info",
+  "message": "[memory-consolidation] Found 1 stale memories to consolidate",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.250Z",
+  "level": "info",
+  "message": "[memory-consolidation] Memory 3 rejected by acceptance gate: Duplicate of existing memory #1",
+  "context": {}
+}
+
+stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
+{
+  "timestamp": "2026-11-06T02:59:53.250Z",
+  "level": "info",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 0 quarantined, 1 rejected by gate, 0 skipped, 0 errors (2ms)",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them 15ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate 19ms
+(node:42) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts exact-project search before project-bound recency resolves 7ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice ahead of content when the prompt budget trims 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > does not read tenant memory without an organization 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > skips only project memory when no project is selected 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall 5ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned 3ms
+(node:50) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > reads older A and B independently, never the newer unattributed or foreign row 13ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a fresh switch to B with only A and NULL summaries has no prior summary 7ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > preserves the old organization/thread caller when no project selector is supplied 5ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > rejects an invalid explicit selector without issuing an unscoped recall 6ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > retains the actual project id in a structured row read 8ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a selected policy-column failure cannot retry the unscoped query 9ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > binds the exact project alongside vector/thread/organization and returns its stored identity 5ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > a B writeback neither inherits A nor unattributed prior summaries and retains B on its new row 18ms
+(node:62) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'semantic' when the flag is on and similarity recall serves the summary 3ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency_fallback' when the flag is ON but semantic clears nothing — the state a pilot must see 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency' when the flag is off and the default path answers 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'none' when nothing is recalled at all 0ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > recordAnaTurn counts modes and the rendered family carries them 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > the stream route hands the mode from diagnostics to recordAnaTurn (source contract) 2ms
+(node:70) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > does not query organization operational atoms while retaining exact project recall 5ms
+ ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > keeps the same project selector on semantic working memory and recency fallback 1ms
+ ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > retains organization recall when the caller names no project 1ms
+
+ Test Files  5 passed (5)
+      Tests  48 passed (48)
+   Start at  18:59:48
+   Duration  8.40s (transform 895ms, setup 125ms, import 1.69s, tests 5.75s, environment 0ms)
+

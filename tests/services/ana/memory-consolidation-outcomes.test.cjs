@@ -392,3 +392,103 @@ for (const disposition of ['unknown', '', undefined]) {
     assert.equal(h.state.embedCalls.length, 0); assert.equal(h.state.stored.length, 0);
   });
 }
+
+const completeMemory = {
+  objective: 'Prepare the CSR from the frozen study evidence',
+  lockedFacts: ['[KNOWN] Study source version three'],
+  decisions: ['Retain the approved analysis population'],
+  openQuestions: ['Which safety output needs reconciliation?'],
+  nextActions: ['Reconcile table 14.3.1', 'Ask the reviewer to check the narrative'],
+  createdArtifacts: ['CSR draft document 91', 'Frozen study snapshot 7'],
+  exclusions: ['Do not include the exploratory subgroup claim', 'Defer the extension study'],
+};
+const completeContent = [
+  'Objective: Prepare the CSR from the frozen study evidence',
+  'Key facts: [KNOWN] Study source version three',
+  'Decisions: Retain the approved analysis population',
+  'Open questions: Which safety output needs reconciliation?',
+  'Next actions: Reconcile table 14.3.1; Ask the reviewer to check the narrative',
+  'Artifacts: CSR draft document 91; Frozen study snapshot 7',
+  'Deferred/excluded: Do not include the exploratory subgroup claim; Defer the extension study',
+].join('\n');
+
+for (const [label, structured] of [
+  ['JSON object', completeMemory],
+  ['serialized JSON', JSON.stringify(completeMemory)],
+]) {
+  test(`continuity: ${label} carries all seven fields through the real gate, embedding and storage`, async () => {
+    const row = memory(1, { structured_data: structured });
+    const original = JSON.stringify(row.structured_data);
+    const h = harness([row], { realGate: true });
+    assert.deepEqual(counters(await h.runConsolidation()), expected({ threadsProcessed: 1, quarantined: 1 }));
+    assert.equal(h.state.gateCalls[0].content, completeContent);
+    assert.equal(h.state.embedCalls[0].content, completeContent);
+    assert.equal(h.state.stored[0].values.content, completeContent);
+    assert.equal(h.state.stored[0].values.status, 'pending_review');
+    assert.equal(JSON.stringify(row.structured_data), original);
+    const withoutExclusions = harness([memory(1, { structured_data: { ...completeMemory, exclusions: [] } })], { realGate: true });
+    await withoutExclusions.runConsolidation();
+    assert.equal(h.state.gateVerdicts[0].confidence_score, withoutExclusions.state.gateVerdicts[0].confidence_score,
+      'recording an exclusion does not raise confidence or validate evidence');
+  });
+}
+
+test('continuity: exclusions-only structured data preserves the raw summary fallback', async () => {
+  const summary = 'Reconcile the frozen study tables before finalizing the report.';
+  const h = harness([memory(1, { summary, structured_data: {
+    exclusions: ['Do not draft the unsupported subgroup conclusion'],
+  } })], { realGate: true });
+  await h.runConsolidation();
+  const content = `${summary}\nDeferred/excluded: Do not draft the unsupported subgroup conclusion`;
+  assert.equal(h.state.stored[0].values.content, content);
+  assert.equal(h.state.embedCalls[0].content, content);
+  assert.equal(h.state.stored[0].values.status, 'pending_review');
+});
+
+test('continuity: a substantive exclusion is not skipped when the raw summary is empty', async () => {
+  const h = harness([memory(1, { summary: '', structured_data: {
+    exclusions: ['Defer the extension study until source evidence is available'],
+  } })], { realGate: true });
+  assert.deepEqual(counters(await h.runConsolidation()), expected({ threadsProcessed: 1, quarantined: 1 }));
+  assert.equal(h.state.stored[0].values.content,
+    'Deferred/excluded: Defer the extension study until source evidence is available');
+});
+
+test('continuity: different exclusions do not become duplicate summaries at admission', async () => {
+  const previous = harness([memory(1, { structured_data: completeMemory })], { realGate: true });
+  await previous.runConsolidation();
+  const next = harness([memory(2, { structured_data: {
+    ...completeMemory, exclusions: ['Defer the pharmacokinetic appendix until the data arrive'],
+  } })], { realGate: true, existing: [{
+    id: 8, category: 'conversation_summary', content: previous.state.stored[0].values.content,
+  }] });
+  assert.deepEqual(counters(await next.runConsolidation()), expected({ threadsProcessed: 1, quarantined: 1 }));
+  assert.ok(next.state.stored[0].values.content.includes('Defer the pharmacokinetic appendix'));
+});
+
+test('continuity: an exact duplicate including exclusions is still rejected', async () => {
+  const h = harness([memory(1, { structured_data: completeMemory })], { realGate: true,
+    existing: [{ id: 8, category: 'conversation_summary', content: completeContent }] });
+  assert.deepEqual(counters(await h.runConsolidation()), expected({ threadsProcessed: 1, rejectedByGate: 1 }));
+  assert.equal(h.state.embedCalls.length, 0);
+  assert.equal(h.state.stored.length, 0);
+});
+
+test('continuity: a KNOWN label inside an exclusion cannot validate an inferred-only summary', async () => {
+  const h = harness([memory(1, {
+    summary: '[INFERRED] A preliminary conclusion with no checked source.',
+    structured_data: { exclusions: ['Do not describe the exploratory claim as [KNOWN]'] },
+  })], { realGate: true });
+  assert.deepEqual(counters(await h.runConsolidation()), expected({ threadsProcessed: 1, rejectedByGate: 1 }));
+  assert.equal(h.state.stored.length, 0);
+  assert.equal(h.state.embedCalls.length, 0);
+});
+
+for (const exclusions of [undefined, [], null]) {
+  test(`continuity: absent or empty exclusions (${JSON.stringify(exclusions)}) preserve the legacy content`, async () => {
+    const h = harness([memory(1, { structured_data: { exclusions } })], { realGate: true });
+    await h.runConsolidation();
+    assert.equal(h.state.stored[0].values.content, memory().summary);
+    assert.equal(h.state.stored[0].values.status, 'pending_review');
+  });
+}

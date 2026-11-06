@@ -1,0 +1,186 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > scoreAtom (behaviour-preserving with the previous inlined atomSortScore) > pins working memory above any semantic atom 4ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > scoreAtom (behaviour-preserving with the previous inlined atomSortScore) > combines similarity, confidence, and verified boost with the original weights 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > scoreAtom (behaviour-preserving with the previous inlined atomSortScore) > scores an atom with no similarity, verification or confidence as zero 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > per-layer ranking weights (unified formula) > ignores similarity/confidence for working memory under the default weights 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > per-layer ranking weights (unified formula) > falls back to semantic weights for an unrecognised layer 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > per-layer ranking weights (unified formula) > lets a custom policy unpin working memory so it ranks by similarity 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > always keeps working memory 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > keeps recent semantic atoms and drops stale ones 1ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > retains stale atoms when verified or high-importance 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > keeps atoms with no/invalid createdAt (cannot prove staleness) 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > collapses matching layer/category/title/full content to the higher-scoring atom 1ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > keeps atoms that differ by layer 0ms
+ × server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > retains different conclusions after a shared long prefix in working_memory 7ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > retains different conclusions after a shared long prefix in client_memory 1ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > retains different conclusions after a shared long prefix in project_memory 1ms
+   → expected 1 to be +0 // Object.is equality
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > still collapses complete duplicates with existing case and surrounding-whitespace equivalence 1ms
+ × server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > keeps identical text assigned to different categories 11ms
+   → expected { deduped: [ { id: 1, …(6) } ], …(1) } to deeply equal { …(2) }
+ × server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > does not confuse delimiters inside titles with content boundaries 2ms
+   → expected { deduped: [ { id: 1, …(6) } ], …(1) } to deeply equal { …(2) }
+ × server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > a legacy prefix-length setting cannot collapse different complete records 4ms
+   → expected { deduped: [ { id: 1, …(6) } ], …(1) } to deeply equal { …(2) }
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > orchestrateAtoms (full pass) > forgets, dedupes, and ranks with working memory on top 1ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > SEMANTIC_WORKING_MEMORY_POLICY > changes only the working_memory weights (semantic layers untouched) 1ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > SEMANTIC_WORKING_MEMORY_POLICY > ranks working memory by similarity instead of a flat pin 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > SEMANTIC_WORKING_MEMORY_POLICY > keeps a small structural edge: ties favour working memory 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > exposes the reviewed default constants that preserve prior behaviour 0ms
+(node:36) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > does not score a missing confidence as a confidence of zero 2ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > ranks an unscored atom on the same scale as a scored one 0ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > puts a more relevant unscored atom above a less relevant one carrying a stamped 0.8 1ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > orders unscored atoms by similarity, then verification 0ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > says how many ranked atoms carry no recorded confidence 0ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > counts working memory as unscored only where its layer weighs confidence 1ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > control: a recorded confidence still counts with its weight 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > retains different conclusions after a shared long prefix in working_memory
+ FAIL  server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > retains different conclusions after a shared long prefix in client_memory
+ FAIL  server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > retains different conclusions after a shared long prefix in project_memory
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/__tests__/memory-orchestrator.test.ts:168:32
+    166|         const second = atom({ id: 2, layer, title: 'Study conclusion',…
+    167|         const result = dedupeAtoms([first, second]);
+    168|         expect(result.dropped).toBe(0);
+       |                                ^
+    169|         expect(result.deduped.map(entry => entry.content)).toEqual([fi…
+    170|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > keeps identical text assigned to different categories
+AssertionError: expected { deduped: [ { id: 1, …(6) } ], …(1) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+@@ -7,17 +7,8 @@
+        "layer": "client_memory",
+        "metadata": undefined,
+        "similarity": undefined,
+        "title": "Study scope",
+      },
+-     {
+-       "category": "open_question",
+-       "content": "Use the prespecified population.",
+-       "id": 2,
+-       "layer": "client_memory",
+-       "metadata": undefined,
+-       "similarity": undefined,
+-       "title": "Study scope",
+-     },
+    ],
+-   "dropped": 0,
++   "dropped": 1,
+  }
+
+ ❯ server/services/__tests__/memory-orchestrator.test.ts:183:44
+    181|       const first = atom({ id: 1, category: 'decision', title: 'Study …
+    182|       const second = atom({ id: 2, category: 'open_question', title: f…
+    183|       expect(dedupeAtoms([first, second])).toEqual({ deduped: [first, …
+       |                                            ^
+    184|     });
+    185|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > does not confuse delimiters inside titles with content boundaries
+AssertionError: expected { deduped: [ { id: 1, …(6) } ], …(1) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+@@ -7,17 +7,8 @@
+        "layer": "client_memory",
+        "metadata": undefined,
+        "similarity": undefined,
+        "title": "Protocol:scope",
+      },
+-     {
+-       "category": undefined,
+-       "content": "scope:continue",
+-       "id": 2,
+-       "layer": "client_memory",
+-       "metadata": undefined,
+-       "similarity": undefined,
+-       "title": "Protocol",
+-     },
+    ],
+-   "dropped": 0,
++   "dropped": 1,
+  }
+
+ ❯ server/services/__tests__/memory-orchestrator.test.ts:189:44
+    187|       const first = atom({ id: 1, title: 'Protocol:scope', content: 'c…
+    188|       const second = atom({ id: 2, title: 'Protocol', content: 'scope:…
+    189|       expect(dedupeAtoms([first, second])).toEqual({ deduped: [first, …
+       |                                            ^
+    190|     });
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > a legacy prefix-length setting cannot collapse different complete records
+AssertionError: expected { deduped: [ { id: 1, …(6) } ], …(1) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+@@ -7,17 +7,8 @@
+        "layer": "client_memory",
+        "metadata": undefined,
+        "similarity": undefined,
+        "title": "Analysis",
+      },
+-     {
+-       "category": undefined,
+-       "content": "Include population B.",
+-       "id": 2,
+-       "layer": "client_memory",
+-       "metadata": undefined,
+-       "similarity": undefined,
+-       "title": "Analysis",
+-     },
+    ],
+-   "dropped": 0,
++   "dropped": 1,
+  }
+
+ ❯ server/services/__tests__/memory-orchestrator.test.ts:196:10
+    194|       const second = atom({ id: 2, title: 'Analysis', content: 'Includ…
+    195|       expect(dedupeAtoms([first, second], { ...DEFAULT_MEMORY_POLICY, …
+    196|         .toEqual({ deduped: [first, second], dropped: 0 });
+       |          ^
+    197|     });
+    198|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  6 failed | 25 passed (31)
+   Start at  19:05:39
+   Duration  769ms (transform 137ms, setup 109ms, import 83ms, tests 48ms, environment 0ms)
+
