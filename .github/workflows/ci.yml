@@ -9,6 +9,8 @@ on:
     branches: ['**']
   schedule:
     - cron: '0 6 * * *'
+  # On demand, e.g. the Codespace job after a change to the image or its scripts.
+  workflow_dispatch:
 
 permissions:
   contents: read
