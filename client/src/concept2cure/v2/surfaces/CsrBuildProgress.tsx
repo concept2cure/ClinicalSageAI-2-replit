@@ -25,7 +25,7 @@
  *   subject's qualifying events, missing fields, how the prose was written,
  *   any refusal, and whether §14.3.3 still awaits review.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { CsrSourceReceipt } from '@shared/csr-source-input';
 import { apiCall, apiErrorText } from '../apiCall';
 import { I } from '../icons';
@@ -315,12 +315,24 @@ function NarrativeRunStatus({ run }: { run: CsrNarrativeRun | null | undefined }
 function useNarrativeRun(jobId: number, pollMs: number, onSettled: () => void) {
   const [run, setRun] = useState<CsrNarrativeRun | null | undefined>(undefined);
   const [readError, setReadError] = useState<string | null>(null);
+  const reads = useRef<{ jobId: number; sequence: number; applied: number; live: boolean } | null>(null);
   const load = useCallback(async () => {
+    const owner = reads.current;
+    if (!owner?.live || owner.jobId !== jobId) return;
+    const sequence = ++owner.sequence;
     const result = await apiCall<{ run?: CsrNarrativeRun | null }>('GET', `${JOBS}/${jobId}/narratives/status`);
+    // Apply arrived progress even while later polls wait; never undo an already applied newer reply.
+    if (!owner.live || reads.current !== owner || sequence <= owner.applied) return;
+    owner.applied = sequence;
     if (result.ok && result.body && 'run' in result.body) { setRun(result.body.run ?? null); setReadError(null); return; }
     setReadError(apiErrorText(result, 'The narrative build status could not be read.'));
   }, [jobId]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const owner = { jobId, sequence: 0, applied: 0, live: true };
+    reads.current = owner;
+    void load();
+    return () => { owner.live = false; };
+  }, [jobId, load]);
   const running = active(run);
   const [wasRunning, setWasRunning] = useState(false);
   useEffect(() => {
