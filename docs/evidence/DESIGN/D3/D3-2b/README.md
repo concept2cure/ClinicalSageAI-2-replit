@@ -34,8 +34,29 @@ instead of once per reader. No test file was added.
   While the read is out nothing is said, and a failed read is said once ("Open work could not be read."), never as
   "Nothing open".
 
-Next for D3-2b's other half: the records read lifted, with the Activity disclosure on the Records card, and the
-commitments read (keyed by the verified integer project id) on the Filing card.
+### Second half (same step, its own commit)
+
+- **Commitments.** The page reads the project's commitments to the agency once, by the verified integer project id
+  the route takes (`GET /api/concept2cure/projects/:projectId/commitments`, `isCommitmentsPayload`). It reads nothing
+  until the team read has verified the id. The Filing card gains "Commitments": "None open", or "2 open · 1 overdue ·
+  next due Mar 1, 2020". Overdue is the server's effective status. A failed read says "Could not be read". The row
+  opens Respond. Respond's own Commitments section is D3-4's.
+- **Activity.** The project's audit feed, already read once by the page, is the Records card's last disclosure,
+  "Activity", on every step. It was a section of the Author step. The rows, actors, recorded reasons and times are
+  unchanged, and it shows even when the records read fails.
+- **The records read itself is not lifted yet.** Today its one reader is the Records card. Its second reader,
+  Evidence's Protocol, is D3-4's, which lifts it with that reader, so this step adds no plumbing for a reader that
+  does not exist.
+
+Red first: `red/d3-2b-second-half-against-first.txt` (3 failing against the first half). Added cases: the
+commitments row (counts, overdue, next due, opens Respond); a failed commitments read; Activity as the Records card's
+last disclosure in the aside, with nothing of it left in the main column (`projectActivityReason.test.tsx`).
+
+In the running app (`walk.json`): "Commitments: None open" from the real route, and Activity lists the project's
+three recorded acts inside the Records card, at 1440 light and dark and 390 light.
+
+Found, not D3's: `projectCreationDoors.contract` (Vault.tsx's Projects index door) and `projectDestination` fail on
+trunk without this change. They follow the Vault session's `adb1c00cba` and `5144702d21`.
 
 ## Tests (red first: `red/d3-2b-tests-against-d3-2a.txt`, 4 failing against the D3-2a source)
 

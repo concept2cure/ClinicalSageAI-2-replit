@@ -9,3 +9,14 @@ After that run the two Filing rows gained accessible names; projectHomeTeamSetup
 Typecheck: [ci:typecheck-no-regression] OK — error count 0 matches baseline.
 Lint: [ci:eslint-warning-ratchet] no file changed its warning count since e533082d63 (the D3-2a push).
 Gates: ci:undefined-css-classes, ci:surface-text-ramp, ci:check-phantom-tokens, ci:one-product, ci:check-shell-css-collisions, ci:fixture-fallback, ci:token-contrast: all pass.
+
+== Second half (records' Activity, commitments) ==
+$ npx vitest run <the same 83 project-page suites>
+      Tests  3 failed | 902 passed (905)
+ FAIL  client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/Vault.tsx retains its Projects index door
+ FAIL  client/src/concept2cure/v2/__tests__/projectDestination.test.ts > one destination for a project-scoped visit > uses the shared target scope for normal and aliased destinations
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines
+ Test Files  3 failed | 80 passed (83)
+
+projectHomeStageCss fails on trunk too. projectCreationDoors.contract (Vault.tsx's Projects index door) and projectDestination fail on trunk without this change (git stash of every changed file): they follow the Vault session's adb1c00cba / 5144702d21, outside D3.
+After that run, a test query's invalid 'exact' option was replaced (typecheck); projectHomeTeamSetup rerun: 14 passed. Typecheck 0 errors. Lint ratchet: no file changed its warning count since 57b13c599d. Gates: all pass.

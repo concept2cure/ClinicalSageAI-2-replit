@@ -1060,6 +1060,13 @@ The founder asked this session to take over and finish the project page's work. 
   - 4 cases were red against D3-2a and are green here; 82 of 83 project suites pass, the remaining failure as on
     trunk. In the running app eight step changes made no read of either, counted at the network.
 
+- **D3-2b, second half**, `e84c4f1ef`, `docs/evidence/DESIGN/D3/D3-2b/`. The Filing card says the project's
+  commitments to the agency: open, overdue and next due. They are read once, by the verified integer project id.
+  The audit feed is the Records card's last disclosure, "Activity", on every step. The records read is lifted with
+  its second reader in D3-4. Walked: "Commitments: None open" from the real route, and three acts under Activity.
+  - Found, not D3's: `projectCreationDoors.contract` (Vault.tsx's Projects index door) and `projectDestination` fail
+    on trunk. They follow the Vault session's `adb1c00cba` and `5144702d21`.
+
 **Not done in D3-1, for the lead**
 
 - The objective as a composer suggestion (D3.md §4.4 item 5.1). S1's objective already offers "Ask AnA to propose
@@ -1067,9 +1074,9 @@ The founder asked this session to take over and finish the project page's work. 
 
 **Next**
 
-1. D3-2b's other half: the records read lifted (Records gains the Activity disclosure) and the commitments read on
-   the Filing card, keyed by the verified integer project id.
-2. D3-4: the step bodies (§4.7). This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
+1. D3-4: the step bodies (§4.7). Plan holds Tasks and approvals (sorted by due date), and a Tasks handoff opens
+   Plan. Evidence gains Protocol, lifting the records read. Author shows Module completion without the ring. Submit
+   and Respond use the calm section pattern, and Respond lists Commitments from the page's one read. This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
 
 #### F1 — saved conversation handoffs (Codex continuation, 2026-11-06)
