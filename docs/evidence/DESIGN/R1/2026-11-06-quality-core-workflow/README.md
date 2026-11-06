@@ -90,3 +90,8 @@ and native context admission/withdrawal **2 / 12** pass. Relevant production fil
 IDs and all three native record facts are unchanged; report creation/reads/history/render/PDF succeed; readable
 output and full sealed native data/provenance are retained. The earlier full compiler receipt identifies its
 pre-remediation source state; normal publication checks revalidate the final source on push.
+
+The next normal push reached the warning ratchet and found one oversized test-suite callback. Test-only commit
+`3b13b26519` splits that existing suite without changing fixtures/assertions or production behavior; all 13 tests
+pass and its lint count is zero. The warning baseline and hook were unchanged. Normal publication continues
+from a quiet source tree; both refused attempts are retained as evidence rather than described as accepted pushes.
