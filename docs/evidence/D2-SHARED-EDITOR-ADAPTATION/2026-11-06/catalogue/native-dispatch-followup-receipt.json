@@ -1,0 +1,80 @@
+{
+  "recordedAt": "2026-11-06T21:44:58.409773+00:00",
+  "package": "F1",
+  "scope": "Independent bounded rerun of frozen native Quality dispatch repair owned by risk_project_ui",
+  "sourceOwner": "/root/risk_project_ui",
+  "sourceFiles": [
+    "server/services/clinical-regulatory-evidence/retained-source-context.ts",
+    "server/routes/ana-ri/stream.ts"
+  ],
+  "before": {
+    "capturedAt": "2026-11-06T21:43:47.496837+00:00",
+    "head": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+    "sourceInputs": {
+      "server/services/clinical-regulatory-evidence/retained-source-context.ts": "331beee77add448d370ca847ac1f5f806b6cdef6765743f73702b42a5d53d061",
+      "server/routes/ana-ri/stream.ts": "c110b04b96dbbc723d608dd47d9dac1989e18f545abf73b20250609955c4547e",
+      "server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts": "492b3c19bca7ba52aef011b2f6fdd6023c983a7b4f8276df04d7149010018cd1",
+      "server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts": "851b20e4386b9a64c5065258920a8e4ef4fb78b1b3969aa1bd44738a781f5ea2",
+      "server/services/clinical-regulatory-evidence/record-source.ts": "a7875e6472dfbabeef6c4b038559490d9e860c05281134bb3735595ed46f54f4",
+      "server/services/clinical-regulatory-evidence/source-read-access.ts": "29fd116fc5afc84f757dd4362a53d58192274e1b76313fedbcb39ef9e8dbe022",
+      "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": "12424d4ce2eb025a0fe5883d72e9f7830c3c4ba8d25e06dd99d0dc46d102409b",
+      "server/services/ai-gateway/gateway.ts": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+      "server/services/ai-gateway/providers/clients.ts": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+      "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts": "d16e3d1ca9c8d7b4b503d5133948c49a403f32283cfa6d0f79e83b8cc751d688",
+      "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts": "487fffb0df4b2444bb12acc94fa8c4e524c0da7c9c77ad8602ba775c2bc38e50",
+      "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts": "066e80a0bed82775d5dfc88d3029d1691759f54de53f7a3cea743dd23f8e1f56"
+    }
+  },
+  "after": {
+    "capturedAt": "2026-11-06T21:44:58.409773+00:00",
+    "head": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+    "sourceInputs": {
+      "server/services/clinical-regulatory-evidence/retained-source-context.ts": "331beee77add448d370ca847ac1f5f806b6cdef6765743f73702b42a5d53d061",
+      "server/routes/ana-ri/stream.ts": "c110b04b96dbbc723d608dd47d9dac1989e18f545abf73b20250609955c4547e",
+      "server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts": "492b3c19bca7ba52aef011b2f6fdd6023c983a7b4f8276df04d7149010018cd1",
+      "server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts": "851b20e4386b9a64c5065258920a8e4ef4fb78b1b3969aa1bd44738a781f5ea2",
+      "server/services/clinical-regulatory-evidence/record-source.ts": "a7875e6472dfbabeef6c4b038559490d9e860c05281134bb3735595ed46f54f4",
+      "server/services/clinical-regulatory-evidence/source-read-access.ts": "29fd116fc5afc84f757dd4362a53d58192274e1b76313fedbcb39ef9e8dbe022",
+      "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": "12424d4ce2eb025a0fe5883d72e9f7830c3c4ba8d25e06dd99d0dc46d102409b",
+      "server/services/ai-gateway/gateway.ts": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+      "server/services/ai-gateway/providers/clients.ts": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+      "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts": "d16e3d1ca9c8d7b4b503d5133948c49a403f32283cfa6d0f79e83b8cc751d688",
+      "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts": "487fffb0df4b2444bb12acc94fa8c4e524c0da7c9c77ad8602ba775c2bc38e50",
+      "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts": "066e80a0bed82775d5dfc88d3029d1691759f54de53f7a3cea743dd23f8e1f56"
+    }
+  },
+  "changedInputs": [],
+  "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --no-file-parallelism server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts",
+  "exitCode": 0,
+  "result": {
+    "suitesPassed": 2,
+    "testsPassed": 22,
+    "durationSeconds": 21.44,
+    "perFileObservedPasses": {
+      "server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts": 4,
+      "server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts": 18
+    }
+  },
+  "finalWireFiveInputsUnchanged": true,
+  "log": {
+    "originalScratchPath": "/workspace/scratch/shared-editor-native-dispatch-2026-11-06-green.txt",
+    "bytes": 7374,
+    "sha256": "a5d2cd290f20a1edfaf65b8f69e138c53eb6d0433829d40405d572eb93d8e9a9",
+    "orderedParts": [
+      "logs/shared-editor-native-dispatch-2026-11-06-green.txt"
+    ],
+    "reassemblyCommand": "cat logs/shared-editor-native-dispatch-2026-11-06-green.txt > shared-editor-native-dispatch-2026-11-06-green.txt"
+  },
+  "readOnlyReview": [
+    "Guard captures exact admitted native identity/text and scalar actor/org/program independently of mutable request selections.",
+    "Every invocation rereads canonical native access/current facts/disposition and refuses changed, missing or failed verification instead of supplying empty success.",
+    "Both existing AnA stream gateway route calls receive the same captured beforeDispatch guard; earlier existing final-wire gateway checks remain byte-identical.",
+    "Legacy retained-only selections keep existing behavior. Source capture/selection remains separate from approval, scientific support or model qualification."
+  ],
+  "limitations": [
+    "Owner performed production repair and original RED/GREEN; this agent only reviewed and reran the frozen two affected suites.",
+    "Synthetic stream transport/selected-source fixtures, no external model or provider call.",
+    "22 tests overlap earlier native-context cases and are not additive to prior composition. No fresh full13-suite green claim.",
+    "Root owns final compiler/build/publication."
+  ]
+}

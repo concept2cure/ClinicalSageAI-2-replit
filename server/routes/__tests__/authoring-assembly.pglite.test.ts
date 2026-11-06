@@ -246,7 +246,9 @@ describe('catalogue sources through the existing assembly HTTP and SQL', () => {
     await db.pool.query('UPDATE cre_evidence_sources SET client_program_id=$2 WHERE id=$1', [source.sourceId, PROGRAM_B]);
     seam.sql.length = 0;
     const response = await preview({ sources: [source] });
-    expect(response.status, JSON.stringify(response.body)).toBe(409);
+    expect(response.status, JSON.stringify(response.body)).toBe(403);
+    expect(response.body).toEqual({ success: false, error: 'ASSEMBLY_SOURCES_UNAVAILABLE',
+      message: 'Current access to every selected project source could not be verified. No source content was supplied.' });
     expect(response.body.data).toBeUndefined();
     expect(seam.sql.some(sql => /^SELECT extracted_text FROM cre_evidence_sources/.test(sql))).toBe(false);
     expect(seam.sql.some(sql => /SELECT s\.\*,/.test(sql))).toBe(false);

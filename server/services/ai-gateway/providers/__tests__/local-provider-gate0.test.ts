@@ -245,6 +245,29 @@ describe('customer-owned SDK clients at the deterministic credential boundary', 
   });
 });
 
+describe('final source and qualification checks before customer SDK use', () => {
+  it('rechecks qualification after an awaited final source check without sanitizing its policy refusal', async () => {
+    let sourceEntered!: () => void, finishSource!: () => void;
+    const entered = new Promise<void>(resolve => { sourceEntered = resolve; });
+    const held = new Promise<void>(resolve => { finishSource = resolve; });
+    let qualified = true;
+    const policyError = Object.assign(new Error('Qualification revoked during source reads'), { name: 'GatewayPolicyError' });
+    const beforeCreate = vi.fn(() => { if (!qualified) throw policyError; });
+    const sourceCheck = async () => { sourceEntered(); await held; };
+    const client = await createTenantProviderClient('openai', 7, 3, 'model_inference', { beforeCreate, sourceCheck });
+    const outcome = client.chat.completions.create({ model: 'fixture' }).catch((error: unknown) => error);
+    await entered;
+    expect(factory.current).toHaveBeenCalledTimes(1);
+    expect(beforeCreate).not.toHaveBeenCalled();
+    expect(factory.sdkCreate).not.toHaveBeenCalled();
+    qualified = false;
+    finishSource();
+    expect(await outcome).toBe(policyError);
+    expect(beforeCreate).toHaveBeenCalledTimes(1);
+    expect(factory.sdkCreate).not.toHaveBeenCalled();
+  });
+});
+
 describe('customer-owned SDK failures and embedding authority', () => {
   it.each([429, 503])('strips arbitrary SDK errors, headers and causes while retaining HTTP %s', async status => {
     const client = await createTenantProviderClient('openai', 7, 3);

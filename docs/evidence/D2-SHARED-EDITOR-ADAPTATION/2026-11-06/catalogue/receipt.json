@@ -1,0 +1,212 @@
+{
+  "date": "2026-11-06",
+  "package": "F1",
+  "completes": [
+    "server/services/authoring/",
+    "client/src/concept2cure/v2/useFilingOutline.ts"
+  ],
+  "canonicalStartingCommit": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "observedHead": "e533082d6386416fce4857a64f5168631c3791e9",
+  "historicalEnvironmentReceiptsAreNotCurrentAcceptance": true,
+  "checks": {
+    "agency": {
+      "red": {
+        "failed": 6,
+        "passed": 47
+      },
+      "green": {
+        "files": 7,
+        "passed": 419
+      }
+    },
+    "outlineFinal": {
+      "marketOmissionRed": {
+        "failed": 1,
+        "passed": 29
+      },
+      "green": {
+        "files": 3,
+        "passed": 52
+      }
+    },
+    "artifactRelatedRegression": {
+      "files": 4,
+      "passed": 91
+    },
+    "sqlInterpolationGate": {
+      "passed": true,
+      "baselineInterpolations": 1055,
+      "baselineFiles": 223,
+      "baselineIncreased": false
+    },
+    "sqlInterpolationSelftest": {
+      "passed": 35,
+      "existingKnownGapsNotCountedAsPasses": 2
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 3,
+      "warningBaseline": 3,
+      "warningGrowth": false,
+      "finalHookErrors": 0,
+      "finalHookWarnings": 0
+    }
+  },
+  "artifactActualSqlReceipt": "../server/artifact-source-receipt.json",
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/useFilingOutline.ts",
+      "bytes": 18816,
+      "sha256": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4"
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-template.ts",
+      "bytes": 20897,
+      "sha256": "0beb24ff53d7bcf8de01882c7012f256f543465820c92517097187b929d4e97d"
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-region-projection.ts",
+      "bytes": 2141,
+      "sha256": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6"
+    },
+    {
+      "path": "shared/authoring/source-import.ts",
+      "bytes": 7198,
+      "sha256": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e"
+    },
+    {
+      "path": "server/services/authoring/artifact-workflow-source.ts",
+      "bytes": 15210,
+      "sha256": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2"
+    },
+    {
+      "path": "server/services/authoring/authoring-source-import.ts",
+      "bytes": 34919,
+      "sha256": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb"
+    },
+    {
+      "path": "server/services/authoring/workflow-source-import.ts",
+      "bytes": 33551,
+      "sha256": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31"
+    },
+    {
+      "path": "server/services/authoring/import-source-references.ts",
+      "bytes": 7846,
+      "sha256": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b"
+    },
+    {
+      "path": "server/services/authoring/workflow-import-governance.ts",
+      "bytes": 23025,
+      "sha256": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4"
+    },
+    {
+      "path": "server/routes/artifacts-center-routes.ts",
+      "bytes": 23990,
+      "sha256": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b"
+    },
+    {
+      "path": "scripts/ci/lib/approved-sql-predicates.mjs",
+      "bytes": 9227,
+      "sha256": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff"
+    }
+  ],
+  "logs": [
+    {
+      "name": "agency-red.txt",
+      "sourceScratch": "/workspace/scratch/shared-editor-recorded-agency-2026-11-06-red.txt",
+      "bytes": 26485,
+      "sha256": "8190bd0cd8e8330adfda71a8beb993bae3ba29e231e539c80343c39ea669bcb0",
+      "parts": [
+        "logs/agency-red.txt"
+      ]
+    },
+    {
+      "name": "agency-green.txt",
+      "sourceScratch": "/workspace/scratch/shared-editor-recorded-agency-2026-11-06-green.txt",
+      "bytes": 86560,
+      "sha256": "001b74dddc551b312b9865fed6eac6a68bd9e2ae7d4de32cfeb3c3c37865113a",
+      "parts": [
+        "logs/agency-green.txt.part001",
+        "logs/agency-green.txt.part002"
+      ]
+    },
+    {
+      "name": "market-scope-red.txt",
+      "sourceScratch": "/workspace/scratch/shared-editor-market-scope-2026-11-06-red.txt",
+      "bytes": 6400,
+      "sha256": "b9bb22e23b7a29bcdf9396823b3d52d2205ec321d9d1f3f10215bdcde122741e",
+      "parts": [
+        "logs/market-scope-red.txt"
+      ]
+    },
+    {
+      "name": "outline-final-green.txt",
+      "sourceScratch": "/workspace/scratch/shared-editor-market-scope-2026-11-06-green.txt",
+      "bytes": 9594,
+      "sha256": "a5195dc3c4de33df241a4d2a464bd1e42df5a549295474db10c2e235c3079e3c",
+      "parts": [
+        "logs/outline-final-green.txt"
+      ]
+    },
+    {
+      "name": "artifact-regression-green.txt",
+      "sourceScratch": "/workspace/scratch/shared-editor-artifact-2026-11-06-regression.txt",
+      "bytes": 24360,
+      "sha256": "2d5fec14dd665d065579b08e2af76b5fd680e0897cce225b7b3e633b8ae32e1b",
+      "parts": [
+        "logs/artifact-regression-green.txt"
+      ]
+    },
+    {
+      "name": "sql-gate.txt",
+      "sourceScratch": "/workspace/scratch/shared-editor-artifact-2026-11-06-sql-gate.txt",
+      "bytes": 4160,
+      "sha256": "73809a9f6ed06eccf1314af859cca9caad93570101c171283d84440af9a334ff",
+      "parts": [
+        "logs/sql-gate.txt"
+      ]
+    },
+    {
+      "name": "sql-selftest.txt",
+      "sourceScratch": "/workspace/scratch/shared-editor-artifact-2026-11-06-sql-selftest.txt",
+      "bytes": 3079,
+      "sha256": "086bcf24b7eb4474a79bc3b2b185652339863380646386978a4d82a33b24c585",
+      "parts": [
+        "logs/sql-selftest.txt"
+      ]
+    },
+    {
+      "name": "owned-eslint.json",
+      "sourceScratch": "/workspace/scratch/shared-editor-2026-11-06-final-eslint.json",
+      "bytes": 28880,
+      "sha256": "70db700f930b36e090a90c8eccec5861d7128e8a5b69812d1eba40b2867b542e",
+      "parts": [
+        "logs/owned-eslint.json"
+      ]
+    },
+    {
+      "name": "final-hook-eslint.json",
+      "sourceScratch": "/workspace/scratch/shared-editor-market-scope-2026-11-06-eslint.json",
+      "bytes": 540,
+      "sha256": "0ec9666dce37fd2f71b64861229df4ce9e2212cd6b056f9e641dee37dc7be146",
+      "parts": [
+        "logs/final-hook-eslint.json"
+      ]
+    },
+    {
+      "name": "org-route-eslint-baseline.json",
+      "sourceScratch": "/workspace/scratch/shared-editor-org-dto-2026-11-06-eslint-baseline.json",
+      "bytes": 25239,
+      "sha256": "cf8be3b320c617fadd58d60eeab6e165039d8d44618775a3651165c913188b23",
+      "parts": [
+        "logs/org-route-eslint-baseline.json"
+      ]
+    }
+  ],
+  "boundaries": [
+    "Independent overlapping cohorts are not added into a single test total.",
+    "Earlier outline47 is superseded by final52 and is not counted again.",
+    "No full typecheck, final build, authenticated full-app qualification or deployment is claimed by this agent receipt.",
+    "Current-head snapshots do not invent historical versions, recorded integrity, model qualification, source support or inherited signatures."
+  ]
+}

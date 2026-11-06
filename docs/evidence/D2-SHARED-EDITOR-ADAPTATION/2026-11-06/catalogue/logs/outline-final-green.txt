@@ -1,0 +1,61 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > retains newest-home default only when no active document binding was supplied 113ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > selects exact bound 'cer' among mixed home filings 57ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > selects exact bound 'ivdr' among mixed home filings 58ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > selects exact bound 'ind' among mixed home filings 58ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > uses exact market requirements and retains home context 59ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > retains verified market identity and gaps when an older outline omits filing_scope 57ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > refuses missing or malformed binding "missing" 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > refuses missing or malformed binding "" 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > refuses missing or malformed binding " " 58ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > refuses missing or malformed binding " filing-cer " 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > withholds requirements for an unavailable active binding 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > keeps the explicit home-copy creation door for a known unbound document without reading default requirements 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > refuses duplicate bound identity 56ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > retains exact bound home when the optional market read fails 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > does not replace a refused market with home requirements 56ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > requires exact project echo on home list 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > requires exact project echo on market list 53ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects wrong-project successful home response 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects wrong-project successful market response 53ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects wrong-project successful outline response 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects incorrect outline identity 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects incorrect outline shape 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects incorrect outline scope 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects incorrect outline agency 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects incorrect outline type 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > retirement of previous project and actor reads > withholds old filing immediately and ignores its delayed response 111ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > retirement of previous project and actor reads > retires same-project state after actor change and ignores old response 1762ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > retirement of previous project and actor reads > retires same-project state after session change and ignores old response 160ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > retirement of previous project and actor reads > withholds prior project context while next project is unresolved 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > retirement of previous project and actor reads > keeps returned state identity across unchanged host rerenders 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx > a market's own part of the filing in the editor (F22b) > in the home copy: the home outline, and the EU filing offers to create its document, bound by the server 547ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx > a market's own part of the filing in the editor (F22b) > in the EU copy: its Module 1 and 3.2.R, the gaps named, a Module 1 node starts here 179ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx > a market's own part of the filing in the editor (F22b) > a market list that could not be read is said, and the home outline stays 111ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx > the actual editor distinguishes EU device authority from its storage key > labels the exact cer subtitle, choice and gaps with EU / Notified Body 104ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx > the actual editor distinguishes EU device authority from its storage key > labels the exact mdr subtitle, choice and gaps with EU / Notified Body 120ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx > the actual editor distinguishes EU device authority from its storage key > labels the exact ivdr subtitle, choice and gaps with EU / Notified Body 112ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx > the actual editor distinguishes EU device authority from its storage key > preserves the exact governed ID in explicit editing-copy creation 188ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the outline is derived from the filing type > a BLA renders CTD modules with sections nested beneath them 3ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the outline is derived from the filing type > a 510(k) renders lettered parts, not modules 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the outline is derived from the filing type > THE FALSIFICATION — the two filings do not produce the same tree 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the tree walk preserves the pack > orders by path_order regardless of the order rows arrive in 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the tree walk preserves the pack > loses no section — every row appears exactly once 2ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the tree walk preserves the pack > promotes an unresolvable parent to a root rather than dropping the row 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the tree walk preserves the pack > handles an empty pack without throwing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > binding an outline node to the section that holds its text > matches by code 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > binding an outline node to the section that holds its text > returns null for a node with no authored section yet 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > binding an outline node to the section that holds its text > an undivided node opens the document’s first section under it; a subdivided node does not 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > binding an outline node to the section that holds its text > never matches a null code — the worst failure would be opening the wrong text 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the draft indicator is asked of BOTH stores > lights for text authored in THIS editor, which the governed flag cannot see 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the draft indicator is asked of BOTH stores > still lights for text written through the governed path 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the draft indicator is asked of BOTH stores > stays dark when neither store has anything 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the draft indicator is asked of BOTH stores > does not count whitespace as a draft 0ms
+
+ Test Files  3 passed (3)
+      Tests  52 passed (52)
+   Start at  18:34:10
+   Duration  19.84s (transform 7.90s, setup 1.32s, import 9.83s, tests 4.98s, environment 2.33s)
+

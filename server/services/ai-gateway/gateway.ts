@@ -1330,6 +1330,8 @@ export class AIGateway {
   private readonly qualifiedPinEvidenceReader: QualifiedPinEvidenceReader = readQualifiedPinEvidence;
   /** Tenant availability belongs to one captured request, never to the global registry or SDK cache. */
   private readonly requestModels = new WeakMap<GatewayRequest, ModelConfig[]>();
+  /** Captured source authority stays private while provider credentials await their own reads. */
+  private readonly finalSourceChecks = new WeakMap<GatewayRequest, () => Promise<void>>();
   private readonly customerOwnedModelSets = new WeakSet<ModelConfig[]>();
   private readonly customerCredentialRows = new Set(DEFAULT_MODELS.filter(row => row.enabled).map(row => row.id));
   private readonly explicitlyDisabledProviders = new Set<ProviderName>();
@@ -2035,15 +2037,33 @@ export class AIGateway {
 
   private modelsForRequest(request: GatewayRequest): ModelConfig[] { return this.requestModels.get(request) ?? this.models; }
 
+  private assertProviderCreateAllowed(request: GatewayRequest, modelConfig?: ModelConfig): void {
+    if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+    this.assertQualifiedModel(request, modelConfig);
+  }
+
   private async tenantProviderClient(provider: ProviderName, request: GatewayRequest): Promise<any | null> {
     const organizationId = auditOrganizationId(request);
-    if (!isOrganizationId(organizationId)) return null;
+    const sourceCheck = this.finalSourceChecks.get(request);
+    if (!isOrganizationId(organizationId)) {
+      await sourceCheck?.();
+      this.assertProviderCreateAllowed(request);
+      return null;
+    }
     if (request.userId !== undefined && !isOrganizationId(request.userId)) throw new TenantModelCredentialError();
+    let client: Awaited<ReturnType<typeof createTenantProviderClient>>;
     try {
-      return await createTenantProviderClient(provider, Number(organizationId),
+      client = await createTenantProviderClient(provider, Number(organizationId),
         isOrganizationId(request.userId) ? Number(request.userId) : undefined, 'model_inference',
-        () => this.assertQualifiedModel(request));
+        { beforeCreate: () => this.assertProviderCreateAllowed(request), ...(sourceCheck ? { sourceCheck } : {}) });
     } catch { throw new TenantModelCredentialError(); }
+    // A platform-mode lookup also awaited credential state. Keep source/policy
+    // failures outside the credential catch and before the platform SDK path.
+    if (client === null) {
+      await sourceCheck?.();
+      this.assertProviderCreateAllowed(request);
+    }
+    return client;
   }
 
   /**
@@ -2081,6 +2101,15 @@ export class AIGateway {
     const governed = governServerTools(modelConfig.provider, request);
     // …and in the version this model accepts.
     governed.request = webToolsForModel(governed.request, modelConfig.webToolVariant);
+    this.finalSourceChecks.set(governed.request, async () => {
+      if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+      try { await beforeDispatch?.(); }
+      catch {
+        if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+        throw sourceCheckpointRefusal();
+      }
+      if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+    });
     if (governed.withheld.length > 0) {
       log.info('[ai-gateway] server tools withheld for this lane', {
         requestId,
@@ -2440,6 +2469,7 @@ export class AIGateway {
 
     applyOpenAIToolParams(params, request, modelConfig);
 
+    this.assertProviderCreateAllowed(request, modelConfig);
     const completion = await Promise.race([
       client.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
       new Promise<never>((_, reject) =>
@@ -2708,6 +2738,7 @@ export class AIGateway {
     if (notes.active) addBetaHeader(reqOptions, PROGRESS_UPDATES_BETA);
     if (request.signal) reqOptions.signal = request.signal;
 
+    this.assertProviderCreateAllowed(request, modelConfig);
     const response = await Promise.race([
       client.messages.create(params, Object.keys(reqOptions).length > 0 ? reqOptions : undefined),
       new Promise<never>((_, reject) =>
@@ -2928,6 +2959,7 @@ export class AIGateway {
     // a stop only stopped us reading, and the model ran to completion at full
     // cost — which is what stream.ts's own comment used to say.
     if (request.signal) streamOptions.signal = request.signal;
+    this.assertProviderCreateAllowed(request, modelConfig);
     const stream = await client.messages.create(
       params,
       Object.keys(streamOptions).length > 0 ? streamOptions : undefined
@@ -3167,6 +3199,7 @@ export class AIGateway {
 
     applyOpenAIToolParams(params, request, modelConfig);
 
+    this.assertProviderCreateAllowed(request, modelConfig);
     const completion = await Promise.race([
       client.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
       new Promise<never>((_, reject) =>
@@ -3249,6 +3282,7 @@ export class AIGateway {
     }
     applyOpenAIToolParams(params, request, modelConfig);
 
+    this.assertProviderCreateAllowed(request, modelConfig);
     const stream = await client.chat.completions.create(
       params,
       request.signal ? { signal: request.signal } : undefined,

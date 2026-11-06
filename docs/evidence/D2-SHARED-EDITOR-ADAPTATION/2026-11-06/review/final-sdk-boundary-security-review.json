@@ -1,0 +1,95 @@
+{
+  "observedAt": "2026-11-06T20:46:16.562446+00:00",
+  "reviewerTask": "/root/editor_context_security_review",
+  "package": "F1",
+  "sourceBaseMerge": "b8b73e2fc924a5f0b80510a8920d57ca22bf8459",
+  "reviewedRepairCommit": "f4295889ca0297e115fcd88b334c98804c7c2fbc",
+  "status": "passed_scoped_source_review_both_reported_races_resolved",
+  "method": "Independent read-only diff/caller/test inspection; checked all27 current source/test pins and all6 retained log manifests from the owner receipt. No source/test edits, tests, compiler, browser, provider calls or git mutations by this reviewer.",
+  "closesReview": "incoming-7d-security-review.json",
+  "resolvedFindings": [
+    {
+      "code": "FINAL_WIRE_SOURCE_CHECKPOINT_GAP",
+      "resolution": "Private WeakMap binds exact governed request to the original pre-await captured callback. Tenant SDK invokes current source check after credential capture/audit; platform/null and no-org paths do likewise after their lookup. Source failures remain terminal outside credential and provider sanitizers."
+    },
+    {
+      "code": "PLATFORM_CONTINUATION_ABORT_PQ_GAP",
+      "firstReportedBy": "/root/editor_context_security_review",
+      "resolution": "All five actual SDK create sites synchronously recheck abort and qualified evidence with concrete modelConfig after helper promise continuations. Tenant SDK wrapper also rechecks abort/PQ after its awaited final source check."
+    }
+  ],
+  "preservedContracts": [
+    "Post-capacity source check and original immutable callback capture remain.",
+    "SOURCE_CONTEXT_UNAVAILABLE remains a safe GatewayPolicyError; source refusal does not trigger provider retries/fallback or health failure.",
+    "Pre-SDK cancellation remains GatewayAbortedError pre_call.",
+    "Existing synchronous fifth-argument client-factory callbacks remain supported, including embedding callers.",
+    "No saved-template/agency, source-intake, exact-filing, editor or Vault source was changed by this repair.",
+    "Incoming tenant credentials, tombstones, secret redaction and qualified-model gates remain in place."
+  ],
+  "ownerVerification": {
+    "performedBy": "/root/catalog_audit",
+    "receipt": "../catalogue/final-wire-current-source-receipt.json",
+    "reviewerInspectedRawLogSummary": true,
+    "reviewerReranTests": false,
+    "suitesPassed": 9,
+    "testsPassed": 250,
+    "durationSeconds": 44.75,
+    "sdkModelProviderTests": 107,
+    "boundedAuthoringTests": 143,
+    "lintErrors": 0,
+    "lintWarnings": 26,
+    "baselineWarnings": 26,
+    "testWarnings": 0,
+    "redEvidence": {
+      "correctedFixture": {
+        "failed": 12,
+        "passed": 16
+      },
+      "platformContinuation": {
+        "failed": 3,
+        "passed": 81
+      },
+      "initialRaw": {
+        "failed": 14,
+        "passed": 14,
+        "twoFailuresWereStaleSanitizationAssertions": true
+      }
+    },
+    "verifiedCurrentOwnerPins": 27,
+    "verifiedRetainedLogManifests": 6
+  },
+  "sourceFiles": [
+    {
+      "path": "server/services/ai-gateway/gateway.ts",
+      "sha256": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+      "bytes": 239345
+    },
+    {
+      "path": "server/services/ai-gateway/providers/clients.ts",
+      "sha256": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+      "bytes": 9895
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+      "sha256": "d16e3d1ca9c8d7b4b503d5133948c49a403f32283cfa6d0f79e83b8cc751d688",
+      "bytes": 21388
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts",
+      "sha256": "066e80a0bed82775d5dfc88d3029d1691759f54de53f7a3cea743dd23f8e1f56",
+      "bytes": 27146
+    },
+    {
+      "path": "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts",
+      "sha256": "487fffb0df4b2444bb12acc94fa8c4e524c0da7c9c77ad8602ba775c2bc38e50",
+      "bytes": 17330
+    }
+  ],
+  "canonicalPinManifestSha256": "65fa70546bd8300eec7576cb58c2a950cbc45a69086cdf25af5948b74479d797",
+  "limits": [
+    "Synthetic credential/SDK seams only; no real provider/credentials/model PQ or production qualification.",
+    "Owner verification results overlap earlier runs and are not additive.",
+    "Final combined compiler/build/publication remains the lead responsibility.",
+    "Existing UI receipts retain their recorded checkpoints; no new browser qualification is asserted by this review."
+  ]
+}

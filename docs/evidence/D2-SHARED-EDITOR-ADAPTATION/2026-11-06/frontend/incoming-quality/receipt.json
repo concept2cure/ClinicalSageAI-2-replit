@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "package": "F1",
+  "launchRow": "D2",
+  "kind": "incoming Quality frontend compatibility",
+  "sourceCommitAtInitial": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+  "sourceTreeAtInitial": "650876f533e14b79de46069c014fc7697af3a9f8",
+  "headAtPackaging": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+  "reviewBase": "8dbc9d589f",
+  "incomingCommit": "f6127e7223",
+  "packagedAtUtc": "2026-11-06T21:39:02.287598+00:00",
+  "workdir": "/workspace/ClinicalSageAI-2-replit",
+  "initialRun": {
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/__tests__/qualityCoreHandoff.test.tsx client/src/concept2cure/v2/__tests__/taskBoardQualitySource.test.tsx client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx",
+    "exitCode": 1,
+    "suitesPassed": 6,
+    "suitesFailed": 1,
+    "testsPassed": 116,
+    "testsFailed": 1,
+    "log": {
+      "path": "initial.log",
+      "sha256": "1f558b92d5ab277ce5566ca63738c73b49b92a371a46c8ce1c23ae9f413f030a",
+      "bytes": 26007,
+      "originalSha256": "1f558b92d5ab277ce5566ca63738c73b49b92a371a46c8ce1c23ae9f413f030a",
+      "originalBytes": 26007,
+      "originalLines": 146,
+      "gzipMtime": null
+    }
+  },
+  "unchangedPassingSuites": [
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
+      "testsPassed": 41
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+      "testsPassed": 31
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx",
+      "testsPassed": 4
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx",
+      "testsPassed": 14
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardQualitySource.test.tsx",
+      "testsPassed": 8
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/qualityCoreHandoff.test.tsx",
+      "testsPassed": 4
+    }
+  ],
+  "affectedSuiteRerun": {
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+    "exitCode": 0,
+    "suitesPassed": 1,
+    "testsPassed": 15,
+    "log": {
+      "path": "affected-rerun.log",
+      "sha256": "a74893df74109f754f069f57a6c71b651f0f4cf78e5bade7aaf8ab46f4908eb5",
+      "bytes": 3559,
+      "originalSha256": "a74893df74109f754f069f57a6c71b651f0f4cf78e5bade7aaf8ab46f4908eb5",
+      "originalBytes": 3559,
+      "originalLines": 24,
+      "gzipMtime": null
+    }
+  },
+  "composedQualification": {
+    "unchangedPassingSuites": 6,
+    "unchangedPassingCases": 102,
+    "correctedSuitePassingCases": 15,
+    "distinctSuitesQualified": 7,
+    "distinctCasesQualified": 117,
+    "interpretation": "Six unchanged suites from the initial run plus the full affected-suite rerun. There was no all-green seven-suite rerun. Fourteen originally passing affected-suite cases overlap the rerun; do not add 116 and 15."
+  },
+  "fixtureCorrection": {
+    "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+    "change": "Only c2c_document_id:null added to the existing intended unbound doc literal.",
+    "reason": "The canonical exact-filing guard correctly withheld drafting when the fixture omitted its filing-binding state; the server projects an explicit null for an unbound document.",
+    "patch": "fixture-correction.patch",
+    "sha256": "35be0a6d69b6adec3a0d8a1e160c36118a5770b8909ae3fc006070fa66690187"
+  },
+  "productionChanges": false,
+  "assertionChanges": false,
+  "selectedInputs": 24,
+  "changedSelectedInputsSinceInitial": [
+    "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx"
+  ],
+  "selectedInputDriftDuringAffectedRerun": [],
+  "inputManifests": [
+    {
+      "path": "initial-before.json",
+      "sha256": "290cbfa81183ba85f79af5af9dff5940713e43b7dbe5ebd0952ce782eb2e9b6a"
+    },
+    {
+      "path": "rerun-before.json",
+      "sha256": "c595a89fc3743c1d5cd39533703d1aefef3491033f7aa137b8f25dc25f7447aa"
+    },
+    {
+      "path": "after.json",
+      "sha256": "68c31fbd0ced3a8f62d10f8c6441bf853bdb271a6d2174af0b841f1fd87cc4c1"
+    }
+  ],
+  "diffCheck": {
+    "command": "git diff --check -- client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+    "exitCode": 0,
+    "path": "diff-check.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "realCredentialsUsed": false,
+  "providerRequestsPerformed": false,
+  "gitMutations": false,
+  "limits": "Synthetic component/transport qualification with selected pins, not exhaustive transitive inputs or a whole-tree snapshot. Native Quality catalogue facts and guarded task handoff are covered; the new native-record Ask AnA routing condition was inspected in source, while existing UI companions preserve ordinary retained-source gates. Backend durability, complete native-source ingestion/drafting, agency acceptance, real providers and deployed/browser behavior are outside this receipt. No broad 313-test rerun or compiler run was performed."
+}

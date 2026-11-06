@@ -1,5 +1,15 @@
 # Information architecture: the client journey
 
+> Current direction, reaffirmed by the founder on 2026-11-06: everything starts
+> with project definition. Existing capabilities belong inside its downstream
+> workflow, with one AnA, one canvas and one adaptive document editor. Read
+> `CLAUDE.md` rules 4–6 and `docs/design/ONE_DESIGN_PLAN.md` as controlling.
+> Older app identities, cards, workspaces and feature-door placements below
+> identify existing functionality to converge; they do not authorize separate
+> products, per-document editors or additional screens. Preserve each capability
+> and its safeguards in its reachable project/editor home. Historical “Coming
+> later” copy is superseded by the current plan's retired-pattern rule.
+
 Date 2026-10-25, revised the same day for the founder's rule on the catalogue and again after a code check of the
 draft; direction clarified on 2026-10-26 below. Launch row D2. Owner: the founder. Companion to `DESIGN_BRIEF.md` (this folder) and
 `docs/design/CLIENT_JOURNEY_2026-10-25.md` (passes 1–5, committed through `f8e0d3210`). Evidence:

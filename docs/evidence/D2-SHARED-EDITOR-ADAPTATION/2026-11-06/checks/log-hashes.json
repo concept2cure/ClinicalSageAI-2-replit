@@ -1,0 +1,116 @@
+[
+  {
+    "path": "checks/target-red.txt.gz",
+    "rawBytes": 21490,
+    "rawSha256": "b9d249df4e3d39899d11dc28938e588228dcfaa460b2cd6ae0aa2f2c3fbb43d3",
+    "compressedSha256": "4e55b58d8e656da719880faa212a7e4891f6ee0f07ad26b28c8341475a0f15b6"
+  },
+  {
+    "path": "checks/target-green.txt.gz",
+    "rawBytes": 6726,
+    "rawSha256": "74ae8de98b7b5fe4840615a081991729ea6135082acc7165e9de3a7ab676b10e",
+    "compressedSha256": "282df106d92246afaaed0a12b6c1620a7607ae9729cf3f99b4482442322a356d"
+  },
+  {
+    "path": "checks/target-lint.txt.gz",
+    "rawBytes": 0,
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "compressedSha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "path": "checks/incoming-project-compatibility.txt.gz",
+    "rawBytes": 23279,
+    "rawSha256": "f6514487857faf942066446351b80c6018899d827d69f13a045c1b7ce9faeb1a",
+    "compressedSha256": "12be126b05f4f7420bec924424e38217f548328d399ff4789f58b1bee196aacd"
+  },
+  {
+    "path": "checks/build.txt.gz",
+    "rawBytes": 17919,
+    "rawSha256": "db5be6ae017f34bc671aa945034007de12ada573cf1d3100d15b659a98ea85fb",
+    "compressedSha256": "57ea2aa63bdba7746e4a458dcf1f1c1fe012993ee05e374458c86ab71980c99b"
+  },
+  {
+    "path": "checks/companion-filename-scan.txt.gz",
+    "rawBytes": 836,
+    "rawSha256": "11cd3e4a8aec5a5fb053df7212073e9b6f7b85b1342be7d881e048bf858cc2b9",
+    "compressedSha256": "e2a6c22e6ac8580d92e159d1d7a34adac48672d06fc764edbd77d20472128edd"
+  },
+  {
+    "path": "checks/initial-typecheck-red.txt.gz",
+    "rawBytes": 20306,
+    "rawSha256": "8517697098488ff69671aeb00b1d9458449ffea0fd60b46d1ba8191657c134b6",
+    "compressedSha256": "9ebd74281a2674cb66dfc2798513c1c70065aeb15af861c458ac4f57609fe605"
+  },
+  {
+    "path": "checks/prior-pre-push-green.txt.gz",
+    "rawBytes": 16023,
+    "rawSha256": "30b9359db356234b93fa155f6b552ae53330d52bcca08a2b7f408d3e6a9ee0b4",
+    "compressedSha256": "49f776c3ef4244c199632fa935d281526cf23f7198bd750a86d658cd826e0a51"
+  },
+  {
+    "path": "checks/prior-pre53b-pre-push-green.txt.gz",
+    "rawBytes": 16023,
+    "rawSha256": "9c1f22956cd5c2c6c3a11141707734b030fba78f5d45769564df1a85382390f7",
+    "compressedSha256": "3dca0df1a41b46a2cbeb10483fd1a0f55fd81043f7aeb3b2f42ad5cd5c4e720d"
+  },
+  {
+    "path": "checks/prior-preb86-pre-push-green.txt.gz",
+    "rawBytes": 16023,
+    "rawSha256": "0d24207cdc9097d9d254c82a98452921db9cb7e6b1d82c6d95f4fa802bd376e4",
+    "compressedSha256": "9bc53af8c9c43bab7e108861a7772bcf293d0e7b60744b3bb3eb7ec88044e549"
+  },
+  {
+    "path": "checks/prior-pre7d-pre-push-green.txt.gz",
+    "rawBytes": 16023,
+    "rawSha256": "1ead83de12dd58b43291cfa1b06b7edb58333805a9cd13b9625d23f4f7e31d60",
+    "compressedSha256": "2a6c1d4014acbba4009b12481df613291e36554f2cdb5b36a058761413c51865"
+  },
+  {
+    "path": "checks/prior-pre8dbc-pre-push-green.txt.gz",
+    "rawBytes": 16023,
+    "rawSha256": "59db792f83b3c955a4d0f2e3b308ca9f869dab991229a975ae97f08b5206d36f",
+    "compressedSha256": "0aa27fb006fc4ba0cde2941aee7aed1a2f896de496fa09ef2c621d0cba148505"
+  },
+  {
+    "path": "checks/prior-pref612-pre-push-green.txt.gz",
+    "rawBytes": 16023,
+    "rawSha256": "ef20954dc501bce48bd14474ce9271ef2f0bc1773c53d86d798d04629d62d5a5",
+    "compressedSha256": "0aafbad8b73ffabcf92d3e93d81856068c625d97917838c221f2e65f55177e46"
+  },
+  {
+    "path": "checks/launcher-compatibility.txt.gz",
+    "rawBytes": 6127,
+    "rawSha256": "dc19824670c433c789da1e020108b9437738626e2ae3280fe28e96d7a5b572ec",
+    "compressedSha256": "d83ed5784cb8ab67c6c3f05c8df54f055a9edf15f8f0fc5316017c023971d14c"
+  },
+  {
+    "path": "checks/committed-secrets.txt.gz",
+    "rawBytes": 87,
+    "rawSha256": "f7329d46faa2c9a441ccf22a60021cdc98262e73f2f818f5ca88c970fb94e6f9",
+    "compressedSha256": "8e83beeb7df8be8354bef7598d83d2b41274de740b21a2e1e2a4d76dcf9dfc83"
+  },
+  {
+    "path": "checks/component-browser.txt.gz",
+    "rawBytes": 365,
+    "rawSha256": "2f6d39596ca26dfde5aabd470fa16c4f28188acf99cb8c4440c549c92f16b813",
+    "compressedSha256": "f8c76f9c4e487ea93f5110e1b1763cd994767ea02626b27d1651231be4a45379"
+  },
+  {
+    "path": "checks/native-browser.txt.gz",
+    "rawBytes": 141,
+    "rawSha256": "6047c8d3a3f5d2e952c3846754ce10be097d8c71876549785afde4a0841d8264",
+    "compressedSha256": "ecd1c863a6fb11873248b7573f2943554743eb93a368e41137350fdf392ce2f7"
+  },
+  {
+    "path": "checks/browser-input-verification.txt.gz",
+    "rawBytes": 1259,
+    "rawSha256": "a01ea3b533d7bd488879d932f3e472bd467a87dc8ffc0e2d89da823d0ad1e8a5",
+    "compressedSha256": "2ea7859b4ac503b65f9048dd1be94653d9522e7ac4a414f5fc17bba3de3d2487"
+  },
+  {
+    "path": "checks/pre-push.txt.gz",
+    "rawBytes": 16024,
+    "rawSha256": "1db627e0da354a917bbadcd181588131a4ea3a9a3ffe84297c83073dcee97d1d",
+    "compressedSha256": "9112c98969e237466a5b474b71553ba4794a1b3d01bedfe5d88babb612f93c6d"
+  }
+]

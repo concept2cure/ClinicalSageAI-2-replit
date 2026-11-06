@@ -1,0 +1,254 @@
+{
+  "package": "F1",
+  "launchRow": "D2",
+  "branch": "concept2cure-v2",
+  "sourceCheckpoint": "0800d15173ac9dc2172d0c4669c3b99d187ac410",
+  "canonicalBase": "f6127e72231bd9e9f302f596a672f58b1b40db15",
+  "retainedQualifiedCheckpoint": "3d9879dfc7b7bbb6b595705c03f3773a01f5ed6d",
+  "nodeMajor": 22,
+  "build": {
+    "exitCode": 0,
+    "changedRuntimePinsStable": 121
+  },
+  "prePush": {
+    "exitCode": 0,
+    "typecheckErrors": 0,
+    "baselineRelaxed": false
+  },
+  "committedSecrets": {
+    "exitCode": 0,
+    "credentialMaterialFound": false
+  },
+  "sourceFreeze": {
+    "path": "checks/source-freeze-proof.json",
+    "inputCount": 13203,
+    "sha256": "1aa9ea0470a60e7c635358c395aaadbbccee274a08482fe0584e4be0d44c0934",
+    "capturePhase": "After the frozen source commit, before the normal full pre-push run."
+  },
+  "targetChannel": {
+    "testsPassed": 39,
+    "initialFailed": 15
+  },
+  "incomingProjectCompatibility": {
+    "suitesPassed": 9,
+    "testsPassed": 102
+  },
+  "componentBrowser": {
+    "checksPassed": 12,
+    "selectedPinsStable": 45,
+    "checkedCheckpoint": "5283da69cb953d7c4c8970d80fd14f8fe81879ce",
+    "api": "explicit synthetic fixture; four simulated intake POSTs"
+  },
+  "nativeBrowser": {
+    "journeysPassed": 2,
+    "filings": [
+      "510k",
+      "ind"
+    ],
+    "checkedCheckpoint": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+    "api": "real local application, no interception",
+    "sectionPatches": 2,
+    "selectedPinsStable": 25,
+    "qualificationSavesAcrossCompletedRuns": 10,
+    "completedNativeRuns": 5,
+    "scope": "Retained native core save/reopen proof with unchanged selected owners; excludes incoming UK CTA, ANA preparation and unified-task behavior."
+  },
+  "latestIncomingCompatibility": {
+    "ordinaryTask": {
+      "suitesPassed": 6,
+      "testsPassed": 116,
+      "receipt": "server/ordinary-task-compatibility-receipt.json"
+    },
+    "editor": {
+      "unchangedPassingSuites": 5,
+      "unchangedPassingTests": 54,
+      "affectedFileRerunTestsPassed": 14,
+      "composedPassingTests": 68,
+      "freshAllSixSuiteGreenRun": false,
+      "receipt": "editor/latest-six-compatibility-receipt.json"
+    },
+    "authoringAcl": {
+      "suitesPassed": 3,
+      "testsPassed": 65,
+      "receipt": "server/authoring-acl-compatibility-receipt.json"
+    },
+    "confirmedProjectLists": {
+      "unchangedPassingSuites": 3,
+      "unchangedPassingTests": 63,
+      "correctedFilePassingSuites": 4,
+      "correctedFilePassingTests": 53,
+      "composedPassingTests": 116,
+      "freshAllSevenSuiteGreenRun": false,
+      "receipt": "editor/scoped-list-compatibility-receipt.json"
+    },
+    "vaultConfirmedProjectLists": {
+      "suitesPassed": 3,
+      "testsPassed": 43,
+      "receipt": "frontend/scoped-read-contract/receipt.json"
+    },
+    "lineageHardening": {
+      "mutationTestsPassed": 49,
+      "guardedPaths": 22,
+      "launchBoundaryTestsPassed": 207,
+      "receipt": "catalogue/lineage-hardening-receipt.json"
+    },
+    "unifiedTask": {
+      "suitesPassed": 5,
+      "testsPassed": 164,
+      "receipt": "server/unified-task-compatibility-receipt.json"
+    },
+    "ukCta": {
+      "suitesPassed": 8,
+      "testsPassed": 152,
+      "receipt": "catalogue/uk-cta-integration-receipt.json"
+    },
+    "projectRail": {
+      "suitesPassed": 1,
+      "testsPassed": 16,
+      "receipt": "editor/final-rail-compatibility-receipt.json"
+    },
+    "adminCredentialUi": {
+      "suitesPassed": 3,
+      "testsPassed": 44,
+      "receipt": "frontend/incoming7d-admin/receipt.json"
+    },
+    "gatewayAccounts": {
+      "unchangedPassingSuites": 5,
+      "unchangedPassingTests": 67,
+      "isolatedConnectorRetryPassingTests": 38,
+      "composedPassingTests": 105,
+      "freshAllSixSuiteGreenRun": false,
+      "receipt": "server/gateway-account-compatibility-receipt.json"
+    },
+    "startupAndQualifiers": {
+      "nodeTestsPassed": 27,
+      "receipt": "checks/launcher-compatibility.json"
+    },
+    "finalSdkBoundary": {
+      "suitesPassed": 9,
+      "testsPassed": 250,
+      "sourceRaceRed": {
+        "failed": 12,
+        "passed": 16
+      },
+      "continuationRed": {
+        "failed": 3,
+        "passed": 81
+      },
+      "receipt": "catalogue/final-wire-current-source-receipt.json"
+    },
+    "regionalContext": {
+      "suitesPassed": 8,
+      "testsPassed": 404,
+      "receipt": "catalogue/regional-context-integration-receipt.json"
+    },
+    "rbmIdentity": {
+      "suitesPassed": 1,
+      "testsPassed": 13,
+      "receipt": "server/rbm-identity-compatibility-receipt.json"
+    },
+    "qualityTasks": {
+      "suitesPassed": 8,
+      "testsPassed": 93,
+      "receipt": "server/quality-task-compatibility-receipt.json"
+    },
+    "qualityFrontend": {
+      "unchangedPassingSuites": 6,
+      "unchangedPassingTests": 102,
+      "affectedFileRerunTestsPassed": 15,
+      "composedPassingTests": 117,
+      "freshAllSevenSuiteGreenRun": false,
+      "receipt": "frontend/incoming-quality/receipt.json"
+    },
+    "qualitySourcesAndReports": {
+      "unchangedPassingSuites": 12,
+      "unchangedPassingTests": 172,
+      "affectedFileRerunTestsPassed": 76,
+      "composedPassingTests": 248,
+      "freshAllThirteenSuiteGreenRun": false,
+      "receipt": "catalogue/quality-source-report-integration-receipt.json"
+    },
+    "nativeQualityDispatch": {
+      "suitesPassed": 2,
+      "testsPassed": 22,
+      "initialFailed": 14,
+      "initialPassed": 8,
+      "independentAffectedRerun": {
+        "suitesPassed": 2,
+        "testsPassed": 22
+      },
+      "receipt": "server/native-quality-dispatch-receipt.json",
+      "rerunReceipt": "catalogue/native-dispatch-followup-receipt.json"
+    }
+  },
+  "cohortCounting": "Owner cohorts overlap and are not summed.",
+  "ownerReceipts": [
+    "editor/receipt.json",
+    "frontend/receipt.json",
+    "catalogue/receipt.json",
+    "server/binary-vault-receipt.json",
+    "server/artifact-source-receipt.json",
+    "review/security-review.json",
+    "ui/README.md",
+    "editor/latest-six-compatibility-receipt.json",
+    "server/ordinary-task-compatibility-receipt.json",
+    "server/authoring-acl-compatibility-receipt.json",
+    "editor/scoped-list-compatibility-receipt.json",
+    "frontend/scoped-read-contract/receipt.json",
+    "catalogue/lineage-hardening-receipt.json",
+    "review/incoming-53b-security-review.json",
+    "server/unified-task-compatibility-receipt.json",
+    "catalogue/uk-cta-integration-receipt.json",
+    "editor/final-rail-compatibility-receipt.json",
+    "review/incoming-b86-security-review.json",
+    "frontend/incoming7d-admin/receipt.json",
+    "server/gateway-account-compatibility-receipt.json",
+    "catalogue/final-wire-current-source-receipt.json",
+    "review/incoming-7d-security-review.json",
+    "review/final-sdk-boundary-security-review.json",
+    "catalogue/regional-context-integration-receipt.json",
+    "server/rbm-identity-compatibility-receipt.json",
+    "review/incoming-8dbc-security-review.json",
+    "server/quality-task-compatibility-receipt.json",
+    "frontend/incoming-quality/receipt.json",
+    "catalogue/quality-source-report-integration-receipt.json",
+    "server/native-quality-dispatch-receipt.json",
+    "catalogue/native-dispatch-followup-receipt.json",
+    "review/incoming-f612-security-review.json",
+    "review/native-stream-dispatch-security-review.json"
+  ],
+  "nativeRuntime": {
+    "database": "fresh local PostgreSQL 15",
+    "role": "app_service",
+    "rls": "on",
+    "launchScope": "on",
+    "developmentLogin": true,
+    "databaseSchemaStorageReady": true,
+    "overallReadyHttpStatus": 503,
+    "notReadyReason": "No AI provider; no AI request was made."
+  },
+  "setupCorrections": [
+    "Node 24 install rejected by engine requirement; dependencies installed under Node 22.",
+    "First local psql wrapper lacked repository SQL mount; fresh mounted provisioning exited 0.",
+    "Undersized local JWT secret refused; runtime-only secrets replaced with random 32-byte values.",
+    "Browser origin at port 5100 refused; exact local ALLOWED_ORIGINS configured without bypass.",
+    "Fixture review GET, previewOnly omission, token readback helper and lint setup corrected before acceptance.",
+    "Seven test-fixture type errors corrected without production changes or baseline relaxation.",
+    "Merged conversation fixture corrected to the canonical unbound header/list and no ambient outline contract.",
+    "Six older project-list test fixtures corrected to include actual success and row project identity fields after incoming read hardening; all assertions and production guards retained.",
+    "Two legacy provider-error identity assertions aligned with incoming exact HTTP400 sanitization while retaining safe status/message and non-identity checks.",
+    "Isolated connector suite passed unchanged after its initial setup hook timed out; no timeout, production or assertion change.",
+    "Two older Quality integration fixtures aligned to explicit unbound header and exact safe403 refusal; existing source-access/no-body assertions retained."
+  ],
+  "notQualified": [
+    "deployment",
+    "every client/document combination",
+    "full scientific MDX automation",
+    "native concurrent editing",
+    "IAM/MFA",
+    "AI generation",
+    "controlled release",
+    "agency transmission",
+    "full roadmap convergence or closing S11/S12"
+  ]
+}

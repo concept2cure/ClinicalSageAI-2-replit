@@ -1,0 +1,222 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+{
+  "timestamp": "2026-11-06T18:09:49.192Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+{
+  "timestamp": "2026-11-06T18:09:54.941Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T18:09:54.942Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+{
+  "timestamp": "2026-11-06T18:09:54.942Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > lists Module 1, 2, 3 and 5 artifacts and those with no CTD section, grouped by CTD module 66ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries kind, format, model, status, version, author, recorded hash, signature, sources, review and origin 28ms
+   → expected { artifactId: 'artifact_1', …(11) } to deeply equal { artifactId: 'artifact_1', …(12) }
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > does not invent an importable version for an unrecorded or invalid head (null) 25ms
+   → expected undefined to be null
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > does not invent an importable version for an unrecorded or invalid head (0) 26ms
+   → expected undefined to be null
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > does not invent an importable version for an unrecorded or invalid head (1.5) 11ms
+   → expected undefined to be null
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries its stored content size, as the Artifacts center states it (slice B: the shared manifest) 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > states the signature in the four states the Artifacts center uses 13ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > names an origin only where the row records one 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > reports the status breakdown and the count, and the count joins documentCount 11ms
+stderr | server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a real failure of the registry read is a failure of the read, not an empty branch
+{
+  "timestamp": "2026-11-06T18:09:56.224Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] project vault read error",
+  "context": {
+    "err": "connection reset"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > reads the registry bound to the organization and the program, newest first, one past the window 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an anchored project with no artifacts is an honest empty: no branch, a zero, no unavailable 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an unanchored project is reported unavailable, never as an empty branch 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a registry this environment has not provisioned is reported unavailable 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a real failure of the registry read is a failure of the read, not an empty branch 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a project with more artifacts than the window says so and keeps the exact total 28ms
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts
+{
+  "timestamp": "2026-11-06T18:09:58.340Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-completion.test.ts
+{
+  "timestamp": "2026-11-06T18:10:01.482Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T18:10:01.484Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts
+{
+  "timestamp": "2026-11-06T18:10:01.484Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > a drafted section is not 100% — it is 0% until the filing approves it
+{
+  "timestamp": "2026-11-06T18:10:01.812Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\"....",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > a drafted section is not 100% — it is 0% until the filing approves it 49ms
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > an approved section is 100% 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > an untouched mandatory section is 0% and still flags itself as a blocker 12ms
+ × server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — a market document shows its own part > carries exact filing identities and section keys when document titles and classes are identical 20ms
+   → expected [ undefined, undefined ] to deeply equal [ 'filing-a', 'filing-b' ]
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — a market document shows its own part > a market document holds Module 1 and 3.2.R only, never the home filing’s Module 2 (at head: 2.5 and 3.2.P too) 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — a market document shows its own part > the home filing still shows its whole outline 5ms
+ × server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — a market document shows its own part > a document with no section spec and no sections has no completion figure (at head: 0) 6ms
+   → expected undefined to be null
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — a market document shows its own part > a document with no section spec but with sections keeps its measured figure 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — a market document shows its own part > carries exact filing identities and section keys when document titles and classes are identical
+AssertionError: expected [ undefined, undefined ] to deeply equal [ 'filing-a', 'filing-b' ]
+
+- Expected
++ Received
+
+  [
+-   "filing-a",
+-   "filing-b",
++   undefined,
++   undefined,
+  ]
+
+ ❯ server/routes/c2c/__tests__/project-vault-completion.test.ts:200:88
+    198|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    199|     const filings = res.body.data.tree.filter((node: { id: string }) =…
+    200|     expect(filings.map((node: { filingDocumentId: string }) => node.fi…
+       |                                                                                        ^
+    201|     for (const filing of filings) {
+    202|       expect(filing.children[0]).not.toHaveProperty('filingDocumentId'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — a market document shows its own part > a document with no section spec and no sections has no completion figure (at head: 0)
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/routes/c2c/__tests__/project-vault-completion.test.ts:235:35
+    233|     expect(leaf).toBeTruthy();
+    234|     expect(leaf.pct).toBeNull();
+    235|     expect(leaf.filingSectionKey).toBeNull();
+       |                                   ^
+    236|   });
+    237|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries kind, format, model, status, version, author, recorded hash, signature, sources, review and origin
+AssertionError: expected { artifactId: 'artifact_1', …(11) } to deeply equal { artifactId: 'artifact_1', …(12) }
+
+- Expected
++ Received
+
+@@ -9,7 +9,6 @@
+    "origin": "ana",
+    "reviewed": true,
+    "signature": "stale",
+    "signedVersion": 3,
+    "sourceCount": 4,
+-   "version": 5,
+  }
+
+ ❯ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts:165:27
+    163|       src: 'artifact',
+    164|     });
+    165|     expect(leaf.artifact).toEqual({
+       |                           ^
+    166|       artifactId: 'artifact_1',
+    167|       version: 5,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > does not invent an importable version for an unrecorded or invalid head (null)
+ FAIL  server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > does not invent an importable version for an unrecorded or invalid head (0)
+ FAIL  server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > does not invent an importable version for an unrecorded or invalid head (1.5)
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts:189:71
+    187|     const res = await request(app()).get(`/api/c2c/project-vault/${PRO…
+    188|     expect(res.status).toBe(200);
+    189|     expect(branch(res.body).children[0].children[0].artifact.version).…
+       |                                                                       ^
+    190|   });
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 17 passed (23)
+   Start at  18:09:45
+   Duration  16.20s (transform 4.33s, setup 192ms, import 14.91s, tests 379ms, environment 0ms)
+

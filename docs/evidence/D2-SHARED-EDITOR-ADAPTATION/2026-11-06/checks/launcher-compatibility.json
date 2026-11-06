@@ -1,0 +1,64 @@
+{
+  "incomingCanonical": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4",
+  "checkedMerge": "b8b73e2fc924a5f0b80510a8920d57ca22bf8459",
+  "exitCode": 0,
+  "nodeMajor": 22,
+  "testsPassed": 27,
+  "failed": 0,
+  "command": "node --test scripts/ci/__tests__/dev-entrypoint.test.mjs scripts/ops/codespaces-startup.test.mjs scripts/demo/launch-demo/qualify-csr.test.mjs scripts/demo/launch-demo/qualify-ana-editor.test.mjs",
+  "inputProof": "Read-only run; selected inputs checked against the committed merge after completion. No before-run snapshot claimed.",
+  "selectedInputs": [
+    {
+      "path": "package.json",
+      "sha256": "af28ba6ac01790095784a6c04a8a288d256470915898fe003f9289cc6e69fe75",
+      "gitBlob": "aedfd0b154b1101dcefa729d54911ae00e85cd66"
+    },
+    {
+      "path": ".devcontainer/post-start.sh",
+      "sha256": "baf40d3b9386f47b86ee58af7f4326e6f3821aa8b4e6d10c0cecc6387300c0e9",
+      "gitBlob": "d5fec4c79659c534005963876ab62ddab4dd1e7a"
+    },
+    {
+      "path": "scripts/build-server.mjs",
+      "sha256": "55ceb60c631634a8b552fc6f0696e1cfd80777f057907b07cb7a24929b25042a",
+      "gitBlob": "ee73103b28461690d76ae818d59f9edbc5399e39"
+    },
+    {
+      "path": "scripts/ci/__tests__/dev-entrypoint.test.mjs",
+      "sha256": "29bd02f0c11e984e69b2acbc5e9881fc8246eb915f617fbe308fdb92b6ab506d",
+      "gitBlob": "448166dc568bcdf125466ba0d648eef6941a693f"
+    },
+    {
+      "path": "scripts/ops/codespaces-startup.test.mjs",
+      "sha256": "b8b2718ce5ae3d98394557fda252c7debdd22c0de94fa5e1c7f503a90b866092",
+      "gitBlob": "94d9ef8b9f31a24daebb2c00205dda53c0aefb80"
+    },
+    {
+      "path": "scripts/demo/launch-demo/qualify-csr.mjs",
+      "sha256": "f36c9bc5d36c716cfbb982fe104c3f5fb6ddb508301f70fc4fa4b9874c5a9d11",
+      "gitBlob": "e58e1d131ae11dd52ac36e48e04eba1a953fa3b7"
+    },
+    {
+      "path": "scripts/demo/launch-demo/qualify-csr.test.mjs",
+      "sha256": "ca8c8b873d286eb6ec19b7202a64ad04231a63fbc415dd2a4af83980c0da8256",
+      "gitBlob": "3d41c2adb03554cad55254d382b22ab58f085e81"
+    },
+    {
+      "path": "scripts/demo/launch-demo/qualify-ana-editor.mjs",
+      "sha256": "d1cacc0ef324298ca4c21de76b195e791a5ce8919deb214fdad16c04c2732776",
+      "gitBlob": "02a8a477274f64dce4af368bc9d7ab64ca301487"
+    },
+    {
+      "path": "scripts/demo/launch-demo/qualify-ana-editor.test.mjs",
+      "sha256": "7c2d965922ff2833d6121fb8bd42d1aef52cf5593423f9cca9ca5aa0d418c86c",
+      "gitBlob": "a8b5f0791891d58e3a2616043d5fa5a7f6513c7e"
+    }
+  ],
+  "rawLogSha256": "dc19824670c433c789da1e020108b9437738626e2ae3280fe28e96d7a5b572ec",
+  "rawLogBytes": 6127,
+  "log": "checks/launcher-compatibility.txt.gz",
+  "limits": [
+    "Synthetic local Node fixtures only.",
+    "No live provider, credentials, deployment or native runtime qualification."
+  ]
+}

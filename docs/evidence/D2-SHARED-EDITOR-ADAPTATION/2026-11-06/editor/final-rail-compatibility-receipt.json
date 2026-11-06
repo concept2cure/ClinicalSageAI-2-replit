@@ -1,0 +1,31 @@
+{
+  "observedAt": "2026-11-06T20:12:13.141230+00:00",
+  "testedHead": "5283da69cb953d7c4c8970d80fd14f8fe81879ce",
+  "testedCommittedTree": "7bf97f21176084cadfb64493f8d78434076f1e03",
+  "headAtReceipt": "5283da69cb953d7c4c8970d80fd14f8fe81879ce",
+  "state": "Read-only single-suite check. No source, test, runner, assertion or timeout changes.",
+  "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx --maxWorkers=1",
+  "result": {
+    "exitCode": 0,
+    "passedSuites": 1,
+    "passedTests": 16,
+    "failedTests": 0,
+    "durationSeconds": 5.75
+  },
+  "pins": {
+    "client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx": "e3a52cd8d1c56a14dec0268adef39a0717470e6ce328d87557e5da7e170456ae",
+    "client/src/concept2cure/v2/Shell.tsx": "2f41f9a60277a2f6856a70c19f636cf528751ea3ed8f1b03248917d5bbec2c32",
+    "client/src/concept2cure/v2/navEntitlements.tsx": "f26e729cf42c34b33ed6e17d00a6f888d254136ac24d82cab1f02b9ebcbee7e7",
+    "client/src/concept2cure/v2/shellProject.ts": "f3eb25c1e08b3fff094c0b7aa468084dd4caa7d0ca48f8f582fbe670f7c7676e",
+    "client/src/concept2cure/v2/paletteProjects.ts": "815612ece3f00d83750ea6625cdb9784a90302ab6e305c374709ff0b0004ddd8"
+  },
+  "allPinsMatchTestedCommit": true,
+  "log": {
+    "file": "final-rail-compatibility-green.txt.gz",
+    "uncompressedSha256": "3ae9398f749078719bac87b95702e9d9aa3ba888866a1707dca2de33452f68bc",
+    "uncompressedBytes": 2606,
+    "compressedSha256": "8bb65c6c7d1a4a16304b71348937ce4a7498adc435d2db338578e1487b5f5663",
+    "compressedBytes": 556
+  },
+  "limits": "No broader editor, compiler, build or browser rerun by this agent. Root separately owns unchanged browser input pins and final normal gates."
+}

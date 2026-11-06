@@ -5,6 +5,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RecordedTemplateSource } from '../../../../shared/authoring/recorded-template-source';
 import type { RequestSqlClient } from '../../../db/requestDb';
 import type { SavedTemplateReview } from '../../ana/saved-template-review';
+import { parseRecordedTemplateSource } from '../../../../shared/authoring/recorded-template-source';
+import { builtinAuthoringTemplateId, getBuiltinAuthoringTemplate } from '../builtin-authoring-templates';
+import { builtinTemplateSource } from '../authoring-template-sections';
 
 const h = vi.hoisted(() => ({ review: vi.fn() }));
 vi.mock('../../ana/saved-template-review', () => ({ savedTemplateReview: h.review }));
@@ -223,6 +226,37 @@ describe('a CSR drafts as a CSR whatever template it was made from', () => {
 });
 
 describe('writing region follows the effective saved source without inventing a jurisdiction', () => {
+  it.each(['component:performance_evaluation_report', 'registry:EU_PER'])('refuses unsupported actual notified-body agency for %s without substituting EMA', async entryId => {
+    const template = await getBuiltinAuthoringTemplate(builtinAuthoringTemplateId(entryId));
+    if (!template) throw new Error('The actual PER template must be available');
+    const selected = parseRecordedTemplateSource(builtinTemplateSource(template), template.id);
+    if (!selected) throw new Error('The actual PER source must be recorded');
+    expect(selected).toMatchObject({ aiDraftable: true, filingContext: { region: 'EU', agency: 'Notified_Body' } });
+    const input = assembled(source(), selected);
+    const before = JSON.stringify(input);
+    h.review.mockResolvedValue(input);
+    for (const requested of [undefined, 'EMA', 'FDA']) await denied('TEMPLATE_AGENCY_UNSUPPORTED', 409, requested);
+    expect(JSON.stringify(input)).toBe(before);
+  });
+
+  it('keeps the actual IVDR technical-document manual limit ahead of any writing preference', async () => {
+    const template = await getBuiltinAuthoringTemplate(builtinAuthoringTemplateId('registry:EU_IVDR'));
+    if (!template) throw new Error('The actual IVDR template must be available');
+    const selected = parseRecordedTemplateSource(builtinTemplateSource(template), template.id);
+    if (!selected) throw new Error('The actual IVDR source must be recorded');
+    expect(selected.filingContext?.agency).toBe('Notified_Body');
+    h.review.mockResolvedValue(assembled(source(), selected));
+    await denied('TEMPLATE_NOT_DRAFTABLE', 409, 'EMA');
+  });
+
+  it('does not interpret an unsupported recorded agency as a geographic region code', async () => {
+    const recorded = source('EU');
+    if (!recorded.filingContext) throw new Error('This fixture requires recorded agency identity');
+    recorded.filingContext.agency = 'EU';
+    h.review.mockResolvedValue(reviewed(recorded));
+    await denied('TEMPLATE_AGENCY_UNSUPPORTED', 409, 'EMA');
+  });
+
   it.each([['US', 'FDA'], ['CA', 'Health Canada'], ['EU', 'EMA'], ['JP', 'PMDA']] as const)('derives %s writing control only when the caller omitted it', async (region, expected) => {
     h.review.mockResolvedValue(reviewed(source(region)));
     expect((await read()).region).toBe(expected);
