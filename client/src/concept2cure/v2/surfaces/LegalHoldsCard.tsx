@@ -37,8 +37,9 @@ const isActor = (v: unknown) => v === null || Number.isInteger(v);
 const isNullableText = (v: unknown) => v === null || typeof v === 'string';
 const isScopedTarget = (h: LegalHold) => (h.scope === 'program' && typeof h.programId === 'string' && h.documentId === null)
   || (h.scope === 'document' && typeof h.documentId === 'string' && h.programId === null);
-const isTargetLabels = (h: LegalHold) => (h.targetLabel === undefined || isNullableText(h.targetLabel))
-  && (h.targetProjectLabel === undefined || isNullableText(h.targetProjectLabel));
+const isOptionalText = (v: unknown) => v === undefined || isNullableText(v);
+/** The names the server adds beside the ids: the target's, and the people who placed and lifted it. */
+const isLabels = (h: LegalHold) => [h.targetLabel, h.targetProjectLabel, h.placedByName, h.liftedByName].every(isOptionalText);
 
 function isHold(v: unknown): v is LegalHold {
   if (!v || typeof v !== 'object') return false;
@@ -47,9 +48,8 @@ function isHold(v: unknown): v is LegalHold {
     && typeof h.active === 'boolean'
     && isDate(h.placedAt) && (h.liftedAt === null || isDate(h.liftedAt))
     && isActor(h.placedBy) && isActor(h.liftedBy) && isNullableText(h.liftReason)
-    && (h.placedByName === undefined || isNullableText(h.placedByName)) && (h.liftedByName === undefined || isNullableText(h.liftedByName))
     && h.active === (h.liftedAt === null)
-    && isScopedTarget(h) && isTargetLabels(h);
+    && isScopedTarget(h) && isLabels(h);
 }
 function isList(v: unknown): v is ListPayload {
   const holds = (v as ListPayload | null)?.holds;
