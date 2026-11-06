@@ -28,7 +28,7 @@ import { requestPgClient } from '../../db/requestDb.js';
 import { retainRequestDbClient } from '../../db/requestDbLease.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import { GatewayContextWindowError } from '../../services/ai-gateway/context-budget.js';
-import { classifyGatewayError, GATEWAY_ERROR_HTTP_STATUS } from '../../services/ai-gateway/gateway-error-map.js';
+import { classifyGatewayError, GATEWAY_ERROR_HTTP_STATUS, isGatewayError } from '../../services/ai-gateway/gateway-error-map.js';
 import {
   resolveEffortLevel,
   resolveEffortStrategy,
@@ -157,7 +157,7 @@ import {
 import { TurnTimeline } from '../../services/ana/turn-timeline-emitter.js';
 import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
-import { selectToolsForTurn, SELF_DRIVE_TOOLS } from '../../services/ana/tool-selection.js';
+import { selectToolsForTurn, SELF_DRIVE_TOOLS, CANVAS_DOCUMENT_TOOLS } from '../../services/ana/tool-selection.js';
 import { recentTurnWindow, conversationWindowNotice } from '../../services/ana/history-window.js';
 import { continuationContextMessage } from '../../../shared/ana/continuation-context.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
@@ -2507,6 +2507,9 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
             // rather than always-on because voice and deep investigations
             // share the selector and can do neither (tool-selection.ts).
             ...SELF_DRIVE_TOOLS,
+            // A document she drafts reaches the canvas this route renders only
+            // through draft_authoring_document (tool-selection.ts).
+            ...CANVAS_DOCUMENT_TOOLS,
             // Delegation survives relevance trimming on a turn that may use it.
             ...(agentsOffered ? [RUN_AGENT_TOOL] : []),
             // The engines a loaded skill's method names: a method that tells
@@ -4285,7 +4288,19 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       timeline.end(stopped ? 'stopped' : 'failed', stopped ? endStoppedReason(true, stoppedWhy) : null);
       const turnRecord = await fileTurnRecord(stopped ? 'stopped' : 'failed');
       const budgetRefusal = error instanceof ToolResultBudgetExceededError ? error : null;
-      const refusal = budgetRefusal ?? contextRefusal;
+      /* Every other gateway refusal is classified too: a refused API key, no
+         qualified model, an organisation's placement policy, a rate limit. Until
+         2026-11-06 only the two above were, so each of these reached the person
+         as "An error occurred while generating the response" and the page's "Try
+         again", and a wrong key looked like a broken product. The classified
+         message is the gateway's own, never the provider's text. */
+      const classified = !contextRefusal && isGatewayError(error)
+        ? classifyGatewayError(error, { priorToolWorkMayExist: true }) : null;
+      // TOKEN_LIMIT_EXCEEDED and its recovery stay the context carrier's alone
+      // (stream-context-window-refusal.test.ts, the narrow carrier controls): a
+      // provider's own size error keeps the generic frame, as before.
+      const gatewayRefusal = classified && classified.code !== 'TOKEN_LIMIT_EXCEEDED' ? classified : null;
+      const refusal = budgetRefusal ?? contextRefusal ?? gatewayRefusal;
       if (res.headersSent && stopped) {
         // A stop, not a failure: the page reads it as every stop closes — its
         // reason on `done`, then the record on `post_done`. Before DT3 only a
@@ -4315,6 +4330,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       } else {
         if (budgetRefusal) sendError(res, 422, budgetRefusal.message, { turnRecord }, budgetRefusal.code);
         else if (contextRefusal) sendError(res, GATEWAY_ERROR_HTTP_STATUS[contextRefusal.code], contextRefusal.message, { turnRecord }, contextRefusal.code);
+        else if (gatewayRefusal) sendError(res, GATEWAY_ERROR_HTTP_STATUS[gatewayRefusal.code], gatewayRefusal.message, { turnRecord }, gatewayRefusal.code);
         else sendError(res, 500, 'Internal server error');
       }
     } finally {
