@@ -1011,6 +1011,35 @@ The founder asked this session to take over and finish the project page's work. 
    and Respond use the calm section pattern, and Respond lists Commitments from the page's one read. This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
 
+#### F1 — saved conversation handoffs (Codex continuation, 2026-11-06)
+
+**Delivered**
+
+- `931e287429`, with nullable-writer type correction `ae825ca1b7`,
+  `docs/evidence/F1/2026-11-06-recent-conversation-handoff/`.
+  D1's existing sidebar/palette could select B while A was open without loading B;
+  it dropped the saved-thread URL and parked the selection for a later visit.
+  The shell now delivers the choice through its existing conversation identity
+  and canonical URL. Selecting the current thread preserves its composer and
+  unsent text. The existing active-answer refusal is shared with shell preflight,
+  before a remount can discard a follow-up. Refused requests do not replay.
+  The type-only correction uses the existing nullable handoff contract without
+  touching D3's held global declaration; its emitted JavaScript is identical.
+- 178 focused tests and the production build pass, with no new lint errors or
+  warnings. The running app was used at 1440 and 390 px, light and dark, with
+  project context retained. Separate, explicitly synthetic SSE checks verify
+  pending-answer refusal and fresh retry; no provider/model drafting was exercised.
+- No new screen, card, editor, canvas, route, service, table, tool or dependency.
+  The changes finish `V2App.tsx`, with the existing refusal factored into
+  `routing.ts` and reused by `ConversationThread.tsx`. File holds are released.
+
+**Next**
+
+Plain generic navigation to the conversation, with no saved-thread selection,
+can still drop its saved-thread URL suffix. It is a separate D1/F1 repair;
+the saved-selection slice does not change it. Other packages retain their owners
+and holds in `COORDINATION.md`; no package is marked closed here.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for
