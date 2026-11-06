@@ -549,6 +549,9 @@ async function prepare() {
   await step('Editor: New document → M5 lists the CSR once (F1)', checkCsrCatalog, { page: PEOPLE.author.page });
   await step('Editor: the CSR created from New document shows "Build from the study’s data"', prepareCsrDocument, { critical: true, page: PEOPLE.author.page });
   await step('Study data: manifest chosen, tables previewed, frozen in the document', prepareFreeze, { critical: true, page: PEOPLE.author.page });
+  // DEMO_PREPARE_UNTIL=freeze stops here: the study is ready for its CSR build, which a person starts with their own
+  // model key (the Codespace's setup, .devcontainer/post-start.sh, never spends that key by itself).
+  if (process.env.DEMO_PREPARE_UNTIL === 'freeze') return;
   await step('Build CSR draft, waited to its end', prepareBuild, { critical: true, page: PEOPLE.author.page });
   await step('Section review: the requester sends drafted headings, the approver reads and approves them', prepareHeadingReview, { page: PEOPLE.approver.page });
   await step('Import approved sections into this CSR document (F6)', prepareImport, { page: PEOPLE.author.page });
