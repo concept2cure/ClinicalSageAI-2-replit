@@ -618,3 +618,38 @@ describe('POST /:projectIdent/compile — nothing placed yet, said plainly', () 
     expect(body.errors.join(' ')).not.toMatch(/application number|D-U-N-S/i);
   });
 });
+
+/* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): with documents placed,
+   the compile led with one run-on refusal ("… (select the recorded applicant in
+   Module 1 forms); and … (record its nine digits in the sponsor registry) …..")
+   that names no screen in the product, and Validate said nothing of the identity
+   at all. B3's per-gap findings, with where a US IND records each, now lead both. */
+describe('documents placed, applicant identity missing: the same actionable lines as with nothing placed', () => {
+  const NOTHING_RECORDED = { application_number: null, applicant_sponsor_id: null, sponsor_id: null, duns: null,
+    contact_name: null, contact_phone: null, contact_email: null };
+  const noNumber = { program: { ...PROGRAM, application_number: null }, identity: NOTHING_RECORDED };
+
+  it('compile: the application number, the bound sponsor and its D-U-N-S lead, each saying where to record it', async () => {
+    mockSpine(noNumber);
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq({ region: 'FDA', submissionType: 'initial' }), res);
+    const body = res.json.mock.calls[0][0];
+    expect(assembleSequenceMock).not.toHaveBeenCalled();
+    expect(body).toMatchObject({ status: 'failed', submissionReady: false });
+    const [first, second, third] = body.errors as string[];
+    expect(first).toMatch(/application number/i);
+    expect(second).toMatch(/sponsor/i);
+    expect(third).toMatch(/D-U-N-S/);
+    for (const line of [first, second, third]) expect(line).toMatch(/Forms and letters \(1571, cover letter, LOA\)/);
+    expect(JSON.stringify(body.errors)).not.toMatch(/\.\./);
+  });
+
+  it('validate: the identity gaps are errors too, so Validate never reads cleaner than Compile', async () => {
+    mockSpine(noNumber);
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/validate', 'post')(makeReq({ region: 'FDA' }), res);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.results[0]).toMatchObject({ rule: 'PACKAGE_IDENTITY_MISSING', severity: 'error' });
+    expect(payload.valid).toBe(false);
+  });
+});

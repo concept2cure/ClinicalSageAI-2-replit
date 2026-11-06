@@ -1083,6 +1083,7 @@ async function compileFromSpine(
   let auditTrail: AuditRowOutcome | undefined;
   /** The number the package carries (P-44), stored with the compilation. */
   let packagedNumber: string | null = null;
+  let identityRefused = false;
 
   try {
     // The application and the applicant from the record, or nothing is
@@ -1096,7 +1097,7 @@ async function compileFromSpine(
     if (!region) throw new Error('The sequence region is not recognized, so its recorded package identity cannot be established. Nothing was assembled.');
     const fda = region === 'US';
     const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.', { fda });
-    if (missingIdentity) throw missingIdentity;
+    if (missingIdentity) { identityRefused = true; throw missingIdentity; }
     const assembled = await assembleSequence({
       sequenceId: seq.id,
       organizationId: orgId,
@@ -1200,6 +1201,10 @@ async function compileFromSpine(
       message: `eCTD assembly refused: ${assembleFailure}`,
       fix: 'Resolve the refusal (leaf sources, path safety, packager gates) and compile again.',
     });
+    // A refusal for the applicant identity leads with B3's per-gap findings,
+    // each saying where a US IND records it, as a compile with nothing placed
+    // does (J4 human test, 2026-11-06). The refusal itself stays; nothing is loosened.
+    if (identityRefused) validationResults.unshift(...await packageIdentityFindings(orgId, anchor, spine));
   }
   const errors = validationResults.filter((v) => v.severity === 'error').map((v) => v.message);
   // The compile STATUS reports whether the package assembled — the same
@@ -1556,6 +1561,9 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
     if (spine?.sequence && spine.sequence.leafCount > 0) {
       const leaves = await loadSpineLeaves(spine.sequence.id, orgId);
       results = [
+        // What the package would be refused for, as with nothing placed (B3):
+        // Validate must not read cleaner than Compile (J4 human test, 2026-11-06).
+        ...await packageIdentityFindings(orgId, anchor, spine),
         {
           rule: 'SUBMISSION_SPINE_LINKED',
           severity: 'info',
