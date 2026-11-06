@@ -10,6 +10,6 @@
   "server/services/c2c/program-project-anchor.ts": "feee4a39a6147b595e058682b4ac97f1cba23b10cfe5ffda6012b76e3d1585f3",
   "server/services/csr/project-scope.ts": "6f70d1b969ea1abc92809f22ac9e8061506366ce250e583f325e969520b74108",
   "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
-  "server/services/report-os/project-access.ts": "1f65ab78bebd43e97563c42cbe16345845de58277efa79e03f2d8c2c753b5731",
+  "server/services/report-os/project-access.ts": "14fda044477c19e4903efd888bdd175a1e2ba2207d6633d15c58a2c65d2eafcf",
   "tests/validation/lib/harness.mjs": "eb4d7563f86b0fec1a2a7569404c7f6c753c1a52982ac1077b16820e5a8ecf70"
 }

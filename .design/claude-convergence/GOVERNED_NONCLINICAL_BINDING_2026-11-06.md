@@ -40,3 +40,10 @@ Independent read-only review confirms the existing authority is usable without g
 ## What already exists — immediate tool-result publication
 
 Review of the existing SSE owner (`routes/ana-ri/stream.ts`, tool_result recording/emission) found that the tool payload is recorded/shown before its next gateway SDK check. The native owner must therefore invoke the same actor/anchor/whole-snapshot callback once before returning any recorded/empty-set outcome, as well as register it for later gateway checks. Add query-wrapper race reds that mutate permission/content/eligible-set after the initial SELECT before fixing this boundary. No stream/gateway code changes are needed.
+
+
+## Implemented and checked
+
+The existing Module2 tools now compose from their selected project's governed eligible study fields under the real same-client actor/anchor boundary. Source-set grants are checked before tool publication and again before protected model dispatch/retry/fallback. Missing source context is unavailable, not an empty register. Whole-set changes (including no-timestamp edits/additions), permission revocation, deletion and relinking refuse. No name/pathology/report/safety facts are inferred. Currentness is current-run only.
+
+Final core79, adjacent260 and gateway102 cases pass; additional Quality shared compatibility44 passes after ordinary canonical merge. Incoming68 client and11 Node cases and the final combined production/verifier build pass. Lint0 errors/95 existing warnings, no growth. Full compiler/publication remain the final pending gate, with actual acceptance recorded in this increment's evidence rather than assumed.

@@ -35,7 +35,7 @@
   "core": {
     "result": "passed",
     "suites": 3,
-    "tests": 78,
+    "tests": 79,
     "log": "core-final.txt.gz"
   },
   "adjacent": {
@@ -71,7 +71,7 @@
   },
   "build": {
     "result": "passed",
-    "log": "build.txt.gz",
+    "log": "build-quality-merged.txt.gz",
     "scope": "production client/server and audit/qualification operations verifiers"
   },
   "publication": {
@@ -95,5 +95,21 @@
     "tests": 11,
     "log": "incoming-node.txt.gz"
   },
-  "finalIssuerGuard": "Explicit missing-actor refusal at the private grant issuer narrows its required actor type; core/lint/build rerun after this final source edit."
+  "finalIssuerGuard": "Explicit missing-actor refusal at the private grant issuer narrows its required actor type; core/lint/build rerun after this final source edit.",
+  "qualitySynchronization": {
+    "remote": "05aafea82",
+    "merge": "b9a612362",
+    "ownProductionHashesPreserved": 4,
+    "review": "Only Quality receipt currentness/cache behavior changes in shared project-access module; canAccessReportProject and CSR admission unchanged. Other source/task/report changes strengthen currentness. No Module2/gateway edit needed.",
+    "sharedCompatibility": {
+      "result": "passed",
+      "tests": 122,
+      "suites": 7,
+      "overlappingCoreTests": 78,
+      "additionalQualityTests": 44,
+      "log": "quality-merged.txt.gz"
+    },
+    "limits": "Local checks cover shared compatibility, not a rerun/qualification of every owner task/UI/native/PDF claim."
+  },
+  "sourceFreeze": "Final added test proves named project under an unbound private conversation authority, including subsequent sharing revocation. Production unchanged; final core79 and lint95 pass."
 }

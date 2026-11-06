@@ -205,6 +205,20 @@ describe.each(['2.4', '2.6'] as const)('Module %s governed project binding', mod
 });
 
 describe('denials and empty/unavailable sources', () => {
+  it('binds a named project when the private conversation authority has no open project', async () => {
+    const ctx = context({ projectId: null, projectRef: null });
+    await withAuthority(async () => {
+      const out = await draft('2.6', { project_id: 11 }, ctx);
+      expect(status(out)).toBe('recorded');
+      expect(ids(out)).toEqual([1, 2, 3]);
+      const gate = checkpoint(ctx);
+      expect(gate.tiers).toContain(3);
+      await gate.recheck();
+      await pg.exec("DELETE FROM project_members WHERE project_id=11 AND user_id=5");
+      await expect(gate.recheck()).rejects.toThrow();
+    }, ctx);
+  });
+
   it.each([
     ['non-member', { userId: 99 }], ['missing actor', { userId: undefined }],
     ['private project without sharing', { userId: 6 }], ['foreign project', { projectId: 13 }],

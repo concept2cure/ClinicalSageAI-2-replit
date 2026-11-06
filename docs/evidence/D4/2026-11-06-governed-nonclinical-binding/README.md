@@ -56,3 +56,10 @@ Final core78/78 in3 suites and adjacent260/260 in17 suites pass. Scoped lint acr
 ## Source freeze and canonical synchronization
 
 All440 cases in24 distinct source/core/adjacent/gateway suites pass. Canonical7e042881d was merged normally as6be80f509; incoming collaboration/RBM context behavior was reviewed,68 client cases and11 Node checks pass. A final explicit issuer actor guard preserves the required private-grant identity; core78, zero-new-warning lint and production build were rerun afterward. The6-file source manifest now pins that final source. No dependency, warning/typecheck baseline or gate changed. Further incoming Quality changes are reviewed before final integration/publication; no owner browser/native/model qualification is borrowed as local evidence.
+
+
+## Final merged checks before publication
+
+Canonical05aafea82 is merged normally asb9a612362. Review confirms shared `canAccessReportProject` and CSR admission are unchanged; Quality receipt caches/currentness are strengthened. The7-suite shared-compatibility run passes122 cases (78 overlap the earlier core;44 are additional Quality cases). The final new real-request-shape case proves a named project works under private conversation authority with no open project and that subsequent permission removal still refuses. Final core is79/79, alongside260 adjacent and102 gateway cases; these24 source suites total441 distinct cases, or485 including the44 Quality compatibility cases. Incoming68 client/11 Node cases are separately recorded. No counts are added twice.
+
+Final production client/server and audit/qualification verifier build passes on the Quality-merged source. The last edit afterward adds only the named-project test; all four production hashes remain identical. Final6-file lint:0 errors/95 existing warnings, no growth or baseline change. Source/test and13 integration-owner hashes are pinned. Full-program TypeScript and normal canonical publication remain pending until their actual receipts are captured. Native study/report scientific correctness, live model qualification, deployed RLS and later-turn currentness are not inferred from these software checks.
