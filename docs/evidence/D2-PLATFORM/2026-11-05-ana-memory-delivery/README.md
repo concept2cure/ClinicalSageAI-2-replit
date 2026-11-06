@@ -6,7 +6,7 @@ Branch and starting snapshot: `concept2cure-v2`, `2cec182a17105da5863bab2fdb66ba
 
 Scope: W1 / launch row D2, `Plan: F1`. Repair evidence, not launch closure.
 
-Status: local behavioral tests and build passed. Complete pre-push validation and GitHub publication remain pending; their exact identities and outcomes will be recorded in a separate publication receipt.
+Status: repaired, locally verified and published. The complete unchanged pre-push hook passed before publication; exact candidate/published identities and observed hosted workflow states appear below and in `publication.json`.
 
 ## What already exists
 
@@ -66,9 +66,39 @@ The first full pre-push attempt on local candidate `340290a483a10fa19e1e90835032
 
 The three existing test files were refactored without changing production code or warning policy. Bootstrap cases are split into coherent groups; assembler cases register through three focused helpers; consolidation shares compilation, continuity and rejection assertions. All original cases and meaningful assertions remain, and several continuity checks now apply consistently to more cases. Targeted lint returned to the previous warning counts: zero for bootstrap, one existing outer-group warning for the assembler and one existing harness warning for consolidation. The consolidation file has 499 counted lines. No lint suppression, baseline, gate or configuration was changed.
 
-The final combined tests were rerun after this cleanup and again passed 128 Node cases plus 323 Vitest cases. All seven production files remain byte-identical to the successful build. `execution.json` carries the refreshed final test identities, the failed-gate record and the test-refactor receipts. The complete hook will be rerun on the final committed candidate before publication.
+The final combined tests were rerun after this cleanup and again passed 128 Node cases plus 323 Vitest cases. All seven production files remain byte-identical to the successful build. `execution.json` carries the refreshed final test identities, the failed-gate record and the test-refactor receipts. The complete hook was then rerun on the final committed candidate and passed before publication.
 
-The captured logs are preserved except for documented whitespace normalization needed by `git diff --check`. Extra blank lines at EOF are removed; the failed consolidation TAP's diagnostic diff lines also have trailing whitespace removed. `execution.json` records original/stored SHA-256 hashes and the exact whitespace changes, so the original captures can be reconstructed. No test result, diagnostic text, baseline, gate or compiler configuration is changed.
+### Complete pre-push result
+
+The unchanged hook passed on local candidate `85c4f258b2c8b0292b6af59f7e56b8281b1da96b`, against remote base `2cec182a17105da5863bab2fdb66ba1adef317e2`, from **2026-11-06 05:24:58 UTC to 06:13:59 UTC**. Every pre-push gate passed. The warning ratchet reported no changed warning count in any of the 17 lintable files. Full-program TypeScript checking completed **15,379 source files exactly once, across 33 workers, with zero errors and an unchanged input snapshot**. The existing zero-error baseline, hook, compiler configuration, CI scripts, package manifest and lockfile were unchanged.
+
+`pre-push.txt` is the successful capture, with its original and stored hashes in `execution.json` and `publication.json`. Both normal pre-commit hooks passed as well; their captured outputs are retained. The failed earlier warning-gate attempt remains separate and is not counted as a pass.
+
+## Published result
+
+A fresh GitHub branch read-back at **2026-11-06 06:15:09 UTC** verified `concept2cure-v2` at **`58f9558d235184f6d02a50feb3c90b882bf2d370`**, tree **`fefec1e18d9b2cb4074d2d59c1b90920a082504f`**. A subsequent local fetch confirmed the same head and both complete trees.
+
+| Change | Local candidate | Published commit | Complete tree |
+| --- | --- | --- | --- |
+| Complete memory delivery | `340290a483a10fa19e1e90835032cd4ff3a9c222` | [28704d1a](https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/28704d1a1135195990d6c7abb49bb41bb5b196c0) | `22efcd6e0ad7cc932474112e9d24b019e2e52ea2` |
+| Test-size cleanup and refreshed evidence | `85c4f258b2c8b0292b6af59f7e56b8281b1da96b` | [58f9558d](https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/58f9558d235184f6d02a50feb3c90b882bf2d370) | `fefec1e18d9b2cb4074d2d59c1b90920a082504f` |
+
+Publication used the connected GitHub app after the complete local hook passed. Each remote tree matched the corresponding local tree exactly; each commit's tree, parent and message was read back and checked before updating the branch. The branch update used `force: false` and the expected previous head. The app supplies commit metadata, so local and published commit IDs differ while their trees match. After fetching, the clean local branch was aligned using a compare-and-swap ref update only after tree equality; no files were reset. This final publication receipt is a separate documentation commit.
+
+Hosted workflow states for the exact published implementation head were observed at the same time:
+
+| Workflow | Observed state | Run |
+| --- | --- | --- |
+| CI | Queued | [42173230790](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230790) |
+| Tier 5 Browser Smoke | Queued | [42173230725](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230725) |
+| CodeQL | Queued | [42173230763](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230763) |
+| Semgrep | Queued | [42173230837](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230837) |
+| Repo Health Baseline Refresh | Pending | [42173230773](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230773) |
+| C2C Agent — Validate & Audit | Completed / skipped | [42173230723](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230723) |
+
+These observations do not claim successful hosted CI, browser qualification or deployment. The completed local checks are the evidence stated above.
+
+The captured logs are preserved except for documented whitespace normalization needed by `git diff --check`. Extra blank lines at EOF are removed; the failed consolidation TAP's diagnostic diff lines and two pre-commit echo lines also have trailing whitespace removed. `execution.json` records original/stored SHA-256 hashes and the exact whitespace changes, so the original captures can be reconstructed. No test result, diagnostic text, baseline, gate or compiler configuration is changed.
 
 ## Reproduction
 
