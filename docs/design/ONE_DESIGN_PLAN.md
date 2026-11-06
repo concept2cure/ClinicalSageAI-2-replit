@@ -308,6 +308,13 @@ objectives, including CSR, CTD, IND and registration workstreams. Extend the cur
 Workers need scoped peer awareness and bounded communications so they can coordinate inside their authorized
 assignment; AnA still assesses results, reconciles dependencies and escalates the required human decisions.
 
+The existing canonical charter objective reader gains a caller-owned SQL executor adapter so the schedule monitor
+reads the same admitted snapshot as its task/dependency checks. Aggregate-learning review reaches the existing
+QMS change approval body and dialog: a named current curator explicitly reviews the exact generic artifact and
+invariant under the existing signature ceremony. The managed contribution setting has no generic settings door;
+server-only system reads return fixed aggregate classes/counts or verified public-artifact receipts, never tenant
+source text or an arbitrary privileged query. Legacy wisdom remains quarantined.
+
 The existing conversation gains a subtle **Show team** toggle, **off by default**. Opening it shows worker
 assignments, real status/blockers, measurable completed/total steps and AnA's actual assessment against the project
 goal. Unknown totals have no invented percentage; completion estimates require an execution basis and otherwise

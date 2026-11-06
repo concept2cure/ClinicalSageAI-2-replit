@@ -409,7 +409,11 @@
         "server/services/tasking/task-planning.ts",
         "server/services/qms/change-approval-signature.ts",
         "server/services/qms/changeControl.service.ts",
-        "server/services/qms/controlled-document-service.ts"
+        "server/services/qms/controlled-document-service.ts",
+        "server/services/c2c/charter-objectives.ts",
+        "server/routes/mdx-qms.ts",
+        "client/src/concept2cure/quality/ChangeControl.tsx",
+        "client/src/concept2cure/quality/qmsApproval.ts"
       ]
     },
     {
