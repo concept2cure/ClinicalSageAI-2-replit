@@ -1,0 +1,957 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/project-write-gates.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the routers production mounts at /api/concept2cure > register exactly these writes under /projects, so a new one cannot arrive without a verdict 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses viewer and writes nothing 36ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses not-on-private and writes nothing 27ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses archived and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses other-org and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits use-member 98ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits reviewer-no-edit 2069ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits owner 1092ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses viewer and writes nothing 1137ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses not-on-private and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses archived and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses other-org and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits use-member 26ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits reviewer-no-edit 1086ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits owner 1287ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items > refuses viewer and writes nothing 915ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items > refuses use-member and writes nothing 19ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items > refuses reviewer-no-edit and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items > refuses not-on-private and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items > refuses archived and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items > refuses other-org and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items > admits owner 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses viewer and writes nothing 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses use-member and writes nothing 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses not-on-private and writes nothing 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses archived and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > admits owner 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/authority-profiles > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/authority-profiles > refuses use-member and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/authority-profiles > refuses reviewer-no-edit and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/authority-profiles > refuses not-on-private and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/authority-profiles > refuses archived and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/authority-profiles > refuses other-org and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/authority-profiles > admits owner 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications > refuses use-member and writes nothing 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications > refuses reviewer-no-edit and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications > refuses not-on-private and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications > refuses archived and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications > admits owner 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses use-member and writes nothing 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses not-on-private and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses archived and writes nothing 34ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses other-org and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > admits owner 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses viewer and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses use-member and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses reviewer-no-edit and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses not-on-private and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses archived and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses other-org and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > admits owner 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses use-member and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses reviewer-no-edit and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses not-on-private and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > admits owner 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses viewer and writes nothing 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses use-member and writes nothing 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses reviewer-no-edit and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses not-on-private and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses archived and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses other-org and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses viewer and writes nothing 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses use-member and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses reviewer-no-edit and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses not-on-private and writes nothing 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses archived and writes nothing 22ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses other-org and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > admits owner 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses use-member and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses not-on-private and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses archived and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses other-org and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses viewer and writes nothing 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses use-member and writes nothing 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses reviewer-no-edit and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses not-on-private and writes nothing 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses archived and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses other-org and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > admits owner 38ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses viewer and writes nothing 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses use-member and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses not-on-private and writes nothing 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses archived and writes nothing 21ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > admits owner 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses viewer and writes nothing 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses use-member and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses reviewer-no-edit and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses not-on-private and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses archived and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > admits owner 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses use-member and writes nothing 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses not-on-private and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses other-org and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > admits owner 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/commitments > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/commitments > refuses use-member and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/commitments > refuses reviewer-no-edit and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/commitments > refuses not-on-private and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/commitments > refuses archived and writes nothing 19ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/commitments > refuses other-org and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/commitments > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses viewer and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses use-member and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses not-on-private and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses archived and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses other-org and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > admits owner 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses use-member and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses not-on-private and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses other-org and writes nothing 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > admits owner 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses use-member and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses reviewer-no-edit and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses not-on-private and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses archived and writes nothing 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses other-org and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > admits owner 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/publishops/services > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/publishops/services > refuses use-member and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/publishops/services > refuses reviewer-no-edit and writes nothing 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/publishops/services > refuses not-on-private and writes nothing 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/publishops/services > refuses archived and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/publishops/services > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/publishops/services > admits owner 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses viewer and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses use-member and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses reviewer-no-edit and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses not-on-private and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > admits owner 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks > refuses use-member and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks > refuses reviewer-no-edit and writes nothing 27ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks > refuses not-on-private and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks > refuses archived and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks > admits owner 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses viewer and writes nothing 1168ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses use-member and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses reviewer-no-edit and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses not-on-private and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/tasks/:taskId > admits owner 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses viewer and writes nothing 1087ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses use-member and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses not-on-private and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses archived and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses other-org and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > admits owner 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses viewer and writes nothing 1160ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses use-member and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses reviewer-no-edit and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses not-on-private and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses archived and writes nothing 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses other-org and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/bulk > admits owner 32ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/assess > refuses not-on-private and writes nothing 1017ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/assess > refuses other-org and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/assess > admits viewer 21ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/assess > admits use-member 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/assess > admits reviewer-no-edit 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/assess > admits archived 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/tasks/assess > admits owner 23ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations > refuses viewer and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations > refuses use-member and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations > refuses reviewer-no-edit and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations > refuses not-on-private and writes nothing 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations > refuses archived and writes nothing 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations > refuses other-org and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations > admits owner 35ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses viewer and writes nothing 1408ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses use-member and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses not-on-private and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses archived and writes nothing 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses other-org and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > admits owner 20ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses use-member and writes nothing 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses reviewer-no-edit and writes nothing 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses not-on-private and writes nothing 21ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses archived and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > admits owner 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses use-member and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses reviewer-no-edit and writes nothing 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses not-on-private and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses other-org and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > admits owner 22ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-package > refuses not-on-private and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-package > refuses other-org and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-package > admits viewer 22ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-package > admits use-member 1239ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-package > admits reviewer-no-edit 1250ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-package > admits archived 948ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/submission-package > admits owner 1341ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts > refuses viewer and writes nothing 1008ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts > refuses use-member and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts > refuses not-on-private and writes nothing 20ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts > refuses archived and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts > refuses other-org and writes nothing 7ms
+stdout | server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts > admits owner
+[GenerationGuard] artifact_created | source=document_builder project=401 artifact=artifact_1793931624800_27d75406e4a4 trace=gen_1793931624919_j609gn
+
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts > admits owner 183ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses viewer and writes nothing 1422ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses use-member and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses reviewer-no-edit and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses not-on-private and writes nothing 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses archived and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses other-org and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > admits owner 71ms
+stderr | server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > admits owner
+[governed-evaluator] RIM emitter not registered — learning loop inactive
+
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses viewer and writes nothing 1318ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses use-member and writes nothing 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses reviewer-no-edit and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses not-on-private and writes nothing 20ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses archived and writes nothing 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses other-org and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > admits owner 71ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses viewer and writes nothing 1150ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses use-member and writes nothing 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses reviewer-no-edit and writes nothing 22ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses not-on-private and writes nothing 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses archived and writes nothing 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses other-org and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > admits owner 204ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses viewer and writes nothing 1570ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses not-on-private and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses archived and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses other-org and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > admits use-member 69ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > admits reviewer-no-edit 1506ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > admits owner 1127ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses viewer and writes nothing 1137ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses use-member and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses not-on-private and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses archived and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses other-org and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > admits owner 30ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses viewer and writes nothing 1509ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses use-member and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses reviewer-no-edit and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses not-on-private and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses archived and writes nothing 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses other-org and writes nothing 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > admits owner 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses viewer and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses not-on-private and writes nothing 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses archived and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses other-org and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits use-member 31ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits reviewer-no-edit 1267ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits owner 1076ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses viewer and writes nothing 1332ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses not-on-private and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses other-org and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > admits use-member 25ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > admits reviewer-no-edit 1122ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > admits owner 1132ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses viewer and writes nothing 1498ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses use-member and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses not-on-private and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses archived and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses other-org and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > admits owner 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses viewer and writes nothing 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses use-member and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses reviewer-no-edit and writes nothing 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses not-on-private and writes nothing 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses archived and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses other-org and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > admits owner 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses viewer and writes nothing 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses use-member and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses reviewer-no-edit and writes nothing 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses not-on-private and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses archived and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses other-org and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > admits owner 20ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses viewer and writes nothing 1018ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses not-on-private and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses other-org and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > admits use-member 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > admits reviewer-no-edit 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > admits owner 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/linked > refuses viewer and writes nothing 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/linked > refuses use-member and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/linked > refuses reviewer-no-edit and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/linked > refuses not-on-private and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/linked > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/linked > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/linked > admits owner 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/knowledge > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/knowledge > refuses use-member and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/knowledge > refuses reviewer-no-edit and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/knowledge > refuses not-on-private and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/knowledge > refuses archived and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/knowledge > refuses other-org and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:projectId/knowledge > admits owner 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses viewer and writes nothing 1066ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses use-member and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses reviewer-no-edit and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses not-on-private and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses archived and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > admits owner 25ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/apps > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/apps > refuses use-member and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/apps > refuses reviewer-no-edit and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/apps > refuses not-on-private and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/apps > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/apps > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/apps > admits owner 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses viewer and writes nothing 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses use-member and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses reviewer-no-edit and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses not-on-private and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses other-org and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:projectId/apps/:appId > admits owner 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id > refuses viewer and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id > refuses use-member and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id > refuses reviewer-no-edit and writes nothing 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id > refuses not-on-private and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id > refuses archived and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id > admits owner 24ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses viewer and writes nothing 1299ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses use-member and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses not-on-private and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses archived and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/ownership-preferences > admits owner 25ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses viewer and writes nothing 1128ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses use-member and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses reviewer-no-edit and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses not-on-private and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses archived and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses other-org and writes nothing 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:id/sharing/members/:userId > admits owner 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses viewer and writes nothing 1327ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses use-member and writes nothing 20ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses reviewer-no-edit and writes nothing 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses not-on-private and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses archived and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses other-org and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id/sharing/members/:userId > admits owner 20ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses viewer and writes nothing 1448ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses use-member and writes nothing 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses reviewer-no-edit and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses not-on-private and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses archived and writes nothing 27ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses other-org and writes nothing 26ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PATCH /api/concept2cure/projects/:id/sharing/visibility > admits owner 34ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/collaborators > refuses viewer and writes nothing 1370ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/collaborators > refuses use-member and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/collaborators > refuses reviewer-no-edit and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/collaborators > refuses not-on-private and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/collaborators > refuses archived and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/collaborators > refuses other-org and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/collaborators > admits owner 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id > refuses viewer and writes nothing 1244ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id > refuses use-member and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id > refuses reviewer-no-edit and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id > refuses not-on-private and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id > refuses archived and writes nothing 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id > refuses other-org and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > DELETE /api/concept2cure/projects/:id > admits owner 23ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/export > refuses not-on-private and writes nothing 1384ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/export > refuses other-org and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/export > admits viewer 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/export > admits use-member 1431ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/export > admits reviewer-no-edit 1279ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/export > admits archived 1486ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/export > admits owner 1301ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/transfer > refuses viewer and writes nothing 1643ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/transfer > refuses use-member and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/transfer > refuses reviewer-no-edit and writes nothing 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/transfer > refuses not-on-private and writes nothing 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/transfer > refuses archived and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/transfer > refuses other-org and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/transfer > admits owner 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses viewer and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses use-member and writes nothing 20ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses reviewer-no-edit and writes nothing 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses not-on-private and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses archived and writes nothing 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses other-org and writes nothing 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/generate > admits owner 36ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses viewer and writes nothing 1434ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses use-member and writes nothing 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses reviewer-no-edit and writes nothing 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses not-on-private and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses archived and writes nothing 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses other-org and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/amend > admits owner 43ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses viewer and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses use-member and writes nothing 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses reviewer-no-edit and writes nothing 19ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses not-on-private and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses archived and writes nothing 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses other-org and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/review > admits owner 39ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses viewer and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses use-member and writes nothing 20ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses reviewer-no-edit and writes nothing 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses not-on-private and writes nothing 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses archived and writes nothing 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses other-org and writes nothing 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > admits owner 43ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > are exactly the thread, the review task, the status change, the comment, its resolution and the decision 1439ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads 29ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks 1524ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments 1714ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > an assigned reviewer who is not an edit member of the private project completes PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve 1733ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit 1566ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads 1537ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > a viewer is refused PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > a viewer is refused PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the review acts > the same reviewer is refused a write that is not a review act (editing the artifact) 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > approving an artifact through PUT …/status > an organization reviewer who is not an edit member, and holds signing authority, approves: the signed act commits 111ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > approving an artifact through PUT …/status > an archived project takes no approval, even from an approver who may sign: the gate answers before the ceremony 1685ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > approving an artifact through PUT …/status > a viewer is refused by the gate, and nothing is signed 1532ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > approving an artifact through PUT …/status > a member without signing authority is admitted by the gate and refused by the ceremony, and nothing is signed 1502ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the admitted project is the one the row belongs to > PUT /api/concept2cure/projects/:projectId/tasks/:taskId: the private project’s task, through the open project’s URL, is not found and not changed 1456ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the admitted project is the one the row belongs to > DELETE /api/concept2cure/projects/:projectId/tasks/:taskId: the private project’s task, through the open project’s URL, is not found and not changed 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the admitted project is the one the row belongs to > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads: the private project’s artifact, through the open project’s URL, is not found 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the admitted project is the one the row belongs to > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks: the private project’s artifact, through the open project’s URL, is not found 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the admitted project is the one the row belongs to > the review reads > GET …/review-threads: the private project’s review record, through the open project’s URL, is not readable 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the admitted project is the one the row belongs to > the review reads > GET …/review-tasks: the private project’s review record, through the open project’s URL, is not readable 1652ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the admitted project is the one the row belongs to > the review reads > GET …/review-threads: through its own project’s URL, its owner reads it (the control) 1468ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the admitted project is the one the row belongs to > the review reads > GET …/review-tasks: through its own project’s URL, its owner reads it (the control) 1471ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the admitted project is the one the row belongs to > the review reads > GET …/review-record/export: another project’s artifact, through this project’s URL, is not found (an audit reader) 1667ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > the admitted project is the one the row belongs to > the task writes carry the organization and the project in their predicate 1847ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/artifacts > lists only the projects the caller may use: a member not on the private project does not see its artifact 1576ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/artifacts > names each artifact’s project, and never another organization’s project 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/artifacts > its projects join is held to the caller’s organization 1511ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/artifacts-center/:artifactId/export > a member who is not on the private project is not given its artifact’s file, and no export is recorded 9ms
+stderr | server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/artifacts-center/:artifactId/export > the same member is given the open project’s artifact (read mode: the gate is project access, not edit permission)
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: {
+    rowMode: 'object',
+    parsers: {
+      '20': [Function: identity],
+      '1082': [Function: identity],
+      '1114': [Function: identity],
+      '1184': [Function: identity],
+      '1186': [Function: identity]
+    }
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/artifacts-center/:artifactId/export > the same member is given the open project’s artifact (read mode: the gate is project access, not edit permission) 212ms
+stderr | server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/artifacts-center/:artifactId/export > the private project’s owner is given its artifact, and the download is recorded (the control)
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: {
+    rowMode: 'object',
+    parsers: {
+      '20': [Function: identity],
+      '1082': [Function: identity],
+      '1114': [Function: identity],
+      '1184': [Function: identity],
+      '1186': [Function: identity]
+    }
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/artifacts-center/:artifactId/export > the private project’s owner is given its artifact, and the download is recorded (the control) 1831ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/artifacts-center/:artifactId/export > another organization’s artifact is not found 1513ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > a project under a second client of the organization > is admitted in its own workspace for its owner, and still refused to a member it is not shared with 22ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses not-on-private 1730ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses other-org 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits viewer 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits owner 23ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export > admits viewer 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export > admits owner 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits viewer 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits owner 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/reviews/project-queue > refuses not-on-private 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/reviews/project-queue > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/reviews/project-queue > admits viewer 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/reviews/project-queue > admits owner 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/review-pulse > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/review-pulse > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/review-pulse > admits viewer 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/review-pulse > admits owner 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/work-items > refuses not-on-private 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/work-items > refuses other-org 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/work-items > admits viewer 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/work-items > admits owner 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/readiness-summary > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/readiness-summary > refuses other-org 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/readiness-summary > admits viewer 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/readiness-summary > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/submission-center/items > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/submission-center/items > refuses other-org 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/submission-center/items > admits viewer 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/submission-center/items > admits owner 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/authority-profiles > refuses not-on-private 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/authority-profiles > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/authority-profiles > admits viewer 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/authority-profiles > admits owner 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications > refuses other-org 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications > admits viewer 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications > admits owner 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/company-legal-documents > refuses not-on-private 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/company-legal-documents > refuses other-org 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/company-legal-documents > admits viewer 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/company-legal-documents > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source > admits viewer 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source > admits owner 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > admits viewer 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > admits owner 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/question-proposals > refuses not-on-private 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/question-proposals > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/question-proposals > admits viewer 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/question-proposals > admits owner 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/commitment-proposals > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/commitment-proposals > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/commitment-proposals > admits viewer 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/commitment-proposals > admits owner 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/commitments > refuses not-on-private 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/commitments > refuses other-org 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/commitments > admits viewer 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/commitments > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options > refuses not-on-private 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options > refuses other-org 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options > admits viewer 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options > admits owner 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-questions > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-questions > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-questions > admits viewer 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/agency-questions > admits owner 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/publishops/services > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/publishops/services > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/publishops/services > admits viewer 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/publishops/services > admits owner 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/tasks > refuses not-on-private 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/tasks > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/tasks > admits viewer 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/tasks > admits owner 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/tasks/summary > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/tasks/summary > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/tasks/summary > admits viewer 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/tasks/summary > admits owner 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts > refuses not-on-private 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts > refuses other-org 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts > admits viewer 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts > admits owner 23ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/dossier-metrics > refuses not-on-private 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/dossier-metrics > refuses other-org 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/dossier-metrics > admits viewer 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/dossier-metrics > admits owner 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures > refuses not-on-private 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures > refuses other-org 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures > admits viewer 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures > admits owner 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots > refuses other-org 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots > admits viewer 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots > admits owner 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance > refuses other-org 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance > admits viewer 35ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance > admits owner 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/versions > refuses not-on-private 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/versions > refuses other-org 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/versions > admits viewer 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/versions > admits owner 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report > refuses not-on-private 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report > refuses other-org 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report > admits viewer 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report > admits owner 1679ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity > refuses not-on-private 1582ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity > refuses other-org 36ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity > admits viewer 103ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity > admits owner 1749ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses not-on-private 1606ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses other-org 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits viewer 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits owner 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses not-on-private 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses other-org 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > admits viewer 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > admits owner 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/team > refuses not-on-private 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/team > refuses other-org 3ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/team > admits viewer 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/team > admits owner 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status > refuses not-on-private 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status > refuses other-org 4ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status > admits viewer 21ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status > admits owner 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/program-twin > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/program-twin > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/program-twin > admits viewer 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/program-twin > admits owner 12ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verification > refuses not-on-private 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verification > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verification > admits viewer 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verification > admits owner 19ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/change-impact > refuses not-on-private 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/change-impact > refuses other-org 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/change-impact > admits viewer 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/change-impact > admits owner 18ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/context > refuses not-on-private 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/context > refuses other-org 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/context > admits viewer 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/context > admits owner 15ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/transform-context > refuses not-on-private 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/transform-context > refuses other-org 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/transform-context > admits viewer 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/transform-context > admits owner 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/knowledge > refuses not-on-private 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/knowledge > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/knowledge > admits viewer 21ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/knowledge > admits owner 1788ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/activity > refuses not-on-private 2029ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/activity > refuses other-org 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/activity > admits viewer 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/activity > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/linked > refuses not-on-private 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/linked > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/linked > admits viewer 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/linked > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/decisions > refuses not-on-private 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/decisions > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/decisions > admits viewer 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/decisions > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/summary > refuses not-on-private 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/summary > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/summary > admits viewer 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/summary > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace > refuses not-on-private 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace > admits viewer 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history > refuses not-on-private 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history > refuses other-org 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history > admits viewer 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/review-queue > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/review-queue > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/review-queue > admits viewer 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/governance/review-queue > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/apps > refuses not-on-private 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/apps > refuses other-org 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/apps > admits viewer 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/apps > admits owner 9ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id > refuses other-org 5ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id > admits viewer 8ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id > admits owner 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/collaborators > refuses not-on-private 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/collaborators > refuses other-org 10ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/collaborators > admits viewer 16ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:projectId/collaborators > admits owner 11ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/sharing > refuses not-on-private 19ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/sharing > refuses other-org 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/sharing > admits viewer 13ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/sharing > admits owner 14ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/unified-work > refuses not-on-private 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/unified-work > refuses other-org 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/unified-work > admits viewer 47ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/unified-work > admits owner 24ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/schedule-of-events > refuses not-on-private 7ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/schedule-of-events > refuses other-org 6ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/schedule-of-events > admits viewer 17ms
+ ✓ server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/concept2cure/projects/:id/schedule-of-events > admits owner 20ms
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-06T02:21:56.888Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-06T02:21:58.380Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T02:21:58.381Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-06T02:21:58.381Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > no re-authentication: refused 401, and the artifact, the signatures and the ledger are untouched 65ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > a wrong password: refused 401, and the artifact, the signatures and the ledger are untouched 22ms
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > no meaning: refused 400 before the password is checked, nothing written 30ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > free text: refused 400 before the password is checked, nothing written 8ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > another act’s meaning: refused 400 before the password is checked, nothing written 15ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row 86ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > enrolled in TOTP: signed with password and a verified code; without the code, refused 76ms
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a provenance event that cannot be written takes the whole act back
+{
+  "timestamp": "2026-11-06T02:22:02.714Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, $10, $11, $12, $13, default)\nparams: evt_1793931722710_3bf0b16fce2f,9,99,approval,status_approved,777,Dana Reviewer,s***@example.com,{\"previousStatus\":\"review\",\"newStatus\":\"approved\",\"reason\":\"Reviewed against the protocol; approved for filing.\",\"attestation\":{\"meaning\":\"approval\",\"attestationText\":\"I approve this document as reviewed.\",\"signerName\":\"Dana Reviewer\",\"signerRole\":\"admin\"},\"signatureId\":\"sig_1793931722704_6a441318f5b8\",\"snapshotId\":null},Status changed from review to approved (approval),/projects/3/artifacts/artifact_abc/status,concept2cure-api,127.0.0.xxx",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a signature that cannot be written takes the approval back with it
+{
+  "timestamp": "2026-11-06T02:22:02.792Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_signatures\" (\"id\", \"signature_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"signature_type\", \"signature_purpose\", \"signature_meaning\", \"signer_id\", \"signer_name\", \"signer_email\", \"signer_role\", \"authentication_method\", \"authentication_timestamp\", \"second_factor_verified\", \"signature_hash\", \"signature_manifest\", \"ip_address\", \"device_info\", \"status\", \"signed_at\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, default, default) returning \"id\", \"signature_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"signature_type\", \"signature_purpose\", \"signature_meaning\", \"signer_id\", \"signer_name\", \"signer_email\", \"signer_role\", \"authentication_method\", \"authentication_timestamp\", \"second_factor_verified\", \"signature_hash\", \"signature_manifest\", \"ip_address\", \"device_info\", \"status\", \"signed_at\", \"created_at\", \"updated_at\"\nparams: sig_1793931722785_620cea0b1c41,10,10,99,approval,approval_attestation,approval,777,Dana Reviewer,s***@example.com,admin,password,2026-11-06T02:22:02.785Z,false,0b247921ec5332d6e9c9f3db9cdf95c2d7bfde73ea61c8162c26b19b988a1290,{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"approval\",\"printedName\":\"Dana Reviewer\",\"attestationText\":\"I approve this document as reviewed.\",\"reason\":\"Reviewed against the protocol; approved for filing.\",\"previousStatus\":\"review\",\"newStatus\":\"approved\",\"contentHash\":\"230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5\",\"actionId\":\"act_d700bbbacc4e49608ad6016a6e028cb0\",\"auditId\":\"31f4f713-97f7-410b-a0ed-fa6537e64c42\",\"auditSha256Chain\":\"8f934930a735695e4abd2075528bddf92620b4cc8b83bae437723697c27d4289\"},127.0.0.xxx,,active,2026-11-06T02:22:02.785Z",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > no stored row for the version: the act records it from the content and signs that — never approved unsigned 74ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a provenance event that cannot be written takes the whole act back 89ms
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > review → draft: a provenance event that cannot be written takes the change back
+{
+  "timestamp": "2026-11-06T02:22:02.856Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, $10, $11, $12, $13, default)\nparams: evt_1793931722855_d30d9e446aae,13,99,status_change,status_draft,777,s***@example.com,s***@example.com,{\"previousStatus\":\"review\",\"newStatus\":\"draft\",\"reason\":\"Returned for rework of section 2.\",\"attestation\":null,\"signatureId\":null,\"snapshotId\":null},Status changed from review to draft,/projects/3/artifacts/artifact_abc/status,concept2cure-api,127.0.0.xxx",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > approved → review: a provenance event that cannot be written takes the change back
+{
+  "timestamp": "2026-11-06T02:22:02.871Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, $10, $11, $12, $13, default)\nparams: evt_1793931722869_ffae748b333b,14,99,status_change,status_review,777,s***@example.com,s***@example.com,{\"previousStatus\":\"approved\",\"newStatus\":\"review\",\"reason\":\"Returned for rework of section 2.\",\"attestation\":null,\"signatureId\":null,\"snapshotId\":null},Status changed from approved to review,/projects/3/artifacts/artifact_abc/status,concept2cure-api,127.0.0.xxx",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a signature that cannot be written takes the approval back with it 37ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > review → draft: changed, with one provenance event naming it 19ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > approved → review: changed, with one provenance event naming it 14ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > review → draft: a provenance event that cannot be written takes the change back 29ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > approved → review: a provenance event that cannot be written takes the change back 14ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > without re-authentication: refused 401, not locked, no snapshot 11ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > re-authenticated with the meaning release: locked at the version, with its snapshot, signature and ledger row 42ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > approved in between (a second approval racing the first): not signed, nothing written 20ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > edited in between (a new version): not signed, nothing written 14ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > re-approved in between with no version recorded (the lock would cover nothing): not signed, nothing written 15ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > review → approved by the author: not signed, nothing written 16ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > approved → locked by the author: not signed, nothing written 20ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > the harness metadata the route republishes is written by the act, through the route 52ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > an extra column is a contract error, never "the document changed", and nothing is written 16ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > a column it must write, removed is a contract error, never "the document changed", and nothing is written 7ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > approving what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 16ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > releasing (locking) what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 32ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written 19ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > Ada asked for changes; routed to Ada again: round 2 opens, her approval of the new version meets the quorum, and the document is approved 117ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > Ada rejected; routed to Ada again: round 2 opens, her approval of the new version meets the quorum, and the document is approved 131ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > Ada approved, and the document was edited after; routed to Ada again: round 2 opens, her approval of the new version meets the quorum, and the document is approved 116ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > Ada asked for changes twice: the third routing opens round 3 after round 2, and her approval of version 4 meets the quorum 113ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > every reviewer was withdrawn: the round is closed, and the same reviewer is assigned again in round 2 78ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > the round is chosen from the rows the quorum reads: another organization’s pending row on the artifact does not hold a closed round open 41ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: a new round holds only the reviewers assigned to it > Ada asked for changes to version 2: with the document unchanged, assigning Ben does not open round 2 (409), and nothing is written 39ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: a new round holds only the reviewers assigned to it > a co-reviewer who approved cannot assign themselves into a new round over Ada’s request for changes (409) 65ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: a new round holds only the reviewers assigned to it > Ada asked for changes; the document is edited; Ben is assigned (round 2) and withdrawn: the quorum refuses an all-withdrawn round, and the approval is refused 83ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: a new round holds only the reviewers assigned to it > round 1 closed with an approval (quorum met): assigning Ben opens round 2, and the quorum then waits for Ben alone 64ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is open, so an assignment joins it and the round is not split > Ada is pending: Ben joins round 1, and the quorum waits for both 78ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is open, so an assignment joins it and the round is not split > Ada is in progress: Ben joins round 1, and the quorum waits for both 62ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is open, so an assignment joins it and the round is not split > round 2 is open (Ada pending in it): Ben joins round 2, and no round is opened 53ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is open, so an assignment joins it and the round is not split > the round stays open while any reviewer has not decided: Ada asked for changes, Ben is pending, and Cam joins round 1 36ms
+stdout | server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts
+{
+  "timestamp": "2026-11-06T02:22:06.969Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T02:22:06.970Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts
+{
+  "timestamp": "2026-11-06T02:22:06.970Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > 20260923b_artifact_approval_follows_status.sql > is registered in C2C_MIGRATION_FILES above the final pair 4451ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > 20260923b_artifact_approval_follows_status.sql > carries no DROP (RULE 1) 36ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > review → approved through the status route records v1 and is filable 51ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approved → review clears the approval; promote_artifact does not approve it again, and it is NOT filable 49ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > archived by markObjectSuperseded, then an unsigned approve through AnA: refused, still archived, NOT filable 40ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approve → lock at the same version keeps the approval: still filable 35ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > locked → draft (unlock) clears both the approval and the lock; re-approval records the new version 49ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > the status comparison is case-insensitive 31ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > an INSERT of a non-approved row carries no approval 50ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > clears a stale approval left on a non-approved row before the trigger existed 3173ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > applies twice: one trigger, and an approved row written between the runs keeps its approval 32ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > NOTICE-skips on a database without concept2cure_artifacts (the set-only blank replay) 2797ms
+
+ Test Files  3 passed (3)
+      Tests  738 passed (738)
+   Start at  02:19:36
+   Duration  164.99s (transform 13.96s, setup 152ms, import 23.47s, tests 140.21s, environment 0ms)
+

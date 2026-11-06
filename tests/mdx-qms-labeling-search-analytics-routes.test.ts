@@ -339,13 +339,28 @@ describe('Labeling routes', () => {
 /* ─── Global search ─────────────────────────────────────────── */
 
 describe('Global search', () => {
+  /* The search reads the caller's project scope before it searches (F1,
+     2026-11-05). Here the sharing policy's own reads answer one open project
+     anchoring program '1'; every other statement is the test's. The policy
+     itself runs on PostgreSQL in
+     server/routes/__tests__/listing-doors-project-scope.pglite.test.ts. */
+  const withOpenProject = (search: () => Promise<unknown>) => queryFn.mockImplementation(async (sql: string) => {
+    if (/FROM organization_users ou/.test(sql)) return { rows: [{ role: 'member' }] };
+    if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) {
+      return { rows: [{ id: 41, owner_id: null, created_by_id: null, settings: {}, visibility: 'org_public', members: [], review_assigned: false }] };
+    }
+    if (/SELECT id::text FROM regulatory_programs/.test(sql)) return { rows: [{ id: '1' }] };
+    if (/AS program_id,id,client_workspace_id/.test(sql)) return { rows: [{ program_id: '1', id: 41, clientWorkspaceId: null }] };
+    return search();
+  });
+
   it('rejects q shorter than 2 chars', async () => {
     const res = await request(makeApp()).get('/api/mdx/search?q=a');
     expect(res.status).toBe(422);
   });
 
   it('returns grouped envelope', async () => {
-    queryFn.mockResolvedValue({ rows: [{ id: '1', name: 'BX-204', code: 'BX', status: 'active', description: 'CGM' }] });
+    withOpenProject(async () => ({ rows: [{ id: '1', name: 'BX-204', code: 'BX', status: 'active', description: 'CGM' }] }));
     const res = await request(makeApp()).get('/api/mdx/search?q=BX&type=program');
     expect(res.status).toBe(200);
     expect(res.body.meta.query).toBe('BX');
@@ -354,7 +369,7 @@ describe('Global search', () => {
 
   it('survives missing optional tables (42P01)', async () => {
     const err = Object.assign(new Error('missing'), { code: '42P01' });
-    queryFn.mockRejectedValue(err);
+    withOpenProject(async () => { throw err; });
     const res = await request(makeApp()).get('/api/mdx/search?q=test');
     expect(res.status).toBe(200);
     expect(res.body.meta.total).toBe(0);
