@@ -373,6 +373,19 @@ status or ownership; closing a package stays §3 step 5.
   are that document type's validation. Under Rule 4 they belong in the one editor, not a protocol panel. Whether
   the two records converge is the D4 owner's or the founder's decision.
 
+**L1 (row D2): the founder's CSR demo** (2026-11-05 and 11-06)
+
+- **Rehearsal**, `4c38889a4`, `docs/evidence/D2-CSR/2026-11-05-lmn201-demo-rehearsal/`.
+  - The CSR path walked in the running app as author, reviewer and approver, on the Lumen LMN-201 demonstration pack.
+  - It ran from the Vault source's signed approval to assembly's gap list.
+  - Found R-1 to R-4 and handed them to the CSR lane (`011Dpx…`).
+- **R-1 and R-3 closed** (2026-11-06), `78ce793a7`. The lane fixed them (`b3c176b34d`, `0180e0eec2`). The re-walk on
+  trunk confirmed both and wrote nothing.
+  - The run-of-show lost its two workarounds.
+  - It gained a verified way to show §11.1 and §11.4 live without freezing.
+- **Blocked**: drafting, the scientific review of drafted text, e-sign and placement. They need a model key, which
+  this environment does not have.
+
 **Finding shared with the design lead**
 
 In production `LAUNCH_SCOPE_ENFORCE` defaults to on (`server/services/entitlements/launch-scope.ts:42-45`). So
