@@ -128,3 +128,10 @@ The encrypted-family/monitor rehome meets the unchanged size ceilings and preser
 275 monitor/graph regression checks. Current administration reauthentication passes 25 cases, including revoked
 authority before password checking; QMS error envelopes pass 15 ceremony cases and the unchanged disclosure guard.
 These runs overlap and must not be summed. Final merged publication is retried with the normal hooks.
+
+
+The second complete publication attempt, on `5277bb277`, also passed all gates and the full zero-error compiler,
+then lost a remote ref race to `772a1238a`. The later merge retains the CSR/read/editor fixes. New incoming checks
+pass 112 backend and 46 UI cases; source callbacks, private custody and strict qualification remain intact. The
+coordination file records the requested publication window and continued normal retry. Remote acceptance is still
+pending; neither a green hook nor a rejected push is described as publication.

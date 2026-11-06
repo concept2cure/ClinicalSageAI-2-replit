@@ -271,3 +271,42 @@ release validation, coordinating Integration's existing native joined fixture. T
 approval, currently a separately identified gap from the signed manifest. Trust has a read-only seven-path proposal
 for client-confirmed repair closure and holds no task source yet. Automatic private reflection stays held pending
 its own encrypted lifetime proof. No other file holds are released or silently claimed by this continuation.
+
+
+### P-104 publication window request — 2026-11-06 23:37 UTC
+
+Two complete normal pushes passed every gate, including full compiler **0 errors / baseline 0**, and lost remote
+ref races (`086b05de9` against `76cc6fcc2`, then `5277bb277` against `772a1238a`). Under this file's push guidance
+(“after two lost ref races, ask the coordinating session for a push window”), this lane requests a 15-minute window.
+The coordinating session remains unavailable through this environment; no callable cross-session channel reaches
+it, and no other lane is claimed paused. Root continues ordinary fetch, merge and retry with no force or skipped
+hook. All six agents in this root's own tree hold feature edits until publication is confirmed.
+
+The current source preserves the incoming editor, source/credential and CSR repairs. Post-merge checks pass SDK42,
+private capture34, stream11, authoring82, native workflow21, drafting panel32, and latest CSR/read/template/RPS112
+plus retained-editor UI46. Counts overlap and are not additive. Whole client/server builds and standalone verifiers
+build. One unproven selected-section deletion/dirty-buffer editor edge is retained for a targeted later review;
+it does not change these reported test results or create a false full editor acceptance claim.
+
+After publication, these existing-file scopes are assigned within the P-104 continuation:
+
+- Test: final-ZIP preparation/signature/precheck backend in `submission-service.ts`, `signature-persistence.ts`,
+  `submissions.ts` and `c2c/actions.ts`; opaque preparation authority derives only from actual immutable storage,
+  signature and claimed attempt, with exact current actor/destination/application/source binding.
+- Runtime: existing gateway `index.ts`/`governed-transmit.ts` guards, fresh byte/authority rechecks after awaits,
+  one-use dispatch and safe legacy holds; Test owns canonical authority issuance.
+- Integration: existing SubmissionCenter/SubmissionSeqWorkspaces and their lifecycle/selector tests; display the
+  exact staged hash/size/environment/destination/application/expiry before signing, fence scope/session/selection,
+  preserve unknown-send outcomes and reuse the same preparation.
+- Roadmap: existing private approval, gateway/types, authoring and GovActionSignoff homes; whole encrypted proposal,
+  successful output/tool-use evidence, fresh-owner exact preview, narrowly bound sharing, fixed-ID atomic consent/
+  creation and uncertain-commit reconciliation. Read-only and all regulated release checks survive confirmation.
+- Trust: the 11 current task/board/status/side-effect/reminder writers, including the canonical **service**
+  `server/services/ana-ri/command-executor.ts`; immutable repair opening/transition authority and actual affected
+  client acknowledgment prevent generic closure, erasure and reopen. Part 11 approval remains separate.
+- Spec: current agency proposal/record/read/UI and retained-source homes; exact source/checksum/text/span admission,
+  manual-vs-source-backed provenance, current all-kind retained-context rechecks, then staged clock/coding/clean-file
+  work. No duplicate correspondence or evidence implementation is authorized.
+
+No agent adds a source file, screen, mount, table, tool, model or dependency, and no baseline or ceiling grows.
+Existing code is extended or cohesively rehomed inside existing related files. Root retains Git, plan and compiler.
