@@ -1,0 +1,18 @@
+{
+  "startedAt": "2026-11-06T21:30:22.144756+00:00",
+  "parentRequestedSections": [
+    "1"
+  ],
+  "fullCsrRequested": false,
+  "providerConfigured": false,
+  "narrativeEngine": "existing fact-only template engine",
+  "signingOrAgencySubmission": false,
+  "jobId": 1,
+  "parentQueueHttpStatus": 202,
+  "parentStatus": "complete",
+  "narrativeQueueHttpStatus": 202,
+  "status": "passed",
+  "nativeNarrativeStatus": "complete",
+  "nativeQcHasSubjects": true,
+  "finishedAt": "2026-11-06T21:30:27.155623+00:00"
+}

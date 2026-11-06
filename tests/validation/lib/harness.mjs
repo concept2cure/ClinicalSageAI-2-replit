@@ -345,7 +345,6 @@ export function createApiClient({ baseUrl, accessToken, onRecord, identity = nul
       else if (Number.isFinite(reset) && reset > Date.now()) waitMs = reset - Date.now() + 500;
       console.log(`    (429 on ${method} ${apiPath}; waiting ${Math.round(waitMs / 1000)}s, retry ${retries})`);
       await sleep(Math.min(waitMs, 70_000));
-      if (body instanceof FormData) break; // multipart bodies are single-use
     }
     let json = null;
     try {

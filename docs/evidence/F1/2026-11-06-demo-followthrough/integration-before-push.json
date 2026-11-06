@@ -1,0 +1,16 @@
+{
+  "qualifiedBase": "f6127e72231bd9e9f302f596a672f58b1b40db15",
+  "integratedParent": "ea3b158e6a4d87519958f60e2c43520fdd476d99",
+  "method": "Rebase unpublished repair onto canonical updates; no source conflicts. Founder plan/ledger changes preserved. F1 remains open.",
+  "eightQualifiedSourceHashesUnchanged": {
+    "client/src/concept2cure/v2/surfaces/RbmIngest.tsx": true,
+    "client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx": true,
+    "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx": true,
+    "client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx": true,
+    "scripts/demo/launch-demo/packs/lumen-rbm.mjs": true,
+    "scripts/demo/launch-demo/lumen-rbm-completion.test.mjs": true,
+    "tests/validation/lib/harness.mjs": true,
+    "tests/validation/lib/api-client-retry.test.mjs": true
+  },
+  "dependencyDiffCheck": "No upstream changes to owned source, queryClient, rbmWrites, useDialog, dataConnect or shared/schema. Admin/review/private-profile server changes remain with their owners and ordinary canonical gates; no new native qualification is claimed."
+}

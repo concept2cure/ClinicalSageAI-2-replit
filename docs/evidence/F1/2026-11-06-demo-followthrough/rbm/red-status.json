@@ -1,0 +1,10 @@
+{
+  "base": "f6127e72231bd9e9f302f596a672f58b1b40db15",
+  "tests": 8,
+  "failed": 6,
+  "passed": 2,
+  "expectedUnhandledErrors": 1,
+  "limit": "Two initial selector calibration attempts are not used as RED proof. Final RED covers actual stale data/read failures and duplicate authorization; the uncaught readAsText failure is expected before repair.",
+  "sourceSha256": "4ffe75589cd0d529c415a2e5c3291ccac74477eda70f548251e4f21353d3f838",
+  "testSha256": "6667b307cfec18f2499c1af89f38602b6e91f9c475ae1729fdbf38a5378a87e2"
+}
