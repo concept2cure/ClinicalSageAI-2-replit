@@ -71,6 +71,19 @@ describe('canonical PQ claim verification', () => {
   it('accepts a complete attributable PASS only under an approved canonical test fixture', () => {
     expect(verify(fixture())).toEqual([]);
   });
+  it('binds strict qualification to the recorded intended uses and exact serving version', () => {
+    const f = fixture();
+    const claim = { ...entry, pq: { ...entry.pq, intendedUses: ['document_drafting'], pinKind: 'provider_snapshot' as const } };
+    const check = () => verifyCanonicalPqClaim(claim, () => f.record, rules, f.evidence);
+    expect(check().join(' ')).toMatch(/intended uses/);
+    Object.assign(f.record, { intendedUses: ['document_drafting'] });
+    expect(check()).toEqual([]);
+    Object.assign(f.record, { intendedUses: ['document_drafting', 'document_drafting'] });
+    expect(check().join(' ')).toMatch(/intended uses/);
+    Object.assign(f.record, { intendedUses: ['document_drafting'] });
+    f.record.generation[0].servedModel = `${entry.pinnedVersion}-20261101`;
+    expect(check().join(' ')).toMatch(/exact registry model/);
+  });
   it.each([NaN, Infinity, -0.1, 1.1, null, '1'])('rejects invalid coverage %s', value => {
     const f = fixture(); (f.record.generation[0] as Record<string, unknown>).sectionCoverage = value;
     expect(verify(f).join(' ')).toMatch(/invalid section coverage/);

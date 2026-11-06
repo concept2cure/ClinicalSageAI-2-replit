@@ -42,7 +42,7 @@ beforeEach(() => {
       h.store.set(`${params[0]}:${params[1]}`, params[2] as string);
       return { rows: [] };
     }
-    if (/SELECT credentials FROM connector_credentials/.test(sql)) {
+    if (/SELECT credentials(?:, is_valid)? FROM connector_credentials/.test(sql)) {
       const v = h.store.get(`${params[0]}:${params[1]}`);
       return { rows: v ? [{ credentials: v }] : [] };
     }

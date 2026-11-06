@@ -24,12 +24,13 @@ import { connectorCredentials } from '../../../../shared/schema';
 
 const holder = vi.hoisted(() => ({ pg: null as unknown as import('@electric-sql/pglite').PGlite }));
 const pool = vi.hoisted(() => ({
-  query: (text: string, params?: unknown[]) => holder.pg.query(text, params as unknown[]),
+  query: (text: string, params?: unknown[]) => holder.pg.query<Record<string, unknown>>(text, params),
+  connect: async () => ({ query: (text: string, params?: unknown[]) => holder.pg.query<Record<string, unknown>>(text, params), release: () => undefined }),
 }));
 vi.mock('../../../db.js', () => ({ pool, getPool: () => pool }));
 vi.mock('../../../db', () => ({ pool, getPool: () => pool }));
 
-import { getConnectorCatalog, searchConnectors, storeCredentials } from '../connector-registry.js';
+import { getConnectorCatalog, searchConnectors, storeCredentials, writeCredentialCard, listCredentialCards, mayManageCredentialCards, captureCredentialForUse, assertCredentialUseCurrent, resolveTenantModelCredentialAvailability, type CredentialCardChange } from '../connector-registry.js';
 
 const ORG = 1;
 const row = async () =>
@@ -50,7 +51,10 @@ const json = (body: unknown) =>
 
 beforeAll(async () => {
   holder.pg = new PGlite();
-  await holder.pg.exec(`CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT); INSERT INTO organizations (id, name) VALUES (${ORG}, 'acme');`);
+  await holder.pg.exec(`CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, status TEXT DEFAULT 'active'); INSERT INTO organizations (id, name) VALUES (${ORG}, 'acme'), (2, 'other');
+    CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT); INSERT INTO users VALUES (11,'active'),(12,'active');
+    CREATE TABLE organization_users (organization_id INTEGER, user_id INTEGER, role TEXT); INSERT INTO organization_users VALUES (1,11,'admin'),(1,12,'member');
+    CREATE TABLE audit_logs (id UUID PRIMARY KEY, tenant_id INTEGER, user_id INTEGER, action TEXT, table_name TEXT, record_id TEXT, actor_id INTEGER, target TEXT, payload_hash TEXT, sha256_chain TEXT, chain_seq BIGSERIAL, occurred_at TIMESTAMPTZ, hmac_seal TEXT, old_values JSON, new_values JSON, ip_address TEXT, user_agent TEXT, reason TEXT);`);
   // drizzle-kit's ESM entry has an unsupported bundled require; use its CJS entry.
   const kit = createRequire(import.meta.url)('drizzle-kit/api') as typeof import('drizzle-kit/api');
   for (const statement of await kit.generateMigration(kit.generateDrizzleJson({}), kit.generateDrizzleJson({ connectorCredentials }))) {
@@ -62,7 +66,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await holder.pg.exec('DELETE FROM connector_credentials');
+  await holder.pg.exec("DROP TRIGGER IF EXISTS revoke_during_use ON audit_logs; DROP FUNCTION IF EXISTS revoke_during_use(); ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS refuse_audit; DELETE FROM connector_credentials; DELETE FROM audit_logs; UPDATE organizations SET status='active'; UPDATE users SET status='active'; DELETE FROM organization_users; INSERT INTO organization_users VALUES (1,11,'admin'),(1,12,'member')");
   driveSearches.length = 0;
   globalThis.fetch = vi.fn(async (input: string | URL | Request) => {
     const url = String(input);
@@ -73,6 +77,7 @@ beforeEach(async () => {
 });
 afterEach(() => {
   globalThis.fetch = realFetch;
+  vi.useRealTimers();
 });
 
 describe('connector credentials: stored is not validated', () => {
@@ -107,5 +112,145 @@ describe('connector credentials: stored is not validated', () => {
     const [res] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] });
     expect(res.error).toBeDefined();
     expect(driveSearches).toEqual([]);
+  });
+});
+
+
+const CANARY = 'synthetic-client-key-capture-canary-20261106';
+const cardChange = (action: 'capture' | 'rotate' | 'revoke' = 'capture'): CredentialCardChange => ({ connectorId: 'llm_openai', action,
+  credentials: { apiKey: CANARY }, scopes: ['model_inference'], reason: `Client-owned key capture ${CANARY}` });
+async function changeCard(change: CredentialCardChange = cardChange(), organizationId = ORG, userId = 11) {
+  await holder.pg.query('BEGIN');
+  try {
+    const result = await writeCredentialCard(pool, organizationId, userId, change);
+    await holder.pg.query('COMMIT');
+    return result;
+  } catch (error) { await holder.pg.query('ROLLBACK'); throw error; }
+}
+
+describe('client-owned credential grants enforce current custody and delegation', () => {
+  it('stores only ciphertext and returns metadata without secret values; its audit reason redacts the canary', async () => {
+    const saved = await changeCard();
+    expect(saved).toMatchObject({ status: 'stored_unvalidated', canManage: true, grantedScopes: ['model_inference'], secretFieldsHeld: ['apiKey'] });
+    const stored = (await holder.pg.query('SELECT credentials,is_valid,last_validated_at FROM connector_credentials')).rows[0];
+    expect(stored).toMatchObject({ is_valid: null, last_validated_at: null });
+    expect(JSON.stringify(stored)).not.toContain(CANARY);
+    const audit = (await holder.pg.query('SELECT action,new_values,reason FROM audit_logs')).rows;
+    expect(audit).toHaveLength(1);
+    expect(audit[0]).toMatchObject({ action: 'credential.capture', new_values: { accountOwner: 'client', reauthenticated: true } });
+    expect(JSON.stringify([saved, audit, await listCredentialCards(ORG, false, pool)])).not.toContain(CANARY);
+  });
+  it.each(['member', 'inactive_user', 'inactive_org', 'other_org'])('rejects capture with stale or insufficient %s authority', async state => {
+    if (state === 'member') await holder.pg.exec("UPDATE organization_users SET role='member' WHERE user_id=11");
+    if (state === 'inactive_user') await holder.pg.exec("UPDATE users SET status='inactive' WHERE id=11");
+    if (state === 'inactive_org') await holder.pg.exec("UPDATE organizations SET status='inactive' WHERE id=1");
+    await expect(changeCard(cardChange(), state === 'other_org' ? 2 : ORG)).rejects.toMatchObject({ code: 'CREDENTIAL_ADMIN_REQUIRED' });
+    expect((await holder.pg.query('SELECT * FROM connector_credentials')).rows).toEqual([]);
+  });
+  it('rotation and revocation immediately invalidate already captured deterministic uses', async () => {
+    await changeCard();
+    const first = await captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool);
+    expect(first?.credentials.apiKey).toBe(CANARY);
+    await assertCredentialUseCurrent(first!, 11, false, pool);
+    await changeCard({ ...cardChange('rotate'), credentials: { apiKey: 'synthetic-rotated-client-key' } });
+    await expect(assertCredentialUseCurrent(first!, 11, false, pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    const rotated = await captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool);
+    await changeCard(cardChange('revoke'));
+    await expect(assertCredentialUseCurrent(rotated!, 11, false, pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    await expect(captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    expect(await resolveTenantModelCredentialAvailability(ORG, pool)).toEqual({ mode: 'customer_owned', providers: [] });
+    expect((await holder.pg.query('SELECT connector_id FROM connector_credentials')).rows).toEqual([{ connector_id: 'llm_openai' }]);
+  });
+  it('an expired captured grant is refused and cannot fall back to a platform key', async () => {
+    const now = Date.now();
+    await changeCard({ ...cardChange(), expiresAt: new Date(now + 60_000).toISOString() });
+    const captured = await captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(now + 61_000);
+    await expect(assertCredentialUseCurrent(captured!, 11, false, pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    expect(await resolveTenantModelCredentialAvailability(ORG, pool)).toEqual({ mode: 'customer_owned', providers: [] });
+  });
+  it('scopes and storage-only portal cards cannot become ungranted capabilities', async () => {
+    await changeCard({ connectorId: 'veeva_vault', action: 'capture', credentials: { baseUrl: 'https://fixture.veevavault.com', apiKey: CANARY }, scopes: ['connector_search'], reason: 'Limited fixture search delegation' });
+    expect(await captureCredentialForUse(ORG, 'veeva_vault', 'connector_search', pool)).not.toBeNull();
+    await expect(captureCredentialForUse(ORG, 'veeva_vault', 'connector_upload', pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    const portal = await changeCard({ connectorId: 'fda_portal', action: 'capture', credentials: { username: 'fixture-user', password: CANARY }, scopes: ['account_reference'], reason: 'Store fixture client portal login' });
+    expect(portal.status).toBe('stored_not_connected');
+    await expect(captureCredentialForUse(ORG, 'fda_portal', 'account_reference', pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+  });
+  it.each(['organization', 'provider'])('copied ciphertext cannot authorize a different %s', async target => {
+    await changeCard();
+    await holder.pg.query(`INSERT INTO connector_credentials (organization_id,connector_id,credentials,is_valid) SELECT $1,$2,credentials,is_valid FROM connector_credentials WHERE organization_id=1 AND connector_id='llm_openai'`, [target === 'organization' ? 2 : ORG, target === 'provider' ? 'llm_anthropic' : 'llm_openai']);
+    await expect(captureCredentialForUse(target === 'organization' ? 2 : ORG, target === 'provider' ? 'llm_anthropic' : 'llm_openai', 'model_inference', pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+  });
+  it('an unissued serialized capture cannot acquire the process-local authority to use a credential', async () => {
+    await changeCard();
+    const captured = await captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool);
+    await expect(assertCredentialUseCurrent(JSON.parse(JSON.stringify(captured)), 11, false, pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+  });
+  it('a refused capture audit rolls back the actual credential write', async () => {
+    await holder.pg.exec('ALTER TABLE audit_logs ADD CONSTRAINT refuse_audit CHECK (false) NOT VALID');
+    await expect(changeCard()).rejects.toThrow();
+    expect((await holder.pg.query('SELECT * FROM connector_credentials')).rows).toEqual([]);
+    expect((await holder.pg.query('SELECT * FROM audit_logs')).rows).toEqual([]);
+  });
+  it('admin metadata is evaluated from persisted standing', async () => {
+    expect(await mayManageCredentialCards(pool, ORG, 11)).toBe(true);
+    expect(await mayManageCredentialCards(pool, ORG, 12)).toBe(false);
+  });
+});
+
+
+describe('credential use retains current membership through its durable audit', () => {
+  it.each(['membership', 'user'] as const)('a %s revoked during the actual use-audit prevents sending without a grant revision change', async standing => {
+    await changeCard();
+    const captured = await captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool);
+    const before = (await holder.pg.query('SELECT credentials FROM connector_credentials')).rows;
+    const mutation = standing === 'membership' ? 'DELETE FROM organization_users WHERE organization_id = NEW.tenant_id AND user_id = NEW.user_id;'
+      : "UPDATE users SET status = 'inactive' WHERE id = NEW.user_id;";
+    await holder.pg.exec(`CREATE FUNCTION revoke_during_use() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW.action = 'credential.use' THEN ${mutation} END IF; RETURN NEW; END; $$;
+      CREATE TRIGGER revoke_during_use AFTER INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION revoke_during_use();`);
+    const send = vi.fn();
+    await expect(assertCredentialUseCurrent(captured!, 11, true, pool).then(send)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    expect(send).not.toHaveBeenCalled();
+    expect((await holder.pg.query("SELECT user_id, action FROM audit_logs WHERE action = 'credential.use'")).rows).toEqual([{ user_id: 11, action: 'credential.use' }]);
+    expect((await holder.pg.query('SELECT credentials FROM connector_credentials')).rows).toEqual(before);
+  });
+  it('a delegated background use has a SQL NULL actor and still requires the organization to remain active', async () => {
+    await changeCard();
+    const captured = await captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool);
+    await assertCredentialUseCurrent(captured!, undefined, true, pool);
+    expect((await holder.pg.query("SELECT user_id, actor_id FROM audit_logs WHERE action = 'credential.use'")).rows).toEqual([{ user_id: null, actor_id: null }]);
+    await holder.pg.exec("UPDATE organizations SET status='inactive' WHERE id=1");
+    const send = vi.fn();
+    await expect(assertCredentialUseCurrent(captured!, undefined, true, pool).then(send)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    expect(send).not.toHaveBeenCalled();
+  });
+  it('legacy storage cannot overwrite secure cards or resurrect a revoked model grant', async () => {
+    await changeCard();
+    await changeCard(cardChange('revoke'));
+    const tombstone = (await holder.pg.query('SELECT credentials,is_valid FROM connector_credentials')).rows;
+    for (const connector of ['llm_openai','veeva_vault']) await expect(storeCredentials(ORG, connector, { apiKey: CANARY })).rejects.toMatchObject({ code: 'SECURE_CAPTURE_REQUIRED' });
+    expect((await holder.pg.query('SELECT credentials,is_valid FROM connector_credentials')).rows).toEqual(tombstone);
+    expect(await resolveTenantModelCredentialAvailability(ORG, pool)).toEqual({ mode: 'customer_owned', providers: [] });
+  });
+  it('an expired grant can always be revoked and stays a non-fallback tombstone', async () => {
+    const expiry = new Date(Date.now() + 60_000).toISOString();
+    await changeCard({ ...cardChange(), expiresAt: expiry });
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(Date.parse(expiry) + 1_000);
+    expect((await changeCard({ ...cardChange('revoke'), expiresAt: expiry })).status).toBe('revoked');
+    expect(await resolveTenantModelCredentialAvailability(ORG, pool)).toEqual({ mode: 'customer_owned', providers: [] });
+  });
+  it('capture, rotation and revocation audits redact all old/new Veeva field values from reasons and metadata', async () => {
+    const old = { baseUrl: 'https://old-vault.example.com', username: 'old-fixture-login', password: 'old-fixture-password' };
+    const next = { baseUrl: 'https://next-vault.example.com', username: 'next-fixture-login', password: 'next-fixture-password' };
+    const common = { connectorId: 'veeva_vault', scopes: ['connector_search'] };
+    await changeCard({ ...common, action: 'capture', credentials: old, reason: `Capture ${Object.values(old).join(' ')}` });
+    await changeCard({ ...common, action: 'rotate', credentials: next, reason: `Replace ${Object.values(old).join(' ')} with ${Object.values(next).join(' ')}` });
+    await changeCard({ ...common, action: 'revoke', reason: `Revoke ${Object.values(next).join(' ')}` });
+    const ledger = JSON.stringify((await holder.pg.query('SELECT action,reason,new_values FROM audit_logs')).rows);
+    for (const value of [...Object.values(old), ...Object.values(next)]) expect(ledger).not.toContain(value);
+    expect((await holder.pg.query('SELECT action FROM audit_logs ORDER BY chain_seq')).rows).toEqual([{ action: 'credential.capture' }, { action: 'credential.rotate' }, { action: 'credential.revoke' }]);
   });
 });

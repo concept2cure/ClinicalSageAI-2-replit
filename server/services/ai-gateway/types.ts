@@ -55,6 +55,16 @@ export type TaskType =
   | 'embedding'
   | 'general';
 
+/** An exact, evidence-bound model choice. Values are checked against the controlled registry. */
+export interface QualifiedModelPin {
+  id: string;
+  provider: ProviderName;
+  pinnedVersion: string;
+  intendedUse: TaskType;
+  pqReference: string;
+  pqSha256: string;
+}
+
 export type RoutingStrategy =
   | 'task_based'      // Route based on task type → provider capabilities
   | 'cost_optimized'  // Cheapest model that meets quality threshold
@@ -506,6 +516,9 @@ export interface GatewayRequest {
 
   /** Explicit model override (bypasses routing) */
   model?: string;
+
+  /** Require this qualified version and evidence; never substitute another model or demo output. */
+  qualifiedModelPin?: QualifiedModelPin;
 
   /** Routing strategy override */
   strategy?: RoutingStrategy;

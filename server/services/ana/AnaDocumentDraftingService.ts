@@ -30,6 +30,7 @@ import type {
   AnaTool,
   AnaToolResult,
   TaskType,
+  QualifiedModelPin,
 } from '../ai-gateway/types';
 import {
   DOCUMENT_DRAFTING_TOOLS,
@@ -838,6 +839,8 @@ export function resolveSystemPrompt(submissionType: string): string {
 export type RegulatoryFramework = 'fda_510k' | 'fda_pma' | 'eu_mdr' | 'ich_clinical' | 'cer_clinical_evaluation' | 'general_regulatory';
 
 export interface DocumentDraftRequest {
+  /** Exact qualified model/evidence choice for nonstreaming drafting. */
+  qualifiedModelPin?: QualifiedModelPin;
   /** Backend-loaded project evidence; never copied from tool arguments. */
   sourceContext?: import('./draft-project-sources.js').DraftSourceContext;
   /** Regulatory framework context */
@@ -961,6 +964,7 @@ export interface BatchDocumentRequest {
  * The selected-source object itself must retain its private issuer identity. */
 function snapshotDraftRequest(request: DocumentDraftRequest): DocumentDraftRequest {
   const pinned = { ...request };
+  if (pinned.qualifiedModelPin !== undefined) pinned.qualifiedModelPin = Object.freeze({ ...pinned.qualifiedModelPin });
   const signal = trustedSignal(pinned.signal);
   if (signal) pinned.signal = signal;
   else delete pinned.signal;
@@ -1082,8 +1086,8 @@ export class AnaDocumentDraftingService {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      provider: 'anthropic',
-      model: 'claude-opus-4', // Use Opus for document drafting (registry alias, not a wire version)
+      ...(req.qualifiedModelPin !== undefined ? { qualifiedModelPin: req.qualifiedModelPin }
+        : { provider: 'anthropic' as const, model: 'claude-opus-4' }),
       maxTokens: 8192,
       // Enable prompt caching for regulatory system prompts
       promptCache: { enabled: true, type: 'ephemeral' },

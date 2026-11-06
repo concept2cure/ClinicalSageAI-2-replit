@@ -41,9 +41,7 @@ const sdk = vi.hoisted(() => {
 vi.mock('openai', () => ({
   default: class OpenAIStub {
     embeddings = { create: sdk.create };
-    constructor(opts: unknown) {
-      sdk.construct(opts);
-    }
+    constructor(opts: unknown) { sdk.construct(opts); }
   },
 }));
 
@@ -60,6 +58,7 @@ import { SELF_HOSTED_EMBEDDING_MODEL } from '../../../embedding-corpus-policy';
 import { resetOrgPlacementResolver, setOrgPlacementResolver } from '../../providers/org-placement';
 import { resetPlacementRegistry } from '../../providers/placement';
 import { runWithTenantScope, runWithSystemTenantScope } from '../../../../db/tenantStore';
+import * as providerClients from '../../providers/clients';
 
 const PHI_TEXT = 'Patient MRN: 44819023 was admitted on 2026-03-02 for observation.';
 const PLAIN_TEXT = 'Section 3.2.P.5.1 lists the release specifications for the drug product.';
@@ -87,16 +86,12 @@ function seedGateway() {
 beforeEach(() => {
   process.env.NODE_ENV = 'development';
   for (const key of [
-    'EMBEDDING_PROVIDER',
-    'EMBEDDING_LOCAL_BASE_URL',
-    'EMBEDDING_LOCAL_MODEL',
-    'EMBEDDING_LOCAL_NATIVE_DIMENSIONS',
-    'LOCAL_AI_BASE_URL',
-    'OPENAI_API_KEY',
+    'EMBEDDING_PROVIDER', 'EMBEDDING_LOCAL_BASE_URL',
+    'EMBEDDING_LOCAL_MODEL', 'EMBEDDING_LOCAL_NATIVE_DIMENSIONS',
+    'LOCAL_AI_BASE_URL', 'OPENAI_API_KEY',
     'OPENAI_ZERO_RETENTION',
     'AI_PROVIDER_PLACEMENT_APPROVALS',
-    'AI_SENSITIVE_DATA_POLICY_MODE',
-    'AI_PII_ENFORCEMENT',
+    'AI_SENSITIVE_DATA_POLICY_MODE', 'AI_PII_ENFORCEMENT',
   ]) {
     delete process.env[key];
   }
@@ -111,6 +106,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   process.env = { ...SAVED };
   resetEmbeddingProvider();
   resetOrgPlacementResolver();
@@ -119,6 +115,28 @@ afterEach(() => {
 });
 
 describe('embedding provider selection', () => {
+  it('uses a fresh tenant-owned embedding grant without a global OpenAI key', async () => {
+    const create = vi.fn(sdk.answer);
+    const factory = vi.spyOn(providerClients, 'createTenantProviderClient').mockResolvedValue({ embeddings: { create } });
+    const result = await getEmbeddingProvider().embed({ input: PLAIN_TEXT, organizationId: 7 });
+    expect(result.embeddings).toHaveLength(1);
+    expect(factory).toHaveBeenCalledWith('openai', 7, undefined, 'embedding');
+    expect(create).toHaveBeenCalledOnce();
+    expect(sdk.construct).not.toHaveBeenCalled();
+    expect(sdk.create).not.toHaveBeenCalled();
+  });
+
+  it('never falls back to a platform embedding key when the tenant grant is revoked', async () => {
+    process.env.OPENAI_API_KEY = FIXTURE_KEY;
+    vi.spyOn(providerClients, 'createTenantProviderClient').mockRejectedValue(new providerClients.TenantCredentialUnavailableError());
+    await expect(getEmbeddingProvider().embed({ input: PLAIN_TEXT, organizationId: 7 })).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    expect(sdk.construct).not.toHaveBeenCalled();
+    expect(sdk.create).not.toHaveBeenCalled();
+    const entries = (getGateway() as any).auditLogger.getRecentEntries();
+    expect(entries).toHaveLength(1);
+    expect(entries[0].success).toBe(false);
+    expect(JSON.stringify(entries)).not.toContain(FIXTURE_KEY);
+  });
   it('defaults to the OpenAI embedding provider (shared frontier)', () => {
     const p = resolveEmbeddingProvider();
     expect(p.kind).toBe('openai');
@@ -344,16 +362,17 @@ describe('a served embedding is on the ledger (D6)', () => {
     expect(JSON.stringify(entries)).not.toContain('release specifications');
   });
 
-  it('an embedding the provider failed leaves a failure row, and the error still reaches the caller', async () => {
+  it('a failed embedding leaves a safe failure row and status without echoing arbitrary provider text', async () => {
     process.env.OPENAI_API_KEY = FIXTURE_KEY;
-    sdk.create.mockRejectedValueOnce(Object.assign(new Error('upstream 503'), { status: 503 }));
+    sdk.create.mockRejectedValueOnce(Object.assign(new Error('upstream 503 opaqueSecretCanary_222333'), { status: 503 }));
     const provider = getEmbeddingProvider();
 
-    await expect(provider.embed({ input: PLAIN_TEXT })).rejects.toThrow('upstream 503');
+    await expect(provider.embed({ input: PLAIN_TEXT })).rejects.toThrow('Model provider request failed (HTTP 503).');
 
     const entries = (getGateway() as any).auditLogger.getRecentEntries();
     expect(entries).toHaveLength(1);
-    expect(entries[0]).toMatchObject({ success: false, taskType: 'embedding', provider: 'openai', error: 'upstream 503' });
+    expect(entries[0]).toMatchObject({ success: false, taskType: 'embedding', provider: 'openai', error: 'Model provider request failed (HTTP 503).' });
+    expect(JSON.stringify(entries)).not.toContain('opaqueSecretCanary_222333');
     expect(entries[0].approvedModelId).toBeUndefined();
   });
 });

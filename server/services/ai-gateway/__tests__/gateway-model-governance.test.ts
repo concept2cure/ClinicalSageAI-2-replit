@@ -18,6 +18,12 @@ import { isTerminalGatewayError } from '../gateway-outcome';
 import { classifyGatewayError } from '../gateway-error-map';
 import { resetOrgPlacementResolver, setOrgPlacementResolver } from '../providers/org-placement';
 import { APPROVED_MODELS } from '../../ai-governance/approved-models';
+import { createHash } from 'node:crypto';
+import { qualifiedPinFor, qualifiedPinRefusal } from '../model-governance';
+import { projectQualifiedModelPins } from '../effort';
+import type { GatewayRequest, GatewayResponse } from '../types';
+import * as providerClients from '../providers/clients';
+import { AIGateway, DEFAULT_MODELS } from '../gateway';
 import {
   judgeAgainst,
   ledgerRows,
@@ -207,5 +213,250 @@ describe('§4c — local-default pins a placeholder, so production does not sele
     const invoked = stubDispatch(gw);
     await gw.route(request({ taskType: 'chat', model: 'local-default', organizationId: ORG }));
     expect(invoked).toEqual(['local-default']);
+  });
+});
+
+/** Synthetic approved protocol/evidence injected only in tests; no production qualification is asserted. */
+function qualifiedFixture(local = false) {
+  const gw = governedGateway();
+  const base = APPROVED_MODELS.find(e => e.id === (local ? 'local-default' : 'claude-opus-4'))!;
+  const sha = (text: string) => createHash('sha256').update(text).digest('hex');
+  const version = local ? `weights@sha256:${'a'.repeat(64)}` : 'claude-opus-5-5-20261101';
+  const protocolText = JSON.stringify({ protocolId: 'UNIT-PQ', version: '1', status: 'approved', approvedBy: 'Test fixture owner',
+    approvedOn: '2026-11-01', components: { generation: { required: true, executable: true,
+      criteria: { minSectionCoverage: 1, maxForbiddenHits: 0, minTasksPerDocType: 1 }, criteriaSource: 'Unit fixture' } } });
+  const docBankText = JSON.stringify({ version: 'unit', tasks: [{ id: 'one', docType: 'ind', taskType: 'generation', input: 'Fixture input' }] });
+  const record = { kind: 'pq-record', modelId: base.id, provider: base.provider, pinnedVersion: version, intendedUses: ['document_drafting'],
+    protocolId: 'UNIT-PQ', protocolVersion: '1', protocolStatus: 'approved', protocolSha256: sha(protocolText),
+    goldBankVersion: 'unit', goldBankSha256: sha(docBankText), verdict: 'PASS',
+    generation: [{ taskId: 'one', docType: 'ind', servedModel: version, servedProvider: base.provider,
+      servedModelVerified: true, finishReason: 'stop', cached: false, deterministic: false, sectionCoverage: 1, forbiddenHits: 0 }] };
+  let recordText = JSON.stringify(record);
+  const entry = { ...base, pinnedVersion: version, approvedForHighRisk: true,
+    pq: { status: 'passed' as const, reference: 'docs/evidence/PQ/unit-only.json', recordSha256: sha(recordText),
+      intendedUses: ['document_drafting'] as const, pinKind: local ? 'weights_sha256' as const : 'provider_snapshot' as const } };
+  const entries = APPROVED_MODELS.map(e => e.id === base.id ? entry : e);
+  judgeAgainst(gw, entries);
+  const row = registryOf(gw).find(m => m.id === base.id)!;
+  row.model = version;
+  if (local) row.capabilities = [...row.capabilities, 'document_drafting']; // Synthetic qualification fixture only.
+  const reader = vi.fn(() => ({ recordText, canonicalEvidence: { protocolText, docBankText, ragGoldText: '{}', corpusManifestText: '{}' } }));
+  (gw as unknown as { qualifiedPinEvidenceReader: typeof reader }).qualifiedPinEvidenceReader = reader;
+  const pin = qualifiedPinFor(entry, 'document_drafting');
+  const route = (extra: Partial<GatewayRequest> = {}) => gw.route(request({ taskType: 'document_drafting', qualifiedModelPin: pin, ...extra }));
+  const dispatch = vi.spyOn(gw as unknown as { executeProvider: () => Promise<GatewayResponse> }, 'executeProvider').mockImplementation(async () => ({
+    content: 'CANARY_QUALIFIED_OUTPUT', provider: base.provider, model: version, resolvedModel: version,
+    requestId: 'unit-response', latencyMs: 1, cached: false, deterministic: false,
+    usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2, estimatedCostUsd: 0 },
+  }));
+  return { gw, entry, entries, pin, route, dispatch, reader, record, changeRecord: (text: string) => { recordText = text; } };
+}
+
+describe('exact qualified model pins', () => {
+  it.each([false, true])('serves verified evidence and exact provider version (local=%s)', async local => {
+    const f = qualifiedFixture(local);
+    expect(qualifiedPinRefusal({ taskType: 'document_drafting', qualifiedModelPin: f.pin }, f.entries, f.reader)).toBeNull();
+    await expect(f.route()).resolves.toMatchObject({ content: 'CANARY_QUALIFIED_OUTPUT', resolvedModel: f.pin.pinnedVersion });
+    expect(f.dispatch).toHaveBeenCalledOnce();
+    expect(ledgerRows(f.gw)[0]).toMatchObject({ success: true, resolvedModel: f.pin.pinnedVersion,
+      metadata: { qualifiedModelPin: f.pin } });
+  });
+
+  it.each(['id', 'provider', 'pinnedVersion', 'intendedUse', 'pqReference', 'pqSha256'] as const)('refuses altered %s before reading any caller path or dispatching', async field => {
+    const f = qualifiedFixture();
+    const pin = { ...f.pin, [field]: field === 'pqReference' ? '/etc/passwd' : 'tampered' };
+    await expect(f.route({ qualifiedModelPin: pin as never })).rejects.toMatchObject({ code: 'QUALIFIED_MODEL_PIN_REFUSED' });
+    expect(f.reader).not.toHaveBeenCalled();
+    expect(f.dispatch).not.toHaveBeenCalled();
+  });
+
+  it.each([null, {}, { id: 'only-id' }])('refuses malformed pin %j without a default', async pin => {
+    const f = qualifiedFixture();
+    await expect(f.route({ qualifiedModelPin: pin as never })).rejects.toMatchObject({ reason: 'invalid-pin' });
+    expect(f.dispatch).not.toHaveBeenCalled();
+  });
+
+  it.each(['disabled', 'drifted', 'wrong-task'])('does not substitute for an %s pin', async kind => {
+    const f = qualifiedFixture();
+    const row = registryOf(f.gw).find(m => m.id === f.pin.id)!;
+    if (kind === 'disabled') row.enabled = false;
+    if (kind === 'drifted') row.model = 'different-model';
+    if (kind === 'wrong-task') row.capabilities = ['chat'];
+    await expect(f.route()).rejects.toMatchObject({ reason: 'unavailable' });
+    expect(f.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('does not fall back to any other qualified or unqualified model after a provider failure', async () => {
+    const f = qualifiedFixture();
+    f.dispatch.mockRejectedValue(Object.assign(new Error('simulated'), { status: 400 }));
+    await expect(f.route()).rejects.toThrow();
+    expect(f.dispatch).toHaveBeenCalledOnce();
+  });
+
+  it.each([{ resolvedModel: undefined }, { resolvedModel: 'different-version' }, { provider: 'openai' },
+    { cached: true }, { deterministic: true }] as Partial<GatewayResponse>[])('withholds a response that cannot prove the serving pin: %j', async patch => {
+    const f = qualifiedFixture();
+    const response = await f.dispatch.getMockImplementation()!();
+    f.dispatch.mockResolvedValue({ ...response, ...patch });
+    const error = await f.route().catch(e => e);
+    expect(error).toMatchObject({ code: 'QUALIFIED_MODEL_PIN_REFUSED', reason: 'served-mismatch' });
+    expect(isTerminalGatewayError(error)).toBe(true);
+    expect(classifyGatewayError(error).code).toBe('MODEL_NOT_QUALIFIED');
+    expect(ledgerRows(f.gw)).toHaveLength(1);
+    expect(ledgerRows(f.gw)[0]).toMatchObject({ success: false, resolvedModel: 'resolvedModel' in patch ? patch.resolvedModel : response.resolvedModel,
+      provider: patch.provider ?? response.provider });
+    expect(JSON.stringify(ledgerRows(f.gw))).not.toContain('CANARY_QUALIFIED_OUTPUT');
+  });
+
+});
+
+describe('qualified model pin transport and evidence', () => {
+  it.each([{ stream: true }, { onStream: vi.fn() }])('refuses streaming before dispatch', async extra => {
+    const f = qualifiedFixture();
+    await expect(f.route(extra)).rejects.toMatchObject({ reason: 'streaming' });
+    expect(f.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('refuses deterministic fixture text even outside production', async () => {
+    const f = qualifiedFixture();
+    f.gw.setDeterministicMode(true);
+    await expect(f.route()).rejects.toMatchObject({ reason: 'deterministic' });
+    expect(f.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('rejects changed evidence bytes, even if the file still claims PASS', async () => {
+    const f = qualifiedFixture();
+    f.changeRecord(JSON.stringify({ ...f.record, changed: true }));
+    await expect(f.route()).rejects.toMatchObject({ reason: 'evidence-mismatch' });
+    expect(f.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('rechecks evidence after an awaited source checkpoint, before the real dispatch boundary', async () => {
+    const f = qualifiedFixture();
+    f.dispatch.mockRestore();
+    const dispatch = vi.spyOn(f.gw as unknown as { dispatchProvider: () => Promise<GatewayResponse> }, 'dispatchProvider');
+    await expect(f.route({ beforeDispatch: async () => { f.changeRecord('{}'); } })).rejects.toMatchObject({ reason: 'evidence-mismatch' });
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(ledgerRows(f.gw)).toHaveLength(1);
+  });
+
+  it('captures the caller pin before any await so later mutation cannot change the version', async () => {
+    const f = qualifiedFixture();
+    const original = { ...f.pin };
+    vi.spyOn(f.gw as unknown as { applyOrgPlacementDefaults: (raw: GatewayRequest) => Promise<GatewayRequest> }, 'applyOrgPlacementDefaults').mockImplementation(async (raw: GatewayRequest) => {
+      f.pin.pinnedVersion = 'mutated-during-await';
+      return raw;
+    });
+    await expect(f.route()).resolves.toMatchObject({ resolvedModel: original.pinnedVersion });
+    expect(ledgerRows(f.gw)[0].metadata.qualifiedModelPin).toEqual(original);
+  });
+
+  it('never accepts a header-only PASS or an unreviewed alias', () => {
+    const f = qualifiedFixture();
+    const alias = { ...f.entry, pinnedVersion: 'gpt-4o' };
+    expect(qualifiedPinRefusal({ taskType: 'document_drafting', qualifiedModelPin: qualifiedPinFor(alias, 'document_drafting') }, [alias], f.reader)).toBe('mutable-version');
+    const headerText = JSON.stringify({ ...f.record, generation: [] });
+    const entry = { ...f.entry, pq: { ...f.entry.pq, recordSha256: createHash('sha256').update(headerText).digest('hex') } };
+    const reader = () => ({ ...f.reader(), recordText: headerText });
+    expect(qualifiedPinRefusal({ taskType: 'document_drafting', qualifiedModelPin: qualifiedPinFor(entry, 'document_drafting') }, [entry], reader)).toBe('evidence-invalid');
+  });
+
+  it('lists verified qualified pins, while the real pending registry offers none', () => {
+    const f = qualifiedFixture();
+    expect(projectQualifiedModelPins(registryOf(f.gw), 'document_drafting', f.entries, f.reader).qualifiedModelPins).toEqual([f.pin]);
+    const actual = projectQualifiedModelPins(registryOf(f.gw));
+    expect(actual.qualifiedModelPins).toEqual([]);
+    expect(actual.qualificationUnavailable.every(item => item.pqStatus === 'pending')).toBe(true);
+  });
+});
+
+describe('tenant-owned model availability and SDK dispatch', () => {
+  function tenantClients() {
+    const availability = vi.spyOn(providerClients, 'resolveTenantModelCredentialAvailability').mockImplementation(async org => ({
+      mode: 'customer_owned', providers: org === 101 ? ['anthropic'] : ['openai'],
+    }));
+    const calls: Array<{ provider: string; organizationId: number }> = [];
+    const factory = vi.spyOn(providerClients, 'createTenantProviderClient').mockImplementation(async (provider, organizationId) => {
+      calls.push({ provider, organizationId });
+      return provider === 'anthropic' ? { messages: { create: async (params: { model: string }) => ({
+        model: params.model, content: [{ type: 'text', text: `Organization ${organizationId}` }], stop_reason: 'end_turn',
+        usage: { input_tokens: 1, output_tokens: 1 },
+      }) } } : { chat: { completions: { create: async (params: { model: string }) => ({
+        model: params.model, choices: [{ message: { content: `Organization ${organizationId}` }, finish_reason: 'stop' }],
+        usage: { prompt_tokens: 1, completion_tokens: 1 },
+      }) } } };
+    });
+    return { availability, calls, factory };
+  }
+
+  it('enables existing rows separately for two tenants without global keys or global registry mutation', async () => {
+    const gw = governedGateway({ providers: [] });
+    const f = tenantClients();
+    const before = registryOf(gw).map(row => row.enabled);
+    const [a, b] = await Promise.all([
+      gw.route(request({ taskType: 'chat', provider: 'anthropic', model: 'claude-opus-4', organizationId: 101 })),
+      gw.route(request({ taskType: 'chat', provider: 'openai', model: 'gpt-4o', organizationId: 202 })),
+    ]);
+    expect([a.content, b.content]).toEqual(['Organization 101', 'Organization 202']);
+    expect(f.calls).toEqual(expect.arrayContaining([{ provider: 'anthropic', organizationId: 101 }, { provider: 'openai', organizationId: 202 }]));
+    expect(registryOf(gw).map(row => row.enabled)).toEqual(before);
+    expect((await gw.getModelsForOrganization(101)).filter(row => row.enabled).every(row => row.provider === 'anthropic')).toBe(true);
+    expect((await gw.getModelsForOrganization(202)).filter(row => row.enabled).every(row => row.provider === 'openai')).toBe(true);
+    expect(JSON.stringify(ledgerRows(gw))).not.toMatch(/apiKey|credentialAuthorityToken/);
+  });
+
+  it('refuses revoked cards without using an enabled platform key or silently substituting another model', async () => {
+    const gw = governedGateway();
+    const f = tenantClients();
+    f.availability.mockResolvedValue({ mode: 'customer_owned', providers: [] });
+    const dispatch = stubDispatch(gw);
+    const error = await gw.route(request({ taskType: 'chat', model: 'claude-opus-4', organizationId: 101 })).catch(e => e);
+    expect(error).toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    expect(isTerminalGatewayError(error)).toBe(true);
+    expect(dispatch).toEqual([]);
+    expect(f.factory).not.toHaveBeenCalled();
+    expect(ledgerRows(gw)).toHaveLength(1);
+  });
+
+  it('preserves explicitly disabled providers and canonically disabled rows even with an active tenant key', async () => {
+    tenantClients();
+    const disabledProvider = new AIGateway({ auditEnabled: false, providers: [{ name: 'anthropic', enabled: false,
+      apiKey: 'not-used', defaultModel: 'not-used', models: [] }] });
+    expect((await disabledProvider.getModelsForOrganization(101)).filter(row => row.provider === 'anthropic').every(row => !row.enabled)).toBe(true);
+    const canonical = DEFAULT_MODELS.find(row => row.id === 'claude-opus-4')!;
+    const previous = canonical.enabled;
+    let disabledRow: AIGateway;
+    try { canonical.enabled = false; disabledRow = governedGateway({ providers: [] }); }
+    finally { canonical.enabled = previous; }
+    expect((await disabledRow.getModelsForOrganization(101)).find(row => row.id === canonical.id)?.enabled).toBe(false);
+  });
+
+  it('contains a credential revoked after selection at the fresh SDK boundary, without platform fallback', async () => {
+    const gw = governedGateway();
+    const f = tenantClients();
+    f.factory.mockRejectedValue(new providerClients.TenantCredentialUnavailableError());
+    const platform = vi.fn();
+    (gw as unknown as { anthropicClient: unknown }).anthropicClient = { messages: { create: platform } };
+    await expect(gw.route(request({ taskType: 'chat', model: 'claude-opus-4', organizationId: 101 }))).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    expect(f.factory).toHaveBeenCalledOnce();
+    expect(platform).not.toHaveBeenCalled();
+    expect(ledgerRows(gw)).toHaveLength(1);
+  });
+
+  it('refuses a supplied invalid actor instead of interpreting it as background work', async () => {
+    const gw = governedGateway({ providers: [] });
+    const f = tenantClients();
+    await expect(gw.route(request({ taskType: 'chat', model: 'claude-opus-4', organizationId: 101, userId: 'invalid-actor' }))).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    expect(f.factory).not.toHaveBeenCalled();
+  });
+
+  it('keeps arbitrary SDK error text out of the final error and failure ledger', async () => {
+    const gw = governedGateway({ providers: ['openai'] });
+    const canary = 'opaqueCustomerCredentialCANARY_334455';
+    vi.spyOn(gw as unknown as { executeProvider: () => Promise<GatewayResponse> }, 'executeProvider').mockRejectedValue(Object.assign(new Error(`provider echoed ${canary}`), { status: 400 }));
+    const error = await gw.route(request({ taskType: 'chat' })).catch(e => e);
+    expect(error.message).not.toContain(canary);
+    expect(JSON.stringify(ledgerRows(gw))).not.toContain(canary);
+    expect(error.message).toContain('HTTP 400');
   });
 });
