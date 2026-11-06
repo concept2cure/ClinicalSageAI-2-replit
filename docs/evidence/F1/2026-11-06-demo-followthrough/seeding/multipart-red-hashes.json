@@ -1,0 +1,4 @@
+{
+  "tests/validation/lib/harness.mjs": "53bfb6eb35cfae75fe34b1888d8ca4485122aa9bb9b386818fc871bfbaa054a9",
+  "tests/validation/lib/api-client-retry.test.mjs": "51d374662ec28523b4ea047d61a72e896c64d63e3f7f682bdbc903cbf5f072e9"
+}
