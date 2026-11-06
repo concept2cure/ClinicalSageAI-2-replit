@@ -6,7 +6,7 @@
   "server/services/ana/draft-product-advisory.ts": "075023efba6b48cbd9f4f9d38172f9513a44f5557594a950cde62be46a261fc5",
   "server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts": "c772d11befa709518ddb57bacc9a3950a8e03b11f2b7a30099c27cb251e1315c",
   "server/services/ana/therapeutic-area-profiles/index.ts": "52a7356bae78e91689b432741c2befa8b410d55fbe3e23ec14377409b0c8c67a",
-  "server/services/authoring/__tests__/authoring-draft-template.test.ts": "d8fb6833a6f3859b9dc46224987dfddbd98d7709460785fd26d63ade6a8270a4",
+  "server/services/authoring/__tests__/authoring-draft-template.test.ts": "b7b63776985a910dd2343cbd1d41cacc864251532ca018df3ebf8e55e947ad6a",
   "server/services/authoring/authoring-draft-template.ts": "a19f7299b268c6e6061a339b1cda62922b8fb0915a8dc0934b742205dda9b9ff",
   "server/services/regulatory/registry/blueprints/canadaCtaBlueprint.ts": "aa4119d16e12c17bbf1bcd653d816113af2f9c41216aa776ccdce73a75c5b9f9",
   "server/services/regulatory/registry/blueprints/euCtaBlueprint.ts": "1b732e9137c87a58eb3e67d44ef408259bc2bb65ea151c3e7fa7e250e516b076",

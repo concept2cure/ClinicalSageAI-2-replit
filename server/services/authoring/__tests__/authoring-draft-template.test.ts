@@ -25,11 +25,11 @@ const LIMIT = 16 * 1024;
 const SCOPE = { tenantId: 7, documentId: DOC, programId: PROGRAM, sectionId: SECTION, code: '3' };
 const q: RequestSqlClient = { query: async () => { throw new Error('The adapter must reuse the canonical validator'); } };
 const header = { template_id: PARENT, provenance: {}, title: 'Renamed working document' };
-const source = (region: 'US' | 'CA' | 'EU' | 'UK' | 'JP' | 'GLOBAL' = 'US', id = PARENT): RecordedTemplateSource => {
-  const registryId = { US: 'US_IND', CA: 'CA_CTA', EU: 'EU_CTA', UK: 'UK_CTA', JP: 'JP_CTN', GLOBAL: 'ICH_IB' }[region];
+const source = (region: 'US' | 'CA' | 'EU' | 'JP' | 'GLOBAL' = 'US', id = PARENT): RecordedTemplateSource => {
+  const registryId = { US: 'US_IND', CA: 'CA_CTA', EU: 'EU_CTA', JP: 'JP_CTN', GLOBAL: 'ICH_IB' }[region];
   return { id, entryId: `registry:${registryId}`, version: 1, sha256: 'a'.repeat(64), kind: 'narrative',
     aiDraftable: true, authoringMode: 'ai_draft', originalFormat: 'docx', limitations: ['Retain original source records.'],
-    filingContext: { registryId, region, agency: { US: 'FDA', CA: 'Health Canada', EU: 'EMA', UK: 'MHRA', JP: 'PMDA', GLOBAL: 'ICH' }[region] } };
+    filingContext: { registryId, region, agency: { US: 'FDA', CA: 'Health Canada', EU: 'EMA', JP: 'PMDA', GLOBAL: 'ICH' }[region] } };
 };
 
 function reviewed(parent: RecordedTemplateSource | null = source(), guidance = 'Exact saved reference guidance.'): SavedTemplateReview {
@@ -73,7 +73,6 @@ beforeEach(() => { h.review.mockReset().mockResolvedValue(reviewed()); });
 
 describe('the adapter renders only the exact admitted section reference', () => {
   it.each([
-    ['UK', 'UK_CTA', 'uk_cta_protocol'],
     ['EU', 'EU_CTA', 'PART_I.PROTOCOL'], ['EU', 'EU_CTA', 'PART_I.SYNOPSIS'],
     ['CA', 'CA_CTA', '1.7.1'], ['CA', 'CA_CTA', '1.4.1'], ['CA', 'CA_CTA_A', '1.7.1'],
   ] as const)('carries its own saved %s / %s / %s identity without consulting the project filing', async (region, registryId, code) => {

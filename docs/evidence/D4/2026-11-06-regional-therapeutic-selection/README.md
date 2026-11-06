@@ -4,7 +4,7 @@
 
 ## Current status
 
-Implementation, scoped checks and production builds pass. Source is frozen; normal hooked canonical publication is pending.
+Corrected core checks pass355/355. The first normal push refused one invalid new UK saved-template fixture at the compiler; its failed log and explicit correction are retained. The zero baseline and production code are unchanged. Normal retry is pending after documentation-only synchronization.
 
 ## What already exists
 
@@ -71,3 +71,11 @@ and merge. The five core suites pass 356/356; they are separate scoped runs, not
 whole-repository or scientific qualification. All 13 own hashes still match the
 manifest. Production and source guards are frozen; no file remains held by this
 slice. Normal repository hooks, including the full compiler, will qualify publication.
+
+
+## What already exists — saved UK region boundary found by the compiler
+
+The first normal publication compiler reports one TS2322 in the added adapter test. `shared/authoring/recorded-template-source.ts` has an established US/EU/CA/JP/GLOBAL region contract and runtime parser; `builtin-authoring-templates.ts` uses the same admitted region list. The new UK saved-template fixture bypassed that actual boundary via the mocked validated-result seam. Remove that invalid fixture rather than widen template admission or pretend GLOBAL is UK. UK remains covered by exact project-filing and direct advisory identity tests; saved regional template handoff is verified for currently admitted EU/CA identities only. Five positive saved-template cases remain, preserving their assertions. Original failed compiler/log is retained, the zero baseline is unchanged, and this limitation supersedes earlier unqualified six-template statements.
+
+
+The corrected core run passes355/355 across five suites. Scoped fixture lint is zero errors/warnings. The13-file manifest has one explicitly recorded test-only transition; its prior snapshot is retained. The eight production files, adjacent213-case qualification and production build are unchanged. UK saved-template admission remains a recorded gap; EU/CA saved-template handoff is verified.

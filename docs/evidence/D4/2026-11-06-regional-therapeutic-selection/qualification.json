@@ -21,7 +21,7 @@
     "existingPaths": [
       "nested AnA drafting",
       "editor project-filing fallback",
-      "validated saved-template identity handoff"
+      "validated EU/CA saved-template identity handoff"
     ]
   },
   "red": {
@@ -35,16 +35,18 @@
       "failed": 19,
       "passedControls": 79,
       "suites": 3,
-      "log": "integration-red.txt.gz"
+      "log": "integration-red.txt.gz",
+      "invalidFixtureCasesRemoved": 1,
+      "validBehavioralFailures": 18
     },
     "productionBeforeManifest": "production-before-sha256.json"
   },
   "core": {
     "result": "passed",
-    "tests": 356,
+    "tests": 355,
     "suites": 5,
-    "log": "core-green.txt.gz",
-    "note": "Final after private helper separation; original controls retained."
+    "log": "core-corrected.txt.gz",
+    "note": "Final after removing one newly added UK saved-template fixture outside the existing admitted region contract. Every valid original assertion retained."
   },
   "adjacent": {
     "result": "passed",
@@ -69,13 +71,21 @@
     "log": "build.txt.gz"
   },
   "review": "Independent read-only review found no material defect, import cycle or source/model/preservation regression.",
-  "publication": "pending normal hooked push",
+  "publication": {
+    "result": "pending",
+    "initialAttempt": "failed compiler with1TS2322 in added fixture; no accepted push",
+    "failedSource": "737d908c9384b8790df79ff976bc7d2f83184842",
+    "failedLog": "publication-typecheck-red.txt.gz",
+    "correctedBaseline": 0
+  },
   "limits": [
     "Advisory knowledge reach only; not clinical/regulatory/scientific or model qualification.",
     "Static profile references retain existing dated-currency and unresolved-applicability checks. No new clinical source guidance was authored.",
     "PGlite SQL and mocked HTTP/provider transports are scoped software proof; no live model/agency or native PostgreSQL qualification was run.",
     "NMPA/Australia/Japan content unchanged; CMC composition stays small-molecule US IND.",
-    "No app/card/editor/screen/route/service/table/provider/model addition. Held CSR route unchanged."
+    "No app/card/editor/screen/route/service/table/provider/model addition. Held CSR route unchanged.",
+    "UK saved-template region admission remains outside the existing template-region contract. UK proof uses project-filing and direct advisory paths; no admission widening or GLOBAL substitution.",
+    "Inline authoring/CSR inputSensitivityTiers propagation remains open P-104 work, as recorded in the incoming launcher handoff; no blanket provider-placement qualification is claimed."
   ],
   "implementationCommit": "e1e98c60b",
   "canonicalSynchronization": {
@@ -86,5 +96,6 @@
       "passed": 6,
       "log": "launcher-tests.txt.gz"
     }
-  }
+  },
+  "fixtureCorrection": "fixture-correction.json"
 }

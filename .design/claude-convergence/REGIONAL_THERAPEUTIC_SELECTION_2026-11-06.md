@@ -37,3 +37,8 @@ Further caller inspection before implementation found `authoring-draft-template.
 ## Preservation review before green checks
 
 Exact protocol/synopsis roles clear the CTD section rather than inventing a CTD location. Other regional rows retain their existing numeric CTD context when one exists (notably Canadian Module3 quality), while the explicit regional-other role withholds clinical endpoint/statistical arrays. This preserves existing modality/quality advice and scoped rules. Non-numeric UK/EU preparation codes still have no CTD meaning. Requested row matching mirrors the resolver's canonical code/title/former-title contract, including code plus title, and refuses a duplicate-code string. These are preservation details within the reviewed scope, not expanded clinical requirements.
+
+
+## What already exists — saved UK region boundary found by the compiler
+
+The first normal publication compiler reports one TS2322 in the added adapter test. `shared/authoring/recorded-template-source.ts` has an established US/EU/CA/JP/GLOBAL region contract and runtime parser; `builtin-authoring-templates.ts` uses the same admitted region list. The new UK saved-template fixture bypassed that actual boundary via the mocked validated-result seam. Remove that invalid fixture rather than widen template admission or pretend GLOBAL is UK. UK remains covered by exact project-filing and direct advisory identity tests; saved regional template handoff is verified for currently admitted EU/CA identities only. Five positive saved-template cases remain, preserving their assertions. Original failed compiler/log is retained, the zero baseline is unchanged, and this limitation supersedes earlier unqualified six-template statements.
