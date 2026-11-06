@@ -509,3 +509,57 @@ describe('the record and the view', () => {
     expect(h.frames.at(-1)).toMatchObject({ status: 'completed' });
   });
 });
+
+
+describe('exact stored source spans (multi-agent specification §14.4)', () => {
+  const text = 'Response was 42%.';
+  const span = { artifact_id: 'source-1', source_start: 7, source_end: 23, draft_start: 0, draft_end: 16 };
+  const verify = (source_spans: unknown = [span]) => ({ ...RESEARCH, role: 'verify', text_to_check: text, source_spans });
+  const withSource = () => host({ governedTools: [...GOVERNED, TOOL('read_vault_document')] });
+  const sourceReading = (r: any) => r.checks.find((c: any) => c.check === 'source_spans');
+  it('compares actual stored source bytes before the model, keeping the scoped read and hashes in the run record', async () => {
+    const reads: any[] = [];
+    registerToolHandler('read_vault_document', async (input, ctx) => {
+      reads.push({ input, ctx, refusal: modelCallRefusal(), modelCallsBefore: gw.calls.length });
+      return JSON.stringify({ ok: true, content: 'Prefix:Response was 42%.', document: { artifact_id: 'source-1' } });
+    });
+    const r = await run(verify(), withSource());
+    expect(sourceReading(r).outcome).toBe('pass');
+    expect(sourceReading(r).statement).toContain('1 exact matches, 0 mismatches');
+    expect(reads).toHaveLength(1);
+    expect(reads[0].ctx).toMatchObject({ organizationId: 7, projectRef: 'prog-uuid', agentDepth: 1 });
+    expect(reads[0].refusal).not.toBeNull();
+    expect(reads[0].modelCallsBefore).toBe(0);
+    expect(r.trace.checkOutputs.find((o: any) => o.check === 'source_spans')).toBeDefined();
+    expect(r.trace.steps[0]).toMatchObject({ round: 0, tool: 'read_vault_document', ok: true });
+    const evidence = JSON.parse(r.checkOutputs.find((o: any) => o.check === 'source_spans').output).evidence[0];
+    expect(evidence.sourceReadHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(evidence.quoteHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(r.notChecked.join(' ')).toContain('semantic support');
+    expect(r.report.advisory).toBe(true);
+  });
+  it('a one-character mismatch blocks even when the model declares the quote correct', async () => {
+    registerToolHandler('read_vault_document', async () => JSON.stringify({ ok: true, content: 'Prefix:Response was 43%.' }));
+    gw.script = [{ content: 'All citations are correct.', toolUses: [], usage: {}, provider: 'anthropic', model: 'm', requestId: 'r' }];
+    const r = await run(verify(), withSource());
+    expect(sourceReading(r).outcome).toBe('fail');
+    expect(r.verdict).toBe('issues_found');
+  });
+  it.each([
+    { error: 'No document in this project.' },
+    { ok: true, content: 'short' },
+    { ok: false, content: 'Prefix:Response was 42%.' },
+    { ok: true, error: 'Source read failed.', content: 'Prefix:Response was 42%.' },
+  ])('an unavailable, out-of-range or refused source is never a pass: %j', async source => {
+    registerToolHandler('read_vault_document', async () => JSON.stringify(source));
+    expect(sourceReading(await run(verify(), withSource())).outcome).toBe('error');
+  });
+  it('does not use a source tool the parent was not offered', async () => {
+    const read = vi.fn(async () => JSON.stringify({ ok: true, content: 'Prefix:Response was 42%.' }));
+    registerToolHandler('read_vault_document', read);
+    const r = await run(verify());
+    expect(read).not.toHaveBeenCalled();
+    expect(sourceReading(r).outcome).toBe('error');
+  });
+
+});
