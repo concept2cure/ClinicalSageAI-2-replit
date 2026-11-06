@@ -353,7 +353,12 @@
         "server/services/vault/document-catalog-document.ts",
         "server/services/vault/document-catalog-actor-reads.ts",
         "db/migrations/20260520_ana_failure_learning.sql",
-        "server/services/vault/vault-ingest.service.ts"
+        "server/services/vault/vault-ingest.service.ts",
+        "shared/ana/skills.ts",
+        "server/services/account-skill-bundles.ts",
+        "client/src/concept2cure/v2/surfaces/AdminSkillForms.ts",
+        "client/src/concept2cure/v2/SkillStudioParts.tsx",
+        "client/src/concept2cure/v2/SkillStudio.tsx"
       ]
     },
     {
@@ -765,6 +770,41 @@
           "commit": "a717cfe4",
           "testSuitesPassed": 7,
           "testsPassed": 182
+        },
+        {
+          "name": "atomic_account_canon_fact_and_event",
+          "package": "F1",
+          "status": "implementation_in_progress",
+          "scope": "existing account-canon.ts mutation and immutable event commit or roll back together; component verification in progress, 15 tests reported passing"
+        },
+        {
+          "name": "authority_account_recheck_after_archive",
+          "package": "F1",
+          "status": "implementation_in_progress",
+          "scope": "existing gateway-accounts.ts/index.ts recheck org/gateway/environment authority fingerprint after archive awaits and immediately before transport; refuse mode/sender/rotation/deletion changes without fallback"
+        },
+        {
+          "name": "sourced_mandatory_skill_policy_bindings",
+          "package": "S4",
+          "status": "implementation_in_progress",
+          "scope": "extend existing skill-store policy_bindings and current administration/studio surfaces with sourced mandatory rules; runtime acceptance not yet demonstrated"
+        }
+      ],
+      "hardDependencies": [
+        {
+          "name": "qualified_local_model",
+          "status": "unresolved",
+          "evidence": "server/services/ai-governance/approved-models.ts local-default remains a placeholder without pinned weights, high-risk approval or passed PQ"
+        },
+        {
+          "name": "approved_reversible_derivative_pipeline",
+          "status": "unresolved",
+          "evidence": "No established reversible tenant-local token-map custody or approved derivative policy; existing redaction is not the §26 derivative round-trip"
+        },
+        {
+          "name": "expanded_spike",
+          "status": "acceptance_pending",
+          "evidence": "No full §14.4 + §§19/23/26 fixture pass; component tests do not enable downstream phases"
         }
       ]
     }

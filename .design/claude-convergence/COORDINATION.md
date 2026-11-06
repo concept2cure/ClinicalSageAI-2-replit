@@ -162,3 +162,18 @@ This is an extension of the current packages, not a parallel program or a releas
 The account target changes from the historical platform/client choice to client-owned accounts for client filings.
 Historical records are retained; migration and live transport are not claimed by the plan. No child worker gains
 write/lock/sign/transmit rights. Existing approved-model/PQ, tenant and content-bound approval gates remain enforced.
+
+### Anna runtime continuation — active ownership, P-104, 2026-11-06
+
+This continues §1d after the first bounded-control integration. Earlier audit/progress rows above are historical;
+the active holds below are separate and do not transfer another session's existing files.
+
+| Scope and existing files | Active holder | Release condition |
+|---|---|---|
+| F1 atomic canon mutation/event: `server/services/account-canon.ts`, existing `server/services/__tests__/account-canon-stores-no-unstated-confidence.test.ts` | Anna architecture lead's assigned canon repair agent | Lead integrates atomic rollback evidence and records commit; 15 component cases reported passing, integration in progress. |
+| F1 authority-account freshness: `server/services/submission-gateways/gateway-accounts.ts`, `index.ts`, existing `__tests__/gateway-accounts.test.ts` | Anna architecture lead's assigned gateway repair agent | Current authority fingerprint rechecked after archive awaits/before wire; mode/sender/rotation/deletion refusals verified. |
+| S4 sourced mandatory skill policies: `shared/ana/skills.ts`, `server/services/account-skill-bundles.ts`, existing `server/services/ana/skills/` runtime, `client/src/concept2cure/v2/surfaces/AdminSkillForms.ts`, `client/src/concept2cure/v2/SkillStudioParts.tsx`, `client/src/concept2cure/v2/SkillStudio.tsx` | Anna architecture lead's assigned skill runtime agent | Runtime enforcement and current UI agree; source/mandatory-policy fixture evidence recorded before claiming completion. |
+| Plan §1d/§3a, existing ledger and this active coordination entry | Anna architecture lead's roadmap agent | Lead stages a `Plan: PLAN` / `Founder-Decision: P-104` scope commit; no implementation files edited here. |
+
+No new files/tables/tools/models are approved. The local-model pin/high-risk/PQ and reversible derivative-policy/
+token-map custody dependencies stay unresolved; first-slice tests do not mark the expanded spike complete.

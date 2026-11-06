@@ -219,6 +219,25 @@ and extensions, not a declaration that the seven spike checks passed. Semantic c
 coverage for legacy/unassessed inputs, a durable RuleRecord/hard-gate runtime, scoped credential-grant migration,
 local derivative round-trip and full clean-file review remain unresolved acceptance dependencies.
 
+**Continuation audit and work in progress (P-104).** Three further extensions remain in the current homes.
+**F1:** `server/services/account-canon.ts` must commit a canon mutation and its immutable event atomically; the
+existing `server/services/__tests__/account-canon-stores-no-unstated-confidence.test.ts` reports 15 passing component
+cases, with integration still in progress. **F1:** `server/services/submission-gateways/gateway-accounts.ts` and
+`index.ts` must recheck the current organization/gateway/environment authority fingerprint after
+`archiveSentPackage` awaits and immediately before transport. A changed mode, sender, rotated or deleted credential
+must refuse without fallback; expanded `gateway-accounts.test.ts` verification is in progress. This is authority
+credential freshness, not an account-canon memory change. **S4:** source and enforce mandatory `policy_bindings`
+through the existing skill store/runtime, `shared/ana/skills.ts`, `server/services/account-skill-bundles.ts`, and the
+current `client/src/concept2cure/v2/surfaces/AdminSkillForms.ts`, `client/src/concept2cure/v2/SkillStudioParts.tsx` and `client/src/concept2cure/v2/SkillStudio.tsx` surfaces. No completed rule runtime,
+RuleRecord store or hard-gate fixture pass is claimed by this scope entry.
+
+**Hard dependencies remain unresolved.** The `local-default` approved-model entry still pins a placeholder rather
+than concrete weights, is not high-risk approved and has no passed PQ (`server/services/ai-governance/approved-models.ts`).
+There is no established reversible tenant-local token-map custody or approved derivative policy for the §26
+round-trip. Existing redaction does not supply that derivative contract. These limitations keep the expanded spike
+**acceptance pending**; no model is enabled, provider terms verified or external retention/residency assurance made
+by this update. Record actual evidence before changing those statuses.
+
 ### Milestones in the existing roadmap — §11 build order
 
 Each row is **queued for v0.5 acceptance** until its stated fixture is run and recorded. A file's existence or an
@@ -472,6 +491,15 @@ checks, then execute the expanded fixture contract. Exact quotation checks canno
 No provider call, live transmission, authority-account transition, full derivative round-trip, production rollout,
 customer IQ/OQ or complete spike pass is asserted by these component checks. Phases 1–8 stay queued behind their
 stated gates.
+
+#### F1 / S4 — Anna runtime continuation (2026-11-06, P-104, active)
+
+The lead continues the same §1d epic through atomic canon fact/event persistence (F1), authority-account freshness
+across archive awaits (F1), and sourced mandatory skill `policy_bindings` in the existing store/runtime and current
+studio (S4). Exact paths and the 15-case canon component result are recorded in §1d. Gateway and policy-binding
+acceptance is in progress; no delivery commit or completed fixture is claimed here. No files, tables, routes,
+tools or models are added. Full spike acceptance remains pending on its seven checks and the explicit local-model
+and reversible-derivative dependencies. Existing authority-account ownership migration is still not asserted.
 
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
