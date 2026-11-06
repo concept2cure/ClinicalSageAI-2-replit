@@ -152,6 +152,8 @@ describe('AuthoringAiDraft — revise the text shown by instruction', () => {
     await waitFor(() => expect(apiRequest.mock.calls.some((c: unknown[]) => String(c[1]).endsWith('/ai/draft/accept'))).toBe(true));
     const accept = apiRequest.mock.calls.find((c: unknown[]) => String(c[1]).endsWith('/ai/draft/accept'))!;
     expect(accept[2]).toMatchObject({ draftId: 'DC-rev-1' });
+    // Slice 1 decision 3 (CSR slice 2): the accept names the option set, from the panel's own list.
+    expect((accept[2] as Body).optionSet).toEqual({ kind: 'revision', revision: 1, of: { kind: 'alternative', position: 1, count: 3, approach: 'professional' } });
   });
 
   it('revises a lone draft and lists both, keeping “Draft again” a single draft', async () => {

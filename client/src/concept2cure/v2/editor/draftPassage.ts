@@ -13,6 +13,8 @@ import { MAX_PASSAGE_CHARS, PASSAGE_CONTEXT_CHARS, type DraftPassage } from '@sh
 import { locateProposal } from './proposalAnchor';
 import { remedyRefusal } from './authoringRemedies';
 import type { EditorBridgeProposal, EditorBridgeProposeResult } from './DocumentWorkbench';
+import type { PendingAiDraft } from './authoringDraftTransport';
+import { csrFigureHold } from './draftAlternatives';
 
 export { PASSAGE_CONTEXT_CHARS };
 
@@ -93,4 +95,12 @@ export function passageRefusal(result: Extract<EditorBridgeProposeResult, { ok: 
   if (result.reason === 'ambiguous') return `${lead}the selected passage now reads the same in more than one place. Select a longer passage and ask again.`;
   if (result.reason === 'overlaps-suggestion') return `${lead}the selected passage already holds a pending change. Accept or reject it in the editor first.`;
   return lead + remedyRefusal(result);
+}
+
+/** Why a passage alternative is held back: a figure the study's engine did not produce (CSR slice 2). null when not held. */
+export function passageFigureHold(draft: PendingAiDraft): string | null {
+  const held = csrFigureHold(draft, draft.generated)?.blocking ?? [];
+  if (!held.length) return null;
+  return `Not offered: ${held.join(', ')} ${held.length === 1 ? 'is not a figure' : 'are not figures'} the study’s engine produced`
+    + ' for this section. Ask AnA for the alternatives again, or edit the passage in the editor.';
 }

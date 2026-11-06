@@ -139,14 +139,51 @@ figures on a draft, and the 422 at accept, could not be walked live. That walk w
 
 It belongs to the session with the founder's model keys (COORDINATION.md, "Codespace setup").
 
-## Not done in this change
+## The panel half (second commit, 2026-11-06)
 
-1. **The figure on the draft itself, in the panel.** Inline marks on the figure in each alternative, paragraph, revision
-   and passage alternative; disabling the proposal of a paragraph or passage that carries one; and the "not checked
-   against the study's engine output" note. The server now answers all of these. The panel does not yet draw them.
-   Until it does, a whole accept is refused with the figure named, and a paragraph or passage proposed into the editor
-   is caught by the saved-CSR verdict at critique and release, and by P-89 at signing.
-2. **The panel sending `optionSet` on accept.** The server accepts and records it, but the panel does not send it yet.
-3. **Slices 3–4 decision 4, the assembly "Review" edge.** It is in `DocumentWorkbench.tsx`, which this lane does not
+It completes the one review panel and adds no screen, card or CSS. A figure is named in quiet text with the draft, as
+plan §2 asks.
+
+- **Transport.** `authoringDraftTransport.ts` decodes `csrFigures` onto the draft. A malformed one is dropped, never
+  guessed. The accept sends `optionSet`.
+- **Pure helpers** (`editor/draftAlternatives.ts`):
+  - `csrFigureHold(draft, text)` gives the gate's figures that still stand in the text as it now reads, the person's
+    edits included;
+  - `acceptOptionSet(state)` reads the panel's own list: the alternative shown ("alternative 2 of 3, concise"), or a
+    revision with its depth and what it revises. A lone draft names no set.
+- **What the person sees and can do:**
+  - With each draft, `CsrFigureNote` (in `editor/DraftAlternatives.tsx`) says one of four things:
+    - a figure the engine did not produce, named, with "Correct or remove it to accept";
+    - a reported figure outside the results sections, which does not hold the accept;
+    - "not checked against the study's engine output" when there are no receipts;
+    - that every figure is one the engine claims.
+  - The accept is held, `aria-describedby` that note, while a blocking figure still stands in the text. Correcting it
+    in the panel releases the hold, and the server re-checks at accept.
+  - A paragraph carrying a blocking figure is not offered for "Add chosen paragraphs". Its checkbox is disabled and
+    the reason sits beneath it. The other paragraphs stay available.
+  - A passage alternative carrying one is not offered for "Replace". The reason is given by `passageFigureHold`, in
+    `editor/draftPassage.ts`.
+- **Proof.**
+  - Red: 12 new panel tests fail without the panel change (`red-panel.log.gz`).
+  - Green: 70 of 70 in the four panel test files. Regression: every test file that imports the panel's modules or the
+    workbench, 53 files and 728 tests (`regression-panel.log.gz`).
+  - Mutations: 8 of 8 killed, each file restored by SHA-256 (`mutate-panel.py.txt`):
+    - the accept not held;
+    - the hold read on the model's text instead of the edited text;
+    - a paragraph not held;
+    - a passage not held;
+    - no receipts reading as checked;
+    - the option set not sent;
+    - revision depth not counted;
+    - the transport dropping the gate.
+  - Gates: ESLint has no new warnings. `CsrFigureNote` sits in the editor's existing panel module, so
+    `AuthoringAiDraft.tsx` stays under its line limit. The scoped tsc is clean. `ci:canvas-path`,
+    `ci:single-native-canvas`, `ci:check-editor-integrity`, `ci:design-system`, `ci:one-product` and
+    `ci:undefined-css-classes` pass.
+
+## Not done
+
+1. **The running-app walk.** It needs a model key, which this environment does not have.
+2. **Slices 3–4 decision 4, the assembly "Review" edge.** It is in `DocumentWorkbench.tsx`, which this lane does not
    hold. The fix is to clear `draftPassage` in `onReviewSection` (`DocumentWorkbench.tsx:2327`), with an assembly-flow
-   test. It goes to D4's holder.
+   test. It is handed to D4's holder in COORDINATION.md.
