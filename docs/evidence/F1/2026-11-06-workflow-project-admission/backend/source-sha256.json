@@ -1,0 +1,6 @@
+{
+  "server/routes/taskManagement.routes.ts": "36d2e39885c4d09bfe34bf38325062bc7c1e6a18cf235238ef5e3bd470e1cde7",
+  "server/services/tasking/task-project.ts": "75aa5c80b70ad433a6327077a0e6d403e3e983d1d2994ef633f5e0528aadf8c9",
+  "server/services/tasking/__tests__/task-project-admission.test.ts": "429351e12c2ec9604da4fd5b5b2cdbb59758ecbaee0f2141c34bf0db38f36b6e",
+  "server/routes/__tests__/_task-management-governed-harness.ts": "67fcd9138303b75263c20902f7cf0f11e71902518df191411b373b4badc0c8d7"
+}

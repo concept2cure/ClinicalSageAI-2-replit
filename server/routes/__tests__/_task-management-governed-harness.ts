@@ -217,11 +217,14 @@ export function resetHarness() {
  * recording SQL client; only the ledger primitive and planning pick are mocked. */
 function pinnedAssignmentClient(role: string | null) {
   const tasks = new Map<string, Record<string, unknown>>();
-  return { discard: async () => undefined, async query(statement: string, params: unknown[] = []) {
+  return { discard: async () => undefined, async query(config: string | { text: string; rowMode?: string }, params: unknown[] = []) {
+    const statement = typeof config === 'string' ? config : config.text;
     h.rawQueries.push(statement);
-    const transaction = assignmentTransaction(statement);
+    const transaction = assignmentTransaction(statement.trim().toUpperCase());
     if (transaction) return transaction;
     if (statement.includes('SELECT ou.role')) return { rows: [{ role: params[1] === 9 ? 'member' : role }] };
+    const workflow = workflowFixtureQuery(config, statement, params);
+    if (workflow) return workflow;
     const task = assignmentTaskFixture(tasks, statement, params);
     if (task) return task;
     if (statement.includes('task-assignment:roster')) return { rows: [{ id: 9, name: 'Ana', email: 'ana@example.test', role: 'member' }] };
@@ -239,6 +242,55 @@ function pinnedAssignmentClient(role: string | null) {
     if (statement === 'INSERT INTO audit_logs') { h.log.push('tx:execute'); return { rows: [] }; }
     throw new Error(`Unexpected assignment fixture SQL: ${statement}`);
   } };
+}
+
+/** The workflow's actual fixture parent belongs to actor 7; the production
+ * sharing policy evaluates that row, rather than being mocked as an allow. */
+function workflowProjectFixture(statement: string, params: unknown[]) {
+  if (statement.includes('SELECT id,client_workspace_id,status FROM projects')) {
+    return { rows: params[0] === 3 && params[1] === 2 ? [{ id: 3, client_workspace_id: null, status: 'active' }] : [] };
+  }
+  if (statement.includes('FROM projects p LEFT JOIN project_visibility_settings')) {
+    // The adapter binds every repeated placeholder separately; the requested
+    // project is the final value in this canonical policy query.
+    return { rows: params.at(-1) === 3 ? [{ id: 3, owner_id: 7, created_by_id: 7,
+      settings: {}, visibility: 'private', members: [], review_assigned: false }] : [] };
+  }
+  if (statement.includes('FROM project_visibility_settings') || statement.includes('FROM project_members')) return { rows: [] };
+  return undefined;
+}
+const camel = (name: string) => name.replace(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase());
+
+function workflowFixtureQuery(config: string | { rowMode?: string }, statement: string, params: unknown[]) {
+  const parent = workflowProjectFixture(statement, params);
+  if (parent) return parent;
+  const workflow = workflowWriteFixture(statement, params);
+  if (!workflow || typeof config === 'string' || config.rowMode !== 'array') return workflow;
+  const returning = statement.slice(statement.indexOf(' returning ') + 11).split(',').map(name => camel(name.trim().replaceAll('"', '')));
+  return { rows: workflow.rows.map(row => returning.map(name => row[name] ?? null)) };
+}
+
+/** Recording stand-in for the same node-pg Drizzle transaction as production.
+ * Native tests separately prove actual SQL, RLS, admission and atomic rollback. */
+function workflowWriteFixture(statement: string, params: unknown[]) {
+  const insert = statement.match(/^insert into "(unified_tasks|task_dependencies)" \(([^)]+)\) values \(([^)]+)\)/);
+  if (insert) {
+    h.log.push('tx:insert'); const error = h.fail?.('tx', 'insert'); if (error) throw error;
+    const columns = insert[2].split(',').map(name => camel(name.trim().replaceAll('"', '')));
+    const values: Record<string, unknown> = {};
+    insert[3].split(',').forEach((token, index) => {
+      const parameter = token.trim().match(/^\$(\d+)/); if (!parameter) return;
+      const value = params[Number(parameter[1]) - 1]; const name = columns[index];
+      values[name] = ['startDate', 'dueDate'].includes(name) && typeof value === 'string' ? new Date(value) : value;
+    });
+    h.values.push(values);
+    return { rows: h.inserted as Array<Record<string, unknown>> };
+  }
+  if (statement.startsWith('update "task_templates"')) {
+    h.log.push('tx:update'); const error = h.fail?.('tx', 'update'); if (error) throw error;
+    return { rows: h.updated as Array<Record<string, unknown>> };
+  }
+  return undefined;
 }
 
 function assignmentTaskFixture(tasks: Map<string, Record<string, unknown>>, statement: string, params: unknown[]) {

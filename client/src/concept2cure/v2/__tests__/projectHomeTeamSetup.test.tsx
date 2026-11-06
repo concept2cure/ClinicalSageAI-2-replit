@@ -177,3 +177,71 @@ describe('the team on the project page (D3-3, D3.md §4.8 item 3 and §4.9)', ()
     expect(within(card).queryByRole('list')).toBeNull();
   });
 });
+
+/* D3-2b (2026-11-06, D3.md §4.10): the page reads the project's unified work and its agency inbox once each. The
+   task panels, the Team card's per-person lines, Respond and the Filing card's letters row render those reads. */
+describe('one read, several readers (D3-2b)', () => {
+  const WORK_URL = `/api/concept2cure/projects/${PID}/unified-work`;
+  const COMMS_URL = `/api/concept2cure/projects/${PID}/agency-communications`;
+  const item = (id: string, status: string, ownerName: string | null, dueAt: string | null) =>
+    ({ id, source: 'board', title: `Item ${id}`, status, priority: null, dueAt, ownerName, blocking: false });
+  const WORK = { items: [
+    item('w1', 'open', 'Coordinator', '2020-01-05T00:00:00Z'),
+    item('w2', 'in_progress', 'Coordinator', '2099-02-01T00:00:00Z'),
+    item('w3', 'open', null, null),
+    item('w4', 'done', 'Coordinator', '2019-01-01T00:00:00Z'),
+    item('w5', 'open', 'Former colleague', null),
+  ] };
+  const letter = (id: string, closureStatus: string, dueDate: string) => ({
+    id, sourceType: 'agency_letter', communicationType: 'information_request', sourceChannel: 'email', linkedSectionCodes: [],
+    receivedDate: '2099-01-02', dueDate, urgency: 'high', responseRequired: true, extractedIssues: [], humanReviewStatus: 'pending', closureStatus,
+  });
+  function serveAll(work: Response = ok(WORK), comms: Response = ok([letter('c1', 'open', '2099-02-20'), letter('c2', 'closed', '2099-01-01')])) {
+    request.mockImplementation(async (_method: string, path: string) => {
+      if (path === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'Programme A' });
+      if (path === `/api/c2c/projects/${PID}/team`) return ok(TEAM);
+      if (path === URL) return ok(sharing());
+      if (path === WORK_URL) return work;
+      if (path === COMMS_URL) return comms;
+      return ok({});
+    });
+  }
+  const calls = (url: string) => request.mock.calls.filter(([, path]) => path === url).length;
+  const step = (label: string) => fireEvent.click(screen.getByRole('button', { name: label }));
+
+  it('each person on the Team card says their open work; what no one on the team holds is said, and opens Plan', async () => {
+    serveAll(); render(<ProjectHome {...props} />);
+    const card = await screen.findByRole('region', { name: 'Team' });
+    const line = await within(card).findByText('2 open · next due Jan 5, 2020');
+    expect(line.getAttribute('data-late'), 'a passed due date is marked').not.toBeNull();
+    expect(within(card).getByRole('button', { name: '1 open item unassigned' })).toBeTruthy();
+    fireEvent.click(within(card).getByRole('button', { name: '1 open item assigned to someone not on this list' }));
+    await waitFor(() => expect(document.querySelector('.pj-lc-stage[aria-current="step"]')?.textContent?.trim()).toBe('Plan'));
+  });
+
+  it('a work read that failed is said once on the card, never as "Nothing open"', async () => {
+    serveAll({ ...ok({}), ok: false, status: 503 } as Response); render(<ProjectHome {...props} />);
+    const card = await screen.findByRole('region', { name: 'Team' });
+    expect(await within(card).findByText('Open work could not be read.')).toBeTruthy();
+    expect(within(card).queryByText('Nothing open')).toBeNull();
+  });
+
+  it("the Filing card says the open agency letters and the next response due, and opens Respond", async () => {
+    serveAll(); render(<ProjectHome {...props} />);
+    const filing = await screen.findByRole('region', { name: 'Filing' });
+    /* The name says label and value apart, as a screen reader reads it. */
+    const row = await within(filing).findByRole('button', { name: 'Agency letters: 1 open · next response due Feb 20, 2099' });
+    fireEvent.click(row);
+    await waitFor(() => expect(document.querySelector('.pj-lc-stage[aria-current="step"]')?.textContent?.trim()).toBe('Respond'));
+  });
+
+  it('the work and the inbox are each read once, however many steps show them', async () => {
+    serveAll(); render(<ProjectHome {...props} />);
+    const card = await screen.findByRole('region', { name: 'Team' });
+    await within(card).findByText('2 open · next due Jan 5, 2020');
+    for (const label of ['Plan', 'Review', 'Respond', 'Plan', 'Review']) step(label);
+    await screen.findByRole('region', { name: 'Tasks and approvals' });
+    expect(calls(WORK_URL)).toBe(1);
+    expect(calls(COMMS_URL)).toBe(1);
+  });
+});
