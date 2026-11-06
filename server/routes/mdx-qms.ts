@@ -649,8 +649,9 @@ const changeApproveBody = approveBody.extend({ learningReview: z.object({
 }).strict().optional() });
 const learningReviewOption = (body: z.infer<typeof changeApproveBody>) => body.learningReview ? { learningReview: body.learningReview } : {};
 function learningApprovalFailure(res: Response, error: AggregateLearningRefusedError) {
-  return error.status === 503 ? res.status(503).json({ error: 'Reviewed learning approval is unavailable. Re-read its current status before retrying.', details: { code: error.code } })
-    : clientError(res, error.status, error.message, { code: error.code });
+  const message = 'Reviewed learning approval could not be verified. Re-read its current status before retrying.';
+  if (error.status === 503) return res.status(503).json({ error: message, details: { code: error.code } });
+  return clientError(res, error.status, message, { code: error.code });
 }
 
 /* Retirement = the same electronic signature (P1-29 / DP-32, security review
