@@ -122,3 +122,12 @@ incoming owner's native PostgreSQL proof is retained with that workstream and is
 not counted as a rerun here. All 14 current UK manifest hashes still match, and
 no UK code was changed to accommodate this merge. Publication retries continue
 through the normal hooks; the fifth complete gate/ref-race receipt is retained.
+
+
+The sixth normal run, `797e33c09`, passed all gates with zero TypeScript errors
+and no warning growth, then lost the lock to billing changes through `c73ac5a2e`.
+Those six files were reviewed and merged normally at `05519759f`. Portal role and
+authenticated-organization binding remain intact; no UK/project/editor owner was
+touched. Billing controls, invoice/history and portal admission checks pass 75/75
+across four suites. The production client/server build passes again, and all 14
+current UK hashes still match. The normal publication retry remains pending.

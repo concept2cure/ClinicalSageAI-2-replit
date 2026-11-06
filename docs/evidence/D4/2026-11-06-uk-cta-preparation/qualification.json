@@ -97,6 +97,13 @@
       "warningGrowth": 0,
       "log": "gates-pass-fifth-ref-race.txt.gz",
       "note": "Anna-integrated source passed all normal gates; concurrent tasking/D3 ref advance rejected the lock."
+    },
+    "sixthPass": {
+      "source": "797e33c09621dcac9701b566807d2f157e782594",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-sixth-ref-race.txt.gz",
+      "note": "All normal gates passed; concurrent billing update rejected the lock."
     }
   },
   "publication": "pending normal retry after merge",
@@ -136,7 +143,7 @@
   },
   "originalSourceManifest": "source-sha256.json",
   "sourceTransition": "source-hash-transition.json",
-  "currentMergedGates": "pending normal retry after tasking/D3 integration",
+  "currentMergedGates": "pending normal retry after billing integration",
   "annaIntegration": {
     "incoming": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
     "source": "ba1d327e2c00d459e0eaa7ec037489bf805a941a",
@@ -170,5 +177,14 @@
     "review": "Tasking admission/transaction and lifted project work/inbox reads preserve UK/editor/source scope.",
     "nativeTaskingProof": "Retained by incoming owner; not rerun in this workstream.",
     "conflict": "COORDINATION.md only; latest D3 row and released UK row retained."
+  },
+  "billingIntegration": {
+    "incoming": "c73ac5a2e5b0c69c04bcddd31b51e76d1f0aee60",
+    "source": "05519759f0c9e9a13f5d9b2d27713fe60b6c4266",
+    "passed": 75,
+    "suites": 4,
+    "build": "pass",
+    "currentManifestMatches": 14,
+    "review": "No UK/project/editor impact; portal role and authenticated-organization binding retained."
   }
 }
