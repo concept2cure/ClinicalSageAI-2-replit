@@ -9,6 +9,7 @@
  * today but a reader must still refuse.
  */
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { parseAgentBrief } from '../sub-agent-limits';
 
 const dbState = vi.hoisted(() => ({ rows: [] as unknown[] }));
 
@@ -226,5 +227,20 @@ describe('agentResultSummary', () => {
     expect(summary({ agent: { ...agent, role: 'verify' }, status: 'completed', verdict: 'no_issues_found', checks })).toBe(
       'verification agent: completed, no_issues_found (2 of 3 checks compared anything)',
     );
+  });
+});
+
+
+describe('source span reference bounds', () => {
+  const span = { artifact_id: 'source-1', source_start: 7, source_end: 23, draft_start: 0, draft_end: 16 };
+  it.each([
+    [],
+    [{ ...span, source_start: -1 }],
+    [{ ...span, source_end: 30_001 }],
+    [{ ...span, source_start: 7.5 }],
+    [{ ...span, draft_end: 17 }],
+    Array.from({ length: 9 }, () => span),
+  ].map(refs => ({ refs })))('refuses malformed or unbounded source references before starting: %j', ({ refs }) => {
+    expect(parseAgentBrief({ role: 'verify', objective: 'Check quote', instructions: 'Compare exact source spans.', text_to_check: 'Response was 42%.', source_spans: refs })).toMatchObject({ error: 'INVALID_AGENT_BRIEF' });
   });
 });

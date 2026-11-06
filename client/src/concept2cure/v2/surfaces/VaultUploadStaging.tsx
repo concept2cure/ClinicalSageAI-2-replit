@@ -262,8 +262,8 @@ function StagedRow({ row, folders, repeated, busy, onChange, onRemove, view }: {
           <label htmlFor={`${id}-class`}>Classification</label>
           <select id={`${id}-class`} className="c2c-input" value={row.classification} disabled={locked}
             onChange={(e) => onChange({ classification: e.target.value as VaultClassification | '' })}>
-            <option value="">Internal (default)</option>
-            {VAULT_CLASSIFICATIONS.filter((c) => c !== 'INTERNAL').map((c) => <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
+            <option value="">Confidential (default)</option>
+            {VAULT_CLASSIFICATIONS.map((c) => <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
           </select>
           <label htmlFor={`${id}-folder`}>Folder</label>
           <select id={`${id}-folder`} className="c2c-input" value={row.folderId} disabled={locked}

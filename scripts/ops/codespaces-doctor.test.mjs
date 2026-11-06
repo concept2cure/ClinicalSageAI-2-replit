@@ -9,7 +9,7 @@ import {
 } from './codespaces-doctor.mjs';
 
 const owner = 'postgresql://neondb_owner:secret@ep-example.neon.tech/neondb?sslmode=require';
-const runtime = 'postgresql://app_service:othersecret@ep-example-pooler.neon.tech/neondb?sslmode=require';
+const runtime = 'postgresql://app_service:othersecret@ep-example-pooler.neon.tech/neondb?sslmode=require'; // ci-secret-scan-ignore: synthetic DSN for the same-database/pooler fixture; never used for a live connection.
 const env = { DATABASE_URL: owner, APP_DATABASE_URL: runtime,
   OPENAI_API_KEY: 'sk-not-a-real-secret', C2C_DB_MODE: 'neon',
   RLS_ENFORCE: 'on',
@@ -154,7 +154,7 @@ test('OpenAI auth probe is no-charge GET; billable POST requires explicit reques
 });
 test('Anthropic authentication checks models without a drafting or billable request', async () => {
   let calls = 0;
-  const fake = 'sk-ant-test-not-a-real-credential';
+  const fake = 'sk-ant-test-not-a-real-credential'; // ci-secret-scan-ignore: synthetic provider key used only by the injected mock fetcher.
   const observed = await checkAnthropic({
     env: { ANTHROPIC_API_KEY: fake, ANTHROPIC_WORKSPACE_ID: 'wrkspc_test' },
     fetcher: async (url, opts) => {

@@ -88,8 +88,7 @@ export class GoogleDriveConnector implements DataConnector {
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Google Drive token refresh failed: ${res.status} ${err.slice(0, 200)}`);
+      throw new Error(`Google Drive token refresh failed: ${res.status}`);
     }
 
     const data = await res.json() as { access_token: string; expires_in: number };
@@ -105,8 +104,7 @@ export class GoogleDriveConnector implements DataConnector {
       headers: { Authorization: `Bearer ${this.accessToken}` },
     });
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Google Drive API error: ${res.status} ${err.slice(0, 200)}`);
+      throw new Error(`Google Drive API error: ${res.status}`);
     }
     return res.json() as Promise<Record<string, unknown>>;
   }
@@ -257,8 +255,7 @@ export class GoogleDriveConnector implements DataConnector {
     });
 
     if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      throw new Error(`Google Drive upload failed: ${res.status} ${errText.slice(0, 200)}`);
+      throw new Error(`Google Drive upload failed: ${res.status}`);
     }
 
     const data = await res.json() as Record<string, unknown>;

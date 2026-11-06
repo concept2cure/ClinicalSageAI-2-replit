@@ -78,33 +78,28 @@ function countLabel(section: RecordSection | undefined): string {
   return n >= SECTION_CAP ? `the first ${SECTION_CAP}` : String(n);
 }
 
+/** The project's records as one card in Project knowledge, on every step (D3-2a, D3.md §4.8 item 7). Each store is
+ *  a closed disclosure whose summary says its count ("Vault documents · 6") or that it is not available, so the card
+ *  is a short list until a person opens a store. It moved here from the Author step's "Records in this project". */
 export function ProjectRecords({ pid }: { pid: string }) {
   const state = useLiveData<ProjectRecordsRead>(`/api/c2c/projects/${pid}/records`);
-  if (state.loading) {
-    return <div role="status" aria-busy="true" className="scaf-note" style={{ padding: '16px 10px' }}>Loading the project’s records…</div>;
-  }
-  if (state.error || !state.data) {
-    return (
-      <EmptyState
-        tone="error"
-        icon={I.alertTriangle}
-        title="Couldn't load the project's records"
-        hint="The project records read didn't respond. Sign in and retry, or check the service is reachable."
-      />
-    );
-  }
-  const records = state.data.records ?? {};
+  const records = state.data?.records ?? {};
   return (
-    <div>
-      {SECTIONS.map(({ key, label, title, detail }) => {
-        const section = records[key];
-        return (
-          <div key={key} style={{ marginTop: 12 }} data-records-section={key}>
-            <div className="pj-sec-h"><h3>{label} <span className="rd-chip tone-idle">{countLabel(section)}</span></h3></div>
-            <SectionBody section={section} title={title} detail={detail} />
-          </div>
-        );
-      })}
-    </div>
+    <section className="pj-card" aria-labelledby="pj-records-h">
+      <div className="pj-card-h"><h3 id="pj-records-h">Records</h3></div>
+      {state.loading ? <p role="status" aria-busy="true" className="pj-team-note">Reading the project’s records…</p>
+        : state.error || !state.data ? (
+          <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the project's records" read={state} readWhat="the project's records"
+            hint="The project records read didn't respond. Sign in and retry, or check the service is reachable." />
+        ) : SECTIONS.map(({ key, label, title, detail }) => {
+          const section = records[key];
+          return (
+            <details key={key} className="pj-more" data-records-section={key}>
+              <summary>{label} · {countLabel(section)}</summary>
+              <SectionBody section={section} title={title} detail={detail} />
+            </details>
+          );
+        })}
+    </section>
   );
 }

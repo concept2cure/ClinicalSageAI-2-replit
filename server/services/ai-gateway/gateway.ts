@@ -83,6 +83,7 @@ import { assertDeterministicServingAllowed, isDeterministicModeRequested } from 
 import { modelCallRefusal, type ModelCallRefusalScope } from './model-call-scope.js';
 import {
   decideSensitivePlacement,
+  decideInputTierPlacement,
   readProviderPlacementApprovals,
   zeroRetentionInForce,
   type PlacementReasonCode,
@@ -1389,6 +1390,11 @@ export class AIGateway {
    * This is the ONLY method external code should call.
    */
   async route(request: GatewayRequest): Promise<GatewayResponse> {
+    if (request.inputSensitivityTiers !== undefined) {
+      request = { ...request, inputSensitivityTiers: Object.freeze(
+        Array.isArray(request.inputSensitivityTiers) ? [...request.inputSensitivityTiers] : [],
+      ) };
+    }
     const requestId = randomUUID();
     const startTime = Date.now();
     const strategy = request.strategy || this.config.defaultStrategy;
@@ -1672,6 +1678,7 @@ export class AIGateway {
     provider: 'openai' | 'local';
     texts: string[];
     requestId?: string;
+    inputSensitivityTiers?: GatewayRequest['inputSensitivityTiers'];
   }): Promise<EmbeddingAuthorization> {
     const requestId = input.requestId ?? randomUUID();
     const startTime = Date.now();
@@ -1682,6 +1689,9 @@ export class AIGateway {
       provider: input.provider,
       callerModule: 'embedding-provider',
       messages: [{ role: 'user', content: input.texts.join('\n') }],
+      ...(input.inputSensitivityTiers !== undefined ? { inputSensitivityTiers: Object.freeze(
+        Array.isArray(input.inputSensitivityTiers) ? [...input.inputSensitivityTiers] : [],
+      ) } : {}),
     };
 
     request = await this.applyOrgPlacementDefaults(request);
@@ -1763,6 +1773,7 @@ export class AIGateway {
       request,
       placementReasonCode: clearance.reasonCode,
       zeroRetentionAgreement: clearance.zeroRetentionAgreement,
+      inputTierPlacement: clearance.inputTierPlacement,
     };
   }
 
@@ -1794,6 +1805,7 @@ export class AIGateway {
         ...clearanceFields({
           reasonCode: authorization.placementReasonCode,
           zeroRetentionAgreement: authorization.zeroRetentionAgreement,
+          inputTierPlacement: authorization.inputTierPlacement,
         }),
       },
       authorization.request.strategy || this.config.defaultStrategy,
@@ -2045,7 +2057,31 @@ export class AIGateway {
     requestId: string,
     startTime: number,
   ): Promise<SensitiveDispatchClearance> {
-    if (!this.config.policy.piiDetection) return {};
+    let inputTierPlacement: SensitiveDispatchClearance['inputTierPlacement'];
+    // The input-tier wall is independent of the optional heuristic PII screen
+    // and of audit-only mode. It also runs on every fallback and embeddings.
+    if (request.inputSensitivityTiers !== undefined) {
+      const decision = decideInputTierPlacement({ tiers: request.inputSensitivityTiers,
+        provider: modelConfig.provider, detectedDataClass: request.sensitiveDataClass });
+      const routing = { ...decision, provider: modelConfig.provider,
+        lane: modelConfig.provider === 'local' ? 'A_local' : 'B_frontier' };
+      inputTierPlacement = routing;
+      log.info('[ai-gateway] input tier placement decision', routing);
+      if (!decision.allowed) {
+        await this.logContentPolicyBlock({ ...request,
+          metadata: { ...request.metadata, inputTierPlacement: routing } },
+        request.strategy || this.config.defaultStrategy, requestId, startTime, decision.reasonCode,
+        [{ scope: 'pii', action: 'block', messageIndex: -1, role: 'request',
+          detector: 'input_tier_placement_policy', contentClass: `T${decision.tierMax}` }]);
+        throw new GatewayPolicyError(
+          `This request contains confidential or restricted inputs requiring local processing (${decision.reasonCode}).`,
+        );
+      }
+      // Retain only classification metadata, never input content, in the
+      // existing served-call ledger. Public provenance cannot erase this tier.
+    }
+    const tierClearance = inputTierPlacement ? { inputTierPlacement } : {};
+    if (!this.config.policy.piiDetection) return tierClearance;
     const detectedDataClass = request.sensitiveDataClass ?? 'unknown';
     // Development retains audit-only usefulness; production always uses the
     // explicit deployment contract and fails closed on unknown classification.
@@ -2060,7 +2096,7 @@ export class AIGateway {
       // 'off' disables screening entirely. 'audit' exists to make otherwise
       // invisible exposure visible, so it still RECORDS the placement signal
       // (content-free, below) even though it never blocks.
-      if (enforcement !== 'audit' || detectedDataClass === 'none') return {};
+      if (enforcement !== 'audit' || detectedDataClass === 'none') return tierClearance;
     }
     const placement = resolvePlacement(modelConfig.provider);
     let approvals: Record<string, ProviderPlacementApproval>;
@@ -2140,7 +2176,7 @@ export class AIGateway {
         reasonCode: decision.reasonCode,
         enforcement,
       });
-      return { reasonCode: `audit_only:${decision.reasonCode}` };
+      return { ...tierClearance, reasonCode: `audit_only:${decision.reasonCode}` };
     }
     log.info('[ai-gateway] sensitive placement decision', {
       reasonCode: decision.reasonCode,
@@ -2182,6 +2218,7 @@ export class AIGateway {
       );
     }
     return {
+      ...tierClearance,
       reasonCode: decision.reasonCode,
       ...(decision.zeroRetentionAgreement ? { zeroRetentionAgreement: decision.zeroRetentionAgreement } : {}),
     };
@@ -4862,6 +4899,7 @@ export interface EmbeddingAuthorization {
   placementReasonCode?: string;
   /** The agreement the sensitive-dispatch gate relied on, when the embedding required zero retention. */
   zeroRetentionAgreement?: ZeroRetentionAgreement;
+  inputTierPlacement?: SensitiveDispatchClearance['inputTierPlacement'];
 }
 
 /**
@@ -4872,23 +4910,26 @@ export interface EmbeddingAuthorization {
 interface SensitiveDispatchClearance {
   reasonCode?: string;
   zeroRetentionAgreement?: ZeroRetentionAgreement;
+  inputTierPlacement?: ReturnType<typeof decideInputTierPlacement> & { provider: string; lane: string };
 }
 
 /** A response carrying the agreement its dispatch relied on, beside placementReasonCode. */
-type ClearedResponse = GatewayResponse & { zeroRetentionAgreement?: ZeroRetentionAgreement };
+type ClearedResponse = GatewayResponse & Pick<SensitiveDispatchClearance, 'zeroRetentionAgreement' | 'inputTierPlacement'>;
 
 /** The clearance as response fields: only those the gate set. */
 function clearanceFields(clearance: SensitiveDispatchClearance): Partial<ClearedResponse> {
   return {
     ...(clearance.reasonCode ? { placementReasonCode: clearance.reasonCode } : {}),
     ...(clearance.zeroRetentionAgreement ? { zeroRetentionAgreement: clearance.zeroRetentionAgreement } : {}),
+    ...(clearance.inputTierPlacement ? { inputTierPlacement: clearance.inputTierPlacement } : {}),
   };
 }
 
 /** The ledger metadata naming the agreement a served call relied on; nothing for any other row. */
-function agreementMetadata(response: GatewayResponse, success: boolean): { zeroRetentionAgreement?: ZeroRetentionAgreement } {
+function agreementMetadata(response: GatewayResponse, success: boolean): Pick<ClearedResponse, 'zeroRetentionAgreement' | 'inputTierPlacement'> {
   const agreement = (response as ClearedResponse).zeroRetentionAgreement;
-  return success && agreement ? { zeroRetentionAgreement: agreement } : {};
+  const tier = (response as ClearedResponse).inputTierPlacement;
+  return success ? { ...(agreement ? { zeroRetentionAgreement: agreement } : {}), ...(tier ? { inputTierPlacement: tier } : {}) } : {};
 }
 
 /**

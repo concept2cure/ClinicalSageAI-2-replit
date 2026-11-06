@@ -25,7 +25,7 @@ vi.mock('../../db', () => {
   return { db: { select: () => chain([]) } };
 });
 
-import { buildWisdomRouterContext } from '../ana-context-router';
+import { buildMergedContext, buildWisdomRouterContext } from '../ana-context-router';
 
 const dialect = new PgDialect();
 const objectivesWhere = () => dialect.sqlToQuery(h.wheres[1] as never).sql.toLowerCase();
@@ -45,5 +45,18 @@ describe('buildWisdomRouterContext objectives', () => {
     const sql = objectivesWhere();
     expect(sql).toContain('"project_id" is null');
     expect(sql).not.toContain('"project_id" = $');
+  });
+});
+
+
+describe('instruction scope in the live context assembly', () => {
+  it('carries project > company > personal precedence even without a saved user profile', async () => {
+    const result = await buildMergedContext({ organizationId: 5, projectId: 7 });
+    expect(result.layers.user).toBeNull();
+    expect(result.contextBlock).toContain('Project instructions take precedence over company instructions');
+    expect(result.contextBlock).toContain('which take precedence over personal defaults');
+    expect(result.contextBlock).toContain('A hard gate at any scope remains binding');
+    expect(result.contextBlock).toContain('surface the conflict for a human decision before the affected action');
+    expect(result.contextBlock).toContain('governed actions still require their runtime gates');
   });
 });

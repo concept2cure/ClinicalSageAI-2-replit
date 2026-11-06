@@ -2002,3 +2002,37 @@ store that the sequence replaced on 17 Oct (FILING_SPINE F12)": **"Retire them."
   judged on its own.
 - **Owner.** RIM, which holds S5.
 
+
+### P-104 — Extend the existing Anna runtime from the multi-agent architecture specification v0.5
+
+The founder, 2026-11-06, supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf** and directed:
+
+> "Study the attached document, align to the current roadmap, and add the attached plan to the current roadmap,
+> and you own this end to end. This is your assignment to build all of this in a very sophisticated way, not by
+> building new files, but extending what we already have done. Extend and bring to life. Build this out."
+
+- **What is decided.** Add one Anna-runtime epic to the canonical plan (§1d), mapped onto existing open packages
+  S1–S12 and D4, then extend the implementation in those existing homes. The supplied §15 plan-only handoff is
+  superseded by this explicit build instruction. Native in-product orchestration is the target; workers propose,
+  Anna disposes within runtime gates, humans sign/approve consequential actions. Parallel agents use distinct files
+  under one lead, on `concept2cure-v2`.
+- **Build order and evidence.** Preserve §11 phases 0–8 with the §14.4 spike expanded by §§19/23/26. Each downstream
+  phase waits for its fixture gate. §29 shared learning and §32 clean-file feedback follow the isolation/custody/
+  routing walls; no local test or code audit is represented as production qualification.
+- **Account direction reconciled.** The 2026-10-01 platform-or-client option in
+  `server/services/submission-gateways/gateway-accounts.ts` is the existing behavior. The supplied §17.2 now sets
+  the target for client filings to client-owned authority accounts with scoped revocable grants, exact-content
+  approval and no house-account fallback. Existing account rows and historical sender identities are not rewritten
+  by this decision; S5 must implement and prove the transition explicitly. Other authorities remain record-only
+  until their transport and verified onboarding are supported.
+- **Existing path scope.** S4 also covers the existing AI gateway, connectors, working/session memory and Vault
+  classification readers; S10 covers the existing orchestration route and pre-submission verdict. These additions
+  to package paths approve completion of current files only.
+- **What is not admitted.** No new file, screen, route, mount, service, table, tool, dependency or model. Extend the
+  existing code and records; a requirement needing an addition is recorded as a precise unresolved dependency.
+  Preserve the one editor, one sequence filing path, current client/jurisdiction/composition scope, independent
+  read-only workers, approved-model/PQ controls and human signing. No agency account creation, transmission,
+  provider enablement, certification claim or deployment is implied by roadmap status.
+- **Owner.** The lead owns end-to-end integration and acceptance; existing package owners keep their file holds.
+  The current roadmap is `docs/design/ONE_DESIGN_PLAN.md` and `docs/design/one-design-plan.json`, not the historical
+  CER-only or January vision roadmaps. Progress must name actual commits, checks and remaining dependencies.

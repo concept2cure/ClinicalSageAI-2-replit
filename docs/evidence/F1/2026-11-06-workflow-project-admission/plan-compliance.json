@@ -1,0 +1,16 @@
+{
+  "package": "F1",
+  "existingCompletedPaths": [
+    "server/routes/taskManagement.routes.ts",
+    "server/services/tasking/task-project.ts"
+  ],
+  "changedProductionPaths": [
+    "server/routes/taskManagement.routes.ts",
+    "server/services/tasking/task-project.ts"
+  ],
+  "newProductionPaths": [],
+  "findings": [],
+  "unlabelledControlRefused": true,
+  "proposedCommitMessage": "Repair workflow task project admission\n\nPlan: F1\nCompletes: server/routes/taskManagement.routes.ts\nCompletes: server/services/tasking/task-project.ts",
+  "committed": false
+}

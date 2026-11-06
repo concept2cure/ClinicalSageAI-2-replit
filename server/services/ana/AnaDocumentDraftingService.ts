@@ -971,12 +971,13 @@ function snapshotDraftRequest(request: DocumentDraftRequest): DocumentDraftReque
 /** Keep source authority and its guarded outbound callback on the server. */
 async function draftSourceCheckpoint(req: DocumentDraftRequest) {
   const identity = Object.freeze({ organizationId: req.organizationId, userId: req.userId, projectId: req.projectId });
-  const { assertDraftSourceContextCurrent, draftSourcePrompt, draftSourceAudit } = await import('./draft-project-sources.js');
+  const { assertDraftSourceContextCurrent, draftSourcePrompt, draftSourceAudit, draftSourceSensitivityTiers } = await import('./draft-project-sources.js');
   const assertCurrent = () => assertDraftSourceContextCurrent(req.sourceContext, identity, req.signal);
   await assertCurrent();
   const selectedSources = req.sourceContext?.status === 'loaded';
   if (selectedSources && (req.onStream || req.enableTools)) throw new Error('SOURCE_CONTEXT_REQUIRES_NONSTREAMING_DRAFT');
   return { assertCurrent, prompt: draftSourcePrompt(req.sourceContext), audit: draftSourceAudit(req.sourceContext),
+    inputSensitivityTiers: draftSourceSensitivityTiers(req.sourceContext),
     dispatch: selectedSources ? { beforeDispatch: assertCurrent } : {} };
 }
 
@@ -1076,6 +1077,7 @@ export class AnaDocumentDraftingService {
     // Build gateway request
     const gatewayRequest: GatewayRequest = {
       taskType: 'document_drafting',
+      inputSensitivityTiers: sourceCheckpoint.inputSensitivityTiers,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },

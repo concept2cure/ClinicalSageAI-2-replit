@@ -50,6 +50,7 @@ function checkedSource(doc: CatalogDocumentRow, scope: AdmittedAnaSourceReadScop
 }
 function sourceChanged(before: CatalogDocumentRow, after: CatalogDocumentRow): boolean {
   return before.id !== after.id || before.programId !== after.programId || before.contentHash !== after.contentHash ||
+    before.classification !== after.classification ||
     before.extractedText !== after.extractedText || before.isCurrent !== after.isCurrent ||
     before.disposition !== after.disposition || before.originalFileAvailable !== after.originalFileAvailable;
 }

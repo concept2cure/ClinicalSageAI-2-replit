@@ -101,8 +101,8 @@ async function openProjectFiles() {
   render(<DocumentAuthoring {...props()} />);
   await screen.findAllByText('Rationale');
   await waitFor(() => expect((document.querySelector('.rse-body .tiptap')?.textContent ?? '')).toContain('product rationale'));
-  fireEvent.click(openEditorControl('Project files'));
-  return screen.findByRole('complementary', { name: 'Project files' });
+  fireEvent.click(openEditorControl('Vault'));
+  return screen.findByRole('complementary', { name: 'Vault' });
 }
 
 beforeEach(() => {
@@ -121,7 +121,7 @@ describe('DocumentWorkbench — Project files', () => {
     expect(await within(rail).findByText('Module 5 — Clinical')).toBeTruthy();
     expect(within(rail).getByText('Protocol C2C-101-201 v1.0')).toBeTruthy();
     expect(within(rail).getByText('Statistical Analysis Plan C2C-101-201 v1.0')).toBeTruthy();
-    expect(within(rail).getByText(/Project files · C2C-101/)).toBeTruthy();
+    expect(within(rail).getByText(/Vault · C2C-101/)).toBeTruthy();
   });
 
   it('searches through the vault search route and shows the total', async () => {
@@ -171,7 +171,7 @@ describe('DocumentWorkbench — Project files', () => {
     mockApi();
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('Rationale');
-    fireEvent.click(openEditorControl('Project files'));
+    fireEvent.click(openEditorControl('Vault'));
     expect(await screen.findByTestId('pf-no-program')).toBeTruthy();
     expect(apiRequest.mock.calls.some(c => String(c[1]).startsWith('/api/c2c/project-vault/'))).toBe(false);
   });

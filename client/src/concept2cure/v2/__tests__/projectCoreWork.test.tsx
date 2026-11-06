@@ -34,6 +34,20 @@ describe('the project’s work areas, as direct doors', () => {
     expect(screen.queryByRole('button', { name: /Start selected work/ })).toBeNull();
   });
 
+  /* D3-2a: a card in Project knowledge, headed "Work areas"; the page's Reports row comes last, in the same card. */
+  it('is a "Work areas" card whose rows carry an icon, and whose last row is the one passed after them', () => {
+    render(<ProjectCoreWork programId={PID} track={DRUG} available={allow} onNav={vi.fn()}><button type="button">Reports</button></ProjectCoreWork>);
+    const nav = screen.getByRole('navigation', { name: 'This project’s work areas' });
+    expect(within(nav).getByRole('heading', { name: 'Work areas' })).toBeTruthy();
+    expect(doors().at(-1)).toBe('Reports');
+    expect(nav.querySelectorAll('.pj-work-area .pj-work-area-ic svg').length).toBe(4);
+  });
+
+  it('waits for the project\u2019s track before naming an area, and still offers the row passed after them', () => {
+    render(<ProjectCoreWork programId={PID} track={null} available={allow} onNav={vi.fn()}><button type="button">Reports</button></ProjectCoreWork>);
+    expect(doors()).toEqual(['Reports']);
+  });
+
   it('a biologic still gets the CMC / Module 3 door: its screen says what it composes', () => {
     render(<ProjectCoreWork programId={PID} track={BIOLOGIC} available={allow} onNav={vi.fn()} />);
     expect(doors()).toContain('CMC / Module 3');

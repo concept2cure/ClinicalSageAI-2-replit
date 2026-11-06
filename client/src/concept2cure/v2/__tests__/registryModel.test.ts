@@ -163,14 +163,16 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
     const ids = RAIL_CORE.map((s) => s.id);
     expect(ids).toContain('cmc');
     // Risk-based monitoring (P-76) joined the same work areas since; CMC still
-    // opens them and Quality follows in the group. Biostatistics is not a rail
-    // entry (RULE 4, P-79): the project's "Start work in this project" reaches it.
+    // opens them and Quality follows in the group. Biostatistics was reached only
+    // from the project (RULE 4, P-79) until the founder, 2026-11-06: "Our core
+    // modules are … CMC, biostatistics, RBM … the left rail should be a navigation
+    // point for all of those entry points" (one-product-baseline founderDecisions).
     const workAreas = RAIL_CORE.filter((s) => (s as { group?: string }).group === 'work-areas').map((s) => s.id);
     expect(workAreas[0], 'CMC opens the work areas').toBe('cmc');
     expect(workAreas.indexOf('quality'), 'Quality is in the work areas beside CMC').toBeGreaterThan(0);
     expect(NAV_HIDDEN.has('cmc')).toBe(false);
     expect(getSurface('cmc')).toBeDefined();
-    expect(ids, 'Biostatistics is reached from the project, not the rail').not.toContain('biostatistics');
+    expect(workAreas.indexOf('biostatistics'), 'Biostatistics is a work area on the rail, after CMC').toBe(workAreas.indexOf('cmc') + 1);
     expect(isLaunchSurface('biostatistics'), 'Biostatistics stays in the launch catalog').toBe(true);
   });
 
