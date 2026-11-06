@@ -275,3 +275,16 @@ describe('current derivative custody administration', () => {
     expect(JSON.stringify(res.body)).not.toMatch(/private-key-or-source-canary|synthetic-current-password/);
   });
 });
+
+
+describe('current administration immediately before password verification', () => {
+  it.each([
+    { action: 'learning_policy', enabled: true, expectedVersion: 0, reasonForChange: 'Contribute reviewed generic patterns.', reauth: { password: 'synthetic' } },
+    { action: 'derivative_policy', policy: { enabled: true, kmsKeyArn: 'arn:aws:kms:us-east-1:123456789012:key/11111111-1111-4111-8111-111111111111', maxLifetimeSeconds: 3600 }, reasonForChange: 'Manage derivative custody.', reauth: { password: 'synthetic' } },
+  ])('refuses lost authority after initial admission without checking a password or mutating: $action', async body => {
+    REQUEST_CLIENT.query.mockResolvedValueOnce({ rows: [{ role: 'admin' }] }).mockResolvedValueOnce({ rows: [] });
+    const result = await request(appAs(ADMIN)).put('/api/ai-placement-policy').send(body);
+    expect(result.status).toBe(403); expect(result.body.error.code).toBe('CURRENT_ADMIN_REQUIRED');
+    expect(reauth.calls).toEqual([]); expect(learning.policy).not.toHaveBeenCalled(); expect(manageDerivativeCustody).not.toHaveBeenCalled();
+  });
+});

@@ -49,6 +49,22 @@ function positiveInt(raw: unknown): number | null {
   return typeof n === 'number' && Number.isInteger(n) && n > 0 ? n : null;
 }
 
+class CurrentAdministrationRequiredError extends Error {
+  constructor() { super('Current administration authority for this organization is required.'); }
+}
+async function currentAdministrator(req: Request, organizationId: number, userId: number): Promise<boolean> {
+  const { rows } = await requestPgClient(req).query(`SELECT ou.role FROM organization_users ou
+      JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.organization_id
+      WHERE ou.organization_id = $1 AND ou.user_id = $2 AND u.status = 'active' AND o.status = 'active'`, [organizationId, userId]);
+  return rows.length === 1 && ['admin', 'owner'].includes(String(rows[0].role));
+}
+/** These configuration acts sign nothing. Recheck current tenant administration
+ * before the shared password/MFA ceremony; regulated QMS signing stays separate. */
+async function reauthenticateAdministrator(req: Request, organizationId: number, userId: number, proof: unknown) {
+  if (!await currentAdministrator(req, organizationId, userId)) throw new CurrentAdministrationRequiredError();
+  return verifyReauth(userId, derivativeReauthentication(proof));
+}
+
 /** Placement and custody controls require current tenant authority, not a stale role claim. */
 router.use(async (req, res, next) => {
   const organizationId = positiveInt((req as any).user?.organizationId);
@@ -57,10 +73,7 @@ router.use(async (req, res, next) => {
     return res.status(403).json({ error: { code: 'NO_ORGANIZATION', message: 'A current organization administrator is required.' } });
   }
   try {
-    const { rows } = await requestPgClient(req).query(`SELECT ou.role FROM organization_users ou
-      JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.organization_id
-      WHERE ou.organization_id = $1 AND ou.user_id = $2 AND u.status = 'active' AND o.status = 'active'`, [organizationId, userId]);
-    if (rows.length !== 1 || !['admin', 'owner'].includes(String(rows[0].role))) {
+    if (!await currentAdministrator(req, organizationId, userId)) {
       return res.status(403).json({ error: { code: 'CURRENT_ADMIN_REQUIRED', message: 'Current administration authority for this organization is required.' } });
     }
     next();
@@ -98,7 +111,7 @@ async function manageDerivative(req: Request, res: Response, organizationId: num
   try {
     const { reauth, ...body } = req.body;
     const action = parseDerivativeAction(body);
-    const proof = await verifyReauth(userId, derivativeReauthentication(reauth));
+    const proof = await reauthenticateAdministrator(req, organizationId, userId, reauth);
     if (!proof.ok) return res.status(401).json({ error: { code: 'REAUTH_REQUIRED', message: 'Confirm your password and required second factor before managing derivative custody.' } });
     const derivativeCustody = await manageDerivativeCustody(requestConnectable(req), organizationId, action, {
       userId, ipAddress: clientIpOf(req), userAgent: req.headers['user-agent'] as string | undefined,
@@ -106,6 +119,7 @@ async function manageDerivative(req: Request, res: Response, organizationId: num
     res.setHeader('Cache-Control', 'no-store');
     return res.json({ organizationId, derivativeCustody, audited: true });
   } catch (error) {
+    if (error instanceof CurrentAdministrationRequiredError) return res.status(403).json({ error: { code: 'CURRENT_ADMIN_REQUIRED', message: error.message } });
     if (error instanceof DerivativeCustodyError) return res.status(error.status).json({ error: { code: error.code, message: error.message } });
     log.error('derivative custody change could not be confirmed');
     return res.status(503).json({ error: { code: 'DERIVATIVE_CHANGE_UNCONFIRMED', message: 'The derivative custody change could not be confirmed. Re-read its status before retrying.' } });
@@ -126,11 +140,12 @@ async function manageLearning(req: Request, res: Response, organizationId: numbe
   try {
     const { reauth, action, ...body } = req.body;
     if (!['learning_policy', 'learning_contribute', 'learning_prepare', 'learning_install'].includes(action)) throw new AggregateLearningRefusedError(400);
-    const proof = await verifyReauth(userId, derivativeReauthentication(reauth));
+    const proof = await reauthenticateAdministrator(req, organizationId, userId, reauth);
     if (!proof.ok) return res.status(401).json({ error: { code: 'REAUTH_REQUIRED', message: 'Confirm your password and required second factor before changing learning contributions.' } });
     const result = await performLearningAction(req, organizationId, userId, action, body);
     return res.json({ organizationId, learningContribution: result, audited: true });
   } catch (error) {
+    if (error instanceof CurrentAdministrationRequiredError) return res.status(403).json({ error: { code: 'CURRENT_ADMIN_REQUIRED', message: error.message } });
     if (error instanceof AggregateLearningRefusedError) return res.status(error.status).json({ error: { code: error.code, message: error.message } });
     if (error instanceof QmsContentRefusedError) return res.status(error.status).json({ error: { code: error.code, message: error.message } });
     return res.status(503).json({ error: { code: 'LEARNING_CHANGE_UNCONFIRMED', message: 'The learning contribution change could not be confirmed. Re-read its current status before retrying.' } });
