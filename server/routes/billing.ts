@@ -34,6 +34,7 @@ import {
   createCheckoutSession,
   createDTCCheckoutSession,
   createPortalSession,
+  BillingPortalUnavailableError,
   getSubscriptionStatus,
   processWebhookEvent,
   PRICING,
@@ -175,6 +176,10 @@ router.post('/portal', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), a
 
     res.json({ portalUrl });
   } catch (error) {
+    // A known state, said as itself: no billing record yet (409), or no billing provider on this deployment (503).
+    if (error instanceof BillingPortalUnavailableError) {
+      return res.status(error.code === 'BILLING_NOT_SET_UP' ? 409 : 503).json({ error: error.message, code: error.code });
+    }
     logger.error('Portal error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to create portal session' });
   }

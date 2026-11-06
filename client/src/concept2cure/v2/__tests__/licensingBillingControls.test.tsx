@@ -109,4 +109,22 @@ describe('a billing administrator', () => {
     await waitFor(() => expect(open).toHaveBeenCalledTimes(2));
     expect(h.published.licensing?.facts.subscriptionActions).toBe('offered');
   });
+
+  /* 2026-11-06, the founder's Codespace click-through: with no billing record, "Manage billing" answered a click with
+     a red "Billing portal unavailable · Failed to create portal session", beside the page's own "Billing is not set
+     up". The control now says so before it is clicked. */
+  it('with no billing record yet, Manage billing is unavailable and says why, and nothing is sent', async () => {
+    h.apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/billing/status') return ok({ ...STATUS, billingAccount: false });
+      if (method === 'GET' && url.startsWith('/api/billing/invoices')) return ok({ billingSetUp: false, invoices: [], hasMore: false, nextCursor: null });
+      throw new Error(`unexpected ${method} ${url}`);
+    });
+    mount();
+    const manage = await screen.findByRole('button', { name: /Manage billing/ });
+    expect((manage as HTMLButtonElement).disabled).toBe(true);
+    expect(manage.getAttribute('aria-describedby')).toBe('lic-billing-not-set-up');
+    expect(screen.getByText('Billing is set up the first time a subscription is checked out.')).toBeTruthy();
+    fireEvent.click(manage);
+    expect(posts().some(([, url]) => url === '/api/billing/portal')).toBe(false);
+  });
 });
