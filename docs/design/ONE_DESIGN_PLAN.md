@@ -459,8 +459,26 @@ informed consent was.
   file the send removes by design, so it stayed red. The check now follows the recorded key. It fails on a missing
   package and passes as written. The baseline went from 12 to 11.
 
+**Delivered** (2026-11-06)
+
+- **The local database the repository provisions can run the migration set**, `70d52cc76`,
+  `docs/evidence/D1/2026-11-06-local-db-applier-rights/`.
+  - **Before.** `scripts/setup-local-db.sh` (run at every session start) gave its applier role `CREATEDB` only. On
+    a fresh cluster, `deploy-migrate` stopped at 214 of 462.
+  - **Now.** The role gets `CREATEROLE NOSUPERUSER` and owns its database, as the RDS master does. Two fresh
+    clusters: trunk's script halts at 214, the fixed one completes (1,023 tables). Every session that must open the
+    running app (RULE 4) needs this.
+- **The editor's citation catalogue says a refusal as itself**, `f0809d977`,
+  `docs/evidence/SPINE/S2/2026-11-06-citation-catalogue-refusals/`. The **Cite a source** picker showed "Module access
+  denied" with **Try again** for a plan without the feature. Through the one read classifier, a refusal is now
+  worded and not retryable, and the picker offers no retry for it. This completes the D4 hand-off of 2026-11-05.
+  All 36 suites that render the editor pass (511).
+
 **Found**
 
+- A fresh machine also needs `postgresql-16-pgvector` and `npm ci` before the session-start hook runs. That is a
+  cloud-environment setup script, not a repository change. A personal environment that does this was proposed on
+  2026-11-06. The request could not be shown in the Claude mobile app version in use, so nothing was saved.
 - `ci:canvas-path` read green all four days the walk was red. Its founder-walk link is static by design; the walk's
   result exists only in CI's Test job. That job can be red for days while every push lands.
 - `server/routes/__tests__/authoringSelectedSources.pglite.test.ts` fails 12 cases at trunk, before this change.
@@ -478,7 +496,7 @@ informed consent was.
   Recording spans, and walking the Data Room → Vault → receipt → document path, is S4's work with S2.
 - **Handed on.**
   - D3: the Evidence step's "What to do now" box is a retired pattern.
-  - D4: `editor/useProjectSourceCatalog.ts` does not classify refusals.
+  - ~~D4: `editor/useProjectSourceCatalog.ts` does not classify refusals.~~ Done here 2026-11-06 (`f0809d977`).
   - D0: a refusal is drawn in the error tone.
   - R1: the CTD onboarding routes (`/api/ctd/*`) have no caller.
 - **The local database.** Running the migration set needs pgvector created by a superuser, `CREATEROLE` on the
