@@ -1,0 +1,324 @@
+{
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "baseline": "2cec182a17105da5863bab2fdb66ba1adef317e2",
+  "local_verification_as_of_utc": "2026-11-06T05:08:42Z",
+  "runtime": {
+    "node": "22.23.4",
+    "typescript": "5.6.3",
+    "dependencies": "existing locked npm ci installation"
+  },
+  "changed_source_and_test_files": {
+    "server/routes/chat/__tests__/send-message-read-only.test.ts": {
+      "sha256": "f7502a5428162c0cd7ac2e89590da2c592770b66ac1c84eddd23164116816316",
+      "git_blob": "b5f0799c34af68b30dd1fd5bdcca1200c0c4232f"
+    },
+    "server/routes/chat/send-message.ts": {
+      "sha256": "98555f1f30761856e71d0006da7ffc0079060c0dfd8d579ddd6c20a7c9a47f2c",
+      "git_blob": "59e54c3ce854eb298e8c3273e4efdb2870b6792f"
+    },
+    "server/services/__tests__/ana-session-bootstrap.test.ts": {
+      "sha256": "164685ba8c338d75985c690c7566d0e0e42c5f8f9d706c1204ffb819ebc4ded2",
+      "git_blob": "458e351be05456c433c16048bb0cfda3c686e356"
+    },
+    "server/services/__tests__/memory-context-assembler-deadline.test.ts": {
+      "sha256": "dd5db503289a5695b4aa5d709b440243c1b0dde2fdba4eff4d0f799c64a53958",
+      "git_blob": "a41e487f17ea0563ca1ec94562148a4402dd7d34"
+    },
+    "server/services/__tests__/working-memory-fact-check.test.ts": {
+      "sha256": "abebaf9dc7b11f3a0e3da70e65fb1de24d585c9951abac5038a13f535537afed",
+      "git_blob": "386e7c79ad29bcc21e543f612fc1ed381afe7bd9"
+    },
+    "server/services/__tests__/working-memory-project-recall.pglite.test.ts": {
+      "sha256": "d37a337e8b018ef2469d4a15ed250a3d9152e3f74bd496bcdb0fa7063a73a3fe",
+      "git_blob": "5e6cef8b94cbe1e1d3b30b3b9f82e01b1db96a2a"
+    },
+    "server/services/__tests__/working-memory.test.ts": {
+      "sha256": "774b81e5fc5d6e225b64015602d332853105f910b85b91b6e8ada9746433582b",
+      "git_blob": "7d49c94974bfab3c426b8f5d049042d27f31aa88"
+    },
+    "server/services/ana-session-bootstrap-format.ts": {
+      "sha256": "4f51052a5d0f1aba2d1f6df9345681ee8bbf6ae12f3d8031b238374392e5cadf",
+      "git_blob": "c5ae80ebffffcbbcdef3ec208b671ab8d2f35815"
+    },
+    "server/services/ana/__tests__/agentic-loop-rounds.test.ts": {
+      "sha256": "1d95cf100513b18cbcc8f11d9dea8826189a45da57359078e311677b0db5c951",
+      "git_blob": "ad12011543a285bf0d08c04af6c4ddefa4bcaece"
+    },
+    "server/services/ana/__tests__/turn-plan-and-context.test.ts": {
+      "sha256": "1e4eb698e913eabe2a5b3312191cf2720346840f054fefbfe528506c2c8547f3",
+      "git_blob": "dbe8cb44d42830e335e593ca8ae18cb2c9a30957"
+    },
+    "server/services/ana/agentic-loop.ts": {
+      "sha256": "ca9f2017e76cc0cc265097c9a8db085861126ec7bf999ac7d11cdc18e045d697",
+      "git_blob": "ef9c015331b8389c31afed9a99fbdfbd7fe30788"
+    },
+    "server/services/ana/turn-context-used.ts": {
+      "sha256": "2d96f928592429ffe1018427286e5db981b75adf3244d82db13f73c90162abc0",
+      "git_blob": "0419f46451017664111edc98a33340228a75ea3c"
+    },
+    "server/services/memory-consolidation-job.ts": {
+      "sha256": "411858fdba10eec272ffead7f418280fa763ca1e180a824ef679e62b8fc54fa0",
+      "git_blob": "9261e2b08830f16bb159c266f91f5b115a59d294"
+    },
+    "server/services/memory-context-assembler.ts": {
+      "sha256": "1c0c333d68021c6f6f358ce2ba09a0c5cde853bd37d6db7c408e6fd38bb93026",
+      "git_blob": "75c11479fc6ef3b8de93df0711d314f67e9e8672"
+    },
+    "server/services/working-memory.ts": {
+      "sha256": "ef9ceca85145b64f8f911c412448e444229b1987e7811bfef0b3ef436a53d170",
+      "git_blob": "5db1d1ca100beb724cc3b59fb38c401946e97d59"
+    },
+    "tests/services/ana/memory-consolidation-outcomes.test.cjs": {
+      "sha256": "235ff6cb91751a9bd7e1eb02752ef91c2572279cc8135bde24d3f6d0bad4fb65",
+      "git_blob": "9ddd78308bbb62c07fe029180ee146277fa0f0e0"
+    },
+    "tests/unit/memory-context-assembler.test.ts": {
+      "sha256": "f38c0cc8c6c7ac055d40cab9f143e3a9284a0872d892b8a9d01e0ed21fa2b65b",
+      "git_blob": "3a2733a9b9c7ee892b05d383adf997e7c0a65e03"
+    }
+  },
+  "red_green": {
+    "working_memory": {
+      "red_passed": 24,
+      "red_failed": 4,
+      "green_passed": 28
+    },
+    "assembler_context_used": {
+      "red_passed": 44,
+      "red_failed": 26,
+      "green_passed": 70,
+      "subsequent_exact_boundary_unit_passed": 27
+    },
+    "bootstrap": {
+      "red_passed": 25,
+      "red_failed": 10,
+      "green_passed": 35
+    },
+    "consolidation_quality_copy": {
+      "red_passed": 65,
+      "red_failed": 6,
+      "green_passed": 71
+    },
+    "json_chat_snapshot": {
+      "red_passed": 7,
+      "red_failed": 4,
+      "green_passed": 11
+    },
+    "recall_tool_handoff": {
+      "red_passed": 20,
+      "red_failed": 6,
+      "green_passed": 99,
+      "green_files": 6
+    }
+  },
+  "combined_final_runs": {
+    "node_tests": 128,
+    "vitest_tests": 323,
+    "vitest_files": 22,
+    "distinct_combined_tests": 451,
+    "failed": 0,
+    "build": "passed client, server and audit-chain verifier",
+    "companion_scan": "passed with filename-only warnings; actual companion suites executed",
+    "vitest_files_executed": [
+      "tests/unit/memory-context-assembler.test.ts",
+      "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+      "server/services/__tests__/memory-context-assembler-mode.test.ts",
+      "server/services/__tests__/memory-context-selected-project.test.ts",
+      "server/services/__tests__/memory-context-assembler-presents-no-confidence-percent.test.ts",
+      "server/services/__tests__/working-memory-fact-check.test.ts",
+      "server/services/__tests__/working-memory.test.ts",
+      "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+      "server/services/__tests__/working-memory-project-attribution.test.ts",
+      "server/services/__tests__/ana-session-bootstrap.test.ts",
+      "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+      "server/services/__tests__/memory-consolidation.pglite.integration.test.ts",
+      "server/services/__tests__/memory-orchestrator.test.ts",
+      "server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts",
+      "server/services/ana/__tests__/memory-fact-check.test.ts",
+      "server/services/ana/__tests__/turn-plan-and-context.test.ts",
+      "server/routes/chat/__tests__/send-message-read-only.test.ts",
+      "server/services/ana/__tests__/agentic-loop-rounds.test.ts",
+      "server/services/ana/__tests__/passage-round-budget.test.ts",
+      "server/services/ana/__tests__/passage-round-read-priority.test.ts",
+      "server/services/ana/__tests__/strict-round-body-budget.test.ts",
+      "server/services/ana/__tests__/read-receipts.test.ts"
+    ]
+  },
+  "pre_push": "not yet run on the committed candidate; publication receipt will record the exact result",
+  "logs": {
+    "working-red.txt": {
+      "source_capture": "next-memory-working-red.txt",
+      "capture_sha256": "ff086a1b0e0d7b337a1f08742a3a4272cad833476e3039a9170d42debac93194",
+      "stored_sha256": "030c7eef6949f939adb61a5c121e25390608ca658e8816f9d4acf4d9048990a4",
+      "bytes": 11235,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "working-green.txt": {
+      "source_capture": "next-memory-working-green.txt",
+      "capture_sha256": "21a65ffc727cc55a94d96aaeec30d19207872f82bf8f3a1ab2982f9b6dd7740a",
+      "stored_sha256": "053a4f9231e36a7cfa42ef4678c04259065cf6b866e3ae6a4a1806b3b34bc8ad",
+      "bytes": 7226,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "assembler-red.txt": {
+      "source_capture": "next-memory-assembler-red.txt",
+      "capture_sha256": "5c680e9982ae883f64ace14dce44d5743099e3e3d423d3ecfa6709ef1fb9101d",
+      "stored_sha256": "afd9c62bd3b81c2a3cd74f0d09d16daa04bac9470149cf22c914bdd9ac6c8b8d",
+      "bytes": 56378,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "assembler-green.txt": {
+      "source_capture": "next-memory-assembler-green.txt",
+      "capture_sha256": "da670625568c4ea669abc3e6ce1ade9580bfd32ac83d068b0befc65631d949ee",
+      "stored_sha256": "5904d16d34f9754dbfa6ab38706257a00eedba143e5f6f359131bdaf792751e8",
+      "bytes": 14473,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "assembler-boundary-green.txt": {
+      "source_capture": "next-memory-assembler-boundary-green.txt",
+      "capture_sha256": "7cfa70d544af7c273bf4d9f226fad60b4543220b9f62b1ca7c53e44637727e5a",
+      "stored_sha256": "5d230580454a0d546ad940f5162056a77c4c7b97963b9941c1284435533d0932",
+      "bytes": 6662,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "bootstrap-red.txt": {
+      "source_capture": "next-memory-bootstrap-red.txt",
+      "capture_sha256": "319dcffc5c1d9067a428102269be24f69f473f9716ea58f927290b22491a9e08",
+      "stored_sha256": "a6761c554c6dc557d308173f2aacb4b36a2bbd6d06231615546aba59b0fae2f1",
+      "bytes": 47916,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "bootstrap-green.txt": {
+      "source_capture": "next-memory-bootstrap-green.txt",
+      "capture_sha256": "21f6a46b1d592d5e4aa488e51d16528ebccf3f3739a792224c8ecd75f1a6c4ac",
+      "stored_sha256": "851888e8a72a0196e4f31914ea78a741edc8690d7164479285db879d071f324a",
+      "bytes": 7039,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "consolidation-label-red.tap": {
+      "source_capture": "next-memory-consolidation-label-red.txt",
+      "capture_sha256": "23f1ecaac69603b3e1c425fc590a151db5e509c639747da7492f315b024ce4a0",
+      "stored_sha256": "1e4ba5be1a9b222cc3ba671c5b43f0c7ac5f5f1dcc6aa9730599a9cc21c94db8",
+      "bytes": 23371,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {
+        "370": "    ",
+        "380": "    ",
+        "414": "    ",
+        "424": "    ",
+        "458": "    ",
+        "468": "    ",
+        "502": "    ",
+        "512": "    ",
+        "546": "    ",
+        "556": "    ",
+        "589": "    ",
+        "591": "    "
+      }
+    },
+    "consolidation-label-green.tap": {
+      "source_capture": "next-memory-consolidation-label-green.txt",
+      "capture_sha256": "172dd0e04b53480dcd09bd479ec82a1d74b46fdcedbf85db4240b391c59581ef",
+      "stored_sha256": "172dd0e04b53480dcd09bd479ec82a1d74b46fdcedbf85db4240b391c59581ef",
+      "bytes": 16285,
+      "normalization": "none",
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "snapshot-red.txt": {
+      "source_capture": "next-memory-snapshot-red.txt",
+      "capture_sha256": "d4ebd3946ad6bda2d01a471491c76a3d51d7eefd88bf08bf9e572f2a88f15b32",
+      "stored_sha256": "ffb47c9b750fcb47620bdbadedf5f91d405e7e9620823b140b5f5d84a2d734c0",
+      "bytes": 21707,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "snapshot-green.txt": {
+      "source_capture": "next-memory-snapshot-green.txt",
+      "capture_sha256": "4a413af39c254775f693e0faa14b22b1696dfbb569802753fae2107bdc53037e",
+      "stored_sha256": "a12b0817b1e6a9364a2d8b8ee69ddee7e01542066c14881f43e1cbeb6f82988a",
+      "bytes": 15410,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "tool-handoff-red.txt": {
+      "source_capture": "next-memory-tool-handoff-red.txt",
+      "capture_sha256": "f9d7fd0d4edc1186c96ee66187608199397dbce426af0460d211684ce29a2be6",
+      "stored_sha256": "4002b8d0c6c361a93a78b425eb892414d2aad12c468d422ce8f42d9eefbe2499",
+      "bytes": 11405,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "tool-handoff-green.txt": {
+      "source_capture": "next-memory-tool-handoff-green.txt",
+      "capture_sha256": "a1571a2624736bc4c2948f0943c267f9b19b891caa4ebc1d132180e181bd80ba",
+      "stored_sha256": "d5d40b81ce58f280d5fe2b0c4561cb9ca3ac48e48a5d4fd3078950cbe5888725",
+      "bytes": 26312,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "final-behavioral.tap": {
+      "source_capture": "next-memory-final-behavioral.tap",
+      "capture_sha256": "9092574397625e2bbd05362603557c146ff7508b19260272366ec0b5489fb63b",
+      "stored_sha256": "9092574397625e2bbd05362603557c146ff7508b19260272366ec0b5489fb63b",
+      "bytes": 27626,
+      "normalization": "none",
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "final-vitest.txt": {
+      "source_capture": "next-memory-final-vitest.txt",
+      "capture_sha256": "a046363af2ecdf1e9e2fb2d5ad7e35023923c02b9f628813e015f88cc325745a",
+      "stored_sha256": "995c178aa3092a0e601899aecc2753f6262e3a70e17da6ffdf8ab2576728e3ed",
+      "bytes": 116034,
+      "normalization": "documented EOF/trailing-whitespace removal only",
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "build.txt": {
+      "source_capture": "next-memory-build.txt",
+      "capture_sha256": "404e8606741e42f0b30d21a5bea21493e3c53fef9a6941f501265a7d37cde2fd",
+      "stored_sha256": "404e8606741e42f0b30d21a5bea21493e3c53fef9a6941f501265a7d37cde2fd",
+      "bytes": 17661,
+      "normalization": "none",
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {}
+    },
+    "verify-tests.txt": {
+      "source_capture": "next-memory-verify-tests.txt",
+      "capture_sha256": "4b9c8753da5542ac29d07e19290bd6c377671c726c71c056069a512b0783a2a4",
+      "stored_sha256": "4b9c8753da5542ac29d07e19290bd6c377671c726c71c056069a512b0783a2a4",
+      "bytes": 493,
+      "normalization": "none",
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {}
+    }
+  },
+  "commands": {
+    "node": "node --test tests/services/ana/memory-consolidation-outcomes.test.cjs tests/services/ana/memory-acceptance-fidelity.test.cjs",
+    "vitest": "node --import tsx ./node_modules/vitest/vitest.mjs run tests/unit/memory-context-assembler.test.ts server/services/__tests__/memory-context-assembler-deadline.test.ts server/services/__tests__/memory-context-assembler-mode.test.ts server/services/__tests__/memory-context-selected-project.test.ts server/services/__tests__/memory-context-assembler-presents-no-confidence-percent.test.ts server/services/__tests__/working-memory-fact-check.test.ts server/services/__tests__/working-memory.test.ts server/services/__tests__/working-memory-project-recall.pglite.test.ts server/services/__tests__/working-memory-project-attribution.test.ts server/services/__tests__/ana-session-bootstrap.test.ts server/services/__tests__/ana-session-bootstrap-latency.test.ts server/services/__tests__/memory-consolidation.pglite.integration.test.ts server/services/__tests__/memory-orchestrator.test.ts server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts server/services/ana/__tests__/memory-fact-check.test.ts server/services/ana/__tests__/turn-plan-and-context.test.ts server/routes/chat/__tests__/send-message-read-only.test.ts server/services/ana/__tests__/agentic-loop-rounds.test.ts server/services/ana/__tests__/passage-round-budget.test.ts server/services/ana/__tests__/passage-round-read-priority.test.ts server/services/ana/__tests__/strict-round-body-budget.test.ts server/services/ana/__tests__/read-receipts.test.ts",
+    "build": "npm run build",
+    "companion_scan": "bash scripts/ai/verify-tests.sh",
+    "runtime_path_prefix": "/workspace/scratch/873134e51e15/node22-runtime/node_modules/node/bin"
+  }
+}

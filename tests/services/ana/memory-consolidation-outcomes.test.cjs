@@ -484,6 +484,85 @@ test('continuity: a KNOWN label inside an exclusion cannot validate an inferred-
   assert.equal(h.state.embedCalls.length, 0);
 });
 
+for (const [style, marker] of [
+  ['compact', '[KNOWN]'], ['compact', '[INFERRED]'], ['compact', '[MISSING]'], ['public', '[KNOWN]'],
+]) {
+  test(`continuity: a ${style} exclusions-only summary gives ${marker} no quality credit or penalty`, async () => {
+    const exclusion = `Do not describe the exploratory subgroup claim as ${marker}`;
+    const structured = {
+      objective: '', lockedFacts: [], decisions: [], openQuestions: [], nextActions: [], createdArtifacts: [],
+      exclusions: [exclusion], factCheck: 'answer-check/2',
+    };
+    const summary = style === 'compact'
+      ? `**Deferred/Excluded**: ${exclusion}`
+      : `**Objective**: \n\n**Deferred/Excluded**:\n- ${exclusion}`;
+    const row = memory(1, { summary, structured_data: structured });
+    const original = JSON.stringify(row);
+    const h = harness([row], { realGate: true });
+    await h.runConsolidation();
+    // Delivering the same exclusions through the stored summary must not
+    // alter the quality signals compared with the structured-only record.
+    const structuredOnly = harness([memory(1, { summary: '', structured_data: structured })], { realGate: true });
+    await structuredOnly.runConsolidation();
+    assert.deepEqual(h.state.gateCalls[0].qualitySignals, structuredOnly.state.gateCalls[0].qualitySignals);
+    assert.equal(h.state.gateVerdicts[0].confidence_score, structuredOnly.state.gateVerdicts[0].confidence_score);
+    const content = `${summary}\nDeferred/excluded: ${exclusion}`;
+    assert.equal(h.state.stored[0].values.content, content);
+    assert.equal(h.state.embedCalls[0].content, content);
+    assert.equal(h.state.stored[0].values.status, 'pending_review');
+    assert.equal(JSON.stringify(row), original);
+  });
+}
+
+test('continuity: fallback quality retains genuine raw facts outside the rendered exclusions', async () => {
+  const fact = '[KNOWN] Study source version three remains the recorded reference.';
+  const exclusion = '[INFERRED] Do not rely on the exploratory subgroup claim.';
+  const summary = `${fact}\n**Deferred/Excluded**: ${exclusion}`;
+  const h = harness([memory(1, { summary, structured_data: { exclusions: [exclusion] } })], { realGate: true });
+  await h.runConsolidation();
+  const rawOnly = harness([memory(1, { summary: fact })], { realGate: true });
+  await rawOnly.runConsolidation();
+  assert.deepEqual(h.state.gateCalls[0].qualitySignals, rawOnly.state.gateCalls[0].qualitySignals);
+  assert.equal(h.state.gateVerdicts[0].confidence_score, rawOnly.state.gateVerdicts[0].confidence_score);
+  assert.equal(h.state.stored[0].values.content, `${summary}\nDeferred/excluded: ${exclusion}`);
+});
+
+test('continuity: overlapping exclusions cannot leave a quality label behind or mutate the source', async () => {
+  const exclusions = ['Exploratory subgroup claim', '[KNOWN] Exploratory subgroup claim'];
+  const h = harness([memory(1, {
+    summary: `**Deferred/Excluded**: ${exclusions.join('; ')}`,
+    structured_data: { exclusions },
+  })], { realGate: true });
+  await h.runConsolidation();
+  assert.equal(h.state.gateCalls[0].qualitySignals.hasKnownLabels, false);
+  assert.equal(h.state.stored[0].values.status, 'pending_review');
+  assert.deepEqual(exclusions, ['Exploratory subgroup claim', '[KNOWN] Exploratory subgroup claim']);
+});
+
+test('continuity: masking exclusion text cannot join fragments into quality labels', async () => {
+  const exclusion = 'Excluded intervening text';
+  const summary = `[KNO${exclusion}WN] [INFER${exclusion}RED] [MISS${exclusion}ING] are not evidence labels.`;
+  const h = harness([memory(1, { summary, structured_data: { exclusions: [exclusion] } })], { realGate: true });
+  await h.runConsolidation();
+  const quality = h.state.gateCalls[0].qualitySignals;
+  assert.equal(quality.hasKnownLabels, false);
+  assert.equal(quality.hasInferredLabels, false);
+  assert.equal(quality.hasMissingLabels, false);
+  assert.equal(h.state.stored[0].values.content, `${summary}\nDeferred/excluded: ${exclusion}`);
+});
+
+for (const structured of [null, {}]) {
+  test(`continuity: a legacy ${JSON.stringify(structured)} structure keeps raw fallback quality and content`, async () => {
+    const summary = '[KNOWN] The original checked source remains recorded.';
+    const h = harness([memory(1, { summary, structured_data: structured })], { realGate: true });
+    await h.runConsolidation();
+    assert.equal(h.state.gateCalls[0].qualitySignals.hasKnownLabels, true);
+    assert.equal(h.state.stored[0].values.content, summary);
+    assert.equal(h.state.embedCalls[0].content, summary);
+    assert.equal(h.state.stored[0].values.status, 'pending_review');
+  });
+}
+
 for (const exclusions of [undefined, [], null]) {
   test(`continuity: absent or empty exclusions (${JSON.stringify(exclusions)}) preserve the legacy content`, async () => {
     const h = harness([memory(1, { structured_data: { exclusions } })], { realGate: true });

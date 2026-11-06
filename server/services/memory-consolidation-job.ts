@@ -249,7 +249,19 @@ async function consolidateMemoryInner(
     // Keep the raw-summary fallback when the six content fields are empty,
     // including records whose only structured field is an exclusion.
     if (parts.length === 0 && memory.summary?.trim()) parts.push(memory.summary);
-    const contentForQualitySignals = parts.join('\n');
+    let contentForQualitySignals = parts.join('\n');
+    if (structuredFieldsPopulated === 0 && Array.isArray(structured?.exclusions)) {
+      // A rendered thread summary can already contain these exclusions. Mask
+      // their exact text only for scoring, preserving the raw fallback itself.
+      // Longest first avoids leaving a label behind after a shorter match;
+      // whitespace prevents neighboring fragments from becoming a new label.
+      const exclusions: unknown[] = structured.exclusions;
+      for (const exclusion of exclusions
+        .filter((item): item is string => typeof item === 'string' && item.length > 0)
+        .sort((a, b) => b.length - a.length)) {
+        contentForQualitySignals = contentForQualitySignals.replaceAll(exclusion, ' ');
+      }
+    }
     if (Array.isArray(structured?.exclusions) && structured.exclusions.length > 0) {
       parts.push(`Deferred/excluded: ${structured.exclusions.join('; ')}`);
     }

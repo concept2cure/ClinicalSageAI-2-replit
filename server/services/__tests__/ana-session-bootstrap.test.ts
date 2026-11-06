@@ -9,6 +9,7 @@ import {
   formatSessionBootstrap,
   shouldAutoBootstrap,
   type BootstrapAtom,
+  type SessionBootstrapParts,
 } from '../ana-session-bootstrap-format';
 
 const atom = (over: Partial<BootstrapAtom>): BootstrapAtom => ({
@@ -130,6 +131,157 @@ describe('formatSessionBootstrap', () => {
     expect(out).not.toContain('What I learned');
   });
 
+});
+
+describe('formatSessionBootstrap — complete memory within the prompt budget', () => {
+  const empty = { projectAtoms: [], clientAtoms: [], outcomeLessons: [] };
+  const heading = '## Session memory — picking up where we left off';
+  const workingHeading = '### Where we left off';
+  const omission = /memory.*omitted.*budget.*history is incomplete/i;
+
+  it('keeps trailing qualifications in working, project, client and lesson records when they fit together', () => {
+    const working = `${'The retained results need independent review. '.repeat(29)}Do not describe the study as successful.`;
+    const title = `${'Review of study results '.repeat(6)}— still provisional`;
+    const project = `${'The draft currently cites the frozen analysis. '.repeat(6)}Exclude the exploratory subgroup claim.`;
+    const client = `${'The sponsor requested a source-based draft. '.repeat(6)}Do not infer sponsor approval.`;
+    const lesson = `${'Check the source version before using a result. '.repeat(5)}Never substitute a model estimate.`;
+    const out = formatSessionBootstrap({
+      workingMemorySummary: working,
+      projectAtoms: [atom({ title, content: project })],
+      clientAtoms: [atom({ title: 'Sponsor direction', content: client })],
+      outcomeLessons: [{ capabilityKey: 'draft-csr', outcome: 'failure', lessonsLearned: lesson }],
+    });
+    for (const whole of [working, title, project, client, lesson]) expect(out).toContain(whole);
+    expect(out.length).toBeLessThanOrEqual(4500);
+    expect(out).not.toMatch(omission);
+    expect(out).not.toContain('…');
+  });
+
+  it('omits an oversized working summary and still considers later memory', () => {
+    const working = `The primary endpoint was achieved. ${'Source review pending. '.repeat(240)}That claim is unconfirmed and must not be used.`;
+    const out = formatSessionBootstrap({ ...empty, workingMemorySummary: working,
+      projectAtoms: [atom({ title: 'Current task', content: 'Reconcile the analysis before drafting.' })],
+      outcomeLessons: [{ capabilityKey: 'review', outcome: 'failure', lessonsLearned: 'Keep the original source.' }],
+    });
+    expect(out).not.toContain('The primary endpoint was achieved.');
+    expect(out).not.toContain(workingHeading);
+    expect(out).toContain('Reconcile the analysis before drafting.');
+    expect(out).toContain('Keep the original source.');
+    expect(out).toMatch(omission);
+    expect(out.length).toBeLessThanOrEqual(4500);
+  });
+
+  it.each(['project', 'client', 'lesson'] as const)('skips an oversized %s record without losing a later complete record', kind => {
+    const content = `Unqualified ${kind} claim. ${'Retain the source context. '.repeat(200)}Do not use that claim.`;
+    const parts: SessionBootstrapParts = { ...empty };
+    if (kind === 'lesson') {
+      parts.outcomeLessons = [
+        { capabilityKey: 'oversized-lesson', outcome: 'failure', lessonsLearned: content },
+        { capabilityKey: 'later-lesson', outcome: 'failure', lessonsLearned: 'Ask for the saved protocol.' },
+      ];
+    } else {
+      parts[kind === 'project' ? 'projectAtoms' : 'clientAtoms'] = [
+        atom({ title: `Oversized ${kind}`, content, importance: 'critical' }),
+        atom({ title: `Later ${kind}`, content: 'Ask for the saved protocol.', importance: 'low' }),
+      ];
+    }
+    const out = formatSessionBootstrap(parts);
+    expect(out).not.toContain(`Unqualified ${kind} claim.`);
+    expect(out).not.toContain(kind === 'lesson' ? 'oversized-lesson' : `Oversized ${kind}`);
+    expect(out).toContain('Ask for the saved protocol.');
+    expect(out).toMatch(omission);
+    expect(out.length).toBeLessThanOrEqual(4500);
+  });
+
+  it('budgets full titles, categories and lesson labels as part of each record', () => {
+    const out = formatSessionBootstrap({ ...empty,
+      projectAtoms: [
+        atom({ title: `Title ${'T'.repeat(4500)}`, content: 'Omit the long-title record.', importance: 'critical' }),
+        atom({ title: 'Long category', category: 'C'.repeat(4500), content: 'Omit the long-category record.', importance: 'high' }),
+        atom({ title: 'Fits', content: 'This full record remains.', importance: 'low' }),
+      ],
+      outcomeLessons: [{ capabilityKey: 'K'.repeat(4500), outcome: 'failure', lessonsLearned: 'Omit the long-label record.' }],
+    });
+    expect(out).toContain('This full record remains.');
+    expect(out).not.toContain('Omit the long-');
+    expect(out).not.toContain('What I learned on past work here');
+    expect(out).toMatch(omission);
+    expect(out.length).toBeLessThanOrEqual(4500);
+  });
+
+  it('admits a complete summary exactly at the rendered budget without an omission notice', () => {
+    const summary = 'S'.repeat(4500 - heading.length - workingHeading.length - 2);
+    const out = formatSessionBootstrap({ ...empty, workingMemorySummary: summary });
+    expect(out).toBe([heading, workingHeading, summary].join('\n'));
+    expect(out.length).toBe(4500);
+    expect(out).not.toMatch(omission);
+  });
+
+  it('reserves room for the omission notice before admitting complete records', () => {
+    const prefix = 'Do not drop this qualification. ';
+    const summary = prefix + 'S'.repeat(4500 - heading.length - workingHeading.length - 2 - prefix.length);
+    const out = formatSessionBootstrap({ ...empty, workingMemorySummary: summary,
+      projectAtoms: [atom({ title: 'Later record', content: 'Read the saved decision.' })] });
+    expect(out).not.toContain('Do not drop this qualification.');
+    expect(out).not.toContain(workingHeading);
+    expect(out).toContain('Read the saved decision.');
+    expect(out).toMatch(omission);
+    expect(out.length).toBeLessThanOrEqual(4500);
+  });
+
+  it('reports an incomplete history when all candidates are omitted, without empty section headings', () => {
+    const out = formatSessionBootstrap({ ...empty, workingMemorySummary: 'W'.repeat(4600),
+      projectAtoms: [atom({ title: 'P', content: 'P'.repeat(4600) })],
+      clientAtoms: [atom({ title: 'C', content: 'C'.repeat(4600) })],
+      outcomeLessons: [{ capabilityKey: 'k', outcome: 'failure', lessonsLearned: 'L'.repeat(4600) }],
+    });
+    expect(out).toMatch(omission);
+    expect(out).not.toContain('###');
+    expect(out.length).toBeLessThanOrEqual(4500);
+    expect(formatSessionBootstrap({ ...empty, workingMemorySummary: ' \n\t ' })).toBe('');
+  });
+
+  it('preserves ordinary short output, section order, ranking and count limits', () => {
+    const out = formatSessionBootstrap({ workingMemorySummary: '  Resume\nreview.  ', atomLimit: 2,
+      projectAtoms: [
+        atom({ title: 'Low', content: 'Do not include.', importance: 'low' }),
+        atom({ title: 'High', content: 'Check the source.', category: 'decision', importance: 'high' }),
+        atom({ title: 'Critical', content: 'Keep the qualifier.', importance: 'critical' }),
+      ],
+      clientAtoms: [atom({ title: 'Client', content: 'Ask the sponsor.' })],
+      outcomeLessons: Array.from({ length: 6 }, (_, i) => ({ capabilityKey: 'review', outcome: 'failure', lessonsLearned: `Lesson ${i}.` })),
+    });
+    expect(out).toBe([
+      heading, workingHeading, 'Resume review.',
+      '### Project memory (most important)', '- **Critical**: Keep the qualifier.', '- **High** _(decision)_: Check the source.',
+      '### Client memory (most important)', '- **Client**: Ask the sponsor.',
+      '### What I learned on past work here',
+      ...Array.from({ length: 5 }, (_, i) => `- (review, failure) Lesson ${i}.`),
+    ].join('\n'));
+  });
+
+  it('leaves Vault and chat preview text and access notices outside the memory budget', () => {
+    const files: Pick<SessionBootstrapParts, 'vaultFiles' | 'chatUploads'> = {
+      vaultFiles: { ...WHOLE_SCOPE, total: 12, actorFiltered: true, sourceAccessNotice: 'Only currently accessible records are listed.',
+        files: Array.from({ length: 12 }, (_, i) => ({ fileName: `source-${i}.pdf`, documentTitle: `Source ${i}`,
+          placementStatus: 'confirmed', catalogStatus: 'cataloged', catalogState: 'confirmed',
+          documentKind: 'Governed source', purpose: 'Source detail. '.repeat(20) })),
+      },
+      chatUploads: { uploads: [{ fileName: 'earlier-source.pdf', fileId: 'file_source' }], hasMore: true, actorFiltered: true,
+        sourceAccessNotice: 'Chat files are scoped to the current actor.' },
+    };
+    const previews = formatSessionBootstrap({ ...empty, ...files }).slice(heading.length + 1);
+    const content = `${'Keep all of this memory. '.repeat(14)}Do not state a definitive conclusion.`;
+    const out = formatSessionBootstrap({ ...empty, ...files,
+      projectAtoms: [atom({ title: 'Draft boundary', content })],
+      outcomeLessons: [{ capabilityKey: 'review', outcome: 'failure', lessonsLearned: 'Read the complete source.' }],
+    });
+    expect(out).toContain(previews);
+    expect(out).toContain(content);
+    expect(out).toContain('Read the complete source.');
+    expect(out.length).toBeGreaterThan(4500); // File previews have their own established limits.
+    expect(out).not.toMatch(omission);
+  });
 });
 
 describe("formatSessionBootstrap — the client's files", () => {

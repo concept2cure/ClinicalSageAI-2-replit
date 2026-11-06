@@ -1,0 +1,784 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+TAP version 13
+# (node:12) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: dedupe preserves different decisions after character 200
+ok 1 - dedupe preserves different decisions after character 200
+  ---
+  duration_ms: 35.670591
+  type: 'test'
+  ...
+# Subtest: dedupe preserves different numeric results after character 200
+ok 2 - dedupe preserves different numeric results after character 200
+  ---
+  duration_ms: 0.258181
+  type: 'test'
+  ...
+# Subtest: dedupe preserves different sources after character 200
+ok 3 - dedupe preserves different sources after character 200
+  ---
+  duration_ms: 0.175309
+  type: 'test'
+  ...
+# Subtest: dedupe preserves different final character at the 5000-character limit
+ok 4 - dedupe preserves different final character at the 5000-character limit
+  ---
+  duration_ms: 0.297069
+  type: 'test'
+  ...
+# Subtest: dedupe preserves a known djb2 hash collision
+ok 5 - dedupe preserves a known djb2 hash collision
+  ---
+  duration_ms: 0.307774
+  type: 'test'
+  ...
+# Subtest: dedupe preserves different Unicode text after character 200
+ok 6 - dedupe preserves different Unicode text after character 200
+  ---
+  duration_ms: 15.176507
+  type: 'test'
+  ...
+# Subtest: an opposite conclusion after a shared opening reaches human review, not duplicate rejection
+ok 7 - an opposite conclusion after a shared opening reaches human review, not duplicate rejection
+  ---
+  duration_ms: 0.842705
+  type: 'test'
+  ...
+# Subtest: an exact long duplicate is still rejected
+ok 8 - an exact long duplicate is still rejected
+  ---
+  duration_ms: 0.202018
+  type: 'test'
+  ...
+# Subtest: existing case-and-whitespace normalization still identifies duplicates
+ok 9 - existing case-and-whitespace normalization still identifies duplicates
+  ---
+  duration_ms: 0.344249
+  type: 'test'
+  ...
+# Subtest: equal content in different categories is not a duplicate
+ok 10 - equal content in different categories is not a duplicate
+  ---
+  duration_ms: 1.02935
+  type: 'test'
+  ...
+# Subtest: category/content field boundaries do not collide
+ok 11 - category/content field boundaries do not collide
+  ---
+  duration_ms: 0.185724
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag is sufficient / is insufficient in both directions
+ok 12 - opposite phrases still flag is sufficient / is insufficient in both directions
+  ---
+  duration_ms: 0.275577
+  type: 'test'
+  ...
+# Subtest: two matching is insufficient assessments do not contradict each other
+ok 13 - two matching is insufficient assessments do not contradict each other
+  ---
+  duration_ms: 0.214637
+  type: 'test'
+  ...
+# Subtest: two matching is sufficient assessments do not contradict each other
+ok 14 - two matching is sufficient assessments do not contradict each other
+  ---
+  duration_ms: 0.124223
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag is adequate / is inadequate in both directions
+ok 15 - opposite phrases still flag is adequate / is inadequate in both directions
+  ---
+  duration_ms: 0.12913
+  type: 'test'
+  ...
+# Subtest: two matching is inadequate assessments do not contradict each other
+ok 16 - two matching is inadequate assessments do not contradict each other
+  ---
+  duration_ms: 0.078887
+  type: 'test'
+  ...
+# Subtest: two matching is adequate assessments do not contradict each other
+ok 17 - two matching is adequate assessments do not contradict each other
+  ---
+  duration_ms: 0.073609
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag meets requirements / does not meet requirements in both directions
+ok 18 - opposite phrases still flag meets requirements / does not meet requirements in both directions
+  ---
+  duration_ms: 0.198503
+  type: 'test'
+  ...
+# Subtest: two matching does not meet requirements assessments do not contradict each other
+ok 19 - two matching does not meet requirements assessments do not contradict each other
+  ---
+  duration_ms: 0.122831
+  type: 'test'
+  ...
+# Subtest: two matching meets requirements assessments do not contradict each other
+ok 20 - two matching meets requirements assessments do not contradict each other
+  ---
+  duration_ms: 0.077184
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag no risk / significant risk in both directions
+ok 21 - opposite phrases still flag no risk / significant risk in both directions
+  ---
+  duration_ms: 0.128891
+  type: 'test'
+  ...
+# Subtest: two matching significant risk assessments do not contradict each other
+ok 22 - two matching significant risk assessments do not contradict each other
+  ---
+  duration_ms: 0.077855
+  type: 'test'
+  ...
+# Subtest: two matching no risk assessments do not contradict each other
+ok 23 - two matching no risk assessments do not contradict each other
+  ---
+  duration_ms: 0.070334
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag compliant / non-compliant in both directions
+ok 24 - opposite phrases still flag compliant / non-compliant in both directions
+  ---
+  duration_ms: 0.12867
+  type: 'test'
+  ...
+# Subtest: two matching non-compliant assessments do not contradict each other
+ok 25 - two matching non-compliant assessments do not contradict each other
+  ---
+  duration_ms: 0.085396
+  type: 'test'
+  ...
+# Subtest: two matching compliant assessments do not contradict each other
+ok 26 - two matching compliant assessments do not contradict each other
+  ---
+  duration_ms: 0.070624
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag complete / incomplete in both directions
+ok 27 - opposite phrases still flag complete / incomplete in both directions
+  ---
+  duration_ms: 0.136652
+  type: 'test'
+  ...
+# Subtest: two matching incomplete assessments do not contradict each other
+ok 28 - two matching incomplete assessments do not contradict each other
+  ---
+  duration_ms: 0.127729
+  type: 'test'
+  ...
+# Subtest: two matching complete assessments do not contradict each other
+ok 29 - two matching complete assessments do not contradict each other
+  ---
+  duration_ms: 0.076343
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag no gaps / data gaps in both directions
+ok 30 - opposite phrases still flag no gaps / data gaps in both directions
+  ---
+  duration_ms: 0.111836
+  type: 'test'
+  ...
+# Subtest: two matching data gaps assessments do not contradict each other
+ok 31 - two matching data gaps assessments do not contradict each other
+  ---
+  duration_ms: 0.077414
+  type: 'test'
+  ...
+# Subtest: two matching no gaps assessments do not contradict each other
+ok 32 - two matching no gaps assessments do not contradict each other
+  ---
+  duration_ms: 0.124434
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag approved / rejected in both directions
+ok 33 - opposite phrases still flag approved / rejected in both directions
+  ---
+  duration_ms: 0.140227
+  type: 'test'
+  ...
+# Subtest: two matching rejected assessments do not contradict each other
+ok 34 - two matching rejected assessments do not contradict each other
+  ---
+  duration_ms: 0.077524
+  type: 'test'
+  ...
+# Subtest: two matching approved assessments do not contradict each other
+ok 35 - two matching approved assessments do not contradict each other
+  ---
+  duration_ms: 0.070675
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: unapproved
+ok 36 - a word fragment is not the phrase: unapproved
+  ---
+  duration_ms: 0.172454
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: unrejected
+ok 37 - a word fragment is not the phrase: unrejected
+  ---
+  duration_ms: 0.086818
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: completeness
+ok 38 - a word fragment is not the phrase: completeness
+  ---
+  duration_ms: 0.122821
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: non-compliantness
+ok 39 - a word fragment is not the phrase: non-compliantness
+  ---
+  duration_ms: 0.08116
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: no risks
+ok 40 - a word fragment is not the phrase: no risks
+  ---
+  duration_ms: 0.07457
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: incomplete_record
+ok 41 - a word fragment is not the phrase: incomplete_record
+  ---
+  duration_ms: 0.070624
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: αapproved
+ok 42 - a word fragment is not the phrase: αapproved
+  ---
+  duration_ms: 0.127127
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: approvedβ
+ok 43 - a word fragment is not the phrase: approvedβ
+  ---
+  duration_ms: 0.085607
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: approved2
+ok 44 - a word fragment is not the phrase: approved2
+  ---
+  duration_ms: 0.129071
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: approved́ness
+ok 45 - a word fragment is not the phrase: approved́ness
+  ---
+  duration_ms: 0.143292
+  type: 'test'
+  ...
+# Subtest: whitespace and case do not hide a configured multi-word conflict
+ok 46 - whitespace and case do not hide a configured multi-word conflict
+  ---
+  duration_ms: 0.129982
+  type: 'test'
+  ...
+# Subtest: punctuation boundaries retain the configured phrases
+ok 47 - punctuation boundaries retain the configured phrases
+  ---
+  duration_ms: 0.099668
+  type: 'test'
+  ...
+# Subtest: masking a negative phrase does not erase a separate positive assertion
+ok 48 - masking a negative phrase does not erase a separate positive assertion
+  ---
+  duration_ms: 0.103924
+  type: 'test'
+  ...
+# Subtest: a conflict notice states the opposing assertion even when existing text contains both
+ok 49 - a conflict notice states the opposing assertion even when existing text contains both
+  ---
+  duration_ms: 0.162289
+  type: 'test'
+  ...
+# Subtest: multiple conflicts in one entry do not duplicate its identifier
+ok 50 - multiple conflicts in one entry do not duplicate its identifier
+  ---
+  duration_ms: 0.118174
+  type: 'test'
+  ...
+# Subtest: different conflicting entries retain their separate identifiers
+ok 51 - different conflicting entries retain their separate identifiers
+  ---
+  duration_ms: 0.140688
+  type: 'test'
+  ...
+# Subtest: the full acceptance path does not quarantine two non-compliant assessments
+ok 52 - the full acceptance path does not quarantine two non-compliant assessments
+  ---
+  duration_ms: 0.221778
+  type: 'test'
+  ...
+# Subtest: low-quality content is not auto-accepted merely because a false conflict was removed
+ok 53 - low-quality content is not auto-accepted merely because a false conflict was removed
+  ---
+  duration_ms: 0.21654
+  type: 'test'
+  ...
+# Subtest: sub-floor confidence is still rejected
+ok 54 - sub-floor confidence is still rejected
+  ---
+  duration_ms: 0.161468
+  type: 'test'
+  ...
+# Subtest: length rejection boundaries are unchanged
+ok 55 - length rejection boundaries are unchanged
+  ---
+  duration_ms: 0.163021
+  type: 'test'
+  ...
+# Subtest: content, provenance and thread attribution survive unchanged
+ok 56 - content, provenance and thread attribution survive unchanged
+  ---
+  duration_ms: 0.103233
+  type: 'test'
+  ...
+# Subtest: no comparison records means no inferred contradiction
+ok 57 - no comparison records means no inferred contradiction
+  ---
+  duration_ms: 0.077154
+  type: 'test'
+  ...
+# (node:13) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: successful promotion retains tenant, stored content, embedding and commit-before-count
+ok 58 - successful promotion retains tenant, stored content, embedding and commit-before-count
+  ---
+  duration_ms: 3.462073
+  type: 'test'
+  ...
+# Subtest: empty scan is not a failure and opens no row scope
+ok 59 - empty scan is not a failure and opens no row scope
+  ---
+  duration_ms: 0.737619
+  type: 'test'
+  ...
+# Subtest: empty content remains a legitimate skip
+ok 60 - empty content remains a legitimate skip
+  ---
+  duration_ms: 0.5348
+  type: 'test'
+  ...
+# Subtest: missing profile remains a legitimate skip
+ok 61 - missing profile remains a legitimate skip
+  ---
+  duration_ms: 0.337298
+  type: 'test'
+  ...
+# Subtest: concurrently existing summary remains skipped, without another insert
+ok 62 - concurrently existing summary remains skipped, without another insert
+  ---
+  duration_ms: 0.503804
+  type: 'test'
+  ...
+# Subtest: gate rejection remains distinct and prevents embedding and transaction writes
+ok 63 - gate rejection remains distinct and prevents embedding and transaction writes
+  ---
+  duration_ms: 0.271871
+  type: 'test'
+  ...
+# Subtest: contradiction remains a stored quarantine rather than a successful promotion
+ok 64 - contradiction remains a stored quarantine rather than a successful promotion
+  ---
+  duration_ms: 0.451777
+  type: 'test'
+  ...
+# Subtest: noncontradiction pending-review disposition survives storage without confidence inflation
+ok 65 - noncontradiction pending-review disposition survives storage without confidence inflation
+  ---
+  duration_ms: 0.38592
+  type: 'test'
+  ...
+# Subtest: best-effort embedding failure retains durable unembedded content without provider payload logging
+ok 66 - best-effort embedding failure retains durable unembedded content without provider payload logging
+  ---
+  duration_ms: 0.639334
+  type: 'test'
+  ...
+# Subtest: comparison failure counts once as error and does not suppress the following tenant
+ok 67 - comparison failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.733713
+  type: 'test'
+  ...
+# Subtest: gate failure counts once as error and does not suppress the following tenant
+ok 68 - gate failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.477896
+  type: 'test'
+  ...
+# Subtest: begin failure counts once as error and does not suppress the following tenant
+ok 69 - begin failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.321114
+  type: 'test'
+  ...
+# Subtest: lock failure counts once as error and does not suppress the following tenant
+ok 70 - lock failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.35906
+  type: 'test'
+  ...
+# Subtest: dedupe failure counts once as error and does not suppress the following tenant
+ok 71 - dedupe failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.545035
+  type: 'test'
+  ...
+# Subtest: insert failure counts once as error and does not suppress the following tenant
+ok 72 - insert failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.269989
+  type: 'test'
+  ...
+# Subtest: commit-before failure counts once as error and does not suppress the following tenant
+ok 73 - commit-before failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.340173
+  type: 'test'
+  ...
+# Subtest: scope-open failure counts once as error and does not suppress the following tenant
+ok 74 - scope-open failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.436655
+  type: 'test'
+  ...
+# Subtest: scope-close failure counts once as error and does not suppress the following tenant
+ok 75 - scope-close failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.418298
+  type: 'test'
+  ...
+# Subtest: malformed JSON is an error, not a skip, and later work continues
+ok 76 - malformed JSON is an error, not a skip, and later work continues
+  ---
+  duration_ms: 0.358299
+  type: 'test'
+  ...
+# Subtest: invalid generation date is an error, not a skip, and later work continues
+ok 77 - invalid generation date is an error, not a skip, and later work continues
+  ---
+  duration_ms: 0.236029
+  type: 'test'
+  ...
+# Subtest: rollback failure does not erase the original failed attempt or abort later rows
+ok 78 - rollback failure does not erase the original failed attempt or abort later rows
+  ---
+  duration_ms: 0.723859
+  type: 'test'
+  ...
+# Subtest: mixed batch has separate success, quarantine, rejection, skip and failure counts
+ok 79 - mixed batch has separate success, quarantine, rejection, skip and failure counts
+  ---
+  duration_ms: 0.716048
+  type: 'test'
+  ...
+# Subtest: multiple scope failures are counted per attempted row, not one abort for the batch
+ok 80 - multiple scope failures are counted per attempted row, not one abort for the batch
+  ---
+  duration_ms: 0.287615
+  type: 'test'
+  ...
+# Subtest: scanError is one batch failure with no invented row outcomes or raw details
+ok 81 - scanError is one batch failure with no invented row outcomes or raw details
+  ---
+  duration_ms: 0.212384
+  type: 'test'
+  ...
+# Subtest: scanScopeError is one batch failure with no invented row outcomes or raw details
+ok 82 - scanScopeError is one batch failure with no invented row outcomes or raw details
+  ---
+  duration_ms: 0.253775
+  type: 'test'
+  ...
+# Subtest: a scheduled lease held elsewhere remains a no-work result
+ok 83 - a scheduled lease held elsewhere remains a no-work result
+  ---
+  duration_ms: 0.23026
+  type: 'test'
+  ...
+# Subtest: scheduled execution returns its actual partial-failure counts to the caller
+ok 84 - scheduled execution returns its actual partial-failure counts to the caller
+  ---
+  duration_ms: 0.330618
+  type: 'test'
+  ...
+# Subtest: scheduler lease error remains explicitly unavailable and omits raw exception payloads
+ok 85 - scheduler lease error remains explicitly unavailable and omits raw exception payloads
+  ---
+  duration_ms: 0.554429
+  type: 'test'
+  ...
+# Subtest: a non-Error thrown payload is counted without logging its contents
+ok 86 - a non-Error thrown payload is counted without logging its contents
+  ---
+  duration_ms: 0.347624
+  type: 'test'
+  ...
+# Subtest: failed save is retryable and does not fabricate a completed marker
+ok 87 - failed save is retryable and does not fabricate a completed marker
+  ---
+  duration_ms: 0.46008
+  type: 'test'
+  ...
+# Subtest: lost COMMIT acknowledgement is unconfirmed; retry still respects the existing duplicate guard
+ok 88 - lost COMMIT acknowledgement is unconfirmed; retry still respects the existing duplicate guard
+  ---
+  duration_ms: 0.463265
+  type: 'test'
+  ...
+# Subtest: cron initialization remains single-registration with the existing cadence
+ok 89 - cron initialization remains single-registration with the existing cadence
+  ---
+  duration_ms: 0.190191
+  type: 'test'
+  ...
+# Subtest: real gate: plain conversation remains pending without a contradiction
+ok 90 - real gate: plain conversation remains pending without a contradiction
+  ---
+  duration_ms: 0.977624
+  type: 'test'
+  ...
+# Subtest: real gate: structured conversation remains pending without a contradiction
+ok 91 - real gate: structured conversation remains pending without a contradiction
+  ---
+  duration_ms: 0.37922
+  type: 'test'
+  ...
+# Subtest: real gate: all six fields with KNOWN labels remains pending without a contradiction
+ok 92 - real gate: all six fields with KNOWN labels remains pending without a contradiction
+  ---
+  duration_ms: 0.320904
+  type: 'test'
+  ...
+# Subtest: real gate: matching negative assessments remains pending without a contradiction
+ok 93 - real gate: matching negative assessments remains pending without a contradiction
+  ---
+  duration_ms: 33.519359
+  type: 'test'
+  ...
+# Subtest: real gate: a genuine contradiction remains quarantined
+ok 94 - real gate: a genuine contradiction remains quarantined
+  ---
+  duration_ms: 0.681667
+  type: 'test'
+  ...
+# Subtest: real gate: short is rejected without embedding or storage
+ok 95 - real gate: short is rejected without embedding or storage
+  ---
+  duration_ms: 0.350207
+  type: 'test'
+  ...
+# Subtest: real gate: inferred only is rejected without embedding or storage
+ok 96 - real gate: inferred only is rejected without embedding or storage
+  ---
+  duration_ms: 0.233265
+  type: 'test'
+  ...
+# Subtest: real gate: duplicate is rejected without embedding or storage
+ok 97 - real gate: duplicate is rejected without embedding or storage
+  ---
+  duration_ms: 0.371659
+  type: 'test'
+  ...
+# Subtest: real gate: pending review is not lost during embed failure
+ok 98 - real gate: pending review is not lost during embed failure
+  ---
+  duration_ms: 0.527419
+  type: 'test'
+  ...
+# Subtest: real gate: pending review is not lost during insert failure
+ok 99 - real gate: pending review is not lost during insert failure
+  ---
+  duration_ms: 0.360773
+  type: 'test'
+  ...
+# Subtest: real gate: pending review is not lost during commit-after failure
+ok 100 - real gate: pending review is not lost during commit-after failure
+  ---
+  duration_ms: 0.565355
+  type: 'test'
+  ...
+# Subtest: real gate: scheduled mixed-tenant batch retains both scopes and pending outcomes
+ok 101 - real gate: scheduled mixed-tenant batch retains both scopes and pending outcomes
+  ---
+  duration_ms: 0.46012
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted with human review cannot become active
+ok 102 - controlled verdict: accepted with human review cannot become active
+  ---
+  duration_ms: 0.386591
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted with a contradiction cannot become active
+ok 103 - controlled verdict: accepted with a contradiction cannot become active
+  ---
+  duration_ms: 0.391729
+  type: 'test'
+  ...
+# Subtest: controlled verdict: pending with contradictory false flags cannot become active
+ok 104 - controlled verdict: pending with contradictory false flags cannot become active
+  ---
+  duration_ms: 0.642479
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted without a review flag cannot become active
+ok 105 - controlled verdict: accepted without a review flag cannot become active
+  ---
+  duration_ms: 0.271401
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted without a contradiction flag cannot become active
+ok 106 - controlled verdict: accepted without a contradiction flag cannot become active
+  ---
+  duration_ms: 0.312592
+  type: 'test'
+  ...
+# Subtest: controlled verdict: unavailable disposition unknown is a failure, not active memory
+ok 107 - controlled verdict: unavailable disposition unknown is a failure, not active memory
+  ---
+  duration_ms: 0.280304
+  type: 'test'
+  ...
+# Subtest: controlled verdict: unavailable disposition  is a failure, not active memory
+ok 108 - controlled verdict: unavailable disposition  is a failure, not active memory
+  ---
+  duration_ms: 0.232343
+  type: 'test'
+  ...
+# Subtest: controlled verdict: unavailable disposition undefined is a failure, not active memory
+ok 109 - controlled verdict: unavailable disposition undefined is a failure, not active memory
+  ---
+  duration_ms: 2.773927
+  type: 'test'
+  ...
+# Subtest: continuity: JSON object carries all seven fields through the real gate, embedding and storage
+ok 110 - continuity: JSON object carries all seven fields through the real gate, embedding and storage
+  ---
+  duration_ms: 0.510504
+  type: 'test'
+  ...
+# Subtest: continuity: serialized JSON carries all seven fields through the real gate, embedding and storage
+ok 111 - continuity: serialized JSON carries all seven fields through the real gate, embedding and storage
+  ---
+  duration_ms: 0.314284
+  type: 'test'
+  ...
+# Subtest: continuity: exclusions-only structured data preserves the raw summary fallback
+ok 112 - continuity: exclusions-only structured data preserves the raw summary fallback
+  ---
+  duration_ms: 0.326241
+  type: 'test'
+  ...
+# Subtest: continuity: a substantive exclusion is not skipped when the raw summary is empty
+ok 113 - continuity: a substantive exclusion is not skipped when the raw summary is empty
+  ---
+  duration_ms: 0.326507
+  type: 'test'
+  ...
+# Subtest: continuity: different exclusions do not become duplicate summaries at admission
+ok 114 - continuity: different exclusions do not become duplicate summaries at admission
+  ---
+  duration_ms: 0.863776
+  type: 'test'
+  ...
+# Subtest: continuity: an exact duplicate including exclusions is still rejected
+ok 115 - continuity: an exact duplicate including exclusions is still rejected
+  ---
+  duration_ms: 0.33134
+  type: 'test'
+  ...
+# Subtest: continuity: a KNOWN label inside an exclusion cannot validate an inferred-only summary
+ok 116 - continuity: a KNOWN label inside an exclusion cannot validate an inferred-only summary
+  ---
+  duration_ms: 0.261116
+  type: 'test'
+  ...
+# Subtest: continuity: a compact exclusions-only summary gives [KNOWN] no quality credit or penalty
+ok 117 - continuity: a compact exclusions-only summary gives [KNOWN] no quality credit or penalty
+  ---
+  duration_ms: 0.644311
+  type: 'test'
+  ...
+# Subtest: continuity: a compact exclusions-only summary gives [INFERRED] no quality credit or penalty
+ok 118 - continuity: a compact exclusions-only summary gives [INFERRED] no quality credit or penalty
+  ---
+  duration_ms: 0.501902
+  type: 'test'
+  ...
+# Subtest: continuity: a compact exclusions-only summary gives [MISSING] no quality credit or penalty
+ok 119 - continuity: a compact exclusions-only summary gives [MISSING] no quality credit or penalty
+  ---
+  duration_ms: 0.364329
+  type: 'test'
+  ...
+# Subtest: continuity: a public exclusions-only summary gives [KNOWN] no quality credit or penalty
+ok 120 - continuity: a public exclusions-only summary gives [KNOWN] no quality credit or penalty
+  ---
+  duration_ms: 0.312532
+  type: 'test'
+  ...
+# Subtest: continuity: fallback quality retains genuine raw facts outside the rendered exclusions
+ok 121 - continuity: fallback quality retains genuine raw facts outside the rendered exclusions
+  ---
+  duration_ms: 0.325981
+  type: 'test'
+  ...
+# Subtest: continuity: overlapping exclusions cannot leave a quality label behind or mutate the source
+ok 122 - continuity: overlapping exclusions cannot leave a quality label behind or mutate the source
+  ---
+  duration_ms: 0.294576
+  type: 'test'
+  ...
+# Subtest: continuity: masking exclusion text cannot join fragments into quality labels
+ok 123 - continuity: masking exclusion text cannot join fragments into quality labels
+  ---
+  duration_ms: 0.215108
+  type: 'test'
+  ...
+# Subtest: continuity: a legacy null structure keeps raw fallback quality and content
+ok 124 - continuity: a legacy null structure keeps raw fallback quality and content
+  ---
+  duration_ms: 0.292011
+  type: 'test'
+  ...
+# Subtest: continuity: a legacy {} structure keeps raw fallback quality and content
+ok 125 - continuity: a legacy {} structure keeps raw fallback quality and content
+  ---
+  duration_ms: 0.152996
+  type: 'test'
+  ...
+# Subtest: continuity: absent or empty exclusions (undefined) preserve the legacy content
+ok 126 - continuity: absent or empty exclusions (undefined) preserve the legacy content
+  ---
+  duration_ms: 0.252303
+  type: 'test'
+  ...
+# Subtest: continuity: absent or empty exclusions ([]) preserve the legacy content
+ok 127 - continuity: absent or empty exclusions ([]) preserve the legacy content
+  ---
+  duration_ms: 0.16225
+  type: 'test'
+  ...
+# Subtest: continuity: absent or empty exclusions (null) preserve the legacy content
+ok 128 - continuity: absent or empty exclusions (null) preserve the legacy content
+  ---
+  duration_ms: 0.143643
+  type: 'test'
+  ...
+1..128
+# tests 128
+# suites 0
+# pass 128
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 447.677136
