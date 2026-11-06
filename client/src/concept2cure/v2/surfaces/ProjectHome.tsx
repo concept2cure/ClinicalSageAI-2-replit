@@ -52,6 +52,7 @@ import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle
 import { ProjectSettings } from './ProjectSettings';
 import { ProjectCoreWork } from './ProjectCoreWork';
 import { actionWords, enumWords } from './projectWords';
+import { WS_LABEL } from './ProjectPortfolioFilters';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -229,9 +230,11 @@ function Anchored<T>(props: {
    and PDF viewer, and the same honest states (a failed read is an error with a
    retry, not an empty vault). Filing, uploads and version history stay in the
    Vault, which the header opens. */
-function ProjectEvidence({ pid, name, onNav, onAsk, available, monitoring, onMonitoring }: {
+function ProjectEvidence({ pid, name, onNav, onAsk, available, monitoring, onMonitoring, deviceFiling = false }: {
   pid: string; name: string | null; onNav: (id: string) => void; onAsk: (text: string) => void; available: (id: string) => boolean;
   monitoring: boolean; onMonitoring: () => void;
+  /** A device or diagnostic project files no IND, so its files have no IND document library. */
+  deviceFiling?: boolean;
 }) {
   const [toast, fireToast] = useToast();
   return (
@@ -245,7 +248,7 @@ function ProjectEvidence({ pid, name, onNav, onAsk, available, monitoring, onMon
           </button>
         )}
       </div>
-      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk} onNav={onNav}
+      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk} onNav={onNav} indLibrary={!deviceFiling}
         onOpenDocument={docId => openImportedDocument(docId, pid, onNav)} />
       <C2CToast msg={toast} />
     </section>
@@ -1599,7 +1602,7 @@ function ProjectTags({ tags: t }: { tags: {
 } }) {
   return (
     <div className="pj-tags">
-      {t.clientType && <span className="rd-chip tone-ai">{t.clientType}</span>}
+      {t.clientType && <span className="rd-chip tone-ai">{WS_LABEL[t.clientType] ?? t.clientType}</span>}
       {t.submissionType && <span className="rd-chip tone-idle">{t.submissionType}</span>}
       {t.regionLabel && <span className="rd-chip tone-idle">{t.regionLabel}</span>}
       {t.indication && <span className="rd-chip tone-idle">{t.indication}</span>}
@@ -2037,7 +2040,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
               room sat under Author. */}
           {stage === 'evidence' && pid && (
             <div className="pj-stagebody">
-              <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available}
+              <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available} deviceFiling={deviceFiling}
                 monitoring={prog?.id === pid && prog.riskBasedMonitoring === true && !progState.loading && !progState.error}
                 onMonitoring={() => { const bearer = getAuthToken(); if (bearer && monitoringMounted.current && monitoringCurrent() && projectSession.sameRevision() && authService.captureSessionReadGuard(bearer).current()) onNav('rbm'); }} />
               <DataRoom key={pid} pid={pid} onNav={onNav} onAsk={ask} />
