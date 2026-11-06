@@ -1,0 +1,49 @@
+C2C Codespace setup (Node.js 22, PostgreSQL 16 + pgvector, local database)
+
+> concept2cure-riai@1.0.0 prepare
+> [ -n "$CI" ] || husky || true
+
+
+added 2421 packages, and audited 2422 packages in 57s
+
+361 packages are looking for funding
+  run `npm fund` for details
+
+81 vulnerabilities (9 low, 62 moderate, 9 high, 1 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+> concept2cure-riai@1.0.0 codespaces:doctor:test
+> node --test scripts/ops/codespaces-doctor.test.mjs scripts/ops/codespaces-startup.test.mjs scripts/ops/codespaces-neon-policy.test.mjs
+
+TAP version 13
+1..36
+# tests 36
+# suites 0
+# pass 36
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 110.675921
+[c2c-codespace] PostgreSQL 16 and pgvector already installed.
+[c2c-codespace] Creating PostgreSQL cluster 16/main.
+[c2c-codespace] Provisioning the database (npm run db:provision; first run takes several minutes).
+[c2c-codespace] Database provisioned and verified as the app_service role.
+[c2c-codespace] Sign-in accounts ready: ana.author@concept2cure.pro (author), rhea.reviewer@concept2cure.pro, ava.approver@concept2cure.pro.
+[c2c-codespace] Chromium for the CSR study preparation is already installed.
+[c2c-codespace] Setup complete. post-start starts the app on port 5000.
+
+real	1m21.968s
+user	0m53.243s
+sys	0m37.432s
+exit=0
