@@ -207,6 +207,68 @@ interface TaskBoardItem {
   };
   /** The owning store's own note (a blocker, a module, a catalogue key), when it has one. */
   detail?: string | null;
+  /**
+   * A review-route member's task (`review_route_id` set): where the route is
+   * acted on. The board never moves such a task (the server answers 409,
+   * ROUTE_TASK_OWNED_BY_ROUTE), so without this a reviewer who started from
+   * Tasks had no way to the version (J5 human test, J2's D4, 2026-11-06).
+   * Resolved as a task notice is (notification-record-target.ts,
+   * canonicalDocumentTarget); 'unresolved' when the version could not be read.
+   * The Vault checks access again when the version is opened.
+   */
+  reviewRoute?: ReviewRouteHome;
+}
+
+type ReviewRouteHome =
+  | { kind: 'vault'; documentId: string; programId: string | null }
+  | { kind: 'quality'; qmsDocumentId: string }
+  | { kind: 'unresolved' };
+
+const VAULT_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** One org-scoped read of the Vault versions the board's Vault route tasks are on. */
+async function loadRouteVersions(
+  client: { query: (text: string, values: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
+  organizationId: number,
+  canonicalIds: string[],
+): Promise<Map<string, { documentId: string; programId: string | null }> | null> {
+  if (!canonicalIds.length) return new Map();
+  try {
+    const { rows } = await client.query(
+      `SELECT cd.canonical_id, vd.id::text AS vault_id, vd.program_id::text AS program_id
+         FROM canonical_documents cd
+         JOIN vault.documents vd
+           ON vd.id::text = cd.source_refs->'vault_documents'->>'nativeId'
+          AND vd.organization_id = cd.organization_id AND vd.deleted_at IS NULL
+        WHERE cd.organization_id = $1 AND cd.canonical_id = ANY($2::text[])`,
+      [organizationId, canonicalIds],
+    );
+    const out = new Map<string, { documentId: string; programId: string | null }>();
+    for (const r of rows) {
+      if (typeof r.canonical_id !== 'string' || typeof r.vault_id !== 'string' || !VAULT_UUID.test(r.vault_id)) continue;
+      const programId = typeof r.program_id === 'string' && VAULT_UUID.test(r.program_id) ? r.program_id.toLowerCase() : null;
+      out.set(r.canonical_id, { documentId: r.vault_id.toLowerCase(), programId });
+    }
+    return out;
+  } catch (error) {
+    logger.warn('task board: review-route versions unread', { err: error instanceof Error ? error.message : String(error) });
+    return null;
+  }
+}
+
+function routeHomeOf(
+  row: { reviewRouteId?: string | null; sourceEntityType: string | null; sourceEntityId: string | null },
+  versions: Map<string, { documentId: string; programId: string | null }> | null,
+): ReviewRouteHome | undefined {
+  if (!row.reviewRouteId) return undefined;
+  if (row.sourceEntityType === 'qms_document' && typeof row.sourceEntityId === 'string' && /^[1-9]\d{0,9}$/.test(row.sourceEntityId)) {
+    return { kind: 'quality', qmsDocumentId: row.sourceEntityId };
+  }
+  if (row.sourceEntityType === 'canonical_document' && typeof row.sourceEntityId === 'string') {
+    const version = versions?.get(row.sourceEntityId);
+    if (version) return { kind: 'vault', ...version };
+  }
+  return { kind: 'unresolved' };
 }
 
 /** What the board says about its own read: which stores it could not read. */
@@ -359,6 +421,7 @@ export function otherStoreCards(
 async function readOwnBoard(
   db: RequestDb,
   organizationId: number,
+  client?: Parameters<typeof loadRouteVersions>[0],
 ): Promise<{ tasks: TaskBoardItem[]; mirrored: Set<string> }> {
   const mirrored = new Set<string>();
   // Soft-deleted (archived) rows never reach the board (D24).
@@ -407,6 +470,10 @@ async function readOwnBoard(
     blocksMap.set(dep.predecessorTaskId, blocks);
   }
 
+  const routeCanonicalIds = [...new Set(rows.flatMap(row =>
+    row.reviewRouteId && row.sourceEntityType === 'canonical_document' && typeof row.sourceEntityId === 'string' ? [row.sourceEntityId] : []))];
+  const routeVersions = client ? await loadRouteVersions(client, organizationId, routeCanonicalIds) : null;
+
   const tasks: TaskBoardItem[] = rows.map(row => {
     const status = row.status;
     const blocked =
@@ -443,6 +510,7 @@ async function readOwnBoard(
       phase: row.lifecyclePhase ?? null,
       blocked,
       estimatedHours: row.estimatedHours ?? null,
+      ...(row.reviewRouteId ? { reviewRoute: routeHomeOf(row, routeVersions) } : {}),
     };
   });
 
@@ -503,7 +571,7 @@ export default function createTaskBoardRoutes(): Router {
 
       // The board's own store: its cards keep their move and edit behaviour.
       try {
-        ({ tasks, mirrored: mirroredProjectTaskIds } = await readOwnBoard(db, organizationId));
+        ({ tasks, mirrored: mirroredProjectTaskIds } = await readOwnBoard(db, organizationId, requestPgClient(req)));
       } catch (error) {
         if (!isMissingTable(error)) throw error;
         logger.error('task board: unified_tasks unprovisioned — the board reports it unread', {
