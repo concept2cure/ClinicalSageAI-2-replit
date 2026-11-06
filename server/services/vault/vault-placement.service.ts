@@ -323,10 +323,6 @@ async function writePlacement(
   targetFolder: string | null,
 ): Promise<PlaceVaultDocumentResult> {
     const { programId, documentId, organizationId, userId } = args;
-    const view = folders.view;
-    /* A binder heading names its CTD section ('bn:3.2.S.4' is 3.2.S.4), so a
-       filing there is counted at that heading as the classifier's is. */
-    const headingSection = targetFolder ? folders.ctdSectionOf(targetFolder) : null;
     const byAgent = args.agent != null;
     // An agent's folder is a proposal a person confirms ('suggested', the
     // classifier's state); only a person's call records 'confirmed'.
@@ -358,7 +354,7 @@ async function writePlacement(
         args.evidenceKind ?? null,
         // An explicit move to a non-CTD folder clears a stale CTD section;
         // confirming keeps what the classifier read.
-        args.ctdSection ?? headingSection ?? (args.confirm ? before.ctd_section : null),
+        args.ctdSection ?? (targetFolder ? folders.ctdSectionOf(targetFolder) : null) ?? (args.confirm ? before.ctd_section : null), // a binder heading's own section
         newStatus,
         rationale,
         // placed_by/placed_at record the PERSON who placed it (shared/schema/
@@ -392,7 +388,7 @@ async function writePlacement(
         ...(args.agent ?? {}),
         programId,
         documentTitle: before.document_title,
-        view,
+        view: folders.view,
         // The evidence kind on both ends too (VR-05): a move can change what
         // the document is taken to be, and the row said nothing of it.
         from: {
@@ -413,7 +409,7 @@ async function writePlacement(
 
     return {
       ok: true,
-      view,
+      view: folders.view,
       documentTitle: before.document_title,
       before: {
         folderId: before.folder_id,

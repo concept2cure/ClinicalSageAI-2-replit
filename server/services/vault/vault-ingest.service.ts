@@ -73,8 +73,6 @@ import {
   classifyForFiling,
   filingVocabularyRefusal,
   resolveVaultFilingContext,
-  isFolderInView,
-  folderLabel,
 } from './vault-filing.service.js';
 
 import type { VaultIngestArgs, VaultIngestResult } from './vault-ingest-types.js';
@@ -414,7 +412,7 @@ async function admitVaultDocument(
   if (checkIn) {
     placement = inheritedPlacement(checkIn.head);
   } else if (args.folderId) {
-    /* Any folder of this project: its presets, its binder, the folders people made (vault-folders.ts). */
+    // Any folder of the project: presets, binder, people's folders (vault-folders.ts).
     const folders = await readProgramFolderIndex(pool, args.programId, orgId, vaultView);
     if (!folders.has(args.folderId)) {
       return { ok: false, status: 400, code: 'INVALID_FOLDER',
@@ -766,8 +764,7 @@ async function admitVaultDocument(
          not just that bytes arrived. */
       filing: {
         ...filed,
-        folderLabel: folderLabel(vaultView, doc.folder_id ?? null)
-          || (doc.folder_id ? (await readProgramFolderIndex(pool, args.programId, orgId, vaultView)).label(doc.folder_id) : ''),
+        folderLabel: (await readProgramFolderIndex(pool, args.programId, orgId, vaultView)).label(doc.folder_id ?? null),
         needsReview: doc.placement_status === 'unfiled',
       },
       ...(recorded ? { reupload: { unchanged: changes.length === 0, changes, differs } } : {}),
