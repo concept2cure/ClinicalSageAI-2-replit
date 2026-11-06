@@ -4,7 +4,7 @@ const path = require('path');
 const OUT = process.argv[2];
 const BASE = 'http://127.0.0.1:5000';
 const log = [];
-const note = (s) => { log.push(s); console.log(s); };
+const note = (s) => { log.push(s); console.info(s); };
 (async () => {
   const browser = await chromium.launch();
   const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })).newPage();
