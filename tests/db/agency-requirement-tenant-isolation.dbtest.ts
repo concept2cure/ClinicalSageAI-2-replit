@@ -86,16 +86,16 @@ describe('agency requirements under the real runtime role', () => {
     expect(policies).toEqual([{ cmd: 'INSERT' }, { cmd: 'SELECT' }]);
   });
 
-  it('organization A reads its suggestion and validated global rules only', async () => {
-    expect(await visible(organizations[0])).toEqual([ids[0], ids[2]].sort());
+  it('organization A cannot read a validated requirement owned by organization B', async () => {
+    expect(await visible(organizations[0])).toEqual([ids[0]]);
   });
 
   it('organization B cannot read organization A, unknown-writer, or rejected suggestions', async () => {
     expect(await visible(organizations[1])).toEqual([ids[1], ids[2]].sort());
   });
 
-  it('missing tenant settings expose validated canonical rules only', async () => {
-    expect(await visible(null)).toEqual([ids[2]]);
+  it('missing tenant settings expose no client-derived requirements', async () => {
+    expect(await visible(null)).toEqual([]);
   });
 
   it('admits an insert bearing the current organization', async () => {
@@ -118,19 +118,28 @@ describe('agency requirements under the real runtime role', () => {
     expect((await owner.query('SELECT id FROM intelligence.agency_requirements WHERE id=ANY($1::uuid[])', [ids])).rows).toHaveLength(5);
   });
 
-  it('keeps the real instrumented service readable and writable in verified tenant scope', async () => {
+  it('quarantines ownerless pattern content from the runtime role', async () => {
+    const flags = (await owner.query(`SELECT relrowsecurity,relforcerowsecurity FROM pg_class
+      WHERE oid='intelligence.failure_patterns'::regclass`)).rows[0];
+    expect(flags).toEqual({ relrowsecurity: true, relforcerowsecurity: true });
+    for (const organization of [organizations[0], organizations[1], null]) {
+      await scoped(organization, async client => {
+        expect((await client.query('SELECT suggested_correction FROM intelligence.failure_patterns WHERE id=$1', [patternId])).rows).toEqual([]);
+      });
+    }
+  });
+
+  it('keeps tenant requirements readable but refuses promotion from quarantined legacy patterns', async () => {
     const within = <T>(organization: number, fn: () => Promise<T>) => runWithTenantScope(
       { tenantId: String(organization), role: 'member', source: 'test', caller: tag }, fn,
     );
-    const added = await within(organizations[0], () => promotePatternToRequirement({
+    await expect(within(organizations[0], () => promotePatternToRequirement({
       organizationId: organizations[0], patternId, requirementSummary: `${tag}-service`,
-    }));
-    expect(added.validationStatus).toBe('unvalidated');
+    }))).rejects.toThrow('not found or not active');
     const a = await within(organizations[0], () => getAgencyRequirements({ organizationId: organizations[0], agency: 'ema' }));
     const b = await within(organizations[1], () => getAgencyRequirements({ organizationId: organizations[1], agency: 'ema' }));
-    expect(a.some(row => row.id === added.requirementId)).toBe(true);
-    expect(b.some(row => row.id === added.requirementId)).toBe(false);
-    expect(a.some(row => row.id === ids[2])).toBe(true);
+    expect(a.some(row => row.id === ids[0])).toBe(true);
+    expect(a.some(row => row.id === ids[2])).toBe(false);
     expect(b.some(row => row.id === ids[2])).toBe(true);
   });
 });

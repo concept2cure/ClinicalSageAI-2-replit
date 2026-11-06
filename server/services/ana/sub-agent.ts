@@ -32,7 +32,7 @@
  * @module server/services/ana/sub-agent
  */
 
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import {
   CHILD_ACTIVE_MS,
@@ -66,6 +66,7 @@ import {
   parseAgentBrief,
   subAgentsEnabled,
   type AgentBrief,
+  type AgentSourceSpan,
   type AgentRefusal,
   type AgentTurnCounters,
 } from './sub-agent-limits.js';
@@ -218,10 +219,11 @@ async function runHarnessChecks(
   childCtx: ToolContext,
   offered: ReadonlySet<string>,
   ids: { runId: string; parentRunId: string },
-): Promise<{ readings: CheckReading[]; outputs: Array<{ check: HarnessCheck; output: string }> }> {
+  evidence?: { sourceSpans?: readonly AgentSourceSpan[]; steps: AgentStep[] },
+): Promise<{ readings: CheckReading[]; outputs: Array<{ check: CheckReading['check']; output: string }> }> {
   const { getToolHandler } = await import('./AnaToolExecutor.js');
   const readings: CheckReading[] = [];
-  const outputs: Array<{ check: HarnessCheck; output: string }> = [];
+  const outputs: Array<{ check: CheckReading['check']; output: string }> = [];
   for (const check of HARNESS_CHECKS) {
     if (!offered.has(check)) {
       readings.push({ check, outcome: 'not_assessed', statement: `${CHECK_SUBJECT[check]}: not checked; the check is not available in this conversation.` });
@@ -245,7 +247,64 @@ async function runHarnessChecks(
     outputs.push({ check, output });
     readings.push(CHECK_READER[check](output));
   }
+  if (evidence?.sourceSpans?.length) {
+    const result = await runSourceSpanChecks(text, evidence.sourceSpans, childCtx, { offered, ids, steps: evidence.steps });
+    readings.push(result.reading);
+    outputs.push(result.output);
+  }
   return { readings, outputs };
+}
+
+/** Read each referenced source through the same scoped, read-only tool boundary as the child. */
+async function runSourceSpanChecks(
+  text: string,
+  sourceSpans: readonly AgentSourceSpan[],
+  childCtx: ToolContext,
+  scope: { offered: ReadonlySet<string>; ids: { runId: string; parentRunId: string }; steps: AgentStep[] },
+) {
+  const { getToolHandler } = await import('./AnaToolExecutor.js');
+  const { offered, ids, steps } = scope;
+  const sources = new Map<string, Record<string, unknown> | null>();
+  const handler = offered.has('read_vault_document') ? getToolHandler('read_vault_document') : undefined;
+  for (const span of sourceSpans) {
+    if (sources.has(span.artifact_id)) continue;
+    const input = { artifact_id: span.artifact_id, max_chars: Math.max(...sourceSpans.filter(s => s.artifact_id === span.artifact_id).map(s => s.source_end)) };
+    let output = JSON.stringify({ error: 'The source read is not available in this conversation.' });
+    if (handler) {
+      try {
+        output = await runRefusingModelCalls({ ...ids, tool: 'read_vault_document' }, () => handler(input, childCtx));
+      } catch {
+        output = JSON.stringify({ error: 'The source could not be read.' });
+      }
+    }
+    // This is a server-run read, kept in the same recorded run trace as child reads.
+    steps.push({ round: 0, tool: 'read_vault_document', input, result: output, ok: refusalOf(output) === null });
+    try {
+      const result: unknown = JSON.parse(output);
+      sources.set(span.artifact_id, refusalOf(output) === null && result && typeof result === 'object' && !Array.isArray(result) ? result as Record<string, unknown> : null);
+    } catch { sources.set(span.artifact_id, null); }
+  }
+  const evidence = sourceSpans.map(span => {
+    const source = sources.get(span.artifact_id);
+    const content = source?.ok === true && typeof source.content === 'string' ? source.content : null;
+    const available = content !== null && span.source_end <= content.length;
+    const match = available && content.slice(span.source_start, span.source_end) === text.slice(span.draft_start, span.draft_end);
+    return {
+      ...span,
+      outcome: !available ? 'not_assessed' as const : match ? 'pass' as const : 'fail' as const,
+      sourceReadHash: content === null ? null : createHash('sha256').update(content).digest('hex'),
+      quoteHash: createHash('sha256').update(text.slice(span.draft_start, span.draft_end)).digest('hex'),
+    };
+  });
+  const failed = evidence.filter(e => e.outcome === 'fail').length;
+  const unavailable = evidence.filter(e => e.outcome === 'not_assessed').length;
+  const matched = evidence.length - failed - unavailable;
+  const reading: CheckReading = {
+    check: 'source_spans',
+    outcome: failed ? 'fail' : unavailable ? 'error' : 'pass',
+    statement: `Stored source spans: ${matched} exact matches, ${failed} mismatches, ${unavailable} unreadable or out-of-range references. This checks only the specified quotations, not semantic support.`,
+  };
+  return { reading, output: { check: 'source_spans' as const, output: JSON.stringify({ evidence }) } };
 }
 
 /** The child's standing instructions. */
@@ -460,7 +519,7 @@ async function driveAgent(run: AgentRun): Promise<string> {
   const offered = new Set(run.host.governedTools.map(t => t.name));
   const checks =
     run.brief.textToCheck !== undefined
-      ? await runHarnessChecks(run.brief.textToCheck, childCtx, offered, { runId: run.runId, parentRunId: run.host.parentRunId })
+      ? await runHarnessChecks(run.brief.textToCheck, childCtx, offered, { runId: run.runId, parentRunId: run.host.parentRunId }, { sourceSpans: run.brief.sourceSpans, steps: run.steps })
       : null;
   const verdict = checks ? aggregateVerdict(checks.readings) : null;
   const response = await runChildLoop(run, childCtx, checks?.readings ?? []);

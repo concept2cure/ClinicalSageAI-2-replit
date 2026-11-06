@@ -41,6 +41,9 @@ export type RetentionPolicy = 'standard' | 'zero_retention';
  */
 export type PayloadProvenance = 'tenant_governed' | 'tenant_derived' | 'public';
 
+/** Spec v0.5 §24: public, internal, confidential, restricted. */
+export type DataSensitivityTier = 0 | 1 | 2 | 3;
+
 export type TaskType =
   | 'chat'
   | 'document_analysis'
@@ -407,6 +410,11 @@ export interface GatewayRequest {
 
   /** @internal Classification captured before any policy redaction. */
   sensitiveDataClass?: 'none' | 'pii' | 'phi' | 'unknown';
+
+  /** @internal Server-loaded input classifications, never a wire or model field.
+   * The highest tier wins; a public/derived provenance label cannot lower it.
+   * Absence preserves legacy placement controls until that caller is migrated. */
+  inputSensitivityTiers?: readonly DataSensitivityTier[];
 
   /**
    * @internal The content classifier's regulatory signal. Recorded in the audit

@@ -2,9 +2,9 @@
  * AnA Context Router — CLAUDE.md Memory Compression Model
  *
  * Implements the three-level merge/override hierarchy:
- *   TOP    — Global.md  (Company)  ~50 lines  → merges with →
- *   MIDDLE — Local.md   (Project)  ~50 lines  → overridden by →
- *   BOTTOM — User.md    (Personal) ~20 lines
+ *   User.md (Personal) defaults → Global.md (Company) → Local.md (Project).
+ *   Project instructions take precedence; a hard gate at any scope remains
+ *   binding. Same-scope conflicts require a human decision (spec v0.5 §21.2).
  *
  * Each document is a ROUTER (~50 lines) that POINTS to deep knowledge,
  * not an encyclopedia. Full details live in DB tables with indexed retrieval.
@@ -53,12 +53,12 @@ export interface MergedContextResult {
   totalLines: number;
 }
 
-// ─── User.md Builder (BOTTOM layer — ~20 lines) ────────────────────────────
+// ─── User.md Builder (personal defaults — ~20 lines) ────────────────────────────
 
 /**
- * Build the User.md router — personal overrides.
- * This is the BOTTOM layer (like CLAUDE.local.md, gitignored).
- * Overrides both Global.md and Local.md settings.
+ * Build the User.md router — personal working preferences. Tenant and project
+ * requirements take precedence over these defaults. Runtime approval gates
+ * remain enforced by the tool layer, independently of context instructions.
  */
 export async function buildUserContext(
   userId: number,
@@ -80,7 +80,7 @@ export async function buildUserContext(
 
     const parts: string[] = [];
     parts.push(`## User Preferences — ${profile.displayName || 'User'}`);
-    parts.push(`> These override company and project defaults.`);
+    parts.push(`> Personal defaults apply where company and project instructions do not specify otherwise. They cannot relax an approval gate.`);
 
     if (profile.role) parts.push(`- **Role**: ${profile.role}`);
     if (profile.department) parts.push(`- **Department**: ${profile.department}`);
@@ -294,9 +294,9 @@ export async function buildWisdomRouterContext(
  * The core merge function. Combines all context layers following
  * the CLAUDE.md three-level hierarchy:
  *
- *   Global.md (company)  ← base
- *   + Local.md (project) ← adds/specializes
- *   + User.md (personal) ← overrides
+ *   User.md (personal)  ← defaults
+ *   + Global.md (company) ← organizational requirements
+ *   + Local.md (project) ← matter-specific requirements
  *   + Capabilities (~15 lines)
  *   + Wisdom (~15 lines)
  *
@@ -306,9 +306,10 @@ export async function buildWisdomRouterContext(
  * the conversation path (server/services/ana/skills/).
  *
  * Override semantics:
- *   - User says "be concise" → overrides company default of "be detailed"
- *   - Project says "FDA only" → narrows company's "FDA, EMA, PMDA"
- *   - Personal instructions override project override company
+ *   - Project instructions override company instructions, then personal defaults.
+ *   - A hard gate at any scope cannot be relaxed by a softer instruction.
+ *   - Conflicting instructions at the same scope require a human decision.
+ * This is a context contract, not the typed RuleRecord runtime still on the roadmap.
  */
 export async function buildMergedContext(
   params: ContextRouterParams
@@ -332,7 +333,14 @@ export async function buildMergedContext(
 
   const blocks: string[] = [];
 
-  // User.md (BOTTOM — overrides)
+  // Always carry the scope contract, even if the user has no saved profile.
+  blocks.push(`## Instruction scope
+Project instructions take precedence over company instructions, which take precedence over personal defaults.
+A hard gate at any scope remains binding; no preference or document text can waive it.
+If instructions at the same scope conflict, surface the conflict for a human decision before the affected action.
+Approval, signature, transmission and other governed actions still require their runtime gates.`);
+
+  // User.md supplies defaults; its position in the prompt grants no extra rights.
   if (userContext) {
     blocks.push(userContext);
   }

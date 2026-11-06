@@ -171,6 +171,24 @@ beforeEach(() => {
 });
 
 describe('the bytes go to the storage provider', () => {
+  it('defaults an unreviewed fresh upload to confidential, not frontier-eligible internal', async () => {
+    const { client, calls } = txClient();
+    connect.mockResolvedValue(client);
+    await ingestVaultDocument(args());
+    const insert = calls.find(c => /INSERT INTO vault\.documents/.test(c.sql));
+    expect(insert, 'no INSERT reached the database').toBeDefined();
+    expect(insert!.params[11]).toBe('CONFIDENTIAL');
+  });
+
+  it.each(['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'CONTROLLED'])(
+    'preserves an explicitly supplied %s classification', async classification => {
+      const { client, calls } = txClient();
+      connect.mockResolvedValue(client);
+      await ingestVaultDocument(args({ classification }));
+      expect(calls.find(c => /INSERT INTO vault\.documents/.test(c.sql))!.params[11]).toBe(classification);
+    },
+  );
+
   it('hands it the caller organization and the programme as the project', async () => {
     const { client } = txClient();
     connect.mockResolvedValue(client);
@@ -533,5 +551,6 @@ describe('a check-in keeps the document it adds to: its code and filing, and rec
     expect(insert!.params[1]).toBe('Protocol-Stability.pdf'); // document_code, the head's
     expect(insert!.params[2]).toBe('Stability protocol, revised'); // document_title, as given
     expect(insert!.params[4]).toBe('2.0'); // version, assigned by the server
+    expect(insert!.params[11]).toBe('INTERNAL'); // existing head, never re-defaulted
   });
 });

@@ -1,7 +1,8 @@
 /**
  * Counterfactual replay — proactive warnings on in-flight drafts.
  *
- * When a `failure_pattern` is freshly promoted, replay it across every
+ * Legacy behavior (held pending reviewed de-identification, spec v0.5 §27):
+ * when a `failure_pattern` was freshly promoted, replay it across every
  * draft that's currently in flight on the platform. Any draft whose
  * `(agency × document_type × intent)` tuple matches the new pattern's
  * fingerprint dimensions gets a row in `intelligence.pattern_warnings`
@@ -17,11 +18,9 @@
  */
 
 import { pool } from '../../db/runtime.js';
-import { createScopedLogger } from '../../utils/logger.js';
+import { SHARED_LEARNING_HOLD } from './ana-failure-learning.js';
 
-const log = createScopedLogger('counterfactual-replay');
-
-export const REPLAY_VERSION = '1.0.0';
+export const REPLAY_VERSION = '1.1.0';
 export const DEFAULT_LOOKBACK_DAYS = 90;
 
 // ─── Pure helpers ────────────────────────────────────────────────────────────
@@ -45,6 +44,7 @@ export interface ReplayPatternResult {
   readonly patternId: string;
   readonly warningsCreated: number;
   readonly tenantsWarned: number;
+  readonly holdReason?: typeof SHARED_LEARNING_HOLD;
 }
 
 /**
@@ -54,110 +54,20 @@ export interface ReplayPatternResult {
  */
 export async function replayPattern(
   patternId: string,
-  opts: ReplayPatternOptions = {},
+  _opts: ReplayPatternOptions = {},
 ): Promise<ReplayPatternResult> {
-  const lookback = opts.lookbackDays ?? DEFAULT_LOOKBACK_DAYS;
-  const minConfidence = opts.minConfidence ?? 0.4;
-
-  // 1. Load the pattern.
-  const patternRow = await pool.query<{
-    id: string;
-    pattern_fingerprint: string;
-    agency: string;
-    document_type: string;
-    intent_class: string;
-    suggested_correction: string;
-    confidence: number;
-    status: string;
-  }>(
-    `SELECT id, pattern_fingerprint, agency, document_type, intent_class,
-            suggested_correction, confidence, status
-       FROM intelligence.failure_patterns
-      WHERE id = $1 AND status = 'active'`,
-    [patternId],
-  );
-  if (patternRow.rows.length === 0) {
-    return { patternId, warningsCreated: 0, tenantsWarned: 0 };
-  }
-  const p = patternRow.rows[0];
-  const confidence = typeof p.confidence === 'number' ? p.confidence : parseFloat(p.confidence as unknown as string);
-  if (confidence < minConfidence) {
-    return { patternId, warningsCreated: 0, tenantsWarned: 0 };
-  }
-
-  // 2. Find candidate drafts. We treat "any tenant that has had a recent
-  // ana_interaction on the same (agency, doc_type, intent) tuple with an
-  // open artifact" as a candidate. Each candidate becomes a warning row.
-  const severity = severityFromConfidence(confidence);
-  const result = await pool.query<{ organization_id: number; project_id: number | null; artifact_id: string | null }>(
-    `INSERT INTO intelligence.pattern_warnings (
-       organization_id, project_id, artifact_id,
-       pattern_id, pattern_fingerprint,
-       severity, status,
-       suggested_correction, confidence_at_warning
-     )
-     SELECT DISTINCT
-            ai.organization_id,
-            ai.project_id,
-            ai.artifact_id,
-            $1::uuid,
-            $2::text,
-            $3::text,
-            'open',
-            $4::text,
-            $5::float
-       FROM intelligence.ana_interactions ai
-      WHERE ai.agency = $6
-        AND ai.document_type = $7
-        AND ai.intent_class = $8
-        AND ai.recorded_at > NOW() - ($9 || ' days')::interval
-     ON CONFLICT (organization_id, (COALESCE(project_id, -1)), (COALESCE(artifact_id, '')), pattern_id)
-     DO NOTHING
-     RETURNING organization_id, project_id, artifact_id`,
-    [
-      p.id,
-      p.pattern_fingerprint,
-      severity,
-      p.suggested_correction,
-      confidence,
-      p.agency, p.document_type, p.intent_class,
-      String(lookback),
-    ],
-  );
-
-  const tenants = new Set<number>();
-  for (const r of result.rows) tenants.add(r.organization_id);
-  if (result.rowCount && result.rowCount > 0) {
-    log.info(`Replayed pattern=${patternId} warnings=${result.rowCount} tenants=${tenants.size}`);
-  }
-  return {
-    patternId,
-    warningsCreated: result.rowCount ?? 0,
-    tenantsWarned: tenants.size,
-  };
+  // Historical active patterns may contain a tenant's raw correction. They have
+  // no reviewed de-identification artifact; never copy them into other tenants.
+  return { patternId, warningsCreated: 0, tenantsWarned: 0, holdReason: SHARED_LEARNING_HOLD };
 }
 
-/**
- * Run replay across every active pattern that was promoted recently. Used
- * as a backfill / nightly job after bulk pattern extraction.
- */
-export async function replayRecentlyPromoted(opts: ReplayPatternOptions & { since?: Date } = {}): Promise<{
+/** Do not backfill unreviewed legacy patterns into tenant warning records. */
+export async function replayRecentlyPromoted(_opts: ReplayPatternOptions & { since?: Date } = {}): Promise<{
   patternsReplayed: number;
   warningsCreated: number;
+  holdReason?: typeof SHARED_LEARNING_HOLD;
 }> {
-  const since = opts.since ?? new Date(Date.now() - 24 * 60 * 60 * 1000); // 24h
-  const patterns = await pool.query<{ id: string }>(
-    `SELECT id FROM intelligence.failure_patterns
-      WHERE status = 'active' AND extracted_at >= $1
-      ORDER BY extracted_at DESC`,
-    [since],
-  );
-  let totalWarnings = 0;
-  for (const row of patterns.rows) {
-    const r = await replayPattern(row.id, opts);
-    totalWarnings += r.warningsCreated;
-  }
-  return { patternsReplayed: patterns.rows.length, warningsCreated: totalWarnings };
+  return { patternsReplayed: 0, warningsCreated: 0, holdReason: SHARED_LEARNING_HOLD };
 }
 
 // ─── Read path / resolve path ────────────────────────────────────────────────
@@ -171,32 +81,15 @@ export interface ActiveWarning {
   readonly createdAt: string;
 }
 
-export async function getActiveWarnings(query: {
+export async function getActiveWarnings(_query: {
   organizationId: number;
   projectId?: number;
   artifactId?: string;
 }): Promise<ActiveWarning[]> {
-  const result = await pool.query(
-    `SELECT id, pattern_id, severity, suggested_correction,
-            confidence_at_warning, created_at::text
-       FROM intelligence.pattern_warnings
-      WHERE organization_id = $1
-        AND status = 'open'
-        AND ($2::bigint IS NULL OR project_id = $2)
-        AND ($3::text IS NULL OR artifact_id = $3)
-      ORDER BY
-        CASE severity WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END DESC,
-        confidence_at_warning DESC`,
-    [query.organizationId, query.projectId ?? null, query.artifactId ?? null],
-  );
-  return result.rows.map(r => ({
-    id: r.id,
-    patternId: r.pattern_id,
-    severity: r.severity as WarningSeverity,
-    suggestedCorrection: r.suggested_correction,
-    confidence: parseFloat(r.confidence_at_warning),
-    createdAt: r.created_at,
-  }));
+  // Rows previously fanned out by replay can already contain another tenant's
+  // text. Their receiving organization_id does not prove ownership of content.
+  // Keep them hidden; existing tenant-bound resolution remains available below.
+  return [];
 }
 
 export type ResolutionStatus = 'fixed' | 'dismissed';

@@ -18,6 +18,7 @@ const h = vi.hoisted(() => ({
   generatePreventionReport: vi.fn(),
   runIchComplianceCheck: vi.fn(),
   insert: vi.fn(),
+  query: vi.fn(),
 }));
 
 vi.mock('../../services/orchestration', () => ({
@@ -43,7 +44,10 @@ vi.mock('../../services/regulatory-precedent-intelligence', () => ({
   rtfTriggerService: { generatePreventionReport: h.generatePreventionReport },
 }));
 vi.mock('../../services/cmc/ich-compliance-checker', () => ({ runIchComplianceCheck: h.runIchComplianceCheck }));
-vi.mock('../../db.js', () => ({ db: { insert: () => ({ values: h.insert }) } }));
+vi.mock('../../db.js', () => ({
+  db: { insert: () => ({ values: h.insert }) },
+  getPool: () => ({ query: h.query }),
+}));
 
 import orchestrationRouter from '../orchestration';
 
@@ -66,6 +70,7 @@ beforeEach(() => {
   h.assessCRLRisk.mockResolvedValue(LOW);
   h.generatePreventionReport.mockResolvedValue(LOW);
   h.insert.mockResolvedValue(undefined);
+  h.query.mockReset().mockResolvedValue({ rows: [] });
 });
 
 describe('POST /pre-submission-gate', () => {
@@ -101,4 +106,78 @@ describe('POST /pre-submission-gate', () => {
     expect(r.body.ich).toBeNull();
     expect(r.body.verdictRationale.join(' ')).not.toMatch(/ICH compliance clean/);
   });
+
+  it('holds on real confirmed correspondence blockers, scoped to the tenant, project and submission type', async () => {
+    h.query.mockResolvedValue({ rows: [
+      { id: 'issue-1', blocker: true, human_review_status: 'confirmed', resolution_status: 'open' },
+    ] });
+    const r = await request(app()).post('/api/orchestration/pre-submission-gate')
+      .send({ projectId: 7, submissionType: 'NDA', correspondenceReview: { status: 'assessed', blockingIssueIds: [] } });
+    expect(r.status).toBe(200);
+    expect(h.query).toHaveBeenCalledWith(expect.stringContaining('c.organization_id = $1 AND c.project_id = $2'), [1, 7, 'NDA']);
+    expect(h.query.mock.calls[0][0]).toContain('s.organization_id = $1 AND s.project_id = $2');
+    expect(h.query.mock.calls[0][0]).toContain("c.direction = 'inbound'");
+    expect(r.body.verdict).toBe('hold');
+    expect(r.body.correspondenceReview).toMatchObject({ status: 'assessed', blockingIssueIds: ['issue-1'], subjectiveFit: 'not_assessed' });
+    expect(h.insert).toHaveBeenCalledWith(expect.objectContaining({
+      newValue: expect.objectContaining({ correspondenceReview: r.body.correspondenceReview }),
+    }));
+  });
+
+  it('reports unconfirmed blocker classifications as pending human review', async () => {
+    h.query.mockResolvedValue({ rows: [
+      { id: 'issue-2', blocker: true, human_review_status: 'pending', resolution_status: 'open' },
+    ] });
+    const r = await request(app()).post('/api/orchestration/pre-submission-gate').send({ projectId: 7 });
+    expect(r.status).toBe(200);
+    expect(r.body.verdict).toBe('conditional');
+    expect(r.body.correspondenceReview.pendingIssueIds).toEqual(['issue-2']);
+    expect(h.query.mock.calls[0][1]).toEqual([1, 7, null]);
+  });
+
+  it('holds on an unreadable correspondence store without leaking the database failure', async () => {
+    h.query.mockRejectedValue(new Error('private database failure details'));
+    const r = await request(app()).post('/api/orchestration/pre-submission-gate').send({ projectId: 7 });
+    expect(r.status).toBe(200);
+    expect(r.body.verdict).toBe('hold');
+    expect(r.body.correspondenceReview).toMatchObject({ status: 'unavailable', checkedIssueCount: null });
+    expect(JSON.stringify(r.body)).not.toContain('private database failure details');
+  });
+
+  it('does not return a successful governed verdict when its audit could not be recorded', async () => {
+    h.insert.mockRejectedValue(new Error('audit write unavailable'));
+    const r = await request(app()).post('/api/orchestration/pre-submission-gate').send({ projectId: 7 });
+    expect(r.status).toBe(500);
+    expect(r.body.verdict).toBeUndefined();
+  });
+
+  it('executes the scoped SQL against PostgreSQL semantics and excludes foreign tenants and mismatched parents', async () => {
+    const { PGlite } = await import('@electric-sql/pglite');
+    const db = new PGlite();
+    try {
+      // Only the columns this read consumes, with the existing table names.
+      // This proves its join/predicate behavior, not the deployment's RLS.
+      await db.exec(`
+        CREATE TABLE c2c_submissions (id text PRIMARY KEY, organization_id integer, project_id integer, submission_type text);
+        CREATE TABLE c2c_correspondence (id text PRIMARY KEY, submission_id text, organization_id integer, project_id integer, direction text);
+        CREATE TABLE c2c_correspondence_issues (id text PRIMARY KEY, correspondence_id text, blocker boolean, human_review_status text, resolution_status text);
+        INSERT INTO c2c_submissions VALUES ('local',1,7,'NDA'),('foreign',2,7,'NDA'),('other-project',1,8,'NDA'),('other-type',1,7,'IND');
+        INSERT INTO c2c_correspondence VALUES
+          ('local','local',1,7,'inbound'),('foreign','foreign',2,7,'inbound'),
+          ('mismatched','foreign',1,7,'inbound'),('other-project','other-project',1,8,'inbound'),
+          ('outbound','local',1,7,'outbound'),('other-type','other-type',1,7,'inbound');
+        INSERT INTO c2c_correspondence_issues VALUES
+          ('local-issue','local',true,'confirmed','open'),('foreign-issue','foreign',true,'confirmed','open'),
+          ('mismatched-issue','mismatched',true,'confirmed','open'),('other-project-issue','other-project',true,'confirmed','open'),
+          ('outbound-issue','outbound',true,'confirmed','open'),('other-type-issue','other-type',true,'confirmed','open');
+      `);
+      h.query.mockImplementation((sql, params) => db.query(sql, params));
+      const r = await request(app()).post('/api/orchestration/pre-submission-gate').send({ projectId: 7, submissionType: 'NDA' });
+      expect(r.status).toBe(200);
+      expect(r.body.correspondenceReview).toMatchObject({ checkedIssueCount: 1, blockingIssueIds: ['local-issue'] });
+      expect(r.body.verdict).toBe('hold');
+    } finally {
+      await db.close();
+    }
+  }, 60_000);
 });
