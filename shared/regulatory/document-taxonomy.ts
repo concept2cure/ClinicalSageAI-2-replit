@@ -224,6 +224,8 @@ export interface SectionDefinition {
   required: boolean;
   contentType: 'narrative' | 'table' | 'form' | 'data' | 'list' | 'mixed';
   guidance?: string;
+  /** Selects existing therapeutic advisory arrays; never evidence or an applicability verdict. */
+  therapeuticContext?: 'protocol' | 'protocol-synopsis';
   templateId?: string;
   /**
    * The titles this row carried before a correction renamed it, so a document

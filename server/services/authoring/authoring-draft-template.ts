@@ -9,6 +9,7 @@ import { savedTemplateReview, type SavedTemplateReview } from '../ana/saved-temp
 import { e3ReferenceDraftingMode } from '../ind/ctd/csr-e3-guidance';
 import { writingAgencyOf } from '../../../shared/authoring/writing-regions';
 import { isCsrTemplateId } from '../../../shared/authoring/csr-scientific-review';
+import { draftProductDocumentContext } from '../ana/draft-product-advisory';
 
 export const MAX_DRAFT_TEMPLATE_REFERENCE_BYTES = 16 * 1024;
 
@@ -106,7 +107,8 @@ function renderDraftReference(review: SavedTemplateReview, scope: DraftTemplateS
   // no registryId, so it drafted as a generic CTD document (2026-11-05).
   const csr = filing?.registryId === 'ICH_CSR' || isCsrTemplateId(review.template.id);
   const documentKind = csr ? 'csr' : filing?.registryId === 'ICH_PROTOCOL' ? 'protocol' : 'ctd';
-  return { region, recordedRegion, documentKind: documentKind as 'csr' | 'protocol' | 'ctd', referenceBlock: renderSavedSectionTemplateReference(reference) };
+  return { region, recordedRegion, documentKind: draftProductDocumentContext(documentKind, filing?.registryId, scope.code),
+    referenceBlock: renderSavedSectionTemplateReference(reference) };
 }
 
 /** Caller admits this exact section's current edit/project access before reference reads. */

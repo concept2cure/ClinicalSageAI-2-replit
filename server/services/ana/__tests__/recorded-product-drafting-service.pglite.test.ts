@@ -239,3 +239,33 @@ describe('recorded UK CTA uses shared drafting with explicit IRAS boundaries', (
     expect(prompt()).toContain('hra.nhs.uk/');
   });
 });
+
+describe('regional protocol preparation reuses clinical therapeutic guidance', () => {
+  it.each([
+    ['UK_CTA', 'uk_cta_protocol'],
+    ['EU_CTA', 'PART_I.PROTOCOL'],
+    ['EU_CTA', 'PART_I.SYNOPSIS'],
+    ['CA_CTA', '1.7.1'],
+    ['CA_CTA', '1.4.1'],
+    ['CA_CTA_A', '1.7.1'],
+  ])('reaches the recorded product guidance at %s / %s', async (submissionType, sectionType) => {
+    await service.draftDocument(request({ submissionType, sectionType }));
+    expect(captured().metadata?.requirementsSource).toBe(`blueprint:regional:${submissionType}:${sectionType}`);
+    expect(prompt()).toContain('### Endpoint Considerations');
+    expect(prompt()).toContain('### Statistical Considerations');
+    expect(prompt()).toContain('Therapeutic Area Context — Oncology');
+    expect(prompt()).toContain('not scientific evidence');
+    expect(captured().metadata?.productContextSource).toBe('recorded-unqualified');
+  });
+
+  it.each([
+    ['UK_CTA', 'uk_cta_quality'], ['UK_CTA', 'uk_cta_nonclinical'],
+    ['UK_CTA', 'uk_cta_application_form'], ['EU_CTA', 'PART_I.IMPD_Q'],
+    ['EU_CTA', 'FORM.COVER'], ['EU_CTA', 'PART_II.CONSENT'],
+    ['CA_CTA', '2.3'], ['CA_CTA', '1.2.1'], ['CA_CTA_A', '1.4.1'],
+  ])('keeps clinical arrays out of %s / %s', async (submissionType, sectionType) => {
+    await service.draftDocument(request({ submissionType, sectionType }));
+    expect(prompt()).not.toContain('### Endpoint Considerations');
+    expect(prompt()).not.toContain('### Statistical Considerations');
+  });
+});
