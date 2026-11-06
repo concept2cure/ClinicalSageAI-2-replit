@@ -158,12 +158,17 @@ describe('SOP register — governed actions reach their routes', () => {
     expect(asked).toEqual([]);
   });
 
-  it('a library card opens the same create form with its template chosen', async () => {
+  // D7-B (2026-11-06, RULE 4): the library's cards became the template field of the one
+  // "New controlled document"; choosing a type there sets the same template and type the card did.
+  it('the template field of New controlled document sets the type, as the library card did', async () => {
     renderRegister();
-    fireEvent.click(screen.getByRole('button', { name: /Change-request form/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'New controlled document' }));
     const d = drawer(/New controlled document/);
-    expect(within(d).getByText('Template: Change-request form')).toBeTruthy();
+    const field = within(d).getByLabelText('Template') as HTMLSelectElement;
+    const option = [...field.options].find((o) => /^Change-request form/.test(o.textContent ?? ''))!;
+    fireEvent.change(field, { target: { value: option.value } });
     expect((within(d).getByLabelText(/Document type/) as HTMLSelectElement).value).toBe('form');
+    expect((within(d).getByLabelText('Title') as HTMLInputElement).value).toBe('Change-request form');
     expect(asked).toEqual([]);
   });
 
@@ -196,10 +201,11 @@ describe('SOP register — governed actions reach their routes', () => {
     expect(asked).toEqual([]);
   });
 
-  it('the pre-inspection check says it is a request to AnA', () => {
+  // D7-B (2026-11-06): the pre-inspection check is a starter in the work area's
+  // "Ask AnA" row (App.tsx), pinned by QualityWorkArea.test.tsx; the register has no second door to it.
+  it('the register carries no AnA request of its own above its rows', () => {
     renderRegister();
-    fireEvent.click(screen.getByRole('button', { name: /Ask AnA.*pre-inspection check/i }));
-    expect(asked).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: /pre-inspection check/i })).toBeNull();
   });
 });
 
@@ -284,9 +290,9 @@ describe('Change control — governed actions reach their routes', () => {
     expect(screen.queryByRole('dialog', { name: 'Controlled document' })).toBeNull();
   });
 
-  it('the health check says it is a request to AnA', () => {
+  // D7-B: the health check is the Change control tab's third starter (QualityWorkArea.test.tsx).
+  it('the log carries no AnA request of its own above its rows', () => {
     renderLog();
-    fireEvent.click(screen.getByRole('button', { name: /Ask AnA.*health check/i }));
-    expect(asked).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: /health check/i })).toBeNull();
   });
 });
