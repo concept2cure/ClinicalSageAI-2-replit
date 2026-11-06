@@ -204,6 +204,7 @@ export function DocumentCanvas({
   const assignRefusalId = useId();
   const [storedSections, setSections] = useState<SectionRow[]>([]);
   const sections = recordCurrent ? storedSections : [];
+  const [savedRefreshKey, setSavedRefreshKey] = useState(0);
   const [showAll, setShowAll] = useState(false);
   /* The section the outline chose; null shows the first. */
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -287,6 +288,7 @@ export function DocumentCanvas({
     sectionsRef.current = read.sections;
     setSections(read.sections);
     setState('ready');
+    if (quiet) setSavedRefreshKey(key => key + 1);
     return true;
   }, [docId, programId, readKey, readSession]);
 
@@ -615,7 +617,7 @@ export function DocumentCanvas({
               refreshCreationContext={refreshCreationContext}
               programId={programId}
               pinnedDocId={docId}
-              embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true, onEditorBridge: setBridge, focusSection }}
+              embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true, onEditorBridge: setBridge, focusSection, savedRefreshKey }}
               surfaceActionId={null}
               consumeDeepLinks={false}
               onAsk={onAsk}
