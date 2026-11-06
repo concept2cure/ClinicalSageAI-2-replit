@@ -402,3 +402,14 @@ describe("the CTD filename detector's Module 1 documents follow the project's re
     expect(classifyForFiling({ fileName: 'RMP draft.pdf', view: 'pharma' }).ctdSection).toBeNull();
   });
 });
+
+/* J2 human test (2026-11-06): a data-room letter filed itself and the note under "Looks like" read
+   "filed to corresp for the biotech view" — a folder id and an internal view name, not the folder a person sees. */
+describe('the classifier note names the folder a person sees', () => {
+  it('says the folder by its label, never its id or the view', () => {
+    const c = classifyForFiling({ fileName: '[Demo] FDA information request - IND C2C-101.txt', view: 'biotech' });
+    expect(c.folderId).toBe('corresp');
+    expect(c.rationale).toBe('Matched agency correspondence — filed to Agency correspondence.');
+    expect(c.rationale).not.toMatch(/\bcorresp\b|biotech view/);
+  });
+});

@@ -225,6 +225,13 @@ function userRef(id: number | null): string | null {
   return id != null && Number.isInteger(id) && id > 0 ? `user:${id}` : null;
 }
 
+/** A row's own description first; then the act's name; a title only when the act has none (a title names the
+ *  record, not what was done to it); else the action as recorded. */
+function auditLogEvent(action: unknown, payload: unknown): string {
+  return metaString(payload, ['description', 'summary']) ?? ACTION_EVENT[String(action ?? '')]
+    ?? metaString(payload, ['title', 'message']) ?? humanizeEventType(action);
+}
+
 function auditLogEntry(row: Record<string, unknown>): AuditLedgerEntry {
   const payload = row.new_values;
   const actorId = row.actor_id == null ? null : Number(row.actor_id);
@@ -237,7 +244,7 @@ function auditLogEntry(row: Record<string, unknown>): AuditLedgerEntry {
       nonEmpty(row.user_email) ??
       (actorId != null && Number.isFinite(actorId) ? `user ${actorId}` : 'System'),
     actorRef: userRef(actorId),
-    event: ACTION_EVENT[String(row.action ?? '')] ?? metaString(payload, ['description', 'summary', 'title', 'message']) ?? humanizeEventType(row.action),
+    event: auditLogEvent(row.action, payload),
     target:
       nonEmpty(row.target) ??
       `${nonEmpty(row.table_name) ?? 'system'}${nonEmpty(row.record_id) ? ` ${String(row.record_id).trim()}` : ''}`,
@@ -319,6 +326,9 @@ const ACTION_EVENT: Record<string, string> = {
   'c2c.work.review-route.return': 'Returned from review',
   'c2c.work.review-route.reassign': 'Reviewer reassigned',
   'c2c.work.review-route.add': 'Reviewer added',
+  'vault.document.ingest': 'Uploaded to the Vault',
+  'vault.document.file': 'Filing recorded',
+  'vault.document.download': 'Downloaded',
   'regulated_document.registered': 'Registered as a controlled document',
   'regulated_document.created': 'Version entered review and approval',
   'regulated_document.authoring': 'Version returned to Not sent for review',
