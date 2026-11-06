@@ -69,7 +69,13 @@ unmount, no B history request/replay, and successful fresh retry. No provider or
 model drafting was exercised. The ordinary local 429 encountered during repeated
 walks and the successful cooldown retry are recorded in `source-state.json`.
 No limiter or runtime control was bypassed. Its three source hashes match the
-final tested source. Scripts, receipts and screenshots contain fictional data.
+browser-tested source. A subsequent type-only correction is pinned by
+`type-only-equivalence.json`: the exact same JavaScript is emitted with stable
+identifiers. `ProjectHome.tsx`'s held global declaration allows only strings;
+the existing consumed handoff uses `seed: null`. Two writes now use the same
+precise nullable boundary type as the existing conversation writer, without
+editing that held file. `push-typecheck-red.log.gz` records the two caught errors.
+Scripts, receipts and screenshots contain fictional data.
 
 Required plan, one-product, canvas-path, lint and typecheck gates run before
 publication. This is engineering evidence, not formal OQ or deployment proof.

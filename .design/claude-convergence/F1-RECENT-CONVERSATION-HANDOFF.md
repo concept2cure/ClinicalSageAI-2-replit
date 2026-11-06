@@ -54,3 +54,10 @@ that existing refusal into `routing.ts` and use it both at the shell boundary
 (before remount/URL change) and on conversation arrival. `V2App` reads its own
 chat's latest streaming state through a ref, and uses the existing `C2CToast`
 for the same reason. No second guard registry or chat state is introduced.
+
+The full typecheck also found that `ProjectHome.tsx`'s global `C2C_CONVO`
+declaration is only `Record<string, string>`, while the existing conversation
+reader/writers use a nullable seed. That file is held by D3. The F1 writer uses
+the same precise nullable boundary type as the existing writer, preserving the
+`{ id: 'current', seed: null }` runtime contract without touching the held file.
+The before/after TypeScript erasure emits identical JavaScript.

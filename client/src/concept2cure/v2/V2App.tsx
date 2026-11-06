@@ -377,7 +377,7 @@ export function V2App() {
       if (saved && surfaceSegmentFromLocation(window.location.pathname) === 'conversation-thread') {
         if (conversationIdFromLocation(window.location.pathname) === saved.id) {
           // Already showing it: consume the redundant choice without losing an unsent question or its address.
-          window.C2C_CONVO = { id: 'current', seed: null };
+          (window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } }).C2C_CONVO = { id: 'current', seed: null };
           notifyNavigation('', 'error');
           return;
         }
@@ -385,7 +385,7 @@ export function V2App() {
           conversationRef.current.threadId, saved.id, conversationRef.current.isStreaming,
         );
         if (refusal) {
-          window.C2C_CONVO = { id: 'current', seed: null };
+          (window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } }).C2C_CONVO = { id: 'current', seed: null };
           notifyNavigation(refusal, 'error');
           return;
         }
