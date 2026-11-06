@@ -94,7 +94,7 @@ function ObjectiveForm({ current, onCancel, onSubmit }: {
       config={{
         eyebrow: 'Project · objective',
         title: current ? 'Record a new version of the objective' : "Record the project's objective",
-        sub: 'What the study set out to show, as its protocol states it. Every version is kept with its reason.',
+        sub: 'What the project sets out to achieve, as its source states it. Every version is kept with its reason.',
         governed: 'Recorded with your reason in the audit trail.',
         submitLabel: 'Record objective',
         fields: [
@@ -170,7 +170,8 @@ export function NewProjectObjectiveField({ value, onChange }: { value: string; o
       <label className="npw-field-l" htmlFor="npw-objective">Objective (optional)</label>
       <textarea id="npw-objective" className="c2c-input" rows={3} value={value} aria-describedby="npw-objective-help"
         onChange={e => onChange(e.target.value)}
-        placeholder="What the study set out to show, e.g. that the primary endpoint is met, and what is to be filed." />
+        /* For every filing type: a device 510(k) has no study endpoint to state (human test J1, 2026-11-06). */
+        placeholder="What this project must achieve, e.g. study-may-proceed on the IND, or 510(k) clearance, and by when." />
       <span className="npw-field-help" id="npw-objective-help">
         Recorded as the project's objective, with its history. You can add its sources on the project page, or ask AnA to propose it from the protocol and the public record.
       </span>

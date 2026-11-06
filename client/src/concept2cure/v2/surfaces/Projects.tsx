@@ -1035,8 +1035,9 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
                     pane said "Workstream: Biotech / Recorded as: 510K · biologic"
                     for a device filing — and then stored it. */}
                 <div className="npw-review-row">
-                  <dt>Workstream</dt>
-                  <dd>{workstreamForFilingType(programType, recordedClass) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
+                  <dt>Client type</dt>
+                  {/* Said in words (WS_LABEL): the stored key "MDX" read as jargon to a device tester (J1, 2026-11-06). */}
+                  {(() => { const ws = workstreamForFilingType(programType, recordedClass) ?? SEG2WS[uiSeg] ?? 'Biotech'; return <dd>{WS_LABEL[ws] ?? ws}</dd>; })()}
                 </div>
                 <div className="npw-review-row">
                   <dt>Recorded as</dt>

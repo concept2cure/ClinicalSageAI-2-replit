@@ -79,7 +79,7 @@ export function HomeSetup({ onNav, onNewProject, projects }: {
       state: companyDetailsState(company), act: () => openAdminTab('settings', onNav) },
     { id: 'team', label: 'Invite your team', hint: 'The people who write, review and sign with you.',
       state: teamState(org), act: () => openAdminTab('members', onNav) },
-    { id: 'project', label: 'Create your first project', hint: 'One regulatory filing, for example an IND, from plan to submission.',
+    { id: 'project', label: 'Create your first project', hint: 'One regulatory filing, for example an IND or a 510(k), from plan to submission.',
       state: projects.loading ? 'reading' : projects.error ? 'unknown' : projects.rows.length > 0 ? 'done' : 'todo', act: onNewProject },
   ];
   if (steps.every((s) => s.state === 'done')) return null;
