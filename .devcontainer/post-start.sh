@@ -74,9 +74,23 @@ c2c_readiness_line() {
     catch{console.log("unknown")}})'
 }
 
-if c2c_app_up; then
-  c2c_log "The app is already running on port $C2C_PORT."
-else
+# What the RUNNING app's AnA sees (anaState / anaDetail on /readyz). This, not
+# this shell's environment, says whether the app has the model key.
+c2c_ana_state() {
+  c2c_readyz | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).anaState||"unknown")}catch{console.log("unknown")}})'
+}
+c2c_ana_detail() {
+  c2c_readyz | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(String(JSON.parse(s).anaDetail||"").slice(0,300))}catch{console.log("")}})'
+}
+c2c_stop_app() {
+  pkill -f 'tsx --inspect=0 server/index.ts' 2>/dev/null
+  for _ in $(seq 1 30); do
+    curl -s -o /dev/null --max-time 2 "http://127.0.0.1:$C2C_PORT/healthz" || return 0
+    sleep 1
+  done
+  pkill -9 -f 'tsx --inspect=0 server/index.ts' 2>/dev/null; sleep 2
+}
+c2c_start_app() {
   c2c_log "Starting the app (npm run dev) on port $C2C_PORT; log: $C2C_APP_LOG"
   (
     set -a; . "$C2C_CODESPACE_STATE/app.env"; set +a
@@ -91,6 +105,36 @@ else
   done
   c2c_app_up || c2c_blocked "the app did not serve (database and schema ok on /readyz) within 15 minutes. Last log lines:
 $(tail -n 30 "$C2C_APP_LOG")"
+}
+
+# The model keys this start holds that the running server process does not.
+# Read by name from the process's own environment; no value is printed.
+c2c_keys_app_lacks() {
+  local pid name missing=()
+  pid="$(pgrep -f 'tsx --inspect=0 server/index.ts' | tail -n 1)"
+  [[ -n "$pid" && -r "/proc/$pid/environ" ]] || return 0
+  for name in ANTHROPIC_API_KEY OPENAI_API_KEY; do
+    if [[ -n "${!name:-}" ]] && ! tr '\0' '\n' < "/proc/$pid/environ" | grep -q "^$name=."; then
+      missing+=("$name")
+    fi
+  done
+  echo "${missing[*]}"
+}
+
+if c2c_app_up; then
+  C2C_APP_LACKS="$(c2c_keys_app_lacks)"
+  if [[ -n "$C2C_APP_LACKS" ]]; then
+    # The app was started before the key reached this Codespace (a secret added
+    # later, or a restart from a terminal opened before it). It keeps the
+    # environment it started with, so it is restarted to start with the key.
+    c2c_log "The running app was started without $C2C_APP_LACKS (AnA: $(c2c_ana_state)); restarting it with this start's keys."
+    c2c_stop_app
+    c2c_start_app
+  else
+    c2c_log "The app is already running on port $C2C_PORT."
+  fi
+else
+  c2c_start_app
 fi
 c2c_log "The app is serving. /readyz: $(c2c_readiness_line)"
 
@@ -153,6 +197,21 @@ else
   )"
   c2c_log "ANTHROPIC_API_KEY: $C2C_ANTHROPIC_LINE"
 fi
+if [[ -z "${OPENAI_API_KEY:-}" ]]; then
+  c2c_log "No OPENAI_API_KEY secret: search (Vault, knowledge base, AnA's project memory) uses OpenAI embeddings and will fail."
+fi
+# What the running app itself reports for AnA, whatever this shell holds.
+C2C_APP_ANA="$(c2c_ana_state)"
+case "$C2C_APP_ANA" in
+  ready) c2c_log "AnA in the running app: ready." ;;
+  no_provider|no_high_risk_model)
+    c2c_log "AnA in the running app: $C2C_APP_ANA. $(c2c_ana_detail)"
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+      c2c_log "This start has no ANTHROPIC_API_KEY. A Codespaces secret reaches a Codespace when it starts:"
+      c2c_log "after adding one, stop and start the Codespace (Codespaces menu: Stop Current Codespace), not just reload the page."
+    fi ;;
+  *) c2c_log "AnA in the running app: $C2C_APP_ANA. $(c2c_ana_detail)" ;;
+esac
 
 cat <<EOF
 
@@ -161,7 +220,9 @@ cat <<EOF
  Sign in: press "Demo access" on the sign-in page (signs in as $DEMO_SEED_EMAIL).
  Password sign-in for the three demo people: see $C2C_CODESPACE_STATE/app.env
    (DEMO_SIGNER_PASSWORD). App log: $C2C_APP_LOG
- Restart the app: pkill -f 'tsx --inspect=0 server/index.ts'; bash .devcontainer/post-start.sh
+ Restart the app: bash .devcontainer/post-start.sh (restarts it when it lacks a key this
+   terminal has). A secret added after the Codespace started is not in an open terminal:
+   stop and start the Codespace instead.
 ============================================================================
 EOF
 exit 0
