@@ -20,7 +20,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
@@ -156,7 +156,9 @@ describe('ProjectHome — Review stage: the program’s tasks and approvals', ()
 
     expect(await screen.findByText(/This project has no tracking record/)).toBeTruthy();
     expect(screen.queryByText(/No tasks or approvals on this project/)).toBeNull();
-    expect(screen.queryByText(/Couldn't load/)).toBeNull();
+    /* The step's body, not the page: since D3-3 the Team card in Project knowledge reads the team on every step, and
+       this test serves no team, so the card rightly says the team could not be read. */
+    expect(within(document.querySelector('.pj-main') as HTMLElement).queryByText(/Couldn't load/)).toBeNull();
   });
 
   it('a failed read is an error, never an empty list', async () => {

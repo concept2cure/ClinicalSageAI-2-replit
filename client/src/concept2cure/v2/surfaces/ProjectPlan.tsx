@@ -13,7 +13,8 @@
  *   · a device or diagnostic filing: its workstreams (ProjectMdxWorkflow, which
  *     sat above the steps until this pass), each opening its existing feature.
  * Each item can be assigned to a person with a due date (PlanAssign.tsx), and
- * the team and the project's tasks follow, moved here from Author.
+ * the project's tasks follow, moved here from Author. The team left Plan on 2026-11-06 (D3-3): it is the
+ * Team card in Project knowledge, on every step, and the Team drawer it opens.
  *
  * S11 step 4 (THE_PROGRAM §3.5, §8): the step opens with what is due for the
  * signed-in person in this project's plan, and each IND document says the
@@ -97,7 +98,7 @@ function usePlanReads(pid: string, prog: { target_submission_date?: string | nul
 }
 
 export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, otherFilings, marketsState, projectId,
-  available, onNav, onStage, onAsk, onOpenDocument, team, tasks }: {
+  available, onNav, onStage, onAsk, onOpenDocument, tasks }: {
   pid: string;
   /** The verified project read (ProjectHome `prog`), for the device plan and the target date. */
   prog: (MdxWorkflowProject & { target_submission_date?: string | null; registry_id?: string | null; submission_type_id?: string | null }) | null;
@@ -113,7 +114,6 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
   onStage: (id: string) => void;
   onAsk: (text: string) => void;
   onOpenDocument: (docId: string) => void;
-  team: React.ReactNode;
   tasks: React.ReactNode;
 }) {
   const [epoch, setEpoch] = useState(0);
@@ -177,7 +177,6 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
         ownersUnread={Boolean(assignments.error)} onAssigned={() => setEpoch(value => value + 1)}
         onNav={onNav} onAsk={onAsk} />}
       {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}
-      {team}
       {/* Read again after each Assign, so the new task is listed without a reload. */}
       <React.Fragment key={epoch}>{tasks}</React.Fragment>
     </div>

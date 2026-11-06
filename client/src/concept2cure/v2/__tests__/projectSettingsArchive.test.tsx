@@ -51,7 +51,7 @@ async function openArchive(onSaved = vi.fn()) {
   fireEvent.click(screen.getByRole('button', { name: 'Project settings' }));
   await screen.findByRole('textbox', { name: 'Project description' });
   fireEvent.click(screen.getByRole('button', { name: 'Archive project' }));
-  return { onSaved, dialog: await screen.findByRole('dialog') };
+  return { onSaved, dialog: await screen.findByRole('dialog', { name: 'Archive project' }) };
 }
 async function confirm(dialog: HTMLElement, reason = 'The IND was withdrawn by the sponsor') {
   fireEvent.change(within(dialog).getByPlaceholderText('Captured verbatim in the audit log. Be specific.'), { target: { value: reason } });

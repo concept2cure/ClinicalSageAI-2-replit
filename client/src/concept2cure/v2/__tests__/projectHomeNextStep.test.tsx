@@ -14,7 +14,8 @@
  *     one with documents, and one whose list could not be read, on Author (a
  *     failure decides nothing);
  *   - a step a person chose is never overridden by a read landing later;
- *   - the open step says what to do now, and offers the next step;
+ *   - the open step offers its own question to AnA in the composer's suggestions (D3-1, 2026-11-06: the band
+ *     that said "What to do now" and "Next step" is retired; the steps are one segmented control, in order);
  *   - a US drug IND offers CMC / Module 3 on Author and the IND forms on Submit,
  *     each opened on this project; other filings are not offered what does not
  *     serve them. Since slice A.1 each door carries the name Plan gives the same
@@ -72,7 +73,7 @@ function serve(program: Record<string, unknown> = US_DRUG_IND, docs: Docs = []) 
 const activeLabel = () => document.querySelector('.pj-lc-stage[data-status="active"]')?.textContent?.trim() ?? null;
 const tab = (label: string) =>
   Array.from(document.querySelectorAll<HTMLButtonElement>('.pj-lc-stage')).find((b) => b.textContent?.trim() === label)!;
-const band = () => screen.getByTestId('pj-stageband');
+const suggestions = () => within(screen.getByRole('group', { name: 'Suggestions' })).getAllByRole('button').map((b) => b.textContent);
 
 function mount() {
   const onNav = vi.fn();
@@ -124,43 +125,43 @@ describe('a project opens on its first step with work to do', () => {
   });
 });
 
-describe('each step says what to do now, and leads to the next', () => {
-  it('Plan says to start and assign each document, and its next step is Evidence', async () => {
+describe('each step offers its own question to AnA, where the band\'s guidance went', () => {
+  it('Plan asks what the filing still needs, and who has each piece', async () => {
     serve(US_DRUG_IND, []);
     mount();
     await waitFor(() => expect(activeLabel()).toBe('Plan'));
-    expect(band().textContent).toMatch(/What to do now: See every document this filing needs/);
-    fireEvent.click(within(band()).getByRole('button', { name: /Next step.*Evidence/ }));
-    expect(activeLabel()).toBe('Evidence');
+    expect(suggestions()).toEqual(['What does this filing still need, and who has each piece?', 'What is due this week, and who has it?']);
   });
 
-  it('Evidence says what to add, and its next step is Author', async () => {
+  it('Evidence asks which sources are missing, and Author offers to draft from them', async () => {
     serve(US_DRUG_IND, []);
     mount();
     await waitFor(() => expect(activeLabel()).toBe('Plan'));
     fireEvent.click(tab('Evidence'));
-    expect(band().textContent).toMatch(/What to do now: Add the documents this filing is written from/);
-    fireEvent.click(within(band()).getByRole('button', { name: /Next step.*Author/ }));
-    expect(activeLabel()).toBe('Author');
-    expect(band().textContent).toMatch(/What to do now: Draft the filing’s documents/);
+    expect(suggestions()[0]).toBe('Which sources does this filing still need?');
+    fireEvent.click(tab('Author'));
+    expect(suggestions()[0]).toBe('Draft the next section from this project’s sources');
   });
 
-  it('the steps follow in order to Respond, which has no next step', async () => {
+  it('the steps are one control in their order, and no step shows a "What to do now" band', async () => {
     serve(US_DRUG_IND, []);
     mount();
     await waitFor(() => expect(activeLabel()).toBe('Plan'));
-    for (const next of ['Evidence', 'Author', 'Review', 'Submit', 'Respond']) {
-      fireEvent.click(within(band()).getByRole('button', { name: new RegExp(`Next step.*${next}`) }));
-      expect(activeLabel()).toBe(next);
+    const steps = Array.from(document.querySelectorAll('.pj-lc .seg .pj-lc-stage')).map((b) => b.textContent?.trim());
+    expect(steps).toEqual(['Plan', 'Evidence', 'Author', 'Review', 'Submit', 'Respond']);
+    for (const label of ['Evidence', 'Author', 'Review', 'Submit', 'Respond']) {
+      fireEvent.click(tab(label));
+      expect(activeLabel()).toBe(label);
+      expect(screen.queryByTestId('pj-stageband')).toBeNull();
+      expect(document.body.textContent).not.toMatch(/What to do now|Next step/);
     }
-    expect(within(band()).queryByRole('button', { name: /Next step/ })).toBeNull();
   });
 
-  it('a device filing is told to draft from its device evidence', async () => {
+  it('a device filing is offered a draft from its device evidence', async () => {
     serve({ ...US_DRUG_IND, program_type: '510k', product_type: 'device' }, [DOC]);
     mount();
     await screen.findByTestId('pj-documents');
-    expect(band().textContent).toMatch(/from the device or diagnostic evidence/);
+    expect(suggestions()[0]).toBe('Draft the next section from the device evidence');
   });
 });
 

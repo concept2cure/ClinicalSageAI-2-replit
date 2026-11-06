@@ -119,7 +119,7 @@ function SharingSession({ scope, onChanged, suspended = false }: TeamSharingProp
   };
   return <section className="pj-sharing" aria-label="Project sharing">
     <div className="pj-sharing-heading"><h3>Project sharing</h3>
-      <button type="button" className="btn ghost small" disabled={suspended || busy || read.loading} onClick={() => { setRevoke(null); void refresh(); }}>Refresh sharing</button></div>
+      <button type="button" className="btn small" disabled={suspended || busy || read.loading} onClick={() => { setRevoke(null); void refresh(); }}>Refresh sharing</button></div>
     {notice && <p className="pj-team-note" role={notice.warning ? 'alert' : 'status'}>{notice.text}</p>}
     {suspended ? <p className="pj-team-note" role="status">Team access is being verified. Sharing controls are unavailable until the team read succeeds.</p> :
       read.loading ? <p className="pj-team-note" role="status" aria-busy="true">Loading sharing…</p> :

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ProjectSharingResponse } from '@shared/project-sharing';
 
 const request = vi.hoisted(() => vi.fn());
@@ -14,9 +14,14 @@ vi.mock('@/services/portal/authService', async original => {
 vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => tenant }));
 import { authService } from '@/services/portal/authService';
 import { ProjectHome } from '../surfaces/ProjectHome';
+import { PROJECT_TEAM_AUTHORITY_NOTE } from '../surfaces/ProjectTeamResponsibilities';
 
 /* The team, the project's tasks and My work are on the Plan step (CLIENT_JOURNEY_2026-10-25.md, pass 3). */
-const openPlan = () => fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
+/* D3-3: the sharing controls are in the Team drawer, opened by the Team card's "Manage" (they were on Plan). */
+async function openTeam() {
+  fireEvent.click(await screen.findByRole('button', { name: 'Manage team' }));
+  return screen.findByRole('dialog', { name: 'Team' });
+}
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const TEAM = { program_id: PID, project_id: 51, team: [{ entry_id: 'user:7', user_id: 7, role: null,
@@ -59,7 +64,7 @@ describe('team anchors belong to the current authenticated scope', () => {
     { change: 'organization', actor: 7, org: 5, workspace: 10, anchor: 61 },
   ])('waits for a fresh team anchor after $change changes on the same selected UUID', async ({ actor, org, workspace, anchor }) => {
     serve(); const view = render(<ProjectHome {...props} />);
-    openPlan();
+    await openTeam();
     await screen.findByLabelText('Organization member');
     let finish!: (response: Response) => void;
     const pending = new Promise<Response>(resolve => { finish = resolve; });
@@ -76,11 +81,16 @@ describe('team anchors belong to the current authenticated scope', () => {
     session(actor, org);
     tenant.currentOrganization = { id: org }; tenant.currentClientWorkspace = { id: String(workspace), organizationId: String(org) };
     view.rerender(<ProjectHome {...props} />);
+    /* The page is remounted for the new account or organization, so the Team drawer the previous one opened is
+       closed (D3-3): no sharing control from the previous scope stays on screen. */
+    expect(screen.queryByRole('dialog', { name: 'Team' })).toBeNull();
     expect(screen.queryByLabelText('Organization member')).toBeNull();
     expect(screen.queryByText('Coordinator', { exact: true })).toBeNull();
+    const drawer = await openTeam();
+    expect(within(drawer).queryByLabelText('Organization member')).toBeNull();
     expect(request.mock.calls.filter(([, path]) => path.includes('/sharing'))).toHaveLength(before);
     await act(async () => finish(ok({ ...TEAM, project_id: anchor })));
-    await screen.findByLabelText('Organization member');
+    await within(drawer).findByLabelText('Organization member');
     await waitFor(() => expect(request).toHaveBeenCalledWith('GET',
       `/api/concept2cure/projects/${anchor}/sharing?programId=${PID}`, undefined,
       expect.objectContaining({ Authorization: `Bearer ${token(actor, org)}`, 'x-client-id': String(workspace) })));
@@ -91,7 +101,7 @@ afterEach(() => { cleanup(); authService.endSession(null); request.mockReset(); 
 describe('ProjectHome reaches its existing sharing controls', () => {
   it('uses the admitted numeric anchor and offers only human Use/Edit choices', async () => {
     serve(); render(<ProjectHome {...props} />);
-    openPlan();
+    await openTeam();
     await screen.findByRole('heading', { name: 'Project sharing' });
     expect(await screen.findByLabelText('Organization member')).toBeTruthy();
     const role = screen.getByLabelText('New sharing role');
@@ -112,22 +122,58 @@ describe('ProjectHome reaches its existing sharing controls', () => {
     let finish!: (response: Response) => void;
     serve(new Promise(resolve => { finish = resolve; }), { ...ok({}), ok: false, status: 503 });
     render(<ProjectHome {...props} />);
-    openPlan();
+    const drawer = within(await openTeam());
     expect(request.mock.calls.some(([, path]) => path.includes('/sharing'))).toBe(false);
     await act(async () => finish(ok(TEAM)));
-    await screen.findByText("Couldn't load project sharing");
-    expect(screen.getByText('Coordinator')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Retry sharing' })).toBeTruthy();
+    await drawer.findByText("Couldn't load project sharing");
+    /* The roster is kept in the drawer (and on the card beside it). */
+    expect(drawer.getByText('Coordinator')).toBeTruthy();
+    expect(drawer.getByRole('button', { name: 'Retry sharing' })).toBeTruthy();
   });
 
   it('uses server capability instead of a displayed project owner fact', async () => {
     const denied = sharing(); denied.canManage = false; denied.candidates = [];
     denied.members = denied.members.map(member => ({ ...member, canSetRole: false, canRevoke: false }));
     serve(ok(TEAM), ok(denied)); render(<ProjectHome {...props} />);
-    openPlan();
+    await openTeam();
     await screen.findByText(/Organization-visible project: organization members may have access/);
     expect(screen.queryByRole('button', { name: 'Grant sharing' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Revoke explicit share/ })).toBeNull();
     expect(screen.queryByLabelText('Organization member')).toBeNull();
+  });
+});
+
+describe('the team on the project page (D3-3, D3.md §4.8 item 3 and §4.9)', () => {
+  it('is a card in Project knowledge, on every step, and no longer a section of Plan', async () => {
+    serve(); render(<ProjectHome {...props} />);
+    const card = await screen.findByRole('region', { name: 'Team' });
+    expect(card.closest('aside.pj-side')).toBeTruthy();
+    expect(await within(card).findByText('Coordinator')).toBeTruthy();
+    expect(within(card).getByText('Project owner · Owner')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
+    expect(screen.queryByRole('heading', { name: 'Project sharing' })).toBeNull();
+    expect(document.querySelector('.pj-main')?.textContent ?? '').not.toMatch(/Recorded responsibilities/);
+    expect(screen.getByRole('region', { name: 'Team' })).toBe(card);
+  });
+
+  it('"Manage" opens the Team drawer with the roster, the note once and sharing; Escape closes it, focus returns', async () => {
+    serve(); render(<ProjectHome {...props} />);
+    const manage = await screen.findByRole('button', { name: 'Manage team' });
+    manage.focus();
+    fireEvent.click(manage);
+    const drawer = await screen.findByRole('dialog', { name: 'Team' });
+    expect(await within(drawer).findByRole('heading', { name: 'Project sharing' })).toBeTruthy();
+    expect(within(drawer).getByRole('list', { name: 'Recorded project team' })).toBeTruthy();
+    expect(within(drawer).getAllByText(PROJECT_TEAM_AUTHORITY_NOTE)).toHaveLength(1);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Team' })).toBeNull());
+    expect(document.activeElement).toBe(manage);
+  });
+
+  it('a team that could not be read says so on the card, with its retry, and "Manage" still opens', async () => {
+    serve({ ...ok({}), ok: false, status: 503 } as Response); render(<ProjectHome {...props} />);
+    const card = await screen.findByRole('region', { name: 'Team' });
+    expect(await within(card).findByRole('button', { name: 'Retry team' })).toBeTruthy();
+    expect(within(card).queryByRole('list')).toBeNull();
   });
 });

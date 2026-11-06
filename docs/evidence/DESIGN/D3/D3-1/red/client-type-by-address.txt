@@ -1,0 +1,11 @@
+The client type, moved from the byline to Project knowledge, read on a page opened by its address (no list row
+handed over). Run with ProjectHome.tsx's derivation reverted to trunk's `const clientType = sel?.ws ?? null;`:
+
+$ npx vitest run client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx
+ × project home shows the program identity from the database > says the client type the filing type gives, as the project list does, with no list row handed over
+Expected: "Biotech"
+Received: "not recorded"
+      Tests  1 failed | 8 passed (9)
+
+With `sel?.ws ?? workstreamForFilingType(prog?.program_type, prog?.product_type) ?? null`: 9 passed.
+Found by the walk: the walk project (an IND, opened by its address) read "Client type: not recorded".

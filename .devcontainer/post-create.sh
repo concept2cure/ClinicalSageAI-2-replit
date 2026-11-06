@@ -177,26 +177,53 @@ c2c_provision() {
 
 # Sign-in accounts through the existing scripts/seed-admin.mjs (local
 # database only; it refuses anything else). The author creates the development
-# organisation; reviewer and approver join it.
+# organisation; everyone else joins it. All are fictional. The roster is
+# recorded in accounts.done, so a Codespace made before a name was added gets
+# it on its next start (seed-admin is idempotent on this machine).
+c2c_account_roster() {
+  printf '%s\n' \
+    "$C2C_DEV_EMAIL|Ana Author|" \
+    "$C2C_REVIEWER_EMAIL|Rhea Reviewer|concept2cure" \
+    "$C2C_APPROVER_EMAIL|Ava Approver|concept2cure" \
+    "mo.monitor@concept2cure.pro|Mo Monitor|concept2cure" \
+    "quinn.quality@concept2cure.pro|Quinn Quality|concept2cure" \
+    "sam.stats@concept2cure.pro|Sam Statistician|concept2cure" \
+    "cal.cmc@concept2cure.pro|Cal CMC|concept2cure"
+}
+c2c_accounts_current() {
+  [[ -f "$C2C_CODESPACE_STATE/accounts.done" ]] &&
+    [[ "$(cat "$C2C_CODESPACE_STATE/accounts.done")" == "$(c2c_account_roster)" ]]
+}
 c2c_seed_accounts() {
-  local signer_pw
+  local signer_pw owner_url email name slug
   signer_pw="$(sed -n 's/^DEMO_SIGNER_PASSWORD=//p' "$C2C_CODESPACE_STATE/app.env")"
-  local who email name slug
-  for who in author reviewer approver; do
-    case "$who" in
-      author)   email="$C2C_DEV_EMAIL";      name="Ana Author";    slug="" ;;
-      reviewer) email="$C2C_REVIEWER_EMAIL"; name="Rhea Reviewer"; slug="concept2cure" ;;
-      approver) email="$C2C_APPROVER_EMAIL"; name="Ava Approver";  slug="concept2cure" ;;
-    esac
-    ( cd "$C2C_REPO_ROOT" && c2c_with_owner_env env DATABASE_URL="$(sed -n 's/^DATABASE_OWNER_URL=//p' "$C2C_CODESPACE_STATE/owner.env")" \
+  owner_url="$(sed -n 's/^DATABASE_OWNER_URL=//p' "$C2C_CODESPACE_STATE/owner.env")"
+  while IFS='|' read -r email name slug; do
+    ( cd "$C2C_REPO_ROOT" && c2c_with_owner_env env DATABASE_URL="$owner_url" \
         ADMIN_EMAIL="$email" ADMIN_NAME="$name" ADMIN_PASSWORD="$signer_pw" ADMIN_ORG_SLUG="$slug" \
         NODE_ENV=development node scripts/seed-admin.mjs ) >>"$C2C_CODESPACE_STATE/accounts.log" 2>&1 || {
-      c2c_log "BLOCKED: could not create the $who account ($email); see $C2C_CODESPACE_STATE/accounts.log"
+      c2c_log "BLOCKED: could not create the account $email; see $C2C_CODESPACE_STATE/accounts.log"
       return 1
     }
-  done
-  touch "$C2C_CODESPACE_STATE/accounts.done"
-  c2c_log "Sign-in accounts ready: $C2C_DEV_EMAIL (author), $C2C_REVIEWER_EMAIL, $C2C_APPROVER_EMAIL."
+  done < <(c2c_account_roster)
+  c2c_account_roster >"$C2C_CODESPACE_STATE/accounts.done"
+  c2c_log "Sign-in accounts ready: $(c2c_account_roster | cut -d'|' -f2 | paste -sd, - | sed 's/,/, /g')."
+}
+
+# node_modules matches package-lock.json only as of the last npm ci. A pull
+# that changes the lockfile (a dependency upgrade) leaves the old tree behind,
+# and the server can then fail at boot. The lockfile's hash is recorded at each
+# install so a start can tell.
+c2c_lock_hash() { sha256sum "$C2C_REPO_ROOT/package-lock.json" | cut -d' ' -f1; }
+c2c_deps_current() {
+  [[ -d "$C2C_REPO_ROOT/node_modules" ]] &&
+    [[ "$(cat "$C2C_CODESPACE_STATE/npm-ci.lock-sha256" 2>/dev/null)" == "$(c2c_lock_hash)" ]]
+}
+c2c_install_deps() {
+  ( cd "$C2C_REPO_ROOT" && npm ci ) || return 1
+  [[ -d "$C2C_REPO_ROOT/node_modules" ]] || { c2c_log "BLOCKED: node_modules missing after npm ci"; return 1; }
+  install -d -m 700 "$C2C_CODESPACE_STATE"
+  c2c_lock_hash >"$C2C_CODESPACE_STATE/npm-ci.lock-sha256"
 }
 
 c2c_post_create_main() {
@@ -207,8 +234,7 @@ c2c_post_create_main() {
 
   # Match CI: fail rather than allowing a partially installed npm tree to look
   # complete. Do not delete/change the lockfile to hide an install error.
-  npm ci
-  test -d node_modules || { echo "BLOCKED: node_modules missing after npm ci"; exit 1; }
+  c2c_install_deps
 
   # Native self-tests do not use a credential or a database.
   npm run codespaces:doctor:test

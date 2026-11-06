@@ -22,6 +22,16 @@ cd "$C2C_REPO_ROOT" || exit 0
 echo "C2C Codespace post-start. Branch: $(git branch --show-current 2>/dev/null || echo unknown)"
 echo "No database or AI secret is printed."
 
+# Dependencies first: a pull that changed package-lock.json since the last
+# install would otherwise start the app on the old tree.
+if ! c2c_deps_current; then
+  c2c_log "package-lock.json changed since the last install: stopping the app and running npm ci."
+  pkill -f 'tsx --inspect=0 server/index.ts' 2>/dev/null
+  c2c_install_deps >"$C2C_CODESPACE_STATE/npm-ci.log" 2>&1 ||
+    { tail -n 20 "$C2C_CODESPACE_STATE/npm-ci.log"; c2c_log "BLOCKED: npm ci failed; see $C2C_CODESPACE_STATE/npm-ci.log."; exit 0; }
+  c2c_log "Dependencies match package-lock.json."
+fi
+
 c2c_blocked() { c2c_log "BLOCKED: $*"; c2c_log "The editor stays open for repair; see .devcontainer and docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md."; exit 0; }
 
 if [[ ! -s "$C2C_CODESPACE_STATE/owner.env" || ! -s "$C2C_CODESPACE_STATE/app.env" ]]; then
@@ -34,7 +44,7 @@ c2c_ensure_database || c2c_blocked "the owner role or database could not be ensu
 # Idempotent: over a complete database this is deploy-migrate + the readiness
 # contract, so migrations committed since the last start are applied.
 c2c_provision || c2c_blocked "database provisioning failed."
-if [[ "${NEED_ACCOUNTS:-0}" == "1" || ! -f "$C2C_CODESPACE_STATE/accounts.done" ]]; then
+if [[ "${NEED_ACCOUNTS:-0}" == "1" ]] || ! c2c_accounts_current; then
   c2c_seed_accounts || c2c_blocked "sign-in accounts could not be created."
 fi
 
@@ -141,13 +151,20 @@ c2c_log "The app is serving. /readyz: $(c2c_readiness_line)"
 # Read (not export) the demo identities; the seeders get only what they need.
 . "$C2C_CODESPACE_STATE/app.env"
 
-# Demo packs through the product's own API, once.
-if [[ ! -f "$C2C_CODESPACE_STATE/demo-seed.done" ]]; then
+# Demo packs through the product's own API. They run again when scripts/demo
+# changes on the branch (the packs are idempotent by title), so a Codespace
+# made earlier gets new demo data on its next start. Without a second signer
+# (OQ_SIGNER_*) the two-person steps are recorded as not executed; the reviewer
+# becomes that signer once the QMS packs route a draft to review before
+# approving it (the server refuses a draft's approval with QMS_INVALID_STATE).
+C2C_DEMO_VERSION="$(git rev-parse HEAD:scripts/demo 2>/dev/null || echo unknown)"
+if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_VERSION" ]]; then
   c2c_log "Seeding the demo projects (npm run demo:seed -- --pack all); log: $C2C_CODESPACE_STATE/demo-seed.log"
-  if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests" npm run --silent demo:seed -- --pack all --base-url "http://127.0.0.1:$C2C_PORT" --email "$DEMO_SEED_EMAIL" \
+  if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests" \
+      npm run --silent demo:seed -- --pack all --base-url "http://127.0.0.1:$C2C_PORT" --email "$DEMO_SEED_EMAIL" \
       >"$C2C_CODESPACE_STATE/demo-seed.log" 2>&1; then
-    touch "$C2C_CODESPACE_STATE/demo-seed.done"
-    c2c_log "Demo projects seeded."
+    echo "$C2C_DEMO_VERSION" >"$C2C_CODESPACE_STATE/demo-seed.done"
+    c2c_log "Demo projects seeded ($(grep -c 'not executed' "$C2C_CODESPACE_STATE/demo-seed.log" || true) steps recorded as not executed; see the log)."
   else
     c2c_log "The demo seed did not finish; see $C2C_CODESPACE_STATE/demo-seed.log. It re-runs on the next start."
   fi

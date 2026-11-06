@@ -1,0 +1,14 @@
+The first run of walk.cjs at 390 x 844, before project-settings.css was rewritten:
+
+locator.waitFor: Timeout 20000ms exceeded.
+  - waiting for locator('h1.pj-title') to be visible
+    43 x locator resolved to hidden <h1 class="pj-title">Durability walk IND</h1>
+
+Probe of the title's box and its ancestors (getBoundingClientRect, CSS px):
+H1.pj-title            w=0   h=468
+DIV.pj-title-row       w=330 h=468  (flex)
+DIV.pj-top-l           w=330 h=617
+
+The project's name was squeezed to zero width and set one letter per line beside the settings button. Cause:
+project-settings.css, written for the inline panel, gave `.pj-settings` `flex-basis:100%` under 600px. Now that the
+settings button sits in the title row, that took the whole row. After the rewrite: H1.pj-title w=290 h=28.

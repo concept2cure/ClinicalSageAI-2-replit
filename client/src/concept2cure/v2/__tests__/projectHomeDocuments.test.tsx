@@ -409,7 +409,7 @@ describe('Evidence — every way a source comes in', () => {
     serve();
     render(<ProjectHome {...props()} />);
     await open('Evidence');
-    expect(document.querySelector('.pj-stageband-blurb')?.textContent).toBe('Project files and the data room the documents are written from');
+    expect(document.querySelector('.pj-step-blurb')?.textContent).toBe('Project files and the data room the documents are written from');
   });
 });
 
