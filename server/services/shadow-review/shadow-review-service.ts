@@ -384,6 +384,13 @@ async function askReviewer(leaves: ReviewerLeaf[], at: AskContext): Promise<{ ou
     callerModule: 'shadow-review-service',
     metadata: { task: 'shadow-review', sequenceId: at.sequenceId, lens: at.lens },
   });
+  // The gateway's fixed demo-mode reply (no provider configured) is not a
+  // model's reply: record it as what it is, not as an invalid assessment (J4
+  // human test, 2026-11-06). Named, not constructed from the gateway class, so
+  // failureCodeOf tells it apart the way it tells every gateway error apart.
+  if ((response as { deterministic?: boolean }).deterministic === true || response.model === 'demo-mode') {
+    throw Object.assign(new Error('No AI provider is configured on this deployment, so no review was performed.'), { name: 'GatewayNoProviderError' });
+  }
   const cleaned = response.content.trim().replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
   const parsed = parseShadowReviewOutput(JSON.parse(cleaned));
   if (!parsed.ok) {
