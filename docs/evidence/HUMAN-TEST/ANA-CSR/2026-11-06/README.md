@@ -72,6 +72,16 @@ The Progress panel's "Memory: Could not be read" on both turns is this sandbox's
 no `EMBEDDING_PROVIDER` the project memory search embeds through OpenAI. The same holds in a Codespace given only
 `ANTHROPIC_API_KEY`; reported to the Codespace session, which holds its guide.
 
+## With only an OpenAI key
+
+Started with `OPENAI_API_KEY` and no Anthropic key, the app's `/readyz` reports `ana: no_high_risk_model` and names
+the providers whose models are approved for drafting. The conversation said only "an administrator needs to enable an
+approved model", so a person holding an OpenAI key could not tell that it is not one. The message now names them from
+the same registry: "Regulatory drafting is approved only for models served by Anthropic, Amazon Bedrock or Google
+Vertex AI. Retrying will not change this; an administrator needs to enable one of those providers."
+(`gateway-error-map.ts`, `gateway-error-map-no-approved-model.test.ts`;
+`06-openai-key-only-names-the-approved-providers.png`).
+
 ## The CSR as a PDF, walked later the same day
 
 From the project's Author step, **Open** on "CDISCPILOT01 Clinical Study Report" opens it in the one editor. Download,
