@@ -141,6 +141,16 @@ describe('No dead ends on the filing path (F16)', () => {
       expect(document.body.textContent).not.toContain('which is not part of this release');
     });
 
+    /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): the empty state
+       named the filing panel and gave no way to it. */
+    it('the empty state opens the 510(k) surface it names', async () => {
+      const onNav = vi.fn();
+      render(<SubmissionCenter onAsk={vi.fn()} onNav={onNav} />);
+      await waitFor(() => expect(document.body.textContent).toContain('No device filings tracked yet'));
+      fireEvent.click(screen.getByRole('button', { name: 'Open the 510(k) filing panel' }));
+      expect(onNav).toHaveBeenCalledWith('device-510k');
+    });
+
     it('where the 510(k) surface is not in the release, the empty state says so and sends no one there', async () => {
       lockedHere.add('device-510k');
       render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
