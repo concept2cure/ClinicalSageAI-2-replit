@@ -509,3 +509,48 @@ describe('the record and the view', () => {
     expect(h.frames.at(-1)).toMatchObject({ status: 'completed' });
   });
 });
+
+
+describe('exact stored source spans (multi-agent specification §14.4)', () => {
+  const text = 'Response was 42%.';
+  const span = { artifact_id: 'source-1', source_start: 7, source_end: 23, draft_start: 0, draft_end: 16 };
+  const verify = (source_spans: unknown = [span]) => ({ ...RESEARCH, role: 'verify', text_to_check: text, source_spans });
+  const withSource = () => host({ governedTools: [...GOVERNED, TOOL('read_vault_document')] });
+  const sourceReading = (r: any) => r.checks.find((c: any) => c.check === 'source_spans');
+  it('compares actual stored source bytes before the model, keeping the scoped read and hashes in the run record', async () => {
+    const reads: any[] = [];
+    registerToolHandler('read_vault_document', async (input, ctx) => {
+      reads.push({ input, ctx, refusal: modelCallRefusal(), modelCallsBefore: gw.calls.length });
+      return JSON.stringify({ ok: true, content: 'Prefix:Response was 42%.', document: { artifact_id: 'source-1' } });
+    });
+    const r = await run(verify(), withSource());
+    expect(sourceReading(r).outcome).toBe('pass');
+    expect(reads).toEqual([expect.objectContaining({ ctx: expect.objectContaining({ organizationId: 7, projectRef: 'prog-uuid', agentDepth: 1 }), refusal: expect.any(Object), modelCallsBefore: 0 })]);
+    expect(r.trace).toMatchObject({ steps: [expect.objectContaining({ round: 0, tool: 'read_vault_document', ok: true })], checkOutputs: expect.arrayContaining([expect.objectContaining({ check: 'source_spans' })]) });
+    expect(JSON.parse(r.trace.checkOutputs.find((o: any) => o.check === 'source_spans').output).evidence[0]).toMatchObject({ sourceReadHash: expect.stringMatching(/^[a-f0-9]{64}$/), quoteHash: expect.stringMatching(/^[a-f0-9]{64}$/) });
+    expect(r.notChecked.join(' ')).toContain('semantic support');
+  });
+  it('a one-character mismatch blocks even when the model declares the quote correct', async () => {
+    registerToolHandler('read_vault_document', async () => JSON.stringify({ ok: true, content: 'Prefix:Response was 43%.' }));
+    gw.script = [{ content: 'All citations are correct.', toolUses: [], usage: {}, provider: 'anthropic', model: 'm', requestId: 'r' }];
+    const r = await run({ ...verify([{ ...span, draft_start: 4, draft_end: 20 }]), text_to_check: '[1] Response was 42%.' }, withSource());
+    expect({ check: sourceReading(r), verdict: r.verdict }).toMatchObject({ check: { outcome: 'fail' }, verdict: 'issues_found' });
+  });
+  it.each([
+    { error: 'No document in this project.' },
+    { ok: true, content: 'short' },
+    { ok: false, content: 'Prefix:Response was 42%.' },
+    { ok: true, error: 'Source read failed.', content: 'Prefix:Response was 42%.' },
+  ])('an unavailable, out-of-range or refused source is never a pass: %j', async source => {
+    registerToolHandler('read_vault_document', async () => JSON.stringify(source));
+    expect(sourceReading(await run(verify(), withSource())).outcome).toBe('error');
+  });
+  it('does not use a source tool the parent was not offered', async () => {
+    const read = vi.fn(async () => JSON.stringify({ ok: true, content: 'Prefix:Response was 42%.' }));
+    registerToolHandler('read_vault_document', read);
+    const r = await run(verify());
+    expect(read).not.toHaveBeenCalled();
+    expect(sourceReading(r).outcome).toBe('error');
+  });
+
+});

@@ -127,7 +127,7 @@ A project is the whole regulatory life of a product, worked in one place:
 
 | Part | What already exists, by path | What is to finish |
 |---|---|---|
-| AnA knows the project and the person | Memory: `server/services/memory/`, `memory-orchestrator.ts`, `memory-context-assembler.ts`, `memory-consolidation-job.ts`, `client-intelligence-memory.ts`. Project intelligence: `server/services/intelligence/project-intelligence-service.ts`. The user profile and interactions: `server/services/ana-context-router.ts` (`buildUserContext`, `recordUserInteraction`). Memory acceptance: `server/services/ana-ri/memory-acceptance.ts`. Memory routes: `server/routes/mdx-ana-memory.ts`. Question flows: `server/services/ana/intelligence-questions/`. | One AnA that carries each project's knowledge and the person's preferences into every turn. It asks the questions that find what is missing, and pushes back (S4). |
+| AnA knows the project and the person | Memory: `server/services/memory/`, `memory-orchestrator.ts`, `memory-context-assembler.ts`, `memory-consolidation-job.ts`, `server/services/client-intelligence-memory.ts`. Project intelligence: `server/services/intelligence/project-intelligence-service.ts`. The user profile and interactions: `server/services/ana-context-router.ts` (`buildUserContext`, `recordUserInteraction`). Memory acceptance: `server/services/ana-ri/memory-acceptance.ts`. Memory routes: `server/routes/mdx-ana-memory.ts`. Question flows: `server/services/ana/intelligence-questions/`. | One AnA that carries each project's knowledge and the person's preferences into every turn. It asks the questions that find what is missing, and pushes back (S4). |
 | The team on licensed seats | Seats: `server/services/seat-licensing.ts`, `server/services/licensing/`. Sharing: `server/routes/c2c/project-sharing.ts`, `server/services/project-sharing-access.ts`, `shared/project-sharing.ts`. Screens: `surfaces/ProjectTeamSharing.tsx`, `ProjectTeamResponsibilities.tsx`. | Seats and the team shown and used in the project page (S9, on D3's layout). |
 | Tasks: what is due, and what is mine | Tasking: `server/services/tasking/`, `server/routes/c2c/tasks.ts`. Screens: `surfaces/TaskBoard.tsx`, `TaskAssignmentControls.tsx`, `v2/TaskTray.tsx`. Deadlines: `server/services/ana/deadline-radar.ts`. | Each person's due work for the project, by date, in the project and in Tasks (S9). |
 | Extract commitments | The capability, registered with no handler: `server/services/ana-capability-registry.ts` (`extract-commitments`). The risk tier: `server/services/ai-governance/risk-tiers.ts`. Fulfilment: `server/services/ha-interactions/commitment-fulfilment.ts`, `server/routes/commitment-fulfil-route.ts`, `surfaces/CommitmentFulfilment.tsx`, `CommitmentRow.tsx`. AnA's commitment tools (`create_regulatory_commitment`, `review_commitment_portfolio`, `fulfill_regulatory_commitment`) are held for `lifecycle-mgmt` in `ana-launch-scope.inventory.json`. Proposing an agency letter's questions: G3. | The handler: AnA proposes, a person confirms, each commitment lands with its source, owner and due date, and shows as due work (S9). |
@@ -157,6 +157,143 @@ It is shown in the project's Plan step. Package S11.
 
 Work projects (CMC, biostatistics, risk-based monitoring and others) are projects of their own under the product
 program. Their deliverables are mapped to the downstream documents they feed (P-83, the study's §7a). Package S12.
+
+## 1d. Anna runtime — extend the existing product (founder decision P-104, 2026-11-06)
+
+The founder supplied **Multi-Agent Architecture Spec v0.5, 2026-11-06**, §§1–32, and directed:
+
+> "Study the attached document, align to the current roadmap, and add the attached plan to the current roadmap,
+> and you own this end to end. This is your assignment to build all of this in a very sophisticated way, not by
+> building new files, but extending what we already have done. Extend and bring to life. Build this out."
+
+This is one epic across the open spine packages below. It extends the existing Anna runtime, evidence, Vault,
+one editor and sequence lifecycle; it does not establish a second architecture or backlog. The current instruction
+supersedes the attachment's §15 plan-only handoff. Implementation is authorized; passing each acceptance gate is
+still required before its downstream phase starts. Existing packages remain open for their other work. No new
+file, service, tool, screen, route, mount, table, dependency or model is approved by this decision. If a requirement
+cannot be met by extending the existing objects, record that precise dependency in this epic before implementing
+it. No work silently weakens isolation, signatures, launch scope, model qualification or a fail-closed gate.
+
+**Account decision reconciled.** `server/services/submission-gateways/gateway-accounts.ts` implements the founder's
+2026-10-01 choice of platform or client accounts, with no row defaulting to platform. The supplied §17.2 now directs
+client-owned accounts only for client filings. P-104 makes that the target for this epic: no silent fallback to a
+house identity. Existing accounts and historical transmissions are not migrated, rewritten or claimed compliant by
+this roadmap entry. S5 must explicitly handle old selections, missing client setup and authority-specific support,
+and retain historical sender identity. A record-only authority must continue to refuse transmission.
+
+### What already exists — §14.3 audit
+
+Read from `concept2cure-v2` on 2026-11-06. **PARTIAL** means implementation exists but the complete v0.5 acceptance
+contract has not been demonstrated; it does not mean absent, production-qualified or newly built.
+
+| Runtime component (§13.1) | Status and file evidence | Smallest completion |
+|---|---|---|
+| Persistent matter memory | **PARTIAL.** `server/services/memory-context-assembler.ts`, `server/services/working-memory.ts`, `server/services/ana-session-bootstrap.ts`, `server/services/client-intelligence-memory.ts` load durable user/client/project context and grounded summaries. | Extend the same records with sourced correction/rule semantics, user/tenant/project precedence, visible reasons and client-confirmed repair closure. Demonstrate next-task behavior and cross-tenant denial. |
+| Controlled skill library | **PARTIAL.** `server/services/ana/skills/types.ts` has version/hash/review state; `server/services/account-skill-bundles.ts` governs tenant changes; `server/services/ana/skills/history.ts` reads audit history. | Require the effective reviewed skill/template version for governed execution; a change reruns the applicable golden fixtures and remains traceable through existing QMS controls. |
+| Stateless spawner | **PARTIAL.** `server/services/ana/sub-agent.ts`, `server/services/ana/sub-agent-limits.ts`, `server/services/ana/sub-agent-result.ts`, `server/services/ana/agentic-workflow-tools.ts` implement isolated briefs, bounded read-only research/verification workers, tenant matching and inherited tool intersection. | Preserve this narrower capability boundary; add independent evidence checking and Anna disposition with an auditable basis. Do not create writable workers to imitate the specification. |
+| Tool and connector layer | **PARTIAL.** `server/services/connectors/connector-registry.ts`, `server/services/security/credential-cipher.ts`, `server/services/submission-gateways/gateway-accounts.ts` provide scoped integration and encrypted capture; client FDA ESG transmit exists while other authorities are record-only. | Extend deterministic credential use with scoped, expiring/revocable grants and reference-only custody. Prove canary secrets absent from model bundles, traces and audit exports. |
+| Scheduler/watchers | **PARTIAL.** `server/services/ana/submission-chat-sweep-scheduler.ts` has managed start/stop, RLS and heartbeat; `server/services/sentinel/scheduler.ts` supplies scheduled work. | Attach owner, stop condition and idempotent WorkTasks to ACK/deadline checks; clocks require confirmed source spans and surface on the existing task ledger. |
+| Approval gates | **PARTIAL.** `server/services/ana/governed-tool-gate.ts` fails closed on command authorization/input; `server/services/ana/run-approval-claim.ts` atomically binds org/user/run/tool-use. `server/services/submission-gateways/governed-transmit.ts` checks staged-byte SHA-256, validation, leaf approvals and signing authority. | Complete decision-basis coverage and the combined tenant/canary/mutation fixture; approval must cover the exact final bytes, identity and action, with refusal audited. |
+
+**Where the code corrects the spec.** §§3/14.4 describe writable task sandboxes. Existing child agents are read-only
+and cannot lock, sign or transmit; preserve that stronger boundary. The parent drafts through the existing governed
+writer and an independent child checks it. §§2/12 name conceptual objects: map them onto the current tenant keys,
+artifact versions, lineage and task records rather than creating duplicate Project/Atom/Task stores. §§11/13 name
+suggested vendors, not permission to replace current integrations. Keep the current model abstraction and the
+approved-model/PQ gates (`docs/adr/0015-ana-autonomy-sub-agents-and-model-governance.md`).
+
+**Further audit findings.** `server/services/intelligence/learning-loop-service.ts` and
+`server/services/intelligence/ana-failure-learning.ts` capture corrections/outcomes. The failure-learning path could activate shared patterns
+from raw correction text after a cohort count, without local abstraction or named human promotion. That is a
+§27.4 violation to contain before any shared-learning claim; neither a cohort count nor model phrasing establishes
+anonymization. `server/services/concept2cure/rules/ruleResolver.ts` routes document-class/persona tracks, and is not the learned
+RuleRecord precedence runtime. Existing correspondence pre-submission checks can consume human-confirmed blocking
+issues, but do not provide the objective/subjective coding and package-bound clean-file review of §§30–32.
+
+**First implementation scope, acceptance pending.** Complete bounded controls in the existing files: exact
+source-quotation checking for `run_agent` verification; persisted Vault sensitivity carried to the canonical model
+gateway; content-free connector failures; fail-closed shared failure-learning; context-rule precedence; and
+human-confirmed correspondence blockers in the current pre-submission verdict. The S4 ledger includes the existing
+AI gateway/connector/classification paths; S10 includes the existing orchestration verdict paths. These are repairs
+and extensions, not a declaration that the seven spike checks passed. Semantic claim verification, classification
+coverage for legacy/unassessed inputs, a durable RuleRecord/hard-gate runtime, scoped credential-grant migration,
+local derivative round-trip and full clean-file review remain unresolved acceptance dependencies.
+
+### Milestones in the existing roadmap — §11 build order
+
+Each row is **queued for v0.5 acceptance** until its stated fixture is run and recorded. A file's existence or an
+older local test does not mark this row green. The two-week spike is a maximum investigation window, not a delay
+before coding; a failed check is a Finding with a named dependency. The lead owns sequencing and integration,
+package owners retain their current file holds, and independent review checks each merged slice.
+
+| §11 phase / milestone | Existing packages and implementation home | Required acceptance evidence |
+|---|---|---|
+| **0 — Runtime spine and expanded §14.4 spike** (§§13–14,19,23,26) | **S4**, with **S9/S11** task/project graph and **S5/S6** trust seams. Existing `ana/`, memory, tasking, gateways and audit; one synthetic project. | Instruction → governed parent draft → independent verifier → Anna disposition. Bounded/idempotent work survives retry. Worker lock attempt fails and is logged; every disposition names atoms/findings/rule and model/version. All seven spike checks below pass. |
+| **1 — Evidence and atom verification** (§§2–3) | **S2/S4/S6**: `clinical-regulatory-evidence/`, `data-room-retrieval.ts`, `ana/drafting-source-lineage.ts`, Vault and citation services. | Provenance survives ingest/retrieval/draft; seeded incorrect citation fails exact document/page/span check. Deterministic outputs pin code/data hashes and can be recomputed. No unverified atom is presented as verified. |
+| **2 — Canvas and one CSR, full gate flow** (§§4,8) | **D4/S4/S6**, existing editor, CSR and governed artifact lifecycle. | Locked protocol contract and effective template precede drafting; unverified claims/open blocker prevent lock. Human accept/reject hunks, version hashes, review/signature segregation and provenance cards work in the existing editor. |
+| **3 — Deterministic biostatistics** (§5) | **S3/S4**, `biostatistics-bridge/`, `ana-biostats/`, `csr/`, `cdisc/`; P-101 keeps SAP in the one editor. | Synthetic ADaM + SAP reproduces TLF cell-for-cell; independently programmed QC catches a seeded cell change; protocol/SAP estimand mismatch raises a Finding. Narrative uses only verified computed values. |
+| **4 — CMC / Module 3** (§6) | **S7/S12**, existing `cmc/` and downstream provenance. | Fixture batch/stability tables match expected cells; OOS is explicitly flagged; QOS and Module 3 share atoms and method references. Existing US small-molecule IND composition boundary stays enforced until separately changed. |
+| **5 — Lab/QNS and RBM** (§7) | **S8/S3/S9**, existing lab/study data and `rbm/`, tasking. | Immutable feed/versioned LOINC/UCUM normalization; QNS recollection/SLA/escalation; seeded deteriorating site crosses QNS/query-aging thresholds in the correct periods. Repeated reports reproduce identical numbers. |
+| **6 — QMS, inspection and governed learning** (§§9,17,20–23,27–29) | **S6/S4/S9**, existing Vault controlled documents, audit, QMS and tenant export/purge paths. | Ineffective template and untrained approver refused; inspection pack exports audit/training/deviation/CAPA/provenance. Support access is approved/logged; offboarding exports open-format client content without secrets and revokes grants under the contractual retention schedule. Rule conflict/edit/revoke/promotion and alignment digest are auditable. Cohort/promotion checks below precede shared learning. |
+| **7 — Publishing, client-account transmission, correspondence and clean-file review** (§§10,17,30–32) | **S5/S10/S9**, existing eCTD/sequence, gateways, agency responses and task clocks. | Clean sequence passes external validation seam; broken link blocks. Exact-byte approval and client-owned scoped grant required to transmit; missing ACK3 creates a Watch task. Full-letter classification extracts all items/dates with spans; humans confirm clocks/subjective coding. Clean-file report is required before ready; confirmed objective deficiencies block, sparse subjective history says “insufficient pattern history”. Track deficiencies/submission, RTF/RTA and review rounds per tenant. |
+| **8 — Device factories on the proven spine** (§4.3) | Existing device/CER capabilities, **D4/S2/S4/S5/S10**, reached under the existing catalog/launch packages. | Synthetic 510(k) predicate cells retain provenance, eSTAR mapping/attachment completeness and version are checked; CER search/screen/appraisal and Annex XIV evidence assemble from the same records. No unqualified type is Anna-enabled. |
+
+The later-phase QMS work prepares cohort controls before phase 7 feedback intelligence; it does not allow letters or
+reviewer identities into a shared pool. Existing launch rows D1–D10 remain the deployment criteria. Vendor onboarding,
+agency test accounts, customer IQ/OQ and model PQ remain explicit dependencies; this epic claims no certification.
+
+### Expanded spike — executable acceptance contract
+
+1. **Independent verification and decision rights (§14.4).** Draft/check are distinct; a deliberate unsupported
+   claim is rejected. Only the governed parent merge reaches lock; a child lock/sign/transmit/clock mutation fails.
+   Reconstruct accept/reject/rework/sequence/lock from the decision audit without conversation text.
+2. **Credential custody (§19.1).** Capture a fixture canary in the existing secure surface; deterministic scoped use
+   succeeds while model context, captured outbound requests, traces, ordinary logs and tenant exports contain no
+   canary. Credential-use events name grant/action/submission without the value. Expired/revoked scope fails.
+3. **Exact-byte approval (§19.2).** Approve a fixture package, change one byte, then transmit: approval is invalid
+   and transmission fails before the wire. Audit both approval invalidation and refusal; reapproval covers new bytes.
+4. **Tenant isolation (§19.3).** Tenant A cannot read tenant B's memory/rules/atoms/audit or invoke B's worker/grant,
+   both through normal requests and as the deployed non-superuser database role with forced RLS.
+5. **Correction and hard gate (§23).** A sourced correction appears in the existing rules view and changes the next
+   applicable task. “Never again” promotes a runtime approval block; a model cannot demote it. Project > tenant >
+   user for soft/standing rules, hard gates at every scope prevail; genuine conflicts produce a decision package.
+6. **Classification and routing (§26.1).** Classify locally; unknown sensitivity tiers up. Highest input tier plus
+   the approved tenant policy authorizes every primary/fallback/embedding call. Raw T3 cannot reach frontier;
+   denial and policy version are logged without source content. Tenant-derived labels alone never relax the floor.
+7. **Derivative round-trip (§26.2).** Local tokenization/minimization removes every fixture secret from captured
+   frontier payload; tokens remain. The mapping stays tenant-local; deterministic merge restores the exact seeded
+   text and local verification checks the result. Missing attestation/map, wrong tenant or policy blocks the call.
+
+**Go/no-go.** Native Anna remains the implementation target (Option A). The lead records each check's command,
+fixture, result and unresolved Finding in this plan's progress log, linked to the actual test output/commit. No
+fabricated green status, provider call or fixture coverage. If the spike fails, keep the existing copilot experience
+honestly limited (Option C); do not market orchestration as qualified. External MCP (Option B) stays an integration
+surface and cannot replace in-product decision enforcement. No human must carry state between spike components.
+
+### v0.5 controls that finish after the spike
+
+- **Trust (§§16–19).** Tenant-scoped content/memory/audit; client-admin credential capture, reference-only grants,
+  immediate revoke/rotation and deterministic use; human approval binds final content; client-visible audit and
+  export. Authority-specific onboarding verifies current mechanics before enablement; an unknown authority is not
+  enabled merely by adding a label.
+- **Continuous evolution (§§20–23).** Typed preference/decision/person/commitment/correction memory with source and
+  supersession; visible user/tenant/project rules; correction → fix → general rule → future behavior. Repeated or
+  severe corrections promote guards, human-only demotion; digest and open repair WorkTasks tie into Deviation/CAPA,
+  with client confirmation required to close repairs.
+- **Locality (§§24–26).** T0 public/T1 internal/T2 confidential/T3 restricted; policy ceiling, residency, approved
+  providers and dated no-training/no-retention terms gate the existing model gateway. Lane A local, B approved
+  frontier, C attested derivative then local reinjection/verification. Tenant/task-class evaluations earn lane use;
+  missing local infrastructure or a policy-permitted qualified model escalates rather than leaking raw content.
+- **Learning boundaries (§§27–29).** Client content/rules/strategy never cross tenants. Shared pattern candidates
+  require local irreversible abstraction, distinct-tenant cohort minimum, contribution opt-in policy, named human
+  invariant review and QMS change control. Reviewer-level observations stay tenant-local. Only content-free craft
+  ships through controlled skill/template versions; opt-out tenants still receive craft. Reports show contribution
+  classes/counts, never candidate content. Tokenization alone is not proof of anonymization.
+- **Agency feedback (§§30–32).** Existing correspondence feeds sourced objective/subjective feedback records tagged
+  by agency/division/product/application. Humans confirm inference before it drives behavior; objective checks are
+  deterministic. The clean-file report joins validation/diff in the exact-package approval bundle. Project/customer
+  learning remains scoped; division-level shared patterns use the cohort/promotion gates. No promise of faster
+  approval substitutes for measured tenant outcomes.
 
 ## 2. The design (binding)
 
@@ -273,7 +410,7 @@ whether work may be committed under it:
 | S1 | **Project and goal.** The project states its goal: the application and the question it must answer. The data room, the protocol and AnA read it. | — | open |
 | S2 | **Data room catalog and lineage.** Immutable capture, versions never overwritten, and lineage kept in perpetuity: the LX and PF fixes of `LINEAGE_END_TO_END_PLAN_2026-09-25.md`, and the catalog of `DATA_ROOM_CATALOG_AND_CLINICAL_DATA_2026-10-08.md`. | — | open |
 | S3 | **Protocol to evidence.** Hypothesis, endpoints and estimands from the protocol. The engines compute biostatistics and safety from the catalog's data. | — | open |
-| S4 | **AnA the writer.** AnA narrates evidence with citations, takes direction, and pushes back when the data do not support a claim. | — | open |
+| S4 | **AnA the writer and runtime.** Cited drafting, project/person memory, independent read-only workers, controlled skills and runtime decision gates; Anna epic §1d (P-104). | — | open |
 | S5 | **eCTD and filing.** eCTD 3.2.2 and 4.0 assembly, validation and dispatch. Module 1 for the US, EU, Japan, Canada and Australia. | — | open |
 | S6 | **Vault, at Veeva parity.** The 2026-07 audit's gaps, closed on the existing Vault. | — | open |
 | S7 | **CMC.** Module 3 composition and study-conduct data capture, as one work area. | — | open |
@@ -302,6 +439,39 @@ Each design package (D0–D7) runs its own work in this order:
 Each session records what it delivered here, under its package, while the coordinator is unavailable. An entry is
 facts only: commits by SHA, evidence by path, what was found, and what is next. It changes no package's scope,
 status or ownership; closing a package stays §3 step 5.
+
+#### S4 / S10 — Anna runtime v0.5, first bounded controls (2026-11-06, P-104)
+
+**What already exists.** The six-component audit and completion contracts are in §1d. These changes extend those
+same services and tests; they do not add a second runtime, tables, routes, tools or files.
+
+| Slice | Commit / existing-file evidence | Verification and limit |
+|---|---|---|
+| Roadmap integration | `7edec20d`: this plan §1d, existing ledger, P-104 and roadmap pointer | Phases 0–8 mapped; full expanded spike remains **acceptance pending**. |
+| Context precedence | `93b6f1a5`: `server/services/ana-context-router.ts` and existing test | 3 context cases pass. Project instructions outrank tenant/user context; this is not a durable RuleRecord/conflict/hard-gate runtime. |
+| Correspondence blocker verdict | `91dcd2ea`: `server/routes/orchestration.ts`, `server/services/orchestration/pre-submission-gate-verdict.ts`, existing `pre-submission-gate-honest.test.ts` / `pre-submission-gate-verdict.test.ts` | 37 tests pass: confirmed open blocking correspondence holds; pending review is conditional; failed scoped read holds. No learned subjective-fit or exact-package clean-file claim. |
+| Connector error custody | `1033d183`: `server/services/connectors/` existing registry and four providers; `connector-tenant-isolation.test.ts` | 40 tests pass, including reflected-secret canaries. Upstream response bodies and arbitrary exception messages cannot become agent-facing errors. Full credential-grant/capture/transmission acceptance is still owed. |
+| Source-aware locality boundary | Existing `server/services/ai-gateway/`, `server/services/ana/draft-project-sources.ts`, `AnaDocumentDraftingService.ts`, and Vault document-catalog readers; `af8723e7` | Agent verification: 12 suites / 238 tests pass. The root's narrower boundary set: 5 files / 123 tests pass (overlapping coverage, not additive). Private-issued selected Vault classifications enforce highest tier, T2/T3 raw frontier refusal and content-free audit, independent of PII mode. Legacy/unclassified caller coverage, ingest classification, approved derivatives/local merge and local hosting remain incomplete. |
+| Independent exact quotation check | Existing `server/services/ana/sub-agent*.ts`, `agentic-workflow-tools.ts` and the existing sub-agent, toolset, verifiers, hostable and passage-staging test suites; `c08aba5c` | 5 suites / 149 tests pass (`/workspace/scratch/runtime-tests.log`, local session output). Source-span comparison is deterministic and isolated from the drafter; missing/malformed source results fail closed. Exact matching does not establish semantic claim support or full spike verification. |
+| Shared-learning containment | Existing `server/services/intelligence/ana-failure-learning.ts`, `counterfactual-replay.ts`, existing tenant fixture tests; `3ad2bb07` | 31 preliminary targeted tests pass. Unsafe shared correction extraction/reads are held rather than promoting tenant text. This does not implement de-identification, contribution policy, human/QMS promotion or a RuleRecord ledger. |
+| Writer-tenant agency requirements and raw-pattern quarantine | Existing creator `db/migrations/20260520_ana_failure_learning.sql`, amended in place under RULE 1; `server/routes/__tests__/ri-agency-requirements-unvalidated-visible-only-to-writer-org.pglite.test.ts`; `3ad2bb07` | 11 PGlite cases pass, including direct SQL as NOSUPERUSER/NOBYPASSRLS, foreign validated-row refusal, own-row access, missing-tenant refusal, and replay twice over the prior permissive policy. The creator also ENABLEs/FORCEs RLS on ownerless legacy `intelligence.failure_patterns` with no runtime policies: A/B/missing-tenant reads are denied, including after replay over disabled RLS. Rows are preserved for privileged maintenance; reviewed cross-tenant promotion remains held. |
+
+**Fresh-upload completion (`a717cfe4`, S6).** The existing Vault ingest now defaults an undeclared fresh upload to
+CONFIDENTIAL/T2. Existing version classifications and same-byte retries are preserved, and the existing upload
+control shows the same default while allowing an explicit Internal choice. Seven server/UI suites, 182 tests,
+pass. Historical classifications are unchanged; content-aware ingest classification remains an acceptance gap.
+
+**Consolidated validation.** Nineteen targeted suites, 434 tests, passed together after integration, covering source
+checks, last-mile routing, tenant SQL policies, connector canaries, correspondence blockers, upload persistence,
+worker decision rights and package-byte integrity. The full TypeScript no-regression gate reports zero errors.
+Additional component-suite counts above overlap this run and are not additive. Validation uses synthetic fixtures
+and mocked provider transport; no live model/gateway call or real-PostgreSQL deployment is claimed.
+
+**Next.** Record the remaining implementation commits and consolidated
+checks, then execute the expanded fixture contract. Exact quotation checks cannot establish semantic claim support.
+No provider call, live transmission, authority-account transition, full derivative round-trip, production rollout,
+customer IQ/OQ or complete spike pass is asserted by these component checks. Phases 1–8 stay queued behind their
+stated gates.
 
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 

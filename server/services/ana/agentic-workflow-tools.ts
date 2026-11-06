@@ -16,6 +16,7 @@
 
 import type { AnaTool } from '../ai-gateway/types';
 import { capToolResultForModel } from './agentic-loop.js';
+import { MAX_AGENT_SOURCE_SPANS, MAX_AGENT_SOURCE_CHARS, MAX_AGENT_QUOTE_CHARS } from './sub-agent-limits.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import { looksLikeProgramUuid } from '../../lib/project-id.js';
 import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access.js';
@@ -139,7 +140,9 @@ export const RUN_AGENT: AnaTool = {
     'figure carries a citation marker (the marker is not checked against any source), whether any labelled figure ' +
     'stated more than once is stated with two different values, and, when a numbered project is open, whether any ' +
     'figure differs from the same labelled figure in the project records. No checker verifies that a citation ' +
-    'exists or supports the text, or that a quotation matches its source. For those, the agent can only find and ' +
+    'exists or supports the text. Optionally provide source_spans to compare exact quotation spans against stored ' +
+    'artifacts through the available project-scoped read_vault_document tool before the agent starts. These checks ' +
+    'compare only those spans, not semantic support or source authenticity. For other citations, the agent can only find and ' +
     'quote source passages, and its report is advisory. The verdict comes only from the checks.',
   input_schema: {
     type: 'object',
@@ -161,6 +164,22 @@ export const RUN_AGENT: AnaTool = {
       text_to_check: {
         type: 'string',
         description: `verify only: the exact text to check, as written (at most ${AGENT_TEXT_TO_CHECK_MAX} characters).`,
+      },
+      source_spans: {
+        type: 'array', minItems: 1, maxItems: MAX_AGENT_SOURCE_SPANS,
+        description: `verify only: optional exact quotation references (up to ${MAX_AGENT_SOURCE_SPANS}). UTF-16 character offsets, end exclusive; source and draft spans must have equal length (1–${MAX_AGENT_QUOTE_CHARS} characters). Source end must be at most ${MAX_AGENT_SOURCE_CHARS}. No source text is accepted as evidence: the server reads each stored artifact.`,
+        items: {
+          type: 'object',
+          properties: {
+            artifact_id: { type: 'string', description: 'Existing artifact id returned by a project-scoped document read.' },
+            source_start: { type: 'integer', minimum: 0 },
+            source_end: { type: 'integer', minimum: 1 },
+            draft_start: { type: 'integer', minimum: 0 },
+            draft_end: { type: 'integer', minimum: 1 },
+          },
+          required: ['artifact_id', 'source_start', 'source_end', 'draft_start', 'draft_end'],
+          additionalProperties: false,
+        },
       },
     },
     required: ['role', 'objective', 'instructions'],

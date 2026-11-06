@@ -39,6 +39,7 @@ function document(id = SOURCE, text = TEXT) {
   return { id, organizationId: 7, programId: PROGRAM, contentHash: 'a'.repeat(64),
     documentTitle: 'Synthetic CSR', fileName: 'csr.pdf', extractedText: text, extractedTextSha256: sha(text),
     isCurrent: true, originalFileAvailable: true, disposition: null as string | null,
+    classification: 'CONTROLLED',
     sourceAccess: { currentUseEligible: true },
     catalog: { contentHash: 'a'.repeat(64), status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } };
 }
@@ -100,6 +101,7 @@ describe('selected-source generation checkpoints', () => {
     const context = await selected();
     await expect(service.draftDocument(request(context))).resolves.toMatchObject({ content: 'Generated draft.' });
     const sent = seam.route.mock.calls[0][0] as GatewayRequest;
+    expect(sent.inputSensitivityTiers).toEqual([3]);
     expect(sent.beforeDispatch).toEqual(expect.any(Function));
     expect(JSON.stringify(sent.messages)).toContain(TEXT);
     expect(sent.metadata).toMatchObject({ projectSourceStatus: 'loaded', projectSources: [expect.objectContaining({

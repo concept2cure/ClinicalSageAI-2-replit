@@ -579,7 +579,11 @@ async function admitVaultDocument(
         fileSize,
         mimeType,
         contentHash,
-        args.classification ?? checkIn?.head.classification ?? 'INTERNAL',
+        // Unreviewed client uploads are confidential, never implicitly T1.
+        // A version inherits its current head; same-bytes retries retain the
+        // recorded classification in ON CONFLICT above. This changes only a
+        // fresh admission with no declared or inherited classification.
+        args.classification ?? checkIn?.head.classification ?? 'CONFIDENTIAL',
         args.retentionPolicy ?? checkIn?.head.retention_policy ?? null,
         null,
         checkIn?.head.id ?? null,
