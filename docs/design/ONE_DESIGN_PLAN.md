@@ -794,6 +794,17 @@ The founder asked this session to take over and finish the project page's work. 
     trunk too; this change leaves one clash fewer. The retired-name ratchet is at 0 for `pj-stageband` and
     "What to do now".
 
+- **D3-3, the team and the settings request**, `6cd6d7c92`, `docs/evidence/DESIGN/D3/D3-3/`.
+  - The team was a section of Plan only. It is now a Team card in Project knowledge on every step. "Manage" opens
+    a Team drawer with the same roster, sharing controls and refusals, and the authority note once.
+  - The drawer closes on a project, account or organization change, so no sharing control from a previous scope
+    stays on screen.
+  - Project settings opens on the field a request names. About's "Edit" opens it on the description.
+  - The card and drawer reuse the one team read and the existing components, in their own file. Three unused
+    `.pj-team` rules became the card's.
+  - 10 cases were red against D3-1 and are green here; 80 of 81 project suites pass, the remaining failure as on
+    trunk. Walked at 1440 and 390, light and dark.
+
 **Not done in D3-1, for the lead**
 
 - The objective as a composer suggestion (D3.md §4.4 item 5.1). S1's objective already offers "Ask AnA to propose
@@ -801,9 +812,9 @@ The founder asked this session to take over and finish the project page's work. 
 
 **Next**
 
-1. D3-3: the Team drawer, and the settings `request` prop that opens the drawer on a named field.
-2. D3-2: the seven Project knowledge cards (§4.8), with the reads lifted into `ProjectWorkspace` (§4.10).
-3. D3-4: the step bodies (§4.7). This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
+1. D3-2: the rest of Project knowledge (§4.8: Filing, Work areas, What AnA knows, Skills, Records), with the reads
+   lifted into `ProjectWorkspace` (§4.10). The Team card gains each person's due work from the lifted read.
+2. D3-4: the step bodies (§4.7). This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
 
 ## 4. How everyone works
