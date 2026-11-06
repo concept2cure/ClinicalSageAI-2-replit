@@ -391,7 +391,25 @@
         "server/services/digest/proactive-digest.ts",
         "server/services/digest/digest-heartbeat.ts",
         "server/services/automation/scheduled-jobs.ts",
-        "server/services/tasking/create-task.ts"
+        "server/services/tasking/create-task.ts",
+        "shared/ana/turn-timeline.ts",
+        "client/src/concept2cure/v2/AnaActivity.tsx",
+        "client/src/concept2cure/v2/AnaWorkPanel.tsx",
+        "client/src/concept2cure/v2/AnaWorkSections.tsx",
+        "client/src/concept2cure/v2/anaWorkModel.ts",
+        "client/src/concept2cure/v2/TurnSummary.tsx",
+        "client/src/concept2cure/v2/turnSummaryRows.ts",
+        "client/src/concept2cure/v2/useAgentActivity.ts",
+        "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "client/src/concept2cure/v2/WhatAnaRemembers.tsx",
+        "server/routes/client-intelligence.ts",
+        "server/mcp/tools/runtime.ts",
+        "server/services/projects/schedule-of-events/service.ts",
+        "server/jobs/scheduleOfEventsSweep.ts",
+        "server/services/tasking/task-planning.ts",
+        "server/services/qms/change-approval-signature.ts",
+        "server/services/qms/changeControl.service.ts",
+        "server/services/qms/controlled-document-service.ts"
       ]
     },
     {
@@ -1022,6 +1040,24 @@
           "package": "S4",
           "status": "planned",
           "scope": "Reconcile existing project objectives, task dependencies, evidence, authoring review and filing gates across runs for CSR/CTD/IND/registrations; distinguish task completion from verified content and filing release, surface blockers and human decisions."
+        },
+        {
+          "name": "legacy_global_wisdom_quarantine",
+          "package": "F1",
+          "status": "implemented_component_verified",
+          "scope": "e464ee0ce holds every unreviewed global wisdom promotion/read/reinforcement path and quarantines historical rows with FORCE RLS/no policies; 59 focused tests, canonical 462/462 replay and native runtime on/off/unset switch denial pass. Tenant-local learning remains."
+        },
+        {
+          "name": "private_user_rule_lifecycle",
+          "package": "S4",
+          "status": "planned",
+          "scope": "Owner-protected private profile subtree, actual private correction sources and hash-only shared audit, expected-version human lifecycle, project>tenant>user precedence with hard gates at every scope; existing user-profile API and What AnA remembers drawer, including private prompt/record/peer isolation."
+        },
+        {
+          "name": "reviewed_aggregate_pattern_contribution",
+          "package": "S4",
+          "status": "planned",
+          "scope": "Extend existing contribution setting, append-only tenant-local class/count events and QMS exact-artifact signature/version controls. Enum-only aggregate candidates require server cohort and current opt-in; no free text, source values, reversible maps or historical wisdom bypass. Existing quarantines stay closed."
         }
       ],
       "hardDependencies": [
@@ -1077,7 +1113,24 @@
           "instruction": "AnA must continuously monitor and orchestrate the whole project and its objectives across workstreams for CTD, CSR, IND and registrations.",
           "implementation": "Extend existing project/run/task/timeline/audit and conversation controls; no new source files or parallel product surface. Source checks and human/independent gates address fallible model proposals; zero-hallucination guarantees are not asserted."
         }
-      ]
+      ],
+      "continuationPublicationVerification": {
+        "consolidatedSuitesPassed": 54,
+        "consolidatedTestsPassed": 1195,
+        "productionBuild": "passed",
+        "packagingChecksPassed": 8,
+        "packagedRegistryPending": 16,
+        "packagedRegistryPassed": 0,
+        "lintErrors": 0,
+        "netLintWarningChange": -14,
+        "committedSecrets": "passed",
+        "compiler": "final_merged_run_pending",
+        "nativeExistingRlsTestsPassed": 49,
+        "nativePrivateOwnerAndPoolTestsPassed": 19,
+        "browserChecksPassed": 22,
+        "nativeBrowserControlsPassed": 9,
+        "countsOverlap": "Component and consolidated counts are not additive."
+      }
     }
   ]
 }

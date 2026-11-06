@@ -625,7 +625,7 @@ actual tenant KMS grants, deployed locality and provider/model qualification ret
 suite counts overlap earlier runs and are not additive. No external provider terms or live service result is
 claimed. This lane's completed file holds are released to the lead; other sessions' holds are unaffected.
 
-#### P-104 continuation — published implementation evidence
+#### P-104 continuation — implementation evidence
 
 `649303b43` binds evidence review and correspondence blocker lifecycle to exact current source and human review.
 `fd0421456` repairs the database owner boundary for private profiles; 167 targeted tests and 49 native RLS tests
@@ -646,8 +646,10 @@ enforcement switch disabled. Tenant-local learning remains available. Cohort siz
 These counts overlap component runs and are not additive. Synthetic model/KMS/transport boundaries are identified
 in their fixtures; no real model PQ, customer KMS grant, provider terms approval or scientific correctness is
 asserted. The built plain-Node qualification verifier reports all 16 registry entries pending. The production
-client/server build and all eight packaging tests pass. Consolidated tests, final compiler and publication gates
-are recorded when completed; the full expanded spike remains acceptance pending.
+client/server build and all eight packaging tests pass. The final merged consolidation passes 1,195 tests in
+54 existing suites; changed-file lint has zero errors and 14 fewer warnings, with no baseline increase. The
+committed-secret gate passes. Final compiler and publication gates are recorded when completed; the full expanded
+spike remains acceptance pending.
 
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
