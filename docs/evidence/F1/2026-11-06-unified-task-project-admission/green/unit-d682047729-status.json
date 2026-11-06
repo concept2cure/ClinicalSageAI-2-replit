@@ -1,0 +1,29 @@
+{
+  "exitCode": 0,
+  "processExitCode": 0,
+  "sourcesUnchanged": true,
+  "args": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/routes/__tests__/unifiedTasks.routes.test.ts",
+    "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts",
+    "server/services/tasking",
+    "server/routes/__tests__/task-management-source-project.test.ts",
+    "server/routes/__tests__/task-management-assignment-record.test.ts",
+    "server/routes/__tests__/task-management-governed-writes.test.ts",
+    "server/routes/__tests__/task-management-governed-writes-review.test.ts",
+    "server/routes/__tests__/task-management-reasons.test.ts",
+    "server/routes/__tests__/task-template-list.test.ts",
+    "server/routes/__tests__/task-template-merge.test.ts",
+    "server/routes/__tests__/task-assignment.pglite.test.ts",
+    "server/routes/__tests__/route-task-guard.pglite.integration.test.ts",
+    "server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts",
+    "server/services/review/__tests__/route-writer-setting.gate.test.ts",
+    "client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskBoardViewOnly.test.tsx",
+    "--reporter=dot"
+  ],
+  "elapsedSeconds": 57.7
+}
