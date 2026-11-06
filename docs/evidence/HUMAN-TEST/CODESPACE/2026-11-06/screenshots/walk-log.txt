@@ -1,0 +1,11 @@
+shot 01-sign-in.png @ /concept2cure/login
+shot 02-home.png @ /concept2cure
+shot 03-projects.png @ /concept2cure/projects
+projects page mentions CDISCPILOT01: true
+projects page mentions [Demo: true
+shot 04-project.png @ /concept2cure/project-home?program=287f0577-8917-40c8-8c4c-2279cefb6d8d
+shot 05-ana-composer.png @ /concept2cure/project-home?program=287f0577-8917-40c8-8c4c-2279cefb6d8d
+shot 06-ana-answer.png @ /concept2cure/conversation-thread?program=287f0577-8917-40c8-8c4c-2279cefb6d8d
+shot 07-csr-build-from-study-data.png @ /concept2cure/document-authoring?program=287f0577-8917-40c8-8c4c-2279cefb6d8d
+Build CSR draft button visible: true
+5xx API responses: ["503 /api/ana-ri/stream"]

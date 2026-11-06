@@ -10,6 +10,8 @@
  *
  * --probe-openai         : no-charge GET /v1/models, authentication only.
  * --probe-anthropic      : no-generation-charge GET /v1/models for Claude auth/model discovery.
+ * --expect-anthropic-models=a,b : with --probe-anthropic, name which of these
+ *                          drafting versions the key can see (none: blocked).
  * --probe-openai-usage   : EXPLICIT, BILLABLE one-response API smoke; may
  *                          identify quota/billing without claiming CSR PQ.
  * --check-app            : requests existing http://127.0.0.1:5000/readyz.
@@ -240,36 +242,60 @@ export function classifyAnthropicResponse(status, data) {
   return 'ANTHROPIC_UNKNOWN_FAILURE';
 }
 
-export async function checkAnthropic({ env, fetcher, timeoutMs = 10000 }) {
+/**
+ * expectedModels: the pinned first-party versions approved for regulatory
+ * drafting (server/services/ai-governance/approved-models.ts). When given, the
+ * report names which of them this key can see; a key that sees none of them
+ * cannot draft, whatever else it can do. Model ids are not secrets.
+ */
+export async function checkAnthropic({ env, fetcher, timeoutMs = 10000, expectedModels = [] }) {
   if (!secretSet(env.ANTHROPIC_API_KEY)) {
     return { status: 'missing', code: 'ANTHROPIC_KEY_MISSING',
       explanation: 'Set ANTHROPIC_API_KEY in GitHub Codespaces secrets for an authorized Claude provider. A key alone does not qualify regulated drafting.' };
   }
+  const headers = {
+    'x-api-key': env.ANTHROPIC_API_KEY,
+    'anthropic-version': '2026-10-21',
+    'Accept': 'application/json',
+    ...(secretSet(env.ANTHROPIC_WORKSPACE_ID)
+      ? { 'anthropic-workspace-id': env.ANTHROPIC_WORKSPACE_ID } : {}),
+  };
   try {
-    const response = await fetcher('https://api.anthropic.com/v1/models?limit=100', {
-      method: 'GET',
-      headers: {
-        'x-api-key': env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2026-10-21',
-        'Accept': 'application/json',
-        ...(secretSet(env.ANTHROPIC_WORKSPACE_ID)
-          ? { 'anthropic-workspace-id': env.ANTHROPIC_WORKSPACE_ID } : {}),
-      },
-      signal: AbortSignal.timeout(timeoutMs),
-    });
-    const body = await response.json().catch(() => null);
+    // The list is paged (has_more / last_id); a few pages cover every model.
+    const ids = [];
+    let response; let body; let after = null;
+    for (let page = 0; page < 5; page += 1) {
+      const url = 'https://api.anthropic.com/v1/models?limit=100' +
+        (after ? '&after_id=' + encodeURIComponent(after) : '');
+      response = await fetcher(url, { method: 'GET', headers, signal: AbortSignal.timeout(timeoutMs) });
+      body = await response.json().catch(() => null);
+      if (!response.ok) break;
+      for (const m of Array.isArray(body?.data) ? body.data : []) if (typeof m?.id === 'string') ids.push(m.id);
+      if (!body?.has_more || typeof body?.last_id !== 'string') break;
+      after = body.last_id;
+    }
     const code = classifyAnthropicResponse(response.status, body);
-    const count = response.ok && Array.isArray(body?.data)
-      ? body.data.filter(x => typeof x?.id === 'string').length : 0;
+    const count = response.ok ? ids.length : 0;
     if (response.ok && count === 0) {
       return { status: 'blocked', code: 'ANTHROPIC_NO_MODELS_VISIBLE',
         httpStatus: response.status, authenticationVerified: true,
         modelsVisible: 0, billingVerified: false,
         explanation: 'The key was accepted but no accessible models were returned; verify project/workspace model permissions.' };
     }
+    const drafting = response.ok && expectedModels.length
+      ? { draftingModelsVisible: expectedModels.filter(id => ids.includes(id)),
+        draftingModelsMissing: expectedModels.filter(id => !ids.includes(id)) }
+      : {};
+    if (drafting.draftingModelsVisible && drafting.draftingModelsVisible.length === 0) {
+      return { status: 'blocked', code: 'ANTHROPIC_DRAFTING_MODELS_NOT_VISIBLE',
+        httpStatus: response.status, authenticationVerified: true,
+        modelsVisible: count, billingVerified: false, ...drafting,
+        explanation: 'The key works, but none of the Claude versions approved for regulatory drafting (' +
+          expectedModels.join(', ') + ') is available to it. Check the key\'s workspace model access in the Anthropic Console.' };
+    }
     return { status: response.ok ? 'passed' : 'blocked', code,
       httpStatus: response.status, authenticationVerified: response.ok,
-      modelsVisible: count, billingVerified: false,
+      modelsVisible: count, billingVerified: false, ...drafting,
       explanation: response.ok
         ? 'Anthropic accepted this key and listed accessible models. Billing headroom, model calls, approved provider placement and PQ are NOT verified.'
         : code === 'ANTHROPIC_KEY_INVALID'
@@ -426,7 +452,9 @@ export async function runCodespacesDoctor({ env = process.env, args = [], fetche
   report.database.live = await probeDatabase({ config, connectDb });
   if (args.includes('--probe-openai-usage')) report.openai = await checkOpenAI({ env, fetcher, probeUsage: true });
   else if (args.includes('--probe-openai')) report.openai = await checkOpenAI({ env, fetcher });
-  if (args.includes('--probe-anthropic')) report.anthropic = await checkAnthropic({ env, fetcher });
+  const expectArg = args.find(a => a.startsWith('--expect-anthropic-models='));
+  const expectedModels = expectArg ? expectArg.slice(expectArg.indexOf('=') + 1).split(',').map(x => x.trim()).filter(Boolean) : [];
+  if (args.includes('--probe-anthropic')) report.anthropic = await checkAnthropic({ env, fetcher, expectedModels });
   if (args.includes('--check-app')) report.application = await checkApplication({
     fetcher, port: Number(env.PORT) || 5000 });
   const required = [

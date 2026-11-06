@@ -49,7 +49,9 @@ There is no model key in this environment. So these were not walked:
 - AI drafting of the 119 headings;
 - the CSR scientific review of drafted text, with each figure mapped to its cell;
 - E-sign of the CSR;
-- placement into a sequence.
+- placement into a sequence;
+- AnA drafting a CSR into the canvas from the conversation. The CSR lane made `draft_authoring_document` reachable
+  on every turn in `1d129897b`, but it needs a model key.
 
 The scientific review will refuse while any section holds a "[…]" placeholder. That is by design (F8).
 
@@ -57,10 +59,31 @@ The scientific review will refuse while any section holds a "[…]" placeholder.
 
 | # | What | Where | Demo impact |
 |---|---|---|---|
-| R-1 | **The import preview renders below the whole section list** (119 rows), far from "Import approved sections into this document", with no scroll or focus to it. A click looks like nothing happened. | `CsrRunBuilds.tsx` import preview | **High on stage:** after clicking, scroll down past the list to "Reason for importing". |
-| R-2 | The import preview request is sent twice per click (two identical `previewOnly` POSTs). | `CsrRunBuilds.tsx` | None visible. |
-| R-3 | The source-preview tables have no column spacing: the header reads "Synthetic LMN201 armSynthetic CONTROL armTotal". | the study-data preview table | Cosmetic. Zoom or expand before showing §11.1. |
-| R-4 | A local seed against a dev server fails with `CORS_ORIGIN_BLOCKED` unless `ALLOWED_ORIGINS` names the seed's base URL. | `server/middleware/enterprise-security.ts`; `scripts/demo/launch-demo` | Setup only: set `ALLOWED_ORIGINS=http://localhost:5200`. |
+| R-1 | **The import preview renders below the whole section list** (119 rows), far from "Import approved sections into this document", with no scroll or focus to it. A click looks like nothing happened. | `CsrRunBuilds.tsx` import preview | **Closed** (`b3c176b34d`, `71095a9003`); re-walked below. |
+| R-2 | The import preview request is sent twice per click (two identical `previewOnly` POSTs). | `CsrRunBuilds.tsx` | None. Not a defect: React StrictMode runs the effect twice in development only. |
+| R-3 | The source-preview tables have no column spacing: the header reads "Synthetic LMN201 armSynthetic CONTROL armTotal". | the study-data preview table | **Closed** (`0180e0eec2`); re-walked below. |
+| R-4 | A local seed against a dev server fails with `CORS_ORIGIN_BLOCKED` unless `ALLOWED_ORIGINS` names the seed's base URL. | `server/middleware/enterprise-security.ts`; `scripts/demo/launch-demo` | Setup only, now in the lane's runbook (`9772520bd`): set `ALLOWED_ORIGINS=http://localhost:5200`. |
+
+### Re-walked on trunk, 2026-11-06, on the Lumen pack
+
+This was run at `7ad066cfe` on the same database as above. It did not write anything: the tables preview is a
+read-only POST, and nothing was frozen or imported.
+
+- **R-1 closed.** The re-walk clicked "Import approved sections into this document" once and waited 1.5 s.
+  - Focus was in the textarea labelled "Reason for importing (8–2000 characters, recorded with each section)".
+  - The field was inside the viewport, 374 px from the top. Nobody scrolled.
+  - The box says "§1 Title Page · Already holds this approved text", which is the import of step 8.
+  - Screenshot: `07-r1-import-first-click.png`.
+- **R-3 closed.** The re-walk opened Freeze newer study data, which only reveals the chooser, then Preview clinical
+  tables and §11.1.
+  - The table is `reg-tbl`, and every header cell has 8 px × 12 px padding.
+  - The columns read Population, Synthetic LMN201 arm, Synthetic CONTROL arm, Total, at 147, 230, 243 and 76 px.
+  - "Return to current frozen study data and CSR build" leads back without freezing.
+  - Screenshot: `08-r3-preview-11-1-spaced.png`.
+- No request failed and the page raised no error.
+
+The CSR lane checked the same two fixes on the CDISC pilot (`../../DEMO/2026-11-05-csr-lifecycle/README.md`, "After the
+founder's rehearsal").
 
 ## For the demo (run-of-show, verified as far as above)
 
@@ -87,12 +110,22 @@ The scientific review will refuse while any section holds a "[…]" placeholder.
    SHA-256.
 3. **The CSR in the one editor.** No separate CSR app: the CSR is one document type, with "Build from the study's
    data" inside the editor.
-4. **Study data.** Open §11.1 and §11.4. The numbers come from the deterministic engine over the frozen source.
-   AnA writes the narrative over them, and every figure is checked against them. The CI and p-value are blank
-   because the source does not carry them, and the platform never invents a statistic.
+4. **Study data.** Show §11.1 and §11.4 without writing anything:
+   - press Freeze newer study data, which only opens the chooser;
+   - pick the clinical source and press Preview clinical tables, a read;
+   - open §11.1 and §11.4;
+   - press "Return to current frozen study data and CSR build".
+
+   This was walked on 2026-11-06: one read-only POST, and the build and its section review came back as they were.
+
+   What to say:
+   - The numbers come from the deterministic engine over the frozen source.
+   - AnA writes the narrative over them, and every figure is checked against them.
+   - The CI and p-value are "—" because the source does not carry them. The platform never invents a statistic.
 5. **Section review.** Template rows are labelled honestly and are not reviewable. Drafted rows are read, then
    approved by someone other than the requester (separation of duties).
-6. **Import.** The approved text lands in this document. Scroll down to the preview (R-1).
+6. **Import.** The approved text lands in this document. One click opens the import box with the reason field
+   focused.
 7. **Assembly.** The gap list: what blocks placement and why, appendix by appendix.
 8. **Review and e-sign.**
    - Send the CSR for review.
@@ -101,7 +134,8 @@ The scientific review will refuse while any section holds a "[…]" placeholder.
    - Place into filing at 5.3.5.1.
 
 **What not to do live**
-- Do not press Build CSR draft, Freeze newer study data or Freeze as this document's study data. They take tens of
-  minutes, or move the panel to study data that has no builds.
+- Do not press Build CSR draft or Freeze as this document's study data. The first takes tens of minutes. The second
+  moves the panel to study data that has no builds. Freeze newer study data is safe on its own; it only opens the
+  chooser (step 4).
 - Do not choose a failed or keyless build.
 - Do not create the CSR live and expect the prepared build to appear in it.

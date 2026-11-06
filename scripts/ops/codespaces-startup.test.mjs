@@ -54,7 +54,30 @@ test('Codespaces main path gates on the doctor before any legacy mutation', () =
   const post = readFileSync(postStart, 'utf8');
   const executableLines = post.split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
   assert.doesNotMatch(executableLines, /pg_hba\.conf|sed -i|ALTER USER postgres|export DATABASE_URL/);
-  assert.match(post, /No database is provisioned or switched/);
+});
+
+test('Codespaces local database: the owner credential never reaches the app process', () => {
+  const create = readFileSync(postCreate, 'utf8');
+  const post = readFileSync(postStart, 'utf8');
+  const code = text => text.split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+  // The state lives outside the repository, written under umask 077.
+  assert.match(create, /C2C_CODESPACE_STATE="\$\{C2C_CODESPACE_STATE:-\$HOME\/\.concept2cure-codespace\}"/);
+  assert.match(create, /umask 077/);
+  // owner.env is read only inside the subshell that provisions or seeds accounts.
+  const ownerReads = code(create + '\n' + post).split('\n').filter(line => /owner\.env/.test(line) && /(^|\s)\.\s|source /.test(line));
+  assert.deepEqual(ownerReads.map(l => l.trim()), ['( set -a; . "$C2C_CODESPACE_STATE/owner.env"; set +a; "$@" )']);
+  // The app.env the server runs with carries no owner credential.
+  const appEnv = create.slice(create.indexOf('cat >"$app_env"'), create.indexOf('EOF', create.indexOf('cat >"$app_env"') + 20));
+  assert.doesNotMatch(appEnv, /DATABASE_OWNER_URL|APP_SERVICE_DB_PASSWORD|C2C_OWNER_PASSWORD|^DATABASE_URL=/m);
+  assert.match(appEnv, /C2C_DB_MODE=local/);
+  // The app is started with every owner/maintenance name the doctor refuses removed.
+  const doctor = readFileSync(resolve(root, 'scripts/ops/codespaces-doctor.mjs'), 'utf8');
+  const names = doctor.slice(doctor.indexOf('const ownerNames = ['), doctor.indexOf('];', doctor.indexOf('const ownerNames = [')))
+    .match(/'([A-Z_]+)'/g).map(s => s.slice(1, -1));
+  for (const name of names) assert.match(post, new RegExp('\\b' + name + '\\b'), name + ' must be removed from the app env');
+  assert.match(post, /exec env "\$\{C2C_UNSET\[@\]\}" NODE_ENV=development/);
+  // The script reports readiness only after /readyz answered.
+  assert.match(post, /c2c_app_up \|\| c2c_blocked/);
 });
 
 test('Codespaces boot does not seed an admin using owner or app role', () => {

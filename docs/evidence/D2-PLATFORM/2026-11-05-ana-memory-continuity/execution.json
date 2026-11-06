@@ -1,0 +1,98 @@
+{
+  "starting_commit": "36169f21f2ce6e9486c8f521bca307dd5ebf8943",
+  "branch": "concept2cure-v2",
+  "recorded_at_utc": "2026-11-06T03:08:05.239458+00:00",
+  "runtime": {
+    "node": "22.23.4",
+    "typescript": "5.6.3",
+    "dependencies": "npm ci against unchanged package-lock.json"
+  },
+  "files": {
+    "server/services/memory-consolidation-job.ts": {
+      "baseline_blob": "d98282570c5fffadc12176b525d6c9ea8cee9c11",
+      "repaired_blob": "12a31c1b44538056deb9f21157e9917366585b3e",
+      "sha256": "a5c53a0d5ba864207a0b13f835a112adc29450b659daaa214e7da4f9d3d9734a"
+    },
+    "server/services/memory-orchestrator.ts": {
+      "baseline_blob": "c9b0aa98e16ea70d9d72dbe2fc20b4ce826d6b0f",
+      "repaired_blob": "acb11544a6744da4d304f667691bf4e31bb8b922",
+      "sha256": "e43a116a46c0ef1df62c2a91221d5ecad379825a86a14334440c4fd7942fcb63"
+    },
+    "server/services/__tests__/memory-consolidation.pglite.integration.test.ts": {
+      "baseline_blob": "d82a96c5e75333ea9f0cb31b0b25aaf6b876a9e3",
+      "repaired_blob": "f637ae6821c5b57ec909805819276e94e8c56401",
+      "sha256": "dd94d09b66ab49248c655aa67955e5e266e2e8fa23b14612375b471e530894e4"
+    },
+    "server/services/__tests__/memory-orchestrator.test.ts": {
+      "baseline_blob": "4f1be15cbc20e33bc3684431bb07e6160c1dcb98",
+      "repaired_blob": "005b3b4139c48066f85ba685fcc5dbcfba37f063",
+      "sha256": "42dc116079ecbb16f4de72514bebefee64ae3a2730a0ef111c97e61919bbeb48"
+    },
+    "tests/services/ana/memory-consolidation-outcomes.test.cjs": {
+      "baseline_blob": "942409cf9ad2dfdfaed3ae0e31d7c8e1e934c1a2",
+      "repaired_blob": "8a476b33216bd48085efe5d54d4f4e17ebc0fabb",
+      "sha256": "dfbae1727eda20a6dfdce13266e2f8f36254944ab783e28a5bd7b21aa8e01dab"
+    }
+  },
+  "results": {
+    "consolidation_before": {
+      "passed": 56,
+      "failed": 6
+    },
+    "consolidation_after": {
+      "passed": 62,
+      "failed": 0
+    },
+    "postgres_engine_before": {
+      "passed": 11,
+      "failed": 2
+    },
+    "postgres_engine_after": {
+      "passed": 13,
+      "failed": 0
+    },
+    "recall_before": {
+      "passed": 25,
+      "failed": 6
+    },
+    "recall_after": {
+      "passed": 31,
+      "failed": 0
+    },
+    "final_node": {
+      "passed": 119,
+      "failed": 0
+    },
+    "final_vitest": {
+      "passed": 79,
+      "failed": 0
+    },
+    "distinct_passed": 198,
+    "build_exit": 0,
+    "lint_errors": 0,
+    "lint_warnings": 4,
+    "test_presence_exit": 0
+  },
+  "limits": [
+    "PGlite executes SQL with mocked tenant connection acquisition and embedding",
+    "No native multi-connection PostgreSQL/RLS run",
+    "No live provider or browser acceptance",
+    "No historical memory repair or automatic activation",
+    "Pre-push/typecheck and publication not yet asserted in this receipt"
+  ],
+  "logs": {
+    "acceptance-regression.tap": "c48dc223779474ff70dd410ac7688f57c3a32450ea26621ff4c6a9752ec67a99",
+    "build.txt": "8c3b2496362ed123b772cbd968ccb9ad6feecb5614de117679e325331448b589",
+    "changed-lint.txt": "da0011a0df1dcfa11ad82f67b476194d373d91e2868d772ac469268ee59c4147",
+    "consolidation-after.tap": "c0168e84d4f0e2b70368a263c6b95b7554a62cfd9884fa8f575cfe47eae7d878",
+    "consolidation-before.tap": "c3b9dfa3c9f77314bc2fce28442fc3fe11dfe0bab2bc2d7c3843cb7d1b5ffedf",
+    "excluded-label-regression.tap": "8bf3c1bc5837a797e4457751b4280ce9984d4ea024eae4ad7b639309a0981210",
+    "final-behavioral.tap": "b5f5a11e3012f89484f34200189e3f3c594ea5bef9b57d39f81535fd5e4fa98e",
+    "final-memory-tests.txt": "2fed6035835cbaef15c2d92dc88b1af6bcffe2ec985a5ffae8cc0f8761cf4a80",
+    "memory-integration-after.txt": "f44dc9d4bf37aff4171467c68bfe47e3026f9edc909055465bdeabfb230230d2",
+    "postgres-engine-before.txt": "b92dfb7c9cdf2e9119b9535136bfed30b1af7ef3e3ad77aa547a17deefaa0177",
+    "recall-after.txt": "23ed0127c59aa9e791f4a214590595d2b8cad27bb5aea8d10f82531dbecf495e",
+    "recall-before.txt": "d0d6ba506a4cdd9c7a834de4f236d206f0ee6805fd2f566291c221521aae169d",
+    "verify-tests.txt": "8adaa02c0b8fcfba9b23ff9a8d5ce3a3f3589e1a8ede4a55fe90bbf6c8dc0291"
+  }
+}
