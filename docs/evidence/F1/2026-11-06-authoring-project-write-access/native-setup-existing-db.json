@@ -1,0 +1,9 @@
+{
+  "startedAt": "2026-11-06T18:34:35.233184+00:00",
+  "pid": 3014,
+  "childPid": 3017,
+  "status": "stopped-own-setup",
+  "dedicatedLoopbackDatabase": true,
+  "observedAt": "2026-11-06T18:38:35.752620+00:00",
+  "reason": "Installer documents that incomplete existing schemas cannot be repaired by drizzle push (install-fresh.mjs12\u201321). Retain first fixture; retry with client available from the start in a fresh task-owned container."
+}

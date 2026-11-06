@@ -10,6 +10,9 @@ type WorkingDocumentRead = { success?: boolean; documents?: Array<AuthDoc & { pr
 function workingDocumentRows(body: WorkingDocumentRead | null): AuthDoc[] {
   return Array.isArray(body?.documents) ? body.documents : [];
 }
+function legacyWorkingDocumentRead(body: WorkingDocumentRead | null, ok: boolean): boolean {
+  return ok && Boolean(body) && Array.isArray(body?.documents);
+}
 function verifiedWorkingDocuments(body: WorkingDocumentRead | null, programId: string | null): boolean {
   return programId !== null && body?.success === true && Array.isArray(body.documents) && body.documents.every(row =>
     row && typeof row.id === 'string' && row.id.trim() && typeof row.title === 'string' && row.program_id === programId);
@@ -48,7 +51,9 @@ export function useScopedDocuments(programId: string | null, status: string) {
     } catch { /* A failed read is reported below, without stale list fallback. */ }
     if (!currentRead()) return false;
     const verified = ok && verifiedWorkingDocuments(body, programId);
-    const usable = recovery ? verified : ok && Boolean(body) && Array.isArray(body?.documents);
+    // Ordinary project lists need the same confirmed result and project identity
+    // as recovery. The legacy organization read grants no creation authority.
+    const usable = recovery || programId !== null ? verified : legacyWorkingDocumentRead(body, ok);
     setLoadedScope(JSON.stringify([session.actor, session.key, programId, readStatus]));
     setDocs(usable ? workingDocumentRows(body) : []);
     setDocsState(usable ? 'ready' : 'error');
