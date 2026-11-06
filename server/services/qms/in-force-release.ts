@@ -51,7 +51,7 @@ export interface InForceRelease {
 
 /** Optional native-source reader policy. Ordinary register callers retain their existing behavior. */
 export interface QmsReleaseReadOptions {
-  admitRelease?: (identity: Pick<QmsDocumentRow,'id'|'organization_id'|'authoring_document_id'>) => Promise<boolean>;
+  admitRelease?: (identity: { id: number; organization_id: number; authoring_document_id?: unknown }) => Promise<boolean>;
 }
 
 const previousReleaseSql = (projection:string) => `SELECT DISTINCT ON (document_id) ${projection}
