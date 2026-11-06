@@ -219,17 +219,16 @@ and extensions, not a declaration that the seven spike checks passed. Semantic c
 coverage for legacy/unassessed inputs, a durable RuleRecord/hard-gate runtime, scoped credential-grant migration,
 local derivative round-trip and full clean-file review remain unresolved acceptance dependencies.
 
-**Continuation audit and work in progress (P-104).** Three further extensions remain in the current homes.
-**F1:** `server/services/account-canon.ts` must commit a canon mutation and its immutable event atomically; the
-existing `server/services/__tests__/account-canon-stores-no-unstated-confidence.test.ts` reports 15 passing component
-cases, with integration still in progress. **F1:** `server/services/submission-gateways/gateway-accounts.ts` and
-`index.ts` must recheck the current organization/gateway/environment authority fingerprint after
-`archiveSentPackage` awaits and immediately before transport. A changed mode, sender, rotated or deleted credential
-must refuse without fallback; expanded `gateway-accounts.test.ts` verification is in progress. This is authority
-credential freshness, not an account-canon memory change. **S4:** source and enforce mandatory `policy_bindings`
-through the existing skill store/runtime, `shared/ana/skills.ts`, `server/services/account-skill-bundles.ts`, and the
-current `client/src/concept2cure/v2/surfaces/AdminSkillForms.ts`, `client/src/concept2cure/v2/SkillStudioParts.tsx` and `client/src/concept2cure/v2/SkillStudio.tsx` surfaces. No completed rule runtime,
-RuleRecord store or hard-gate fixture pass is claimed by this scope entry.
+**Continuation component evidence (P-104).** The existing homes now contain three verified extensions.
+**F1, `852eb1287`:** `server/services/account-canon.ts` commits a canon mutation and its immutable event together;
+15 component tests pass. **F1, `026c0e96f`:** `server/services/submission-gateways/gateway-accounts.ts` and `index.ts`
+recheck the current organization/gateway/environment authority fingerprint after `archiveSentPackage` awaits and
+immediately before transport; changed mode, sender, rotated or deleted credentials refuse without fallback.
+54 tests pass. This is authority-credential freshness, separate from account-canon memory. **S4, `4852aa78b`:**
+sourced mandatory `policy_bindings` are enforced through the existing skill store, governed runtime and Skills
+administration/studio; 78 runtime tests and 10 UI tests pass. The project-mandatory tool envelope is specifically
+`check_dossier_consistency`; no broader tool class, full RuleRecord store or complete §23 fixture is inferred.
+These statuses mean **implemented component verified**, not complete v0.5 acceptance.
 
 **Hard dependencies remain unresolved.** The `local-default` approved-model entry still pins a placeholder rather
 than concrete weights, is not high-risk approved and has no passed PQ (`server/services/ai-governance/approved-models.ts`).
@@ -518,14 +517,29 @@ No provider call, live transmission, authority-account transition, full derivati
 customer IQ/OQ or complete spike pass is asserted by these component checks. Phases 1–8 stay queued behind their
 stated gates.
 
-#### F1 / S4 — Anna runtime continuation (2026-11-06, P-104, active)
+#### F1 / S4 — Anna runtime continuation (2026-11-06, P-104)
 
-The lead continues the same §1d epic through atomic canon fact/event persistence (F1), authority-account freshness
-across archive awaits (F1), and sourced mandatory skill `policy_bindings` in the existing store/runtime and current
-studio (S4). Exact paths and the 15-case canon component result are recorded in §1d. Gateway and policy-binding
-acceptance is in progress; no delivery commit or completed fixture is claimed here. No files, tables, routes,
-tools or models are added. Full spike acceptance remains pending on its seven checks and the explicit local-model
-and reversible-derivative dependencies. Existing authority-account ownership migration is still not asserted.
+| Slice | Commit and component evidence | Status / boundary |
+|---|---|---|
+| Atomic account canon | `852eb1287`; existing `server/services/account-canon.ts` and confidence/audit test, 15 passing cases | **Implemented component verified.** Fact and immutable event commit or roll back together. |
+| Authority freshness at the wire | `026c0e96f`; existing gateway accounts/dispatch services, 54 passing tests | **Implemented component verified.** Recheck authority after archive awaits; changed sender/mode/rotation/deletion refuses. Historical account ownership migration is not asserted. |
+| Sourced mandatory approval rules | `4852aa78b`; existing `policy_bindings`, Skills store/runtime and administration/studio, 78 runtime + 10 UI tests | **Implemented component verified.** Project-mandatory scope is `check_dossier_consistency`; broader tool permissions and full §23 acceptance remain gated. |
+| Qualified model pin capability | Existing controlled registry, gateway, draft endpoint/catalog, PQ verifier and build adapter; implementation not yet committed | **Integration verification pending.** Full build passes, eight packaging checks pass; plain-Node PQ claim read reports 16 pending and zero passed. Concrete/task-scoped evidence is required, and no pending entry becomes qualified by this work. Root records final compiler/tests and commit. |
+| Client administration credential vault | Existing encrypted connector store, gateway account card, Admin Settings capture and fresh tenant SDK/embedding seams; implementation not yet committed | **Integration verification pending.** Six cards: three LLM providers, Veeva Vault, plus PRS/FDA portal storage-only. Client-admin re-authentication, scope/expiry/rotation/revocation, atomic audit, metadata-only reads and tenant-specific SDK use with no platform fallback. UI capture suite: 50 tests pass; root records consolidated backend/compiler checks and commit. |
+
+The new capture surface reuses existing files/cards/dialogs. PEM capture is paste-only: exact multiline text stays
+in ephemeral form state and the password input contains a fixed mask, with clear/replace controls. LLM keys use
+password inputs. Submission, cancellation, session/org changes and late receipts are fenced; secrets do not enter
+AnA context, browser persistence, errors or audit. Storage is not connection validation: PRS/FDA portal actions are
+explicitly not connected, and a stored client model key does not qualify a model. Current grants are checked for
+scope/expiry/revocation and bound to their tenant/provider immediately before deterministic SDK use.
+
+These components extend the same §1d epic without new files, tables, routes, tools or model entries. Qualified-pin
+and vault integration remain pending final root verification. The expanded spike stays **acceptance pending**;
+local qualified weights/PQ, reversible token-map custody/approved derivative policy, the seven spike checks and
+customer deployment evidence remain unresolved. Existing redaction is not a derivative round-trip. Component
+suite counts overlap earlier runs and are not additive. No external provider terms or live service result is
+claimed. This lane's completed file holds are released to the lead; other sessions' holds are unaffected.
 
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 

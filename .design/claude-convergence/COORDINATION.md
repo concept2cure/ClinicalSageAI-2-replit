@@ -163,17 +163,22 @@ The account target changes from the historical platform/client choice to client-
 Historical records are retained; migration and live transport are not claimed by the plan. No child worker gains
 write/lock/sign/transmit rights. Existing approved-model/PQ, tenant and content-bound approval gates remain enforced.
 
-### Anna runtime continuation — active ownership, P-104, 2026-11-06
+### Anna runtime continuation — completed holds released, P-104, 2026-11-06
 
-This continues §1d after the first bounded-control integration. Earlier audit/progress rows above are historical;
-the active holds below are separate and do not transfer another session's existing files.
+This lane's completed holds below are released to the lead. Earlier sessions' file holds above are unchanged.
+Qualified-pin and credential-vault integration remain with their assigned owners/lead until final verification;
+this entry does not release those ongoing implementation files or claim the expanded spike passed.
 
-| Scope and existing files | Active holder | Release condition |
+| This continuation's scope | Holder / state | Evidence and handoff |
 |---|---|---|
-| F1 atomic canon mutation/event: `server/services/account-canon.ts`, existing `server/services/__tests__/account-canon-stores-no-unstated-confidence.test.ts` | Anna architecture lead's assigned canon repair agent | Lead integrates atomic rollback evidence and records commit; 15 component cases reported passing, integration in progress. |
-| F1 authority-account freshness: `server/services/submission-gateways/gateway-accounts.ts`, `index.ts`, existing `__tests__/gateway-accounts.test.ts` | Anna architecture lead's assigned gateway repair agent | Current authority fingerprint rechecked after archive awaits/before wire; mode/sender/rotation/deletion refusals verified. |
-| S4 sourced mandatory skill policies: `shared/ana/skills.ts`, `server/services/account-skill-bundles.ts`, existing `server/services/ana/skills/` runtime, `client/src/concept2cure/v2/surfaces/AdminSkillForms.ts`, `client/src/concept2cure/v2/SkillStudioParts.tsx`, `client/src/concept2cure/v2/SkillStudio.tsx` | Anna architecture lead's assigned skill runtime agent | Runtime enforcement and current UI agree; source/mandatory-policy fixture evidence recorded before claiming completion. |
-| Plan §1d/§3a, existing ledger and this active coordination entry | Anna architecture lead's roadmap agent | Lead stages a `Plan: PLAN` / `Founder-Decision: P-104` scope commit; no implementation files edited here. |
+| F1 atomic canon mutation/event: existing `server/services/account-canon.ts` and confidence/audit test | Released to lead | `852eb1287`, 15 component tests; mutation and event commit atomically. |
+| F1 authority freshness: existing `server/services/submission-gateways/gateway-accounts.ts`, `index.ts`, account tests | Released to lead | `026c0e96f`, 54 tests; authority rechecked after archival before wire. |
+| S4 sourced mandatory Skills policies: existing shared/store/runtime and administration/studio files | Released to lead | `4852aa78b`, 78 runtime + 10 UI tests; project envelope only `check_dossier_consistency`. |
+| Secure credential UI: existing `AdminSettings.tsx`, `GatewayAccountsSetting.tsx`, `DeepResearch.tsx` and three existing tests | Roadmap/UI agent released to lead; integration verification pending | 50 UI tests; metadata-only cards, password/paste-only capture, re-authentication, session fencing and research redirect. No implementation commit asserted yet. |
+| Plan §1d/§3a, existing ledger and this reconciliation entry | Roadmap agent released for lead staging | `Plan: PLAN` / `Founder-Decision: P-104`; final root compiler/backend evidence and remaining commit SHAs to follow. |
 
-No new files/tables/tools/models are approved. The local-model pin/high-risk/PQ and reversible derivative-policy/
-token-map custody dependencies stay unresolved; first-slice tests do not mark the expanded spike complete.
+No new files/tables/tools/models are approved. Six credential cards are three LLM providers, Veeva Vault and two
+portal login stores; PRS/FDA portal actions are explicitly not connected. Qualified model pin capability and vault
+integration have passing component/build evidence but retain **integration verification pending**. The actual
+qualification read reports 16 pending / zero passed; local model pin/PQ and reversible derivative-policy/token-map
+custody dependencies remain unresolved. Other sessions keep their own holds.

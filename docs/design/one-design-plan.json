@@ -786,32 +786,48 @@
         {
           "name": "atomic_account_canon_fact_and_event",
           "package": "F1",
-          "status": "implementation_in_progress",
-          "scope": "existing account-canon.ts mutation and immutable event commit or roll back together; component verification in progress, 15 tests reported passing"
+          "status": "implemented_component_verified",
+          "scope": "existing account-canon.ts mutation and immutable event commit or roll back together",
+          "commit": "852eb1287",
+          "testsPassed": 15
         },
         {
           "name": "authority_account_recheck_after_archive",
           "package": "F1",
-          "status": "implementation_in_progress",
-          "scope": "existing gateway-accounts.ts/index.ts recheck org/gateway/environment authority fingerprint after archive awaits and immediately before transport; refuse mode/sender/rotation/deletion changes without fallback"
+          "status": "implemented_component_verified",
+          "scope": "current org/gateway/environment authority fingerprint rechecked after archive awaits and immediately before transport; mode/sender/rotation/deletion changes refuse without fallback",
+          "commit": "026c0e96f",
+          "testsPassed": 54
         },
         {
           "name": "sourced_mandatory_skill_policy_bindings",
           "package": "S4",
-          "status": "implementation_in_progress",
-          "scope": "extend existing skill-store policy_bindings and current administration/studio surfaces with sourced mandatory rules; runtime acceptance not yet demonstrated"
+          "status": "implemented_component_verified",
+          "scope": "sourced mandatory approval rules in existing Skills store/runtime/UI; project-mandatory envelope only check_dossier_consistency, not every tool or complete RuleRecord runtime",
+          "commit": "4852aa78b",
+          "runtimeTestsPassed": 78,
+          "uiTestsPassed": 10
         },
         {
           "name": "qualified_model_pin_capability",
           "package": "S4",
-          "status": "implementation_in_progress",
-          "scope": "Exact controlled registry/provider/version and task-scoped PQ reference/hash; no placeholder, silent fallback or unverified streaming."
+          "status": "integration_verification_pending",
+          "scope": "strict concrete registry/provider/version and task-scoped PQ reference/hash; current entries remain pending; root final compiler/tests/commit pending",
+          "verification": {
+            "build": "passed",
+            "packagingChecksPassed": 8,
+            "plainNodePqClaims": {
+              "pending": 16,
+              "passed": 0
+            }
+          }
         },
         {
           "name": "client_administration_credential_vault",
           "package": "S4",
-          "status": "implementation_in_progress",
-          "scope": "Metadata-only client administration cards; encrypted grant envelope, tenant/provider binding, re-authenticated atomic audit, rotate/revoke/expiry, no platform fallback for revoked keys, BYOK SDK/embedding isolation."
+          "status": "integration_verification_pending",
+          "scope": "six metadata-only cards: three LLM providers, Veeva Vault, PRS/FDA portal storage-only; client-admin reauth, scoped encrypted grants, expiry/rotation/revoke/atomic audit, fresh tenant SDK/embedding authority with no platform fallback; root final backend/compiler/tests/commit pending",
+          "uiTestsPassed": 50
         }
       ],
       "hardDependencies": [
