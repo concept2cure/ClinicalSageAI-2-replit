@@ -45,6 +45,14 @@ describe('a classified gateway refusal says its cause (2026-11-06)', () => {
     expect(text).not.toMatch(/couldn't complete this request|Try again/);
   });
 
+  it('an account with no credit left is named, not "try again"', () => {
+    const text = streamRefusalText(refused('PROVIDER_ACCOUNT_REFUSED',
+      "The AI provider (Anthropic) refused the request because this deployment's account has no credit or quota left. Retrying will not change this; an administrator must add credit to the provider account."));
+    expect(text).toContain('no credit or quota left');
+    expect(text).toContain('Prior turns are preserved');
+    expect(text).not.toMatch(/couldn't complete this request|Try again/);
+  });
+
   it('a qualified-model refusal sent as 403 is not told to sign in again', () => {
     const text = streamRefusalText(refused('MODEL_NOT_QUALIFIED',
       'No model approved for regulatory drafting and review is configured on this deployment for this request.', 403));

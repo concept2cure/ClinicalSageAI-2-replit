@@ -90,3 +90,16 @@ test('Codespaces boot does not seed an admin using owner or app role', () => {
   assert.match(prelude, /CODESPACES/);
   assert.match(prelude, /return;/);
 });
+
+test('a running app started without a model key this start holds is restarted, not kept', () => {
+  const post = readFileSync(postStart, 'utf8');
+  // The keys are compared with the RUNNING server process's own environment, by name.
+  const lacks = post.slice(post.indexOf('c2c_keys_app_lacks() {'), post.indexOf('\n}\n', post.indexOf('c2c_keys_app_lacks() {')));
+  assert.match(lacks, /\/proc\/\$pid\/environ/);
+  assert.match(lacks, /for name in ANTHROPIC_API_KEY OPENAI_API_KEY/);
+  assert.doesNotMatch(lacks, /echo "\$\{!name/, 'a key value must never be printed');
+  const keep = post.slice(post.indexOf('if c2c_app_up; then\n  C2C_APP_LACKS'), post.indexOf('\nelse\n  c2c_start_app\nfi'));
+  assert.match(keep, /if \[\[ -n "\$C2C_APP_LACKS" \]\]; then[\s\S]*c2c_stop_app\s+c2c_start_app[\s\S]*else\s+c2c_log "The app is already running/);
+  // What the app itself reports for AnA is printed, not only this shell's key check.
+  assert.match(post, /AnA in the running app: /);
+});

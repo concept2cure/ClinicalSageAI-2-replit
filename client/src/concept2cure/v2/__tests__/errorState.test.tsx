@@ -129,3 +129,55 @@ describe('EmptyState tone="error" delegates rather than rendering its own panel'
     expect(screen.queryByRole('alert')).toBeNull();
   });
 });
+
+/* The founder, 2026-11-05: not licensed, not relevant, missing evidence and unavailable to this user are
+   never one generic failure. 117 screens rendered every failed read as "X could not be read" with Try
+   again, a plan without the feature included. Handed the failed read (`read`), the one panel words a
+   refusal through the one read classifier and offers no retry; a failure to answer keeps the caller's
+   words and its retry. */
+describe('ErrorState — a refused read is said as the refusal it is', () => {
+  const refusals = [
+    { name: 'a plan without the feature', read: { status: 403, code: 'MODULE_NOT_LICENSED' }, title: 'Not enabled for your organization', words: /not enabled for your organization, so the task board was not read/ },
+    { name: 'a part not in this release', read: { status: 403, code: 'LAUNCH_SCOPE' }, title: 'Not in this release', words: /not in this release, so the task board was not read/ },
+    { name: 'a role', read: { status: 403, code: 'FORBIDDEN' }, title: 'Your role cannot do this', words: /Your role cannot do this/ },
+    { name: 'an unconfirmed organization', read: { status: 403, code: 'TENANT_REQUIRED' }, title: 'Your organization could not be confirmed', words: /could not be confirmed/ },
+    { name: 'a record not in this organization', read: { status: 404, code: 'PROJECT_NOT_FOUND' }, title: 'Not found in your organization', words: /not found in your organization/ },
+    { name: 'an expired session', read: { status: 401 }, title: 'Your session has expired', words: /Sign in again to read the task board/ },
+  ];
+
+  it.each(refusals)('$name: its own title and words, and no retry', ({ read, title, words }) => {
+    const retry = vi.fn();
+    render(<ErrorState title="The task board could not be read" message="Module access denied" retry={retry} read={read} readWhat="the task board" />);
+    expect(screen.getByRole('alert').textContent).toContain(title);
+    expect(screen.getByRole('alert').textContent).toMatch(words);
+    expect(screen.queryByText('The task board could not be read')).toBeNull();
+    expect(screen.queryByText('Module access denied')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
+  it.each(refusals)('EmptyState tone="error" passes the read through: $name', ({ read, title }) => {
+    render(<EmptyState tone="error" title="The task board could not be read" hint="Module access denied" retry={vi.fn()} read={read} readWhat="the task board" />);
+    expect(screen.getByRole('alert').textContent).toContain(title);
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
+  it.each([
+    { name: 'a server failure', read: { status: 500 } },
+    { name: 'no response at all', read: { status: 0 } },
+    { name: 'no read given', read: undefined },
+  ])('$name keeps the caller\'s words and its retry', ({ read }) => {
+    const retry = vi.fn();
+    render(<ErrorState title="The task board could not be read" message="The server did not answer." retry={retry} read={read} readWhat="the task board" />);
+    expect(screen.getByText('The task board could not be read')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it('an unavailable ownership check keeps a retry, with the classifier\'s words', () => {
+    const retry = vi.fn();
+    render(<ErrorState title="The task board could not be read" retry={retry} read={{ status: 503, code: 'VERIFICATION_UNAVAILABLE' }} readWhat="the task board" />);
+    expect(screen.getByRole('alert').textContent).toContain('The ownership check was unavailable');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+});

@@ -487,6 +487,18 @@ informed consent was.
   worded and not retryable, and the picker offers no retry for it. This completes the D4 hand-off of 2026-11-05.
   All 36 suites that render the editor pass (511).
 
+- **One rule for a refused read, in the panel every screen shares** (D0), `605f9deb5`, and the two editor callers
+  converged onto it, `85b401722`. `docs/evidence/D0/2026-11-06-refused-read-one-rule/`.
+  - `ErrorState` and `EmptyState tone="error"` take the failed read (`read`, its `{ status, code }`). When the
+    read was refused (not licensed, not in this release, a role, an unconfirmed organization, not found, an expired
+    session), the panel shows the classifier's words and no retry. A failure to answer keeps the caller's words
+    and retry. A call site that passes nothing is untouched.
+  - This replaces three per-screen copies of the rule. Two are converged here; the Vault's is handed to its holder.
+    The Data Room walk passed again in the running app on the shared rule.
+  - **Open, for each screen's owner:** 117 screens still collapse refusals (`03-adoption-list.txt`). Each adopts it
+    with one attribute, `read={state} readWhat="…"`. The browser walk caught one of them live: the project page's
+    own Data room section (`ProjectHome.tsx:507`), "couldn't load this project's sources", for a refused read.
+
 **Found**
 
 - A fresh machine also needs `postgresql-16-pgvector` and `npm ci` before the session-start hook runs. That is a

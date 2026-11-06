@@ -51,6 +51,27 @@ It was labelled `source: seed`, note "canvas plumbing check, no model", in the c
 
 No 4xx or 5xx responses and no page errors in either walk.
 
+## A key that is valid but cannot be served
+
+A valid key can still be refused: the account has no credit left, or it cannot use the model asked for. Both read
+"temporarily unavailable", and OpenAI's spent quota (a 429) read "rate limiting … Try again shortly". So a founder
+holding keys would only ever be told to retry. They now read `PROVIDER_ACCOUNT_REFUSED`, with the cause and who fixes
+it (`server/services/ai-gateway/gateway-error-map.ts`, tests in `gateway-error-map-key-refused.test.ts`).
+
+Walked in the running app with the recorder answering as the real API answers an account with no credit (400,
+"Your credit balance is too low"): the conversation says "The AI provider (Anthropic) refused the request because this
+deployment's account has no credit or quota left. Retrying will not change this; an administrator must add credit to
+the provider account." (`04-no-credit-said-plainly.png`).
+
+The same screen offered "Rewrite Section", "Revise Document", "Create Risk Memo" and "Create Strategy Note" beneath the
+refusal. The server sends these with the turn's opening metadata, before the model replies, and each would have met
+the same refusal. A turn that failed before the model wrote anything now offers none; an answered turn keeps them
+(`ConversationThread.tsx`, `conversationThreadCanvas.test.tsx`; `05-refused-turn-offers-no-next-steps.png`).
+
+The Progress panel's "Memory: Could not be read" on both turns is this sandbox's: no `OPENAI_API_KEY` is set, and with
+no `EMBEDDING_PROVIDER` the project memory search embeds through OpenAI. The same holds in a Codespace given only
+`ANTHROPIC_API_KEY`; reported to the Codespace session, which holds its guide.
+
 ## The CSR as a PDF, walked later the same day
 
 From the project's Author step, **Open** on "CDISCPILOT01 Clinical Study Report" opens it in the one editor. Download,
