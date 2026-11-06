@@ -805,6 +805,15 @@ The founder asked this session to take over and finish the project page's work. 
   - 10 cases were red against D3-1 and are green here; 80 of 81 project suites pass, the remaining failure as on
     trunk. Walked at 1440 and 390, light and dark.
 
+- **D3-2a, Project knowledge on every step**, `8225e3075`, `docs/evidence/DESIGN/D3/D3-2a/`.
+  - The side column is the same on all six steps: About, Filing, Team, Work areas, What AnA knows, Skills,
+    Records. The readiness card, Skills, Memory and Instructions were on Author only, and Records was a section of
+    Author.
+  - Filing carries the readiness figure, which opens Author, and each market's line, which opens Submit.
+  - Work areas and Reports are rows of one card. What AnA knows and Records are cards of closed disclosures.
+  - No read is added. 36 cases were red against D3-3 and are green here; 80 of 81 project suites pass, the
+    remaining failure as on trunk. Walked at 1440 and 390, light and dark.
+
 **Not done in D3-1, for the lead**
 
 - The objective as a composer suggestion (D3.md §4.4 item 5.1). S1's objective already offers "Ask AnA to propose
@@ -812,8 +821,8 @@ The founder asked this session to take over and finish the project page's work. 
 
 **Next**
 
-1. D3-2: the rest of Project knowledge (§4.8: Filing, Work areas, What AnA knows, Skills, Records), with the reads
-   lifted into `ProjectWorkspace` (§4.10). The Team card gains each person's due work from the lifted read.
+1. D3-2b: the four reads lifted into `ProjectWorkspace` (§4.10). With them, the Filing card gains agency letters and
+   commitments, the Team card each person's due work, and Records the Activity disclosure.
 2. D3-4: the step bodies (§4.7). This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
 
