@@ -42,6 +42,7 @@ import { sourceReadView } from '@shared/data-room-processing-status';
 import { ProjectTeamCard, ProjectTeamDrawer, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
 import type { ProjectTeamMember } from '@shared/project-team';
 import { useAgencyInbox, type CommRow } from './AgencyInbox';
+import { isCommitmentsPayload, type CommitmentsPayload } from './CommitmentRow';
 import { ProjectSide } from './ProjectSide';
 import { ProjectClientReview } from './ProjectClientReview';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
@@ -880,6 +881,18 @@ function teamWork(work: DataState<WorkViewRow>, team: ProjectTeamMember[] | null
 
 /** The Filing card's agency letters (D3-2b, D3.md §4.8 item 2), from the page's one inbox read: open letters and the
  *  next response due. A read not in, or failed, says so. */
+/** The Filing card's commitments to the agency (D3-2b, D3.md §4.8 item 2): open ones, how many are overdue (the
+ *  server's effective status), and the next due date. A read not in, or failed, says so. */
+function commitmentsWords(state: DataState<CommitmentsPayload>): string {
+  if (state.loading) return 'Reading…';
+  if (state.error || !state.data) return 'Could not be read';
+  const open = state.data.commitments.filter(c => !['fulfilled', 'waived', 'released'].includes(c.effectiveStatus));
+  if (!open.length) return 'None open';
+  const overdue = open.filter(c => c.effectiveStatus === 'overdue').length;
+  const next = open.map(c => c.due_date?.slice(0, 10)).filter((day): day is string => Boolean(day)).sort()[0];
+  return `${open.length} open${overdue ? ` · ${overdue} overdue` : ''}${next ? ` · next due ${dayWords(next)}` : ''}`;
+}
+
 function lettersWords(live: { loading: boolean; error?: unknown }, comms: CommRow[]): string {
   if (live.loading) return 'Reading…';
   if (live.error) return 'Could not be read';
@@ -1545,8 +1558,39 @@ const filingCopyIn = (docs: ListRead) => (filingId: string): RowCopy => {
   return editingCopyOf(rows, filingId, (d) => d.filingDocumentId);
 };
 
+/** The project's audit read, every act with its actor, its words and the reason recorded with it (21 CFR 11.10(e)).
+ *  Since D3-2b it is the Records card's last disclosure, "Activity", on every step (it was a section of Author). */
+function ProjectActivity({ activityState }: { activityState: DataState<{ activity: ActivityRow[] }> }) {
+  return (
+    <Anchored
+      state={activityState}
+      loadingText="Loading activity…"
+      errorTitle="Couldn't load project activity"
+      errorHint="The project audit read didn't respond. Sign in and retry, or check the service is reachable."
+      emptyTitle="No recorded activity yet"
+      emptyHint="Audited actions on this project appear here as they happen."
+      isEmpty={(d) => (d.activity ?? []).length === 0}
+      render={(d) => (
+        <div className="pj-acts">
+          {(d.activity ?? []).map((a, i) => (
+            <div key={i} className="pj-act">
+              <span className="pj-act-w">{a.actor_name ?? (a.actor_id != null ? 'User ' + a.actor_id : 'System')}</span>
+              <span className="pj-act-t">
+                {activityLabel(a)}
+                {/* The reason recorded with the act, available for review (21 CFR 11.10(e)). */}
+                {a.reason ? <span data-testid="pj-act-reason">. Reason: {a.reason}</span> : null}
+              </span>
+              <span className="pj-act-n">{fmtWhen(a.occurred_at) ?? ''}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    />
+  );
+}
+
 function AuthorWorkspace({
-  pid, dossier, onNav, onAsk, activityState, docs, onRetryDocs, onOpenDoc, cmcComposes,
+  pid, dossier, onNav, onAsk, docs, onRetryDocs, onOpenDoc, cmcComposes,
 }: {
   /** regulatory_programs UUID — scopes the records to this project. */
   pid: string | null;
@@ -1554,7 +1598,6 @@ function AuthorWorkspace({
   dossier: DossierState;
   onNav: (id: string) => void;
   onAsk: (question: string) => void;
-  activityState: DataState<{ activity: ActivityRow[] }>;
   /** GET /api/authoring/docs?programId= — the project's documents. */
   docs: ListRead;
   onRetryDocs: () => void;
@@ -1577,36 +1620,6 @@ function AuthorWorkspace({
             card in Project knowledge, on every step (D3-2a). */}
         <ModuleCompletion read={dossier} copyFor={copyFor} onOpen={onOpenDoc} onAsk={onAsk} />
 
-        {/* The project's audit read. Its team and tasks are on Plan (CLIENT_JOURNEY pass 3). */}
-        <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Activity</h2></div>
-          <div>
-            <Anchored
-              state={activityState}
-              loadingText="Loading activity…"
-              errorTitle="Couldn't load project activity"
-              errorHint="The project audit read didn't respond. Sign in and retry, or check the service is reachable."
-              emptyTitle="No recorded activity yet"
-              emptyHint="Audited actions on this project appear here as they happen."
-              isEmpty={(d) => (d.activity ?? []).length === 0}
-              render={(d) => (
-                <div className="pj-acts">
-                  {(d.activity ?? []).map((a, i) => (
-                    <div key={i} className="pj-act">
-                      <span className="pj-act-w">{a.actor_name ?? (a.actor_id != null ? 'User ' + a.actor_id : 'System')}</span>
-                      <span className="pj-act-t">
-                        {activityLabel(a)}
-                        {/* The reason recorded with the act, available for review (21 CFR 11.10(e)). */}
-                        {a.reason ? <span data-testid="pj-act-reason">. Reason: {a.reason}</span> : null}
-                      </span>
-                      <span className="pj-act-n">{fmtWhen(a.occurred_at) ?? ''}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            />
-          </div>
-        </section>
     </>
   );
 }
@@ -1764,6 +1777,10 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   const work = useProjectWork(pid, workVersion);
   const [inboxToast, fireInbox] = useToast();
   const inbox = useAgencyInbox(pid, fireInbox);
+  /* The project's commitments to the agency, by the verified integer project id the route takes (D3.md §4.10;
+     null until the team read verifies it). The Filing card says them; Respond's Commitments (D3-4) will read the same. */
+  const commitPath = sharingProjectId !== null ? `/api/concept2cure/projects/${sharingProjectId}/commitments` : null;
+  const commitments = useLiveData<CommitmentsPayload>(commitPath, [commitPath], isCommitmentsPayload);
   /* The Team drawer (D3.md §4.9), opened by the Team card's "Manage"; a project switch closes it. */
   const [teamOpen, setTeamOpen] = React.useState(false);
   React.useEffect(() => { setTeamOpen(false); }, [pid]);
@@ -2171,7 +2188,6 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
               dossier={dossier}
               onNav={onNav}
               onAsk={ask}
-              activityState={activityState}
               docs={docsRead}
               onRetryDocs={reloadDocs}
               onOpenDoc={openDocument}
@@ -2244,6 +2260,13 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                   <span className="pj-k-row-v">{lettersWords(inbox.live, inbox.comms)}</span>
                   {I.right}
                 </button>
+                {commitPath && (
+                  <button type="button" className="pj-k-row" aria-label={`Commitments: ${commitmentsWords(commitments)}`} onClick={() => chooseStage('respond')}>
+                    <span className="pj-k-row-l">Commitments</span>
+                    <span className="pj-k-row-v">{commitmentsWords(commitments)}</span>
+                    {I.right}
+                  </button>
+                )}
               </section>
             )}
             {/* The team, on every step (D3-3; it left Plan). "Manage" opens the Team drawer. */}
@@ -2252,7 +2275,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             <C2CToast msg={inboxToast} />
             <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav} />
             {/* What AnA knows, the skills it follows here, and the project's records: on every step (D3-2a). */}
-            <ProjectSide pid={pid} onAsk={onAsk} />
+            <ProjectSide pid={pid} onAsk={onAsk} activity={<ProjectActivity activityState={activityState} />} />
           </aside>
           {teamOpen && pid && (
             <ProjectTeamDrawer programId={pid} state={teamState} onRetry={reloadTeam} onClose={() => setTeamOpen(false)}

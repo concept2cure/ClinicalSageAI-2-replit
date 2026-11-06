@@ -6,7 +6,8 @@
  * One dev-login. The project page's unified work and agency inbox are not read again on any step change (counted
  * at the network). At mount the dev server reads each twice: main.tsx renders under React.StrictMode, which runs
  * effects twice in development only. The Filing card says the agency letters and opens Respond; the
- * Team card says each person's open work. 1440 light and dark, 390 light. Log: ./walk.json, shots: ./screenshots/.
+ * Team card says each person's open work. The commitments row reads the
+ * project's commitments; Activity is the Records card's last disclosure. 1440 light and dark, 390 light. Log: ./walk.json, shots: ./screenshots/.
  */
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -72,6 +73,19 @@ const COMMS = /\/agency-communications(\?|$)/;
         return b && !/Reading/.test(b.getAttribute('aria-label'));
       }, null, { timeout: 20000 });
       const lettersName = await letters.getAttribute('aria-label');
+      /* The commitments row (second half): present once the team read has verified the project's integer id. */
+      await page.waitForFunction(() => {
+        const b = Array.from(document.querySelectorAll('button')).find((x) => (x.getAttribute('aria-label') || '').startsWith('Commitments: '));
+        return b && !/Reading/.test(b.getAttribute('aria-label'));
+      }, null, { timeout: 20000 });
+      const commitmentsName = await filing.getByRole('button', { name: /^Commitments: / }).getAttribute('aria-label');
+      /* Activity is the Records card's last disclosure. */
+      const records = page.getByRole('region', { name: 'Records', exact: true });
+      const activity = records.locator('details[data-records-section="activity"]');
+      await activity.locator('summary').click();
+      const activityRows = await activity.locator('.pj-act').count();
+      expect(activityRows > 0, 'the Activity disclosure lists the project\'s acts');
+      await activity.locator('summary').click();
       const team = page.getByRole('region', { name: 'Team', exact: true });
       await page.waitForFunction(() => !!document.querySelector('[aria-labelledby="pj-team-card-h"] .pj-team-due, [aria-labelledby="pj-team-card-h"] [role="status"]'), null, { timeout: 20000 });
       const teamLines = await team.locator('.pj-team-due, [role="status"], .pj-k-row').allTextContents();
@@ -96,7 +110,7 @@ const COMMS = /\/agency-communications(\?|$)/;
       const shotFile = await shot(page, `${width}-${theme}-filing-team.png`);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
       expect(!overflow, `no sideways scroll at ${width}`);
-      step(`the Filing and Team cards, ${width} ${theme}`, { lettersName, teamLines, shot: shotFile });
+      step(`the Filing and Team cards, ${width} ${theme}`, { lettersName, commitmentsName, activityRows, teamLines, shot: shotFile });
       await ctx.close();
     }
     log.result = 'pass';

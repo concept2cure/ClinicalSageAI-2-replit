@@ -1,7 +1,7 @@
 {
   "base": "http://127.0.0.1:5000",
   "program": "0e8acdb9-40ba-41ed-bb5d-d0b3cf836a54",
-  "startedAt": "2026-11-06T18:34:23.753Z",
+  "startedAt": "2026-11-06T19:09:58.125Z",
   "steps": [
     {
       "name": "no read of the work or the inbox on any of eight step changes; the letters row opens Respond",
@@ -18,6 +18,8 @@
     {
       "name": "the Filing and Team cards, 1440 light",
       "lettersName": "Agency letters: None open",
+      "commitmentsName": "Commitments: None open",
+      "activityRows": 3,
       "teamLines": [
         "Nothing open"
       ],
@@ -26,6 +28,8 @@
     {
       "name": "the Filing and Team cards, 1440 dark",
       "lettersName": "Agency letters: None open",
+      "commitmentsName": "Commitments: None open",
+      "activityRows": 3,
       "teamLines": [
         "Nothing open"
       ],
@@ -34,6 +38,8 @@
     {
       "name": "the Filing and Team cards, 390 light",
       "lettersName": "Agency letters: None open",
+      "commitmentsName": "Commitments: None open",
+      "activityRows": 3,
       "teamLines": [
         "Nothing open"
       ],
@@ -55,5 +61,5 @@
     "comms": 2
   },
   "result": "pass",
-  "finishedAt": "2026-11-06T18:34:44.375Z"
+  "finishedAt": "2026-11-06T19:10:20.433Z"
 }

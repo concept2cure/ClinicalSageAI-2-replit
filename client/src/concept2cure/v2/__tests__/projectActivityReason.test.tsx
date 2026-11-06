@@ -47,6 +47,11 @@ describe('the Project home feed names a governed act and its reason', () => {
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project' } as any} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />);
     const reason = await screen.findByTestId('pj-act-reason');
     expect(reason.textContent).toBe('. Reason: The EU filing starts this quarter');
+    /* D3-2b: the feed is the Records card's last disclosure, "Activity", in Project knowledge on every step. */
+    const disclosure = reason.closest('details[data-records-section="activity"]');
+    expect(disclosure?.querySelector('summary')?.textContent).toBe('Activity');
+    expect(disclosure?.closest('aside.pj-side')).toBeTruthy();
+    expect(document.querySelector('.pj-main')?.textContent ?? '').not.toMatch(/No recorded activity yet|Loading activity/);
     expect(reason.closest('.pj-act')?.textContent).toContain('Market added · EMA');
     expect(screen.getAllByTestId('pj-act-reason')).toHaveLength(1);
   });
