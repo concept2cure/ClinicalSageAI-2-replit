@@ -38,6 +38,16 @@ const SENSITIVE_KEY_FRAGMENTS = [
   'pin',
   'privatekey',
   'private_key',
+  'credential',
+  'reauth',
+  'keypem',
+  'key_pem',
+  'certpem',
+  'cert_pem',
+  'passphrase',
+  'recoverycode',
+  'recovery_code',
+  'otp',
 ];
 
 function isSensitiveKey(key) {
@@ -47,7 +57,9 @@ function isSensitiveKey(key) {
 }
 
 function scrubSensitive(value, depth = 0) {
-  if (depth > 8 || value == null) return value;
+  // A depth limit must truncate, never return an unexamined secret subtree.
+  if (depth > 8) return '[REDACTED:DEPTH_LIMIT]';
+  if (value == null) return value;
   if (Array.isArray(value)) return value.map(item => scrubSensitive(item, depth + 1));
   if (typeof value !== 'object') return value;
   const out = {};
