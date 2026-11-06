@@ -68,7 +68,7 @@ introduced by this continuation.
 | Runtime | 20 tests | Registered parallel workers, actual SQL sources, durable coordination/cancellation/refusals, private external/write holds and safe wire data. |
 | Private SQL/AES | Latest 34 tests | Owner/admin separation, whole encrypted capture/history, immutable source checks, revoked rules, malicious peer data and two-turn tenant-key rotation. |
 | Gateway SDK seam | 24 tests | Private text appears only in final SDK parameters; generic routing/dispatch/audit has no canary; prepared-payload SHA matches actual parameters. Copied capabilities/lineage, revoked admission, frontier tier changes and demo/cache/stream responses are refused. Network I/O is substituted. |
-| Private owner profile | 30 native + 11 omission tests | Real non-bypass RLS, current owner CRUD/version/retry guards, missing unique-index convergence and truthful generic-context omission. |
+| Private owner/pool profile | 30 native + 11 omission tests | Real non-bypass RLS, current owner CRUD/version/retry guards, missing unique-index convergence and truthful generic-context omission. |
 | Private UI/telemetry | 45 tests | Owner/session fencing, exact intent receipts, uncertain save reconciliation and request/response body suppression. |
 | Shared learning | 260 focused + 16 native QMS | Audited contribution policy, closed classes/counts, current cohort/signatures, explicit install and fresh loader admission. |
 | Database deployment | 462 migrations + 49 native RLS | Canonical replay and actual non-superuser/non-bypass row security after owner-index repair. |
@@ -86,3 +86,25 @@ Run the named existing suites with Vitest and one worker; native `.dbtest.ts` su
 against a disposable canonical PostgreSQL database under the provisioned non-bypass runtime role. Current detailed
 session logs and browser captures are in `/workspace/scratch/anna-*` and `/workspace/scratch/private-*`; they contain
 synthetic fixtures only. Final merged compiler, build, pre-push and remote publication receipts follow after success.
+
+
+### Final integrated source checks before publication
+
+The merged component consolidation passes **844 tests in 41 suites**; its 30 database-only cases are skipped in
+that command and pass separately on native PostgreSQL. The consolidation used the installed Node 24 runtime;
+individual native/SDK/build and canonical compiler/release checks use the repository's Node 22 runtime. A later
+child-denial delta passes 5 cases, including actual audit INSERT failure and no second model call.
+
+The joined native authoring fixture now passes **21/21**, with actual non-bypass RLS/JWT/bcrypt: ordinary AnA
+unverified genesis, a real child freeze attempt with durable refusal, saved independent check, assigned human
+finding decisions, an actual qualification hold, full canonical human rewrite/lineage, fresh review and reviewer
+signature, then author freeze bound to the exact saved document SHA. Separate CSR scientific-evidence denial
+remains tested. Qualification component fixtures pass **52/52**, including refusal of legacy model-name-only
+records and calls without actual gateway request identity. No fixture claims a passed real model PQ.
+
+`75c351e96` records the denial and fixture/lint repairs. The final ordinary AnA gate additionally checks immutable
+successful noncached/nondeterministic gateway delivery against the exact retained turn, original actor/project and
+current repository-controlled qualified pin. Generic displayed provenance and old provider/model strings confer
+no release authority. The production client/server and both standalone audit/qualification verifiers build. The
+mandatory changed-source lint checks pass with zero errors and a net reduction of four warnings. Final canonical
+compiler, pre-push and confirmed remote receipt remain the publication gate.
