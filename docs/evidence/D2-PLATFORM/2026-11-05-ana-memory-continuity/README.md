@@ -13,6 +13,7 @@ Completes: `server/services/memory-consolidation-job.ts` and `server/services/me
 - `server/services/ana-ri/memory-acceptance.ts`: the existing full-content acceptance comparison and lexical contradiction check. It already distinguishes complete content and preserves pending review. No new acceptance system is needed.
 - `server/services/memory-orchestrator.ts`: the existing recall ranking, age policy and deduplication. It compares only 120 leading content characters, allowing different conclusions to collapse.
 - `server/services/memory-context-assembler.ts`: the existing caller of that orchestrator, which formats the selected records for AnA. Its retrieval scopes and deadlines remain unchanged.
+- `package.json`: existing pre-push command definitions. The eCTD and risk-code checks already use `node --import tsx`; the one-product check still used the socket-opening CLI. Only its two launch commands are aligned to that existing loader after reproducing the runtime failure.
 - `tests/services/ana/memory-consolidation-outcomes.test.cjs`, `server/services/__tests__/memory-consolidation.pglite.integration.test.ts`, and `server/services/__tests__/memory-orchestrator.test.ts`: existing behavioral and PostgreSQL-engine tests, extended in place.
 - `.design/claude-convergence/COORDINATION.md`: inspected at the starting snapshot; none of the changed production paths is held by another listed session.
 
@@ -47,6 +48,12 @@ The final combined runs on the repaired source passed **119 Node cases and 79 Vi
 `npm run build` passed, including the client, server and audit-chain verifier bundles. Targeted ESLint reported zero errors and four warnings on already-large functions; the pushed-files warning ratchet remains the enforced no-growth check. `scripts/ai/verify-tests.sh` exited zero; its filename-only scan warns about `memory-consolidation-job.ts`, whose actual existing tests are named `memory-consolidation.pglite.integration.test.ts` and `memory-consolidation-outcomes.test.cjs`. Those suites were executed above. `scripts/ai/context-pack.sh` could not generate its optional context bundle because neither packager is installed; repository sources and instructions were inspected directly.
 
 Independent read-only review of the recall change found no blocker. Full pre-push/typecheck and publication outcomes are recorded separately after the ordinary hooked push; this receipt does not assert they have completed.
+
+## Publishing-runtime repair
+
+The CLI push stopped before hooks because no GitHub write credential is available to local Git. The connected GitHub app has repository push permission. Before using it, the unchanged `.husky/pre-push` is run locally against the exact committed candidate and current remote parent. Publication must match that candidate's complete Git tree and use a non-force, expected-head branch update.
+
+The first local hook run stopped at `ci:one-product`: the `npx tsx` CLI attempted to listen on `/tmp/tsx-1000/260.pipe`, which the workspace refuses with `EPERM`. Running the unchanged script with `node --import tsx` passed, as did its existing self-test that refuses an added surface, added rail entry and reasonless grant. `package.json` now uses that loader for `ci:one-product` and `ci:one-product:selftest`, matching `ci:ectd-stubs` and `ci:risk-codes`. The checker, its baseline, the plan, `.husky/pre-push`, dependencies and lockfile are unchanged. This is a launcher correction, not a disabled check. Full-hook completion remains required before the connected app updates the branch.
 
 ## Reproduction
 
