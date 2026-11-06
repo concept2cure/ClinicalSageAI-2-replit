@@ -94,6 +94,27 @@ afterEach(() => {
 });
 
 describe('poolInstrumentation tenant-scope enforcement', () => {
+  it('stamps the verified owner on every query and empties it for the next ownerless scope', async () => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, clientCalls } = makeMockPool();
+    await runWithTenantScope({ ...SCOPE, accountId: 7 }, () => pool.query('SELECT user_id FROM ana_relational_profiles'));
+    await runWithTenantScope({ ...SCOPE, accountId: 8 }, () => pool.query('SELECT user_id FROM ana_relational_profiles'));
+    await runWithTenantScope(SCOPE, () => pool.query('SELECT user_id FROM ana_relational_profiles'));
+    expect(clientCalls.filter(entry => SET_CONFIG_RE.test(entry.text)).map(entry => entry.params)).toEqual([
+      ['42', 'org-uuid-42', '', '7'], ['42', 'org-uuid-42', '', '8'], ['42', 'org-uuid-42', '', ''],
+    ]);
+  });
+
+  it('refuses an owner mutated after scope admission before it reaches the driver', async () => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, clientCalls } = makeMockPool();
+    const scope = { ...SCOPE, accountId: 7 };
+    await runWithTenantScope(scope, async () => {
+      scope.accountId = 2147483648;
+      await expect(pool.query('SELECT user_id FROM ana_relational_profiles')).rejects.toThrow(/account id/);
+    });
+    expect(clientCalls).toHaveLength(0);
+  });
   it('is INERT while RLS_ENFORCE is off — delegates straight to pool.query, no transaction', async () => {
     const { pool, poolCalls, clientCalls } = makeMockPool();
     // enforce unset (off), even with a scope present

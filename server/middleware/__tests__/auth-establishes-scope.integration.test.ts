@@ -142,6 +142,7 @@ interface DriveResult {
   scoped: boolean;
   /** tenantId the downstream handler observed, or null when unscoped. */
   tenantId: string | null;
+  accountId: number | null;
   /** orgUuid the downstream handler's scope carried — what app.current_org_id is set to. */
   orgUuid: string | null;
   /** req.tenantContext.organizationUuid as published to the handler. */
@@ -177,6 +178,7 @@ function drive(
     let reachedHandler = false;
     let scoped = false;
     let tenantId: string | null = null;
+    let accountId: number | null = null;
     let orgUuid: string | null = null;
     let ctxOrgUuid: string | null = null;
     let body: any;
@@ -184,7 +186,7 @@ function drive(
     const settle = () => {
       if (settled) return;
       settled = true;
-      resolve({ status, scoped, tenantId, orgUuid, ctxOrgUuid, reachedHandler, body });
+      resolve({ status, scoped, tenantId, accountId, orgUuid, ctxOrgUuid, reachedHandler, body });
     };
 
     const res = Object.assign(new EventEmitter(), {
@@ -215,6 +217,7 @@ function drive(
       const scope = getTenantScope();
       scoped = !!scope;
       tenantId = scope?.tenantId ?? null;
+      accountId = scope?.accountId ?? null;
       orgUuid = scope?.orgUuid ?? null;
       ctxOrgUuid = (req as { tenantContext?: { organizationUuid?: string | null } }).tenantContext?.organizationUuid ?? null;
       if (opts.inspect) void opts.inspect(req, res).then(settle, reject);
@@ -258,6 +261,14 @@ afterEach(() => {
 });
 
 describe('authenticateToken opens a tenant scope on the member path', () => {
+  it('uses the verified JWT subject instead of account/tenant headers on both authentication gates', async () => {
+    const { authenticateToken } = await importRealMiddlewareAuth();
+    const { authMiddleware } = await import('../../auth');
+    for (const middleware of [authenticateToken, authMiddleware as Middleware]) {
+      const result = await drive(middleware, 'Bearer x', { headers: { 'x-user-id': '999', 'x-account-id': '999', 'x-tenant-id': '999' } });
+      expect(result).toMatchObject({ status: 200, tenantId: '2', accountId: 7, reachedHandler: true });
+    }
+  });
   it('a valid token yields an active scope for the downstream handler', async () => {
     const { authenticateToken } = await importRealMiddlewareAuth();
 
@@ -267,6 +278,7 @@ describe('authenticateToken opens a tenant scope on the member path', () => {
     expect(r.reachedHandler).toBe(true);
     expect(r.scoped).toBe(true);
     expect(r.tenantId).toBe('2');
+    expect(r.accountId).toBe(7);
   });
 
   it('no token → 401 and the handler never runs (no scope)', async () => {
@@ -339,7 +351,7 @@ describe('the auth boundary retains the request database client', () => {
           expect(result.rows).toEqual([{ request_context_probe: 1 }]);
           expect(requestConnections).toBe(1);
           expect(requestStatements[0].text).toContain("set_config('app.current_tenant_id'");
-          expect(requestStatements[0].params).toEqual(['2', 'editor', ORG_UUID]);
+          expect(requestStatements[0].params).toEqual(['2', 'editor', ORG_UUID, '7']);
           expect(requestStatements[0].text).toContain("set_config('app.rls_enforce', 'on', false)");
           expect(requestReleases).toBe(0);
           res.emit('finish');
@@ -454,6 +466,7 @@ describe('authMiddleware (global /api gate) opens a tenant scope', () => {
     expect(r.reachedHandler).toBe(true);
     expect(r.scoped).toBe(true);
     expect(r.tenantId).toBe('2');
+    expect(r.accountId).toBe(7);
   });
 
   it('no token → 401 and the handler never runs (no scope)', async () => {
@@ -589,6 +602,7 @@ describe('the storage quota guard composes with the rest of the chain', () => {
     // that receives the request must still be inside a real RLS boundary.
     expect(r.scoped).toBe(true);
     expect(r.tenantId).toBe('2');
+    expect(r.accountId).toBe(7);
   });
 
   it('does not evaluate storage on a small JSON write', async () => {

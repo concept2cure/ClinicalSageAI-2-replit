@@ -138,6 +138,38 @@ CREATE TABLE IF NOT EXISTS user_intelligence_profiles (
 
 CREATE INDEX IF NOT EXISTS user_intel_profiles_org_idx ON user_intelligence_profiles(organization_id);
 
+-- Private per-account context: tenant membership and platform role never admit
+-- another owner's profile. Restrictive policy ANDs with every permissive policy,
+-- including later generic tenant policies. The canonical deploy replays this
+-- creator, so ENABLE/FORCE and expressions converge on existing installations.
+ALTER TABLE public.user_intelligence_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_intelligence_profiles FORCE ROW LEVEL SECURITY;
+DO $private_owner$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'public.user_intelligence_profiles'::regclass AND polname = 'user_intelligence_profiles_owner_boundary') THEN
+    CREATE POLICY user_intelligence_profiles_owner_boundary ON public.user_intelligence_profiles
+      AS RESTRICTIVE FOR ALL TO PUBLIC
+      USING (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer)
+      WITH CHECK (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer);
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'public.user_intelligence_profiles'::regclass AND polname = 'user_intelligence_profiles_owner_boundary' AND polpermissive) THEN
+    RAISE EXCEPTION 'Private profile owner boundary must be restrictive';
+  END IF;
+  ALTER POLICY user_intelligence_profiles_owner_boundary ON public.user_intelligence_profiles TO PUBLIC
+    USING (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer);
+  -- A matching owner can use the table even before the generic RLS sweep.
+  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'public.user_intelligence_profiles'::regclass AND polname = 'user_intelligence_profiles_owner_access') THEN
+    CREATE POLICY user_intelligence_profiles_owner_access ON public.user_intelligence_profiles FOR ALL TO PUBLIC
+      USING (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer)
+      WITH CHECK (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer);
+  END IF;
+  ALTER POLICY user_intelligence_profiles_owner_access ON public.user_intelligence_profiles TO PUBLIC
+    USING (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer);
+END
+$private_owner$;
+
 -- ============================================================
 -- 5. ANA PLATFORM WISDOM
 -- ============================================================
