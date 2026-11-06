@@ -4,7 +4,7 @@ import type { FireToast } from '../toast';
 import { acceptAuthoringDraft, captureEditorDraftGuard, checkAuthoringDraftSection, createEmptyAiDraftReviewState,
   generateAuthoringDraft, type AcceptedAttribution, type AiDraftGenerationInputs, type AiDraftReviewSession, type AiDraftReviewState,
   type DraftFailure, type DraftPassage } from './authoringDraftTransport';
-import { DRAFT_APPROACHES, NO_ALTERNATIVES, arrivedAlternative, revisedAlternative, revisionTarget, showAlternative, type RevisionTarget } from './draftAlternatives';
+import { DRAFT_APPROACHES, NO_ALTERNATIVES, acceptOptionSet, arrivedAlternative, revisedAlternative, revisionTarget, showAlternative, type RevisionTarget } from './draftAlternatives';
 import { samePassage } from './draftPassage';
 import type { AssemblySourceManifest } from '@shared/authoring/assembly-sources';
 
@@ -52,7 +52,7 @@ async function acceptReview(owner: ReviewActions) {
     refusal: 'Acceptance requested. The saved outcome is not confirmed yet. If you leave this review, check the exact saved section before any further acceptance. No save is repeated automatically.' });
   try {
     const result = await acceptAuthoringDraft({ sectionId: run.options.sectionId, docId: run.options.docId,
-      draftId, content: saved.body, changeReason: saved.changeReason }, run.current);
+      draftId, content: saved.body, changeReason: saved.changeReason, optionSet: acceptOptionSet(saved) }, run.current);
     if (!run.current() || result.ok === false && result.stale) return;
     if (result.ok) {
       if (owner.read().options.editorDirty) {

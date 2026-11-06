@@ -1,0 +1,28 @@
+import hashlib, subprocess
+E='client/src/concept2cure/v2/editor/'
+S='client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx'
+T=['client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx','client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx',
+   E+'__tests__/draftAlternatives.test.ts',E+'__tests__/draftPassage.test.ts']
+M=[
+ ('P1 accept not held by a blocking figure', S, " || draft.sectionId !== sectionId || figureHeld}", " || draft.sectionId !== sectionId}"),
+ ('P2 hold read on the model text, not the edited text', S, "(csrFigureHold(draft, body)?.blocking.length ?? 0) > 0", "(csrFigureHold(draft, draft.generated)?.blocking.length ?? 0) > 0"),
+ ('P3 paragraph not held', E+'DraftAlternatives.tsx', "disabled={disabled || held.length > 0}", "disabled={disabled}"),
+ ('P4 passage not held', E+'draftPassage.ts', "  if (!held.length) return null;\n", "  if (held.length >= 0) return null;\n"),
+ ('P5 no receipts reads as checked', E+'draftAlternatives.ts', "if (gate.status === 'not_checked') return { status: 'not_checked', blocking: [], reported: [] };", "if (gate.status === 'not_checked') return { status: 'checked', blocking: [], reported: [] };"),
+ ('P6 option set not sent', E+'useAuthoringDraftReview.ts', ", optionSet: acceptOptionSet(saved) }", " }"),
+ ('P7 revision depth not counted', E+'draftAlternatives.ts', "    depth += 1;\n", "    depth = 1;\n"),
+ ('P8 transport drops the gate', E+'authoringDraftTransport.ts', "    ...(csrFiguresOf(draft.csrFigures) ? { csrFigures: csrFiguresOf(draft.csrFigures) } : {}) } };", "    } };"),
+]
+for name,f,a,b in M:
+    orig=open(f,encoding='utf-8').read(); h=hashlib.sha256(orig.encode()).hexdigest()
+    assert orig.count(a)==1, name
+    open(f,'w',encoding='utf-8').write(orig.replace(a,b))
+    try:
+        r=subprocess.run(['npx','vitest','run','--maxWorkers=2',*T],capture_output=True,text=True,timeout=1200)
+    finally:
+        open(f,'w',encoding='utf-8').write(orig)
+    assert hashlib.sha256(open(f,encoding='utf-8').read().encode()).hexdigest()==h
+    out=r.stdout+r.stderr
+    line=[l for l in out.splitlines() if l.strip().startswith('Tests ')]
+    print(name,'->','KILLED' if r.returncode!=0 else 'SURVIVED', line[-1].strip() if line else out[-300:], flush=True)
+print('all restored')

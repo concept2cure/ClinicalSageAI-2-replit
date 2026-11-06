@@ -16,7 +16,7 @@ import type { PendingAiDraft } from './authoringDraftTransport';
 import type { AssemblySourceManifest } from '@shared/authoring/assembly-sources';
 import type { EditorProposalReceipt } from './editorProposalReceipt';
 import { draftParagraphAuthor, type DraftProposalTarget } from './draftAlternatives';
-import { passageProposal, passageRefusal, type PassageRequest } from './draftPassage';
+import { passageFigureHold, passageProposal, passageRefusal, type PassageRequest } from './draftPassage';
 import { AlternativesPicker, useFocusReturn, useProposalStates } from './DraftAlternatives';
 import { useAuthoringDraftReview } from './useAuthoringDraftReview';
 
@@ -123,7 +123,9 @@ function PassageReplace({ draft, passage, savedUpdatedAt, target, busy }: {
   const [proposing, setProposing] = useState(false);
   useEffect(() => { setFailure(null); }, [draft.generated]);
   const [state] = useProposalStates(receipt ? [receipt] : [], target);
-  const refused = !target ? 'Open this section in the document editor to replace the passage.' : anaInsertRefusal(draft.turnRecord, false);
+  // CSR slice 2: a figure the study's engine did not produce holds the replacement, and is named.
+  const refused = !target ? 'Open this section in the document editor to replace the passage.'
+    : passageFigureHold(draft) ?? anaInsertRefusal(draft.turnRecord, false);
   const pressed = useFocusReturn(proposing);
   const replace = async (control: HTMLElement) => {
     if (!target || refused || proposing) return;
