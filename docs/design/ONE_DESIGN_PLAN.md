@@ -814,6 +814,14 @@ The founder asked this session to take over and finish the project page's work. 
   - No read is added. 36 cases were red against D3-3 and are green here; 80 of 81 project suites pass, the
     remaining failure as on trunk. Walked at 1440 and 390, light and dark.
 
+- **D3-2b, one read for several readers (work and agency inbox)**, `900e6eb44`, `docs/evidence/DESIGN/D3/D3-2b/`.
+  - The project's unified work and agency inbox are each read once by the page. They were read again on every
+    step change: per task panel, and only inside Respond.
+  - The Filing card says the open agency letters and the next response due. The Team card says each person's open
+    work and next due date, with work no one on the team holds; a failed read is said once.
+  - 4 cases were red against D3-2a and are green here; 82 of 83 project suites pass, the remaining failure as on
+    trunk. In the running app eight step changes made no read of either, counted at the network.
+
 **Not done in D3-1, for the lead**
 
 - The objective as a composer suggestion (D3.md §4.4 item 5.1). S1's objective already offers "Ask AnA to propose
@@ -821,8 +829,8 @@ The founder asked this session to take over and finish the project page's work. 
 
 **Next**
 
-1. D3-2b: the four reads lifted into `ProjectWorkspace` (§4.10). With them, the Filing card gains agency letters and
-   commitments, the Team card each person's due work, and Records the Activity disclosure.
+1. D3-2b's other half: the records read lifted (Records gains the Activity disclosure) and the commitments read on
+   the Filing card, keyed by the verified integer project id.
 2. D3-4: the step bodies (§4.7). This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
 
